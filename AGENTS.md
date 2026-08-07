@@ -30,6 +30,7 @@ Este repositorio es el **frontend**. El backend vive en `SmartPlan-back`
 | [`skills/02-git-flow/SKILL.md`](skills/02-git-flow/SKILL.md) | Antes de cualquier operación de git |
 | [`skills/03-frontend/SKILL.md`](skills/03-frontend/SKILL.md) | Antes de escribir un componente o una página |
 | [`skills/04-calidad/SKILL.md`](skills/04-calidad/SKILL.md) | Antes de desactivar una regla de lint o silenciar un warning |
+| [`skills/05-arquitectura/SKILL.md`](skills/05-arquitectura/SKILL.md) | Antes de agregar un servicio, una integración externa o un proceso en segundo plano |
 | [`SEGUIMIENTO.md`](SEGUIMIENTO.md) | Para saber en qué estado está cada funcionalidad |
 
 ## Reglas que no se negocian
