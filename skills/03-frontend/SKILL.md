@@ -99,42 +99,23 @@ técnico (hooks, utilidades, props) puede ir en inglés si es más natural.
 
 ## Guía visual
 
-### Paleta
+El design system completo —paleta, tipografía, espaciado, radios, componentes
+primitivos y voz de marca— está en **[`skills/06-design-system/`](../06-design-system/SKILL.md)**.
+Leelo antes de escribir cualquier estilo.
 
-| Rol | Color | Hex |
-|---|---|---|
-| Primary | Ember | `#E85D20` |
-| Fondo | Cream | `#F5F0E8` |
-| Superficie / card | Card | `#FFFCF5` |
-| Borde fino | Hairline | `#E2DDD5` |
-| IA / destacado | Electric | `#2B5BFF` |
-| Valoraciones | Gold | `#FFD166` |
-| Éxito | Success | `#22C06B` |
-| Error | Error | `#F04040` |
+Los tokens vigentes están en [`src/styles/tokens.css`](../../src/styles/tokens.css) y
+los logos en [`public/brand/`](../../public/brand/).
 
-> Los hex salen del OCR del documento. `#FFD166` en particular quedó ambiguo en el
-> escaneo (aparece como `#FFDIGG`). Verificalo contra el diseño original antes de
-> fijarlo en la configuración de Tailwind.
+Resumen de la paleta: `--ember #E85D20` (primario) · `--char #1A1109` (texto y
+superficies oscuras) · `--cream #F5F0E8` (fondo) · `--electric #2B5BFF` (IA) ·
+`--gold #FFD166` (valoraciones).
 
-Hay definidas superficies claras y oscuras, más tints de success / warning / error
-para badges y estados.
-
-### Tipografía
-
-Fuente principal: **Bricolage Grotesque**.
-
-| Nivel | Tamaño | Peso |
-|---|---|---|
-| H1 | 42px | 700 |
-| H2 | 32px | 700 |
-| H3 | 24px | 600 |
-| H4 | 20px | 600 |
-| Body | 16px | 400 |
-| Small | 14px | 400 |
+**Nunca escribas un hex a mano**: usá la variable CSS.
 
 > **Discrepancia pendiente:** `src/app/layout.tsx` todavía carga **Geist** y
-> **Geist Mono**, que vienen del template de `create-next-app`. La guía visual
-> define Bricolage Grotesque. Hay que cambiarlo cuando se implemente el diseño real.
+> **Geist Mono**, que vienen del template de `create-next-app`. El design system
+> define **Bricolage Grotesque**, ya self-hosted en `src/app/fonts/`. Falta
+> cablearlo con `next/font/local`.
 
 ## Accesibilidad y rendimiento
 

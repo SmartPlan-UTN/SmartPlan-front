@@ -56,8 +56,10 @@ historial de git.
 | Protección de ramas `main` y `develop` | `Finalizado` | — | — | PR obligatorio + 2 aprobaciones |
 | Análisis estático con ESLint | `En revisión` | `feature/eslint-analisis-estatico` | — | Config comentada + scripts `lint` / `lint:fix` |
 | Skills y convenciones para agentes de IA | `En progreso` | `docs/skills-agentes-ia` | — | Este archivo y la carpeta `skills/` |
-| Fuente Bricolage Grotesque | `No iniciado` | — | — | `layout.tsx` todavía carga Geist (template) |
-| Paleta en configuración de Tailwind | `No iniciado` | — | — | Verificar hex `#FFD166` contra el diseño original |
+| Assets del design system en el repo | `En progreso` | `docs/skills-agentes-ia` | — | Logos, fuente, `tokens.css` e imágenes de ejemplo |
+| Cablear Bricolage Grotesque | `No iniciado` | — | — | El `.ttf` ya está en `src/app/fonts/`; falta `next/font/local` en `layout.tsx`, que sigue con Geist |
+| Importar `tokens.css` en `globals.css` | `No iniciado` | — | — | Y exponerlos a Tailwind 4 con `@theme` |
+| Portar los primitivos a React + TS | `No iniciado` | — | — | Button, Chip, Badge y Card desde `Primitives.jsx` |
 | Cliente axios centralizado (`src/lib/api/`) | `No iniciado` | — | — | Con interceptor para el JWT |
 | Variables de entorno (`NEXT_PUBLIC_API_URL`) | `No iniciado` | — | — | |
 | Estructura de carpetas definitiva | `No iniciado` | — | — | Propuesta en `skills/03-frontend/` |
@@ -202,10 +204,17 @@ Decisiones técnicas tomadas y su motivo. Sirve para no rediscutir lo mismo dos 
 
 Cosas detectadas que todavía no tienen dueño:
 
-- `src/app/layout.tsx` carga **Geist**, pero la guía visual define **Bricolage
-  Grotesque**. Hay que cambiarlo al implementar el diseño real.
-- El hex de "Gold" (valoraciones) quedó ambiguo en el OCR del documento
-  (`#FFDIGG` → se interpretó como `#FFD166`). Verificar contra el diseño original.
+- `src/app/layout.tsx` carga **Geist**, pero el design system define **Bricolage
+  Grotesque**. El archivo ya está en el repo; falta cablearlo.
+- **Dos design systems conviven** en la carpeta `SmartPlanSystemDesign`: la v1
+  (Ink / Lime / Violet) quedó obsoleta y la v2 "EMBER" es la vigente. Conviene
+  borrar la v1 para que nadie la tome por error.
+- **La escala tipográfica del documento no coincide con el design system**: la
+  Etapa 5 dice H1 42px / H2 32px / H3 24px, y la v2 usa 50 / 36 / 26. Actualizar
+  el documento.
+- **El brief de marca está escrito para España**: trata de "tú" y usa euros. El
+  proyecto es de Mendoza y los criterios de aceptación del documento usan voseo y
+  pesos. Definir la variante con el equipo y corregir el brief.
 - El motor de base de datos concreto no está definido en la documentación, que
   solo dice "base de datos relacional".
 - El núcleo de `skills/` (`00-proyecto`, `01-dominio`, `02-git-flow`) está

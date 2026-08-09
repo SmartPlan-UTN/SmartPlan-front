@@ -59,9 +59,24 @@ Los mensajes de commit van en español, en imperativo, referenciando el caso de 
 Implementar generación de plan automático (CU17)
 ```
 
-## Paleta
+## Design system
 
-Primary `#E85D20` · Fondo `#F5F0E8` · Card `#FFFCF5` · Borde `#E2DDD5` ·
-IA `#2B5BFF` · Valoraciones `#FFD166` · Éxito `#22C06B` · Error `#F04040`.
+Tokens en `src/styles/tokens.css`, guía completa en `skills/06-design-system/SKILL.md`.
 
-Tipografía: Bricolage Grotesque.
+**Nunca sugieras un color hexadecimal escrito a mano.** Usá las variables CSS:
+`--ember #E85D20` (primario) · `--char #1A1109` (texto y superficies oscuras) ·
+`--cream #F5F0E8` (fondo) · `--surface-card #FFFCF8` (tarjetas, nunca blanco puro) ·
+`--electric #2B5BFF` (IA) · `--gold #FFD166` (valoraciones) · `--hairline #E2DDD5` ·
+`--success #22C06B` · `--warning #F5A623` · `--error #F04040`.
+
+Tipografía única: **Bricolage Grotesque** (self-hosted en `src/app/fonts/`).
+Clases `.sp-display` `.sp-h1` … `.sp-label`.
+
+Radios: botones `10px`, tarjetas `16px`, chips y badges `99px`.
+Espaciado en escala de 4 (`--s-1` a `--s-8`).
+
+Iconos: `lucide-react`, siempre de línea, trazo 1.75–2. Sin emoji.
+
+Logos en `public/brand/`: variantes `ink` para fondo claro, `white` para oscuro.
+
+La marca se escribe `smartplan` en minúscula, nunca "SmartPlan", en textos de interfaz.

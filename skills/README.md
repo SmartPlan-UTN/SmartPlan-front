@@ -13,6 +13,7 @@ como los agentes de IA (Claude, Codex, Copilot).
 | `03-frontend/` | Next.js 16, Tailwind, guía visual, consumo de la API | Solo este repo |
 | `04-calidad/` | ESLint, reglas activas, qué hacer ante un error | Solo este repo |
 | `05-arquitectura/` | Componentes, comunicación, tecnologías, entornos | Compartido |
+| `06-design-system/` | Tokens EMBER, tipografía, primitivos, logos, voz de marca | Solo este repo |
 
 **Compartido** significa que el archivo es idéntico en `SmartPlan-front` y en
 `SmartPlan-back`. Si modificás uno, replicá el cambio en el otro repositorio.
