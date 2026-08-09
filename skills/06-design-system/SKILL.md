@@ -88,62 +88,157 @@ Foco: `--focus-ember 0 0 0 3px rgba(232,93,32,.18)`.
 
 **Layout:** navbar `60px` · ancho máximo `1200px` · separación vertical de sección `64px`.
 
-## Dónde está la fuente
+## ⚠️ El prototipo no está en el repositorio
 
-```
-SmartPlanSystemDesign/
-├── v2/                     ← FUENTE DE VERDAD: 20 pantallas + tokens + primitivos
-├── SmartPlan v3.html       ← el kit completo; necesita servidor HTTP
-├── SmartPlan standalone.html   ← todo embebido, abre con doble clic (congelado)
-├── assets/                 ← logos
-└── fonts/                  ← Bricolage Grotesque
-```
+El kit de alta fidelidad —20 pantallas en React— vive en la carpeta
+`SmartPlanSystemDesign`, en la máquina de un integrante, **fuera de git por decisión
+del equipo**. No se va a subir.
 
-`standalone/v2/` es una **copia congelada** para el HTML autocontenido. No la edites
-ni la tomes como referencia: usá siempre `v2/` de la raíz.
-
-Para ver el kit hay que servirlo por HTTP, porque Babel carga los `.jsx` por XHR y
-`file://` los bloquea:
+**Esta sección es el único registro durable de ese diseño.** Está descrita para que
+puedas maquetar sin acceso al prototipo. Si tenés la carpeta a mano, se levanta así:
 
 ```powershell
-cd "c:\Users\lenovo\Desktop\SmartPlan\SmartPlanSystemDesign"
+cd "<ruta>\SmartPlanSystemDesign"
 python -m http.server 8080
 # http://127.0.0.1:8080/SmartPlan%20v3.html
 ```
 
-## Pantallas del kit
+Hace falta servidor HTTP porque Babel carga los `.jsx` por XHR y `file://` los bloquea.
+También existe `SmartPlan standalone.html`, con todo embebido, que abre con doble clic.
 
-Las 20 pantallas de `v2/`, mapeadas contra los casos de uso y las pantallas del
-documento entregable:
+## Pantallas diseñadas
 
-| Componente | Pantalla | Casos de uso |
-|---|---|---|
-| `Landing.jsx` | PAN 07 — Home | CU17, CU20 |
-| `Login.jsx` | PAN 04 — Login | CU1, CU2, CU3 |
-| `PlanGenerator.jsx` | PAN 07 / PAN 09 | CU17, CU19, CU31 |
-| `Results.jsx` | PAN 11 — Resultados | CU9, CU10, CU11, CU12 |
-| `PlanDetail.jsx` | PAN 17 — Consultar plan | CU13, CU25–CU30, CU43 |
-| `ActivityDetail.jsx` | PAN 18 — Consultar actividad | CU14, CU15, CU35, CU44, CU45 |
-| `Favorites.jsx` | PAN 12 — Ver favoritos | CU39–CU43 |
-| `History.jsx` | PAN 13 — Ver historial | CU23 |
-| `Profile.jsx` | PAN 14 — Editar perfil | CU5, CU7 |
-| `Preferences.jsx` | PAN 15 — Editar preferencias | CU8, CU18 |
-| `Security.jsx` | — | CU6 |
-| `AdminHome.jsx` | REP-01 — Panel de control | CU58 |
-| `AdminUsers.jsx` | PAN 19 / REP-02 | CU57 |
-| `AdminActivities.jsx` | PAN 21 — Gestionar actividades | CU53 |
-| `AdminPlanes.jsx` | PAN 22 — Gestionar Plan | CU60 |
-| `AdminReviews.jsx` | PAN 20 — Moderar valoraciones | CU55 |
-| `Navbar.jsx` | transversal | — |
-| `Carousel.jsx` | transversal | — |
-| `MoodBackground.jsx` | transversal | — |
-| `Primitives.jsx` | transversal | — |
+### Públicas y de sesión
 
-**Antes de maquetar un issue, mirá su pantalla en el kit.** El diseño ya está
-resuelto; no hay que inventarlo.
+**Login** — CU1, CU2, CU3 · PAN 04
+Alterna entre iniciar sesión y registro. Medidor de fortaleza de contraseña
+(Débil / Media / Fuerte), mostrar-ocultar con icono `eye-off`, validación inline
+("Este campo es requerido", "Las contraseñas no coinciden", "Ingresá un email
+válido"). Superficie oscura con `blur(8px)`. Deriva a `admin-inicio` si el rol es
+administrador.
 
-Falta diseño para PAN 05 (recuperar contraseña), PAN 08 (búsqueda por mapa),
-PAN 10 (planes recomendados) y las pantallas de colección (CU32–CU38).
+### Aplicación
+
+**Landing / Home** — CU17, CU20 · PAN 07
+Hero sobre fondo oscuro con `MoodBackground` animado detrás. Campo central de
+lenguaje natural: *"Contale qué querés"*, se envía con Enter. Debajo, chips de
+sugerencias (*"Algo romántico y sorpresa para hoy"*, *"Aventura serrana familiar"*,
+*"Algo que no se me ocurriría nunca"*). Más abajo, carrusel de categorías y planes
+destacados con su secuencia resumida (*"Café → Paseo → Cena"*), distancia
+(*"A 2.5 km"*) y momento (*"Esta tarde"*). Ubicación por defecto: Mendoza.
+
+**PlanGenerator** — CU17, CU19, CU31 · PAN 07 / PAN 09
+Formulario de parámetros: presupuesto, zona (barrios), momento, tipo de salida
+(Con amigos / En pareja / Familiar), características (Aire libre, Accesible,
+Con estacionamiento). Pantalla de espera con pasos progresivos —"Analizando tus
+preferencias", "Buscando actividades compatibles", "Armando combinaciones
+perfectas"— en `--electric`, que es la única animación viva permitida.
+
+**Results** — CU9–CU12 · PAN 11
+Grilla de tarjetas de plan y actividad. Cada tarjeta lleva título, secuencia
+(*"Bodega → Almuerzo → Degustación"*), `Badge` de categoría (Cultural,
+Gastronómico, Romántico, Activo, Al aire libre), `Stars` con la valoración y
+distancia. Fila superior de chips de filtro con scroll horizontal sin barra.
+Estado de carga: *"Buscando lo mejor cerca tuyo..."*.
+
+**PlanDetail** — CU13, CU25–CU30, CU43 · PAN 17
+Cabecera con nombre del plan y recorrido (*"Valle de Uco → Luján de Cuyo"*).
+Lista ordenada de actividades, cada una con horario, nombre del lugar, tipo
+(*"Bodega · Degustación"*), dirección y costo. `Divider` entre items. Costo total
+al pie y botón **Guardar plan**.
+
+**ActivityDetail** — CU14, CU15, CU35, CU44, CU45 · PAN 18
+Detalle con foto, descripción, horarios (*"Lun–Dom: 12:00–16:00"*), enlace a
+Google Maps y listado de valoraciones con autor y `Stars`. Botón de guardar con
+dos estados: **Guardar** / **Guardada**. Pestaña de Información.
+
+**Favorites** — CU39–CU43 · PAN 12
+Tres solapas: Actividades, Planes y Colecciones. Cada una con su estado vacío
+propio: *"Aún no guardaste ninguna actividad"*, *"Aún no guardaste ningún plan"*,
+*"Aún no creaste ninguna colección"*. Las colecciones tienen nombre libre
+(*"Bodegas para visitar"*).
+
+**History** — CU23 · PAN 13
+Listado de planes por estado, con badge `DRAFT` para los borradores y estados
+`generating` para los que están procesándose. Estado vacío: *"Tus planes guardados
+aparecerán acá"*.
+
+**Profile** — CU5, CU7 · PAN 14
+Datos personales con validación inline. Incluye la sección de contraseña con las
+mismas reglas que Security.
+
+**Preferences** — CU8, CU18 · PAN 15
+Categorías de interés como chips seleccionables (cultura, compras, gastronomía…),
+presupuesto habitual con validación (*"Ingresá un presupuesto válido mayor a $0"*)
+y zona de preferencia.
+
+**Security** — CU6
+Cambio de contraseña con medidor de fortaleza y checklist de requisitos:
+*"Mínimo 8 caracteres"*, *"Al menos una mayúscula"*, *"Incluir números y símbolos"*.
+
+### Panel de administración
+
+**AdminHome** — CU58 · REP-01
+Tarjetas de KPI: Total de Usuarios, Planes Activos, Actividades en Catálogo,
+Valoraciones Pendientes. Debajo, tasa de aceptación, valoración promedio y
+retención. Distribución por estado de ánimo (Relax, Festiva, Romántica, Aventura,
+Cultural) y por tamaño de grupo (En pareja, Grupo chico, Grupo grande) con barras
+de porcentaje. Ranking de actividades más populares y feed de actividad reciente.
+Selector de rango: Hoy / 7 días / 30 días / Este mes.
+
+**AdminUsers** — CU57 · PAN 19 / REP-02
+Métricas de encabezado (total, activos hoy, nuevos registros de la semana) y tabla
+de usuarios con nombre, email, fecha de alta y estado: Activo, Suspendido, Baneado.
+Acciones por fila, entre ellas **Reactivar cuenta**. Filtro por estado.
+
+**AdminActivities** — CU53 · PAN 21
+Tabla del catálogo con filtros por categoría (Aventura, Cultura & Arte, Bienestar,
+Entretenimiento, Gastronomía) y por tipo de salida. Alta, edición y baja.
+
+**AdminPlanes** — CU60 · PAN 22
+Tabla de planes con estado y filtros. Edición y baja desde administración.
+
+**AdminReviews** — CU55 · PAN 20
+Bandeja de moderación con solapas Pendientes / Aprobadas. Cada fila con autor,
+plan valorado y antigüedad relativa (*"Hace 2 horas"*, *"Hace 3 días"*).
+
+### Transversales
+
+**Navbar** — barra de 60px con `backdrop-filter: blur(18px)` sobre el hero.
+Navegación: Inicio, Explorar, Favoritos, Historial, y menú de usuario con Mi Perfil
+y Preferencias.
+
+**Carousel** — carrusel infinito de categorías: Gastronomía, Vinos & Bodegas,
+Cultura & Arte, Vida nocturna, Cócteles, Café & Brunch, y de momentos: Con amigos,
+Noche especial, Tarde de semana, Fin de semana. El keyframe `sp-carousel` de
+`tokens.css` desplaza exactamente un set de 5 items.
+
+**MoodBackground** — fondo animado del hero. Manchas de color muy tenues (opacidad
+5–10%) que transicionan en 1.4s según el estado de ánimo seleccionado. Es
+decorativo; no debe competir con el contenido.
+
+### Lo que falta diseñar
+
+No hay pantalla en el kit para:
+
+- **PAN 05** — Recuperar contraseña (CU3 tiene el formulario en Login, pero no el
+  flujo de token)
+- **PAN 08** — Búsqueda por mapa (CU16)
+- **PAN 10** — Planes recomendados (CU20 aparece embebido en el Home, sin pantalla propia)
+- **Módulo de colección completo** — CU32 a CU38. En Favorites hay una solapa de
+  colecciones, pero no están el detalle ni el alta.
+
+Son 7 casos de uso sin diseño. Hay que resolverlos al maquetar o pedirle las
+pantallas al diseñador.
+
+## Contenido de referencia
+
+El prototipo usa datos de Mendoza y Buenos Aires: Ruta del vino en Luján de Cuyo,
+Bodega Zuccardi Valle de Uco, Termas de Cacheuta, Potrerillos, Chacras de Coria,
+Uspallata, San Telmo, Palermo. Los precios van en **pesos argentinos**.
+
+Sirve como referencia de tono y de volumen de texto al maquetar. **No es contenido
+real**: son datos de ejemplo.
 
 ## Componentes primitivos
 
@@ -234,12 +329,14 @@ es el loader de generación de plan, en `--electric`.
 - Tono cercano y concreto: hablá **del plan**, no de opciones.
 - Sin emoji en la interfaz de producto.
 
-> **Conflicto a resolver con el equipo:** el brief original está escrito para
-> España — trata de **"tú"** ("dinos qué te apetece") y usa **euros**. El proyecto
-> es de Mendoza, Argentina: corresponde **voseo** ("decinos qué te gusta") y
-> **pesos argentinos**. Los criterios de aceptación del documento entregable ya usan
-> voseo ("Aún no tenés planes guardados"), así que la referencia correcta es el
-> documento, no el brief.
+- **Voseo argentino**, no "tú". El prototipo ya está escrito así: *"Contale qué
+  querés"*, *"cerca tuyo"*, *"Aún no guardaste ninguna actividad"*, *"Ingresá un
+  email válido"*. Coincide con los criterios de aceptación del documento entregable.
+- **Pesos argentinos.**
+
+> Existió un brief anterior escrito para España, con "tú" y euros. Pertenecía a la
+> versión v1 del design system y **se eliminó**. Si aparece en alguna copia vieja,
+> ignoralo.
 
 ## Pendiente de integración
 
@@ -250,14 +347,17 @@ Los assets ya están en el repo, pero **todavía no están cableados**:
 - [ ] Exponer los tokens a Tailwind 4 con `@theme` para poder usarlos como utilidades
 - [ ] Portar los 7 primitivos de `v2/Primitives.jsx` a componentes React con TypeScript
 
-## ⚠️ El design system no está versionado
+## Qué está en el repo y qué no
 
-La carpeta `SmartPlanSystemDesign` vive en el escritorio de una sola máquina, fuera
-de los dos repositorios. **No está en git.** Si esa máquina se pierde, se pierden
-las 20 pantallas y no hay copia.
+| | |
+|---|---|
+| **En el repo** | Tokens (`src/styles/tokens.css`), logos (`public/brand/`), fuente (`src/app/fonts/`), imágenes de ejemplo (`public/mock/`) y esta documentación |
+| **Fuera del repo** | El prototipo React de 20 pantallas, por decisión del equipo |
 
-Acá solo están los tokens, los logos y la fuente. Los `.jsx` de las pantallas, no.
-Conviene commitear la carpeta `v2/` en algún lado antes de seguir.
+Consecuencia: **la sección "Pantallas diseñadas" de este archivo es el único
+registro versionado del diseño.** Si cambian una pantalla en el prototipo,
+actualizá acá también. Si no, la documentación y el diseño se separan y nadie
+sabe cuál vale.
 
 ## Imágenes de ejemplo
 
