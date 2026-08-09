@@ -88,10 +88,67 @@ Foco: `--focus-ember 0 0 0 3px rgba(232,93,32,.18)`.
 
 **Layout:** navbar `60px` · ancho máximo `1200px` · separación vertical de sección `64px`.
 
+## Dónde está la fuente
+
+```
+SmartPlanSystemDesign/
+├── v2/                     ← FUENTE DE VERDAD: 20 pantallas + tokens + primitivos
+├── SmartPlan v3.html       ← el kit completo; necesita servidor HTTP
+├── SmartPlan standalone.html   ← todo embebido, abre con doble clic (congelado)
+├── assets/                 ← logos
+└── fonts/                  ← Bricolage Grotesque
+```
+
+`standalone/v2/` es una **copia congelada** para el HTML autocontenido. No la edites
+ni la tomes como referencia: usá siempre `v2/` de la raíz.
+
+Para ver el kit hay que servirlo por HTTP, porque Babel carga los `.jsx` por XHR y
+`file://` los bloquea:
+
+```powershell
+cd "c:\Users\lenovo\Desktop\SmartPlan\SmartPlanSystemDesign"
+python -m http.server 8080
+# http://127.0.0.1:8080/SmartPlan%20v3.html
+```
+
+## Pantallas del kit
+
+Las 20 pantallas de `v2/`, mapeadas contra los casos de uso y las pantallas del
+documento entregable:
+
+| Componente | Pantalla | Casos de uso |
+|---|---|---|
+| `Landing.jsx` | PAN 07 — Home | CU17, CU20 |
+| `Login.jsx` | PAN 04 — Login | CU1, CU2, CU3 |
+| `PlanGenerator.jsx` | PAN 07 / PAN 09 | CU17, CU19, CU31 |
+| `Results.jsx` | PAN 11 — Resultados | CU9, CU10, CU11, CU12 |
+| `PlanDetail.jsx` | PAN 17 — Consultar plan | CU13, CU25–CU30, CU43 |
+| `ActivityDetail.jsx` | PAN 18 — Consultar actividad | CU14, CU15, CU35, CU44, CU45 |
+| `Favorites.jsx` | PAN 12 — Ver favoritos | CU39–CU43 |
+| `History.jsx` | PAN 13 — Ver historial | CU23 |
+| `Profile.jsx` | PAN 14 — Editar perfil | CU5, CU7 |
+| `Preferences.jsx` | PAN 15 — Editar preferencias | CU8, CU18 |
+| `Security.jsx` | — | CU6 |
+| `AdminHome.jsx` | REP-01 — Panel de control | CU58 |
+| `AdminUsers.jsx` | PAN 19 / REP-02 | CU57 |
+| `AdminActivities.jsx` | PAN 21 — Gestionar actividades | CU53 |
+| `AdminPlanes.jsx` | PAN 22 — Gestionar Plan | CU60 |
+| `AdminReviews.jsx` | PAN 20 — Moderar valoraciones | CU55 |
+| `Navbar.jsx` | transversal | — |
+| `Carousel.jsx` | transversal | — |
+| `MoodBackground.jsx` | transversal | — |
+| `Primitives.jsx` | transversal | — |
+
+**Antes de maquetar un issue, mirá su pantalla en el kit.** El diseño ya está
+resuelto; no hay que inventarlo.
+
+Falta diseño para PAN 05 (recuperar contraseña), PAN 08 (búsqueda por mapa),
+PAN 10 (planes recomendados) y las pantallas de colección (CU32–CU38).
+
 ## Componentes primitivos
 
-Definidos en `standalone/v2/Primitives.jsx` del design system. Al portarlos a React
-con TypeScript, respetá estas variantes:
+Los siete de `v2/Primitives.jsx`. Al portarlos a React con TypeScript, respetá
+estas variantes:
 
 ### Button
 Radio `--r-btn`, peso 700, `scale(0.97)` al presionar, `brightness(1.1)` en hover.
@@ -117,9 +174,26 @@ sobre oscuro).
 Radio 99, 12px, peso 600. Variantes: `ai` (electric-15), `cost` (ember-10),
 `rating` (gold-15 con texto `#7A5C00`), `success`, `tag`, `warn`, `dark`.
 
-### Card
-`--surface-card` sobre fondo claro, radio `--r-card`, borde `1px --hairline`,
-sombra `--shadow-card`.
+### Icon
+Envuelve Lucide. Props: `name`, `size` (18 por defecto), `color`, `stroke` (2).
+Al portarlo, usá directamente `lucide-react` en vez del script global.
+
+### Stars
+Puntuación de 0 a 5 con medias estrellas. Relleno `#FFD166`, vacío
+`rgba(255,209,102,0.22)`. Props: `rating`, `size` (12).
+
+### Logo
+Props: `variant` (`white` | `ink`), `kind` (`full` | `mark`), `height` (26).
+Resuelve el archivo por convención `logo-{kind}-{variant}.png`. Al portarlo,
+apuntá a `public/brand/` y usá `<Image>` de `next/image`.
+
+### Divider
+Línea de 1px. `--hairline` sobre claro, `--hairline-dark` sobre oscuro.
+Prop `dark`.
+
+> **No existe un primitivo Card.** La tarjeta es un patrón, no un componente:
+> `--surface-card` sobre fondo claro, radio `--r-card`, borde `1px --hairline`,
+> sombra `--shadow-card`. Sobre oscuro, `--char-surface` con `--hairline-dark`.
 
 ## Iconografía
 
@@ -174,7 +248,16 @@ Los assets ya están en el repo, pero **todavía no están cableados**:
 - [ ] Cargar Bricolage Grotesque con `next/font/local` en `layout.tsx` (hoy carga Geist)
 - [ ] Importar `src/styles/tokens.css` en `globals.css`
 - [ ] Exponer los tokens a Tailwind 4 con `@theme` para poder usarlos como utilidades
-- [ ] Portar los primitivos de `Primitives.jsx` a componentes React con TypeScript
+- [ ] Portar los 7 primitivos de `v2/Primitives.jsx` a componentes React con TypeScript
+
+## ⚠️ El design system no está versionado
+
+La carpeta `SmartPlanSystemDesign` vive en el escritorio de una sola máquina, fuera
+de los dos repositorios. **No está en git.** Si esa máquina se pierde, se pierden
+las 20 pantallas y no hay copia.
+
+Acá solo están los tokens, los logos y la fuente. Los `.jsx` de las pantallas, no.
+Conviene commitear la carpeta `v2/` en algún lado antes de seguir.
 
 ## Imágenes de ejemplo
 
