@@ -1,0 +1,189 @@
+/* ================================================================
+   smartplan v2 — EMBER Design System tokens
+   Palette: Char · Ember · Cream · Electric · Gold
+   ================================================================ */
+
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("../fonts/BricolageGrotesque-VariableFont_opsz_wdth_wght.ttf")
+       format("truetype-variations");
+  font-weight: 200 800;
+  font-stretch: 75% 100%;
+  font-display: swap;
+}
+
+:root {
+  /* ── Core palette ────────────────────────────────── */
+  --ember:    #E85D20;
+  --char:     #1A1109;
+  --cream:    #F5F0E8;
+  --electric: #2B5BFF;
+  --gold:     #FFD166;
+
+  /* ── Semantic status ─────────────────────────────── */
+  --success:  #22C06B;
+  --error:    #F04040;
+  --warning:  #F5A623;
+
+  /* ── Tints ───────────────────────────────────────── */
+  --ember-04:      rgba(232,93,32,0.04);
+  --ember-10:      rgba(232,93,32,0.10);
+  --ember-15:      rgba(232,93,32,0.15);
+  --ember-20:      rgba(232,93,32,0.20);
+  --electric-15:   rgba(43,91,255,0.15);
+  --gold-15:       rgba(255,209,102,0.15);
+  --success-15:    rgba(34,192,107,0.15);
+
+  /* ── Dark surfaces ───────────────────────────────── */
+  --char-surface:  #1E1812;   /* card on dark bg        */
+  --char-surface2: #241D14;   /* elevated/hover on dark */
+
+  /* ── Foreground tokens ───────────────────────────── */
+  --fg-on-dark:   #F5F0E8;
+  --fg-on-dark-2: rgba(245,240,232,0.55);
+  --fg-on-dark-3: rgba(245,240,232,0.30);
+
+  --fg-1: #1A1109;    /* primary on cream   */
+  --fg-2: #5C5448;    /* secondary on cream */
+  --fg-3: #9E9589;    /* placeholder/caption */
+
+  /* ── Surfaces ────────────────────────────────────── */
+  --surface:      var(--cream);
+  --surface-card: #FFFCF8;    /* card on cream    */
+
+  /* ── Borders ─────────────────────────────────────── */
+  --hairline:      #E2DDD5;
+  --hairline-dark: rgba(255,255,255,0.07);
+
+  /* ── Typography ──────────────────────────────────── */
+  --font: "Bricolage Grotesque", "Arial Narrow", sans-serif;
+
+  /* ── Type scale ──────────────────────────────────── */
+  --t-display: 78px;
+  --t-h1:      50px;
+  --t-h2:      36px;
+  --t-h3:      26px;
+  --t-h4:      20px;
+  --t-body-lg: 18px;
+  --t-body:    16px;
+  --t-small:   14px;
+  --t-label:   12px;
+
+  /* ── Weights ─────────────────────────────────────── */
+  --w-body:    400; /* @kind other */
+  --w-label:   600; /* @kind other */
+  --w-heading: 700; /* @kind other */
+  --w-display: 800; /* @kind other */
+
+  /* ── Tracking ────────────────────────────────────── */
+  --track-display: -0.03em;
+  --track-h1:      -0.02em;
+  --track-label:    0.05em;
+
+  /* ── Layout ──────────────────────────────────────── */
+  --navbar-h:   60px;
+  --max-w:      1200px;
+  --section-v:  64px;
+
+  /* ── Radii ───────────────────────────────────────── */
+  --r-pill:    40px;
+  --r-card:    16px;
+  --r-card-sm: 12px;
+  --r-btn:     10px;
+  --r-chip:    99px;
+
+  /* ── Shadows ─────────────────────────────────────── */
+  --shadow-card:      0 4px 16px rgba(0,0,0,0.08);
+  --shadow-card-dark: 0 4px 20px rgba(0,0,0,0.30);
+  --focus-ember:      0 0 0 3px rgba(232,93,32,0.18);
+
+  /* ── Spacing ─────────────────────────────────────── */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
+  --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px;
+}
+
+/* ── Reset ───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--font);
+  background: var(--cream);
+  color: var(--fg-1);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+#root { min-height: 100vh; }
+input, button, textarea, select { font-family: inherit; }
+input::placeholder { color: var(--fg-3); }
+::selection { background: var(--ember); color: #fff; }
+
+/* ── Type utility classes ─────────────────────────────── */
+.sp-display {
+  font-size: var(--t-display);
+  font-weight: var(--w-display);
+  letter-spacing: var(--track-display);
+  line-height: 0.96;
+  font-optical-sizing: auto;
+}
+.sp-h1 {
+  font-size: var(--t-h1);
+  font-weight: var(--w-display);
+  letter-spacing: var(--track-h1);
+  line-height: 1.04;
+}
+.sp-h2 { font-size: var(--t-h2); font-weight: var(--w-heading); line-height: 1.1; letter-spacing: -0.01em; }
+.sp-h3 { font-size: var(--t-h3); font-weight: var(--w-heading); line-height: 1.15; letter-spacing: -0.01em; }
+.sp-h4 { font-size: var(--t-h4); font-weight: var(--w-heading); line-height: 1.2; }
+.sp-body-lg { font-size: var(--t-body-lg); font-weight: var(--w-body); line-height: 1.6; }
+.sp-body { font-size: var(--t-body); font-weight: var(--w-body); line-height: 1.55; }
+.sp-small { font-size: var(--t-small); font-weight: var(--w-body); line-height: 1.45; }
+.sp-label {
+  font-size: var(--t-label);
+  font-weight: var(--w-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+/* ── Animation keyframes ──────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulseDot {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50%       { opacity: 1;   transform: scale(1.2); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 1; }
+}
+
+.fade-in { animation: fadeUp 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.sp-spin  { animation: spin 0.8s linear infinite; }
+
+@keyframes shimmer {
+  to { background-position: 200% center; }
+}
+@keyframes up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-12px); }
+}
+
+/* Dark textarea placeholder */
+.sp-textarea-dark::placeholder { color: rgba(255,255,255,0.22); }
+.sp-textarea-light::placeholder { color: rgba(26,17,9,0.28); }
+
+/* ── Infinite carousel scroll ─────────────────────────── */
+/* translates exactly one full set: 5 items × (210 + 44)px */
+@keyframes sp-carousel {
+  from { transform: translateX(0); }
+  to   { transform: translateX(calc(-5 * (210px + 44px))); }
+}
