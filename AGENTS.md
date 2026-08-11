@@ -34,6 +34,42 @@ Este repositorio es el **frontend**. El backend vive en `SmartPlan-back`
 | [`skills/06-design-system/SKILL.md`](skills/06-design-system/SKILL.md) | Antes de escribir un estilo, elegir un color o maquetar un componente |
 | [`SEGUIMIENTO.md`](SEGUIMIENTO.md) | Para saber en qué estado está cada funcionalidad |
 
+> **Si estás corriendo como Claude Code:** estos mismos archivos también están
+> publicados como skills nativas autodescubribles en `.claude/skills/`, y se
+> cargan solos según lo que estés haciendo — no hace falta que sigas los links
+> de la tabla a mano. `skills/` sigue siendo la fuente real; `.claude/skills/`
+> es una copia sincronizada por un hook de pre-commit. Ver
+> [`skills/README.md`](skills/README.md) si vas a editar contenido.
+
+## Dos tipos de skill: negocio y habilidad técnica
+
+Hay dos categorías distintas bajo `.claude/skills/`, y no se mezclan:
+
+| Categoría | Prefijo / origen | Qué define |
+|---|---|---|
+| **Reglas del proyecto** | `smartplan-*`, fuente en `skills/` de este repo | Cómo es SmartPlan: dominio, nombres, git flow, arquitectura, convenciones propias |
+| **Habilidades técnicas** | Sin prefijo, instaladas de paquetes externos vía `npx skills add`, fuente en `.agents/skills/` | Cómo ejecutar bien una tarea genérica (armar UI, animar, revisar React) — no son específicas de SmartPlan |
+
+Las de negocio dicen **qué construir y cómo se llama**. Las técnicas dicen
+**cómo construirlo bien**. Si hay conflicto entre ambas (p. ej. una skill
+técnica sugiere inglés y `smartplan-dominio` pide español), **gana la regla del
+proyecto**.
+
+### Habilidades técnicas instaladas
+
+| Skill | De dónde | Cuándo se activa |
+|---|---|---|
+| `shadcn` | [shadcn-ui/ui](https://github.com/shadcn-ui/ui) | Agregar, buscar o componer componentes de UI |
+| `emil-design-eng` | [emilkowalski/skills](https://github.com/emilkowalski/skills) | Pulido de interfaz: animaciones, sombras, micro-interacciones, sensación general |
+| `improve-react` | [millionco/react-doctor](https://github.com/millionco/react-doctor) | Auditoría de calidad de código React a nivel de codebase completo |
+| `better-ui` | [jakubkrehel/skills](https://github.com/jakubkrehel/skills) | Revisión de interfaz: layout, tipografía, accesibilidad, color |
+| `frontend-design` | [anthropics/skills](https://github.com/anthropics/skills) | Dirección estética al construir o rediseñar UI, para que no se vea "genérica" |
+
+Se instalan y actualizan con `npx skills add <repo> --skill <nombre>` /
+`npx skills update`. Fuente real en `.agents/skills/` (universal, la lee
+cualquier agente); `.claude/skills/` es un symlink que gestiona esa misma CLI,
+no lo edites a mano.
+
 ## Reglas que no se negocian
 
 1. **Nunca commitees en `main` ni en `develop`.** Están protegidas y requieren PR
