@@ -32,6 +32,7 @@ Este repositorio es el **frontend**. El backend vive en `SmartPlan-back`
 | [`skills/04-calidad/SKILL.md`](skills/04-calidad/SKILL.md) | Antes de desactivar una regla de lint o silenciar un warning |
 | [`skills/05-arquitectura/SKILL.md`](skills/05-arquitectura/SKILL.md) | Antes de agregar un servicio, una integración externa o un proceso en segundo plano |
 | [`skills/06-design-system/SKILL.md`](skills/06-design-system/SKILL.md) | Antes de escribir un estilo, elegir un color o maquetar un componente |
+| [`ROADMAP.md`](ROADMAP.md) | Quién es dueño de cada issue, con qué estimación y en qué sprint entra |
 | [`SEGUIMIENTO.md`](SEGUIMIENTO.md) | Para saber en qué estado está cada funcionalidad |
 
 ## Reglas que no se negocian
