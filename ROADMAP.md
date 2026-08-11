@@ -28,6 +28,22 @@ El reparto va de 52 a 58 puntos por persona. Quienes tienen menos issues
 —Ramiro y Valentín— cargan el modelo de datos y la infraestructura, que en
 cantidad es poco y en trabajo es de lo más pesado.
 
+### Asignación en GitHub
+
+| Persona | Usuario | Issues asignados |
+|---|---|---|
+| Ramiro Martínez | `Rami195` | 9 ✓ |
+| Bautista Alós | `BautistaAlosMartorell` | 11 ✓ |
+| Matías Zarandón | `TuteSeta` | 7 ✓ |
+| Valentín Mathey | `valentinmathey` | 10 ✓ |
+| Álvaro Ariza | — | 15 **pendientes** |
+| Luciano Marquesini | — | 19 **pendientes** |
+
+**Faltan 34 issues por asignar.** Álvaro y Luciano todavía no son miembros de la
+organización, y GitHub solo permite asignar a quien tenga acceso al repositorio.
+Invitalos en `github.com/orgs/SmartPlan-UTN/people` y después asignales los issues
+que figuran en sus secciones de abajo.
+
 ---
 
 ## Asignación por persona
