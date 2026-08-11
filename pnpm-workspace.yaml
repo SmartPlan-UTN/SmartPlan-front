@@ -1,3 +1,13 @@
-ignoredBuiltDependencies:
-  - sharp
-  - unrs-resolver
+# Configuración de pnpm. Desde pnpm 10.6 los ajustes viven acá y ya no en el
+# campo "pnpm" de package.json.
+
+# pnpm 10+ bloquea los scripts de instalación de las dependencias y aborta
+# cualquier `pnpm <script>` con ERR_PNPM_IGNORED_BUILDS hasta que se decide qué
+# hacer con cada una. La decisión queda versionada acá para que sea la misma en
+# todas las máquinas y en CI.
+allowBuilds:
+  # install script de sharp, que resuelve el binario nativo del optimizador de
+  # imágenes de next/image. Sin esto, `next build` falla al optimizar.
+  sharp: true
+  # postinstall que enlaza el binario nativo del resolver que usa ESLint.
+  unrs-resolver: true

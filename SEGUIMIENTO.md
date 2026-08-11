@@ -43,7 +43,7 @@ historial de git.
 |---|---|
 | **Fase** | Scaffold — sin lógica de negocio implementada |
 | **Rama base** | `develop` |
-| **Última actualización** | 2026-08-06 |
+| **Última actualización** | 2026-08-11 |
 | **Casos de uso finalizados** | 0 / 62 |
 
 ---
@@ -56,6 +56,7 @@ historial de git.
 | Protección de ramas `main` y `develop` | `Finalizado` | — | — | PR obligatorio + 2 aprobaciones |
 | Análisis estático con ESLint | `En revisión` | `feature/eslint-analisis-estatico` | — | Config comentada + scripts `lint` / `lint:fix` |
 | Skills y convenciones para agentes de IA | `En progreso` | `docs/skills-agentes-ia` | — | Este archivo y la carpeta `skills/` |
+| [F21] Definition of Done y plantillas de issue y PR | `En revisión` | `SMART-f21-definition-of-done-y-plantillas-de-issue-y-pr` | #71 | DoD en `skills/02-git-flow/`, plantillas en `.github/`. Falta replicar el núcleo compartido en `SmartPlan-back` |
 | Assets del design system en el repo | `En progreso` | `docs/skills-agentes-ia` | — | Logos, fuente, `tokens.css` e imágenes de ejemplo |
 | Cablear Bricolage Grotesque | `No iniciado` | — | — | El `.ttf` ya está en `src/app/fonts/`; falta `next/font/local` en `layout.tsx`, que sigue con Geist |
 | Importar `tokens.css` en `globals.css` | `No iniciado` | — | — | Y exponerlos a Tailwind 4 con `@theme` |
@@ -197,6 +198,10 @@ Decisiones técnicas tomadas y su motivo. Sirve para no rediscutir lo mismo dos 
 | 2026-08-06 | ESLint como analizador estático | Estándar del ecosistema TS/JS, integración oficial con Next.js, análisis con tipos, sin infraestructura adicional (a diferencia de SonarQube) |
 | 2026-08-06 | Análisis de ESLint con información de tipos (`projectService`) | Permite detectar promesas sin manejar, que es el error más probable al consumir la API con axios |
 | 2026-08-06 | Nombres del dominio en español | Coinciden con la matriz de trazabilidad del documento entregable; traducirlos rompería la trazabilidad CU → código |
+| 2026-08-11 | Plantillas de issue en formato *issue forms* (`.yml`) y no en Markdown | Los campos se pueden marcar obligatorios, así que un issue no se abre sin criterios de aceptación ni sin pasos para reproducir. Con Markdown el formulario se borra y nadie se entera |
+| 2026-08-11 | Los issues en blanco quedan habilitados | El trabajo de fundaciones no sale de la matriz de trazabilidad y no entra en ninguna de las dos plantillas. Deshabilitarlos obligaría a forzar issues de fundaciones dentro de la plantilla de caso de uso |
+| 2026-08-11 | La Definition of Done vive en `skills/02-git-flow/DEFINITION-OF-DONE.md` y no en el wiki | El wiki no se versiona con el código ni se revisa por PR. Acá cambia con las mismas 2 aprobaciones que cualquier otro cambio |
+| 2026-08-11 | La DoD incluye los criterios del back aunque este sea el repo del front | Es un acuerdo del equipo, no del repositorio, y el archivo es núcleo compartido: se replica verbatim en `SmartPlan-back` |
 
 ---
 
@@ -219,6 +224,13 @@ Cosas detectadas que todavía no tienen dueño:
   solo dice "base de datos relacional".
 - El núcleo de `skills/` (`00-proyecto`, `01-dominio`, `02-git-flow`) está
   duplicado en `SmartPlan-back`. Al modificarlo, replicar en el otro repositorio.
+- **Pendiente de replicar en `SmartPlan-back`** (F21): `DEFINITION-OF-DONE.md`,
+  las secciones nuevas de `02-git-flow/SKILL.md` y las plantillas de
+  `.github/` adaptadas al back (`pnpm test`, DTOs, migraciones). Va en un PR
+  aparte, en el otro repositorio.
+- **Las labels `caso de uso` y `bug` tienen que existir en el repositorio.**
+  GitHub ignora en silencio las que la plantilla pide y no existen. Crearlas en
+  Settings → Labels.
 
 ---
 
@@ -228,3 +240,4 @@ Cosas detectadas que todavía no tienen dueño:
 |---|---|
 | 2026-08-06 | Configuración de ESLint 9 con reglas propias del proyecto. Primera corrida: 0 errores, 0 advertencias (scaffold sin código propio). |
 | 2026-08-06 | Creación de `skills/` y de este archivo de seguimiento. |
+| 2026-08-11 | F21: Definition of Done acordada, plantillas de issue (caso de uso y bug) y de PR en `.github/`. El núcleo de `02-git-flow` quedó sincronizado con el del back, que estaba más nuevo. |

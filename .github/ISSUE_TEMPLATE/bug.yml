@@ -1,0 +1,93 @@
+name: Bug
+description: Algo que ya está implementado y no funciona como debería.
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Para trabajo nuevo usá la plantilla de **caso de uso**. Esta es para algo
+        que ya existe en `develop` y falla.
+
+  - type: textarea
+    id: que-pasa
+    attributes:
+      label: Qué pasa
+      description: Una o dos frases. Sin interpretar la causa todavía.
+      placeholder: Al guardar un plan desde el detalle, el botón queda cargando para siempre y el plan no aparece en Guardados.
+    validations:
+      required: true
+
+  - type: textarea
+    id: pasos
+    attributes:
+      label: Pasos para reproducirlo
+      description: Numerados, desde una sesión limpia. Si no se puede reproducir a pedido, decilo y contá cuándo apareció.
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: input
+    id: esperado
+    attributes:
+      label: Qué esperabas que pase
+    validations:
+      required: true
+
+  - type: input
+    id: obtenido
+    attributes:
+      label: Qué pasó en cambio
+      description: Si hay un error en la consola o una respuesta HTTP con código de error, ponelo acá.
+    validations:
+      required: true
+
+  - type: input
+    id: donde
+    attributes:
+      label: Dónde
+      description: Ruta y pantalla del prototipo, si aplica.
+      placeholder: /planes/17 — PAN 17
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severidad
+    attributes:
+      label: Severidad
+      description: Bloqueante y grave entran al sprint en curso; el resto se prioriza en el refinamiento.
+      options:
+        - Bloqueante — no se puede usar la funcionalidad ni hay forma de esquivarlo
+        - Grave — falla seguido o pierde datos, pero hay una vuelta
+        - Molesto — falla en un caso puntual
+        - Cosmético — se ve mal, funciona bien
+    validations:
+      required: true
+
+  - type: input
+    id: entorno
+    attributes:
+      label: Entorno
+      description: Navegador y versión, rama o commit donde lo viste, y si el back estaba corriendo local.
+      placeholder: Chrome 141, rama develop (9658f3e), back local en :3001
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidencia
+    attributes:
+      label: Capturas, logs o respuesta de la API
+      description: Arrastrá las imágenes acá. Pegá los logs entre triple backtick. **Borrá tokens y credenciales antes de pegar.**
+
+  - type: checkboxes
+    id: chequeos
+    attributes:
+      label: Antes de enviarlo
+      options:
+        - label: Busqué en los issues abiertos y no está reportado
+          required: true
+        - label: Lo reproduje con la última `develop` (`git switch develop && git pull && pnpm install`)
+          required: true
