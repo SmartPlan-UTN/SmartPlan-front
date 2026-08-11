@@ -56,7 +56,7 @@ historial de git.
 | Protección de ramas `main` y `develop` | `Finalizado` | — | — | PR obligatorio + 2 aprobaciones |
 | Análisis estático con ESLint | `En revisión` | `feature/eslint-analisis-estatico` | — | Config comentada + scripts `lint` / `lint:fix` |
 | Skills y convenciones para agentes de IA | `En progreso` | `docs/skills-agentes-ia` | — | Este archivo y la carpeta `skills/` |
-| [F21] Definition of Done y plantillas de issue y PR | `En revisión` | `SMART-f21-definition-of-done-y-plantillas-de-issue-y-pr` | #71 | DoD en `skills/02-git-flow/`, plantillas en `.github/`. Falta replicar el núcleo compartido en `SmartPlan-back` |
+| [F21] Definition of Done y plantillas de issue y PR | `En revisión` | `SMART-f21-definition-of-done-y-plantillas-de-issue-y-pr` | #73 | DoD en `skills/02-git-flow/`, plantillas en `.github/`. Falta replicar el núcleo compartido en `SmartPlan-back` |
 | Assets del design system en el repo | `En progreso` | `docs/skills-agentes-ia` | — | Logos, fuente, `tokens.css` e imágenes de ejemplo |
 | Cablear Bricolage Grotesque | `No iniciado` | — | — | El `.ttf` ya está en `src/app/fonts/`; falta `next/font/local` en `layout.tsx`, que sigue con Geist |
 | Importar `tokens.css` en `globals.css` | `No iniciado` | — | — | Y exponerlos a Tailwind 4 con `@theme` |
