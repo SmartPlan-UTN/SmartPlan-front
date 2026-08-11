@@ -148,9 +148,13 @@ el id entre corchetes, `[F21]`.
 El id entre corchetes no es decorativo: **de ahí sale el nombre de la rama**
 (`SMART-f21-...`), y es lo que mantiene la cadena issue → rama → PR → commit.
 
-> Las plantillas aplican las labels `caso de uso` y `bug`. GitHub **ignora en
-> silencio** las labels que no existen en el repositorio, así que si un issue
-> nuevo aparece sin label, creala en Settings → Labels.
+Las plantillas ponen solo las labels del repositorio (`frontend`, y `bug` en el
+caso de los bugs). El label de módulo (`auth`, `busqueda`, `coleccion`…) y el de
+puntos (`pts: 3`) se asignan en el refinamiento, no los pone quien abre el issue.
+
+> GitHub **ignora en silencio** las labels que una plantilla pide y no existen en
+> el repositorio. Si agregás una a la plantilla, creala antes en
+> Settings → Labels.
 
 ## Definition of Done
 

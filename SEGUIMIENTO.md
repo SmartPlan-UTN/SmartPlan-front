@@ -228,9 +228,10 @@ Cosas detectadas que todavía no tienen dueño:
   las secciones nuevas de `02-git-flow/SKILL.md` y las plantillas de
   `.github/` adaptadas al back (`pnpm test`, DTOs, migraciones). Va en un PR
   aparte, en el otro repositorio.
-- **Las labels `caso de uso` y `bug` tienen que existir en el repositorio.**
-  GitHub ignora en silencio las que la plantilla pide y no existen. Crearlas en
-  Settings → Labels.
+- Las plantillas de issue solo aplican labels que ya existen (`frontend`, `bug`):
+  GitHub ignora en silencio las que no existen. Si el equipo quiere un label
+  `caso de uso`, hay que crearlo en Settings → Labels **antes** de agregarlo a
+  la plantilla.
 
 ---
 

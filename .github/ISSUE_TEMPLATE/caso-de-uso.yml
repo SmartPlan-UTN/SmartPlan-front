@@ -1,7 +1,10 @@
 name: Caso de uso
 description: Funcionalidad que sale de la matriz de trazabilidad del documento (CU1 a CU62).
 title: "[CU00] "
-labels: ["caso de uso"]
+# Solo labels que ya existen en el repositorio: GitHub ignora en silencio las que
+# no existen. El label de módulo (auth, busqueda, coleccion...) y el de puntos
+# (pts: 3) se agregan en el refinamiento, no los pone quien abre el issue.
+labels: ["frontend"]
 body:
   - type: markdown
     attributes:
