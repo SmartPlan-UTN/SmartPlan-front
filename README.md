@@ -1,3 +1,41 @@
+# SmartPlan Front
+
+Frontend de SmartPlan — Proyecto Final 2026, UTN Facultad Regional Mendoza. El
+backend vive en [`SmartPlan-back`](https://github.com/SmartPlan-UTN/SmartPlan-back).
+
+## Cómo trabajar en este repositorio
+
+| | Dónde |
+|---|---|
+| Convenciones del proyecto | [`skills/`](skills/) — empezá por [`00-proyecto`](skills/00-proyecto/SKILL.md) |
+| Ramas, commits y PRs | [`skills/02-git-flow/SKILL.md`](skills/02-git-flow/SKILL.md) |
+| **Qué significa "terminado"** | [`skills/02-git-flow/DEFINITION-OF-DONE.md`](skills/02-git-flow/DEFINITION-OF-DONE.md) |
+| Estado de cada funcionalidad | [`SEGUIMIENTO.md`](SEGUIMIENTO.md) |
+
+En corto:
+
+1. Abrí el issue con la plantilla que corresponda: **caso de uso** para lo que
+   sale de la matriz de trazabilidad, **bug** para algo que ya existe y falla.
+   Las fundaciones (tooling, configuración, documentación) van en un issue en
+   blanco, con el id entre corchetes.
+2. Sacá la rama de `develop`: `SMART-<id>-<descripcion-en-kebab-case>`.
+   **Nunca commitees parado en `main` ni en `develop`**: están protegidas.
+3. Antes de abrir el PR, `pnpm lint` sin errores.
+4. Abrí el PR **con base `develop`**. La plantilla ya trae las tres secciones —
+   qué hace, cómo probarlo, qué queda afuera —, el `Closes #NN` y la checklist de
+   la Definition of Done. Necesita **2 aprobaciones**.
+5. Actualizá tu fila en `SEGUIMIENTO.md`.
+
+```bash
+pnpm install      # instalar dependencias
+pnpm dev          # servidor de desarrollo
+pnpm build        # build de producción
+pnpm lint         # análisis estático
+pnpm lint:fix     # corregir lo autocorregible
+```
+
+---
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

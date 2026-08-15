@@ -51,13 +51,19 @@ Copilot no debe sugerir código que las viole:
 
 `main` y `develop` están protegidas: requieren PR con 2 aprobaciones. Nunca
 sugieras commitear directo en esas ramas. Las ramas de trabajo salen de `develop`
-y se llaman `SMART-<número>-<descripción>`.
+y se llaman `SMART-<id-del-ticket>-<descripción>`, donde el id es el que va entre
+corchetes en el título del issue (`[CU17]`, `[F21]`).
 
 Los mensajes de commit van en español, en imperativo, referenciando el caso de uso:
 
 ```
 Implementar generación de plan automático (CU17)
 ```
+
+Los issues se abren con las plantillas de `.github/ISSUE_TEMPLATE/` y los PR
+usan `.github/pull_request_template.md`: qué hace, cómo probarlo, qué queda
+afuera, y `Closes #NN`. Una tarea está terminada cuando cumple
+`skills/02-git-flow/DEFINITION-OF-DONE.md`, no cuando el código anda.
 
 ## Design system
 

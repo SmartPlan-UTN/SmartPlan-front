@@ -27,7 +27,8 @@ Este repositorio es el **frontend**. El backend vive en `SmartPlan-back`
 |---|---|
 | [`skills/00-proyecto/SKILL.md`](skills/00-proyecto/SKILL.md) | Siempre primero: qué es el sistema, alcance, módulos, equipo, stack |
 | [`skills/01-dominio/SKILL.md`](skills/01-dominio/SKILL.md) | Antes de nombrar tablas, endpoints, rutas, tipos o componentes |
-| [`skills/02-git-flow/SKILL.md`](skills/02-git-flow/SKILL.md) | Antes de cualquier operación de git |
+| [`skills/02-git-flow/SKILL.md`](skills/02-git-flow/SKILL.md) | Antes de cualquier operación de git y antes de abrir un issue o un PR |
+| [`skills/02-git-flow/DEFINITION-OF-DONE.md`](skills/02-git-flow/DEFINITION-OF-DONE.md) | Antes de dar una tarea por terminada |
 | [`skills/03-frontend/SKILL.md`](skills/03-frontend/SKILL.md) | Antes de escribir un componente o una página |
 | [`skills/04-calidad/SKILL.md`](skills/04-calidad/SKILL.md) | Antes de desactivar una regla de lint o silenciar un warning |
 | [`skills/05-arquitectura/SKILL.md`](skills/05-arquitectura/SKILL.md) | Antes de agregar un servicio, una integración externa o un proceso en segundo plano |
@@ -62,6 +63,9 @@ pnpm lint:fix     # corregir lo autocorregible
 ```
 
 ## Cuando termines una tarea
+
+Verificá la [Definition of Done](skills/02-git-flow/DEFINITION-OF-DONE.md) antes
+de decir que está lista. La checklist corta viene cargada en el PR.
 
 Actualizá la fila correspondiente en [`SEGUIMIENTO.md`](SEGUIMIENTO.md): estado,
 fecha, rama y PR. Es lo que permite que el siguiente agente (o la siguiente
