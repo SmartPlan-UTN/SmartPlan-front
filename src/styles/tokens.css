@@ -1,16 +1,12 @@
 /* ================================================================
    smartplan v2 — EMBER Design System tokens
    Palette: Char · Ember · Cream · Electric · Gold
-   ================================================================ */
 
-@font-face {
-  font-family: "Bricolage Grotesque";
-  src: url("../fonts/BricolageGrotesque-VariableFont_opsz_wdth_wght.ttf")
-       format("truetype-variations");
-  font-weight: 200 800;
-  font-stretch: 75% 100%;
-  font-display: swap;
-}
+   La fuente (Bricolage Grotesque) NO se declara acá con @font-face:
+   ya la carga next/font/local en src/app/layout.tsx, que expone la
+   variable --font-bricolage-grotesque. Declararla dos veces duplica
+   la carga del archivo .ttf.
+   ================================================================ */
 
 :root {
   /* ── Core palette ────────────────────────────────── */
@@ -56,7 +52,7 @@
   --hairline-dark: rgba(255,255,255,0.07);
 
   /* ── Typography ──────────────────────────────────── */
-  --font: "Bricolage Grotesque", "Arial Narrow", sans-serif;
+  --font: var(--font-bricolage-grotesque), "Arial Narrow", sans-serif;
 
   /* ── Type scale ──────────────────────────────────── */
   --t-display: 78px;

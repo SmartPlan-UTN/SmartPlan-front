@@ -343,10 +343,18 @@ es el loader de generación de plan, en `--electric`.
 Los assets ya están en el repo, pero **todavía no están cableados**:
 
 - [x] Cargar Bricolage Grotesque con `next/font/local` en `layout.tsx`
-- [ ] Importar `src/styles/tokens.css` en `globals.css` — al hacerlo, borrar el
-      `@font-face` que trae el archivo: la fuente ya la carga `next/font/local`,
-      y dejar los dos significa declararla dos veces
-- [ ] Exponer los tokens a Tailwind 4 con `@theme` para poder usarlos como utilidades
+- [x] Importar `src/styles/tokens.css` en `globals.css`. El `@font-face` propio
+      de `tokens.css` se borró (la fuente ya la carga `next/font/local`) y el
+      token `--font` ahora apunta a `var(--font-bricolage-grotesque)` en vez de
+      a un nombre de familia literal
+- [x] Exponer los tokens a Tailwind 4 con `@theme inline` en `globals.css`:
+      colores (`bg-ember`, `text-fg-1`, `bg-surface-card`, …) y radios
+      (`rounded-btn`, `rounded-card`, …) ya están disponibles como utilidades.
+      Sombras y espaciado (`--shadow-*`, `--s-*`) quedaron afuera a propósito:
+      sus nombres ya coinciden con el namespace de Tailwind (`--shadow-*`), y
+      mapearlos tal cual (`--shadow-card: var(--shadow-card)`) crea una
+      referencia circular. Si se necesitan como utilidad, primero hay que
+      renombrar el token fuente en `tokens.css`
 - [ ] Portar los 7 primitivos de `v2/Primitives.jsx` a componentes React con TypeScript
 
 ## Qué está en el repo y qué no
