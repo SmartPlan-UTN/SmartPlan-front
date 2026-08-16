@@ -3,7 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 
 const bricolageGrotesque = localFont({
-  src: "./fonts/BricolageGrotesque-Variable.ttf",
+  src: "./fonts/BricolageGrotesque-VariableFont_opsz_wdth_wght.ttf",
   variable: "--font-bricolage-grotesque",
   weight: "200 800",
   display: "swap",
