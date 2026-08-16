@@ -342,8 +342,10 @@ es el loader de generación de plan, en `--electric`.
 
 Los assets ya están en el repo, pero **todavía no están cableados**:
 
-- [ ] Cargar Bricolage Grotesque con `next/font/local` en `layout.tsx` (hoy carga Geist)
-- [ ] Importar `src/styles/tokens.css` en `globals.css`
+- [x] Cargar Bricolage Grotesque con `next/font/local` en `layout.tsx`
+- [ ] Importar `src/styles/tokens.css` en `globals.css` — al hacerlo, borrar el
+      `@font-face` que trae el archivo: la fuente ya la carga `next/font/local`,
+      y dejar los dos significa declararla dos veces
 - [ ] Exponer los tokens a Tailwind 4 con `@theme` para poder usarlos como utilidades
 - [ ] Portar los 7 primitivos de `v2/Primitives.jsx` a componentes React con TypeScript
 

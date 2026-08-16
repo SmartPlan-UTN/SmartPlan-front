@@ -43,7 +43,7 @@ historial de git.
 |---|---|
 | **Fase** | Scaffold — sin lógica de negocio implementada |
 | **Rama base** | `develop` |
-| **Última actualización** | 2026-08-11 |
+| **Última actualización** | 2026-08-16 |
 | **Casos de uso finalizados** | 0 / 62 |
 
 ---
@@ -58,8 +58,8 @@ historial de git.
 | Skills y convenciones para agentes de IA | `En progreso` | `docs/skills-agentes-ia` | — | Este archivo y la carpeta `skills/` |
 | [F21] Definition of Done y plantillas de issue y PR | `En revisión` | `SMART-f21-definition-of-done-y-plantillas-de-issue-y-pr` | #73 | DoD en `skills/02-git-flow/`, plantillas en `.github/`. Falta replicar el núcleo compartido en `SmartPlan-back` |
 | Assets del design system en el repo | `En progreso` | `docs/skills-agentes-ia` | — | Logos, fuente, `tokens.css` e imágenes de ejemplo |
-| Cablear Bricolage Grotesque | `No iniciado` | — | — | El `.ttf` ya está en `src/app/fonts/`; falta `next/font/local` en `layout.tsx`, que sigue con Geist |
-| Importar `tokens.css` en `globals.css` | `No iniciado` | — | — | Y exponerlos a Tailwind 4 con `@theme` |
+| [F14] Cablear Bricolage Grotesque | `En revisión` | `SmartPlan_AlvaroAriza_FrontEnd` | #74 | Cargada con `next/font/local` en `layout.tsx` y mapeada a `--font-sans` en `globals.css`. Geist y Geist Mono afuera |
+| Importar `tokens.css` en `globals.css` | `No iniciado` | — | — | Y exponerlos a Tailwind 4 con `@theme`. Al hacerlo, sacar el `@font-face` propio de `tokens.css`: la fuente ya la carga `next/font/local` |
 | Portar los primitivos a React + TS | `No iniciado` | — | — | Button, Chip, Badge y Card desde `Primitives.jsx` |
 | Cliente axios centralizado (`src/lib/api/`) | `No iniciado` | — | — | Con interceptor para el JWT |
 | Variables de entorno (`NEXT_PUBLIC_API_URL`) | `No iniciado` | — | — | |

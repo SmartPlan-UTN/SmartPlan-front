@@ -34,6 +34,27 @@ pnpm lint         # análisis estático
 pnpm lint:fix     # corregir lo autocorregible
 ```
 
+## Tipografía
+
+La fuente del proyecto es **Bricolage Grotesque**, self-hosted con
+[`next/font/local`](https://nextjs.org/docs/app/api-reference/components/font).
+La escala tipográfica está en
+[`skills/06-design-system/SKILL.md`](skills/06-design-system/SKILL.md).
+
+- El archivo variable vive en
+  [`src/app/fonts/BricolageGrotesque-VariableFont_opsz_wdth_wght.ttf`](src/app/fonts/BricolageGrotesque-VariableFont_opsz_wdth_wght.ttf),
+  bajado de [Google Fonts](https://fonts.google.com/specimen/Bricolage+Grotesque)
+  bajo la [SIL Open Font License](https://openfontlicense.org/).
+- Se carga una sola vez en [`src/app/layout.tsx`](src/app/layout.tsx) con
+  `weight: "200 800"`: al ser una fuente variable, eso habilita todos los pesos
+  del rango en lugar de un set fijo.
+- El loader expone la familia como la variable CSS
+  `--font-bricolage-grotesque`, mapeada a `--font-sans` de Tailwind en
+  [`src/app/globals.css`](src/app/globals.css). Se usa con la utilidad
+  `font-sans` y cualquier peso entre `font-extralight` (200) y `font-extrabold`
+  (800).
+- Geist y Geist Mono, que venían del template de `create-next-app`, se sacaron.
+
 ---
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
@@ -55,8 +76,6 @@ bun dev
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More
 
