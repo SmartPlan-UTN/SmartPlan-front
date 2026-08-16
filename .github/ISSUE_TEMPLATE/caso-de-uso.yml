@@ -1,0 +1,77 @@
+name: Caso de uso
+description: Funcionalidad que sale de la matriz de trazabilidad del documento (CU1 a CU62).
+title: "[CU00] "
+# Solo labels que ya existen en el repositorio: GitHub ignora en silencio las que
+# no existen. El label de módulo (auth, busqueda, coleccion...) y el de puntos
+# (pts: 3) se agregan en el refinamiento, no los pone quien abre el issue.
+labels: ["frontend"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Antes de abrir el issue, buscá el caso de uso en
+        [`skills/01-dominio/SKILL.md`](https://github.com/SmartPlan-UTN/SmartPlan-front/blob/develop/skills/01-dominio/SKILL.md) y
+        fijate en [`SEGUIMIENTO.md`](https://github.com/SmartPlan-UTN/SmartPlan-front/blob/develop/SEGUIMIENTO.md) que no esté ya
+        en curso. El título va con el número entre corchetes: `[CU17] Generar plan
+        automatico`, porque de ahí sale el nombre de la rama.
+
+  - type: input
+    id: caso-de-uso
+    attributes:
+      label: Caso de uso
+      description: Número y nombre exactos, como figuran en la matriz de trazabilidad. No lo reescribas con otras palabras.
+      placeholder: CU17 — Generar plan automático
+    validations:
+      required: true
+
+  - type: input
+    id: pantalla
+    attributes:
+      label: Pantalla
+      description: Código de pantalla del prototipo (ver `skills/06-design-system/`). Si el CU no tiene interfaz, poné "—".
+      placeholder: PAN 07 — Generar plan
+    validations:
+      required: true
+
+  - type: textarea
+    id: que-hay-que-hacer
+    attributes:
+      label: Qué hay que hacer
+      description: En dos o tres párrafos. Qué ve el usuario, qué puede hacer y contra qué endpoint trabaja.
+    validations:
+      required: true
+
+  - type: textarea
+    id: criterios-de-aceptacion
+    attributes:
+      label: Criterios de aceptación
+      description: Uno por línea, en voseo y observables desde afuera. Son los que se verifican al revisar el PR.
+      value: |
+        - [ ] Cuando ... , el sistema ...
+        - [ ] Si ... , se muestra ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: fuera-de-alcance
+    attributes:
+      label: Qué queda afuera
+      description: Lo que alguien podría suponer que entra y no entra. Evita discusiones en la revisión.
+
+  - type: textarea
+    id: dependencias
+    attributes:
+      label: Dependencias
+      description: Endpoints del back, componentes del design system u otros issues que tienen que estar antes. Enlazalos con "#".
+      placeholder: |
+        - Depende de SmartPlan-back#17 (endpoint POST /api/planes/generar)
+        - Necesita el primitivo Button portado a React
+
+  - type: checkboxes
+    id: definition-of-done
+    attributes:
+      label: Definition of Done
+      description: El issue se cierra según los criterios de [`skills/02-git-flow/DEFINITION-OF-DONE.md`](https://github.com/SmartPlan-UTN/SmartPlan-front/blob/develop/skills/02-git-flow/DEFINITION-OF-DONE.md), no solo con el código andando.
+      options:
+        - label: Leí la Definition of Done y el issue se va a cerrar contra esos criterios
+          required: true
