@@ -18,7 +18,14 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Fonts
+
+This project uses [`next/font/local`](https://nextjs.org/docs/app/api-reference/components/font) to self-host **Bricolage Grotesque**, the project's typeface.
+
+- The variable font file lives at [`src/app/fonts/BricolageGrotesque-Variable.ttf`](src/app/fonts/BricolageGrotesque-Variable.ttf) (sourced from [Google Fonts](https://fonts.google.com/specimen/Bricolage+Grotesque), licensed under the [SIL Open Font License](https://openfontlicense.org/)).
+- It's loaded once in [`src/app/layout.tsx`](src/app/layout.tsx) with `weight: "200 800"`, since it's a variable font — this exposes every weight in that range instead of a fixed set.
+- The loader exposes the font family as the CSS variable `--font-bricolage-grotesque`, which is mapped to Tailwind's `--font-sans` in [`src/app/globals.css`](src/app/globals.css). Use it via the `font-sans` utility class, together with any weight utility from `font-extralight` (200) through `font-extrabold` (800).
+- The default Geist / Geist Mono fonts from the `create-next-app` template were removed in favor of this font.
 
 ## Learn More
 
