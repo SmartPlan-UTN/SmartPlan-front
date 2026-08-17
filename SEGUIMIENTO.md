@@ -60,7 +60,7 @@ historial de git.
 | Assets del design system en el repo | `En progreso` | `docs/skills-agentes-ia` | — | Logos, fuente, `tokens.css` e imágenes de ejemplo |
 | [F14] Cablear Bricolage Grotesque | `Finalizado` | `SmartPlan_AlvaroAriza_FrontEnd` | #74 | Cargada con `next/font/local` en `layout.tsx` y mapeada a `--font-sans` en `globals.css`. Geist y Geist Mono afuera |
 | [F15] Importar `tokens.css` en `globals.css` | `En progreso` | `SmartPlan_AlvaroAriza_dv` | — | Expuesto a Tailwind 4 con `@theme inline` (colores y radios). Se sacó el `@font-face` propio de `tokens.css` y `--font` ahora usa `var(--font-bricolage-grotesque)`. `page.tsx` (único componente existente) se migró a las utilidades nuevas, sin hex ni colores por defecto de Tailwind |
-| [F16] Portar los 7 primitivos a React + TS | `En progreso` | `SMART-f16-primitivos-design-system` | — | Icon, Button, Chip, Badge, Stars, Logo y Divider tipados, basados en EMBER v2 |
+| [F16] Portar los 7 primitivos a React + TS | `En revisión` | `SMART-f16-primitivos-design-system` | #76 | Icon, Button, Chip, Badge, Stars, Logo y Divider tipados, basados en EMBER v2 |
 | Cliente axios centralizado (`src/lib/api/`) | `No iniciado` | — | — | Con interceptor para el JWT |
 | Variables de entorno (`NEXT_PUBLIC_API_URL`) | `No iniciado` | — | — | |
 | Estructura de carpetas definitiva | `No iniciado` | — | — | Propuesta en `skills/03-frontend/` |
