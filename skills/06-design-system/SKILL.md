@@ -1,6 +1,6 @@
 ---
 name: smartplan-design-system
-description: Design system EMBER — tokens de color, tipografía, espaciado, radios y los componentes primitivos (Button, Chip, Badge, Card). Leer antes de escribir cualquier estilo o componente visual.
+description: Design system EMBER — tokens de color, tipografía, espaciado, radios y componentes primitivos. Leer antes de escribir cualquier estilo o componente visual.
 ---
 
 # SmartPlan — Design System "EMBER"
@@ -36,6 +36,11 @@ Los tokens vigentes están copiados en [`src/styles/tokens.css`](../../src/style
 
 ### Estado
 `--success #22C06B` · `--warning #F5A623` · `--error #F04040`
+
+Los tonos auxiliares necesarios por los primitivos también son tokens:
+`--white`, `--white-15`, `--white-18`, `--gold-22`, `--warning-15`,
+`--rating-ink` y `--warning-ink`. No se repiten sus valores dentro de los
+componentes.
 
 ### Superficies
 | Token | Hex | Uso |
@@ -286,6 +291,40 @@ apuntá a `public/brand/` y usá `<Image>` de `next/image`.
 Línea de 1px. `--hairline` sobre claro, `--hairline-dark` sobre oscuro.
 Prop `dark`.
 
+### Implementación en React
+
+Los primitivos viven en [`src/components/ui/`](../../src/components/ui/) y se
+importan desde su barrel público:
+
+```tsx
+import { Badge, Button, Chip, Divider, Icon, Logo, Stars } from "@/components/ui";
+
+<Button variant="ai" size="lg">Generar plan</Button>
+<Chip active>Gastronomía</Chip>
+<Badge variant="rating">4.5</Badge>
+<Icon name="map-pin" aria-label="Ubicación" />
+<Stars rating={4.5} />
+<Logo variant="white" kind="full" />
+<Divider dark />
+```
+
+- `Button` conserva las props nativas de `<button>` y usa `type="button"` por
+  defecto para no enviar formularios accidentalmente.
+- `Chip` expone el estado `active` como `aria-pressed`; `dark` selecciona el
+  borde correcto cuando está inactivo sobre superficies oscuras.
+- `Badge` conserva las props nativas de `<span>`.
+- `Icon` acepta los nombres tipados, en `kebab-case`, exportados por Lucide. Un
+  icono sin `aria-label` ni `aria-labelledby` se considera decorativo.
+- `Stars` limita la puntuación al rango 0–5 y la redondea al medio punto más
+  cercano. Genera su etiqueta accesible automáticamente, que se puede reemplazar
+  con `aria-label`.
+- `Logo` mantiene la proporción del asset para el `height` indicado y acepta
+  `alt`, `className` y `priority`.
+- `Divider` conserva las props nativas de `<hr>`.
+
+Todos los contratos y variantes se exportan como tipos TypeScript desde
+`@/components/ui`; ninguno usa `any`.
+
 > **No existe un primitivo Card.** La tarjeta es un patrón, no un componente:
 > `--surface-card` sobre fondo claro, radio `--r-card`, borde `1px --hairline`,
 > sombra `--shadow-card`. Sobre oscuro, `--char-surface` con `--hairline-dark`.
@@ -355,7 +394,7 @@ Los assets ya están en el repo, pero **todavía no están cableados**:
       mapearlos tal cual (`--shadow-card: var(--shadow-card)`) crea una
       referencia circular. Si se necesitan como utilidad, primero hay que
       renombrar el token fuente en `tokens.css`
-- [ ] Portar los 7 primitivos de `v2/Primitives.jsx` a componentes React con TypeScript
+- [x] Portar los 7 primitivos de `v2/Primitives.jsx` a componentes React con TypeScript
 
 ## Qué está en el repo y qué no
 

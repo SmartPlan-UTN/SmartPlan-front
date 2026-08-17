@@ -15,6 +15,7 @@
   --color-cream: var(--cream);
   --color-electric: var(--electric);
   --color-gold: var(--gold);
+  --color-white: var(--white);
 
   /* Estado */
   --color-success: var(--success);
@@ -28,7 +29,11 @@
   --color-ember-20: var(--ember-20);
   --color-electric-15: var(--electric-15);
   --color-gold-15: var(--gold-15);
+  --color-gold-22: var(--gold-22);
   --color-success-15: var(--success-15);
+  --color-warning-15: var(--warning-15);
+  --color-white-15: var(--white-15);
+  --color-white-18: var(--white-18);
 
   /* Superficies oscuras */
   --color-char-surface: var(--char-surface);
@@ -41,6 +46,8 @@
   --color-fg-1: var(--fg-1);
   --color-fg-2: var(--fg-2);
   --color-fg-3: var(--fg-3);
+  --color-rating-ink: var(--rating-ink);
+  --color-warning-ink: var(--warning-ink);
 
   /* Superficies y bordes */
   --color-surface: var(--surface);

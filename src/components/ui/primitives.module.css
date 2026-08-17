@@ -1,0 +1,215 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  border: 1px solid transparent;
+  border-radius: var(--r-btn);
+  font-weight: var(--w-heading);
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    filter 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.button:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.button:focus-visible,
+.chip:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ember);
+}
+
+.button:disabled,
+.chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.buttonSizesm {
+  padding: 7px 14px;
+  font-size: 12px;
+}
+
+.buttonSizemd {
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+.buttonSizelg {
+  padding: 14px 28px;
+  font-size: 16px;
+}
+
+.buttonVariantprimary {
+  color: var(--white);
+  background: var(--ember);
+}
+
+.buttonVariantsecondary {
+  color: var(--cream);
+  background: var(--char);
+}
+
+.buttonVariantghost {
+  color: var(--fg-on-dark);
+  background: transparent;
+  border-color: var(--white-15);
+}
+
+.buttonVariantghostLight {
+  color: var(--fg-1);
+  background: transparent;
+  border-color: var(--hairline);
+}
+
+.buttonVariantghostEmber {
+  color: var(--ember);
+  background: var(--ember-15);
+}
+
+.buttonVariantai {
+  color: var(--white);
+  background: var(--electric);
+}
+
+.buttonVariantdanger {
+  color: var(--white);
+  background: var(--error);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  color: var(--fg-1);
+  background: transparent;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-chip);
+  font-size: 14px;
+  font-weight: var(--w-label);
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.chip:hover:not(:disabled):not(.chipActive) {
+  border-color: var(--ember);
+}
+
+.chipActive {
+  color: var(--white);
+  background: var(--ember);
+  border-color: var(--ember);
+}
+
+.chipDark {
+  color: var(--fg-on-dark);
+  border-color: var(--white-18);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 5px 10px;
+  border-radius: var(--r-chip);
+  font-size: 12px;
+  font-weight: var(--w-label);
+  line-height: 1;
+}
+
+.badgeVariantai {
+  color: var(--electric);
+  background: var(--electric-15);
+}
+
+.badgeVariantcost {
+  color: var(--ember);
+  background: var(--ember-10);
+}
+
+.badgeVariantrating {
+  color: var(--rating-ink);
+  background: var(--gold-15);
+}
+
+.badgeVariantsuccess {
+  color: var(--success);
+  background: var(--success-15);
+}
+
+.badgeVarianttag {
+  color: var(--fg-2);
+  background: var(--surface);
+}
+
+.badgeVariantwarn {
+  color: var(--warning-ink);
+  background: var(--warning-15);
+}
+
+.badgeVariantdark {
+  color: var(--fg-on-dark);
+  background: var(--char-surface2);
+}
+
+.stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--gold);
+}
+
+.star {
+  position: relative;
+  display: inline-block;
+  flex: none;
+}
+
+.starEmpty,
+.starFilled {
+  position: absolute;
+  inset: 0;
+}
+
+.starEmpty {
+  color: var(--gold-22);
+  fill: currentColor;
+}
+
+.starFillClip {
+  position: absolute;
+  inset: 0 auto 0 0;
+  overflow: hidden;
+}
+
+.starFilled {
+  color: var(--gold);
+  fill: currentColor;
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  margin: 0;
+  background: var(--hairline);
+  border: 0;
+}
+
+.dividerDark {
+  background: var(--hairline-dark);
+}
