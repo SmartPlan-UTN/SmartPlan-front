@@ -61,7 +61,7 @@ historial de git.
 | [F14] Cablear Bricolage Grotesque | `Finalizado` | `SmartPlan_AlvaroAriza_FrontEnd` | #74 | Cargada con `next/font/local` en `layout.tsx` y mapeada a `--font-sans` en `globals.css`. Geist y Geist Mono afuera |
 | [F15] Importar `tokens.css` en `globals.css` | `En progreso` | `SmartPlan_AlvaroAriza_dv` | — | Expuesto a Tailwind 4 con `@theme inline` (colores y radios). Se sacó el `@font-face` propio de `tokens.css` y `--font` ahora usa `var(--font-bricolage-grotesque)`. `page.tsx` (único componente existente) se migró a las utilidades nuevas, sin hex ni colores por defecto de Tailwind |
 | [F16] Portar los 7 primitivos a React + TS | `Finalizado` | `SMART-f16-primitivos-design-system` | #76 | Icon, Button, Chip, Badge, Stars, Logo y Divider tipados, basados en EMBER v2 |
-| [F20] Testing del frontend: configuración y ejemplos | `En progreso` | `SMART-f20-testing-del-frontend-configuracion-y-ejemplos` | — | Vitest + React Testing Library; moldes para Button y useToggle; CI con lint, test y build |
+| [F20] Testing del frontend: configuración y ejemplos | `En revisión` | `SMART-f20-testing-del-frontend-configuracion-y-ejemplos` | #77 | Vitest + React Testing Library; moldes para Button y useToggle; CI con lint, test y build |
 | Cliente axios centralizado (`src/lib/api/`) | `No iniciado` | — | — | Con interceptor para el JWT |
 | Variables de entorno (`NEXT_PUBLIC_API_URL`) | `No iniciado` | — | — | |
 | Estructura de carpetas definitiva | `No iniciado` | — | — | Propuesta en `skills/03-frontend/` |
