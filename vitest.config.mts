@@ -9,5 +9,8 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
+    // Devuelve los espías a su implementación original después de cada test.
+    // Sin esto, un vi.spyOn() sin restaurar se filtra a las suites siguientes.
+    restoreMocks: true,
   },
 });

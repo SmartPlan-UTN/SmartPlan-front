@@ -11,7 +11,10 @@ permissions:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # En un PR, cada push cancela la corrida anterior. En develop y main no: si
+  # entran dos merges seguidos, el primero quedaría sin check y no sabríamos si
+  # ese commit estaba verde.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   quality:
@@ -22,10 +25,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      # La versión de pnpm sale de "packageManager" en package.json: una sola
+      # fuente de verdad, para que un bump no deje a CI en la versión vieja.
       - name: Configurar Node.js y pnpm
-        uses: pnpm/setup@v1
+        uses: pnpm/setup@v2
         with:
-          version: 11.21.0
           runtime: node@24
           cache: true
           install: false
