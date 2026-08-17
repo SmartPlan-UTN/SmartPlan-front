@@ -7,6 +7,7 @@ export {
 } from "./Button";
 export { Chip, type ChipProps } from "./Chip";
 export { Divider, type DividerProps } from "./Divider";
-export { Icon, type IconProps } from "./Icon";
+export { Icon, type IconName, type IconProps } from "./Icon";
+export { iconRegistry } from "./iconRegistry";
 export { Logo, type LogoKind, type LogoProps, type LogoVariant } from "./Logo";
 export { Stars, type StarsProps } from "./Stars";

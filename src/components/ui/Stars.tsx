@@ -24,13 +24,16 @@ export function Stars({
   const roundedRating = Math.round(safeRating * 2) / 2;
   const classes = [styles.stars, className].filter(Boolean).join(" ");
 
+  // Si el consumidor ya apunta a una etiqueta externa con aria-labelledby, no se
+  // genera aria-label: dos etiquetas compitiendo dejan una sin usar.
+  const label =
+    ariaLabel ??
+    (props["aria-labelledby"] != null
+      ? undefined
+      : `${roundedRating} de ${STAR_COUNT} estrellas`);
+
   return (
-    <span
-      className={classes}
-      role="img"
-      aria-label={ariaLabel ?? `${roundedRating} de ${STAR_COUNT} estrellas`}
-      {...props}
-    >
+    <span className={classes} role="img" aria-label={label} {...props}>
       {Array.from({ length: STAR_COUNT }, (_, index) => {
         const fill = Math.min(1, Math.max(0, roundedRating - index));
 

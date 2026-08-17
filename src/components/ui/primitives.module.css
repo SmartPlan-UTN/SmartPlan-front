@@ -22,9 +22,13 @@
   transform: scale(0.97);
 }
 
+/* El glow de --focus-ember es ember al 18%: sobre --cream da 1.2:1 de contraste,
+   muy por debajo del 3:1 que piden WCAG 1.4.11 y 2.4.11. Se conserva como halo,
+   pero el indicador visible es el outline. */
 .button:focus-visible,
 .chip:focus-visible {
-  outline: none;
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
   box-shadow: var(--focus-ember);
 }
 
@@ -34,54 +38,54 @@
   opacity: 0.55;
 }
 
-.buttonSizesm {
+.buttonSm {
   padding: 7px 14px;
   font-size: 12px;
 }
 
-.buttonSizemd {
+.buttonMd {
   padding: 10px 20px;
   font-size: 14px;
 }
 
-.buttonSizelg {
+.buttonLg {
   padding: 14px 28px;
   font-size: 16px;
 }
 
-.buttonVariantprimary {
+.buttonPrimary {
   color: var(--white);
   background: var(--ember);
 }
 
-.buttonVariantsecondary {
+.buttonSecondary {
   color: var(--cream);
   background: var(--char);
 }
 
-.buttonVariantghost {
+.buttonGhost {
   color: var(--fg-on-dark);
   background: transparent;
   border-color: var(--white-15);
 }
 
-.buttonVariantghostLight {
+.buttonGhostLight {
   color: var(--fg-1);
   background: transparent;
   border-color: var(--hairline);
 }
 
-.buttonVariantghostEmber {
+.buttonGhostEmber {
   color: var(--ember);
   background: var(--ember-15);
 }
 
-.buttonVariantai {
+.buttonAi {
   color: var(--white);
   background: var(--electric);
 }
 
-.buttonVariantdanger {
+.buttonDanger {
   color: var(--white);
   background: var(--error);
 }
@@ -132,37 +136,37 @@
   line-height: 1;
 }
 
-.badgeVariantai {
+.badgeAi {
   color: var(--electric);
   background: var(--electric-15);
 }
 
-.badgeVariantcost {
+.badgeCost {
   color: var(--ember);
   background: var(--ember-10);
 }
 
-.badgeVariantrating {
+.badgeRating {
   color: var(--rating-ink);
   background: var(--gold-15);
 }
 
-.badgeVariantsuccess {
+.badgeSuccess {
   color: var(--success);
   background: var(--success-15);
 }
 
-.badgeVarianttag {
+.badgeTag {
   color: var(--fg-2);
   background: var(--surface);
 }
 
-.badgeVariantwarn {
+.badgeWarn {
   color: var(--warning-ink);
   background: var(--warning-15);
 }
 
-.badgeVariantdark {
+.badgeDark {
   color: var(--fg-on-dark);
   background: var(--char-surface2);
 }

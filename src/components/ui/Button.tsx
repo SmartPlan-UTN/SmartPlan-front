@@ -18,6 +18,22 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: ButtonSize;
 }
 
+const VARIANT_CLASS: Record<ButtonVariant, string> = {
+  primary: styles.buttonPrimary,
+  secondary: styles.buttonSecondary,
+  ghost: styles.buttonGhost,
+  ghostLight: styles.buttonGhostLight,
+  ghostEmber: styles.buttonGhostEmber,
+  ai: styles.buttonAi,
+  danger: styles.buttonDanger,
+};
+
+const SIZE_CLASS: Record<ButtonSize, string> = {
+  sm: styles.buttonSm,
+  md: styles.buttonMd,
+  lg: styles.buttonLg,
+};
+
 export function Button({
   variant = "primary",
   size = "md",
@@ -27,8 +43,8 @@ export function Button({
 }: ButtonProps) {
   const classes = [
     styles.button,
-    styles[`buttonVariant${variant}`],
-    styles[`buttonSize${size}`],
+    VARIANT_CLASS[variant],
+    SIZE_CLASS[size],
     className,
   ]
     .filter(Boolean)

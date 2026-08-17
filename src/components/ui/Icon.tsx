@@ -1,7 +1,8 @@
-"use client";
-
-import { DynamicIcon, type IconName } from "lucide-react/dynamic";
 import type { LucideProps } from "lucide-react";
+
+import { iconRegistry, type IconName } from "./iconRegistry";
+
+export type { IconName };
 
 export interface IconProps
   extends Omit<
@@ -11,6 +12,7 @@ export interface IconProps
   name: IconName;
   size?: number;
   color?: string;
+  /** Grosor del trazo. El design system usa entre 1.75 y 2. */
   stroke?: number;
 }
 
@@ -21,12 +23,12 @@ export function Icon({
   stroke = 2,
   ...props
 }: IconProps) {
+  const Glyph = iconRegistry[name];
   const isDecorative =
     props["aria-label"] == null && props["aria-labelledby"] == null;
 
   return (
-    <DynamicIcon
-      name={name}
+    <Glyph
       size={size}
       color={color}
       strokeWidth={stroke}
