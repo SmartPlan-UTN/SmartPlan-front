@@ -18,7 +18,9 @@ Closes #
 ```bash
 git switch <rama>
 pnpm install
-pnpm dev
+pnpm lint
+pnpm test
+pnpm build
 ```
 
 1.
@@ -37,6 +39,7 @@ Criterios completos en [`skills/02-git-flow/DEFINITION-OF-DONE.md`](https://gith
 
 - [ ] La rama sale de `develop` y el PR va contra `develop`
 - [ ] `pnpm lint` sin errores
+- [ ] `pnpm test` en verde
 - [ ] `pnpm build` pasa
 - [ ] Se cumplen los criterios de aceptación del issue
 - [ ] Sin credenciales, tokens ni URLs hardcodeadas

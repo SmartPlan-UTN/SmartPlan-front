@@ -20,7 +20,7 @@ En corto:
    blanco, con el id entre corchetes.
 2. Sacá la rama de `develop`: `SMART-<id>-<descripcion-en-kebab-case>`.
    **Nunca commitees parado en `main` ni en `develop`**: están protegidas.
-3. Antes de abrir el PR, `pnpm lint` sin errores.
+3. Antes de abrir el PR, `pnpm lint`, `pnpm test` y `pnpm build` en verde.
 4. Abrí el PR **con base `develop`**. La plantilla ya trae las tres secciones —
    qué hace, cómo probarlo, qué queda afuera —, el `Closes #NN` y la checklist de
    la Definition of Done. Necesita **2 aprobaciones**.
@@ -32,7 +32,19 @@ pnpm dev          # servidor de desarrollo
 pnpm build        # build de producción
 pnpm lint         # análisis estático
 pnpm lint:fix     # corregir lo autocorregible
+pnpm test         # tests unitarios, una sola corrida
+pnpm test:watch   # tests unitarios en modo watch
 ```
+
+## Testing
+
+Los tests unitarios usan Vitest, React Testing Library y jsdom. Se colocan junto
+al código con el sufijo `.test.ts` o `.test.tsx`; `Button.test.tsx` y
+`useToggle.test.ts` son los moldes iniciales para componentes y hooks.
+
+Las convenciones completas están en
+[`skills/07-testing/SKILL.md`](skills/07-testing/SKILL.md). Por ahora no hay un
+umbral global de cobertura ni infraestructura end-to-end para el frontend.
 
 ## Tipografía
 

@@ -60,7 +60,8 @@ historial de git.
 | Assets del design system en el repo | `En progreso` | `docs/skills-agentes-ia` | — | Logos, fuente, `tokens.css` e imágenes de ejemplo |
 | [F14] Cablear Bricolage Grotesque | `Finalizado` | `SmartPlan_AlvaroAriza_FrontEnd` | #74 | Cargada con `next/font/local` en `layout.tsx` y mapeada a `--font-sans` en `globals.css`. Geist y Geist Mono afuera |
 | [F15] Importar `tokens.css` en `globals.css` | `En progreso` | `SmartPlan_AlvaroAriza_dv` | — | Expuesto a Tailwind 4 con `@theme inline` (colores y radios). Se sacó el `@font-face` propio de `tokens.css` y `--font` ahora usa `var(--font-bricolage-grotesque)`. `page.tsx` (único componente existente) se migró a las utilidades nuevas, sin hex ni colores por defecto de Tailwind |
-| [F16] Portar los 7 primitivos a React + TS | `En revisión` | `SMART-f16-primitivos-design-system` | #76 | Icon, Button, Chip, Badge, Stars, Logo y Divider tipados, basados en EMBER v2 |
+| [F16] Portar los 7 primitivos a React + TS | `Finalizado` | `SMART-f16-primitivos-design-system` | #76 | Icon, Button, Chip, Badge, Stars, Logo y Divider tipados, basados en EMBER v2 |
+| [F20] Testing del frontend: configuración y ejemplos | `En progreso` | `SMART-f20-testing-del-frontend-configuracion-y-ejemplos` | — | Vitest + React Testing Library; moldes para Button y useToggle; CI con lint, test y build |
 | Cliente axios centralizado (`src/lib/api/`) | `No iniciado` | — | — | Con interceptor para el JWT |
 | Variables de entorno (`NEXT_PUBLIC_API_URL`) | `No iniciado` | — | — | |
 | Estructura de carpetas definitiva | `No iniciado` | — | — | Propuesta en `skills/03-frontend/` |
@@ -202,6 +203,7 @@ Decisiones técnicas tomadas y su motivo. Sirve para no rediscutir lo mismo dos 
 | 2026-08-11 | Los issues en blanco quedan habilitados | El trabajo de fundaciones no sale de la matriz de trazabilidad y no entra en ninguna de las dos plantillas. Deshabilitarlos obligaría a forzar issues de fundaciones dentro de la plantilla de caso de uso |
 | 2026-08-11 | La Definition of Done vive en `skills/02-git-flow/DEFINITION-OF-DONE.md` y no en el wiki | El wiki no se versiona con el código ni se revisa por PR. Acá cambia con las mismas 2 aprobaciones que cualquier otro cambio |
 | 2026-08-11 | La DoD incluye los criterios del back aunque este sea el repo del front | Es un acuerdo del equipo, no del repositorio, y el archivo es núcleo compartido: se replica verbatim en `SmartPlan-back` |
+| 2026-08-17 | Vitest + React Testing Library para tests unitarios del frontend | Es la integración documentada por Next.js, permite probar componentes y hooks con jsdom y mantiene una API rápida para desarrollo y CI |
 
 ---
 
@@ -242,3 +244,4 @@ Cosas detectadas que todavía no tienen dueño:
 | 2026-08-11 | F21: Definition of Done acordada, plantillas de issue (caso de uso y bug) y de PR en `.github/`. El núcleo de `02-git-flow` quedó sincronizado con el del back, que estaba más nuevo. |
 | 2026-08-16 | F15: `tokens.css` importado en `globals.css` y expuesto a Tailwind 4 vía `@theme inline` (colores y radios). Se eliminó el `@font-face` duplicado de `tokens.css` y `page.tsx` se migró a las utilidades nuevas, sin colores hardcodeados. `pnpm lint` y `next build` verdes. |
 | 2026-08-17 | F16: los siete primitivos de EMBER v2 se portaron a componentes React con contratos TypeScript, accesibilidad básica y un barrel público en `@/components/ui`. Revisión del PR: `Icon` pasó de `lucide-react/dynamic` a un registro estático (`iconRegistry.ts`) —los iconos ahora salen en el HTML del servidor y el JS inicial baja de 874 KB a 646 KB—, y el foco de `Button`/`Chip` recuperó un `outline` visible: `--focus-ember` solo da 1.2:1 de contraste. |
+| 2026-08-17 | F20: se configuraron Vitest, React Testing Library y jsdom, se agregaron moldes para un componente y un hook, y el workflow de CI pasó a validar lint, tests y build. |
