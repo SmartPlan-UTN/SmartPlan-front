@@ -60,6 +60,7 @@ historial de git.
 | Assets del design system en el repo | `En progreso` | `docs/skills-agentes-ia` | — | Logos, fuente, `tokens.css` e imágenes de ejemplo |
 | [F14] Cablear Bricolage Grotesque | `Finalizado` | `SmartPlan_AlvaroAriza_FrontEnd` | #74 | Cargada con `next/font/local` en `layout.tsx` y mapeada a `--font-sans` en `globals.css`. Geist y Geist Mono afuera |
 | [F15] Importar `tokens.css` en `globals.css` | `En progreso` | `SmartPlan_AlvaroAriza_dv` | — | Expuesto a Tailwind 4 con `@theme inline` (colores y radios). Se sacó el `@font-face` propio de `tokens.css` y `--font` ahora usa `var(--font-bricolage-grotesque)`. `page.tsx` (único componente existente) se migró a las utilidades nuevas, sin hex ni colores por defecto de Tailwind |
+| [F18] Tipos del dominio en TypeScript | `En revisión` | `feature/f18-tipos-dominio` | #68 | Fundación de los 37 tipos del dominio en `src/types/` alineados con backend TypeORM |
 | Portar los primitivos a React + TS | `No iniciado` | — | — | Button, Chip, Badge y Card desde `Primitives.jsx` |
 | Cliente axios centralizado (`src/lib/api/`) | `No iniciado` | — | — | Con interceptor para el JWT |
 | Variables de entorno (`NEXT_PUBLIC_API_URL`) | `No iniciado` | — | — | |
@@ -241,3 +242,4 @@ Cosas detectadas que todavía no tienen dueño:
 | 2026-08-06 | Creación de `skills/` y de este archivo de seguimiento. |
 | 2026-08-11 | F21: Definition of Done acordada, plantillas de issue (caso de uso y bug) y de PR en `.github/`. El núcleo de `02-git-flow` quedó sincronizado con el del back, que estaba más nuevo. |
 | 2026-08-16 | F15: `tokens.css` importado en `globals.css` y expuesto a Tailwind 4 vía `@theme inline` (colores y radios). Se eliminó el `@font-face` duplicado de `tokens.css` y `page.tsx` se migró a las utilidades nuevas, sin colores hardcodeados. `pnpm lint` y `next build` verdes. |
+| 2026-08-17 | F18: Implementación de los 37 tipos del dominio TypeScript en `src/types/` coordinados con el backend TypeORM. `pnpm lint`, `pnpm build` y `tsc` ejecutados limpiamente. |
