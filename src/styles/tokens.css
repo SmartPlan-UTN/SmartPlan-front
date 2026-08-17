@@ -15,6 +15,7 @@
   --cream:    #F5F0E8;
   --electric: #2B5BFF;
   --gold:     #FFD166;
+  --white:    #FFFFFF;
 
   /* ── Semantic status ─────────────────────────────── */
   --success:  #22C06B;
@@ -28,7 +29,11 @@
   --ember-20:      rgba(232,93,32,0.20);
   --electric-15:   rgba(43,91,255,0.15);
   --gold-15:       rgba(255,209,102,0.15);
+  --gold-22:       rgba(255,209,102,0.22);
   --success-15:    rgba(34,192,107,0.15);
+  --warning-15:    rgba(245,166,35,0.15);
+  --white-15:      rgba(255,255,255,0.15);
+  --white-18:      rgba(255,255,255,0.18);
 
   /* ── Dark surfaces ───────────────────────────────── */
   --char-surface:  #1E1812;   /* card on dark bg        */
@@ -42,6 +47,8 @@
   --fg-1: #1A1109;    /* primary on cream   */
   --fg-2: #5C5448;    /* secondary on cream */
   --fg-3: #9E9589;    /* placeholder/caption */
+  --rating-ink: #7A5C00;
+  --warning-ink: #7A4A00;
 
   /* ── Surfaces ────────────────────────────────────── */
   --surface:      var(--cream);
@@ -111,7 +118,7 @@ body {
 #root { min-height: 100vh; }
 input, button, textarea, select { font-family: inherit; }
 input::placeholder { color: var(--fg-3); }
-::selection { background: var(--ember); color: #fff; }
+::selection { background: var(--ember); color: var(--white); }
 
 /* ── Type utility classes ─────────────────────────────── */
 .sp-display {

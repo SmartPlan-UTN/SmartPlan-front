@@ -43,7 +43,7 @@ historial de git.
 |---|---|
 | **Fase** | Scaffold — sin lógica de negocio implementada |
 | **Rama base** | `develop` |
-| **Última actualización** | 2026-08-16 |
+| **Última actualización** | 2026-08-17 |
 | **Casos de uso finalizados** | 0 / 62 |
 
 ---
@@ -62,6 +62,7 @@ historial de git.
 | [F15] Importar `tokens.css` en `globals.css` | `En progreso` | `SmartPlan_AlvaroAriza_dv` | — | Expuesto a Tailwind 4 con `@theme inline` (colores y radios). Se sacó el `@font-face` propio de `tokens.css` y `--font` ahora usa `var(--font-bricolage-grotesque)`. `page.tsx` (único componente existente) se migró a las utilidades nuevas, sin hex ni colores por defecto de Tailwind |
 | [F18] Tipos del dominio en TypeScript | `En revisión` | `feature/f18-tipos-dominio` | #68 | Fundación de los 37 tipos del dominio en `src/types/` alineados con backend TypeORM |
 | Portar los primitivos a React + TS | `No iniciado` | — | — | Button, Chip, Badge y Card desde `Primitives.jsx` |
+| [F16] Portar los 7 primitivos a React + TS | `En revisión` | `SMART-f16-primitivos-design-system` | #76 | Icon, Button, Chip, Badge, Stars, Logo y Divider tipados, basados en EMBER v2 |
 | Cliente axios centralizado (`src/lib/api/`) | `No iniciado` | — | — | Con interceptor para el JWT |
 | Variables de entorno (`NEXT_PUBLIC_API_URL`) | `No iniciado` | — | — | |
 | Estructura de carpetas definitiva | `No iniciado` | — | — | Propuesta en `skills/03-frontend/` |
@@ -243,3 +244,4 @@ Cosas detectadas que todavía no tienen dueño:
 | 2026-08-11 | F21: Definition of Done acordada, plantillas de issue (caso de uso y bug) y de PR en `.github/`. El núcleo de `02-git-flow` quedó sincronizado con el del back, que estaba más nuevo. |
 | 2026-08-16 | F15: `tokens.css` importado en `globals.css` y expuesto a Tailwind 4 vía `@theme inline` (colores y radios). Se eliminó el `@font-face` duplicado de `tokens.css` y `page.tsx` se migró a las utilidades nuevas, sin colores hardcodeados. `pnpm lint` y `next build` verdes. |
 | 2026-08-17 | F18: Implementación de los 37 tipos del dominio TypeScript en `src/types/` coordinados con el backend TypeORM. `pnpm lint`, `pnpm build` y `tsc` ejecutados limpiamente. |
+| 2026-08-17 | F16: los siete primitivos de EMBER v2 se portaron a componentes React con contratos TypeScript, accesibilidad básica y un barrel público en `@/components/ui`. Revisión del PR: `Icon` pasó de `lucide-react/dynamic` a un registro estático (`iconRegistry.ts`) —los iconos ahora salen en el HTML del servidor y el JS inicial baja de 874 KB a 646 KB—, y el foco de `Button`/`Chip` recuperó un `outline` visible: `--focus-ember` solo da 1.2:1 de contraste. |

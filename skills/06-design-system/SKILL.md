@@ -1,6 +1,6 @@
 ---
 name: smartplan-design-system
-description: Design system EMBER — tokens de color, tipografía, espaciado, radios y los componentes primitivos (Button, Chip, Badge, Card). Leer antes de escribir cualquier estilo o componente visual.
+description: Design system EMBER — tokens de color, tipografía, espaciado, radios y componentes primitivos. Leer antes de escribir cualquier estilo o componente visual.
 ---
 
 # SmartPlan — Design System "EMBER"
@@ -36,6 +36,16 @@ Los tokens vigentes están copiados en [`src/styles/tokens.css`](../../src/style
 
 ### Estado
 `--success #22C06B` · `--warning #F5A623` · `--error #F04040`
+
+Los tonos auxiliares necesarios por los primitivos también son tokens:
+`--white`, `--white-15`, `--white-18`, `--gold-22`, `--warning-15`,
+`--rating-ink` y `--warning-ink`. No se repiten sus valores dentro de los
+componentes.
+
+> `--rating-ink #7A5C00` sale del prototipo (es el texto del badge `rating`).
+> `--warning-ink #7A4A00` **se eligió al portar los primitivos**: EMBER v2 no
+> define el texto del badge `warn`. Lo mismo vale para los fondos de los badges
+> `success`, `tag` y `dark`. Si aparece el prototipo, conviene contrastarlos.
 
 ### Superficies
 | Token | Hex | Uso |
@@ -85,6 +95,12 @@ Fuente única: **Bricolage Grotesque** (variable, pesos 200–800), self-hosted 
 **Sombras:** `--shadow-card 0 4px 16px rgba(0,0,0,.08)` sobre claro,
 `--shadow-card-dark 0 4px 20px rgba(0,0,0,.30)` sobre oscuro.
 Foco: `--focus-ember 0 0 0 3px rgba(232,93,32,.18)`.
+
+> `--focus-ember` es un **halo, no un indicador de foco**: al 18% sobre `--cream`
+> da 1.2:1 de contraste, muy por debajo del 3:1 que piden WCAG 1.4.11 y 2.4.11.
+> Nunca lo uses con `outline: none`. Acompañalo siempre de
+> `outline: 2px solid var(--ember); outline-offset: 2px`, como hacen `Button` y
+> `Chip`.
 
 **Layout:** navbar `60px` · ancho máximo `1200px` · separación vertical de sección `64px`.
 
@@ -271,7 +287,9 @@ Radio 99, 12px, peso 600. Variantes: `ai` (electric-15), `cost` (ember-10),
 
 ### Icon
 Envuelve Lucide. Props: `name`, `size` (18 por defecto), `color`, `stroke` (2).
-Al portarlo, usá directamente `lucide-react` en vez del script global.
+Los nombres son los de Lucide en `kebab-case`, igual que en el prototipo, pero
+resueltos contra un **registro estático** en
+[`iconRegistry.ts`](../../src/components/ui/iconRegistry.ts) — ver más abajo.
 
 ### Stars
 Puntuación de 0 a 5 con medias estrellas. Relleno `#FFD166`, vacío
@@ -286,6 +304,68 @@ apuntá a `public/brand/` y usá `<Image>` de `next/image`.
 Línea de 1px. `--hairline` sobre claro, `--hairline-dark` sobre oscuro.
 Prop `dark`.
 
+### Implementación en React
+
+Los primitivos viven en [`src/components/ui/`](../../src/components/ui/) y se
+importan desde su barrel público:
+
+```tsx
+import { Badge, Button, Chip, Divider, Icon, Logo, Stars } from "@/components/ui";
+
+<Button variant="ai" size="lg">Generar plan</Button>
+<Chip active>Gastronomía</Chip>
+<Badge variant="rating">4.5</Badge>
+<Icon name="map-pin" aria-label="Ubicación" />
+<Stars rating={4.5} />
+<Logo variant="white" kind="full" />
+<Divider dark />
+```
+
+- `Button` conserva las props nativas de `<button>` y usa `type="button"` por
+  defecto para no enviar formularios accidentalmente.
+- `Chip` expone el estado `active` como `aria-pressed`; `dark` selecciona el
+  borde correcto cuando está inactivo sobre superficies oscuras. Un chip que no
+  alterna estado (por ejemplo, uno que navega) puede quitar el atributo con
+  `aria-pressed={undefined}`.
+- `Badge` conserva las props nativas de `<span>`.
+- `Icon` acepta los nombres en `kebab-case` registrados en `iconRegistry.ts`. Un
+  icono sin `aria-label` ni `aria-labelledby` se considera decorativo.
+- `Stars` limita la puntuación al rango 0–5 y la redondea al medio punto más
+  cercano. Genera su etiqueta accesible automáticamente; se puede reemplazar con
+  `aria-label`, o delegar en una etiqueta externa con `aria-labelledby`.
+- `Logo` mantiene la proporción del asset para el `height` indicado y acepta
+  `alt`, `className` y `priority`.
+- `Divider` conserva las props nativas de `<hr>`.
+
+Todos los contratos y variantes se exportan como tipos TypeScript desde
+`@/components/ui`; ninguno usa `any`.
+
+Ninguno lleva `"use client"`: los siete renderizan en el servidor. Si un
+componente de pantalla necesita estado o eventos, el `"use client"` va en ese
+componente, no acá.
+
+#### Para usar un icono nuevo, agregalo al registro
+
+`Icon` resuelve el nombre contra
+[`iconRegistry.ts`](../../src/components/ui/iconRegistry.ts), un mapa explícito de
+`kebab-case` al componente de Lucide. Si el nombre no está en el mapa, es un error
+de TypeScript. Para sumarlo: importá el icono de `lucide-react` en `PascalCase` y
+agregá la entrada en `kebab-case`, en orden alfabético. Los nombres válidos están
+en <https://lucide.dev/icons>.
+
+**No uses `lucide-react/dynamic`.** `DynamicIcon` resuelve el icono en el cliente
+dentro de un `useEffect`, con estas consecuencias medidas en este repo:
+
+| | Iconos en el HTML del servidor | Chunks emitidos | JS inicial de una página con un `<Button>` |
+|---|---|---|---|
+| `DynamicIcon` | ninguno | 1706 | 874 KB |
+| Registro estático | todos | 9 | 646 KB |
+
+Es el mismo problema que el script global de Lucide que el prototipo usaba —
+resolución por nombre en runtime— solo que con `import()` en vez de un `<script>`.
+El registro cuesta una línea por icono y a cambio da render en el servidor,
+tree-shaking y tipado estricto.
+
 > **No existe un primitivo Card.** La tarjeta es un patrón, no un componente:
 > `--surface-card` sobre fondo claro, radio `--r-card`, borde `1px --hairline`,
 > sombra `--shadow-card`. Sobre oscuro, `--char-surface` con `--hairline-dark`.
@@ -293,6 +373,8 @@ Prop `dark`.
 ## Iconografía
 
 **Lucide**, ya instalado como `lucide-react`. Trazo `1.75–2`, color `currentColor`.
+Se consume siempre a través del primitivo `Icon` y su registro: ver
+[Para usar un icono nuevo](#para-usar-un-icono-nuevo-agregalo-al-registro).
 
 No uses emoji como iconos. No uses iconos rellenos: siempre de línea, para que
 acompañen el trazo del isotipo.
@@ -355,7 +437,7 @@ Los assets ya están en el repo, pero **todavía no están cableados**:
       mapearlos tal cual (`--shadow-card: var(--shadow-card)`) crea una
       referencia circular. Si se necesitan como utilidad, primero hay que
       renombrar el token fuente en `tokens.css`
-- [ ] Portar los 7 primitivos de `v2/Primitives.jsx` a componentes React con TypeScript
+- [x] Portar los 7 primitivos de `v2/Primitives.jsx` a componentes React con TypeScript
 
 ## Qué está en el repo y qué no
 
