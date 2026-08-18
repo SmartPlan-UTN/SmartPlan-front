@@ -64,8 +64,8 @@ historial de git.
 | [F18] Tipos del dominio en TypeScript | `En revisión` | `feature/f18-tipos-dominio` | #68 | Fundación de los 37 tipos del dominio en `src/types/` alineados con backend TypeORM |
 | Portar los primitivos a React + TS | `No iniciado` | — | — | Button, Chip, Badge y Card desde `Primitives.jsx` |
 | [F16] Portar los 7 primitivos a React + TS | `En revisión` | `SMART-f16-primitivos-design-system` | #76 | Icon, Button, Chip, Badge, Stars, Logo y Divider tipados, basados en EMBER v2 |
-| Cliente axios centralizado (`src/lib/api/`) | `No iniciado` | — | — | Con interceptor para el JWT |
-| Variables de entorno (`NEXT_PUBLIC_API_URL`) | `No iniciado` | — | — | |
+| [F17] Cliente axios centralizado (`src/lib/api/`) | `Finalizado` | `Smart-f17-cliente-axios-centralizado-con-interceptor-de-jwt` | — | Con interceptor para JWT, abstracción TokenGetter, normalización ApiError y manejo pub/sub de 401 |
+| [F17] Variables de entorno (`NEXT_PUBLIC_API_URL`) | `Finalizado` | `Smart-f17-cliente-axios-centralizado-con-interceptor-de-jwt` | — | Plantilla `.env.example` agregada e integración dinámica en `config.ts` |
 | Estructura de carpetas definitiva | `No iniciado` | — | — | Propuesta en `skills/03-frontend/` |
 
 ---
@@ -252,3 +252,4 @@ Cosas detectadas que todavía no tienen dueño:
 | 2026-08-17 | F20: se configuraron Vitest, React Testing Library y jsdom, se agregaron moldes para un componente y un hook, y el workflow de CI pasó a validar lint, tests y build. |
 | 2026-08-18 | F20 (Review): se documentó y fijó el piso de Node 24 que arrastraba pnpm 11 (`devEngines`, `.nvmrc`, README y AGENTS), se mockeó `next/font/local` para que testear una página no muera con "default is not a function", se le puso `timeout-minutes` al job de CI, se sacó la fila duplicada de F16 y `catalogos-test.ts` pasó a `catalogos.type-check.ts` para no confundirse con una suite de Vitest. |
 | 2026-08-18 | F18 (Review): Corrección de catálogos restringiendo `key` con tipos literales, reemplazo de `openai` por `gemini` en `ProveedorExterno`, inclusión de test de tipos (`catalogos-test.ts`) y documentación de la referencia de `SmartPlan-back` commit `8ec4d07`. |
+| 2026-08-18 | F17: Cliente Axios centralizado en `src/lib/api/` con interceptor JWT, abstracción de token decoupled (`setTokenGetter`), normalización de respuestas/red en `ApiError`, pub/sub con debouncing para 401 (`onUnauthorized`), plantilla `.env.example` y actualización de documentación en `skills/03-frontend/SKILL.md`. `npx eslint .`, `npx tsc --noEmit` y `npx next build` 100% limpios. |
