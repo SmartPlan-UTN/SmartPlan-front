@@ -41,9 +41,9 @@ historial de git.
 
 | | |
 |---|---|
-| **Fase** | Scaffold — sin lógica de negocio implementada |
+| **Fase** | Fundaciones — layout y navegación listos, sin casos de uso implementados |
 | **Rama base** | `develop` |
-| **Última actualización** | 2026-08-17 |
+| **Última actualización** | 2026-08-18 |
 | **Casos de uso finalizados** | 0 / 62 |
 
 ---
@@ -66,7 +66,7 @@ historial de git.
 | [F16] Portar los 7 primitivos a React + TS | `En revisión` | `SMART-f16-primitivos-design-system` | #76 | Icon, Button, Chip, Badge, Stars, Logo y Divider tipados, basados en EMBER v2 |
 | [F17] Cliente axios centralizado (`src/lib/api/`) | `Finalizado` | `Smart-f17-cliente-axios-centralizado-con-interceptor-de-jwt` | — | Con interceptor para JWT, abstracción TokenGetter, normalización ApiError y manejo pub/sub de 401 |
 | [F17] Variables de entorno (`NEXT_PUBLIC_API_URL`) | `Finalizado` | `Smart-f17-cliente-axios-centralizado-con-interceptor-de-jwt` | — | Plantilla `.env.example` agregada e integración dinámica en `config.ts` |
-| Estructura de carpetas definitiva | `No iniciado` | — | — | Propuesta en `skills/03-frontend/` |
+| [F19] Estructura de carpetas, layout base y navbar | `En progreso` | `SMART-f19-estructura-de-carpetas-layout-base-y-navbar` | — | Grupos `(auth)`, `(main)` y `(privado)` en `src/app/`, navbar de 60px con `backdrop-filter`, menú de usuario, mapa de rutas en `src/lib/rutas.ts`, sesión en `src/lib/auth/` y guardián `RutaProtegida`. Las pantallas son marcadores hasta que se implemente cada CU |
 
 ---
 
@@ -207,6 +207,11 @@ Decisiones técnicas tomadas y su motivo. Sirve para no rediscutir lo mismo dos 
 | 2026-08-11 | La DoD incluye los criterios del back aunque este sea el repo del front | Es un acuerdo del equipo, no del repositorio, y el archivo es núcleo compartido: se replica verbatim en `SmartPlan-back` |
 | 2026-08-17 | Vitest + React Testing Library para tests unitarios del frontend | Es la integración documentada por Next.js, permite probar componentes y hooks con jsdom y mantiene una API rápida para desarrollo y CI |
 | 2026-08-18 | El frontend exige Node 24 (`devEngines.runtime` en `package.json`, `.nvmrc`) | pnpm 11 —la versión fijada en `packageManager`— no arranca abajo de Node 22.13: tira `ERR_UNKNOWN_BUILTIN_MODULE: node:sqlite` antes de poder validar nada. Se fija 24 y no el piso 22.13 para que las máquinas corran exactamente la misma versión que CI, que toma el dato del mismo campo |
+| 2026-08-18 | Las rutas privadas se protegen en el cliente, no en `proxy.ts` | El JWT vive en `localStorage`, que el servidor no ve: ningún Server Component ni `proxy.ts` puede saber si hay sesión. `RutaProtegida` es una barrera de navegación; quien autoriza de verdad es el back en cada request. Si CU1 mueve el token a una cookie `httpOnly`, la comprobación se puede pasar al servidor sin tocar las pantallas |
+| 2026-08-18 | Una pantalla se protege por dónde vive: el grupo `(privado)` | El layout del grupo envuelve todo lo que cuelga de él en `RutaProtegida`. Envolver pantalla por pantalla depende de que nadie se olvide, y olvidarse deja una pantalla privada abierta sin que nada falle |
+| 2026-08-18 | El ancho máximo del contenido lo pone la pantalla (`Contenedor`), no el layout | El hero del inicio y la espera de generación de plan van a fondo completo. Con el contenedor en el layout, esas pantallas tendrían que pelearse con él o forzar un cambio que toca a todas. El grupo `(privado)` y `admin/` sí lo ponen en su layout porque ninguna de sus pantallas es a fondo completo |
+| 2026-08-18 | Las URLs se centralizan en `src/lib/rutas.ts` | Un string de ruta escrito a mano en un `<Link>` sobrevive al renombre de la carpeta y falla recién en runtime; la constante rompe la compilación |
+| 2026-08-18 | Favoritos e Historial se muestran en la navbar también sin sesión | Esconder los enlaces deja la aplicación sin pistas de qué hay detrás de la cuenta. Quien entre sin sesión llega a la ruta y el guardián lo manda al login conservando el destino en `?redirect=` |
 | 2026-08-18 | Claves de catálogos mediante uniones literales | Evita incompatibilidad estructural entre catálogos (`EstadoUsuario`, `Rol`, etc.) y previene claves inválidas en TypeScript. Verificado contra `SmartPlan-back` commit `8ec4d07a34d2058f2147220e69d494e4da183811` y `openai` corregido a `gemini`. |
 
 ---
@@ -253,3 +258,4 @@ Cosas detectadas que todavía no tienen dueño:
 | 2026-08-18 | F20 (Review): se documentó y fijó el piso de Node 24 que arrastraba pnpm 11 (`devEngines`, `.nvmrc`, README y AGENTS), se mockeó `next/font/local` para que testear una página no muera con "default is not a function", se le puso `timeout-minutes` al job de CI, se sacó la fila duplicada de F16 y `catalogos-test.ts` pasó a `catalogos.type-check.ts` para no confundirse con una suite de Vitest. |
 | 2026-08-18 | F18 (Review): Corrección de catálogos restringiendo `key` con tipos literales, reemplazo de `openai` por `gemini` en `ProveedorExterno`, inclusión de test de tipos (`catalogos-test.ts`) y documentación de la referencia de `SmartPlan-back` commit `8ec4d07`. |
 | 2026-08-18 | F17: Cliente Axios centralizado en `src/lib/api/` con interceptor JWT, abstracción de token decoupled (`setTokenGetter`), normalización de respuestas/red en `ApiError`, pub/sub con debouncing para 401 (`onUnauthorized`), plantilla `.env.example` y actualización de documentación en `skills/03-frontend/SKILL.md`. `npx eslint .`, `npx tsc --noEmit` y `npx next build` 100% limpios. |
+| 2026-08-18 | F19: estructura de `src/app` con los grupos `(auth)`, `(main)` y `(privado)`, layout con la navbar de 60px y `backdrop-filter`, navegación de Inicio, Explorar, Favoritos e Historial, menú de usuario y rutas protegidas que mandan al login con el destino en `?redirect=`. Se sacó la página del template de `create-next-app` y las pantallas quedaron como marcadores con su CU. `pnpm lint`, `pnpm test` (26) y `pnpm build` verdes. |

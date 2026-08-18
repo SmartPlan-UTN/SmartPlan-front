@@ -56,6 +56,35 @@ Las convenciones completas están en
 [`skills/07-testing/SKILL.md`](skills/07-testing/SKILL.md). Por ahora no hay un
 umbral global de cobertura ni infraestructura end-to-end para el frontend.
 
+## Estructura y rutas
+
+```
+src/app/
+├── (auth)/      login, registro y recuperar contraseña — sin navbar
+├── (main)/      pantallas con navbar
+│   ├── page.tsx     inicio
+│   ├── explorar/
+│   └── (privado)/   favoritos, historial, perfil, preferencias — exigen sesión
+└── admin/       panel de administración
+```
+
+Una pantalla nueva se protege **por dónde vive**: si va dentro de `(privado)`, el
+layout del grupo la envuelve en `RutaProtegida`, que manda al login con
+`?redirect=<ruta>` cuando no hay sesión. Los destinos de la navegación y las URLs
+salen de [`src/lib/rutas.ts`](src/lib/rutas.ts); no se escriben a mano en los
+`<Link>`.
+
+Mientras el login no exista (CU1), la sesión se simula desde la consola del
+navegador:
+
+```js
+localStorage.setItem("smartplan_token", "lo-que-sea"); // entra a lo protegido
+localStorage.removeItem("smartplan_token");            // lo expulsa al login
+```
+
+El detalle —navbar, sesión, dónde va cada pantalla— está en
+[`skills/03-frontend/SKILL.md`](skills/03-frontend/SKILL.md).
+
 ## Tipografía
 
 La fuente del proyecto es **Bricolage Grotesque**, self-hosted con

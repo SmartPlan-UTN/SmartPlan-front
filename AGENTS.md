@@ -51,8 +51,13 @@ Este repositorio es el **frontend**. El backend vive en `SmartPlan-back`
 
 ## Estado del repositorio
 
-Está en **scaffold**: solo el template de `create-next-app`. No hay lógica de
-negocio implementada. Antes de asumir que algo existe, buscalo en el código.
+Están las **fundaciones**: tokens y primitivos del design system, tipos del
+dominio, cliente HTTP con JWT, testing y —desde F19— la estructura de carpetas,
+el layout con la navbar y las rutas protegidas.
+
+**Ningún caso de uso está implementado todavía**: las pantallas existen como
+marcadores (`PantallaPendiente`) para que la navegación se pueda recorrer. Antes
+de asumir que algo existe, buscalo en el código y mirá [`SEGUIMIENTO.md`](SEGUIMIENTO.md).
 
 ## Comandos
 

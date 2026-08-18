@@ -46,34 +46,156 @@ pnpm lint:fix     # corrige lo autocorregible
 
 ## Estructura
 
-```
-src/
-└── app/          App Router de Next.js
-    ├── layout.tsx
-    ├── page.tsx
-    └── globals.css
-```
-
-Está en scaffold. Al crecer, la estructura propuesta:
+La dejó armada F19. Así está hoy:
 
 ```
 src/
 ├── app/                    rutas (App Router)
-│   ├── (auth)/             login, registro, recuperar contraseña
-│   ├── (main)/             home, búsqueda, planes, favoritos, perfil
+│   ├── layout.tsx          html/body, fuente y SesionProvider
+│   ├── not-found.tsx       404 de toda la aplicación
+│   ├── globals.css
+│   ├── (auth)/             login, registro y recuperar contraseña, sin navbar
+│   ├── (main)/             pantallas con navbar
+│   │   ├── layout.tsx      navbar + contenedor del contenido
+│   │   ├── page.tsx        inicio
+│   │   ├── explorar/
+│   │   └── (privado)/      lo que exige sesión: favoritos, historial,
+│   │       └── layout.tsx  perfil, preferencias. El layout es RutaProtegida
 │   └── admin/              panel de administración
-├── components/             componentes reutilizables
-│   ├── ui/                 primitivos (botón, card, badge, input)
+├── components/
+│   ├── ui/                 primitivos del design system
+│   ├── layout/             navbar, menú de usuario y contenedores
+│   ├── auth/               guardián de rutas
 │   └── <dominio>/          componentes por dominio (plan, actividad, coleccion)
+├── hooks/                  hooks de React
 ├── lib/
 │   ├── api/                cliente axios y llamadas por módulo
-│   └── utils/              helpers
-├── hooks/                  hooks de React
-└── types/                  tipos compartidos del dominio
+│   ├── auth/               estado de sesión: token, provider y hook
+│   ├── utils/              helpers sin dominio
+│   └── rutas.ts            mapa de rutas de la aplicación
+├── styles/                 tokens del design system
+├── test/                   setup y mocks de Vitest
+└── types/                  tipos del dominio
 ```
+
+Cada carpeta con más de un archivo público expone un barrel (`index.ts`) y se
+importa desde ahí: `@/components/ui`, `@/components/layout`, `@/components/auth`,
+`@/lib/api`, `@/lib/auth`, `@/lib/utils`. No importes los archivos internos.
 
 El alias `@/*` apunta a `./src/*` (definido en `tsconfig.json`). Usalo en lugar de
 rutas relativas largas.
+
+## Layout, navegación y sesión
+
+### Dónde va una pantalla nueva
+
+| La pantalla… | Va en | Qué hereda |
+|---|---|---|
+| es pública | `app/(main)/<ruta>/page.tsx` | navbar y contenedor |
+| exige sesión | `app/(main)/(privado)/<ruta>/page.tsx` | navbar, contenedor y `RutaProtegida` |
+| es de sesión (login, registro…) | `app/(auth)/<ruta>/page.tsx` | superficie oscura, sin navbar |
+| es de administración | `app/admin/<ruta>/page.tsx` | navbar y `RutaProtegida` |
+
+Los paréntesis son [grupos de ruta](https://nextjs.org/docs/app/api-reference/file-conventions/route-groups):
+organizan carpetas sin aparecer en la URL. `(main)/(privado)/favoritos` es
+`/favoritos`.
+
+**Una pantalla se protege por dónde vive, no por lo que escribe.** Crearla dentro
+de `(privado)` alcanza: el layout del grupo la envuelve en `RutaProtegida`.
+
+### Ancho del contenido
+
+El `<main>` **no impone ancho**. Las pantallas que no van a fondo completo se
+envuelven en `Contenedor`, que aplica los 1200px de `--max-w` y el aire de
+sección:
+
+```tsx
+import { Contenedor } from "@/components/layout";
+
+<Contenedor>{/* la pantalla */}</Contenedor>
+```
+
+El grupo `(privado)` y `admin/` ya lo ponen en su layout, así que sus pantallas
+no lo repiten. Las públicas lo eligen: el hero del inicio, con `MoodBackground`
+detrás, va a fondo completo, y un contenedor impuesto desde el layout lo dejaría
+encajonado.
+
+### Rutas
+
+Las rutas se escriben una sola vez, en [`src/lib/rutas.ts`](../../src/lib/rutas.ts):
+
+```tsx
+import { RUTAS } from "@/lib/rutas";
+
+<Link href={RUTAS.favoritos}>Favoritos</Link>
+```
+
+Nunca pongas el string a mano en un `<Link>`: cuando la carpeta se renombra, la
+constante rompe la compilación y el string se rompe en silencio.
+
+### Navbar
+
+`Navbar` (en `@/components/layout`) es la barra de 60px (`--navbar-h`) con
+`backdrop-filter`, fija arriba. Lleva Inicio, Explorar, Favoritos e Historial, y
+el menú de usuario con Mi perfil, Preferencias y Cerrar sesión. Debajo de 900px
+los enlaces se pliegan en un panel.
+
+Los destinos salen de `ENLACES_PRINCIPALES` y `ENLACES_USUARIO`
+([`enlaces.ts`](../../src/components/layout/enlaces.ts)): para agregar uno, sumá
+la entrada ahí, no un `<Link>` suelto en el JSX.
+
+Favoritos e Historial se muestran también sin sesión. Quien entre sin estar
+logueado llega a la ruta y el guardián lo manda al login: esconder los enlaces
+dejaría la aplicación sin pistas de qué hay detrás de la cuenta.
+
+### Sesión
+
+El estado vive en `SesionProvider`, montado una vez en `app/layout.tsx`. Se lee
+con `useSesion()`:
+
+```tsx
+"use client";
+import { useSesion } from "@/lib/auth";
+
+const { estado, autenticado, iniciarSesion, cerrarSesion } = useSesion();
+```
+
+`estado` es `"cargando" | "autenticado" | "anonimo"`. **Contemplá siempre
+`cargando`**: el token vive en el navegador, así que en el primer render —el que
+se genera en el servidor— todavía no se sabe si hay sesión.
+
+El provider además le enseña al cliente HTTP de dónde sacar el token
+(`setTokenGetter`) y cierra la sesión cuando la API responde 401
+(`onUnauthorized`). Cuando se implemente CU1, el login solo tiene que llamar a
+`iniciarSesion(token)` con el JWT que devuelva el back.
+
+### Rutas protegidas
+
+`RutaProtegida` muestra el contenido si hay sesión, un estado de espera mientras
+se resuelve, y si no hay token reemplaza la ruta por `/login?redirect=<ruta>`.
+El destino se valida con `destinoSeguro()` antes de usarlo: sin ese filtro,
+`?redirect=https://otro-sitio.com` convertiría el login en un redirector abierto.
+
+> **Es una barrera de navegación, no de seguridad.** El JWT vive en
+> `localStorage`, que el servidor no ve: ni `proxy.ts` ni un Server Component
+> pueden decidir si hay sesión. Quien autoriza de verdad es el back en cada
+> request. Si CU1 decide guardar el token en una cookie `httpOnly`, la
+> comprobación se puede mover al servidor sin tocar las pantallas.
+
+Para probar el guardián a mano, mientras el login no exista:
+
+```js
+// consola del navegador
+localStorage.setItem("smartplan_token", "lo-que-sea"); // entra
+localStorage.removeItem("smartplan_token");            // lo expulsa al login
+```
+
+### PantallaPendiente
+
+Las pantallas cuyo CU todavía no se implementó usan `PantallaPendiente`: título,
+descripción y trazabilidad (`"CU39–CU43 · PAN 12"`). Está para que la navegación
+se pueda recorrer entera sin chocar con un 404. **Se borra al implementar la
+pantalla**; cuando no quede ninguna, se borra el componente.
 
 ## Nombres
 

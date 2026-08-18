@@ -1,0 +1,335 @@
+/* ================================================================
+   Cáscara de la aplicación: navbar, menú de usuario y contenedores.
+
+   Todos los valores salen de los tokens de src/styles/tokens.css.
+   Los mixes con transparencia se derivan del token con color-mix()
+   en vez de escribir un rgba() a mano.
+   ================================================================ */
+
+/* ── Enlace de salto ───────────────────────────────────────────── */
+/* Primer elemento enfocable de la página: deja saltar la navegación
+   con el teclado sin recorrer los cuatro enlaces en cada pantalla. */
+.saltarContenido {
+  position: fixed;
+  top: var(--s-2);
+  left: var(--s-4);
+  z-index: 100;
+  padding: var(--s-2) var(--s-4);
+  border-radius: var(--r-btn);
+  background: var(--ember);
+  color: var(--white);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.saltarContenido:focus {
+  transform: translateY(0);
+}
+
+/* ── Navbar ────────────────────────────────────────────────────── */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--char);
+  /* 88% y no menos: la barra también viaja sobre pantallas claras, y con más
+     transparencia el cream de abajo sube el fondo hasta dejar los enlaces
+     inactivos (--fg-on-dark-2, 55%) en 4.3:1, por debajo del 4.5:1 de WCAG. */
+  background: color-mix(in srgb, var(--char) 88%, transparent);
+  /* La prefijada va primero. El minificador deduplica las declaraciones
+     equivalentes y se queda con la última: con el orden invertido el CSS
+     publicado tenía solo -webkit-backdrop-filter y Firefox perdía el blur. */
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--hairline-dark);
+}
+
+/* Sin backdrop-filter la barra queda translúcida y el texto de la página se
+   lee por debajo: ahí conviene el fondo sólido. */
+@supports not (
+  (backdrop-filter: blur(18px)) or (-webkit-backdrop-filter: blur(18px))
+) {
+  .navbar {
+    background: var(--char);
+  }
+}
+
+.barra {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  height: var(--navbar-h);
+  width: 100%;
+  max-width: var(--max-w);
+  margin-inline: auto;
+  padding-inline: var(--s-4);
+}
+
+.marca {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: var(--r-btn);
+}
+
+.marca:focus-visible,
+.enlace:focus-visible,
+.opcion:focus-visible,
+.disparador:focus-visible,
+.botonMenu:focus-visible,
+.enlaceBoton:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.navegacion {
+  display: none;
+  align-items: center;
+  gap: var(--s-1);
+  margin-inline-start: var(--s-3);
+}
+
+/* Empuja el control de sesión —y con él el botón de navegación— contra el
+   borde derecho, sin necesidad de un elemento separador vacío. */
+.controlSesion {
+  margin-inline-start: auto;
+}
+
+/* ── Enlaces de la barra ───────────────────────────────────────── */
+.enlace {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-chip);
+  color: var(--fg-on-dark-2);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.enlace:hover {
+  color: var(--fg-on-dark);
+  background: color-mix(in srgb, var(--white) 8%, transparent);
+}
+
+.enlaceActivo {
+  color: var(--fg-on-dark);
+  background: var(--ember-15);
+}
+
+/* ── Menú de usuario ───────────────────────────────────────────── */
+.menuUsuario {
+  position: relative;
+  display: inline-flex;
+}
+
+.disparador {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--white-15);
+  border-radius: var(--r-chip);
+  background: transparent;
+  color: var(--fg-on-dark);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+  cursor: pointer;
+  transition: background 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.disparador:hover {
+  background: color-mix(in srgb, var(--white) 8%, transparent);
+}
+
+/* En 320px no entran el logo, el control de sesión con texto y el botón de
+   navegación: abajo de 900px el control queda como icono, con su aria-label. */
+.etiquetaSesion {
+  display: none;
+}
+
+.enlaceBoton {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-4);
+  border-radius: var(--r-btn);
+  background: var(--ember);
+  color: var(--white);
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: filter 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.enlaceBoton:hover {
+  filter: brightness(1.1);
+}
+
+/* Reserva el lugar del control mientras se resuelve la sesión, para que la
+   barra no salte cuando aparece el menú o el botón de login. El ancho es el del
+   control ya resuelto: solo icono en viewport chico, con etiqueta arriba de
+   900px. */
+.marcadorSesion {
+  display: inline-block;
+  width: 56px;
+  height: 34px;
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + var(--s-2));
+  right: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  padding: var(--s-2);
+  border: 1px solid var(--hairline-dark);
+  border-radius: var(--r-card-sm);
+  background: var(--char-surface);
+  box-shadow: var(--shadow-card-dark);
+  animation: fadeUp 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.opcion {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  padding: var(--s-2) var(--s-3);
+  border: 0;
+  border-radius: var(--r-btn);
+  background: transparent;
+  color: var(--fg-on-dark);
+  font-size: var(--t-small);
+  font-weight: var(--w-body);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.opcion:hover {
+  background: var(--char-surface2);
+}
+
+.opcionActiva {
+  color: var(--ember);
+}
+
+.separador {
+  height: 1px;
+  margin: var(--s-1) 0;
+  border: 0;
+  background: var(--hairline-dark);
+}
+
+/* ── Menú en viewport chico ────────────────────────────────────── */
+.botonMenu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: var(--s-2);
+  border: 1px solid var(--white-15);
+  border-radius: var(--r-btn);
+  background: transparent;
+  color: var(--fg-on-dark);
+  cursor: pointer;
+}
+
+.panelMovil {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-3) var(--s-4) var(--s-4);
+  border-top: 1px solid var(--hairline-dark);
+  background: var(--char);
+  background: color-mix(in srgb, var(--char) 92%, transparent);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+
+@media (min-width: 900px) {
+  .navegacion {
+    display: flex;
+  }
+
+  .etiquetaSesion {
+    display: inline;
+  }
+
+  .marcadorSesion {
+    width: 140px;
+  }
+
+  .botonMenu,
+  .panelMovil {
+    display: none;
+  }
+}
+
+/* ── Contenedores de contenido ─────────────────────────────────── */
+.contenido {
+  flex: 1;
+  width: 100%;
+}
+
+.contenedor {
+  width: 100%;
+  max-width: var(--max-w);
+  margin-inline: auto;
+  padding: var(--section-v) var(--s-4);
+}
+
+/* ── Cáscara centrada: pantallas de sesión y 404 ───────────────── */
+.pantallaCentrada {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-5);
+  padding: var(--s-7) var(--s-4);
+  background: var(--char);
+}
+
+.tarjetaCentrada {
+  width: 100%;
+  max-width: 420px;
+  padding: var(--s-6);
+  border: 1px solid var(--hairline-dark);
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--char-surface) 88%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-card-dark);
+  color: var(--fg-on-dark);
+}
+
+/* ── Pantalla pendiente de implementar ─────────────────────────── */
+.pantallaPendiente {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-4);
+  max-width: 620px;
+}
+
+.notaPendiente {
+  color: var(--fg-2);
+}
+
+.notaPendienteOscura {
+  color: var(--fg-on-dark-2);
+}
