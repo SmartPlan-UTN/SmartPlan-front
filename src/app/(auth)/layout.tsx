@@ -16,12 +16,12 @@ export default function LayoutAuth({
   children,
 }: Readonly<{ children: ReactNode }>) {
   return (
-    <div className={styles.pantallaAuth}>
+    <div className={styles.pantallaCentrada}>
       <Link href={RUTAS.inicio} className={styles.marca}>
         <Logo variant="white" kind="full" height={28} priority />
       </Link>
 
-      <div className={styles.tarjetaAuth}>{children}</div>
+      <div className={styles.tarjetaCentrada}>{children}</div>
     </div>
   );
 }

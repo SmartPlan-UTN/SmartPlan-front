@@ -35,9 +35,15 @@
   top: 0;
   z-index: 50;
   background: var(--char);
-  background: color-mix(in srgb, var(--char) 82%, transparent);
-  backdrop-filter: blur(18px);
+  /* 88% y no menos: la barra también viaja sobre pantallas claras, y con más
+     transparencia el cream de abajo sube el fondo hasta dejar los enlaces
+     inactivos (--fg-on-dark-2, 55%) en 4.3:1, por debajo del 4.5:1 de WCAG. */
+  background: color-mix(in srgb, var(--char) 88%, transparent);
+  /* La prefijada va primero. El minificador deduplica las declaraciones
+     equivalentes y se queda con la última: con el orden invertido el CSS
+     publicado tenía solo -webkit-backdrop-filter y Firefox perdía el blur. */
   -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
   border-bottom: 1px solid var(--hairline-dark);
 }
 
@@ -65,6 +71,7 @@
 .marca {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
   border-radius: var(--r-btn);
 }
 
@@ -73,7 +80,7 @@
 .opcion:focus-visible,
 .disparador:focus-visible,
 .botonMenu:focus-visible,
-.enlaceLogin:focus-visible {
+.enlaceBoton:focus-visible {
   outline: 2px solid var(--ember);
   outline-offset: 2px;
 }
@@ -85,8 +92,10 @@
   margin-inline-start: var(--s-3);
 }
 
-.espaciador {
-  flex: 1;
+/* Empuja el control de sesión —y con él el botón de navegación— contra el
+   borde derecho, sin necesidad de un elemento separador vacío. */
+.controlSesion {
+  margin-inline-start: auto;
 }
 
 /* ── Enlaces de la barra ───────────────────────────────────────── */
@@ -141,13 +150,16 @@
   background: color-mix(in srgb, var(--white) 8%, transparent);
 }
 
-.etiquetaDisparador {
+/* En 320px no entran el logo, el control de sesión con texto y el botón de
+   navegación: abajo de 900px el control queda como icono, con su aria-label. */
+.etiquetaSesion {
   display: none;
 }
 
-.enlaceLogin {
+.enlaceBoton {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
   gap: var(--s-2);
   padding: var(--s-2) var(--s-4);
   border-radius: var(--r-btn);
@@ -160,15 +172,17 @@
   transition: filter 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.enlaceLogin:hover {
+.enlaceBoton:hover {
   filter: brightness(1.1);
 }
 
-/* Reserva el ancho del control mientras se resuelve la sesión, para que la
-   barra no salte cuando aparece el menú o el botón de login. */
+/* Reserva el lugar del control mientras se resuelve la sesión, para que la
+   barra no salte cuando aparece el menú o el botón de login. El ancho es el del
+   control ya resuelto: solo icono en viewport chico, con etiqueta arriba de
+   900px. */
 .marcadorSesion {
   display: inline-block;
-  width: 96px;
+  width: 56px;
   height: 34px;
 }
 
@@ -225,6 +239,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   padding: var(--s-2);
   border: 1px solid var(--white-15);
   border-radius: var(--r-btn);
@@ -241,8 +256,8 @@
   border-top: 1px solid var(--hairline-dark);
   background: var(--char);
   background: color-mix(in srgb, var(--char) 92%, transparent);
-  backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
 }
 
 @media (min-width: 900px) {
@@ -250,8 +265,12 @@
     display: flex;
   }
 
-  .etiquetaDisparador {
+  .etiquetaSesion {
     display: inline;
+  }
+
+  .marcadorSesion {
+    width: 140px;
   }
 
   .botonMenu,
@@ -273,8 +292,8 @@
   padding: var(--section-v) var(--s-4);
 }
 
-/* ── Cáscara de las pantallas de sesión ────────────────────────── */
-.pantallaAuth {
+/* ── Cáscara centrada: pantallas de sesión y 404 ───────────────── */
+.pantallaCentrada {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -285,15 +304,15 @@
   background: var(--char);
 }
 
-.tarjetaAuth {
+.tarjetaCentrada {
   width: 100%;
   max-width: 420px;
   padding: var(--s-6);
   border: 1px solid var(--hairline-dark);
   border-radius: var(--r-card);
   background: color-mix(in srgb, var(--char-surface) 88%, transparent);
-  backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   box-shadow: var(--shadow-card-dark);
   color: var(--fg-on-dark);
 }

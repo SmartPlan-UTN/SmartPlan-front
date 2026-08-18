@@ -5,6 +5,7 @@
  */
 
 export { CascaraApp, type CascaraAppProps } from "./CascaraApp";
+export { Contenedor, type ContenedorProps } from "./Contenedor";
 export { EnlaceNav, type EnlaceNavProps, type VarianteEnlace } from "./EnlaceNav";
 export {
   ENLACES_PRINCIPALES,

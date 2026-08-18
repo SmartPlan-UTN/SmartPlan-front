@@ -44,8 +44,9 @@ export function guardarToken(token: string): void {
   try {
     localStorage.setItem(DEFAULT_TOKEN_STORAGE_KEY, token);
   } catch {
-    // Sin almacenamiento la sesión dura lo que dura la pestaña: no es motivo
-    // para romper la navegación.
+    // Si el navegador bloquea el almacenamiento, la sesión no se puede
+    // sostener: el estado se relee de `localStorage` y el guardián va a mandar
+    // al login. Se avisa igual para que la UI no quede a medio camino.
   }
 
   window.dispatchEvent(new Event(EVENTO_SESION));

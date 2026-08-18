@@ -5,8 +5,6 @@ export interface EnlaceNavegacion {
   href: string;
   etiqueta: string;
   icono: IconName;
-  /** `true` cuando la pantalla exige sesión iniciada. */
-  privada?: boolean;
 }
 
 /**
@@ -20,12 +18,12 @@ export interface EnlaceNavegacion {
 export const ENLACES_PRINCIPALES: readonly EnlaceNavegacion[] = [
   { href: RUTAS.inicio, etiqueta: "Inicio", icono: "house" },
   { href: RUTAS.explorar, etiqueta: "Explorar", icono: "search" },
-  { href: RUTAS.favoritos, etiqueta: "Favoritos", icono: "heart", privada: true },
-  { href: RUTAS.historial, etiqueta: "Historial", icono: "clock", privada: true },
+  { href: RUTAS.favoritos, etiqueta: "Favoritos", icono: "heart" },
+  { href: RUTAS.historial, etiqueta: "Historial", icono: "clock" },
 ];
 
 /** Opciones del menú de usuario. */
 export const ENLACES_USUARIO: readonly EnlaceNavegacion[] = [
-  { href: RUTAS.perfil, etiqueta: "Mi perfil", icono: "user", privada: true },
-  { href: RUTAS.preferencias, etiqueta: "Preferencias", icono: "settings", privada: true },
+  { href: RUTAS.perfil, etiqueta: "Mi perfil", icono: "user" },
+  { href: RUTAS.preferencias, etiqueta: "Preferencias", icono: "settings" },
 ];

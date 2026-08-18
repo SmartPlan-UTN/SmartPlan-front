@@ -75,6 +75,16 @@ describe("Navbar", () => {
     expect(screen.queryByRole("button", { name: /mi cuenta/i })).toBeNull();
   });
 
+  it("el enlace de login conserva la pantalla desde la que se entra", () => {
+    ruta.actual = "/explorar";
+    renderNavbar();
+
+    expect(screen.getByRole("link", { name: "Iniciar sesión" })).toHaveAttribute(
+      "href",
+      "/login?redirect=%2Fexplorar",
+    );
+  });
+
   it("con sesión despliega el menú de usuario", async () => {
     localStorage.setItem(DEFAULT_TOKEN_STORAGE_KEY, "jwt-de-prueba");
     const user = userEvent.setup();

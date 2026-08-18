@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { Badge } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +14,7 @@ export interface PantallaPendienteProps {
   referencias: string;
   /** `oscuro` para las pantallas de sesión, que van sobre superficie `--char`. */
   tono?: TonoPantalla;
-  children?: React.ReactNode;
+  children?: ReactNode;
 }
 
 /**

@@ -33,6 +33,10 @@ export function RutaProtegida({ children }: RutaProtegidaProps) {
 
   useEffect(() => {
     if (estado === "anonimo") {
+      // Se guarda la ruta, no la query: leerla con `useSearchParams` obligaría
+      // a envolver cada pantalla privada en un `<Suspense>` para que el build
+      // no falle al prerenderizarlas. Cuando alguna pantalla dependa de sus
+      // parámetros, se resuelve ahí.
       router.replace(rutaLogin(rutaActual));
     }
   }, [estado, router, rutaActual]);

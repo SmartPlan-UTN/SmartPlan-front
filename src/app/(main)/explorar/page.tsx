@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { PantallaPendiente } from "@/components/layout";
+import { Contenedor, PantallaPendiente } from "@/components/layout";
 
 export const metadata: Metadata = {
   title: "Explorar",
@@ -8,10 +8,12 @@ export const metadata: Metadata = {
 
 export default function PaginaExplorar() {
   return (
-    <PantallaPendiente
-      titulo="Explorar"
-      descripcion="Búsqueda de actividades y planes, con filtros, orden y la grilla de resultados."
-      referencias="CU9–CU12 · PAN 11"
-    />
+    <Contenedor>
+      <PantallaPendiente
+        titulo="Explorar"
+        descripcion="Búsqueda de actividades y planes, con filtros, orden y la grilla de resultados."
+        referencias="CU9–CU12 · PAN 11"
+      />
+    </Contenedor>
   );
 }

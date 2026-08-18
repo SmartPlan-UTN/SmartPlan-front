@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import { RutaProtegida } from "@/components/auth";
-import { CascaraApp } from "@/components/layout";
+import { CascaraApp, Contenedor } from "@/components/layout";
 
 /**
  * Layout del panel de administración.
@@ -16,7 +16,9 @@ export default function LayoutAdmin({
 }: Readonly<{ children: ReactNode }>) {
   return (
     <CascaraApp>
-      <RutaProtegida>{children}</RutaProtegida>
+      <RutaProtegida>
+        <Contenedor>{children}</Contenedor>
+      </RutaProtegida>
     </CascaraApp>
   );
 }

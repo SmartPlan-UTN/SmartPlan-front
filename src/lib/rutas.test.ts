@@ -22,9 +22,10 @@ describe("rutaLogin", () => {
     );
   });
 
-  it("devuelve el login pelado cuando el destino no sirve", () => {
+  it("devuelve el login pelado cuando el destino no aporta nada", () => {
     expect(rutaLogin("https://otro-sitio.com")).toBe(RUTAS.login);
     expect(rutaLogin(RUTAS.login)).toBe(RUTAS.login);
+    expect(rutaLogin(RUTAS.inicio)).toBe(RUTAS.login);
     expect(rutaLogin()).toBe(RUTAS.login);
   });
 });

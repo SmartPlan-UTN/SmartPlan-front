@@ -103,6 +103,23 @@ organizan carpetas sin aparecer en la URL. `(main)/(privado)/favoritos` es
 **Una pantalla se protege por dónde vive, no por lo que escribe.** Crearla dentro
 de `(privado)` alcanza: el layout del grupo la envuelve en `RutaProtegida`.
 
+### Ancho del contenido
+
+El `<main>` **no impone ancho**. Las pantallas que no van a fondo completo se
+envuelven en `Contenedor`, que aplica los 1200px de `--max-w` y el aire de
+sección:
+
+```tsx
+import { Contenedor } from "@/components/layout";
+
+<Contenedor>{/* la pantalla */}</Contenedor>
+```
+
+El grupo `(privado)` y `admin/` ya lo ponen en su layout, así que sus pantallas
+no lo repiten. Las públicas lo eligen: el hero del inicio, con `MoodBackground`
+detrás, va a fondo completo, y un contenedor impuesto desde el layout lo dejaría
+encajonado.
+
 ### Rutas
 
 Las rutas se escriben una sola vez, en [`src/lib/rutas.ts`](../../src/lib/rutas.ts):

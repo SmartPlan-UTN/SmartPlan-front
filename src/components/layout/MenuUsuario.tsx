@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { Icon } from "@/components/ui";
 import { useSesion } from "@/lib/auth";
-import { RUTAS } from "@/lib/rutas";
+import { rutaLogin } from "@/lib/rutas";
+import { cn } from "@/lib/utils";
 
 import { EnlaceNav } from "./EnlaceNav";
 import { ENLACES_USUARIO } from "./enlaces";
@@ -27,6 +29,7 @@ import styles from "./layout.module.css";
  */
 export function MenuUsuario() {
   const { estado, cerrarSesion } = useSesion();
+  const rutaActual = usePathname();
   const [abierto, setAbierto] = useState(false);
   const contenedorRef = useRef<HTMLDivElement>(null);
   const disparadorRef = useRef<HTMLButtonElement>(null);
@@ -66,24 +69,44 @@ export function MenuUsuario() {
   }, [abierto, cerrar]);
 
   if (estado === "cargando") {
-    return <span className={styles.marcadorSesion} aria-hidden="true" />;
+    return (
+      <span
+        className={cn(styles.marcadorSesion, styles.controlSesion)}
+        aria-hidden="true"
+      />
+    );
   }
 
   if (estado === "anonimo") {
+    // Se conserva la pantalla actual igual que hace el guardián: quien entra al
+    // login desde Explorar espera volver a Explorar, no al inicio.
     return (
-      <Link href={RUTAS.login} className={styles.enlaceLogin}>
+      <Link
+        href={rutaLogin(rutaActual)}
+        className={cn(styles.enlaceBoton, styles.controlSesion)}
+        // La etiqueta se esconde en viewport chico, igual que en el disparador.
+        aria-label="Iniciar sesión"
+      >
         <Icon name="log-in" size={16} />
-        Iniciar sesión
+        <span className={styles.etiquetaSesion} aria-hidden="true">
+          Iniciar sesión
+        </span>
       </Link>
     );
   }
 
   return (
-    <div className={styles.menuUsuario} ref={contenedorRef}>
+    <div
+      className={cn(styles.menuUsuario, styles.controlSesion)}
+      ref={contenedorRef}
+    >
       <button
         ref={disparadorRef}
         type="button"
         className={styles.disparador}
+        // La etiqueta se esconde en viewport chico y los iconos son
+        // decorativos: sin este aria-label el botón se queda sin nombre.
+        aria-label="Mi cuenta"
         aria-expanded={abierto}
         aria-controls={idPanel}
         onClick={() => {
@@ -91,7 +114,9 @@ export function MenuUsuario() {
         }}
       >
         <Icon name="user" size={16} />
-        <span className={styles.etiquetaDisparador}>Mi cuenta</span>
+        <span className={styles.etiquetaSesion} aria-hidden="true">
+          Mi cuenta
+        </span>
         <Icon name="chevron-down" size={14} />
       </button>
 

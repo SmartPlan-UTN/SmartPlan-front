@@ -51,8 +51,6 @@ export function Navbar() {
           ))}
         </nav>
 
-        <div className={styles.espaciador} />
-
         <MenuUsuario />
 
         <button

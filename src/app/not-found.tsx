@@ -17,16 +17,16 @@ export const metadata: Metadata = {
  */
 export default function NoEncontrada() {
   return (
-    <div className={styles.pantallaAuth}>
+    <div className={styles.pantallaCentrada}>
       <Logo variant="white" kind="mark" height={48} />
 
-      <div className={styles.tarjetaAuth}>
+      <div className={styles.tarjetaCentrada}>
         <h1 className="sp-h3">Esta página no existe</h1>
         <p className={`sp-body ${styles.notaPendienteOscura}`}>
           Puede que el enlace esté viejo o que la dirección tenga un error.
         </p>
         <p>
-          <Link href={RUTAS.inicio} className={styles.enlaceLogin}>
+          <Link href={RUTAS.inicio} className={styles.enlaceBoton}>
             Volver al inicio
           </Link>
         </p>

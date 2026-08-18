@@ -8,12 +8,14 @@ export interface CascaraAppProps {
 }
 
 /**
- * Cáscara de las pantallas con navbar: enlace de salto, barra y contenedor de
- * contenido de 1200px (`--max-w`).
+ * Cáscara de las pantallas con navbar: enlace de salto, barra y `<main>`.
  *
  * La usan el layout de `(main)` y el de `admin`. El enlace de salto va primero
  * en el orden de tabulación para no obligar a recorrer la navegación entera en
  * cada pantalla.
+ *
+ * El `<main>` no impone ancho: las pantallas que no van a fondo completo se
+ * envuelven en `Contenedor`.
  */
 export function CascaraApp({ children }: CascaraAppProps) {
   return (
@@ -25,7 +27,7 @@ export function CascaraApp({ children }: CascaraAppProps) {
       <Navbar />
 
       <main id="contenido" className={styles.contenido}>
-        <div className={styles.contenedor}>{children}</div>
+        {children}
       </main>
     </>
   );

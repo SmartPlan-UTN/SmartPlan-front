@@ -47,13 +47,16 @@ export function destinoSeguro(destino: string | null | undefined): string | null
 /**
  * Arma la URL del login conservando la ruta desde la que se expulsó al visitante.
  *
+ * El inicio no se conserva: es a donde se vuelve por defecto, así que agregarlo
+ * al parámetro solo ensucia la URL.
+ *
  * @param destino Ruta a la que volver una vez iniciada la sesión.
  * @returns `/login` con el parámetro `redirect` cuando el destino es válido.
  */
 export function rutaLogin(destino?: string | null): string {
   const ruta = destinoSeguro(destino);
 
-  if (!ruta || ruta === RUTAS.login) {
+  if (!ruta || ruta === RUTAS.login || ruta === RUTAS.inicio) {
     return RUTAS.login;
   }
 
