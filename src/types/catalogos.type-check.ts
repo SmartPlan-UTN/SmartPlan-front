@@ -5,6 +5,9 @@ import type { EstadoUsuario, Rol, ClaveDeEstadoPlan } from './index';
  * Este archivo demuestra que:
  * 1. Asignar un catálogo a otro distinto produce un error de compilación.
  * 2. Asignar una `key` inválida a un catálogo produce un error de compilación.
+ *
+ * No es una suite de Vitest y `pnpm test` no lo ejecuta: se verifica solo, al
+ * compilar, vía `pnpm build`. De ahí el sufijo `.type-check` y no `.test`.
  */
 
 const estadoUsuarioValido: EstadoUsuario = {

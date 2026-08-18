@@ -38,6 +38,8 @@ que se llena sola al abrir el pull request. Este archivo es el detalle: el
 
 ## 3. Específico del front
 
+- **`pnpm test` en verde.** Un test roto bloquea el PR igual que un error de lint
+  o de compilación.
 - **Estilos con los tokens del design system.** Ningún hex escrito a mano
   (`skills/06-design-system/`).
 - **Estados de carga, error y vacío** contemplados en toda pantalla que consuma
@@ -93,8 +95,9 @@ pantalla anda contra datos mockeados, el caso de uso no está hecho.
 
 Para que la lista siga siendo creíble, esto queda explícitamente afuera:
 
-- **Cobertura de tests en el front.** Todavía no hay infraestructura de tests de
-  interfaz. Cuando la haya, se agrega acá.
+- **Un umbral global de cobertura en el front.** La infraestructura de tests ya
+  existe, pero F20 no fija un porcentaje mínimo. Esa política requiere una
+  decisión separada del equipo.
 - **Despliegue.** Mergear a `develop` no despliega nada. El deploy sale de `main`
   y es trabajo aparte.
 - **Revisión de diseño pixel a pixel.** Se revisa contra los tokens y el

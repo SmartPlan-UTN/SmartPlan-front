@@ -33,6 +33,7 @@ Este repositorio es el **frontend**. El backend vive en `SmartPlan-back`
 | [`skills/04-calidad/SKILL.md`](skills/04-calidad/SKILL.md) | Antes de desactivar una regla de lint o silenciar un warning |
 | [`skills/05-arquitectura/SKILL.md`](skills/05-arquitectura/SKILL.md) | Antes de agregar un servicio, una integración externa o un proceso en segundo plano |
 | [`skills/06-design-system/SKILL.md`](skills/06-design-system/SKILL.md) | Antes de escribir un estilo, elegir un color o maquetar un componente |
+| [`skills/07-testing/SKILL.md`](skills/07-testing/SKILL.md) | Antes de agregar o modificar tests de componentes y hooks |
 | [`SEGUIMIENTO.md`](SEGUIMIENTO.md) | Para saber en qué estado está cada funcionalidad |
 
 ## Reglas que no se negocian
@@ -41,8 +42,9 @@ Este repositorio es el **frontend**. El backend vive en `SmartPlan-back`
    con 2 aprobaciones. Trabajá siempre en una rama que salga de `develop`.
 2. **Los nombres del dominio van en español.** Un `plan` es `plan`, no
    `Itinerary`. Ver `skills/01-dominio/`.
-3. **Usá pnpm**, no npm ni yarn.
-4. **Corré `pnpm lint` antes de dar por terminado un cambio.**
+3. **Usá pnpm**, no npm ni yarn, y **Node 24** (`.nvmrc`). Abajo de Node 22.13
+   pnpm ni siquiera arranca.
+4. **Corré `pnpm lint`, `pnpm test` y `pnpm build` antes de dar por terminado un cambio.**
 5. **Toda promesa se maneja.** ESLint tiene `no-floating-promises` en error.
 6. **Nada de credenciales, tokens ni URLs hardcodeadas.** Variables de entorno.
 7. **Referenciá el caso de uso (CU) en commits y PRs** cuando la tarea tenga uno.
@@ -60,6 +62,8 @@ pnpm dev          # servidor de desarrollo
 pnpm build        # build de producción
 pnpm lint         # análisis estático
 pnpm lint:fix     # corregir lo autocorregible
+pnpm test         # tests unitarios, una sola corrida
+pnpm test:watch   # tests unitarios en modo watch
 ```
 
 ## Cuando termines una tarea
