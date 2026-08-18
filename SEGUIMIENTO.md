@@ -62,6 +62,9 @@ historial de git.
 | [F15] Importar `tokens.css` en `globals.css` | `En progreso` | `SmartPlan_AlvaroAriza_dv` | — | Expuesto a Tailwind 4 con `@theme inline` (colores y radios). Se sacó el `@font-face` propio de `tokens.css` y `--font` ahora usa `var(--font-bricolage-grotesque)`. `page.tsx` (único componente existente) se migró a las utilidades nuevas, sin hex ni colores por defecto de Tailwind |
 | [F16] Portar los 7 primitivos a React + TS | `Finalizado` | `SMART-f16-primitivos-design-system` | #76 | Icon, Button, Chip, Badge, Stars, Logo y Divider tipados, basados en EMBER v2 |
 | [F20] Testing del frontend: configuración y ejemplos | `En revisión` | `SMART-f20-testing-del-frontend-configuracion-y-ejemplos` | #77 | Vitest + React Testing Library; moldes para Button y useToggle; CI con lint, test y build |
+| [F18] Tipos del dominio en TypeScript | `En revisión` | `feature/f18-tipos-dominio` | #68 | Fundación de los 37 tipos del dominio en `src/types/` alineados con backend TypeORM |
+| Portar los primitivos a React + TS | `No iniciado` | — | — | Button, Chip, Badge y Card desde `Primitives.jsx` |
+| [F16] Portar los 7 primitivos a React + TS | `En revisión` | `SMART-f16-primitivos-design-system` | #76 | Icon, Button, Chip, Badge, Stars, Logo y Divider tipados, basados en EMBER v2 |
 | Cliente axios centralizado (`src/lib/api/`) | `No iniciado` | — | — | Con interceptor para el JWT |
 | Variables de entorno (`NEXT_PUBLIC_API_URL`) | `No iniciado` | — | — | |
 | Estructura de carpetas definitiva | `No iniciado` | — | — | Propuesta en `skills/03-frontend/` |
@@ -204,6 +207,7 @@ Decisiones técnicas tomadas y su motivo. Sirve para no rediscutir lo mismo dos 
 | 2026-08-11 | La Definition of Done vive en `skills/02-git-flow/DEFINITION-OF-DONE.md` y no en el wiki | El wiki no se versiona con el código ni se revisa por PR. Acá cambia con las mismas 2 aprobaciones que cualquier otro cambio |
 | 2026-08-11 | La DoD incluye los criterios del back aunque este sea el repo del front | Es un acuerdo del equipo, no del repositorio, y el archivo es núcleo compartido: se replica verbatim en `SmartPlan-back` |
 | 2026-08-17 | Vitest + React Testing Library para tests unitarios del frontend | Es la integración documentada por Next.js, permite probar componentes y hooks con jsdom y mantiene una API rápida para desarrollo y CI |
+| 2026-08-18 | Claves de catálogos mediante uniones literales | Evita incompatibilidad estructural entre catálogos (`EstadoUsuario`, `Rol`, etc.) y previene claves inválidas en TypeScript. Verificado contra `SmartPlan-back` commit `8ec4d07a34d2058f2147220e69d494e4da183811` y `openai` corregido a `gemini`. |
 
 ---
 
@@ -243,5 +247,7 @@ Cosas detectadas que todavía no tienen dueño:
 | 2026-08-06 | Creación de `skills/` y de este archivo de seguimiento. |
 | 2026-08-11 | F21: Definition of Done acordada, plantillas de issue (caso de uso y bug) y de PR en `.github/`. El núcleo de `02-git-flow` quedó sincronizado con el del back, que estaba más nuevo. |
 | 2026-08-16 | F15: `tokens.css` importado en `globals.css` y expuesto a Tailwind 4 vía `@theme inline` (colores y radios). Se eliminó el `@font-face` duplicado de `tokens.css` y `page.tsx` se migró a las utilidades nuevas, sin colores hardcodeados. `pnpm lint` y `next build` verdes. |
+| 2026-08-17 | F18: Implementación de los 37 tipos del dominio TypeScript en `src/types/` coordinados con el backend TypeORM. `pnpm lint`, `pnpm build` y `tsc` ejecutados limpiamente. |
 | 2026-08-17 | F16: los siete primitivos de EMBER v2 se portaron a componentes React con contratos TypeScript, accesibilidad básica y un barrel público en `@/components/ui`. Revisión del PR: `Icon` pasó de `lucide-react/dynamic` a un registro estático (`iconRegistry.ts`) —los iconos ahora salen en el HTML del servidor y el JS inicial baja de 874 KB a 646 KB—, y el foco de `Button`/`Chip` recuperó un `outline` visible: `--focus-ember` solo da 1.2:1 de contraste. |
 | 2026-08-17 | F20: se configuraron Vitest, React Testing Library y jsdom, se agregaron moldes para un componente y un hook, y el workflow de CI pasó a validar lint, tests y build. |
+| 2026-08-18 | F18 (Review): Corrección de catálogos restringiendo `key` con tipos literales, reemplazo de `openai` por `gemini` en `ProveedorExterno`, inclusión de test de tipos (`catalogos-test.ts`) y documentación de la referencia de `SmartPlan-back` commit `8ec4d07`. |
