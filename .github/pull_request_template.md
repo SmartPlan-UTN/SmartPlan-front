@@ -17,6 +17,7 @@ Closes #
 
 ```bash
 git switch <rama>
+node --version    # 24.x, ver .nvmrc
 pnpm install
 pnpm lint
 pnpm test

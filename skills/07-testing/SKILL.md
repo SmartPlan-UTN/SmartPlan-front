@@ -39,6 +39,10 @@ Usá `.test.tsx` cuando el archivo renderiza JSX y `.test.ts` para hooks o lógi
 sin JSX. El setup común vive en `src/test/setup.ts`; no repitas `cleanup` ni la
 configuración de `jest-dom` en cada suite.
 
+Solo `.test.ts` y `.test.tsx` se ejecutan. Un archivo que se verifica al
+compilar y no en runtime —como `src/types/catalogos.type-check.ts`— no lleva ese
+sufijo, justamente para que se note que lo valida `pnpm build` y no `pnpm test`.
+
 ## Componentes
 
 - Consultá por rol, nombre accesible, label o texto visible. Evitá `data-testid`
@@ -52,6 +56,17 @@ configuración de `jest-dom` en cada suite.
 
 `Button.test.tsx` es el molde de referencia para render, consultas accesibles y
 una interacción de usuario.
+
+## Módulos que resuelve el compilador de Next
+
+`next/font` no existe fuera del build de Next. Cualquier test que alcance —aunque
+sea de forma indirecta— un archivo que declare una fuente, como
+`src/app/layout.tsx`, muere con `TypeError: default is not a function` y ninguna
+pista de por qué. Por eso `vitest.config.mts` redirige `next/font/local` a
+`src/test/mocks/next-font.ts`.
+
+Si algún día se importa `next/font/google`, necesita su propio mock: ahí las
+fuentes son exports con nombre y un default no alcanza.
 
 ## Hooks
 

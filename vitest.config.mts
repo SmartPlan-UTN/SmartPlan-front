@@ -1,3 +1,5 @@
+import { fileURLToPath } from "node:url";
+
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
@@ -5,6 +7,14 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     tsconfigPaths: true,
+    alias: {
+      // `next/font` solo existe dentro del compilador de Next. Sin este alias,
+      // cualquier test que alcance un archivo con una fuente declarada muere
+      // con "default is not a function". Ver src/test/mocks/next-font.ts.
+      "next/font/local": fileURLToPath(
+        new URL("./src/test/mocks/next-font.ts", import.meta.url),
+      ),
+    },
   },
   test: {
     environment: "jsdom",

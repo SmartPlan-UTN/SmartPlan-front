@@ -20,17 +20,20 @@ jobs:
   quality:
     name: Quality
     runs-on: ubuntu-latest
+    # Un install colgado no debe comerse las 6 horas por defecto del runner.
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
-      # La versión de pnpm sale de "packageManager" en package.json: una sola
-      # fuente de verdad, para que un bump no deje a CI en la versión vieja.
+      # Ni la versión de pnpm ni la de Node se escriben acá: salen de
+      # "packageManager" y "devEngines.runtime" en package.json. Una sola fuente
+      # de verdad, para que un bump no deje a CI en la versión vieja ni a CI
+      # corriendo una versión distinta de la que se usa en las máquinas.
       - name: Configurar Node.js y pnpm
         uses: pnpm/setup@v2
         with:
-          runtime: node@24
           cache: true
           install: false
 

@@ -3,6 +3,16 @@
 Frontend de SmartPlan — Proyecto Final 2026, UTN Facultad Regional Mendoza. El
 backend vive en [`SmartPlan-back`](https://github.com/SmartPlan-UTN/SmartPlan-back).
 
+## Requisitos
+
+- **Node 24.** La versión está en [`.nvmrc`](.nvmrc) y en `devEngines` de
+  `package.json`. Con nvm en macOS o Linux alcanza `nvm use`; nvm-windows no lee
+  `.nvmrc`, así que ahí hay que instalar y activar la 24 a mano. No es un
+  capricho: pnpm 11 no arranca abajo de Node 22.13 y el error que tira no lo
+  explica (`ERR_UNKNOWN_BUILTIN_MODULE: node:sqlite`).
+- **pnpm** no hace falta instalarlo a mano: la versión sale de `packageManager`
+  en `package.json` y pnpm se cambia solo a ella.
+
 ## Cómo trabajar en este repositorio
 
 | | Dónde |

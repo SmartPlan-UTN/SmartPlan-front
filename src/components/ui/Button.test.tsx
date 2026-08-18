@@ -23,4 +23,17 @@ describe("Button", () => {
 
     expect(handleClick).toHaveBeenCalledOnce();
   });
+
+  it("conserva el className recibido y permite sobrescribir el type", () => {
+    render(
+      <Button type="submit" className="w-full">
+        Guardar
+      </Button>,
+    );
+
+    const boton = screen.getByRole("button", { name: "Guardar" });
+
+    expect(boton).toHaveAttribute("type", "submit");
+    expect(boton).toHaveClass("w-full");
+  });
 });

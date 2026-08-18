@@ -42,7 +42,8 @@ Este repositorio es el **frontend**. El backend vive en `SmartPlan-back`
    con 2 aprobaciones. Trabajá siempre en una rama que salga de `develop`.
 2. **Los nombres del dominio van en español.** Un `plan` es `plan`, no
    `Itinerary`. Ver `skills/01-dominio/`.
-3. **Usá pnpm**, no npm ni yarn.
+3. **Usá pnpm**, no npm ni yarn, y **Node 24** (`.nvmrc`). Abajo de Node 22.13
+   pnpm ni siquiera arranca.
 4. **Corré `pnpm lint`, `pnpm test` y `pnpm build` antes de dar por terminado un cambio.**
 5. **Toda promesa se maneja.** ESLint tiene `no-floating-promises` en error.
 6. **Nada de credenciales, tokens ni URLs hardcodeadas.** Variables de entorno.
