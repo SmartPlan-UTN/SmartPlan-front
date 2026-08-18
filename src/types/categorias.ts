@@ -11,7 +11,13 @@ export interface Categoria extends EntidadBase {
 }
 
 /**
- * Estado de una categoría (CU54).
- * Keys previstas: 'activa', 'inactiva'.
+ * Claves previstas para el estado de una categoría (CU54).
  */
-export type EstadoCategoria = EntidadCatalogo;
+export type ClaveDeEstadoCategoria = 'activa' | 'inactiva';
+
+/**
+ * Estado de una categoría (CU54).
+ */
+export interface EstadoCategoria extends EntidadCatalogo<ClaveDeEstadoCategoria> {
+  key: ClaveDeEstadoCategoria;
+}

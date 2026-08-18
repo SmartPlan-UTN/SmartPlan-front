@@ -35,7 +35,18 @@ export interface DetallePlan extends EntidadBase {
 }
 
 /**
- * Estado de un plan (CU22, CU26, CU60).
- * Keys previstas: 'generado', 'seleccionado', 'confirmado', 'finalizado', 'cancelado'.
+ * Claves previstas para el estado de un plan (CU22, CU26, CU60).
  */
-export type EstadoPlan = EntidadCatalogo;
+export type ClaveDeEstadoPlan =
+  | 'generado'
+  | 'seleccionado'
+  | 'confirmado'
+  | 'finalizado'
+  | 'cancelado';
+
+/**
+ * Estado de un plan (CU22, CU26, CU60).
+ */
+export interface EstadoPlan extends EntidadCatalogo<ClaveDeEstadoPlan> {
+  key: ClaveDeEstadoPlan;
+}

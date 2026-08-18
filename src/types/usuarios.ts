@@ -17,10 +17,16 @@ export interface Usuario extends EntidadBase {
 }
 
 /**
- * Rol del sistema (CU57, CU62).
- * Keys previstas: 'usuario', 'administrador'.
+ * Claves previstas para el rol de usuario (CU57, CU62).
  */
-export type Rol = EntidadCatalogo;
+export type ClaveDeRol = 'usuario' | 'administrador';
+
+/**
+ * Rol del sistema (CU57, CU62).
+ */
+export interface Rol extends EntidadCatalogo<ClaveDeRol> {
+  key: ClaveDeRol;
+}
 
 /**
  * Permiso concreto sobre un recurso del sistema (CU61).
@@ -39,10 +45,16 @@ export interface RolPermiso extends EntidadBase {
 }
 
 /**
- * Estado de la cuenta de un usuario (CU2, CU7, CU57).
- * Keys previstas: 'activo', 'suspendido', 'baneado'.
+ * Claves previstas para el estado de cuenta de un usuario (CU2, CU7, CU57).
  */
-export type EstadoUsuario = EntidadCatalogo;
+export type ClaveDeEstadoUsuario = 'activo' | 'suspendido' | 'baneado';
+
+/**
+ * Estado de la cuenta de un usuario (CU2, CU7, CU57).
+ */
+export interface EstadoUsuario extends EntidadCatalogo<ClaveDeEstadoUsuario> {
+  key: ClaveDeEstadoUsuario;
+}
 
 /**
  * Categoría preferida por un usuario (CU8, CU18, CU21). Relación N:M entre Usuario y Categoria.

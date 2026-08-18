@@ -4,9 +4,23 @@ import type { Departamento } from './lugares';
 import type { Categoria } from './categorias';
 
 /**
+ * Claves previstas para el tipo de salida (CU17, CU19).
+ */
+export type ClaveDeTipoSalida =
+  | 'en_pareja'
+  | 'con_amigos'
+  | 'en_familia'
+  | 'solo'
+  | 'pareja'
+  | 'amigos'
+  | 'familia';
+
+/**
  * Tipo de salida para la generación de un plan (CU17, CU19).
  */
-export type TipoSalida = EntidadCatalogo;
+export interface TipoSalida extends EntidadCatalogo<ClaveDeTipoSalida> {
+  key: ClaveDeTipoSalida;
+}
 
 /**
  * Parámetros solicitados por el usuario para generar un plan (CU17, CU19, CU31).
@@ -53,13 +67,32 @@ export interface Retroalimentacion extends EntidadBase {
 }
 
 /**
- * Estado del procesamiento de una solicitud de plan (CU17, CU19, CU31).
- * Keys previstas: 'pendiente', 'en_proceso', 'generada', 'fallida'.
+ * Claves previstas para el estado de una solicitud de plan (CU17, CU19, CU31).
  */
-export type EstadoSolicitud = EntidadCatalogo;
+export type ClaveDeEstadoSolicitud =
+  | 'pendiente'
+  | 'en_proceso'
+  | 'generada'
+  | 'fallida';
+
+/**
+ * Estado del procesamiento de una solicitud de plan (CU17, CU19, CU31).
+ */
+export interface EstadoSolicitud extends EntidadCatalogo<ClaveDeEstadoSolicitud> {
+  key: ClaveDeEstadoSolicitud;
+}
+
+/**
+ * Claves previstas para el estado de una retroalimentación (CU21, CU23).
+ */
+export type ClaveDeEstadoRetroalimentacion =
+  | 'pendiente'
+  | 'procesada'
+  | 'descartada';
 
 /**
  * Estado del procesamiento de una retroalimentación (CU21, CU23).
- * Keys previstas: 'pendiente', 'procesada', 'descartada'.
  */
-export type EstadoRetroalimentacion = EntidadCatalogo;
+export interface EstadoRetroalimentacion extends EntidadCatalogo<ClaveDeEstadoRetroalimentacion> {
+  key: ClaveDeEstadoRetroalimentacion;
+}

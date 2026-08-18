@@ -1,10 +1,15 @@
 import { EntidadBase, EntidadCatalogo } from './common';
 
 /**
- * Proveedor de servicios externos (CU48-CU52).
- * Keys previstas: 'google_maps', 'openai'.
+ * Claves previstas para el proveedor de servicios externos (CU48-CU52).
  */
-export interface ProveedorExterno extends EntidadCatalogo {
+export type ClaveDeProveedorExterno = 'google_maps' | 'gemini';
+
+/**
+ * Proveedor de servicios externos (CU48-CU52).
+ */
+export interface ProveedorExterno extends EntidadCatalogo<ClaveDeProveedorExterno> {
+  key: ClaveDeProveedorExterno;
   activo: boolean;
   sincronizaciones?: SincronizacionExterna[];
 }

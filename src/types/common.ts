@@ -13,8 +13,8 @@ export interface EntidadBase {
  * Forma común para entidades de tipo catálogo en el dominio.
  * Contiene un identificador `key` único de negocio, un `nombre` visible y una `descripcion` opcional.
  */
-export interface EntidadCatalogo extends EntidadBase {
+export interface EntidadCatalogo<K extends string = string> extends EntidadBase {
   nombre: string;
-  key: string;
+  key: K;
   descripcion: string | null;
 }

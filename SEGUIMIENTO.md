@@ -204,6 +204,7 @@ Decisiones técnicas tomadas y su motivo. Sirve para no rediscutir lo mismo dos 
 | 2026-08-11 | Los issues en blanco quedan habilitados | El trabajo de fundaciones no sale de la matriz de trazabilidad y no entra en ninguna de las dos plantillas. Deshabilitarlos obligaría a forzar issues de fundaciones dentro de la plantilla de caso de uso |
 | 2026-08-11 | La Definition of Done vive en `skills/02-git-flow/DEFINITION-OF-DONE.md` y no en el wiki | El wiki no se versiona con el código ni se revisa por PR. Acá cambia con las mismas 2 aprobaciones que cualquier otro cambio |
 | 2026-08-11 | La DoD incluye los criterios del back aunque este sea el repo del front | Es un acuerdo del equipo, no del repositorio, y el archivo es núcleo compartido: se replica verbatim en `SmartPlan-back` |
+| 2026-08-18 | Claves de catálogos mediante uniones literales | Evita incompatibilidad estructural entre catálogos (`EstadoUsuario`, `Rol`, etc.) y previene claves inválidas en TypeScript. Verificado contra `SmartPlan-back` commit `8ec4d07a34d2058f2147220e69d494e4da183811` y `openai` corregido a `gemini`. |
 
 ---
 
@@ -245,3 +246,4 @@ Cosas detectadas que todavía no tienen dueño:
 | 2026-08-16 | F15: `tokens.css` importado en `globals.css` y expuesto a Tailwind 4 vía `@theme inline` (colores y radios). Se eliminó el `@font-face` duplicado de `tokens.css` y `page.tsx` se migró a las utilidades nuevas, sin colores hardcodeados. `pnpm lint` y `next build` verdes. |
 | 2026-08-17 | F18: Implementación de los 37 tipos del dominio TypeScript en `src/types/` coordinados con el backend TypeORM. `pnpm lint`, `pnpm build` y `tsc` ejecutados limpiamente. |
 | 2026-08-17 | F16: los siete primitivos de EMBER v2 se portaron a componentes React con contratos TypeScript, accesibilidad básica y un barrel público en `@/components/ui`. Revisión del PR: `Icon` pasó de `lucide-react/dynamic` a un registro estático (`iconRegistry.ts`) —los iconos ahora salen en el HTML del servidor y el JS inicial baja de 874 KB a 646 KB—, y el foco de `Button`/`Chip` recuperó un `outline` visible: `--focus-ember` solo da 1.2:1 de contraste. |
+| 2026-08-18 | F18 (Review): Corrección de catálogos restringiendo `key` con tipos literales, reemplazo de `openai` por `gemini` en `ProveedorExterno`, inclusión de test de tipos (`catalogos-test.ts`) y documentación de la referencia de `SmartPlan-back` commit `8ec4d07`. |
