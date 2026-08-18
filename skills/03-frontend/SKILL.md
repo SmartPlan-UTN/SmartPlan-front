@@ -89,13 +89,32 @@ técnico (hooks, utilidades, props) puede ir en inglés si es más natural.
 
 ## Consumo de la API
 
-- Todas las llamadas pasan por un cliente axios centralizado en `src/lib/api/`.
-  No instancies axios suelto en los componentes.
-- La URL base va en variable de entorno (`NEXT_PUBLIC_API_URL`), nunca hardcodeada.
-- Autenticación por **JWT**: el token va en el header `Authorization: Bearer <token>`.
-- **Toda promesa se maneja.** ESLint tiene `no-floating-promises` en error: una
-  promesa sin `await` ni `.catch()` hace que el error se pierda en silencio y la
-  UI quede inconsistente.
+- Todas las llamadas pasan por el cliente HTTP centralizado en `src/lib/api/` (`import { apiClient } from '@/lib/api'`). **No instancies Axios suelto en componentes o servicios**.
+- La URL base se configura dinámicamente mediante `NEXT_PUBLIC_API_URL` (definida en `.env.local`, ver `.env.example`).
+- **Autenticación JWT**: El cliente inyecta automáticamente `Authorization: Bearer <token>` cuando hay un token disponible. Por defecto consulta `localStorage` de forma SSR-safe. Se puede registrar un proveedor de token dinámico mediante `setTokenGetter(customGetter)`.
+- **Manejo de errores**: Las peticiones fallidas arrojan una instancia de `ApiError` (`import { ApiError } from '@/lib/api'`).
+  - `error.es401`: Sesión o token inválido (desencadena automáticamente eventos registrados en `onUnauthorized(cb)`).
+  - `error.es403`: Falta de permisos (no borra la sesión).
+  - `error.esRed`: Problemas de red o tiempo de espera (timeout).
+  - `error.mensaje`: Mensaje descriptivo retornado por el backend o fallback formateado.
+- **Toda promesa se maneja.** ESLint tiene `@typescript-eslint/no-floating-promises` en error: una promesa sin `await` ni `.catch()` romperá el build.
+
+```ts
+import { apiClient, ApiError } from '@/lib/api';
+import type { Plan } from '@/types';
+
+// Ejemplo de consumo en un servicio
+export async function obtenerPlan(id: number): Promise<Plan> {
+  try {
+    return await apiClient.get<Plan>(`/planes/${id}`);
+  } catch (error) {
+    if (error instanceof ApiError && error.es404) {
+      // Manejo específico si es necesario
+    }
+    throw error;
+  }
+}
+```
 
 ## Guía visual
 
