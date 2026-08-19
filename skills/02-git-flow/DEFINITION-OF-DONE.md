@@ -66,6 +66,8 @@ que se llena sola al abrir el pull request. Este archivo es el detalle: el
 - **El PR cierra el issue con `Closes #NN`.** Es lo que arma la trazabilidad
   issue → PR → commit.
 - **2 aprobaciones.** Está forzado por la protección de rama: no hay atajo.
+- **El check `CI` en verde** (lint + test + build). Es un status check
+  obligatorio, forzado por la misma protección de rama.
 - **Sin conflictos con `develop`** al momento de mergear.
 
 ## 6. Documentación

@@ -43,7 +43,7 @@ historial de git.
 |---|---|
 | **Fase** | Fundaciones — layout y navegación listos, sin casos de uso implementados |
 | **Rama base** | `develop` |
-| **Última actualización** | 2026-08-18 |
+| **Última actualización** | 2026-08-19 |
 | **Casos de uso finalizados** | 0 / 62 |
 
 ---
@@ -67,6 +67,7 @@ historial de git.
 | [F17] Cliente axios centralizado (`src/lib/api/`) | `Finalizado` | `Smart-f17-cliente-axios-centralizado-con-interceptor-de-jwt` | — | Con interceptor para JWT, abstracción TokenGetter, normalización ApiError y manejo pub/sub de 401 |
 | [F17] Variables de entorno (`NEXT_PUBLIC_API_URL`) | `Finalizado` | `Smart-f17-cliente-axios-centralizado-con-interceptor-de-jwt` | — | Plantilla `.env.example` agregada e integración dinámica en `config.ts` |
 | [F19] Estructura de carpetas, layout base y navbar | `En progreso` | `SMART-f19-estructura-de-carpetas-layout-base-y-navbar` | — | Grupos `(auth)`, `(main)` y `(privado)` en `src/app/`, navbar de 60px con `backdrop-filter`, menú de usuario, mapa de rutas en `src/lib/rutas.ts`, sesión en `src/lib/auth/` y guardián `RutaProtegida`. Las pantallas son marcadores hasta que se implemente cada CU |
+| [F06] Integración continua: lint y tests en cada PR | `En revisión` | `SMART-f06-integracion-continua-lint-y-tests-en-prs` | Ref [`SmartPlan-back#28`](https://github.com/SmartPlan-UTN/SmartPlan-back/issues/28) | El `ci.yml` de F20 ya cubría lint/test/build en push+PR contra develop/main; este ticket alinea el job id a `ci` (antes `quality`) y el setup a `pnpm/action-setup` + `actions/setup-node` con `node-version-file: '.nvmrc'` (antes `pnpm/setup` compuesto), mismo patrón que `SmartPlan-back`. La fila de "Protección de ramas" de arriba dice `Finalizado` pero no había evidencia de que el check estuviera marcado como status check obligatorio — F06 lo confirma/configura. Falta el paso manual en GitHub (nombre exacto del check tras la primera corrida) y abrir el PR |
 
 ---
 
@@ -259,3 +260,4 @@ Cosas detectadas que todavía no tienen dueño:
 | 2026-08-18 | F18 (Review): Corrección de catálogos restringiendo `key` con tipos literales, reemplazo de `openai` por `gemini` en `ProveedorExterno`, inclusión de test de tipos (`catalogos-test.ts`) y documentación de la referencia de `SmartPlan-back` commit `8ec4d07`. |
 | 2026-08-18 | F17: Cliente Axios centralizado en `src/lib/api/` con interceptor JWT, abstracción de token decoupled (`setTokenGetter`), normalización de respuestas/red en `ApiError`, pub/sub con debouncing para 401 (`onUnauthorized`), plantilla `.env.example` y actualización de documentación en `skills/03-frontend/SKILL.md`. `npx eslint .`, `npx tsc --noEmit` y `npx next build` 100% limpios. |
 | 2026-08-18 | F19: estructura de `src/app` con los grupos `(auth)`, `(main)` y `(privado)`, layout con la navbar de 60px y `backdrop-filter`, navegación de Inicio, Explorar, Favoritos e Historial, menú de usuario y rutas protegidas que mandan al login con el destino en `?redirect=`. Se sacó la página del template de `create-next-app` y las pantallas quedaron como marcadores con su CU. `pnpm lint`, `pnpm test` (26) y `pnpm build` verdes. |
+| 2026-08-19 | F06 (ref back#28): el `ci.yml` de F20 ya cumplía casi todo el ticket (lint+test+build en push/PR contra develop/main); se alineó el job id a `ci` (antes `quality`) y el setup a `pnpm/action-setup@v6` + `actions/setup-node@v7` con `node-version-file: '.nvmrc'`, separando explícitamente de dónde sale Node (antes delegado entero a la composite action `pnpm/setup@v2`) — mismo patrón que se implementó en `SmartPlan-back`. Sin cambios de trigger ni de los tres checks reales. `pnpm lint`, `pnpm test` (26) y `pnpm build` verdes con el workflow nuevo. Falta configurar el status check `CI` como obligatorio en la protección de `develop` y `main` (con el nombre exacto que muestre GitHub tras la primera corrida, quitando el check viejo `Quality` si estaba configurado) y abrir el PR. |
