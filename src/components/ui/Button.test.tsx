@@ -6,20 +6,20 @@ import { Button } from "./Button";
 
 describe("Button", () => {
   it("renderiza un botón accesible con type button por defecto", () => {
-    render(<Button>Crear plan</Button>);
+    render(<Button>Create plan</Button>);
 
-    expect(screen.getByRole("button", { name: "Crear plan" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Create plan" })).toHaveAttribute(
       "type",
       "button",
     );
   });
 
-  it("ejecuta el callback cuando el usuario hace click", async () => {
+  it("ejecuta el callback cuando el user hace click", async () => {
     const user = userEvent.setup();
     const handleClick = vi.fn();
-    render(<Button onClick={handleClick}>Crear plan</Button>);
+    render(<Button onClick={handleClick}>Create plan</Button>);
 
-    await user.click(screen.getByRole("button", { name: "Crear plan" }));
+    await user.click(screen.getByRole("button", { name: "Create plan" }));
 
     expect(handleClick).toHaveBeenCalledOnce();
   });

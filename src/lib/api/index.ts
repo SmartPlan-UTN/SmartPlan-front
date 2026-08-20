@@ -7,11 +7,11 @@
 export { apiClient } from './client';
 export type { RequestConfig } from './client';
 
-export { ApiError, normalizarError } from './errors';
+export { ApiError, normalizeError } from './errors';
 export type {
-  TipoErrorApi,
+  ApiErrorType,
   ErrorResponseData,
-  OpcionesApiError,
+  ApiErrorOptions,
 } from './errors';
 
 export {
@@ -22,6 +22,6 @@ export {
 export type { TokenGetter } from './token-provider';
 
 export { onUnauthorized, notifyUnauthorized } from './auth-events';
-export type { ListenerNoAutorizado } from './auth-events';
+export type { UnauthorizedListener } from './auth-events';
 
 export { getApiBaseUrl } from './config';

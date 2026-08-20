@@ -136,7 +136,7 @@ Están en [`.github/ISSUE_TEMPLATE/`](../../.github/ISSUE_TEMPLATE/):
 
 | Plantilla | Para qué | Título que genera |
 |---|---|---|
-| `caso-de-uso.yml` | Funcionalidad que sale de la matriz de trazabilidad | `[CU00] ` |
+| `use-case.yml` | Funcionalidad que sale de la matriz de trazabilidad | `[CU00] ` |
 | `bug.yml` | Algo ya implementado que falla en `develop` | `[BUG] ` |
 
 El trabajo de fundaciones (tooling, configuración, documentación) **no entra en
@@ -163,7 +163,7 @@ Qué significa "terminado" está en
 Acordada en el refinamiento del Sprint 0 y vigente en los dos repositorios.
 
 En corto: criterios de aceptación cumplidos, `pnpm lint` sin errores, build en
-verde, sin secretos, `SEGUIMIENTO.md` actualizado, PR con las tres secciones y
+verde, sin secretos, `TRACKING.md` actualizado, PR con las tres secciones y
 `Closes #NN`, y 2 aprobaciones. El detalle y el motivo de cada punto están en ese
 archivo — **leelo entero una vez** y después alcanza con la checklist del PR.
 

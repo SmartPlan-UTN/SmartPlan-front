@@ -7,12 +7,12 @@ como los agentes de IA (Claude, Codex, Copilot).
 
 | Carpeta | Qué contiene | Alcance |
 |---|---|---|
-| `00-proyecto/` | Qué es SmartPlan, objetivo, alcance, módulos, equipo, stack | Compartido |
-| `01-dominio/` | Entidades, 62 casos de uso, pantallas, glosario | Compartido |
+| `00-project/` | Qué es SmartPlan, objetivo, alcance, módulos, equipo, stack | Compartido |
+| `01-domain/` | Entidades, 62 casos de uso, pantallas, glosario | Compartido |
 | `02-git-flow/` | Ramas, protección, PRs, mensajes de commit, plantillas y Definition of Done | Compartido |
 | `03-frontend/` | Next.js 16, Tailwind, guía visual, consumo de la API | Solo este repo |
-| `04-calidad/` | ESLint, reglas activas, qué hacer ante un error | Solo este repo |
-| `05-arquitectura/` | Componentes, comunicación, tecnologías, entornos | Compartido |
+| `04-quality/` | ESLint, reglas activas, qué hacer ante un error | Solo este repo |
+| `05-architecture/` | Componentes, comunicación, tecnologías, entornos | Compartido |
 | `06-design-system/` | Tokens EMBER, tipografía, primitivos, logos, voz de marca | Solo este repo |
 | `07-testing/` | Vitest, React Testing Library, tests de componentes y hooks | Solo este repo |
 

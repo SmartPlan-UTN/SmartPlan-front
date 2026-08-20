@@ -57,18 +57,18 @@ import {
 } from "lucide-react";
 
 /**
- * Iconografía del proyecto: nombres de Lucide en kebab-case (los mismos que usa
+ * Iconografía del proyecto: names de Lucide en kebab-case (los mismos que usa
  * el prototipo) mapeados a su componente.
  *
- * Es un registro explícito a propósito. `lucide-react/dynamic` resuelve el icono
- * en el cliente dentro de un `useEffect`, así que ningún icono llega en el HTML
+ * Es un signup explícito a propósito. `lucide-react/dynamic` resuelve el icon
+ * en el client dentro de un `useEffect`, así que ningún icon llega en el HTML
  * del servidor y el bundler tiene que emitir un chunk por cada uno de los ~1600
- * iconos de la librería. Con este mapa los iconos se renderizan en el servidor y
+ * icons de la librería. Con este mapa los icons se renderizan en el servidor y
  * solo entran al bundle los que están acá.
  *
- * **Para usar un icono nuevo hay que agregarlo a este mapa.** Importalo de
- * `lucide-react` en PascalCase y sumá la entrada en kebab-case, respetando el
- * orden alfabético. El nombre correcto está en https://lucide.dev/icons.
+ * **Para usar un icon nuevo hay que agregarlo a este mapa.** Importalo de
+ * `lucide-react` en PascalCase y sumá la input en kebab-case, respetando el
+ * order alfabético. El name correcto está en https://lucide.dev/icons.
  */
 export const iconRegistry = {
   accessibility: Accessibility,
@@ -127,5 +127,5 @@ export const iconRegistry = {
   x: X,
 } satisfies Record<string, LucideIcon>;
 
-/** Nombres de icono disponibles. Se deriva del registro: no hay que mantenerlo aparte. */
+/** Nombres de icon disponibles. Se deriva del signup: no hay que mantenerlo aparte. */
 export type IconName = keyof typeof iconRegistry;

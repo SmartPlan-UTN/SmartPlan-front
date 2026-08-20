@@ -4,9 +4,9 @@
  */
 
 /**
- * Obtiene y valida la URL base de la API de SmartPlan desde las variables de entorno.
+ * Obtiene y valida la URL base de la API de SmartPlan desde las variables de environment.
  *
- * @returns La URL base sanitizada (sin barra al final).
+ * @returns La URL base sanitizada (sin navbar al final).
  * @throws {Error} Si `NEXT_PUBLIC_API_URL` no está definida ni tiene contenido válido.
  */
 export function getApiBaseUrl(): string {
@@ -14,7 +14,7 @@ export function getApiBaseUrl(): string {
 
   if (!url || url.trim() === '') {
     throw new Error(
-      '[SmartPlan API] La variable de entorno NEXT_PUBLIC_API_URL no está configurada. ' +
+      '[SmartPlan API] La variable de environment NEXT_PUBLIC_API_URL no está configurada. ' +
         'Por favor, definila en tu archivo .env.local (ver .env.example).'
     );
   }

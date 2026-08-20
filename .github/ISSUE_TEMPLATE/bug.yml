@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Para trabajo nuevo usá la plantilla de **caso de uso**. Esta es para algo
+        Para job nuevo usá la plantilla de **caso de uso**. Esta es para algo
         que ya existe en `develop` y falla.
 
   - type: textarea
@@ -14,7 +14,7 @@ body:
     attributes:
       label: Qué pasa
       description: Una o dos frases. Sin interpretar la causa todavía.
-      placeholder: Al guardar un plan desde el detalle, el botón queda cargando para siempre y el plan no aparece en Guardados.
+      placeholder: Al guardar un plan desde el detalle, el botón queda loading para siempre y el plan no aparece en Guardados.
     validations:
       required: true
 
@@ -41,7 +41,7 @@ body:
     id: obtenido
     attributes:
       label: Qué pasó en cambio
-      description: Si hay un error en la consola o una respuesta HTTP con código de error, ponelo acá.
+      description: Si hay un error en la consola o una response HTTP con código de error, ponelo acá.
     validations:
       required: true
 
@@ -49,8 +49,8 @@ body:
     id: donde
     attributes:
       label: Dónde
-      description: Ruta y pantalla del prototipo, si aplica.
-      placeholder: /planes/17 — PAN 17
+      description: Route y pantalla del prototipo, si aplica.
+      placeholder: /plans/17 — PAN 17
     validations:
       required: true
 
@@ -61,14 +61,14 @@ body:
       description: Bloqueante y grave entran al sprint en curso; el resto se prioriza en el refinamiento.
       options:
         - Bloqueante — no se puede usar la funcionalidad ni hay forma de esquivarlo
-        - Grave — falla seguido o pierde datos, pero hay una vuelta
+        - Grave — falla seguido o pierde data, pero hay una vuelta
         - Molesto — falla en un caso puntual
         - Cosmético — se ve mal, funciona bien
     validations:
       required: true
 
   - type: input
-    id: entorno
+    id: environment
     attributes:
       label: Entorno
       description: Navegador y versión, rama o commit donde lo viste, y si el back estaba corriendo local.
@@ -79,7 +79,7 @@ body:
   - type: textarea
     id: evidencia
     attributes:
-      label: Capturas, logs o respuesta de la API
+      label: Capturas, logs o response de la API
       description: Arrastrá las imágenes acá. Pegá los logs entre triple backtick. **Borrá tokens y credenciales antes de pegar.**
 
   - type: checkboxes

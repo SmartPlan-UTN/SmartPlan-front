@@ -17,10 +17,10 @@ backend vive en [`SmartPlan-back`](https://github.com/SmartPlan-UTN/SmartPlan-ba
 
 | | Dónde |
 |---|---|
-| Convenciones del proyecto | [`skills/`](skills/) — empezá por [`00-proyecto`](skills/00-proyecto/SKILL.md) |
+| Convenciones del proyecto | [`skills/`](skills/) — empezá por [`00-project`](skills/00-project/SKILL.md) |
 | Ramas, commits y PRs | [`skills/02-git-flow/SKILL.md`](skills/02-git-flow/SKILL.md) |
 | **Qué significa "terminado"** | [`skills/02-git-flow/DEFINITION-OF-DONE.md`](skills/02-git-flow/DEFINITION-OF-DONE.md) |
-| Estado de cada funcionalidad | [`SEGUIMIENTO.md`](SEGUIMIENTO.md) |
+| Estado de cada funcionalidad | [`TRACKING.md`](TRACKING.md) |
 
 En corto:
 
@@ -34,7 +34,7 @@ En corto:
 4. Abrí el PR **con base `develop`**. La plantilla ya trae las tres secciones —
    qué hace, cómo probarlo, qué queda afuera —, el `Closes #NN` y la checklist de
    la Definition of Done. Necesita **2 aprobaciones**.
-5. Actualizá tu fila en `SEGUIMIENTO.md`.
+5. Actualizá tu fila en `TRACKING.md`.
 
 ```bash
 pnpm install      # instalar dependencias
@@ -64,14 +64,14 @@ src/app/
 ├── (main)/      pantallas con navbar
 │   ├── page.tsx     inicio
 │   ├── explorar/
-│   └── (privado)/   favoritos, historial, perfil, preferencias — exigen sesión
+│   └── (private)/   favorites, history, profile, preferences — exigen sesión
 └── admin/       panel de administración
 ```
 
-Una pantalla nueva se protege **por dónde vive**: si va dentro de `(privado)`, el
-layout del grupo la envuelve en `RutaProtegida`, que manda al login con
+Una pantalla nueva se protege **por dónde vive**: si va dentro de `(private)`, el
+layout del grupo la envuelve en `ProtectedRoute`, que manda al login con
 `?redirect=<ruta>` cuando no hay sesión. Los destinos de la navegación y las URLs
-salen de [`src/lib/rutas.ts`](src/lib/rutas.ts); no se escriben a mano en los
+salen de [`src/lib/routes.ts`](src/lib/routes.ts); no se escriben a mano en los
 `<Link>`.
 
 Mientras el login no exista (CU1), la sesión se simula desde la consola del

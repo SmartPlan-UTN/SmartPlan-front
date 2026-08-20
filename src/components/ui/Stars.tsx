@@ -24,8 +24,8 @@ export function Stars({
   const roundedRating = Math.round(safeRating * 2) / 2;
   const classes = [styles.stars, className].filter(Boolean).join(" ");
 
-  // Si el consumidor ya apunta a una etiqueta externa con aria-labelledby, no se
-  // genera aria-label: dos etiquetas compitiendo dejan una sin usar.
+  // Si el consumidor ya apunta a una label externa con aria-labelledby, no se
+  // genera aria-label: dos labels compitiendo dejan una sin usar.
   const label =
     ariaLabel ??
     (props["aria-labelledby"] != null

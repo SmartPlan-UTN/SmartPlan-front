@@ -1,27 +1,27 @@
-import { EntidadBase } from './common';
-import type { Usuario } from './usuarios';
+import { BaseEntity } from './common';
+import type { User } from './users';
 
 /**
- * Sesión abierta por un usuario (CU1, CU4).
+ * Sesión abierta por un user (CU1, CU4).
  * Nota: tokenHash no se expone en el frontend por seguridad.
  */
-export interface SesionUsuario extends EntidadBase {
-  idUsuario: number;
-  fechaInicio: string;
-  activa: boolean;
+export interface UserSession extends BaseEntity {
+  idUser: number;
+  startedAt: string;
+  active: boolean;
   ip: string | null;
-  usuario?: Usuario;
+  user?: User;
 }
 
 /**
  * Solicitud de recuperación de contraseña (CU3).
  * Nota: tokenHash no se expone en el frontend por seguridad.
  */
-export interface RecuperacionContrasena extends EntidadBase {
-  idUsuario: number;
-  fechaCreacion: string;
-  fechaExpiracion: string;
-  usado: boolean;
-  usuario?: Usuario;
+export interface PasswordRecovery extends BaseEntity {
+  idUser: number;
+  tokenCreatedAt: string;
+  expiresAt: string;
+  used: boolean;
+  user?: User;
 }
 

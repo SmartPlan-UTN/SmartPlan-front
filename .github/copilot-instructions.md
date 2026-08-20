@@ -23,8 +23,8 @@ axios · lucide-react · ESLint 9 · **pnpm** como gestor de paquetes.
 
 ## Convenciones
 
-- **Dominio en español.** Las entidades se llaman `plan`, `detalle_plan`,
-  `actividad`, `lugar`, `coleccion`, `valoracion`, `retroalimentacion`. En
+- **Dominio en español.** Las entidades se llaman `plan`, `plan_detail`,
+  `actividad`, `lugar`, `coleccion`, `rating`, `feedback`. En
   TypeScript, `PascalCase`: `DetallePlan`. No traduzcas al inglés.
 - Componentes en `PascalCase`, hooks con prefijo `use`, carpetas de ruta en
   `kebab-case`.
@@ -72,7 +72,7 @@ Tokens en `src/styles/tokens.css`, guía completa en `skills/06-design-system/SK
 **Nunca sugieras un color hexadecimal escrito a mano.** Usá las variables CSS:
 `--ember #E85D20` (primario) · `--char #1A1109` (texto y superficies oscuras) ·
 `--cream #F5F0E8` (fondo) · `--surface-card #FFFCF8` (tarjetas, nunca blanco puro) ·
-`--electric #2B5BFF` (IA) · `--gold #FFD166` (valoraciones) · `--hairline #E2DDD5` ·
+`--electric #2B5BFF` (IA) · `--gold #FFD166` (ratinges) · `--hairline #E2DDD5` ·
 `--success #22C06B` · `--warning #F5A623` · `--error #F04040`.
 
 Tipografía única: **Bricolage Grotesque** (self-hosted en `src/app/fonts/`).

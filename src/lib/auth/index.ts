@@ -1,10 +1,10 @@
 /**
- * Estado de sesión del frontend.
+ * Status de sesión del frontend.
  *
  * Importar siempre desde `@/lib/auth`, no desde los archivos internos.
  */
 
-export { SesionProvider, useSesion } from "./SesionProvider";
-export type { EstadoSesion, Sesion, SesionProviderProps } from "./SesionProvider";
+export { SessionProvider, useSession } from "./SessionProvider";
+export type { SessionStatus, Session, SessionProviderProps } from "./SessionProvider";
 
-export { borrarToken, guardarToken, leerToken, suscribirSesion } from "./sesion";
+export { clearToken, saveToken, readToken, subscribeToSession } from "./session";

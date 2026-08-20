@@ -1,14 +1,14 @@
 /* ================================================================
-   Cáscara de la aplicación: navbar, menú de usuario y contenedores.
+   Cáscara de la aplicación: navbar, menú de user y containeres.
 
    Todos los valores salen de los tokens de src/styles/tokens.css.
    Los mixes con transparencia se derivan del token con color-mix()
    en vez de escribir un rgba() a mano.
    ================================================================ */
 
-/* ── Enlace de salto ───────────────────────────────────────────── */
+/* ── Link de salto ───────────────────────────────────────────── */
 /* Primer elemento enfocable de la página: deja saltar la navegación
-   con el teclado sin recorrer los cuatro enlaces en cada pantalla. */
+   con el teclado sin recorrer los cuatro links en cada pantalla. */
 .saltarContenido {
   position: fixed;
   top: var(--s-2);
@@ -35,19 +35,19 @@
   top: 0;
   z-index: 50;
   background: var(--char);
-  /* 88% y no menos: la barra también viaja sobre pantallas claras, y con más
-     transparencia el cream de abajo sube el fondo hasta dejar los enlaces
+  /* 88% y no menos: la navbar también viaja envelope pantallas claras, y con más
+     transparencia el cream de abajo sube el fondo hasta dejar los links
      inactivos (--fg-on-dark-2, 55%) en 4.3:1, por debajo del 4.5:1 de WCAG. */
   background: color-mix(in srgb, var(--char) 88%, transparent);
   /* La prefijada va primero. El minificador deduplica las declaraciones
-     equivalentes y se queda con la última: con el orden invertido el CSS
+     equivalentes y se queda con la última: con el order invertido el CSS
      publicado tenía solo -webkit-backdrop-filter y Firefox perdía el blur. */
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
   border-bottom: 1px solid var(--hairline-dark);
 }
 
-/* Sin backdrop-filter la barra queda translúcida y el texto de la página se
+/* Sin backdrop-filter la navbar queda translúcida y el texto de la página se
    lee por debajo: ahí conviene el fondo sólido. */
 @supports not (
   (backdrop-filter: blur(18px)) or (-webkit-backdrop-filter: blur(18px))
@@ -57,7 +57,7 @@
   }
 }
 
-.barra {
+.navbar {
   display: flex;
   align-items: center;
   gap: var(--s-3);
@@ -76,11 +76,11 @@
 }
 
 .marca:focus-visible,
-.enlace:focus-visible,
-.opcion:focus-visible,
+.link:focus-visible,
+.option:focus-visible,
 .disparador:focus-visible,
 .botonMenu:focus-visible,
-.enlaceBoton:focus-visible {
+.buttonLink:focus-visible {
   outline: 2px solid var(--ember);
   outline-offset: 2px;
 }
@@ -94,12 +94,12 @@
 
 /* Empuja el control de sesión —y con él el botón de navegación— contra el
    borde derecho, sin necesidad de un elemento separador vacío. */
-.controlSesion {
+.sessionControl {
   margin-inline-start: auto;
 }
 
-/* ── Enlaces de la barra ───────────────────────────────────────── */
-.enlace {
+/* ── Links de la navbar ───────────────────────────────────────── */
+.link {
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
@@ -115,18 +115,18 @@
     background 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.enlace:hover {
+.link:hover {
   color: var(--fg-on-dark);
   background: color-mix(in srgb, var(--white) 8%, transparent);
 }
 
-.enlaceActivo {
+.linkActivo {
   color: var(--fg-on-dark);
   background: var(--ember-15);
 }
 
-/* ── Menú de usuario ───────────────────────────────────────────── */
-.menuUsuario {
+/* ── Menú de user ───────────────────────────────────────────── */
+.userMenu {
   position: relative;
   display: inline-flex;
 }
@@ -151,12 +151,12 @@
 }
 
 /* En 320px no entran el logo, el control de sesión con texto y el botón de
-   navegación: abajo de 900px el control queda como icono, con su aria-label. */
-.etiquetaSesion {
+   navegación: abajo de 900px el control queda como icon, con su aria-label. */
+.labelSession {
   display: none;
 }
 
-.enlaceBoton {
+.buttonLink {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
@@ -172,15 +172,15 @@
   transition: filter 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.enlaceBoton:hover {
+.buttonLink:hover {
   filter: brightness(1.1);
 }
 
-/* Reserva el lugar del control mientras se resuelve la sesión, para que la
-   barra no salte cuando aparece el menú o el botón de login. El ancho es el del
-   control ya resuelto: solo icono en viewport chico, con etiqueta arriba de
+/* Reserva el place del control mientras se resuelve la sesión, para que la
+   navbar no salte cuando aparece el menú o el botón de login. El ancho es el del
+   control ya resuelto: solo icon en viewport chico, con label arriba de
    900px. */
-.marcadorSesion {
+.sessionPlaceholder {
   display: inline-block;
   width: 56px;
   height: 34px;
@@ -202,7 +202,7 @@
   animation: fadeUp 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-.opcion {
+.option {
   display: flex;
   align-items: center;
   gap: var(--s-3);
@@ -219,7 +219,7 @@
   cursor: pointer;
 }
 
-.opcion:hover {
+.option:hover {
   background: var(--char-surface2);
 }
 
@@ -265,11 +265,11 @@
     display: flex;
   }
 
-  .etiquetaSesion {
+  .labelSession {
     display: inline;
   }
 
-  .marcadorSesion {
+  .sessionPlaceholder {
     width: 140px;
   }
 
@@ -279,13 +279,13 @@
   }
 }
 
-/* ── Contenedores de contenido ─────────────────────────────────── */
+/* ── Containeres de contenido ─────────────────────────────────── */
 .contenido {
   flex: 1;
   width: 100%;
 }
 
-.contenedor {
+.container {
   width: 100%;
   max-width: var(--max-w);
   margin-inline: auto;
@@ -293,7 +293,7 @@
 }
 
 /* ── Cáscara centrada: pantallas de sesión y 404 ───────────────── */
-.pantallaCentrada {
+.centeredScreen {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -304,7 +304,7 @@
   background: var(--char);
 }
 
-.tarjetaCentrada {
+.centeredCard {
   width: 100%;
   max-width: 420px;
   padding: var(--s-6);
@@ -317,8 +317,8 @@
   color: var(--fg-on-dark);
 }
 
-/* ── Pantalla pendiente de implementar ─────────────────────────── */
-.pantallaPendiente {
+/* ── Pantalla pending de implementar ─────────────────────────── */
+.pendingScreen {
   display: flex;
   flex-direction: column;
   align-items: flex-start;

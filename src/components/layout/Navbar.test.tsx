@@ -3,32 +3,32 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DEFAULT_TOKEN_STORAGE_KEY } from "@/lib/api";
-import { SesionProvider } from "@/lib/auth";
+import { SessionProvider } from "@/lib/auth";
 
 import { Navbar } from "./Navbar";
 
-const ruta = vi.hoisted(() => ({ actual: "/" }));
+const route = vi.hoisted(() => ({ actual: "/" }));
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => ruta.actual,
+  usePathname: () => route.actual,
   useRouter: () => ({ replace: vi.fn(), push: vi.fn(), refresh: vi.fn() }),
 }));
 
 function renderNavbar() {
   return render(
-    <SesionProvider>
+    <SessionProvider>
       <Navbar />
-    </SesionProvider>,
+    </SessionProvider>,
   );
 }
 
 describe("Navbar", () => {
   beforeEach(() => {
     localStorage.clear();
-    ruta.actual = "/";
+    route.actual = "/";
   });
 
-  it("ofrece los cuatro destinos de la navegación principal", () => {
+  it("ofrece los cuatro destinations de la navegación principal", () => {
     renderNavbar();
 
     const navegacion = screen.getByRole("navigation", {
@@ -40,17 +40,17 @@ describe("Navbar", () => {
     ).toHaveAttribute("href", "/");
     expect(
       within(navegacion).getByRole("link", { name: "Explorar" }),
-    ).toHaveAttribute("href", "/explorar");
+    ).toHaveAttribute("href", "/explore");
     expect(
-      within(navegacion).getByRole("link", { name: "Favoritos" }),
-    ).toHaveAttribute("href", "/favoritos");
+      within(navegacion).getByRole("link", { name: "Favorites" }),
+    ).toHaveAttribute("href", "/favorites");
     expect(
       within(navegacion).getByRole("link", { name: "Historial" }),
-    ).toHaveAttribute("href", "/historial");
+    ).toHaveAttribute("href", "/history");
   });
 
-  it("marca con aria-current el destino de la ruta actual", () => {
-    ruta.actual = "/favoritos";
+  it("marca con aria-current el destination de la route actual", () => {
+    route.actual = "/favorites";
     renderNavbar();
 
     const navegacion = screen.getByRole("navigation", {
@@ -58,14 +58,14 @@ describe("Navbar", () => {
     });
 
     expect(
-      within(navegacion).getByRole("link", { name: "Favoritos" }),
+      within(navegacion).getByRole("link", { name: "Favorites" }),
     ).toHaveAttribute("aria-current", "page");
     expect(
       within(navegacion).getByRole("link", { name: "Inicio" }),
     ).not.toHaveAttribute("aria-current");
   });
 
-  it("sin sesión ofrece iniciar sesión en lugar del menú de usuario", () => {
+  it("sin sesión ofrece iniciar sesión en place del menú de user", () => {
     renderNavbar();
 
     expect(screen.getByRole("link", { name: "Iniciar sesión" })).toHaveAttribute(
@@ -75,17 +75,17 @@ describe("Navbar", () => {
     expect(screen.queryByRole("button", { name: /mi cuenta/i })).toBeNull();
   });
 
-  it("el enlace de login conserva la pantalla desde la que se entra", () => {
-    ruta.actual = "/explorar";
+  it("el link de login conserva la pantalla desde la que se entra", () => {
+    route.actual = "/explore";
     renderNavbar();
 
     expect(screen.getByRole("link", { name: "Iniciar sesión" })).toHaveAttribute(
       "href",
-      "/login?redirect=%2Fexplorar",
+      "/login?redirect=%2Fexplore",
     );
   });
 
-  it("con sesión despliega el menú de usuario", async () => {
+  it("con sesión despliega el menú de user", async () => {
     localStorage.setItem(DEFAULT_TOKEN_STORAGE_KEY, "jwt-de-prueba");
     const user = userEvent.setup();
     renderNavbar();
@@ -96,20 +96,20 @@ describe("Navbar", () => {
     await user.click(disparador);
 
     expect(disparador).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("link", { name: "Mi perfil" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Mi profile" })).toHaveAttribute(
       "href",
-      "/perfil",
+      "/profile",
     );
-    expect(screen.getByRole("link", { name: "Preferencias" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Preferences" })).toHaveAttribute(
       "href",
-      "/preferencias",
+      "/preferences",
     );
     expect(
       screen.getByRole("button", { name: "Cerrar sesión" }),
     ).toBeInTheDocument();
   });
 
-  it("cierra el menú de usuario con Escape", async () => {
+  it("cierra el menú de user con Escape", async () => {
     localStorage.setItem(DEFAULT_TOKEN_STORAGE_KEY, "jwt-de-prueba");
     const user = userEvent.setup();
     renderNavbar();
@@ -119,10 +119,10 @@ describe("Navbar", () => {
     await user.keyboard("{Escape}");
 
     expect(disparador).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByRole("link", { name: "Mi perfil" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Mi profile" })).toBeNull();
   });
 
-  it("cerrar sesión devuelve la barra al estado anónimo", async () => {
+  it("cerrar sesión devuelve la navbar al status anónimo", async () => {
     localStorage.setItem(DEFAULT_TOKEN_STORAGE_KEY, "jwt-de-prueba");
     const user = userEvent.setup();
     renderNavbar();

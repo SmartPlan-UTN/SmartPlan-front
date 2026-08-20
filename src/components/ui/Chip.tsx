@@ -23,7 +23,7 @@ export function Chip({
     .filter(Boolean)
     .join(" ");
 
-  // aria-pressed va antes del spread para que un chip que no alterna estado
+  // aria-pressed va antes del spread para que un chip que no alterna status
   // (por ejemplo, uno que navega) pueda quitarlo con aria-pressed={undefined}.
   return (
     <button type={type} className={classes} aria-pressed={active} {...props} />

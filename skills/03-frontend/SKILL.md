@@ -29,7 +29,7 @@ El análisis estático se ejecuta con la CLI de ESLint directamente.
 | Tailwind CSS | 4.x | vía `@tailwindcss/postcss` |
 | axios | 1.15.x | consumo de la API |
 | lucide-react | 1.8.x | iconografía |
-| ESLint | 9.x | ver `skills/04-calidad/` |
+| ESLint | 9.x | ver `skills/04-quality/` |
 
 Gestor de paquetes: **pnpm**. No uses `npm install` ni `yarn` — romperías el
 lockfile.
@@ -59,8 +59,8 @@ src/
 │   │   ├── layout.tsx      navbar + contenedor del contenido
 │   │   ├── page.tsx        inicio
 │   │   ├── explorar/
-│   │   └── (privado)/      lo que exige sesión: favoritos, historial,
-│   │       └── layout.tsx  perfil, preferencias. El layout es RutaProtegida
+│   │   └── (private)/      lo que exige sesión: favorites, history,
+│   │       └── layout.tsx  profile, preferences. El layout usa ProtectedRoute
 │   └── admin/              panel de administración
 ├── components/
 │   ├── ui/                 primitivos del design system
@@ -92,37 +92,37 @@ rutas relativas largas.
 | La pantalla… | Va en | Qué hereda |
 |---|---|---|
 | es pública | `app/(main)/<ruta>/page.tsx` | navbar y contenedor |
-| exige sesión | `app/(main)/(privado)/<ruta>/page.tsx` | navbar, contenedor y `RutaProtegida` |
+| exige sesión | `app/(main)/(private)/<route>/page.tsx` | navbar, contenedor y `ProtectedRoute` |
 | es de sesión (login, registro…) | `app/(auth)/<ruta>/page.tsx` | superficie oscura, sin navbar |
-| es de administración | `app/admin/<ruta>/page.tsx` | navbar y `RutaProtegida` |
+| es de administración | `app/admin/<route>/page.tsx` | navbar y `ProtectedRoute` |
 
 Los paréntesis son [grupos de ruta](https://nextjs.org/docs/app/api-reference/file-conventions/route-groups):
-organizan carpetas sin aparecer en la URL. `(main)/(privado)/favoritos` es
-`/favoritos`.
+organizan carpetas sin aparecer en la URL. `(main)/(private)/favorites` es
+`/favorites`.
 
 **Una pantalla se protege por dónde vive, no por lo que escribe.** Crearla dentro
-de `(privado)` alcanza: el layout del grupo la envuelve en `RutaProtegida`.
+de `(private)` alcanza: el layout del grupo la envuelve en `ProtectedRoute`.
 
 ### Ancho del contenido
 
 El `<main>` **no impone ancho**. Las pantallas que no van a fondo completo se
-envuelven en `Contenedor`, que aplica los 1200px de `--max-w` y el aire de
+envuelven en `Container`, que aplica los 1200px de `--max-w` y el aire de
 sección:
 
 ```tsx
-import { Contenedor } from "@/components/layout";
+import { Container } from "@/components/layout";
 
-<Contenedor>{/* la pantalla */}</Contenedor>
+<Container>{/* la pantalla */}</Container>
 ```
 
-El grupo `(privado)` y `admin/` ya lo ponen en su layout, así que sus pantallas
+El grupo `(private)` y `admin/` ya lo ponen en su layout, así que sus pantallas
 no lo repiten. Las públicas lo eligen: el hero del inicio, con `MoodBackground`
 detrás, va a fondo completo, y un contenedor impuesto desde el layout lo dejaría
 encajonado.
 
 ### Rutas
 
-Las rutas se escriben una sola vez, en [`src/lib/rutas.ts`](../../src/lib/rutas.ts):
+Las rutas se escriben una sola vez, en [`src/lib/routes.ts`](../../src/lib/routes.ts):
 
 ```tsx
 import { RUTAS } from "@/lib/rutas";
@@ -171,7 +171,7 @@ El provider además le enseña al cliente HTTP de dónde sacar el token
 
 ### Rutas protegidas
 
-`RutaProtegida` muestra el contenido si hay sesión, un estado de espera mientras
+`ProtectedRoute` muestra el contenido si hay sesión, un estado de espera mientras
 se resuelve, y si no hay token reemplaza la ruta por `/login?redirect=<ruta>`.
 El destino se valida con `destinoSeguro()` antes de usarlo: sin ese filtro,
 `?redirect=https://otro-sitio.com` convertiría el login en un redirector abierto.
@@ -206,7 +206,7 @@ pantalla**; cuando no quede ninguna, se borra el componente.
 | Carpetas de ruta | `kebab-case` | `app/consultar-plan/` |
 | Tipos del dominio | `PascalCase`, en español | `DetallePlan` |
 
-Los nombres del dominio van **en español** (ver `skills/01-dominio/`). El código
+Los nombres del dominio van **en español** (ver `skills/01-domain/`). El código
 técnico (hooks, utilidades, props) puede ir en inglés si es más natural.
 
 ## Consumo de la API
@@ -249,7 +249,7 @@ los logos en [`public/brand/`](../../public/brand/).
 
 Resumen de la paleta: `--ember #E85D20` (primario) · `--char #1A1109` (texto y
 superficies oscuras) · `--cream #F5F0E8` (fondo) · `--electric #2B5BFF` (IA) ·
-`--gold #FFD166` (valoraciones).
+`--gold #FFD166` (ratinges).
 
 **Nunca escribas un hex a mano**: usá la variable CSS.
 

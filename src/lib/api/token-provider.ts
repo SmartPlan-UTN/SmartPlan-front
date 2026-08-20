@@ -5,7 +5,7 @@
  */
 
 /**
- * Función que retorna un token JWT síncrono o asíncrono, o `null` si no hay sesión activa.
+ * Función que retorna un token JWT síncrono o asíncrono, o `null` si no hay sesión active.
  */
 export type TokenGetter = () => string | null | Promise<string | null>;
 
@@ -17,8 +17,8 @@ let customTokenGetter: TokenGetter | null = null;
 export const DEFAULT_TOKEN_STORAGE_KEY = 'smartplan_token';
 
 /**
- * Permite registrar un proveedor personalizado para obtener el JWT.
- * Útil para cablear el estado de autenticación real cuando se implemente la UI/Context.
+ * Permite registrar un provider personalizado para obtener el JWT.
+ * Útil para cablear el status de autenticación real cuando se implemente la UI/Context.
  *
  * @param getter Función proveedora del token o `null` para restablecer al comportamiento por defecto.
  */
@@ -30,7 +30,7 @@ export function setTokenGetter(getter: TokenGetter | null): void {
  * Obtiene el token JWT actual.
  * Es compatible con SSR y seguro de invocar en Server Components o Client Components.
  *
- * @returns El token JWT o `null` si no hay token disponible.
+ * @returns El token JWT o `null` si no hay token available.
  */
 export async function getToken(): Promise<string | null> {
   if (customTokenGetter) {
@@ -41,7 +41,7 @@ export async function getToken(): Promise<string | null> {
     }
   }
 
-  // Fallback predeterminado seguro para entorno del navegador
+  // Fallback predeterminado seguro para environment del navegador
   if (typeof window !== 'undefined') {
     try {
       return localStorage.getItem(DEFAULT_TOKEN_STORAGE_KEY) ?? localStorage.getItem('token');

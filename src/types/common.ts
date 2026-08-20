@@ -1,8 +1,8 @@
 /**
- * Columnas comunes a todas las entidades del modelo de dominio.
+ * Columnas comunes a todas las entities del model de dominio.
  * Corresponden a las marcas de tiempo e identificador generados por el backend.
  */
-export interface EntidadBase {
+export interface BaseEntity {
   id: number;
   createdAt: string;
   updatedAt: string;
@@ -10,11 +10,11 @@ export interface EntidadBase {
 }
 
 /**
- * Forma común para entidades de tipo catálogo en el dominio.
- * Contiene un identificador `key` único de negocio, un `nombre` visible y una `descripcion` opcional.
+ * Forma común para entities de type catálogo en el dominio.
+ * Contiene un identificador `key` único de negocio, un `name` visible y una `description` opcional.
  */
-export interface EntidadCatalogo<K extends string = string> extends EntidadBase {
-  nombre: string;
+export interface CatalogEntity<K extends string = string> extends BaseEntity {
+  name: string;
   key: K;
-  descripcion: string | null;
+  description: string | null;
 }

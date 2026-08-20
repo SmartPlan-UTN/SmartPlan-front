@@ -1,93 +1,88 @@
 import axios from 'axios';
 
 /**
- * Categorías posibles para la clasificación de errores HTTP y de red.
+ * Categorías posibles para la clasificación de errors HTTP y de red.
  */
-export type TipoErrorApi = 'HTTP' | 'RED' | 'TIMEOUT' | 'CONFIGURACION' | 'DESCONOCIDO';
+export type ApiErrorType = 'HTTP' | 'NETWORK' | 'TIMEOUT' | 'CONFIGURATION' | 'UNKNOWN';
 
 /**
- * Estructura de respuesta de error devuelta por la API de SmartPlan / NestJS.
+ * Estructura de response de error devuelta por la API de SmartPlan / NestJS.
  */
 export interface ErrorResponseData {
-  mensaje?: string;
   message?: string | string[];
   statusCode?: number;
   error?: string;
   [key: string]: unknown;
 }
 
-export interface OpcionesApiError {
-  mensaje: string;
-  tipo: TipoErrorApi;
+export interface ApiErrorOptions {
+  message: string;
+  type: ApiErrorType;
   status?: number | null;
-  codigo?: string | null;
-  datos?: ErrorResponseData | null;
-  causa?: unknown;
+  code?: string | null;
+  data?: ErrorResponseData | null;
+  cause?: unknown;
 }
 
 /**
  * Error estandarizado para la capa de API de SmartPlan.
- * Encapsula la información del error sin exponer detalles internos de Axios hacia los componentes.
+ * Encapsula la información del error sin exponer details internos de Axios hacia los componentes.
  */
 export class ApiError extends Error {
-  public readonly tipo: TipoErrorApi;
+  public readonly type: ApiErrorType;
   public readonly status: number | null;
-  public readonly codigo: string | null;
-  public readonly datos: ErrorResponseData | null;
+  public readonly code: string | null;
+  public readonly data: ErrorResponseData | null;
 
-  constructor(opciones: OpcionesApiError) {
-    super(opciones.mensaje);
+  constructor(options: ApiErrorOptions) {
+    super(options.message);
     this.name = 'ApiError';
-    this.tipo = opciones.tipo;
-    this.status = opciones.status ?? null;
-    this.codigo = opciones.codigo ?? null;
-    this.datos = opciones.datos ?? null;
+    this.type = options.type;
+    this.status = options.status ?? null;
+    this.code = options.code ?? null;
+    this.data = options.data ?? null;
 
-    if (opciones.causa) {
-      this.cause = opciones.causa;
+    if (options.cause) {
+      this.cause = options.cause;
     }
   }
 
   /**
    * Indica si el error se debe a una sesión no autenticada o token inválido (401 Unauthorized).
    */
-  get es401(): boolean {
+  get isUnauthorized(): boolean {
     return this.status === 401;
   }
 
   /**
-   * Indica si el error se debe a falta de permisos suficientes (403 Forbidden).
+   * Indica si el error se debe a falta de permissions suficientes (403 Forbidden).
    */
-  get es403(): boolean {
+  get isForbidden(): boolean {
     return this.status === 403;
   }
 
   /**
    * Indica si el error fue provocado por problemas de conectividad o tiempo de espera agotado.
    */
-  get esRed(): boolean {
-    return this.tipo === 'RED' || this.tipo === 'TIMEOUT';
+  get isNetworkError(): boolean {
+    return this.type === 'NETWORK' || this.type === 'TIMEOUT';
   }
 }
 
 /**
- * Extrae y formatea un mensaje legible desde el payload de error entregado por el backend.
+ * Extrae y formatea un message legible desde el payload de error entregado por el backend.
  */
-function extraerMensajeServidor(datos: ErrorResponseData | undefined, fallback: string): string {
-  if (!datos) {
+function extractServerMessage(data: ErrorResponseData | undefined, fallback: string): string {
+  if (!data) {
     return fallback;
   }
 
-  if (typeof datos.mensaje === 'string' && datos.mensaje.trim() !== '') {
-    return datos.mensaje;
+  if (typeof data.message === 'string' && data.message.trim() !== '') {
+    return data.message;
   }
 
-  if (typeof datos.message === 'string' && datos.message.trim() !== '') {
-    return datos.message;
-  }
-
-  if (Array.isArray(datos.message) && datos.message.length > 0) {
-    return datos.message.map((msg) => String(msg)).join(', ');
+  if (Array.isArray(data.message) && data.message.length > 0) {
+    return data.message.map((msg) => String(msg)).join(', ');
   }
 
   return fallback;
@@ -99,67 +94,67 @@ function extraerMensajeServidor(datos: ErrorResponseData | undefined, fallback: 
  * @param error Error original capturado.
  * @returns Instancia tipada de `ApiError`.
  */
-export function normalizarError(error: unknown): ApiError {
+export function normalizeError(error: unknown): ApiError {
   if (error instanceof ApiError) {
     return error;
   }
 
   if (axios.isAxiosError(error)) {
-    const respuesta = error.response;
+    const response = error.response;
 
-    if (respuesta) {
-      const status = respuesta.status;
-      const datos = respuesta.data as ErrorResponseData | undefined;
-      const mensaje = extraerMensajeServidor(datos, `Error HTTP ${status}`);
-      const codigo = typeof datos?.error === 'string' ? datos.error : error.code ?? null;
+    if (response) {
+      const status = response.status;
+      const data = response.data as ErrorResponseData | undefined;
+      const message = extractServerMessage(data, `Error HTTP ${status}`);
+      const code = typeof data?.error === 'string' ? data.error : error.code ?? null;
 
       return new ApiError({
-        mensaje,
-        tipo: 'HTTP',
+        message,
+        type: 'HTTP',
         status,
-        codigo,
-        datos: datos ?? null,
-        causa: error,
+        code,
+        data: data ?? null,
+        cause: error,
       });
     }
 
     if (error.code === 'ECONNABORTED' || error.message.toLowerCase().includes('timeout')) {
       return new ApiError({
-        mensaje: 'La petición superó el tiempo límite de espera. Por favor, reintentá.',
-        tipo: 'TIMEOUT',
-        codigo: error.code ?? 'TIMEOUT',
-        causa: error,
+        message: 'La petición superó el tiempo límite de espera. Por favor, reintentá.',
+        type: 'TIMEOUT',
+        code: error.code ?? 'TIMEOUT',
+        cause: error,
       });
     }
 
     if (error.request) {
       return new ApiError({
-        mensaje: 'No se pudo conectar con el servidor. Verificá tu conexión a internet.',
-        tipo: 'RED',
-        codigo: error.code ?? 'ERR_NETWORK',
-        causa: error,
+        message: 'No se pudo conectar con el servidor. Verificá tu conexión a internet.',
+        type: 'NETWORK',
+        code: error.code ?? 'ERR_NETWORK',
+        cause: error,
       });
     }
 
     return new ApiError({
-      mensaje: error.message || 'Error al configurar la petición HTTP.',
-      tipo: 'CONFIGURACION',
-      codigo: error.code ?? 'ERR_CONFIG',
-      causa: error,
+      message: error.message || 'Error al configurar la petición HTTP.',
+      type: 'CONFIGURATION',
+      code: error.code ?? 'ERR_CONFIG',
+      cause: error,
     });
   }
 
   if (error instanceof Error) {
     return new ApiError({
-      mensaje: error.message,
-      tipo: 'DESCONOCIDO',
-      causa: error,
+      message: error.message,
+      type: 'UNKNOWN',
+      cause: error,
     });
   }
 
   return new ApiError({
-    mensaje: 'Ocurrió un error inesperado al procesar la solicitud.',
-    tipo: 'DESCONOCIDO',
-    causa: error,
+    message: 'Ocurrió un error inesperado al process la request.',
+    type: 'UNKNOWN',
+    cause: error,
   });
 }

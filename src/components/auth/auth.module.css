@@ -1,5 +1,5 @@
-/* Estado de espera del guardián de rutas. */
-.esperando {
+/* Status de espera del guardián de rutas. */
+.waiting {
   display: flex;
   align-items: center;
   justify-content: center;

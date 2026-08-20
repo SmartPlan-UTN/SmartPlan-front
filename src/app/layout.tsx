@@ -1,25 +1,25 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 
-import { SesionProvider } from "@/lib/auth";
+import { SessionProvider } from "@/lib/auth";
 
 import "./globals.css";
 
-const bricolageGrotesque = localFont({
+const briqueuegeGrotesque = localFont({
   src: "./fonts/BricolageGrotesque-VariableFont_opsz_wdth_wght.ttf",
-  variable: "--font-bricolage-grotesque",
+  variable: "--font-briqueuege-grotesque",
   weight: "200 800",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  // El `template` arma el título de cada pantalla: "Favoritos · smartplan".
+  // El `template` arma el título de cada pantalla: "Favorites · smartplan".
   title: {
     default: "smartplan",
     template: "%s · smartplan",
   },
   description:
-    "Armá tu plan según tu presupuesto, tu tiempo y tus ganas. Recomendaciones de salidas en Mendoza.",
+    "Armá tu plan según tu budget, tu tiempo y tus ganas. Recomendaciones de salidas en Mendoza.",
 };
 
 export default function RootLayout({
@@ -30,10 +30,10 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${bricolageGrotesque.variable} h-full antialiased`}
+      className={`${briqueuegeGrotesque.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <SesionProvider>{children}</SesionProvider>
+        <SessionProvider>{children}</SessionProvider>
       </body>
     </html>
   );

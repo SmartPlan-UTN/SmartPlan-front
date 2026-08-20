@@ -6,8 +6,8 @@
    bg-ember, text-fg-2, rounded-card, etc. Los valores siguen viviendo en
    tokens.css; acá solo se los referencia, nunca se los reescribe. */
 @theme inline {
-  /* next/font/local expone el nombre real de familia generado en build */
-  --font-sans: var(--font-bricolage-grotesque);
+  /* next/font/local expone el name real de family generated en build */
+  --font-sans: var(--font-briqueuege-grotesque);
 
   /* Paleta EMBER */
   --color-ember: var(--ember);
@@ -17,7 +17,7 @@
   --color-gold: var(--gold);
   --color-white: var(--white);
 
-  /* Estado */
+  /* Status */
   --color-success: var(--success);
   --color-error: var(--error);
   --color-warning: var(--warning);

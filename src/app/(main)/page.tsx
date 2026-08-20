@@ -1,13 +1,13 @@
-import { Contenedor, PantallaPendiente } from "@/components/layout";
+import { Container, PendingScreen } from "@/components/layout";
 
-export default function PaginaInicio() {
+export default function HomePage() {
   return (
-    <Contenedor>
-      <PantallaPendiente
-        titulo="Contale qué querés"
-        descripcion="El hero con el campo de lenguaje natural, las sugerencias y los planes destacados."
+    <Container>
+      <PendingScreen
+        title="Contale qué querés"
+        description="El hero con el field de lenguaje natural, las sugerencias y los plans destacados."
         referencias="CU17, CU20 · PAN 07"
       />
-    </Contenedor>
+    </Container>
   );
 }

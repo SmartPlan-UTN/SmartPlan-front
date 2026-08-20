@@ -5,59 +5,59 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { Icon, Logo } from "@/components/ui";
-import { RUTAS } from "@/lib/rutas";
+import { ROUTES } from "@/lib/routes";
 
-import { EnlaceNav } from "./EnlaceNav";
-import { ENLACES_PRINCIPALES } from "./enlaces";
-import { MenuUsuario } from "./MenuUsuario";
+import { NavLink } from "./NavLink";
+import { MAIN_LINKS } from "./links";
+import { UserMenu } from "./UserMenu";
 import styles from "./layout.module.css";
 
 /**
  * Barra de navegación de 60px (`--navbar-h`), fija arriba y con
- * `backdrop-filter` sobre el contenido, como pide el design system EMBER.
+ * `backdrop-filter` envelope el contenido, como pide el design system EMBER.
  *
- * Debajo de 900px los enlaces se pliegan en un panel desplegable; el menú de
- * usuario se mantiene visible en todos los tamaños.
+ * Debajo de 900px los links se pliegan en un panel desplegable; el menú de
+ * user se mantiene visible en todos los tamaños.
  */
 export function Navbar() {
   const [menuAbierto, setMenuAbierto] = useState(false);
-  const rutaActual = usePathname();
-  const [rutaDelMenu, setRutaDelMenu] = useState(rutaActual);
+  const currentRoute = usePathname();
+  const [menuRoute, setMenuRoute] = useState(currentRoute);
 
   // Navegar tiene que cerrar el panel: si no, la pantalla nueva aparece tapada.
   // Se ajusta durante el render en vez de con un efecto, que dispararía un
   // segundo render con el panel todavía abierto:
   // https://react.dev/learn/you-might-not-need-an-effect
-  if (rutaActual !== rutaDelMenu) {
-    setRutaDelMenu(rutaActual);
+  if (currentRoute !== menuRoute) {
+    setMenuRoute(currentRoute);
     setMenuAbierto(false);
   }
 
   return (
     <header className={styles.navbar}>
-      <div className={styles.barra}>
-        <Link href={RUTAS.inicio} className={styles.marca}>
+      <div className={styles.navbar}>
+        <Link href={ROUTES.home} className={styles.marca}>
           <Logo variant="white" kind="full" height={22} priority />
         </Link>
 
         <nav className={styles.navegacion} aria-label="Navegación principal">
-          {ENLACES_PRINCIPALES.map((enlace) => (
-            <EnlaceNav
-              key={enlace.href}
-              href={enlace.href}
-              etiqueta={enlace.etiqueta}
-              icono={enlace.icono}
+          {MAIN_LINKS.map((link) => (
+            <NavLink
+              key={link.href}
+              href={link.href}
+              label={link.label}
+              icon={link.icon}
             />
           ))}
         </nav>
 
-        <MenuUsuario />
+        <UserMenu />
 
         <button
           type="button"
           className={styles.botonMenu}
           aria-expanded={menuAbierto}
-          aria-controls="navegacion-plegable"
+          aria-controls="collapsible-navigation"
           aria-label={menuAbierto ? "Cerrar la navegación" : "Abrir la navegación"}
           onClick={() => {
             setMenuAbierto((estaAbierto) => !estaAbierto);
@@ -69,17 +69,17 @@ export function Navbar() {
 
       {menuAbierto ? (
         <nav
-          id="navegacion-plegable"
+          id="collapsible-navigation"
           className={styles.panelMovil}
           aria-label="Navegación principal plegable"
         >
-          {ENLACES_PRINCIPALES.map((enlace) => (
-            <EnlaceNav
-              key={enlace.href}
-              href={enlace.href}
-              etiqueta={enlace.etiqueta}
-              icono={enlace.icono}
-              variante="opcion"
+          {MAIN_LINKS.map((link) => (
+            <NavLink
+              key={link.href}
+              href={link.href}
+              label={link.label}
+              icon={link.icon}
+              variante="option"
               onNavegar={() => {
                 setMenuAbierto(false);
               }}

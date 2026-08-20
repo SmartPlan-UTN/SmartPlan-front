@@ -25,23 +25,25 @@ Este repositorio es el **frontend**. El backend vive en `SmartPlan-back`
 
 | Archivo | Cuándo consultarlo |
 |---|---|
-| [`skills/00-proyecto/SKILL.md`](skills/00-proyecto/SKILL.md) | Siempre primero: qué es el sistema, alcance, módulos, equipo, stack |
-| [`skills/01-dominio/SKILL.md`](skills/01-dominio/SKILL.md) | Antes de nombrar tablas, endpoints, rutas, tipos o componentes |
+| [`skills/00-project/SKILL.md`](skills/00-project/SKILL.md) | Siempre primero: qué es el sistema, alcance, módulos, equipo, stack |
+| [`skills/01-domain/SKILL.md`](skills/01-domain/SKILL.md) | Antes de nombrar tablas, endpoints, rutas, tipos o componentes |
 | [`skills/02-git-flow/SKILL.md`](skills/02-git-flow/SKILL.md) | Antes de cualquier operación de git y antes de abrir un issue o un PR |
 | [`skills/02-git-flow/DEFINITION-OF-DONE.md`](skills/02-git-flow/DEFINITION-OF-DONE.md) | Antes de dar una tarea por terminada |
 | [`skills/03-frontend/SKILL.md`](skills/03-frontend/SKILL.md) | Antes de escribir un componente o una página |
-| [`skills/04-calidad/SKILL.md`](skills/04-calidad/SKILL.md) | Antes de desactivar una regla de lint o silenciar un warning |
-| [`skills/05-arquitectura/SKILL.md`](skills/05-arquitectura/SKILL.md) | Antes de agregar un servicio, una integración externa o un proceso en segundo plano |
+| [`skills/04-quality/SKILL.md`](skills/04-quality/SKILL.md) | Antes de desactivar una regla de lint o silenciar un warning |
+| [`skills/05-architecture/SKILL.md`](skills/05-architecture/SKILL.md) | Antes de agregar un servicio, una integración externa o un proceso en segundo plano |
 | [`skills/06-design-system/SKILL.md`](skills/06-design-system/SKILL.md) | Antes de escribir un estilo, elegir un color o maquetar un componente |
 | [`skills/07-testing/SKILL.md`](skills/07-testing/SKILL.md) | Antes de agregar o modificar tests de componentes y hooks |
-| [`SEGUIMIENTO.md`](SEGUIMIENTO.md) | Para saber en qué estado está cada funcionalidad |
+| [`TRACKING.md`](TRACKING.md) | Para saber en qué estado está cada funcionalidad |
 
 ## Reglas que no se negocian
 
 1. **Nunca commitees en `main` ni en `develop`.** Están protegidas y requieren PR
    con 2 aprobaciones. Trabajá siempre en una rama que salga de `develop`.
-2. **Los nombres del dominio van en español.** Un `plan` es `plan`, no
-   `Itinerary`. Ver `skills/01-dominio/`.
+2. **El código va en inglés.** Esto incluye archivos, carpetas, identificadores,
+   rutas técnicas, contratos API y esquema de base de datos. Las skills y la
+   documentación funcional pueden estar en español; los textos visibles para el
+   usuario también. Ver `skills/00-project/` y `skills/01-domain/`.
 3. **Usá pnpm**, no npm ni yarn, y **Node 24** (`.nvmrc`). Abajo de Node 22.13
    pnpm ni siquiera arranca.
 4. **Corré `pnpm lint`, `pnpm test` y `pnpm build` antes de dar por terminado un cambio.**
@@ -57,7 +59,7 @@ el layout con la navbar y las rutas protegidas.
 
 **Ningún caso de uso está implementado todavía**: las pantallas existen como
 marcadores (`PantallaPendiente`) para que la navegación se pueda recorrer. Antes
-de asumir que algo existe, buscalo en el código y mirá [`SEGUIMIENTO.md`](SEGUIMIENTO.md).
+de asumir que algo existe, buscalo en el código y mirá [`TRACKING.md`](TRACKING.md).
 
 ## Comandos
 
@@ -76,6 +78,6 @@ pnpm test:watch   # tests unitarios en modo watch
 Verificá la [Definition of Done](skills/02-git-flow/DEFINITION-OF-DONE.md) antes
 de decir que está lista. La checklist corta viene cargada en el PR.
 
-Actualizá la fila correspondiente en [`SEGUIMIENTO.md`](SEGUIMIENTO.md): estado,
+Actualizá la fila correspondiente en [`TRACKING.md`](TRACKING.md): estado,
 fecha, rama y PR. Es lo que permite que el siguiente agente (o la siguiente
 persona) retome sin releer todo el historial.

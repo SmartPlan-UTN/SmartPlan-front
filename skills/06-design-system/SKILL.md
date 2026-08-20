@@ -165,7 +165,7 @@ al pie y botón **Guardar plan**.
 
 **ActivityDetail** — CU14, CU15, CU35, CU44, CU45 · PAN 18
 Detalle con foto, descripción, horarios (*"Lun–Dom: 12:00–16:00"*), enlace a
-Google Maps y listado de valoraciones con autor y `Stars`. Botón de guardar con
+Google Maps y listado de ratinges con autor y `Stars`. Botón de guardar con
 dos estados: **Guardar** / **Guardada**. Pestaña de Información.
 
 **Favorites** — CU39–CU43 · PAN 12
@@ -211,7 +211,7 @@ Acciones por fila, entre ellas **Reactivar cuenta**. Filtro por estado.
 Tabla del catálogo con filtros por categoría (Aventura, Cultura & Arte, Bienestar,
 Entretenimiento, Gastronomía) y por tipo de salida. Alta, edición y baja.
 
-**AdminPlanes** — CU60 · PAN 22
+**AdminPlans** — CU60 · PAN 22
 Tabla de planes con estado y filtros. Edición y baja desde administración.
 
 **AdminReviews** — CU55 · PAN 20

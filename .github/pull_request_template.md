@@ -46,5 +46,5 @@ Criterios completos en [`skills/02-git-flow/DEFINITION-OF-DONE.md`](https://gith
 - [ ] Sin credenciales, tokens ni URLs hardcodeadas
 - [ ] Estilos con tokens del design system, sin hex escritos a mano
 - [ ] Estados de carga, error y vacío contemplados (si la pantalla consume la API)
-- [ ] [`SEGUIMIENTO.md`](https://github.com/SmartPlan-UTN/SmartPlan-front/blob/develop/SEGUIMIENTO.md) actualizado: estado, rama y PR
+- [ ] [`TRACKING.md`](https://github.com/SmartPlan-UTN/SmartPlan-front/blob/develop/TRACKING.md) actualizado: estado, rama y PR
 - [ ] Documentado donde corresponda (`README.md` o `skills/`)
