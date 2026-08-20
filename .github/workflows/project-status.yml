@@ -1,9 +1,9 @@
-name: Status del ticket en el Project
+name: Project ticket status
 
 on:
   create:
   pull_request:
-    types: [opened, reopened, ready_for_review, closed]
+    types: [opened, reopened, synchronize, ready_for_review, closed]
 
 permissions:
   contents: read
@@ -15,26 +15,35 @@ concurrency:
 
 jobs:
   sync:
-    # `create` tambien dispara con tags: solo nos interesan las branches
+    # `create` also runs for tags; only branches are relevant here.
     if: github.event_name != 'create' || github.event.ref_type == 'branch'
     runs-on: ubuntu-latest
+    env:
+      PROJECTS_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
     steps:
-      - uses: actions/github-script@v7
+      - name: Report missing Projects token
+        if: env.PROJECTS_TOKEN == ''
+        run: echo "::notice::PROJECTS_TOKEN is not configured; project status synchronization was skipped."
+
+      - name: Synchronize project status
+        if: env.PROJECTS_TOKEN != ''
+        uses: actions/github-script@v8
         with:
-          github-token: ${{ secrets.PROJECTS_TOKEN }}
+          github-token: ${{ env.PROJECTS_TOKEN }}
           script: |
             const PROJECT_TITLE = 'SmartPlan';
             const STATUS_FIELD = 'Status';
             const { owner, repo } = context.repo;
 
-            // Numero de issue a partir del name de branch: 25-slug, feature/25-slug, SMART-25-slug.
-            // Exige que el numero este delimitado, para no confundirlo con "f03".
+            // Extract the issue number from branch names such as 25-slug,
+            // feature/25-slug, or SMART-25-slug. The number must be delimited
+            // so identifiers such as "f03" are not interpreted as issue numbers.
             const issueFromBranch = (branch) => {
               const m = String(branch).match(/(?:^|[\/_-])(\d{1,6})(?:[\/_-]|$)/);
               return m ? Number(m[1]) : null;
             };
 
-            // --- 1. Que status corresponde y sobre que issues ---
+            // --- 1. Determine the desired status and target issues. ---
             let desiredStatus = null;
             let issueNumbers = [];
 
@@ -42,7 +51,7 @@ jobs:
               const branch = context.payload.ref;
               const n = issueFromBranch(branch);
               if (!n) {
-                core.info(`La branch "${branch}" no contiene un numero de issue. Nada que hacer.`);
+                core.info(`Branch "${branch}" does not contain an issue number. Nothing to do.`);
                 return;
               }
               desiredStatus = 'In Progress';
@@ -53,13 +62,13 @@ jobs:
 
               if (action === 'closed') {
                 if (!pr.merged) {
-                  core.info('PR cerrada sin merge: no se toca el status del ticket.');
+                  core.info('The PR was closed without merging; the issue status will not change.');
                   return;
                 }
                 desiredStatus = 'Done';
               } else {
                 if (pr.draft) {
-                  core.info('PR en draft: se movera a In Review cuando pase a "ready for review".');
+                  core.info('The PR is a draft; it will move to In Review when marked ready for review.');
                   return;
                 }
                 desiredStatus = 'In Review';
@@ -80,23 +89,23 @@ jobs:
               if (linked.length) {
                 issueNumbers = linked;
               } else {
-                // Sin "Closes #N": lo deducimos de la branch y lo dejamos escrito en la PR,
-                // asi al mergear GitHub cierra el ticket solo.
+                // Without "Closes #N", infer the issue from the branch and add
+                // the reference to the PR so GitHub closes it after the merge.
                 const n = issueFromBranch(pr.head.ref);
                 if (!n) {
-                  core.info(`La PR #${pr.number} no referencia ningun issue y la branch "${pr.head.ref}" tampoco. Nada que hacer.`);
+                  core.info(`PR #${pr.number} and branch "${pr.head.ref}" do not reference an issue. Nothing to do.`);
                   return;
                 }
                 issueNumbers = [n];
                 if (action === 'opened') {
                   const body = `${pr.body ? pr.body.trimEnd() + '\n\n' : ''}Closes #${n}`;
                   await github.rest.pulls.update({ owner, repo, pull_number: pr.number, body });
-                  core.info(`Agregado "Closes #${n}" al cuerpo de la PR #${pr.number}.`);
+                  core.info(`Added "Closes #${n}" to PR #${pr.number}.`);
                 }
               }
             }
 
-            // --- 2. Project + campo Status ---
+            // --- 2. Find the Project and its Status field. ---
             const projectsQuery = `
               projectsV2(first:20, query:$q) {
                 nodes {
@@ -123,21 +132,21 @@ jobs:
             }
 
             const project = nodes.find(p => p.title === PROJECT_TITLE);
-            if (!project) throw new Error(`No se encontro el project "${PROJECT_TITLE}" en ${owner}.`);
+            if (!project) throw new Error(`Project "${PROJECT_TITLE}" was not found for ${owner}.`);
 
             const field = project.fields.nodes.find(
               f => f && f.name && f.name.toLowerCase() === STATUS_FIELD.toLowerCase());
-            if (!field) throw new Error(`El project "${PROJECT_TITLE}" no tiene el campo "${STATUS_FIELD}".`);
+            if (!field) throw new Error(`Project "${PROJECT_TITLE}" does not have a "${STATUS_FIELD}" field.`);
 
             const option = field.options.find(
               o => o.name.toLowerCase() === desiredStatus.toLowerCase());
             if (!option) {
               throw new Error(
-                `El campo "${field.name}" no tiene la opcion "${desiredStatus}". ` +
+                `Field "${field.name}" does not have the "${desiredStatus}" option. ` +
                 `Options: ${field.options.map(o => o.name).join(', ')}`);
             }
 
-            // --- 3. Mover cada ticket ---
+            // --- 3. Move each issue to the desired status. ---
             for (const number of issueNumbers) {
               const data = await github.graphql(`
                 query($owner:String!, $repo:String!, $number:Int!) {
@@ -151,7 +160,7 @@ jobs:
 
               const issue = data.repository.issue;
               if (!issue) {
-                core.warning(`No existe el issue #${number} en ${owner}/${repo}.`);
+                core.warning(`Issue #${number} does not exist in ${owner}/${repo}.`);
                 continue;
               }
 
@@ -162,7 +171,7 @@ jobs:
                     addProjectV2ItemById(input:{projectId:$projectId, contentId:$contentId}) { item { id } }
                   }`, { projectId: project.id, contentId: issue.id });
                 item = added.addProjectV2ItemById.item;
-                core.info(`Issue #${number} agregado al project.`);
+                core.info(`Issue #${number} was added to the Project.`);
               }
 
               await github.graphql(`
