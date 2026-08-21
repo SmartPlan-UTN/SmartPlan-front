@@ -8,25 +8,25 @@ export interface AppShellProps {
 }
 
 /**
- * Cáscara de las pantallas con navbar: link de salto, navbar y `<main>`.
+ * Shell for screens with a navbar: skip link, navbar, and `<main>`.
  *
- * La usan el layout de `(main)` y el de `admin`. El link de salto va primero
- * en el order de tabulación para no obligar a recorrer la navegación entera en
- * cada pantalla.
+ * Used by the `(main)` layout and the `admin` one. The skip link comes
+ * first in tab order so users don't have to tab through the entire
+ * navigation on every screen.
  *
- * El `<main>` no impone ancho: las pantallas que no van a fondo completo se
- * envuelven en `Container`.
+ * The `<main>` does not constrain width: screens that don't go full-bleed
+ * wrap themselves in `Container`.
  */
 export function AppShell({ children }: AppShellProps) {
   return (
     <>
-      <a href="#contenido" className={styles.saltarContenido}>
+      <a href="#content" className={styles.skipLink}>
         Saltar al contenido
       </a>
 
       <Navbar />
 
-      <main id="contenido" className={styles.contenido}>
+      <main id="content" className={styles.content}>
         {children}
       </main>
     </>

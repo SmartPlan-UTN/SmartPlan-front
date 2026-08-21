@@ -11,8 +11,8 @@ export default function RecoverPasswordPage() {
     <PendingScreen
       title="Recuperar contraseña"
       description="El pedido del link de recuperación y el cambio de contraseña con token."
-      referencias="CU3 · PAN 05"
-      tono="dark"
+      references="CU3 · PAN 05"
+      tone="dark"
     />
   );
 }

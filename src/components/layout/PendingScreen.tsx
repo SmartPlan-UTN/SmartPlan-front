@@ -10,42 +10,42 @@ export type ScreenTone = "light" | "dark";
 export interface PendingScreenProps {
   title: string;
   description: string;
-  /** Trazabilidad de la pantalla, por ejemplo `"CU39–CU43 · PAN 12"`. */
-  referencias: string;
-  /** `dark` para las pantallas de sesión, que van envelope superficie `--char`. */
-  tono?: ScreenTone;
+  /** Screen traceability, e.g. `"CU39–CU43 · PAN 12"`. */
+  references: string;
+  /** `dark` for session screens, which sit over the `--char` surface. */
+  tone?: ScreenTone;
   children?: ReactNode;
 }
 
 /**
- * Marcador de una pantalla cuya route ya existe pero cuyo caso de uso todavía no
- * se implementó.
+ * Placeholder for a screen whose route already exists but whose use case has
+ * not been implemented yet.
  *
- * Está para que la navegación de F19 se pueda recorrer entera sin chocar con un
- * 404 y para que quede escrito qué CU la completa. Se borra cuando la última
- * pantalla esté hecha.
+ * It exists so F19's navigation can be fully exercised without hitting a
+ * 404, and so it stays documented which CU completes it. It gets removed
+ * once the last screen is done.
  */
 export function PendingScreen({
   title,
   description,
-  referencias,
-  tono = "light",
+  references,
+  tone = "light",
   children,
 }: PendingScreenProps) {
-  const dark = tono === "dark";
+  const dark = tone === "dark";
 
   return (
     <section className={styles.pendingScreen}>
-      <Badge variant={dark ? "dark" : "tag"}>{referencias}</Badge>
+      <Badge variant={dark ? "dark" : "tag"}>{references}</Badge>
       <h1 className="sp-h2">{title}</h1>
       <p className="sp-body-lg">{description}</p>
       <p
         className={cn(
           "sp-small",
-          dark ? styles.notaPendienteOscura : styles.notaPendiente,
+          dark ? styles.pendingNoteDark : styles.pendingNote,
         )}
       >
-        La pantalla todavía no está implementada. F19 deja la route, el layout y la
+        La pantalla todavía no está implementada. F19 deja la ruta, el layout y la
         navegación listos para que el caso de uso la complete.
       </p>
       {children}

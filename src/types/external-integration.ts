@@ -1,12 +1,12 @@
 import { BaseEntity, CatalogEntity } from './common';
 
 /**
- * Claves previstas para el provider de servicios externos (CU48-CU52).
+ * Expected keys for an external service provider (CU48-CU52).
  */
 export type ExternalProviderKey = 'google_maps' | 'gemini';
 
 /**
- * Proveedor de servicios externos (CU48-CU52).
+ * External service provider (CU48-CU52).
  */
 export interface ExternalProvider extends CatalogEntity<ExternalProviderKey> {
   key: ExternalProviderKey;
@@ -14,7 +14,7 @@ export interface ExternalProvider extends CatalogEntity<ExternalProviderKey> {
   syncs?: ExternalSync[];
 }
 /**
- * Registro de sincronización con un provider externo (CU49, CU51, CU52).
+ * Sync record with an external provider (CU49, CU51, CU52).
  */
 export interface ExternalSync extends BaseEntity {
   idExternalProvider: number;
@@ -23,6 +23,6 @@ export interface ExternalSync extends BaseEntity {
   startedAt: string;
   endedAt: string | null;
   recordCount: number;
-  messageError: string | null;
+  errorMessage: string | null;
   provider?: ExternalProvider;
 }

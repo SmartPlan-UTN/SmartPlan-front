@@ -10,10 +10,10 @@ export const metadata: Metadata = {
 };
 
 /**
- * 404 de toda la aplicación.
+ * 404 for the whole application.
  *
- * Va sin navbar: si alguien llegó a una URL que no existe, lo único útil es
- * volver al home.
+ * Renders without the navbar: if someone lands on a URL that doesn't exist,
+ * the only useful action is going back home.
  */
 export default function NotFoundPage() {
   return (
@@ -22,12 +22,12 @@ export default function NotFoundPage() {
 
       <div className={styles.centeredCard}>
         <h1 className="sp-h3">Esta página no existe</h1>
-        <p className={`sp-body ${styles.notaPendienteOscura}`}>
-          Puede que el link esté viejo o que la dirección tenga un error.
+        <p className={`sp-body ${styles.pendingNoteDark}`}>
+          Puede que el enlace esté viejo o que la dirección tenga un error.
         </p>
         <p>
           <Link href={ROUTES.home} className={styles.buttonLink}>
-            Volver al home
+            Volver al inicio
           </Link>
         </p>
       </div>

@@ -1,15 +1,15 @@
 /* ================================================================
-   Cáscara de la aplicación: navbar, menú de user y containeres.
+   Application shell: navbar, user menu, and containers.
 
-   Todos los valores salen de los tokens de src/styles/tokens.css.
-   Los mixes con transparencia se derivan del token con color-mix()
-   en vez de escribir un rgba() a mano.
+   All values come from the tokens in src/styles/tokens.css.
+   Transparency mixes are derived from the token with color-mix()
+   instead of hand-writing an rgba().
    ================================================================ */
 
-/* ── Link de salto ───────────────────────────────────────────── */
-/* Primer elemento enfocable de la página: deja saltar la navegación
-   con el teclado sin recorrer los cuatro links en cada pantalla. */
-.saltarContenido {
+/* ── Skip link ───────────────────────────────────────────────── */
+/* First focusable element on the page: lets keyboard users skip
+   navigation instead of tabbing through four links on every screen. */
+.skipLink {
   position: fixed;
   top: var(--s-2);
   left: var(--s-4);
@@ -25,7 +25,7 @@
   transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.saltarContenido:focus {
+.skipLink:focus {
   transform: translateY(0);
 }
 
@@ -35,20 +35,20 @@
   top: 0;
   z-index: 50;
   background: var(--char);
-  /* 88% y no menos: la navbar también viaja envelope pantallas claras, y con más
-     transparencia el cream de abajo sube el fondo hasta dejar los links
-     inactivos (--fg-on-dark-2, 55%) en 4.3:1, por debajo del 4.5:1 de WCAG. */
+  /* 88% and no less: the navbar also travels over light screens, and with more
+     transparency the cream below raises the background enough to push inactive
+     links (--fg-on-dark-2, 55%) to 4.3:1, below WCAG's 4.5:1. */
   background: color-mix(in srgb, var(--char) 88%, transparent);
-  /* La prefijada va primero. El minificador deduplica las declaraciones
-     equivalentes y se queda con la última: con el order invertido el CSS
-     publicado tenía solo -webkit-backdrop-filter y Firefox perdía el blur. */
+  /* The prefixed one goes first. The minifier deduplicates equivalent
+     declarations and keeps the last one: with the order reversed, the
+     published CSS only had -webkit-backdrop-filter and Firefox lost the blur. */
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
   border-bottom: 1px solid var(--hairline-dark);
 }
 
-/* Sin backdrop-filter la navbar queda translúcida y el texto de la página se
-   lee por debajo: ahí conviene el fondo sólido. */
+/* Without backdrop-filter the navbar stays translucent and the page text
+   shows through: a solid background is better there. */
 @supports not (
   (backdrop-filter: blur(18px)) or (-webkit-backdrop-filter: blur(18px))
 ) {
@@ -57,7 +57,11 @@
   }
 }
 
-.navbar {
+/* Inner navbar row: logo, links, and user menu, capped at the content's
+   max width. Deliberately a class separate from `.navbar`: they are two
+   elements (sticky header vs. width-constrained row) with different
+   responsibilities. */
+.navbarInner {
   display: flex;
   align-items: center;
   gap: var(--s-3);
@@ -68,37 +72,37 @@
   padding-inline: var(--s-4);
 }
 
-.marca {
+.brand {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
   border-radius: var(--r-btn);
 }
 
-.marca:focus-visible,
+.brand:focus-visible,
 .link:focus-visible,
 .option:focus-visible,
-.disparador:focus-visible,
-.botonMenu:focus-visible,
+.trigger:focus-visible,
+.menuButton:focus-visible,
 .buttonLink:focus-visible {
   outline: 2px solid var(--ember);
   outline-offset: 2px;
 }
 
-.navegacion {
+.nav {
   display: none;
   align-items: center;
   gap: var(--s-1);
   margin-inline-start: var(--s-3);
 }
 
-/* Empuja el control de sesión —y con él el botón de navegación— contra el
-   borde derecho, sin necesidad de un elemento separador vacío. */
+/* Pushes the session control —and with it the nav toggle— against the
+   right edge, without needing an empty spacer element. */
 .sessionControl {
   margin-inline-start: auto;
 }
 
-/* ── Links de la navbar ───────────────────────────────────────── */
+/* ── Navbar links ─────────────────────────────────────────────── */
 .link {
   display: inline-flex;
   align-items: center;
@@ -120,18 +124,18 @@
   background: color-mix(in srgb, var(--white) 8%, transparent);
 }
 
-.linkActivo {
+.activeLink {
   color: var(--fg-on-dark);
   background: var(--ember-15);
 }
 
-/* ── Menú de user ───────────────────────────────────────────── */
+/* ── User menu ──────────────────────────────────────────────── */
 .userMenu {
   position: relative;
   display: inline-flex;
 }
 
-.disparador {
+.trigger {
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
@@ -146,12 +150,12 @@
   transition: background 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.disparador:hover {
+.trigger:hover {
   background: color-mix(in srgb, var(--white) 8%, transparent);
 }
 
-/* En 320px no entran el logo, el control de sesión con texto y el botón de
-   navegación: abajo de 900px el control queda como icon, con su aria-label. */
+/* At 320px the logo, the session control with text, and the nav toggle
+   don't fit: below 900px the control collapses to just an icon, with its aria-label. */
 .labelSession {
   display: none;
 }
@@ -176,9 +180,9 @@
   filter: brightness(1.1);
 }
 
-/* Reserva el place del control mientras se resuelve la sesión, para que la
-   navbar no salte cuando aparece el menú o el botón de login. El ancho es el del
-   control ya resuelto: solo icon en viewport chico, con label arriba de
+/* Reserves the control's space while the session resolves, so the navbar
+   doesn't jump when the menu or the login button appears. The width matches
+   the resolved control: icon only on small viewports, with a label above
    900px. */
 .sessionPlaceholder {
   display: inline-block;
@@ -223,19 +227,19 @@
   background: var(--char-surface2);
 }
 
-.opcionActiva {
+.activeOption {
   color: var(--ember);
 }
 
-.separador {
+.divider {
   height: 1px;
   margin: var(--s-1) 0;
   border: 0;
   background: var(--hairline-dark);
 }
 
-/* ── Menú en viewport chico ────────────────────────────────────── */
-.botonMenu {
+/* ── Small-viewport menu ──────────────────────────────────────── */
+.menuButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -248,7 +252,7 @@
   cursor: pointer;
 }
 
-.panelMovil {
+.mobilePanel {
   display: flex;
   flex-direction: column;
   gap: var(--s-1);
@@ -261,7 +265,7 @@
 }
 
 @media (min-width: 900px) {
-  .navegacion {
+  .nav {
     display: flex;
   }
 
@@ -273,14 +277,14 @@
     width: 140px;
   }
 
-  .botonMenu,
-  .panelMovil {
+  .menuButton,
+  .mobilePanel {
     display: none;
   }
 }
 
-/* ── Containeres de contenido ─────────────────────────────────── */
-.contenido {
+/* ── Content containers ───────────────────────────────────────── */
+.content {
   flex: 1;
   width: 100%;
 }
@@ -292,7 +296,7 @@
   padding: var(--section-v) var(--s-4);
 }
 
-/* ── Cáscara centrada: pantallas de sesión y 404 ───────────────── */
+/* ── Centered shell: session screens and 404 ───────────────────── */
 .centeredScreen {
   flex: 1;
   display: flex;
@@ -317,7 +321,7 @@
   color: var(--fg-on-dark);
 }
 
-/* ── Pantalla pending de implementar ─────────────────────────── */
+/* ── Pending-implementation screen ──────────────────────────────── */
 .pendingScreen {
   display: flex;
   flex-direction: column;
@@ -326,10 +330,10 @@
   max-width: 620px;
 }
 
-.notaPendiente {
+.pendingNote {
   color: var(--fg-2);
 }
 
-.notaPendienteOscura {
+.pendingNoteDark {
   color: var(--fg-on-dark-2);
 }

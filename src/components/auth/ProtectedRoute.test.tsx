@@ -13,11 +13,11 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace, push: vi.fn(), refresh: vi.fn() }),
 }));
 
-function renderProtegida() {
+function renderProtected() {
   return render(
     <SessionProvider>
       <ProtectedRoute>
-        <p>Tus favorites</p>
+        <p>Tus favoritos</p>
       </ProtectedRoute>
     </SessionProvider>,
   );
@@ -29,33 +29,34 @@ describe("ProtectedRoute", () => {
     replace.mockClear();
   });
 
-  it("muestra el contenido cuando hay sesión", () => {
+  it("shows the content when there is a session", () => {
     localStorage.setItem(DEFAULT_TOKEN_STORAGE_KEY, "jwt-de-prueba");
 
-    renderProtegida();
+    renderProtected();
 
-    expect(screen.getByText("Tus favorites")).toBeInTheDocument();
+    expect(screen.getByText("Tus favoritos")).toBeInTheDocument();
     expect(replace).not.toHaveBeenCalled();
   });
 
-  it("manda al login con el destination guardado cuando no hay sesión", () => {
-    renderProtegida();
+  it("redirects to login with the saved destination when there is no session", () => {
+    renderProtected();
 
-    expect(screen.queryByText("Tus favorites")).not.toBeInTheDocument();
+    expect(screen.queryByText("Tus favoritos")).not.toBeInTheDocument();
     expect(replace).toHaveBeenCalledWith("/login?redirect=%2Ffavorites");
   });
 
-  it("expulsa al login si la sesión se cae con la pantalla abierta", () => {
+  it("kicks the user to login if the session drops while the screen is mounted", () => {
     localStorage.setItem(DEFAULT_TOKEN_STORAGE_KEY, "jwt-de-prueba");
-    renderProtegida();
+    renderProtected();
 
-    // Es lo que pasa cuando la API responde 401 o cuando se cierra sesión en
-    // otra pestaña: el token desaparece con la pantalla ya montada.
+    // This is what happens when the API responds with 401, or when the
+    // session is closed in another tab: the token disappears while the
+    // screen is already mounted.
     act(() => {
       clearToken();
     });
 
-    expect(screen.queryByText("Tus favorites")).not.toBeInTheDocument();
+    expect(screen.queryByText("Tus favoritos")).not.toBeInTheDocument();
     expect(replace).toHaveBeenCalledWith("/login?redirect=%2Ffavorites");
   });
 });

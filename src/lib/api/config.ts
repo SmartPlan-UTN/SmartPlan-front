@@ -1,24 +1,24 @@
 /**
- * Configuración de la API centralizada.
- * Administra la resolución y validación de la URL base para peticiones HTTP.
+ * Centralized API configuration.
+ * Handles resolving and validating the base URL for HTTP requests.
  */
 
 /**
- * Obtiene y valida la URL base de la API de SmartPlan desde las variables de environment.
+ * Gets and validates the SmartPlan API base URL from environment variables.
  *
- * @returns La URL base sanitizada (sin navbar al final).
- * @throws {Error} Si `NEXT_PUBLIC_API_URL` no está definida ni tiene contenido válido.
+ * @returns The sanitized base URL (without a trailing slash).
+ * @throws {Error} If `NEXT_PUBLIC_API_URL` is not defined or has no valid content.
  */
 export function getApiBaseUrl(): string {
   const url = process.env.NEXT_PUBLIC_API_URL;
 
   if (!url || url.trim() === '') {
     throw new Error(
-      '[SmartPlan API] La variable de environment NEXT_PUBLIC_API_URL no está configurada. ' +
-        'Por favor, definila en tu archivo .env.local (ver .env.example).'
+      '[SmartPlan API] The NEXT_PUBLIC_API_URL environment variable is not set. ' +
+        'Please define it in your .env.local file (see .env.example).'
     );
   }
 
-  // Elimina barras finales duplicadas para mantener consistencia en la concatenación
+  // Remove duplicate trailing slashes to keep concatenation consistent
   return url.trim().replace(/\/+$/, '');
 }

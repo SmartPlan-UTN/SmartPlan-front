@@ -4,7 +4,8 @@ import type { Department } from './places';
 import type { Category } from './categories';
 
 /**
- * Claves previstas para el type de salida (CU17, CU19).
+ * Expected keys for the outing type (CU17, CU19).
+ * Values match exactly what's expected in SmartPlan-back.
  */
 export type OutingTypeKey =
   | 'couple'
@@ -16,14 +17,14 @@ export type OutingTypeKey =
   | 'family';
 
 /**
- * Tipo de salida para la generación de un plan (CU17, CU19).
+ * Outing type for generating a plan (CU17, CU19).
  */
 export interface OutingType extends CatalogEntity<OutingTypeKey> {
   key: OutingTypeKey;
 }
 
 /**
- * Parámetros solicitados por el user para generar un plan (CU17, CU19, CU31).
+ * Parameters submitted by the user to generate a plan (CU17, CU19, CU31).
  */
 export interface PlanRequest extends BaseEntity {
   idUser: number;
@@ -42,7 +43,7 @@ export interface PlanRequest extends BaseEntity {
 }
 
 /**
- * Categoría elegida dentro de una request (CU17, CU19). Relación N:M entre PlanRequest y Category.
+ * Category chosen within a request (CU17, CU19). N:M relationship between PlanRequest and Category.
  */
 export interface PlanRequestCategory extends BaseEntity {
   idPlanRequest: number;
@@ -53,7 +54,7 @@ export interface PlanRequestCategory extends BaseEntity {
 }
 
 /**
- * Devolución del user tras realizar un plan (CU21, CU23).
+ * User's feedback after completing a plan (CU21, CU23).
  */
 export interface Feedback extends BaseEntity {
   title: string;
@@ -67,7 +68,8 @@ export interface Feedback extends BaseEntity {
 }
 
 /**
- * Claves previstas para el status de una request de plan (CU17, CU19, CU31).
+ * Expected keys for a plan request's status (CU17, CU19, CU31).
+ * Values match exactly what's expected in SmartPlan-back.
  */
 export type RequestStatusKey =
   | 'pending'
@@ -76,14 +78,15 @@ export type RequestStatusKey =
   | 'failed';
 
 /**
- * Status del procesamiento de una request de plan (CU17, CU19, CU31).
+ * Processing status of a plan request (CU17, CU19, CU31).
  */
 export interface RequestStatus extends CatalogEntity<RequestStatusKey> {
   key: RequestStatusKey;
 }
 
 /**
- * Claves previstas para el status de una retroalimentación (CU21, CU23).
+ * Expected keys for feedback status (CU21, CU23).
+ * Values match exactly what's seeded in SmartPlan-back.
  */
 export type FeedbackStatusKey =
   | 'pending'
@@ -91,7 +94,7 @@ export type FeedbackStatusKey =
   | 'discarded';
 
 /**
- * Status del procesamiento de una retroalimentación (CU21, CU23).
+ * Processing status of a feedback entry (CU21, CU23).
  */
 export interface FeedbackStatus extends CatalogEntity<FeedbackStatusKey> {
   key: FeedbackStatusKey;

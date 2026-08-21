@@ -9,7 +9,7 @@ describe("session", () => {
     localStorage.clear();
   });
 
-  it("guarda, lee y borra el token", () => {
+  it("saves, reads, and clears the token", () => {
     expect(readToken()).toBeNull();
 
     saveToken("jwt-de-prueba");
@@ -20,7 +20,7 @@ describe("session", () => {
     expect(readToken()).toBeNull();
   });
 
-  it("avisa de los changes de la pestaña actual hasta que se desuscribe", () => {
+  it("notifies changes in the current tab until unsubscribed", () => {
     const onChange = vi.fn();
     const unsubscribe = subscribeToSession(onChange);
 
@@ -33,19 +33,19 @@ describe("session", () => {
     expect(onChange).toHaveBeenCalledTimes(2);
   });
 
-  it("avisa cuando otra pestaña cierra la sesión", () => {
+  it("notifies when another tab closes the session", () => {
     const onChange = vi.fn();
     const unsubscribe = subscribeToSession(onChange);
 
-    // Es lo que dispara el navegador en las demás pestañas: el token cambia y,
-    // con localStorage.clear(), la key viene en null.
+    // This is what the browser fires in the other tabs: the token changes and,
+    // with localStorage.clear(), the key comes through as null.
     window.dispatchEvent(
       new StorageEvent("storage", { key: DEFAULT_TOKEN_STORAGE_KEY }),
     );
     window.dispatchEvent(new StorageEvent("storage", { key: null }));
     expect(onChange).toHaveBeenCalledTimes(2);
 
-    // Un cambio de otra key no es asunto de la sesión.
+    // A change to another key is none of the session's business.
     window.dispatchEvent(new StorageEvent("storage", { key: "otra-cosa" }));
     expect(onChange).toHaveBeenCalledTimes(2);
 

@@ -1,7 +1,7 @@
 /**
- * Status de sesión del frontend.
+ * Frontend session state.
  *
- * Importar siempre desde `@/lib/auth`, no desde los archivos internos.
+ * Always import from `@/lib/auth`, not from the internal files.
  */
 
 export { SessionProvider, useSession } from "./SessionProvider";

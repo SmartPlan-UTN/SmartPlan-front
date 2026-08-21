@@ -1,30 +1,30 @@
 import { DEFAULT_TOKEN_STORAGE_KEY } from "@/lib/api";
 
 /**
- * Lectura y escritura del JWT en el navegador.
+ * Reads and writes the JWT in the browser.
  *
- * El almacenamiento concreto vive solo acá: el resto de la aplicación consume
- * la sesión a través de `SessionProvider` / `useSession`. Si mañana el token pasa
- * a una cookie `httpOnly` —lo que habilitaría proteger las rutas en el
- * servidor—, se cambia este archivo y nada más.
+ * The concrete storage lives only here: the rest of the application consumes
+ * the session through `SessionProvider` / `useSession`. If the token later
+ * moves to an `httpOnly` cookie —which would enable protecting routes on the
+ * server— only this file needs to change.
  *
- * Todas las funciones son seguras de invocar durante el render del servidor:
- * si no hay `window`, devuelven `null` o no hacen nada.
+ * All functions are safe to call during server rendering: if there is no
+ * `window`, they return `null` or do nothing.
  */
 
-/** Evento propio: avisa un cambio de sesión dentro de la misma pestaña. */
+/** Custom event: signals a session change within the same tab. */
 const SESSION_EVENT = "smartplan:session";
 
-const hayNavegador = () => typeof window !== "undefined";
+const hasWindow = () => typeof window !== "undefined";
 
 /**
- * Devuelve el JWT guardado, o `null` si no hay sesión.
+ * Returns the stored JWT, or `null` if there is no session.
  *
- * `localStorage` puede lanzar en modo privado estricto o con las cookies de
- * terceros bloqueadas, así que el acceso va protegido.
+ * `localStorage` can throw in strict private mode or with third-party
+ * cookies blocked, so access is guarded.
  */
 export function readToken(): string | null {
-  if (!hayNavegador()) {
+  if (!hasWindow()) {
     return null;
   }
 
@@ -35,63 +35,63 @@ export function readToken(): string | null {
   }
 }
 
-/** Guarda el JWT y avisa a los suscriptores de la pestaña actual. */
+/** Saves the JWT and notifies subscribers in the current tab. */
 export function saveToken(token: string): void {
-  if (!hayNavegador()) {
+  if (!hasWindow()) {
     return;
   }
 
   try {
     localStorage.setItem(DEFAULT_TOKEN_STORAGE_KEY, token);
   } catch {
-    // Si el navegador bloquea el almacenamiento, la sesión no se puede
-    // sostener: el status se relee de `localStorage` y el guardián va a mandar
-    // al login. Se avisa igual para que la UI no quede a medio camino.
+    // If the browser blocks storage, the session cannot persist: the
+    // state is re-read from `localStorage` and the guard will redirect
+    // to login. Notify anyway so the UI doesn't end up half-updated.
   }
 
   window.dispatchEvent(new Event(SESSION_EVENT));
 }
 
-/** Borra el JWT y avisa a los suscriptores de la pestaña actual. */
+/** Clears the JWT and notifies subscribers in the current tab. */
 export function clearToken(): void {
-  if (!hayNavegador()) {
+  if (!hasWindow()) {
     return;
   }
 
   try {
     localStorage.removeItem(DEFAULT_TOKEN_STORAGE_KEY);
   } catch {
-    // Ídem: si no se puede escribir, igual hay que notificar el cambio.
+    // Same as above: even if writing fails, the change still needs to be notified.
   }
 
   window.dispatchEvent(new Event(SESSION_EVENT));
 }
 
 /**
- * Suscribe un callback a los changes de sesión.
+ * Subscribes a callback to session changes.
  *
- * Cubre los dos orígenes posibles: el event propio para lo que pasa en esta
- * pestaña y `storage` para lo que pasa en otra (cerrar sesión en una pestaña
- * tiene que cerrarla en todas).
+ * Covers both possible sources: the custom event for what happens in this
+ * tab, and `storage` for what happens in another one (logging out in one
+ * tab has to log out in all of them).
  *
- * @returns Función para desuscribirse.
+ * @returns Unsubscribe function.
  */
 export function subscribeToSession(onChange: () => void): () => void {
-  if (!hayNavegador()) {
+  if (!hasWindow()) {
     return () => undefined;
   }
 
-  const onChangeAlmacenamiento = (event: StorageEvent) => {
+  const onStorageChange = (event: StorageEvent) => {
     if (event.key === null || event.key === DEFAULT_TOKEN_STORAGE_KEY) {
       onChange();
     }
   };
 
   window.addEventListener(SESSION_EVENT, onChange);
-  window.addEventListener("storage", onChangeAlmacenamiento);
+  window.addEventListener("storage", onStorageChange);
 
   return () => {
     window.removeEventListener(SESSION_EVENT, onChange);
-    window.removeEventListener("storage", onChangeAlmacenamiento);
+    window.removeEventListener("storage", onStorageChange);
   };
 }

@@ -4,12 +4,12 @@ import { ProtectedRoute } from "@/components/auth";
 import { AppShell, Container } from "@/components/layout";
 
 /**
- * Layout del panel de administración.
+ * Layout for the administration panel.
  *
- * Comparte la navbar con el resto de la aplicación y exige sesión, igual que el
- * grupo `(private)`. **La comprobación de role todavía no existe**: hoy cualquier
- * sesión válida entra. Restringirlo a la persona administradora es parte de
- * CU61 y CU62, que definen permissions y roles.
+ * Shares the navbar with the rest of the application and requires a session,
+ * same as the `(private)` group. **The role check doesn't exist yet**: today
+ * any valid session gets in. Restricting it to admin users is part of CU61
+ * and CU62, which define permissions and roles.
  */
 export default function AdminLayout({
   children,

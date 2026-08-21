@@ -14,16 +14,16 @@ interface LoginPageProps {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const parameters = await searchParams;
   const value = parameters[REDIRECT_PARAM];
-  // `safeDestination` descarta las URLs externas: sin ese filtro, `?redirect=`
-  // convertiría al login en un redirector abierto a cualquier dominio.
+  // `safeDestination` discards external URLs: without that filter, `?redirect=`
+  // would turn the login page into an open redirector to any domain.
   const destination = safeDestination(typeof value === "string" ? value : null);
 
   return (
     <PendingScreen
       title="Iniciar sesión"
-      description="El formulario de acceso, el signup y el medidor de fortaleza de contraseña."
-      referencias="CU1–CU3 · PAN 04"
-      tono="dark"
+      description="El formulario de acceso, el registro y el medidor de fortaleza de contraseña."
+      references="CU1–CU3 · PAN 04"
+      tone="dark"
     >
       {destination ? (
         <p className="sp-small">

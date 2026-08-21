@@ -4,7 +4,7 @@ import type { Activity } from './activities';
 import type { Plan } from './plans';
 
 /**
- * Lista de favorites de un user (CU15, CU39-CU43).
+ * A user's favorites list (CU15, CU39-CU43).
  */
 export interface FavoriteList extends BaseEntity {
   idUser: number;
@@ -13,7 +13,7 @@ export interface FavoriteList extends BaseEntity {
   plans?: FavoritePlan[];
 }
 /**
- * Activity guardada en list de favorites (CU15, CU39, CU41). Relación N:M entre FavoriteList y Activity.
+ * Activity saved to a favorites list (CU15, CU39, CU41). N:M relationship between FavoriteList and Activity.
  */
 export interface FavoriteActivity extends BaseEntity {
   idFavoriteList: number;
@@ -23,7 +23,7 @@ export interface FavoriteActivity extends BaseEntity {
 }
 
 /**
- * Plan guardado en list de favorites (CU40, CU42, CU43). Relación N:M entre FavoriteList y Plan.
+ * Plan saved to a favorites list (CU40, CU42, CU43). N:M relationship between FavoriteList and Plan.
  */
 export interface FavoritePlan extends BaseEntity {
   idFavoriteList: number;

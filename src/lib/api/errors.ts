@@ -1,15 +1,19 @@
 import axios from 'axios';
 
 /**
- * Categorías posibles para la clasificación de errors HTTP y de red.
+ * Possible categories for classifying HTTP and network errors.
  */
 export type ApiErrorType = 'HTTP' | 'NETWORK' | 'TIMEOUT' | 'CONFIGURATION' | 'UNKNOWN';
 
 /**
- * Estructura de response de error devuelta por la API de SmartPlan / NestJS.
+ * Error response shape returned by the SmartPlan / NestJS API.
+ * Matches `ErrorResponse` in SmartPlan-back
+ * (`src/common/errors/error-response.ts`): `code` and `message` are the
+ * fields the backend actually sends.
  */
 export interface ErrorResponseData {
   message?: string | string[];
+  code?: string;
   statusCode?: number;
   error?: string;
   [key: string]: unknown;
@@ -25,8 +29,8 @@ export interface ApiErrorOptions {
 }
 
 /**
- * Error estandarizado para la capa de API de SmartPlan.
- * Encapsula la información del error sin exponer details internos de Axios hacia los componentes.
+ * Standardized error for SmartPlan's API layer.
+ * Wraps error information without leaking Axios internals to components.
  */
 export class ApiError extends Error {
   public readonly type: ApiErrorType;
@@ -48,21 +52,21 @@ export class ApiError extends Error {
   }
 
   /**
-   * Indica si el error se debe a una sesión no autenticada o token inválido (401 Unauthorized).
+   * Whether the error is due to an unauthenticated session or an invalid token (401 Unauthorized).
    */
   get isUnauthorized(): boolean {
     return this.status === 401;
   }
 
   /**
-   * Indica si el error se debe a falta de permissions suficientes (403 Forbidden).
+   * Whether the error is due to insufficient permissions (403 Forbidden).
    */
   get isForbidden(): boolean {
     return this.status === 403;
   }
 
   /**
-   * Indica si el error fue provocado por problemas de conectividad o tiempo de espera agotado.
+   * Whether the error was caused by connectivity issues or a timeout.
    */
   get isNetworkError(): boolean {
     return this.type === 'NETWORK' || this.type === 'TIMEOUT';
@@ -70,7 +74,7 @@ export class ApiError extends Error {
 }
 
 /**
- * Extrae y formatea un message legible desde el payload de error entregado por el backend.
+ * Extracts and formats a readable message from the error payload sent by the backend.
  */
 function extractServerMessage(data: ErrorResponseData | undefined, fallback: string): string {
   if (!data) {
@@ -89,10 +93,10 @@ function extractServerMessage(data: ErrorResponseData | undefined, fallback: str
 }
 
 /**
- * Normaliza cualquier excepción (AxiosError, Error genérico, nulo, etc.) en una instancia de `ApiError`.
+ * Normalizes any exception (AxiosError, generic Error, null, etc.) into an `ApiError` instance.
  *
- * @param error Error original capturado.
- * @returns Instancia tipada de `ApiError`.
+ * @param error Original captured error.
+ * @returns Typed `ApiError` instance.
  */
 export function normalizeError(error: unknown): ApiError {
   if (error instanceof ApiError) {
@@ -106,7 +110,7 @@ export function normalizeError(error: unknown): ApiError {
       const status = response.status;
       const data = response.data as ErrorResponseData | undefined;
       const message = extractServerMessage(data, `Error HTTP ${status}`);
-      const code = typeof data?.error === 'string' ? data.error : error.code ?? null;
+      const code = typeof data?.code === 'string' ? data.code : error.code ?? null;
 
       return new ApiError({
         message,
@@ -153,7 +157,7 @@ export function normalizeError(error: unknown): ApiError {
   }
 
   return new ApiError({
-    message: 'Ocurrió un error inesperado al process la request.',
+    message: 'Ocurrió un error inesperado al procesar la solicitud.',
     type: 'UNKNOWN',
     cause: error,
   });

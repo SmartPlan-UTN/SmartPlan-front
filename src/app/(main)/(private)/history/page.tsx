@@ -10,8 +10,8 @@ export default function HistoryPage() {
   return (
     <PendingScreen
       title="Historial"
-      description="Los plans generados y guardados, con su status y la retroalimentación de cada uno."
-      referencias="CU23 · PAN 13"
+      description="Los planes generados y guardados, con su estado y la retroalimentación de cada uno."
+      references="CU23 · PAN 13"
     />
   );
 }

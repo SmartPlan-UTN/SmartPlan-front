@@ -14,59 +14,59 @@ import { USER_LINKS } from "./links";
 import styles from "./layout.module.css";
 
 /**
- * Menú de user de la navbar.
+ * Navbar user menu.
  *
- * Tres statuses, uno por cada status de la sesión:
+ * Three states, one per session status:
  *
- * - `loading`: un hueco del mismo tamaño, para que la navbar no salte cuando se
- *   resuelve el token.
- * - `anonymous`: link a iniciar sesión.
- * - `authenticated`: desplegable con Mi profile, Preferences y Cerrar sesión.
+ * - `loading`: a same-sized placeholder, so the navbar doesn't jump once
+ *   the token resolves.
+ * - `anonymous`: link to log in.
+ * - `authenticated`: dropdown with Mi perfil, Preferencias, and Cerrar sesión.
  *
- * Es un patrón *disclosure*, no un `menu` de ARIA: el desplegable son links
- * comunes que se recorren con Tab. Se cierra con Escape —devolviendo el foco al
- * disparador—, al hacer click afuera y al navegar.
+ * It's a *disclosure* pattern, not an ARIA `menu`: the dropdown is regular
+ * links navigated with Tab. It closes on Escape —returning focus to the
+ * trigger—, on outside click, and on navigation.
  */
 export function UserMenu() {
-  const { status, cerrarSession } = useSession();
+  const { status, logout } = useSession();
   const currentRoute = usePathname();
-  const [abierto, setAbierto] = useState(false);
+  const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const disparadorRef = useRef<HTMLButtonElement>(null);
-  const idPanel = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelId = useId();
 
-  const cerrar = useCallback(() => {
-    setAbierto(false);
+  const close = useCallback(() => {
+    setOpen(false);
   }, []);
 
   useEffect(() => {
-    if (!abierto) {
+    if (!open) {
       return;
     }
 
-    const alApuntarAfuera = (event: MouseEvent) => {
+    const onClickOutside = (event: MouseEvent) => {
       const container = containerRef.current;
 
       if (container && !container.contains(event.target as Node)) {
-        cerrar();
+        close();
       }
     };
 
-    const alTeclear = (event: KeyboardEvent) => {
+    const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        cerrar();
-        disparadorRef.current?.focus();
+        close();
+        triggerRef.current?.focus();
       }
     };
 
-    document.addEventListener("mousedown", alApuntarAfuera);
-    document.addEventListener("keydown", alTeclear);
+    document.addEventListener("mousedown", onClickOutside);
+    document.addEventListener("keydown", onKeyDown);
 
     return () => {
-      document.removeEventListener("mousedown", alApuntarAfuera);
-      document.removeEventListener("keydown", alTeclear);
+      document.removeEventListener("mousedown", onClickOutside);
+      document.removeEventListener("keydown", onKeyDown);
     };
-  }, [abierto, cerrar]);
+  }, [open, close]);
 
   if (status === "loading") {
     return (
@@ -78,13 +78,13 @@ export function UserMenu() {
   }
 
   if (status === "anonymous") {
-    // Se conserva la pantalla actual igual que hace el guardián: quien entra al
-    // login desde Explorar espera volver a Explorar, no al home.
+    // Preserve the current screen, same as the guard does: someone entering
+    // login from Explorar expects to return to Explorar, not to home.
     return (
       <Link
         href={loginRoute(currentRoute)}
         className={cn(styles.buttonLink, styles.sessionControl)}
-        // La label se esconde en viewport chico, igual que en el disparador.
+        // The label is hidden on small viewports, same as on the trigger.
         aria-label="Iniciar sesión"
       >
         <Icon name="log-in" size={16} />
@@ -101,16 +101,16 @@ export function UserMenu() {
       ref={containerRef}
     >
       <button
-        ref={disparadorRef}
+        ref={triggerRef}
         type="button"
-        className={styles.disparador}
-        // La label se esconde en viewport chico y los icons son
-        // decorativos: sin este aria-label el botón se queda sin name.
+        className={styles.trigger}
+        // The label is hidden on small viewports and the icons are
+        // decorative: without this aria-label the button would have no name.
         aria-label="Mi cuenta"
-        aria-expanded={abierto}
-        aria-controls={idPanel}
+        aria-expanded={open}
+        aria-controls={panelId}
         onClick={() => {
-          setAbierto((estaAbierto) => !estaAbierto);
+          setOpen((isOpen) => !isOpen);
         }}
       >
         <Icon name="user" size={16} />
@@ -120,27 +120,27 @@ export function UserMenu() {
         <Icon name="chevron-down" size={14} />
       </button>
 
-      {abierto ? (
-        <div className={styles.panel} id={idPanel}>
+      {open ? (
+        <div className={styles.panel} id={panelId}>
           {USER_LINKS.map((link) => (
             <NavLink
               key={link.href}
               href={link.href}
               label={link.label}
               icon={link.icon}
-              variante="option"
-              onNavegar={cerrar}
+              variant="option"
+              onNavigate={close}
             />
           ))}
 
-          <hr className={styles.separador} />
+          <hr className={styles.divider} />
 
           <button
             type="button"
             className={styles.option}
             onClick={() => {
-              cerrar();
-              cerrarSession();
+              close();
+              logout();
             }}
           >
             <Icon name="log-out" size={16} />

@@ -4,7 +4,7 @@ import type { PlanRequest } from './recommendation';
 import type { Activity } from './activities';
 
 /**
- * Plan de activities (CU12, CU13, CU17, CU24-CU31, CU60).
+ * Plan made up of activities (CU12, CU13, CU17, CU24-CU31, CU60).
  */
 export interface Plan extends BaseEntity {
   title: string;
@@ -21,7 +21,7 @@ export interface Plan extends BaseEntity {
 }
 
 /**
- * Ítem individual de un plan (CU13, CU27-CU30).
+ * Individual item in a plan (CU13, CU27-CU30).
  */
 export interface PlanDetail extends BaseEntity {
   idPlan: number;
@@ -35,7 +35,9 @@ export interface PlanDetail extends BaseEntity {
 }
 
 /**
- * Claves previstas para el status de un plan (CU22, CU26, CU60).
+ * Expected keys for a plan's status (CU22, CU26, CU60).
+ * Values match exactly what's seeded in SmartPlan-back
+ * (`src/database/seeds/definitions.ts`).
  */
 export type PlanStatusKey =
   | 'generated'
@@ -45,7 +47,7 @@ export type PlanStatusKey =
   | 'cancelled';
 
 /**
- * Status de un plan (CU22, CU26, CU60).
+ * Status of a plan (CU22, CU26, CU60).
  */
 export interface PlanStatus extends CatalogEntity<PlanStatusKey> {
   key: PlanStatusKey;

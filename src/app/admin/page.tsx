@@ -10,8 +10,8 @@ export default function AdminPage() {
   return (
     <PendingScreen
       title="Panel de administración"
-      description="Las métricas del sistema y la gestión de users, activities, plans y ratings."
-      referencias="CU53–CU60 · REP-01"
+      description="Las métricas del sistema y la gestión de usuarios, actividades, planes y valoraciones."
+      references="CU53–CU60 · REP-01"
     />
   );
 }

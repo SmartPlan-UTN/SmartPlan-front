@@ -2,9 +2,9 @@
    smartplan v2 — EMBER Design System tokens
    Palette: Char · Ember · Cream · Electric · Gold
 
-   La dataSource (Briqueuege Grotesque) NO se declara acá con @font-face:
+   La tipografía (Bricolage Grotesque) NO se declara acá con @font-face:
    ya la carga next/font/local en src/app/layout.tsx, que expone la
-   variable --font-briqueuege-grotesque. Declararla dos veces duplica
+   variable --font-bricolage-grotesque. Declararla dos veces duplica
    la carga del archivo .ttf.
    ================================================================ */
 
@@ -59,7 +59,7 @@
   --hairline-dark: rgba(255,255,255,0.07);
 
   /* ── Typography ──────────────────────────────────── */
-  --font: var(--font-briqueuege-grotesque), "Arial Narrow", sans-serif;
+  --font: var(--font-bricolage-grotesque), "Arial Narrow", sans-serif;
 
   /* ── Type scale ──────────────────────────────────── */
   --t-display: 78px;

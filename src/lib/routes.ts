@@ -1,11 +1,11 @@
 /**
- * Mapa de rutas de la aplicación.
+ * Application route map.
  *
- * Las rutas se escriben una sola vez acá y se referencian desde los `<Link>`,
- * los redirects y los tests. Un string suelto en un componente se rompe en
- * silencio cuando la carpeta se renombra; una constante rompe la compilación.
+ * Routes are written once here and referenced from `<Link>`, redirects, and
+ * tests. A loose string in a component breaks silently when the folder is
+ * renamed; a constant breaks the build instead.
  *
- * Las carpetas de route van en `kebab-case` y en español, como pide
+ * Route folders use `kebab-case` and English, as required by
  * `skills/01-domain/`.
  */
 export const ROUTES = {
@@ -23,18 +23,18 @@ export const ROUTES = {
 
 export type Route = (typeof ROUTES)[keyof typeof ROUTES];
 
-/** Nombre del parámetro que guarda a dónde volver después de iniciar sesión. */
+/** Name of the query parameter that stores where to return after logging in. */
 export const REDIRECT_PARAM = "redirect";
 
 /**
- * Valida un destination de redirección antes de navegar a él.
+ * Validates a redirect destination before navigating to it.
  *
- * Solo se aceptan rutas internas: un value como `https://otro-sitio.com` o
- * `//otro-sitio.com` en `?redirect=` convertiría el login en un redirector
- * abierto hacia cualquier dominio.
+ * Only internal routes are accepted: a value like `https://other-site.com` or
+ * `//other-site.com` in `?redirect=` would turn the login page into an open
+ * redirector to any domain.
  *
- * @param destination Valor recibido por query string, o `null` si no vino.
- * @returns La route interna, o `null` si el value no es seguro.
+ * @param destination Value received from the query string, or `null` if none was provided.
+ * @returns The internal route, or `null` if the value is not safe.
  */
 export function safeDestination(destination: string | null | undefined): string | null {
   if (!destination || !destination.startsWith("/") || destination.startsWith("//")) {
@@ -45,13 +45,13 @@ export function safeDestination(destination: string | null | undefined): string 
 }
 
 /**
- * Arma la URL del login conservando la route desde la que se expulsó al visitante.
+ * Builds the login URL while preserving the route the visitor was redirected from.
  *
- * El home no se conserva: es a donde se vuelve por defecto, así que agregarlo
- * al parámetro solo ensucia la URL.
+ * Home is not preserved: it's already the default place to return to, so
+ * adding it to the parameter would only clutter the URL.
  *
- * @param destination Route a la que volver una vez iniciada la sesión.
- * @returns `/login` con el parámetro `redirect` cuando el destination es válido.
+ * @param destination Route to return to once the session is started.
+ * @returns `/login` with the `redirect` parameter when the destination is valid.
  */
 export function loginRoute(destination?: string | null): string {
   const route = safeDestination(destination);
@@ -64,9 +64,9 @@ export function loginRoute(destination?: string | null): string {
 }
 
 /**
- * Indica si una route está dentro de otra, para marcar el link active de la
- * navegación. `/plans` no active `/plans-guardados`, pero `/plans/7` sí
- * active `/plans`.
+ * Indicates whether a route is nested under another, to mark the active nav
+ * link. `/plans` does not activate `/plans-archive`, but `/plans/7` does
+ * activate `/plans`.
  */
 export function isActiveRoute(currentRoute: string, href: string): boolean {
   if (href === ROUTES.home) {

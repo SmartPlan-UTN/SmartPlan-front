@@ -1,7 +1,7 @@
 import { BaseEntity } from './common';
 
 /**
- * País. Primer nivel de la jerarquía geográfica.
+ * Country. First level of the geographic hierarchy.
  */
 export interface Country extends BaseEntity {
   name: string;
@@ -9,7 +9,7 @@ export interface Country extends BaseEntity {
   cities?: City[];
 }
 /**
- * City dentro de un país. Segundo nivel de la jerarquía geográfica.
+ * City within a country. Second level of the geographic hierarchy.
  */
 export interface City extends BaseEntity {
   idCountry: number;
@@ -20,7 +20,7 @@ export interface City extends BaseEntity {
 }
 
 /**
- * Department dentro de una city. Tercer nivel de la jerarquía geográfica.
+ * Department within a city. Third level of the geographic hierarchy.
  */
 export interface Department extends BaseEntity {
   idCity: number;
@@ -31,7 +31,7 @@ export interface Department extends BaseEntity {
 }
 
 /**
- * Ubicación física donde se realiza una activity (CU14, CU16, CU48, CU50).
+ * Physical location where an activity takes place (CU14, CU16, CU48, CU50).
  */
 export interface Place extends BaseEntity {
   name: string;

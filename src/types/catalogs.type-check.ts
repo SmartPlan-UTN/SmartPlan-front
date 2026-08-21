@@ -1,13 +1,14 @@
 import type { UserStatus, Role, PlanStatusKey } from './index';
 
 /**
- * Verificación de incompatibilidad de types entre catálogos a nivel de compilador TypeScript.
- * Este archivo demuestra que:
- * 1. Asignar un catálogo a otro distinto produce un error de compilación.
- * 2. Asignar una `key` inválida a un catálogo produce un error de compilación.
+ * Compiler-level check for catalog type incompatibility in TypeScript.
+ * This file demonstrates that:
+ * 1. Assigning one catalog to a different one produces a compile error.
+ * 2. Assigning an invalid `key` to a catalog produces a compile error.
  *
- * No es una suite de Vitest y `pnpm test` no lo ejecuta: se verifica solo, al
- * compilar, vía `pnpm build`. De ahí el sufijo `.type-check` y no `.test`.
+ * It is not a Vitest suite and `pnpm test` does not run it: it is checked
+ * only at compile time, via `pnpm build`. Hence the `.type-check` suffix
+ * instead of `.test`.
  */
 
 const validUserStatus: UserStatus = {
@@ -15,15 +16,15 @@ const validUserStatus: UserStatus = {
   createdAt: '2026-08-18T00:00:00Z',
   updatedAt: '2026-08-18T00:00:00Z',
   deletedAt: null,
-  name: 'Activo',
+  name: 'Active',
   key: 'active',
-  description: 'User active en el sistema',
+  description: 'User active in the system',
 };
 
-// 1. Incompatibilidad entre catálogos: UserStatus no es asignable a Role
-// @ts-expect-error - UserStatus no es asignable a Role debido a la incompatibilidad de key ('active' vs 'user' | 'admin')
+// 1. Catalog incompatibility: UserStatus is not assignable to Role
+// @ts-expect-error - UserStatus is not assignable to Role due to the key mismatch ('active' vs 'user' | 'admin')
 export const _invalidRole: Role = validUserStatus;
 
-// 2. Clave inválida en catálogo: 'confirmedd' no es una key válida para PlanStatus
-// @ts-expect-error - 'confirmedd' no es un value permitido en PlanStatusKey ('generated' | 'selected' | 'confirmed' | 'completed' | 'cancelled')
+// 2. Invalid catalog key: 'confirmedd' is not a valid key for PlanStatus
+// @ts-expect-error - 'confirmedd' is not an allowed value for PlanStatusKey ('generated' | 'selected' | 'confirmed' | 'completed' | 'cancelled')
 export const _invalidPlanStatusKey: PlanStatusKey = 'confirmedd';

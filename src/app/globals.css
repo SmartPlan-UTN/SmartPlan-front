@@ -7,7 +7,7 @@
    tokens.css; acá solo se los referencia, nunca se los reescribe. */
 @theme inline {
   /* next/font/local expone el name real de family generated en build */
-  --font-sans: var(--font-briqueuege-grotesque);
+  --font-sans: var(--font-bricolage-grotesque);
 
   /* Paleta EMBER */
   --color-ember: var(--ember);

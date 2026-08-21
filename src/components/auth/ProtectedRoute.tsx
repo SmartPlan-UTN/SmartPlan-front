@@ -13,18 +13,19 @@ export interface ProtectedRouteProps {
 }
 
 /**
- * Guardián de las pantallas que exigen sesión.
+ * Guard for screens that require a session.
  *
- * Mientras la sesión se resuelve muestra un status de espera; si no hay token,
- * reemplaza la input del history por `/login?redirect=<route>` para que el
- * botón "atrás" no devuelva a la pantalla de la que acaban de expulsarte.
+ * While the session resolves it shows a waiting state; if there is no
+ * token, it replaces the history entry with `/login?redirect=<route>` so
+ * the "back" button doesn't return to the screen the user was just kicked
+ * out of.
  *
- * **Por qué la protección es del lado del client:** el JWT vive en
- * `localStorage`, que el servidor no ve, así que ni `proxy.ts` ni un Server
- * Component pueden decidir si hay sesión. Es una barrera de navegación, no de
- * seguridad: quien realmente autoriza es el back en cada request. Cuando el
- * token pase a una cookie `httpOnly` (decisión de CU1) esta comprobación se
- * puede mover al servidor sin tocar las pantallas.
+ * **Why the protection is client-side:** the JWT lives in `localStorage`,
+ * which the server can't see, so neither `proxy.ts` nor a Server Component
+ * can decide whether there is a session. It's a navigation barrier, not a
+ * security one: the backend is what actually authorizes on every request.
+ * Once the token moves to an `httpOnly` cookie (CU1 decision), this check
+ * can move to the server without touching the screens.
  */
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { status } = useSession();
@@ -33,10 +34,10 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   useEffect(() => {
     if (status === "anonymous") {
-      // Se guarda la route, no la query: leerla con `useSearchParams` obligaría
-      // a envolver cada pantalla privada en un `<Suspense>` para que el build
-      // no falle al prerenderizarlas. Cuando alguna pantalla dependa de sus
-      // parámetros, se resuelve ahí.
+      // Store the route, not the query: reading it with `useSearchParams`
+      // would force wrapping every private screen in a `<Suspense>` so the
+      // build doesn't fail while prerendering them. If a screen ever needs
+      // its own params, that's handled there.
       router.replace(loginRoute(currentRoute));
     }
   }, [status, router, currentRoute]);

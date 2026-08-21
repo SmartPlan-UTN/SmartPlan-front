@@ -1,15 +1,15 @@
-# Los issues en blanco quedan habilitados a propósito: el job de fundaciones
-# (tooling, configuración, documentación) no entra en ninguna de las dos
-# plantillas y se abre a mano con el id entre corchetes, por ejemplo "[F21]".
+# Blank issues stay enabled on purpose: foundational work (tooling,
+# configuration, documentation) doesn't fit either template and is opened by
+# hand with the id in brackets, e.g. "[F21]".
 blank_issues_enabled: true
 
 contact_links:
-  - name: Convenciones del proyecto
+  - name: Project conventions
     url: https://github.com/SmartPlan-UTN/SmartPlan-front/tree/develop/skills
-    about: Git flow, dominio, design system y Definition of Done. Leelo antes de abrir el issue.
-  - name: Status de cada funcionalidad
+    about: Git flow, domain, design system, and Definition of Done. Read it before opening the issue.
+  - name: Status of each feature
     url: https://github.com/SmartPlan-UTN/SmartPlan-front/blob/develop/TRACKING.md
-    about: Fijate acá si lo que vas a reportar ya está tomado o en revisión.
-  - name: Issues del backend
+    about: Check here whether what you're about to report is already taken or in review.
+  - name: Backend issues
     url: https://github.com/SmartPlan-UTN/SmartPlan-back/issues
-    about: Si el problema es de la API o de la base de data, va en el otro repositorio.
+    about: If the problem is with the API or the database, it goes in the other repository.

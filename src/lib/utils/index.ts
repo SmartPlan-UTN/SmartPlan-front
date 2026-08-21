@@ -1,5 +1,5 @@
 /**
- * Helpers técnicos sin dominio. Importar desde `@/lib/utils`.
+ * Domain-agnostic technical helpers. Import from `@/lib/utils`.
  */
 
 export { cn } from "./cn";

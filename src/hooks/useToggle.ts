@@ -1,11 +1,11 @@
 import { useCallback, useState } from "react";
 
 /**
- * Status booleano con una función que lo invierte. Pensado para lo que se abre
- * y se cierra: un modal, un menú, un acordeón.
+ * Boolean state with a function that flips it. Meant for things that open
+ * and close: a modal, a menu, an accordion.
  *
- * Es además el molde de referencia para testear hooks; `useToggle.test.ts`
- * muestra cómo se prueban el value inicial y las transiciones.
+ * It's also the reference template for testing hooks; `useToggle.test.ts`
+ * shows how to test the initial value and the transitions.
  */
 export function useToggle(initialValue = false) {
   const [value, setValue] = useState(initialValue);

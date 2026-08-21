@@ -3,7 +3,7 @@ import type { Place } from './places';
 import type { Category } from './categories';
 
 /**
- * Experiencia concreta del catálogo (CU9-CU11, CU14, CU50, CU53).
+ * A specific catalog experience (CU9-CU11, CU14, CU50, CU53).
  */
 export interface Activity extends BaseEntity {
   name: string;
@@ -14,7 +14,7 @@ export interface Activity extends BaseEntity {
   places?: ActivityPlace[];
 }
 /**
- * Ubicación de una activity (CU14, CU16, CU50). Relación N:M entre Activity y Place.
+ * Location of an activity (CU14, CU16, CU50). N:M relationship between Activity and Place.
  */
 export interface ActivityPlace extends BaseEntity {
   idActivity: number;
@@ -27,7 +27,7 @@ export interface ActivityPlace extends BaseEntity {
 }
 
 /**
- * Categoría de una activity (CU10, CU53). Relación N:M entre Activity y Category.
+ * Category of an activity (CU10, CU53). N:M relationship between Activity and Category.
  */
 export interface ActivityCategory extends BaseEntity {
   idActivity: number;

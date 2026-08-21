@@ -1,23 +1,23 @@
 /**
- * Sistema de eventos pub/sub para notificar statuses de autenticación no autorizada (401 Unauthorized).
- * Permite a la capa de UI o al futuro AuthProvider reaccionar (ej. readdressar a login o limpiar sesión)
- * sin acoplar la infraestructura HTTP a pantallas específicas.
+ * Pub/sub event system for notifying unauthorized authentication states (401 Unauthorized).
+ * Lets the UI layer or the future AuthProvider react (e.g. redirect to login or clear the session)
+ * without coupling the HTTP infrastructure to specific screens.
  */
 
 export type UnauthorizedListener = () => void;
 
 const listeners: Set<UnauthorizedListener> = new Set();
-let notificationEnProgreso = false;
-let timerNotification: ReturnType<typeof setTimeout> | null = null;
+let notificationInProgress = false;
+let notificationTimer: ReturnType<typeof setTimeout> | null = null;
 
-/** Ventana de deduplicación en milisegundos para peticiones concurrentes que retornen 401 */
-const VENTANA_DEDUPLICACION_MS = 1000;
+/** Deduplication window in milliseconds for concurrent requests that return 401 */
+const DEDUPLICATION_WINDOW_MS = 1000;
 
 /**
- * Suscribe un callback que será ejecutado cuando se detecte un error 401 Unauthorized.
+ * Subscribes a callback to be executed when a 401 Unauthorized error is detected.
  *
- * @param listener Función a execute cuando la sesión no sea válida.
- * @returns Función de desuscripción para remover el listener.
+ * @param listener Function to run when the session is no longer valid.
+ * @returns Unsubscribe function to remove the listener.
  */
 export function onUnauthorized(listener: UnauthorizedListener): () => void {
   listeners.add(listener);
@@ -28,30 +28,30 @@ export function onUnauthorized(listener: UnauthorizedListener): () => void {
 }
 
 /**
- * Notifica a todos los suscriptores que se recibió una response 401.
- * Aplica deduplicación para peticiones múltiples en paralelo dentro de un breve intervalo.
+ * Notifies all subscribers that a 401 response was received.
+ * Deduplicates multiple concurrent requests within a short interval.
  */
 export function notifyUnauthorized(): void {
-  if (notificationEnProgreso) {
+  if (notificationInProgress) {
     return;
   }
 
-  notificationEnProgreso = true;
+  notificationInProgress = true;
 
   listeners.forEach((listener) => {
     try {
       listener();
     } catch (_err) {
-      // Ignora errors generados dentro de los listeners de UI para no romper la cadena de peticiones
+      // Ignore errors raised inside UI listeners so they don't break the request chain
     }
   });
 
-  if (timerNotification) {
-    clearTimeout(timerNotification);
+  if (notificationTimer) {
+    clearTimeout(notificationTimer);
   }
 
-  timerNotification = setTimeout(() => {
-    notificationEnProgreso = false;
-    timerNotification = null;
-  }, VENTANA_DEDUPLICACION_MS);
+  notificationTimer = setTimeout(() => {
+    notificationInProgress = false;
+    notificationTimer = null;
+  }, DEDUPLICATION_WINDOW_MS);
 }

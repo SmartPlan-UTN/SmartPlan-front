@@ -8,22 +8,22 @@ export interface NavigationLink {
 }
 
 /**
- * Navegación principal de la navbar: Inicio, Explorar, Favorites e Historial.
+ * Main navbar navigation: Inicio, Explorar, Favoritos, and Historial.
  *
- * Favorites e Historial se muestran siempre, también sin sesión: quien entre sin
- * estar logueado llega a la route y el guardián lo manda al login con el destination
- * guardado. Esconder los links dejaría la aplicación sin pistas de qué hay
- * detrás de la cuenta.
+ * Favoritos and Historial are always shown, even without a session: someone
+ * who enters without being logged in lands on the route and the guard sends
+ * them to login with the destination saved. Hiding the links would leave
+ * the application with no hints about what's behind the account.
  */
 export const MAIN_LINKS: readonly NavigationLink[] = [
   { href: ROUTES.home, label: "Inicio", icon: "house" },
   { href: ROUTES.explore, label: "Explorar", icon: "search" },
-  { href: ROUTES.favorites, label: "Favorites", icon: "heart" },
+  { href: ROUTES.favorites, label: "Favoritos", icon: "heart" },
   { href: ROUTES.history, label: "Historial", icon: "clock" },
 ];
 
-/** Options del menú de user. */
+/** User menu options. */
 export const USER_LINKS: readonly NavigationLink[] = [
-  { href: ROUTES.profile, label: "Mi profile", icon: "user" },
-  { href: ROUTES.preferences, label: "Preferences", icon: "settings" },
+  { href: ROUTES.profile, label: "Mi perfil", icon: "user" },
+  { href: ROUTES.preferences, label: "Preferencias", icon: "settings" },
 ];

@@ -4,80 +4,80 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
-> El bloque de arriba lo mantiene el tooling de Next.js. No lo edites a mano ni le
-> saques los marcadores.
+> The block above is maintained by Next.js tooling. Don't edit it by hand or
+> remove its markers.
 
-# SmartPlan Front — Instrucciones para agentes de IA
+# SmartPlan Front - AI Agent Instructions
 
-Este archivo es el punto de entrada. Lo leen Claude Code (vía `CLAUDE.md`),
-Codex (`AGENTS.md`) y GitHub Copilot (vía `.github/copilot-instructions.md`).
+This file is the entry point. It's read by Claude Code (via `CLAUDE.md`),
+Codex (`AGENTS.md`), and GitHub Copilot (via `.github/copilot-instructions.md`).
 
-## Qué es SmartPlan
+## What SmartPlan Is
 
-Aplicación web que genera automáticamente planes recreativos personalizados según
-presupuesto, ubicación, tiempo disponible, tipo de salida y preferencias del
-usuario. Proyecto Final 2026 — UTN Facultad Regional Mendoza.
+A web application that automatically generates personalized recreational
+plans based on budget, location, available time, outing type, and user
+preferences. Final Project 2026 — UTN Facultad Regional Mendoza.
 
-Este repositorio es el **frontend**. El backend vive en `SmartPlan-back`
-(NestJS + API REST + JWT).
+This repository is the **frontend**. The backend lives in `SmartPlan-back`
+(NestJS + REST API + JWT).
 
-## Antes de escribir código, leé esto
+## Before Writing Code, Read This
 
-| Archivo | Cuándo consultarlo |
+| File | When to read it |
 |---|---|
-| [`skills/00-project/SKILL.md`](skills/00-project/SKILL.md) | Siempre primero: qué es el sistema, alcance, módulos, equipo, stack |
-| [`skills/01-domain/SKILL.md`](skills/01-domain/SKILL.md) | Antes de nombrar tablas, endpoints, rutas, tipos o componentes |
-| [`skills/02-git-flow/SKILL.md`](skills/02-git-flow/SKILL.md) | Antes de cualquier operación de git y antes de abrir un issue o un PR |
-| [`skills/02-git-flow/DEFINITION-OF-DONE.md`](skills/02-git-flow/DEFINITION-OF-DONE.md) | Antes de dar una tarea por terminada |
-| [`skills/03-frontend/SKILL.md`](skills/03-frontend/SKILL.md) | Antes de escribir un componente o una página |
-| [`skills/04-quality/SKILL.md`](skills/04-quality/SKILL.md) | Antes de desactivar una regla de lint o silenciar un warning |
-| [`skills/05-architecture/SKILL.md`](skills/05-architecture/SKILL.md) | Antes de agregar un servicio, una integración externa o un proceso en segundo plano |
-| [`skills/06-design-system/SKILL.md`](skills/06-design-system/SKILL.md) | Antes de escribir un estilo, elegir un color o maquetar un componente |
-| [`skills/07-testing/SKILL.md`](skills/07-testing/SKILL.md) | Antes de agregar o modificar tests de componentes y hooks |
-| [`TRACKING.md`](TRACKING.md) | Para saber en qué estado está cada funcionalidad |
+| [`skills/00-project/SKILL.md`](skills/00-project/SKILL.md) | Always first: what the system is, scope, modules, team, stack |
+| [`skills/01-domain/SKILL.md`](skills/01-domain/SKILL.md) | Before naming tables, endpoints, routes, types, or components |
+| [`skills/02-git-flow/SKILL.md`](skills/02-git-flow/SKILL.md) | Before any git operation and before opening an issue or PR |
+| [`skills/02-git-flow/DEFINITION-OF-DONE.md`](skills/02-git-flow/DEFINITION-OF-DONE.md) | Before declaring a task complete |
+| [`skills/03-frontend/SKILL.md`](skills/03-frontend/SKILL.md) | Before writing a component or a page |
+| [`skills/04-quality/SKILL.md`](skills/04-quality/SKILL.md) | Before disabling a lint rule or silencing a warning |
+| [`skills/05-architecture/SKILL.md`](skills/05-architecture/SKILL.md) | Before adding a service, an external integration, or a background process |
+| [`skills/06-design-system/SKILL.md`](skills/06-design-system/SKILL.md) | Before writing a style, choosing a color, or building a component |
+| [`skills/07-testing/SKILL.md`](skills/07-testing/SKILL.md) | Before adding or modifying component and hook tests |
+| [`TRACKING.md`](TRACKING.md) | To find out the status of each feature |
 
-## Reglas que no se negocian
+## Non-Negotiable Rules
 
-1. **Nunca commitees en `main` ni en `develop`.** Están protegidas y requieren PR
-   con 2 aprobaciones. Trabajá siempre en una rama que salga de `develop`.
-2. **El código va en inglés.** Esto incluye archivos, carpetas, identificadores,
-   rutas técnicas, contratos API y esquema de base de datos. Las skills y la
-   documentación funcional pueden estar en español; los textos visibles para el
-   usuario también. Ver `skills/00-project/` y `skills/01-domain/`.
-3. **Usá pnpm**, no npm ni yarn, y **Node 24** (`.nvmrc`). Abajo de Node 22.13
-   pnpm ni siquiera arranca.
-4. **Corré `pnpm lint`, `pnpm test` y `pnpm build` antes de dar por terminado un cambio.**
-5. **Toda promesa se maneja.** ESLint tiene `no-floating-promises` en error.
-6. **Nada de credenciales, tokens ni URLs hardcodeadas.** Variables de entorno.
-7. **Referenciá el caso de uso (CU) en commits y PRs** cuando la tarea tenga uno.
+1. **Never commit to `main` or `develop`.** They're protected and require a
+   PR with 2 approvals. Always work on a branch that starts from `develop`.
+2. **Write all code in English.** This includes files, folders,
+   identifiers, technical routes, API contracts, and the database schema.
+   User-visible text may remain in Spanish. See `skills/00-project/` and
+   `skills/01-domain/`.
+3. **Use pnpm**, never npm or yarn, and **Node 24** (`.nvmrc`). Below Node
+   22.13 pnpm won't even start.
+4. **Run `pnpm lint`, `pnpm test`, and `pnpm build` before declaring a change complete.**
+5. **Every promise is handled.** ESLint has `no-floating-promises` set to error.
+6. **No hardcoded credentials, tokens, or URLs.** Use environment variables.
+7. **Reference the use case (CU) in commits and PRs** when the task has one.
 
-## Estado del repositorio
+## Repository Status
 
-Están las **fundaciones**: tokens y primitivos del design system, tipos del
-dominio, cliente HTTP con JWT, testing y —desde F19— la estructura de carpetas,
-el layout con la navbar y las rutas protegidas.
+The **foundations** are in place: design system tokens and primitives,
+domain types, an HTTP client with JWT, testing, and —since F19— the folder
+structure, the layout with the navbar, and protected routes.
 
-**Ningún caso de uso está implementado todavía**: las pantallas existen como
-marcadores (`PantallaPendiente`) para que la navegación se pueda recorrer. Antes
-de asumir que algo existe, buscalo en el código y mirá [`TRACKING.md`](TRACKING.md).
+**No use case is implemented yet**: the screens exist as placeholders
+(`PendingScreen`) so the navigation can be fully exercised. Before assuming
+something exists, check the code and look at [`TRACKING.md`](TRACKING.md).
 
-## Comandos
+## Commands
 
 ```bash
-pnpm install      # instalar dependencias
-pnpm dev          # servidor de desarrollo
-pnpm build        # build de producción
-pnpm lint         # análisis estático
-pnpm lint:fix     # corregir lo autocorregible
-pnpm test         # tests unitarios, una sola corrida
-pnpm test:watch   # tests unitarios en modo watch
+pnpm install      # install dependencies
+pnpm dev          # development server
+pnpm build        # production build
+pnpm lint         # static analysis
+pnpm lint:fix     # auto-fix what's fixable
+pnpm test         # unit tests, a single run
+pnpm test:watch   # unit tests in watch mode
 ```
 
-## Cuando termines una tarea
+## When You Finish a Task
 
-Verificá la [Definition of Done](skills/02-git-flow/DEFINITION-OF-DONE.md) antes
-de decir que está lista. La checklist corta viene cargada en el PR.
+Check the [Definition of Done](skills/02-git-flow/DEFINITION-OF-DONE.md)
+before calling it done. The short checklist is preloaded in the PR.
 
-Actualizá la fila correspondiente en [`TRACKING.md`](TRACKING.md): estado,
-fecha, rama y PR. Es lo que permite que el siguiente agente (o la siguiente
-persona) retome sin releer todo el historial.
+Update the corresponding row in [`TRACKING.md`](TRACKING.md): status, date,
+branch, and PR. That's what lets the next agent (or the next person) pick
+up without rereading the whole history.

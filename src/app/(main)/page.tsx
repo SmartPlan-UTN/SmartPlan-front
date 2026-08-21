@@ -5,8 +5,8 @@ export default function HomePage() {
     <Container>
       <PendingScreen
         title="Contale qué querés"
-        description="El hero con el field de lenguaje natural, las sugerencias y los plans destacados."
-        referencias="CU17, CU20 · PAN 07"
+        description="El hero con el campo de lenguaje natural, las sugerencias y los planes destacados."
+        references="CU17, CU20 · PAN 07"
       />
     </Container>
   );

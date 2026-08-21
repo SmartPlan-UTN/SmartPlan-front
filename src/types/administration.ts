@@ -2,7 +2,9 @@ import { BaseEntity } from './common';
 import type { User } from './users';
 
 /**
- * Acciones posibles registradas en auditoría.
+ * Possible actions recorded in the audit log.
+ * Values match `AuditAction` in SmartPlan-back
+ * (`src/administration/entities/audit-log.entity.ts`).
  */
 export type AuditAction =
   | 'create'
@@ -12,7 +14,7 @@ export type AuditAction =
   | 'end_session';
 
 /**
- * Registro de auditoría del sistema.
+ * System audit log entry.
  */
 export interface AuditLog extends BaseEntity {
   action: AuditAction;
@@ -22,7 +24,7 @@ export interface AuditLog extends BaseEntity {
   changes: Record<string, unknown> | null;
 }
 /**
- * Parámetro configurable del sistema.
+ * Configurable system parameter.
  */
 export interface SystemParameter extends BaseEntity {
   name: string;
@@ -31,7 +33,7 @@ export interface SystemParameter extends BaseEntity {
 }
 
 /**
- * Notificación dirigida a un user.
+ * Notification addressed to a user.
  */
 export interface Notification extends BaseEntity {
   idUser: number;

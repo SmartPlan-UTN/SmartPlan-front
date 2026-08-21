@@ -3,10 +3,10 @@ import type { Activity } from './activities';
 import type { Feedback } from './recommendation';
 
 /**
- * Puntaje a una activity (CU44-CU47, CU55).
+ * Score given to an activity (CU44-CU47, CU55).
  */
 export interface Rating extends BaseEntity {
-  puntaje: number;
+  score: number;
   idActivity: number;
   idFeedback: number | null;
   activity?: Activity;

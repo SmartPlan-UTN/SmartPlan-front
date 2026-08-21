@@ -1,7 +1,7 @@
 /**
- * Barrel export público para la infraestructura HTTP centralizada de SmartPlan.
+ * Public barrel export for SmartPlan's centralized HTTP infrastructure.
  *
- * Importar únicamente desde `@/lib/api`.
+ * Import only from `@/lib/api`.
  */
 
 export { apiClient } from './client';

@@ -11,8 +11,8 @@ export default function ExplorePage() {
     <Container>
       <PendingScreen
         title="Explorar"
-        description="Búsqueda de activities y plans, con filtros, order y la grilla de resultados."
-        referencias="CU9–CU12 · PAN 11"
+        description="Búsqueda de actividades y planes, con filtros, orden y la grilla de resultados."
+        references="CU9–CU12 · PAN 11"
       />
     </Container>
   );

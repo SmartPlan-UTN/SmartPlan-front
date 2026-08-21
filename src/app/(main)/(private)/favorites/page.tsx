@@ -3,15 +3,15 @@ import type { Metadata } from "next";
 import { PendingScreen } from "@/components/layout";
 
 export const metadata: Metadata = {
-  title: "Favorites",
+  title: "Favoritos",
 };
 
 export default function FavoritesPage() {
   return (
     <PendingScreen
-      title="Favorites"
-      description="Las solapas de activities, plans y collections guardadas, cada una con su status vacío."
-      referencias="CU39–CU43 · PAN 12"
+      title="Favoritos"
+      description="Las solapas de actividades, planes y colecciones guardadas, cada una con su estado vacío."
+      references="CU39–CU43 · PAN 12"
     />
   );
 }

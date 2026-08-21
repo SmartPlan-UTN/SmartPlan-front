@@ -22,9 +22,9 @@
   transform: scale(0.97);
 }
 
-/* El glow de --focus-ember es ember al 18%: envelope --cream da 1.2:1 de contraste,
-   muy por debajo del 3:1 que piden WCAG 1.4.11 y 2.4.11. Se conserva como halo,
-   pero el indicador visible es el outline. */
+/* The --focus-ember glow is ember at 18%: over --cream it gives 1.2:1 contrast,
+   well below the 3:1 required by WCAG 1.4.11 and 2.4.11. It's kept as a halo,
+   but the visible indicator is the outline. */
 .button:focus-visible,
 .chip:focus-visible {
   outline: 2px solid var(--ember);

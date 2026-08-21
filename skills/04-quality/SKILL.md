@@ -1,78 +1,77 @@
 ---
 name: smartplan-quality
-description: Análisis estático con ESLint — reglas activas, cómo correrlo y qué hacer ante un error. Consultar antes de desactivar una regla o silenciar un warning.
+description: Static analysis with ESLint — active rules, how to run it, and what to do when an error shows up. Consult before disabling a rule or silencing a warning.
 ---
 
-# SmartPlan — Calidad y análisis estático
+# SmartPlan - Quality and Static Analysis
 
-## Herramienta
+## Tool
 
-**ESLint 9** en formato *flat config* (`eslint.config.mjs`), que es el único
-formato soportado por Next.js 16.
+**ESLint 9** in *flat config* format (`eslint.config.mjs`), the only format
+supported by Next.js 16.
 
-Se eligió ESLint porque es el analizador estándar del ecosistema
-JavaScript/TypeScript, tiene integración oficial con Next.js vía
-`eslint-config-next`, permite análisis con información de tipos a través de
-`typescript-eslint`, y corre localmente sin infraestructura adicional (a
-diferencia de SonarQube).
+ESLint was chosen because it's the standard analyzer for the
+JavaScript/TypeScript ecosystem, has official Next.js integration through
+`eslint-config-next`, allows type-aware analysis through
+`typescript-eslint`, and runs locally without additional infrastructure
+(unlike SonarQube).
 
-## Comandos
+## Commands
 
 ```bash
-pnpm lint         # reporta errores y advertencias
-pnpm lint:fix     # corrige lo autocorregible
+pnpm lint         # reports errors and warnings
+pnpm lint:fix     # fixes what's auto-fixable
 ```
 
-**Corré `pnpm lint` antes de abrir un PR.** Un PR con errores de lint no debería
-mergearse.
+**Run `pnpm lint` before opening a PR.** A PR with lint errors shouldn't be merged.
 
-## Qué hay configurado
+## What's configured
 
-Sobre los presets `eslint-config-next/core-web-vitals` y
-`eslint-config-next/typescript` se agregan reglas propias agrupadas por categoría:
+On top of the `eslint-config-next/core-web-vitals` and
+`eslint-config-next/typescript` presets, custom rules are added, grouped by category:
 
-| Categoría | Reglas | Por qué |
+| Category | Rules | Why |
 |---|---|---|
-| Manejo de promesas | `no-floating-promises`, `await-thenable`, `no-misused-promises` | El front consume la API con axios; una promesa sin manejar pierde el error en silencio |
-| Seguridad de tipos | `no-explicit-any` (error), `no-non-null-assertion` (warn) | `any` anula las garantías de TypeScript |
-| Código muerto | `no-unused-vars`, `no-debugger`, `no-console`, `no-alert` | Descuidos que no deberían llegar a un commit |
-| Buenas prácticas | `eqeqeq`, `no-var`, `prefer-const`, `no-case-declarations` | Evitan coerciones implícitas y scope accidental |
-| React / Next.js | `exhaustive-deps` (elevada a error), `no-img-element`, `no-html-link-for-pages` | Stale closures y métricas de Core Web Vitals |
+| Promise handling | `no-floating-promises`, `await-thenable`, `no-misused-promises` | The frontend consumes the API with axios; an unhandled promise silently loses the error |
+| Type safety | `no-explicit-any` (error), `no-non-null-assertion` (warn) | `any` voids TypeScript's guarantees |
+| Dead code | `no-unused-vars`, `no-debugger`, `no-console`, `no-alert` | Oversights that shouldn't reach a commit |
+| Best practices | `eqeqeq`, `no-var`, `prefer-const`, `no-case-declarations` | Avoid implicit coercions and accidental scope |
+| React / Next.js | `exhaustive-deps` (raised to error), `no-img-element`, `no-html-link-for-pages` | Stale closures and Core Web Vitals metrics |
 
-El archivo `eslint.config.mjs` tiene cada regla comentada con el problema que
-previene. **Leelo antes de tocarlo.**
+The `eslint.config.mjs` file has each rule commented with the problem it
+prevents. **Read it before touching it.**
 
-## Análisis con información de tipos
+## Type-aware analysis
 
-La configuración habilita `projectService`, lo que hace que ESLint consulte al
-compilador de TypeScript. Eso permite detectar errores que el análisis sintáctico
-solo no ve — el caso típico es una promesa sin `await`.
+The configuration enables `projectService`, which makes ESLint query the
+TypeScript compiler. That lets it catch errors that syntax-only analysis
+can't see — the typical case is a promise without `await`.
 
-Consecuencia práctica: los archivos `.mjs` de la raíz están excluidos del análisis
-con tipos porque no pertenecen al proyecto de TypeScript. Si agregás un archivo de
-configuración nuevo en la raíz y el parser falla, es por esto.
+Practical consequence: the root `.mjs` files are excluded from type-aware
+analysis because they don't belong to the TypeScript project. If you add a
+new configuration file at the root and the parser fails, this is why.
 
-## Qué hacer ante un error de lint
+## What to do about a lint error
 
-En orden de preferencia:
+In order of preference:
 
-1. **Arreglar el código.** Es lo correcto en la enorme mayoría de los casos.
-2. Si la variable no se usa a propósito, prefijala con `_`:
+1. **Fix the code.** This is the right call in the vast majority of cases.
+2. If the variable is intentionally unused, prefix it with `_`:
    ```ts
    } catch (_error) {
    ```
-3. Si de verdad hay que ignorar una línea, usá un disable **con motivo escrito**:
+3. If a line genuinely needs to be ignored, use a disable **with a written reason**:
    ```ts
-   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- la librería X no exporta el tipo
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- library X doesn't export the type
    ```
 
-**No desactives una regla en `eslint.config.mjs` para que deje de molestar.** Si
-una regla genera ruido sistemático, discutilo en el PR y documentá el motivo del
-cambio.
+**Don't disable a rule in `eslint.config.mjs` just to make it stop bothering
+you.** If a rule generates systematic noise, discuss it in the PR and
+document the reason for the change.
 
-## Convenciones que ESLint no chequea
+## Conventions ESLint doesn't check
 
-- Código, archivos e identificadores en inglés (ver `skills/01-domain/`).
-- Sin credenciales ni URLs hardcodeadas: todo por variables de entorno.
-- Sin `console.log` de depuración (ESLint avisa, pero solo como warning).
-- Componentes chicos y con una responsabilidad clara.
+- Code, files, and identifiers in English (see `skills/01-domain/`).
+- No hardcoded credentials or URLs: everything through environment variables.
+- No debug `console.log` calls (ESLint warns, but only as a warning).
+- Small components with a single clear responsibility.

@@ -3,7 +3,7 @@ import type { User } from './users';
 import type { Activity } from './activities';
 
 /**
- * Agrupación personalizada de activities creada por el user (CU32-CU38).
+ * Custom grouping of activities created by the user (CU32-CU38).
  */
 export interface Collection extends BaseEntity {
   idUser: number;
@@ -13,7 +13,7 @@ export interface Collection extends BaseEntity {
   activities?: FavoriteCollection[];
 }
 /**
- * Activity perteneciente a una colección (CU35-CU37). Relación N:M entre Collection y Activity.
+ * Activity belonging to a collection (CU35-CU37). N:M relationship between Collection and Activity.
  */
 export interface FavoriteCollection extends BaseEntity {
   idCollection: number;

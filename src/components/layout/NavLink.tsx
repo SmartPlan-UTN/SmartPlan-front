@@ -15,33 +15,34 @@ export interface NavLinkProps {
   href: string;
   label: string;
   icon?: IconName;
-  /** `navbar` para la navegación horizontal, `option` para los desplegables. */
-  variante?: LinkVariant;
-  /** Se ejecuta al navegar; sirve para cerrar el menú que contiene al link. */
-  onNavegar?: () => void;
+  /** `navbar` for horizontal navigation, `option` for dropdowns. */
+  variant?: LinkVariant;
+  /** Runs on navigate; used to close the menu that contains the link. */
+  onNavigate?: () => void;
 }
 
-const CLASE_BASE: Record<LinkVariant, string> = {
+const BASE_CLASS: Record<LinkVariant, string> = {
   navbar: styles.link,
   option: styles.option,
 };
 
-const CLASE_ACTIVA: Record<LinkVariant, string> = {
-  navbar: styles.linkActivo,
-  option: styles.opcionActiva,
+const ACTIVE_CLASS: Record<LinkVariant, string> = {
+  navbar: styles.activeLink,
+  option: styles.activeOption,
 };
 
 /**
- * Link de navegación que se marca solo cuando la route actual cae dentro de su
- * destination. El status active se comunica con `aria-current="page"`, no solo con
- * color: quien navega con lector de pantalla también necesita saber dónde está.
+ * Navigation link that marks itself only when the current route falls
+ * within its destination. The active state is communicated with
+ * `aria-current="page"`, not just color: screen reader users also need to
+ * know where they are.
  */
 export function NavLink({
   href,
   label,
   icon,
-  variante = "navbar",
-  onNavegar,
+  variant = "navbar",
+  onNavigate,
 }: NavLinkProps) {
   const currentRoute = usePathname();
   const active = isActiveRoute(currentRoute, href);
@@ -49,9 +50,9 @@ export function NavLink({
   return (
     <Link
       href={href}
-      className={cn(CLASE_BASE[variante], active && CLASE_ACTIVA[variante])}
+      className={cn(BASE_CLASS[variant], active && ACTIVE_CLASS[variant])}
       aria-current={active ? "page" : undefined}
-      onClick={onNavegar}
+      onClick={onNavigate}
     >
       {icon ? <Icon name={icon} size={16} /> : null}
       {label}

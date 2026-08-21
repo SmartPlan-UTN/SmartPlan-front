@@ -1,6 +1,6 @@
 /**
- * Tipos e interfaces del dominio TypeScript alineados con el backend.
- * Referencia de dataSource de verdad: SmartPlan-back commit 8ec4d07a34d2058f2147220e69d494e4da183811.
+ * Domain TypeScript types and interfaces aligned with the backend.
+ * Source of truth reference: SmartPlan-back commit 8ec4d07a34d2058f2147220e69d494e4da183811.
  */
 
 export * from './common';

@@ -1,7 +1,7 @@
 import { BaseEntity, CatalogEntity } from './common';
 
 /**
- * Categoría de activities (CU10, CU54).
+ * Activity category (CU10, CU54).
  */
 export interface Category extends BaseEntity {
   name: string;
@@ -11,12 +11,13 @@ export interface Category extends BaseEntity {
 }
 
 /**
- * Claves previstas para el status de una categoría (CU54).
+ * Expected keys for a category's status (CU54).
+ * Values match exactly what's seeded in SmartPlan-back.
  */
 export type CategoryStatusKey = 'active' | 'inactive';
 
 /**
- * Status de una categoría (CU54).
+ * Status of a category (CU54).
  */
 export interface CategoryStatus extends CatalogEntity<CategoryStatusKey> {
   key: CategoryStatusKey;

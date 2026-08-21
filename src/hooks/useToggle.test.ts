@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { useToggle } from "./useToggle";
 
 describe("useToggle", () => {
-  it("usa false como value inicial y alterna en ambos sentidos", () => {
+  it("uses false as the initial value and toggles both ways", () => {
     const { result } = renderHook(() => useToggle());
 
     expect(result.current[0]).toBe(false);
@@ -20,7 +20,7 @@ describe("useToggle", () => {
     expect(result.current[0]).toBe(false);
   });
 
-  it("acepta un value inicial configurable", () => {
+  it("accepts a configurable initial value", () => {
     const { result } = renderHook(() => useToggle(true));
 
     expect(result.current[0]).toBe(true);

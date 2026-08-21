@@ -28,44 +28,44 @@ describe("Navbar", () => {
     route.actual = "/";
   });
 
-  it("ofrece los cuatro destinations de la navegación principal", () => {
+  it("offers the four main navigation destinations", () => {
     renderNavbar();
 
-    const navegacion = screen.getByRole("navigation", {
+    const nav = screen.getByRole("navigation", {
       name: "Navegación principal",
     });
 
     expect(
-      within(navegacion).getByRole("link", { name: "Inicio" }),
+      within(nav).getByRole("link", { name: "Inicio" }),
     ).toHaveAttribute("href", "/");
     expect(
-      within(navegacion).getByRole("link", { name: "Explorar" }),
+      within(nav).getByRole("link", { name: "Explorar" }),
     ).toHaveAttribute("href", "/explore");
     expect(
-      within(navegacion).getByRole("link", { name: "Favorites" }),
+      within(nav).getByRole("link", { name: "Favoritos" }),
     ).toHaveAttribute("href", "/favorites");
     expect(
-      within(navegacion).getByRole("link", { name: "Historial" }),
+      within(nav).getByRole("link", { name: "Historial" }),
     ).toHaveAttribute("href", "/history");
   });
 
-  it("marca con aria-current el destination de la route actual", () => {
+  it("marks the current route's destination with aria-current", () => {
     route.actual = "/favorites";
     renderNavbar();
 
-    const navegacion = screen.getByRole("navigation", {
+    const nav = screen.getByRole("navigation", {
       name: "Navegación principal",
     });
 
     expect(
-      within(navegacion).getByRole("link", { name: "Favorites" }),
+      within(nav).getByRole("link", { name: "Favoritos" }),
     ).toHaveAttribute("aria-current", "page");
     expect(
-      within(navegacion).getByRole("link", { name: "Inicio" }),
+      within(nav).getByRole("link", { name: "Inicio" }),
     ).not.toHaveAttribute("aria-current");
   });
 
-  it("sin sesión ofrece iniciar sesión en place del menú de user", () => {
+  it("offers login instead of the user menu when there is no session", () => {
     renderNavbar();
 
     expect(screen.getByRole("link", { name: "Iniciar sesión" })).toHaveAttribute(
@@ -75,7 +75,7 @@ describe("Navbar", () => {
     expect(screen.queryByRole("button", { name: /mi cuenta/i })).toBeNull();
   });
 
-  it("el link de login conserva la pantalla desde la que se entra", () => {
+  it("keeps the login link pointing back to the screen the user came from", () => {
     route.actual = "/explore";
     renderNavbar();
 
@@ -85,22 +85,22 @@ describe("Navbar", () => {
     );
   });
 
-  it("con sesión despliega el menú de user", async () => {
+  it("expands the user menu when there is a session", async () => {
     localStorage.setItem(DEFAULT_TOKEN_STORAGE_KEY, "jwt-de-prueba");
     const user = userEvent.setup();
     renderNavbar();
 
-    const disparador = screen.getByRole("button", { name: /mi cuenta/i });
-    expect(disparador).toHaveAttribute("aria-expanded", "false");
+    const trigger = screen.getByRole("button", { name: /mi cuenta/i });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
 
-    await user.click(disparador);
+    await user.click(trigger);
 
-    expect(disparador).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("link", { name: "Mi profile" })).toHaveAttribute(
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("link", { name: "Mi perfil" })).toHaveAttribute(
       "href",
       "/profile",
     );
-    expect(screen.getByRole("link", { name: "Preferences" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Preferencias" })).toHaveAttribute(
       "href",
       "/preferences",
     );
@@ -109,20 +109,20 @@ describe("Navbar", () => {
     ).toBeInTheDocument();
   });
 
-  it("cierra el menú de user con Escape", async () => {
+  it("closes the user menu with Escape", async () => {
     localStorage.setItem(DEFAULT_TOKEN_STORAGE_KEY, "jwt-de-prueba");
     const user = userEvent.setup();
     renderNavbar();
 
-    const disparador = screen.getByRole("button", { name: /mi cuenta/i });
-    await user.click(disparador);
+    const trigger = screen.getByRole("button", { name: /mi cuenta/i });
+    await user.click(trigger);
     await user.keyboard("{Escape}");
 
-    expect(disparador).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByRole("link", { name: "Mi profile" })).toBeNull();
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("link", { name: "Mi perfil" })).toBeNull();
   });
 
-  it("cerrar sesión devuelve la navbar al status anónimo", async () => {
+  it("logging out returns the navbar to the anonymous state", async () => {
     localStorage.setItem(DEFAULT_TOKEN_STORAGE_KEY, "jwt-de-prueba");
     const user = userEvent.setup();
     renderNavbar();
@@ -136,20 +136,20 @@ describe("Navbar", () => {
     ).toBeInTheDocument();
   });
 
-  it("despliega la navegación plegable en viewport chico", async () => {
+  it("expands the collapsible navigation on small viewports", async () => {
     const user = userEvent.setup();
     renderNavbar();
 
-    const boton = screen.getByRole("button", { name: "Abrir la navegación" });
-    await user.click(boton);
+    const button = screen.getByRole("button", { name: "Abrir la navegación" });
+    await user.click(button);
 
-    const plegable = screen.getByRole("navigation", {
+    const collapsible = screen.getByRole("navigation", {
       name: "Navegación principal plegable",
     });
 
     expect(
-      within(plegable).getByRole("link", { name: "Historial" }),
+      within(collapsible).getByRole("link", { name: "Historial" }),
     ).toBeInTheDocument();
-    expect(boton).toHaveAccessibleName("Cerrar la navegación");
+    expect(button).toHaveAccessibleName("Cerrar la navegación");
   });
 });

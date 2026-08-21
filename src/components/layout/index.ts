@@ -1,7 +1,7 @@
 /**
- * Cáscara de la aplicación: navegación y containeres de pantalla.
+ * Application shell: navigation and screen containers.
  *
- * Importar siempre desde `@/components/layout`.
+ * Always import from `@/components/layout`.
  */
 
 export { AppShell, type AppShellProps } from "./AppShell";

@@ -4,15 +4,16 @@ import { ProtectedRoute } from "@/components/auth";
 import { Container } from "@/components/layout";
 
 /**
- * Grupo de rutas que exige sesión.
+ * Route group that requires a session.
  *
- * Todo lo que cuelga de `(private)` queda protegido por estar acá: no hace
- * falta acordarse de envolver cada pantalla, y una pantalla nueva se protege
- * creándola dentro de la carpeta. El paréntesis hace que el grupo no aparezca
- * en la URL: `(main)/(private)/favorites` sigue siendo `/favorites`.
+ * Everything nested under `(private)` is protected just by being here: no
+ * need to remember to wrap each screen, and a new screen is protected by
+ * creating it inside the folder. The parentheses keep the group out of the
+ * URL: `(main)/(private)/favorites` is still `/favorites`.
  *
- * Estas pantallas son listados y formularios, así que el grupo también aporta
- * el `Container`. Las públicas lo eligen ellas: el home va a fondo completo.
+ * These screens are lists and forms, so the group also provides the
+ * `Container`. Public screens opt into it themselves: the home page goes
+ * full-bleed.
  */
 export default function PrivateLayout({
   children,
