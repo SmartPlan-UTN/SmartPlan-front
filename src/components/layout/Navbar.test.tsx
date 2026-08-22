@@ -122,7 +122,7 @@ describe("Navbar", () => {
     expect(screen.queryByRole("link", { name: "Mi perfil" })).toBeNull();
   });
 
-  it("logging out returns the navbar to the anonymous state", async () => {
+  it("asks for confirmation before logging out, and logs out on confirm", async () => {
     localStorage.setItem(DEFAULT_TOKEN_STORAGE_KEY, "jwt-de-prueba");
     const user = userEvent.setup();
     renderNavbar();
@@ -130,10 +130,33 @@ describe("Navbar", () => {
     await user.click(screen.getByRole("button", { name: /mi cuenta/i }));
     await user.click(screen.getByRole("button", { name: "Cerrar sesión" }));
 
+    // Doesn't log out on the first click: a confirmation dialog opens first.
+    expect(localStorage.getItem(DEFAULT_TOKEN_STORAGE_KEY)).not.toBeNull();
+    expect(
+      screen.getByRole("alertdialog", { name: "Cerrar sesión" }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Confirmar" }));
+
     expect(localStorage.getItem(DEFAULT_TOKEN_STORAGE_KEY)).toBeNull();
     expect(
       screen.getByRole("link", { name: "Iniciar sesión" }),
     ).toBeInTheDocument();
+  });
+
+  it("keeps the session open when the logout confirmation is cancelled", async () => {
+    localStorage.setItem(DEFAULT_TOKEN_STORAGE_KEY, "jwt-de-prueba");
+    const user = userEvent.setup();
+    renderNavbar();
+
+    await user.click(screen.getByRole("button", { name: /mi cuenta/i }));
+    await user.click(screen.getByRole("button", { name: "Cerrar sesión" }));
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(
+      screen.queryByRole("alertdialog", { name: "Cerrar sesión" }),
+    ).not.toBeInTheDocument();
+    expect(localStorage.getItem(DEFAULT_TOKEN_STORAGE_KEY)).not.toBeNull();
   });
 
   it("expands the collapsible navigation on small viewports", async () => {

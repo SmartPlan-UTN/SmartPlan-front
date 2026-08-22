@@ -89,21 +89,29 @@
   outline-offset: 2px;
 }
 
+/* `flex: 1` makes the nav claim all the space between the logo and the
+   session control, so `justify-content: center` centers the links in the
+   bar as a whole rather than in the leftover space next to the logo —
+   matches SmartPlanSystemDesign/v2/Navbar.jsx. */
 .nav {
   display: none;
+  flex: 1;
   align-items: center;
+  justify-content: center;
   gap: var(--s-1);
-  margin-inline-start: var(--s-3);
 }
 
 /* Pushes the session control —and with it the nav toggle— against the
-   right edge, without needing an empty spacer element. */
+   right edge on mobile, where `.nav` is hidden and its `flex: 1` doesn't
+   apply. On desktop `.nav` already claims the free space, so this margin
+   resolves to 0 and does nothing. */
 .sessionControl {
   margin-inline-start: auto;
 }
 
 /* ── Navbar links ─────────────────────────────────────────────── */
 .link {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
@@ -124,9 +132,24 @@
   background: color-mix(in srgb, var(--white) 8%, transparent);
 }
 
+/* A dot below the label, not a filled pill: matches
+   SmartPlanSystemDesign/v2/Navbar.jsx's active-link treatment. Still backed
+   by `aria-current="page"` on the link itself, not just this dot. */
 .activeLink {
   color: var(--fg-on-dark);
-  background: var(--ember-15);
+  background: transparent;
+}
+
+.activeLink::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: var(--r-chip);
+  background: var(--ember);
+  transform: translateX(-50%);
 }
 
 /* ── User menu ──────────────────────────────────────────────── */
@@ -135,23 +158,32 @@
   display: inline-flex;
 }
 
+/* Circular gradient avatar, not a text pill: matches the account trigger in
+   SmartPlanSystemDesign/v2/Navbar.jsx. There's no user name/photo yet
+   (CU1-CU5 haven't wired up a profile), so it shows the `user` icon instead
+   of an initial. */
 .trigger {
   display: inline-flex;
   align-items: center;
-  gap: var(--s-2);
-  padding: var(--s-2) var(--s-3);
-  border: 1px solid var(--white-15);
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border: 0;
   border-radius: var(--r-chip);
-  background: transparent;
-  color: var(--fg-on-dark);
-  font-size: var(--t-small);
-  font-weight: var(--w-label);
+  background: linear-gradient(
+    135deg,
+    var(--ember) 0%,
+    color-mix(in srgb, var(--ember) 55%, black) 100%
+  );
+  color: var(--white);
   cursor: pointer;
-  transition: background 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 2px 8px var(--ember-20);
+  transition: box-shadow 150ms ease;
 }
 
 .trigger:hover {
-  background: color-mix(in srgb, var(--white) 8%, transparent);
+  box-shadow: 0 2px 12px color-mix(in srgb, var(--ember) 50%, transparent);
 }
 
 /* At 320px the logo, the session control with text, and the nav toggle
@@ -336,4 +368,64 @@
 
 .pendingNoteDark {
   color: var(--fg-on-dark-2);
+}
+
+/* ── Logout confirmation modal ───────────────────────────────────
+   Matches the LogoutModal in SmartPlanSystemDesign/v2/Navbar.jsx: an
+   overlay with a blurred backdrop and a centered card, so "Cerrar sesión"
+   needs a deliberate second action instead of firing on the first click. */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-5);
+  background: color-mix(in srgb, var(--char) 55%, transparent);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  animation: fadeUp 180ms ease both;
+}
+
+.modalCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  width: 100%;
+  max-width: 380px;
+  padding: var(--s-6) var(--s-5) var(--s-5);
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
+}
+
+.modalIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--r-card-sm);
+  background: color-mix(in srgb, var(--error) 10%, transparent);
+  color: var(--error);
+}
+
+.modalTitle {
+  margin: 0 0 var(--s-1);
+  color: var(--fg-1);
+}
+
+.modalText {
+  margin: 0;
+  color: var(--fg-2);
+}
+
+.modalActions {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.modalActions > * {
+  flex: 1;
 }
