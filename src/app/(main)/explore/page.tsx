@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 
-import { Container, PendingScreen } from "@/components/layout";
+import { ActivitySearch } from "@/components/activity";
+import { Container } from "@/components/layout";
+
+import styles from "./explore.module.css";
 
 export const metadata: Metadata = {
   title: "Explorar",
@@ -9,11 +12,16 @@ export const metadata: Metadata = {
 export default function ExplorePage() {
   return (
     <Container>
-      <PendingScreen
-        title="Explorar"
-        description="Búsqueda de actividades y planes, con filtros, orden y la grilla de resultados."
-        references="CU9–CU12 · PAN 11"
-      />
+      <div className={styles.page}>
+        <div className={styles.header}>
+          <h1 className="sp-h2">Explorar</h1>
+          <p className={`sp-body ${styles.subtitle}`}>
+            Buscá actividades cerca tuyo.
+          </p>
+        </div>
+
+        <ActivitySearch />
+      </div>
     </Container>
   );
 }

@@ -18,3 +18,45 @@ export interface CatalogEntity<K extends string = string> extends BaseEntity {
   key: K;
   description: string | null;
 }
+
+/**
+ * Ascending/descending order for a listing's `sortBy`.
+ */
+export type SortDirection = 'asc' | 'desc';
+
+/**
+ * Pagination metadata returned by every listing endpoint (CU9-CU12).
+ */
+export interface PaginationMetadata {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+/**
+ * Common envelope for every paginated listing response in the API.
+ */
+export interface PaginatedResult<T> {
+  data: T[];
+  pagination: PaginationMetadata;
+}
+
+/**
+ * Shared query params accepted by every search/exploration endpoint
+ * (`GET /activities`, `GET /plans`, ...). See `docs/exploration-api.md`
+ * in `SmartPlan-back`.
+ */
+export interface ExplorationQueryParams {
+  search?: string;
+  categoryIds?: number[];
+  minPrice?: number;
+  maxPrice?: number;
+  minRating?: number;
+  latitude?: number;
+  longitude?: number;
+  maxDistanceKm?: number;
+  page?: number;
+  limit?: number;
+  direction?: SortDirection;
+}

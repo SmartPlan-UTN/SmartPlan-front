@@ -3,3 +3,4 @@
  */
 
 export { cn } from "./cn";
+export { formatArs } from "./currency";
