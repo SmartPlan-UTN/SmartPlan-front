@@ -97,7 +97,7 @@ traceability matrix (`skills/01-domain/`).
 
 | CU | Feature | Screen | Status | Branch | PR |
 |---|---|---|---|---|---|
-| CU9 | Search activities | PAN 11 | `Not started` | | |
+| CU9 | Search activities | PAN 11 | `In progress` | `SMART-21-cu9-buscar-actividades` | |
 | CU10 | Filter results | PAN 11 | `Not started` | | |
 | CU11 | Sort results | PAN 11 | `Not started` | | |
 | CU12 | Search plans | PAN 10, PAN 11 | `Not started` | | |
@@ -215,6 +215,7 @@ being re-discussed twice.
 | 2026-08-18 | Favoritos and Historial are shown in the navbar even without a session | Hiding the links leaves the application with no hints about what's behind the account. Someone without a session lands on the route and the guard sends them to login while preserving the destination in `?redirect=` |
 | 2026-08-18 | Catalog keys via literal unions | Prevents structural incompatibility between catalogs (`UserStatus`, `Role`, etc.) and prevents invalid keys in TypeScript. Verified against `SmartPlan-back` commit `8ec4d07a34d2058f2147220e69d494e4da183811`, and `openai` corrected to `gemini`. |
 | 2026-08-19/20 | Technical code and structure migrated from Spanish to English, in both `SmartPlan-front` and `SmartPlan-back` | Aligns identifiers, tables, routes, and API contracts with the shared `skills/01-domain/` convention. User-visible text, skills, and functional documentation continue to allow Spanish |
+| 2026-08-22 | CU9 built against `GET /activities` from the backend's `SMART-16-busqueda-y-exploracion` branch (in review, not yet in `develop`) | The endpoint's contract is stable and documented in `SmartPlan-back/docs/exploration-api.md`; per the DoD, this frontend CU can't move to `Completed` until that backend branch merges and the integration is verified against `develop` |
 
 ---
 
@@ -263,3 +264,4 @@ Things that have been spotted but don't have an owner yet:
 | 2026-08-18 | F17: centralized Axios client in `src/lib/api/` with a JWT interceptor, decoupled token abstraction (`setTokenGetter`), response/network normalization in `ApiError`, debounced pub/sub for 401 (`onUnauthorized`), `.env.example` template, and updated documentation in `skills/03-frontend/SKILL.md`. `npx eslint .`, `npx tsc --noEmit`, and `npx next build` 100% clean. |
 | 2026-08-18 | F19: `src/app` structure with the `(auth)`, `(main)`, and `(private)` groups, layout with the 60px navbar and `backdrop-filter`, navigation for Inicio, Explorar, Favoritos, and Historial, user menu, and protected routes that redirect to login with the destination in `?redirect=`. Removed the `create-next-app` template page and left the screens as placeholders with their CU. `pnpm lint`, `pnpm test` (26), and `pnpm build` green. |
 | 2026-08-19/20 | Technical code and structure migrated from Spanish to English across the whole frontend: files, folders, components, hooks, types, routes, and imports. Catalog values, error-response field names, and a few real backend contract fields (`score`, `errorMessage`) were re-verified and corrected against the actual `SmartPlan-back` entities and seeds after the backend completed its own English migration and implemented CU1-CU4 (auth). Two CSS class references left over from a partial rename (`notaPendiente(Oscura)`) were fixed. `pnpm lint`, `pnpm test` (26), and `pnpm build` green. |
+| 2026-08-22 | CU9: search box with `useDebouncedValue` (400ms), `ActivityCard` results grid, loading/empty/error states, and load-more pagination, calling `GET /activities` (`searchActivities` in `src/lib/api/activities.ts`) per the backend's `docs/exploration-api.md`. Replaced `explore/page.tsx`'s `PendingScreen`. `pnpm lint`, `pnpm test` (33), and `pnpm build` green. |
