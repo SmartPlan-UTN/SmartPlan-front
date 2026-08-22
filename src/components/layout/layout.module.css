@@ -30,21 +30,30 @@
 }
 
 /* ── Navbar ────────────────────────────────────────────────────── */
+/* Light, always — SmartPlanSystemDesign/v2's `Navbar` component still has a
+   `dark` prop, but the running prototype (SmartPlan v3.html) hardcodes
+   `navDark = false` with the comment "Results is now light theme": the
+   design settled on one light navbar for every screen, not a dark one over
+   the hero. There's no dark hero screen in this repo yet to contradict
+   that. The border is transparent until the page scrolls past 10px, same
+   as the prototype — it keeps the navbar from drawing a hard edge over a
+   full-bleed hero once one exists. */
 .navbar {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: var(--char);
-  /* 88% and no less: the navbar also travels over light screens, and with more
-     transparency the cream below raises the background enough to push inactive
-     links (--fg-on-dark-2, 55%) to 4.3:1, below WCAG's 4.5:1. */
-  background: color-mix(in srgb, var(--char) 88%, transparent);
+  background: color-mix(in srgb, var(--cream) 92%, transparent);
   /* The prefixed one goes first. The minifier deduplicates equivalent
      declarations and keeps the last one: with the order reversed, the
      published CSS only had -webkit-backdrop-filter and Firefox lost the blur. */
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
-  border-bottom: 1px solid var(--hairline-dark);
+  border-bottom: 1px solid transparent;
+  transition: border-color 200ms ease;
+}
+
+.navbarScrolled {
+  border-bottom-color: var(--hairline);
 }
 
 /* Without backdrop-filter the navbar stays translucent and the page text
@@ -53,7 +62,7 @@
   (backdrop-filter: blur(18px)) or (-webkit-backdrop-filter: blur(18px))
 ) {
   .navbar {
-    background: var(--char);
+    background: var(--cream);
   }
 }
 
@@ -117,26 +126,23 @@
   gap: var(--s-2);
   padding: var(--s-2) var(--s-3);
   border-radius: var(--r-chip);
-  color: var(--fg-on-dark-2);
+  color: var(--fg-2);
   font-size: var(--t-small);
   font-weight: var(--w-label);
   text-decoration: none;
   white-space: nowrap;
-  transition:
-    color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    background 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: color 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .link:hover {
-  color: var(--fg-on-dark);
-  background: color-mix(in srgb, var(--white) 8%, transparent);
+  color: var(--fg-1);
 }
 
 /* A dot below the label, not a filled pill: matches
    SmartPlanSystemDesign/v2/Navbar.jsx's active-link treatment. Still backed
    by `aria-current="page"` on the link itself, not just this dot. */
 .activeLink {
-  color: var(--fg-on-dark);
+  color: var(--fg-1);
   background: transparent;
 }
 
@@ -222,6 +228,9 @@
   height: 34px;
 }
 
+/* Always light-card styled, independent of the navbar's own background —
+   matches the dropdown in SmartPlanSystemDesign/v2/Navbar.jsx, which never
+   switched with the `dark` prop either. */
 .panel {
   position: absolute;
   top: calc(100% + var(--s-2));
@@ -231,10 +240,10 @@
   flex-direction: column;
   min-width: 220px;
   padding: var(--s-2);
-  border: 1px solid var(--hairline-dark);
+  border: 1px solid var(--hairline);
   border-radius: var(--r-card-sm);
-  background: var(--char-surface);
-  box-shadow: var(--shadow-card-dark);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
   animation: fadeUp 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
@@ -247,16 +256,20 @@
   border: 0;
   border-radius: var(--r-btn);
   background: transparent;
-  color: var(--fg-on-dark);
+  color: var(--fg-1);
   font-size: var(--t-small);
   font-weight: var(--w-body);
   text-align: left;
   text-decoration: none;
   cursor: pointer;
+  transition:
+    color 130ms ease,
+    background 130ms ease;
 }
 
 .option:hover {
-  background: var(--char-surface2);
+  color: var(--ember);
+  background: color-mix(in srgb, var(--ember) 7%, transparent);
 }
 
 .activeOption {
@@ -267,7 +280,7 @@
   height: 1px;
   margin: var(--s-1) 0;
   border: 0;
-  background: var(--hairline-dark);
+  background: var(--hairline);
 }
 
 /* ── Small-viewport menu ──────────────────────────────────────── */
@@ -277,10 +290,10 @@
   justify-content: center;
   flex-shrink: 0;
   padding: var(--s-2);
-  border: 1px solid var(--white-15);
+  border: 1px solid var(--hairline);
   border-radius: var(--r-btn);
   background: transparent;
-  color: var(--fg-on-dark);
+  color: var(--fg-1);
   cursor: pointer;
 }
 
@@ -289,9 +302,8 @@
   flex-direction: column;
   gap: var(--s-1);
   padding: var(--s-3) var(--s-4) var(--s-4);
-  border-top: 1px solid var(--hairline-dark);
-  background: var(--char);
-  background: color-mix(in srgb, var(--char) 92%, transparent);
+  border-top: 1px solid var(--hairline);
+  background: color-mix(in srgb, var(--cream) 96%, transparent);
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
 }

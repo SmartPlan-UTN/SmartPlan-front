@@ -228,9 +228,21 @@ días"*).
 
 ### Cross-cutting
 
-**Navbar** — 60px bar with `backdrop-filter: blur(18px)` over the hero.
-Navigation: Inicio, Explorar, Favoritos, Historial, and a user menu with Mi
-Perfil and Preferencias.
+**Navbar** — 60px bar with `backdrop-filter: blur(18px)`. Always the light
+variant: cream background, ink logo, `--fg-1`/`--fg-2` text. The `Navbar`
+component in `v2/Navbar.jsx` still has a `dark` prop, but the shipped
+`SmartPlan v3.html` hardcodes `navDark = false` ("Results is now light
+theme") — there's no dark-over-hero navbar in the current design, on any
+screen. Nav links center between the logo and the session control; the
+active one gets a small ember dot below it, not a filled pill. The border
+under the bar is transparent until the page scrolls past 10px. The account
+trigger is a circular ember-gradient avatar (icon-only until there's a real
+user name/photo); its dropdown is always light-card styled
+(`--surface-card` / `--hairline` / `--shadow-card`) regardless of the
+navbar's own background — same as in the prototype. "Cerrar sesión" opens a
+confirmation dialog instead of logging out immediately. Navigation: Inicio,
+Explorar, Favoritos, Historial, and a user menu with Mi Perfil and
+Preferencias.
 
 **Carousel** — infinite carousel of categories: Gastronomía, Vinos &
 Bodegas, Cultura & Arte, Vida nocturna, Cócteles, Café & Brunch, and of
