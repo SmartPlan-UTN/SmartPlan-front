@@ -1,7 +1,7 @@
 import Image from "next/image";
 
 import { Badge, Icon, Stars } from "@/components/ui";
-import { formatArs } from "@/lib/utils";
+import { formatArs, formatDuration } from "@/lib/utils";
 import type { ActivitySearchResult } from "@/types";
 
 import styles from "./activity.module.css";
@@ -40,33 +40,36 @@ export function ActivityCard({ activity }: ActivityCardProps) {
       </div>
 
       <div className={styles.body}>
-        <h3 className={`sp-h4 ${styles.name}`}>{activity.name}</h3>
-        <p className={`sp-small ${styles.description}`}>
-          {activity.description}
-        </p>
-
-        <div className={styles.ratingRow}>
-          <Stars rating={activity.averageRating} />
-          <span className="sp-small">{activity.averageRating.toFixed(1)}</span>
-          <span className={`sp-small ${styles.ratingCount}`}>
-            ({activity.ratingCount})
-          </span>
-        </div>
+        <h3 className={styles.name}>{activity.name}</h3>
+        <p className={styles.description}>{activity.description}</p>
 
         <div className={styles.metaRow}>
+          <span className={styles.metaItem}>
+            <Icon name="clock" size={12} />
+            {formatDuration(activity.estimatedDuration)}
+          </span>
           <Badge variant="cost">{formatArs(activity.estimatedCost)}</Badge>
-          {visibleCategories.map((category) => (
-            <Badge variant="tag" key={category.id}>
-              {category.name}
-            </Badge>
-          ))}
+          <span className={styles.metaItem}>
+            <Stars rating={activity.averageRating} size={11} />
+            {activity.averageRating.toFixed(1)}
+          </span>
           {activity.distanceKm != null ? (
-            <span className={`sp-small ${styles.distance}`}>
-              <Icon name="map-pin" size={14} />
+            <span className={styles.metaItem}>
+              <Icon name="map-pin" size={12} />
               {activity.distanceKm.toFixed(1)} km
             </span>
           ) : null}
         </div>
+
+        {visibleCategories.length > 0 ? (
+          <div className={styles.tagRow}>
+            {visibleCategories.map((category) => (
+              <Badge variant="tag" key={category.id}>
+                {category.name}
+              </Badge>
+            ))}
+          </div>
+        ) : null}
       </div>
     </article>
   );

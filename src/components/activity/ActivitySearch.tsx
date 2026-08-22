@@ -120,7 +120,11 @@ export function ActivitySearch() {
 
       {status === "loading" ? (
         <div className={styles.stateBlock}>
-          <Icon name="search" size={32} className={styles.stateIcon} />
+          <div className={styles.loadingDots}>
+            <span className={styles.loadingDot} />
+            <span className={styles.loadingDot} />
+            <span className={styles.loadingDot} />
+          </div>
           <p className="sp-body">Buscando lo mejor cerca tuyo...</p>
         </div>
       ) : null}
@@ -132,6 +136,7 @@ export function ActivitySearch() {
             size={32}
             className={styles.errorIcon}
           />
+          <h2 className="sp-h3">Algo salió mal</h2>
           <p className="sp-body">{errorMessage}</p>
           <Button variant="ghostEmber" onClick={retry}>
             Reintentar
@@ -142,8 +147,10 @@ export function ActivitySearch() {
       {status === "idle" && !hasResults ? (
         <div className={styles.stateBlock}>
           <Icon name="inbox" size={32} className={styles.stateIcon} />
+          <h2 className="sp-h3">Sin resultados</h2>
           <p className="sp-body">
-            No encontramos actividades para tu búsqueda.
+            No encontramos actividades para tu búsqueda. Probá con otras
+            palabras.
           </p>
         </div>
       ) : null}

@@ -36,6 +36,12 @@ describe("ActivityCard", () => {
     expect(screen.getByText("Cultural")).toBeInTheDocument();
   });
 
+  it("formats the duration in a compact, human-readable form", () => {
+    render(<ActivityCard activity={baseActivity} />);
+
+    expect(screen.getByText("3h")).toBeInTheDocument();
+  });
+
   it("shows the distance when it's available", () => {
     render(<ActivityCard activity={baseActivity} />);
 
