@@ -215,7 +215,7 @@ being re-discussed twice.
 | 2026-08-18 | Favoritos and Historial are shown in the navbar even without a session | Hiding the links leaves the application with no hints about what's behind the account. Someone without a session lands on the route and the guard sends them to login while preserving the destination in `?redirect=` |
 | 2026-08-18 | Catalog keys via literal unions | Prevents structural incompatibility between catalogs (`UserStatus`, `Role`, etc.) and prevents invalid keys in TypeScript. Verified against `SmartPlan-back` commit `8ec4d07a34d2058f2147220e69d494e4da183811`, and `openai` corrected to `gemini`. |
 | 2026-08-19/20 | Technical code and structure migrated from Spanish to English, in both `SmartPlan-front` and `SmartPlan-back` | Aligns identifiers, tables, routes, and API contracts with the shared `skills/01-domain/` convention. User-visible text, skills, and functional documentation continue to allow Spanish |
-| 2026-08-22 | CU9 built against `GET /activities` from the backend's `SMART-16-busqueda-y-exploracion` branch (in review, not yet in `develop`) | The endpoint's contract is stable and documented in `SmartPlan-back/docs/exploration-api.md`; per the DoD, this frontend CU can't move to `Completed` until that backend branch merges and the integration is verified against `develop` |
+| 2026-08-22 | CU9 built against `GET /activities` from the backend's `SMART-16-busqueda-y-exploracion` branch | The endpoint's contract is documented in `SmartPlan-back/docs/exploration-api.md`. That branch merged into the backend's `develop` on 2026-08-22 (PR #56) with the same contract, verified field-for-field against the frontend's types before wiring it up |
 
 ---
 
