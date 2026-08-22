@@ -23,6 +23,11 @@ const GENERIC_ERROR = "No pudimos completar la búsqueda. Intentá de nuevo.";
 export function ActivitySearch() {
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, DEBOUNCE_MS);
+  // Set by the "Buscar" button or Enter, to search immediately instead of
+  // waiting out the debounce. Cleared on the next keystroke so debounce
+  // resumes driving the search normally.
+  const [manualQuery, setManualQuery] = useState<string | null>(null);
+  const effectiveQuery = manualQuery ?? debouncedQuery;
   const [items, setItems] = useState<ActivitySearchResult[]>([]);
   const [pagination, setPagination] = useState<PaginationMetadata | null>(
     null,
@@ -33,6 +38,15 @@ export function ActivitySearch() {
   // Guards against an older, slower request overwriting a newer one's result.
   const requestId = useRef(0);
 
+  const handleQueryChange = useCallback((value: string) => {
+    setQuery(value);
+    setManualQuery(null);
+  }, []);
+
+  const searchNow = useCallback(() => {
+    setManualQuery(query);
+  }, [query]);
+
   useEffect(() => {
     const currentRequestId = ++requestId.current;
 
@@ -42,7 +56,7 @@ export function ActivitySearch() {
 
       try {
         const result = await searchActivities({
-          search: debouncedQuery.trim() || undefined,
+          search: effectiveQuery.trim() || undefined,
           page: 1,
           limit: PAGE_SIZE,
         });
@@ -60,7 +74,7 @@ export function ActivitySearch() {
     }
 
     void run();
-  }, [debouncedQuery, retryToken]);
+  }, [effectiveQuery, retryToken]);
 
   const loadMore = useCallback(() => {
     if (!pagination) return;
@@ -74,7 +88,7 @@ export function ActivitySearch() {
 
       try {
         const result = await searchActivities({
-          search: debouncedQuery.trim() || undefined,
+          search: effectiveQuery.trim() || undefined,
           page: nextPage,
           limit: PAGE_SIZE,
         });
@@ -90,7 +104,7 @@ export function ActivitySearch() {
     }
 
     void run();
-  }, [debouncedQuery, pagination]);
+  }, [effectiveQuery, pagination]);
 
   const retry = useCallback(() => {
     setRetryToken((token) => token + 1);
@@ -98,6 +112,12 @@ export function ActivitySearch() {
 
   const hasMore = pagination != null && pagination.page < pagination.totalPages;
   const hasResults = items.length > 0;
+  const resultsCountLabel =
+    pagination != null
+      ? pagination.total === 1
+        ? "actividad encontrada"
+        : "actividades encontradas"
+      : null;
 
   return (
     <div>
@@ -114,9 +134,25 @@ export function ActivitySearch() {
           placeholder="Buscá una actividad, lugar o experiencia"
           aria-label="Buscar actividades"
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => {
+            handleQueryChange(event.target.value);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              searchNow();
+            }
+          }}
         />
+        <Button variant="primary" size="sm" onClick={searchNow}>
+          Buscar
+        </Button>
       </div>
+
+      {hasResults && pagination != null ? (
+        <p className={`sp-body ${styles.resultsLabel}`}>
+          <strong>{pagination.total}</strong> {resultsCountLabel} cerca tuyo
+        </p>
+      ) : null}
 
       {status === "loading" ? (
         <div className={styles.stateBlock}>

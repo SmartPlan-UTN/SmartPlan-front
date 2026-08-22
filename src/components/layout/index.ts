@@ -14,6 +14,7 @@ export {
 } from "./links";
 export { UserMenu } from "./UserMenu";
 export { Navbar } from "./Navbar";
+export { MoodBackground, type Mood, type MoodBackgroundProps } from "./MoodBackground";
 export {
   PendingScreen,
   type PendingScreenProps,

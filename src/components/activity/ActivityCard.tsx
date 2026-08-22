@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 import { Badge, Icon, Stars } from "@/components/ui";
 import { formatArs, formatDuration } from "@/lib/utils";
 import type { ActivitySearchResult } from "@/types";
@@ -10,18 +8,22 @@ export interface ActivityCardProps {
   activity: ActivitySearchResult;
 }
 
-const MOCK_IMAGES = [
-  "/mock/coffee-142cbc1f.png",
-  "/mock/pizza.png",
-  "/mock/wine.png",
-  "/mock/MARTINI@1-1920x1080.png",
-  "/mock/camera.png",
+// Warm pastel gradients, ported verbatim from the IMG_GRADS palette in
+// SmartPlanSystemDesign/v2/Results.jsx. The catalog has no real photos yet:
+// a deterministic pick keeps the same card showing the same tile across
+// re-renders and page reloads. No emoji on top (brand voice forbids them);
+// a muted icon stands in for "no photo yet" instead.
+const IMAGE_GRADIENTS = [
+  "linear-gradient(155deg, #F2D9C8, #EDE0D0)",
+  "linear-gradient(155deg, #C8D8F2, #D8E4F0)",
+  "linear-gradient(155deg, #D0C8F2, #DDD8F0)",
+  "linear-gradient(155deg, #C8E8D4, #D4EDE0)",
+  "linear-gradient(155deg, #F2C8D8, #F0D4E0)",
+  "linear-gradient(155deg, #F2ECC8, #EFEAD0)",
 ];
 
-// The catalog has no real photos yet: a deterministic mock keeps the same
-// card showing the same placeholder across re-renders and page reloads.
-function mockImageFor(activityId: number): string {
-  return MOCK_IMAGES[activityId % MOCK_IMAGES.length];
+function gradientFor(activityId: number): string {
+  return IMAGE_GRADIENTS[activityId % IMAGE_GRADIENTS.length];
 }
 
 export function ActivityCard({ activity }: ActivityCardProps) {
@@ -29,14 +31,11 @@ export function ActivityCard({ activity }: ActivityCardProps) {
 
   return (
     <article className={styles.card}>
-      <div className={styles.imageWrapper}>
-        <Image
-          src={mockImageFor(activity.id)}
-          alt=""
-          fill
-          sizes="(min-width: 900px) 33vw, (min-width: 600px) 50vw, 100vw"
-          className={styles.image}
-        />
+      <div
+        className={styles.imageWrapper}
+        style={{ background: gradientFor(activity.id) }}
+      >
+        <Icon name="image" size={40} className={styles.imagePlaceholder} />
       </div>
 
       <div className={styles.body}>

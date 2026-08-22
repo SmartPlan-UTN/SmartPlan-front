@@ -68,6 +68,20 @@ describe("ActivitySearch", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows how many activities matched, pluralized", async () => {
+    searchActivities.mockResolvedValue(
+      page([makeActivity()], { total: 1, totalPages: 1 }),
+    );
+
+    render(<ActivitySearch />);
+
+    expect(
+      await screen.findByText("actividad encontrada cerca tuyo", {
+        exact: false,
+      }),
+    ).toBeInTheDocument();
+  });
+
   it("shows the empty state when there are no results", async () => {
     searchActivities.mockResolvedValue(page([]));
 
@@ -116,6 +130,47 @@ describe("ActivitySearch", () => {
     expect(searchActivities).toHaveBeenCalledTimes(2);
     expect(searchActivities).toHaveBeenLastCalledWith(
       expect.objectContaining({ search: "vino" }),
+    );
+  });
+
+  it("searches immediately on 'Buscar', without waiting for the debounce", async () => {
+    vi.useFakeTimers();
+    searchActivities.mockResolvedValue(page([]));
+    render(<ActivitySearch />);
+
+    expect(searchActivities).toHaveBeenCalledTimes(1);
+
+    fireEvent.change(screen.getByLabelText("Buscar actividades"), {
+      target: { value: "vino" },
+    });
+    expect(searchActivities).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Buscar" }));
+
+    expect(searchActivities).toHaveBeenCalledTimes(2);
+    expect(searchActivities).toHaveBeenLastCalledWith(
+      expect.objectContaining({ search: "vino" }),
+    );
+
+    // The pending debounce timer firing afterwards doesn't repeat the search.
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+    expect(searchActivities).toHaveBeenCalledTimes(2);
+  });
+
+  it("also searches immediately when Enter is pressed in the search box", async () => {
+    vi.useFakeTimers();
+    searchActivities.mockResolvedValue(page([]));
+    render(<ActivitySearch />);
+
+    const input = screen.getByLabelText("Buscar actividades");
+    fireEvent.change(input, { target: { value: "termas" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    expect(searchActivities).toHaveBeenCalledTimes(2);
+    expect(searchActivities).toHaveBeenLastCalledWith(
+      expect.objectContaining({ search: "termas" }),
     );
   });
 

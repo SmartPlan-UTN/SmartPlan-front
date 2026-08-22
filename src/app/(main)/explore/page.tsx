@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { ActivitySearch } from "@/components/activity";
-import { Container } from "@/components/layout";
+import { Container, MoodBackground } from "@/components/layout";
 
 import styles from "./explore.module.css";
 
@@ -11,17 +11,18 @@ export const metadata: Metadata = {
 
 export default function ExplorePage() {
   return (
-    <Container>
-      <div className={styles.page}>
-        <div className={styles.header}>
-          <h1 className="sp-h2">Explorar</h1>
-          <p className={`sp-body ${styles.subtitle}`}>
-            Buscá actividades cerca tuyo.
-          </p>
-        </div>
+    <div className={styles.backdrop}>
+      <MoodBackground mood="idle" />
 
-        <ActivitySearch />
-      </div>
-    </Container>
+      <Container>
+        <div className={styles.page}>
+          {/* SmartPlanSystemDesign's Results screen has no visible page
+              title — it goes straight from the navbar into the search bar
+              — but a page still needs a heading landmark. */}
+          <h1 className="sp-sr-only">Explorar</h1>
+          <ActivitySearch />
+        </div>
+      </Container>
+    </div>
   );
 }
