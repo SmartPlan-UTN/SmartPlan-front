@@ -1,12 +1,12 @@
 /**
- * Une clases CSS descartando las vacías, `null`, `undefined` y `false`.
+ * Joins CSS classes, discarding empty strings, `null`, `undefined`, and `false`.
  *
- * Sirve para componer una clase condicional sin ensuciar el JSX:
+ * Useful for composing a conditional class without cluttering the JSX:
  *
  * ```ts
- * cn(styles.enlace, activo && styles.enlaceActivo, className)
+ * cn(styles.link, active && styles.activeLink, className)
  * ```
  */
-export function cn(...clases: Array<string | false | null | undefined>): string {
-  return clases.filter(Boolean).join(" ");
+export function cn(...classes: Array<string | false | null | undefined>): string {
+  return classes.filter(Boolean).join(" ");
 }

@@ -1,0 +1,186 @@
+name: Project ticket status
+
+on:
+  create:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review, closed]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: project-status-${{ github.event.pull_request.number || github.event.ref }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    # `create` also runs for tags; only branches are relevant here.
+    if: github.event_name != 'create' || github.event.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    env:
+      PROJECTS_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+    steps:
+      - name: Report missing Projects token
+        if: env.PROJECTS_TOKEN == ''
+        run: echo "::notice::PROJECTS_TOKEN is not configured; project status synchronization was skipped."
+
+      - name: Synchronize project status
+        if: env.PROJECTS_TOKEN != ''
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ env.PROJECTS_TOKEN }}
+          script: |
+            const PROJECT_TITLE = 'SmartPlan';
+            const STATUS_FIELD = 'Status';
+            const { owner, repo } = context.repo;
+
+            // Extract the issue number from branch names such as 25-slug,
+            // feature/25-slug, or SMART-25-slug. The number must be delimited
+            // so identifiers such as "f03" are not interpreted as issue numbers.
+            const issueFromBranch = (branch) => {
+              const m = String(branch).match(/(?:^|[\/_-])(\d{1,6})(?:[\/_-]|$)/);
+              return m ? Number(m[1]) : null;
+            };
+
+            // --- 1. Determine the desired status and target issues. ---
+            let desiredStatus = null;
+            let issueNumbers = [];
+
+            if (context.eventName === 'create') {
+              const branch = context.payload.ref;
+              const n = issueFromBranch(branch);
+              if (!n) {
+                core.info(`Branch "${branch}" does not contain an issue number. Nothing to do.`);
+                return;
+              }
+              desiredStatus = 'In Progress';
+              issueNumbers = [n];
+            } else {
+              const pr = context.payload.pull_request;
+              const action = context.payload.action;
+
+              if (action === 'closed') {
+                if (!pr.merged) {
+                  core.info('The PR was closed without merging; the issue status will not change.');
+                  return;
+                }
+                desiredStatus = 'Done';
+              } else {
+                if (pr.draft) {
+                  core.info('The PR is a draft; it will move to In Review when marked ready for review.');
+                  return;
+                }
+                desiredStatus = 'In Review';
+              }
+
+              const prData = await github.graphql(`
+                query($owner:String!, $repo:String!, $number:Int!) {
+                  repository(owner:$owner, name:$repo) {
+                    pullRequest(number:$number) {
+                      id
+                      closingIssuesReferences(first:20) { nodes { number } }
+                    }
+                  }
+                }`, { owner, repo, number: pr.number });
+
+              const linked = prData.repository.pullRequest.closingIssuesReferences.nodes.map(i => i.number);
+
+              if (linked.length) {
+                issueNumbers = linked;
+              } else {
+                // Without "Closes #N", infer the issue from the branch and add
+                // the reference to the PR so GitHub closes it after the merge.
+                const n = issueFromBranch(pr.head.ref);
+                if (!n) {
+                  core.info(`PR #${pr.number} and branch "${pr.head.ref}" do not reference an issue. Nothing to do.`);
+                  return;
+                }
+                issueNumbers = [n];
+                if (action === 'opened') {
+                  const body = `${pr.body ? pr.body.trimEnd() + '\n\n' : ''}Closes #${n}`;
+                  await github.rest.pulls.update({ owner, repo, pull_number: pr.number, body });
+                  core.info(`Added "Closes #${n}" to PR #${pr.number}.`);
+                }
+              }
+            }
+
+            // --- 2. Find the Project and its Status field. ---
+            const projectsQuery = `
+              projectsV2(first:20, query:$q) {
+                nodes {
+                  id title
+                  fields(first:50) {
+                    nodes {
+                      ... on ProjectV2SingleSelectField { id name options { id name } }
+                    }
+                  }
+                }
+              }`;
+
+            let nodes;
+            try {
+              const res = await github.graphql(
+                `query($login:String!, $q:String!) { organization(login:$login) { ${projectsQuery} } }`,
+                { login: owner, q: PROJECT_TITLE });
+              nodes = res.organization.projectsV2.nodes;
+            } catch (e) {
+              const res = await github.graphql(
+                `query($login:String!, $q:String!) { user(login:$login) { ${projectsQuery} } }`,
+                { login: owner, q: PROJECT_TITLE });
+              nodes = res.user.projectsV2.nodes;
+            }
+
+            const project = nodes.find(p => p.title === PROJECT_TITLE);
+            if (!project) throw new Error(`Project "${PROJECT_TITLE}" was not found for ${owner}.`);
+
+            const field = project.fields.nodes.find(
+              f => f && f.name && f.name.toLowerCase() === STATUS_FIELD.toLowerCase());
+            if (!field) throw new Error(`Project "${PROJECT_TITLE}" does not have a "${STATUS_FIELD}" field.`);
+
+            const option = field.options.find(
+              o => o.name.toLowerCase() === desiredStatus.toLowerCase());
+            if (!option) {
+              throw new Error(
+                `Field "${field.name}" does not have the "${desiredStatus}" option. ` +
+                `Options: ${field.options.map(o => o.name).join(', ')}`);
+            }
+
+            // --- 3. Move each issue to the desired status. ---
+            for (const number of issueNumbers) {
+              const data = await github.graphql(`
+                query($owner:String!, $repo:String!, $number:Int!) {
+                  repository(owner:$owner, name:$repo) {
+                    issue(number:$number) {
+                      id
+                      projectItems(first:20) { nodes { id project { id } } }
+                    }
+                  }
+                }`, { owner, repo, number });
+
+              const issue = data.repository.issue;
+              if (!issue) {
+                core.warning(`Issue #${number} does not exist in ${owner}/${repo}.`);
+                continue;
+              }
+
+              let item = issue.projectItems.nodes.find(i => i.project.id === project.id);
+              if (!item) {
+                const added = await github.graphql(`
+                  mutation($projectId:ID!, $contentId:ID!) {
+                    addProjectV2ItemById(input:{projectId:$projectId, contentId:$contentId}) { item { id } }
+                  }`, { projectId: project.id, contentId: issue.id });
+                item = added.addProjectV2ItemById.item;
+                core.info(`Issue #${number} was added to the Project.`);
+              }
+
+              await github.graphql(`
+                mutation($projectId:ID!, $itemId:ID!, $fieldId:ID!, $optionId:String!) {
+                  updateProjectV2ItemFieldValue(input:{
+                    projectId:$projectId, itemId:$itemId, fieldId:$fieldId,
+                    value:{ singleSelectOptionId:$optionId }
+                  }) { projectV2Item { id } }
+                }`, { projectId: project.id, itemId: item.id, fieldId: field.id, optionId: option.id });
+
+              core.info(`Issue #${number} -> ${option.name}`);
+            }

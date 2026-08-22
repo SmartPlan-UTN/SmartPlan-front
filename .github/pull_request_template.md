@@ -1,23 +1,23 @@
 <!--
-Base del PR: develop. Nunca main.
-Título: el mismo del issue, con el id entre corchetes. Ej: [CU17] Generar plan automatico
+PR base: develop. Never main.
+Title: same as the issue's, with the id in brackets. E.g.: [CU17] Generar plan automatico
 -->
 
 Closes #
 
-## Qué hace
+## What it does
 
-<!-- Qué cambia desde el punto de vista de quien usa la aplicación, y qué CU / tarea cubre.
-     Si no hay CU asociado (tooling, configuración, documentación), decilo. -->
+<!-- What changes from the point of view of someone using the application, and which CU / task it covers.
+     If there's no associated CU (tooling, configuration, documentation), say so. -->
 
-## Cómo probarlo
+## How to test it
 
-<!-- Comandos concretos y qué mirar. Quien revisa tiene que poder seguir esto sin preguntarte nada.
-     Si hace falta el backend corriendo o alguna variable de entorno, decilo acá. -->
+<!-- Concrete commands and what to look at. Whoever reviews this needs to be able to follow it without asking you anything.
+     If the backend needs to be running, or an environment variable is needed, say so here. -->
 
 ```bash
-git switch <rama>
-node --version    # 24.x, ver .nvmrc
+git switch <branch>
+node --version    # 24.x, see .nvmrc
 pnpm install
 pnpm lint
 pnpm test
@@ -27,24 +27,24 @@ pnpm build
 1.
 2.
 
-## Qué queda afuera
+## What's out of scope
 
-<!-- Lo del alcance que no entró, y por qué. Si entró todo, poné "Nada".
-     Si dejaste deuda técnica, dejá también el issue que la sigue. -->
+<!-- What was left out of scope, and why. If everything was included, write "Nothing".
+     If you left technical debt behind, also link the issue that follows up on it. -->
 
 ---
 
 ## Definition of Done
 
-Criterios completos en [`skills/02-git-flow/DEFINITION-OF-DONE.md`](https://github.com/SmartPlan-UTN/SmartPlan-front/blob/develop/skills/02-git-flow/DEFINITION-OF-DONE.md).
+Full criteria in [`skills/02-git-flow/DEFINITION-OF-DONE.md`](https://github.com/SmartPlan-UTN/SmartPlan-front/blob/develop/skills/02-git-flow/DEFINITION-OF-DONE.md).
 
-- [ ] La rama sale de `develop` y el PR va contra `develop`
-- [ ] `pnpm lint` sin errores
-- [ ] `pnpm test` en verde
-- [ ] `pnpm build` pasa
-- [ ] Se cumplen los criterios de aceptación del issue
-- [ ] Sin credenciales, tokens ni URLs hardcodeadas
-- [ ] Estilos con tokens del design system, sin hex escritos a mano
-- [ ] Estados de carga, error y vacío contemplados (si la pantalla consume la API)
-- [ ] [`SEGUIMIENTO.md`](https://github.com/SmartPlan-UTN/SmartPlan-front/blob/develop/SEGUIMIENTO.md) actualizado: estado, rama y PR
-- [ ] Documentado donde corresponda (`README.md` o `skills/`)
+- [ ] The branch starts from `develop` and the PR targets `develop`
+- [ ] `pnpm lint` with no errors
+- [ ] `pnpm test` green
+- [ ] `pnpm build` passes
+- [ ] The issue's acceptance criteria are met
+- [ ] No hardcoded credentials, tokens, or URLs
+- [ ] Styles use design system tokens, no hand-written hex values
+- [ ] Loading, error, and empty states are covered (if the screen consumes the API)
+- [ ] [`TRACKING.md`](https://github.com/SmartPlan-UTN/SmartPlan-front/blob/develop/TRACKING.md) updated: status, branch, and PR
+- [ ] Documented where relevant (`README.md` or `skills/`)

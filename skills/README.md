@@ -1,52 +1,54 @@
 # skills/
 
-Convenciones del proyecto SmartPlan, escritas para que las lean tanto las personas
-como los agentes de IA (Claude, Codex, Copilot).
+SmartPlan project conventions, written for both people and AI agents (Claude,
+Codex, Copilot) to read.
 
-## Contenido
+## Contents
 
-| Carpeta | Qué contiene | Alcance |
+| Directory | Contains | Scope |
 |---|---|---|
-| `00-proyecto/` | Qué es SmartPlan, objetivo, alcance, módulos, equipo, stack | Compartido |
-| `01-dominio/` | Entidades, 62 casos de uso, pantallas, glosario | Compartido |
-| `02-git-flow/` | Ramas, protección, PRs, mensajes de commit, plantillas y Definition of Done | Compartido |
-| `03-frontend/` | Next.js 16, Tailwind, guía visual, consumo de la API | Solo este repo |
-| `04-calidad/` | ESLint, reglas activas, qué hacer ante un error | Solo este repo |
-| `05-arquitectura/` | Componentes, comunicación, tecnologías, entornos | Compartido |
-| `06-design-system/` | Tokens EMBER, tipografía, primitivos, logos, voz de marca | Solo este repo |
-| `07-testing/` | Vitest, React Testing Library, tests de componentes y hooks | Solo este repo |
+| `00-project/` | What SmartPlan is, its goal, scope, modules, team, stack | Shared |
+| `01-domain/` | Entities, 62 use cases, screens, glossary | Shared |
+| `02-git-flow/` | Branches, protection, PRs, commit messages, templates, and Definition of Done | Shared |
+| `03-frontend/` | Next.js 16, Tailwind, visual guide, API consumption | This repo only |
+| `04-quality/` | ESLint, active rules, what to do about an error | This repo only |
+| `05-architecture/` | Components, communication, technologies, environments | Shared |
+| `06-design-system/` | EMBER tokens, typography, primitives, logos, brand voice | This repo only |
+| `07-testing/` | Vitest, React Testing Library, component and hook tests | This repo only |
 
-**Compartido** significa que el archivo es idéntico en `SmartPlan-front` y en
-`SmartPlan-back`. Si modificás uno, replicá el cambio en el otro repositorio.
+**Shared** means the file is identical in `SmartPlan-front` and
+`SmartPlan-back`. If you modify one, replicate the change in the other
+repository.
 
-## Cómo lo consume cada herramienta
+## How each tool consumes it
 
-Ninguna de las tres lee esta carpeta por su cuenta: todas entran por un archivo
-raíz que apunta acá.
+None of the three read this folder on their own: they all enter through a
+root file that points here.
 
-| Herramienta | Archivo que lee |
+| Tool | File it reads |
 |---|---|
 | Claude Code | `CLAUDE.md` → `@AGENTS.md` |
 | Codex | `AGENTS.md` |
 | GitHub Copilot | `.github/copilot-instructions.md` |
 
-Los tres apuntan al mismo contenido, así que **`AGENTS.md` es la fuente de verdad**
-y esta carpeta es el detalle.
+All three point to the same content, so **`AGENTS.md` is the source of
+truth** and this folder holds the detail.
 
-> Si querés que Claude Code cargue estos archivos como skills nativas
-> (autodescubribles), copialos o enlazalos bajo `.claude/skills/<nombre>/SKILL.md`.
-> Ya tienen el frontmatter `name` / `description` que ese formato requiere.
+> If you want Claude Code to load these files as native (auto-discoverable)
+> skills, copy or link them under `.claude/skills/<name>/SKILL.md`. They
+> already have the `name` / `description` frontmatter that format requires.
 
-## Al agregar una skill nueva
+## When adding a new skill
 
-1. Creá la carpeta con un prefijo numérico y un `SKILL.md` adentro.
-2. Ponele frontmatter con `name` y `description`. La descripción tiene que decir
-   **cuándo** consultar el archivo, no solo qué contiene.
-3. Agregala a la tabla de arriba y a la de `AGENTS.md`.
-4. Si es compartida, replicala en el otro repositorio.
+1. Create the folder with a numeric prefix and a `SKILL.md` inside.
+2. Add `name` and `description` frontmatter. The description must state
+   **when** to consult the file, not just what it contains.
+3. Add it to the table above and to `AGENTS.md`'s table.
+4. If it's shared, replicate it in the other repository.
 
-## Fuente
+## Source
 
-El contenido sale de `SmartPlan.md`, el documento de Proyecto Final (~3800 líneas).
-Es un OCR de un PDF, así que tiene ruido. Los datos que quedaron ambiguos están
-marcados en cada archivo. Ante la duda, verificá contra el documento original.
+The content comes from `SmartPlan.md`, the Final Project document (~3800
+lines). It's an OCR of a PDF, so it has noise. Data that remained ambiguous
+is flagged in each file. When in doubt, verify against the original
+document.

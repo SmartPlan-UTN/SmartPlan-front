@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 
-import { SesionProvider } from "@/lib/auth";
+import { SessionProvider } from "@/lib/auth";
 
 import "./globals.css";
 
@@ -13,7 +13,7 @@ const bricolageGrotesque = localFont({
 });
 
 export const metadata: Metadata = {
-  // El `template` arma el título de cada pantalla: "Favoritos · smartplan".
+  // The `template` builds each screen's title: "Favoritos · smartplan".
   title: {
     default: "smartplan",
     template: "%s · smartplan",
@@ -33,7 +33,7 @@ export default function RootLayout({
       className={`${bricolageGrotesque.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <SesionProvider>{children}</SesionProvider>
+        <SessionProvider>{children}</SessionProvider>
       </body>
     </html>
   );

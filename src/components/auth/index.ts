@@ -1,5 +1,5 @@
 /**
- * Componentes de sesión. Importar desde `@/components/auth`.
+ * Session components. Import from `@/components/auth`.
  */
 
-export { RutaProtegida, type RutaProtegidaProps } from "./RutaProtegida";
+export { ProtectedRoute, type ProtectedRouteProps } from "./ProtectedRoute";

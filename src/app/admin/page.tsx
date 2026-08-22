@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
 
-import { PantallaPendiente } from "@/components/layout";
+import { PendingScreen } from "@/components/layout";
 
 export const metadata: Metadata = {
   title: "Administración",
 };
 
-export default function PaginaAdmin() {
+export default function AdminPage() {
   return (
-    <PantallaPendiente
-      titulo="Panel de administración"
-      descripcion="Las métricas del sistema y la gestión de usuarios, actividades, planes y valoraciones."
-      referencias="CU53–CU60 · REP-01"
+    <PendingScreen
+      title="Panel de administración"
+      description="Las métricas del sistema y la gestión de usuarios, actividades, planes y valoraciones."
+      references="CU53–CU60 · REP-01"
     />
   );
 }

@@ -1,24 +1,24 @@
 import type { ReactNode } from "react";
 
-import { RutaProtegida } from "@/components/auth";
-import { CascaraApp, Contenedor } from "@/components/layout";
+import { ProtectedRoute } from "@/components/auth";
+import { AppShell, Container } from "@/components/layout";
 
 /**
- * Layout del panel de administración.
+ * Layout for the administration panel.
  *
- * Comparte la navbar con el resto de la aplicación y exige sesión, igual que el
- * grupo `(privado)`. **La comprobación de rol todavía no existe**: hoy cualquier
- * sesión válida entra. Restringirlo a la persona administradora es parte de
- * CU61 y CU62, que definen permisos y roles.
+ * Shares the navbar with the rest of the application and requires a session,
+ * same as the `(private)` group. **The role check doesn't exist yet**: today
+ * any valid session gets in. Restricting it to admin users is part of CU61
+ * and CU62, which define permissions and roles.
  */
-export default function LayoutAdmin({
+export default function AdminLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   return (
-    <CascaraApp>
-      <RutaProtegida>
-        <Contenedor>{children}</Contenedor>
-      </RutaProtegida>
-    </CascaraApp>
+    <AppShell>
+      <ProtectedRoute>
+        <Container>{children}</Container>
+      </ProtectedRoute>
+    </AppShell>
   );
 }

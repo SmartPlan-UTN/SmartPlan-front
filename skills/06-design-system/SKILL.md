@@ -1,74 +1,77 @@
 ---
 name: smartplan-design-system
-description: Design system EMBER — tokens de color, tipografía, espaciado, radios y componentes primitivos. Leer antes de escribir cualquier estilo o componente visual.
+description: EMBER design system — color tokens, typography, spacing, radii, and primitive components. Read before writing any style or visual component.
 ---
 
-# SmartPlan — Design System "EMBER"
+# SmartPlan - "EMBER" Design System
 
-Específico de `SmartPlan-front`. Fuente original: carpeta `SmartPlanSystemDesign`
-(fuera de los repositorios).
+Specific to `SmartPlan-front`. Original source: `SmartPlanSystemDesign` folder
+(outside the repositories).
 
-## ⚠️ Hay dos versiones. Usá la v2
+## ⚠️ There are two versions. Use v2
 
-En la carpeta de diseño conviven dos sistemas incompatibles:
+Two incompatible systems coexist in the design folder:
 
-| Versión | Paleta | Estado |
+| Version | Palette | Status |
 |---|---|---|
-| **v1** — `uploads/smartplan Design System/` | Ink `#0D0D0D`, Lime `#C8F135`, Violet `#5B3CF5`, Slate `#F4F3F0` | **Obsoleta.** No usar |
-| **v2 "EMBER"** — `standalone/v2/tokens.css` | Ember, Char, Cream, Electric, Gold | **Vigente** |
+| **v1** — `uploads/smartplan Design System/` | Ink `#0D0D0D`, Lime `#C8F135`, Violet `#5B3CF5`, Slate `#F4F3F0` | **Deprecated.** Do not use |
+| **v2 "EMBER"** — `standalone/v2/tokens.css` | Ember, Char, Cream, Electric, Gold | **Current** |
 
-La v2 es la que coincide con la guía visual del documento entregable. Si abrís el
-`README.md` de la carpeta v1 y ves colores lima y violeta, es la iteración vieja:
-ignorala.
+v2 is the one that matches the delivery document's visual guide. If you open
+the v1 folder's `README.md` and see lime and violet colors, that's the old
+iteration: ignore it.
 
-Los tokens vigentes están copiados en [`src/styles/tokens.css`](../../src/styles/tokens.css).
+The current tokens are copied into
+[`src/styles/tokens.css`](../../src/styles/tokens.css).
 
-## Paleta
+## Palette
 
-### Núcleo
-| Token | Hex | Uso |
+### Core
+| Token | Hex | Use |
 |---|---|---|
-| `--ember` | `#E85D20` | Color primario. CTAs, acentos, estado activo |
-| `--char` | `#1A1109` | Texto principal y superficies oscuras (hero, navbar) |
-| `--cream` | `#F5F0E8` | Fondo general de la aplicación |
-| `--electric` | `#2B5BFF` | Todo lo relacionado con IA: generación de planes, sugerencias |
-| `--gold` | `#FFD166` | Valoraciones y estrellas |
+| `--ember` | `#E85D20` | Primary color. CTAs, accents, active state |
+| `--char` | `#1A1109` | Main text and dark surfaces (hero, navbar) |
+| `--cream` | `#F5F0E8` | General application background |
+| `--electric` | `#2B5BFF` | Everything AI-related: plan generation, suggestions |
+| `--gold` | `#FFD166` | Ratings and stars |
 
-### Estado
+### Status
 `--success #22C06B` · `--warning #F5A623` · `--error #F04040`
 
-Los tonos auxiliares necesarios por los primitivos también son tokens:
-`--white`, `--white-15`, `--white-18`, `--gold-22`, `--warning-15`,
-`--rating-ink` y `--warning-ink`. No se repiten sus valores dentro de los
-componentes.
+Auxiliary shades needed by the primitives are also tokens: `--white`,
+`--white-15`, `--white-18`, `--gold-22`, `--warning-15`, `--rating-ink`, and
+`--warning-ink`. Their values are never repeated inline inside components.
 
-> `--rating-ink #7A5C00` sale del prototipo (es el texto del badge `rating`).
-> `--warning-ink #7A4A00` **se eligió al portar los primitivos**: EMBER v2 no
-> define el texto del badge `warn`. Lo mismo vale para los fondos de los badges
-> `success`, `tag` y `dark`. Si aparece el prototipo, conviene contrastarlos.
+> `--rating-ink #7A5C00` comes from the prototype (it's the text of the
+> `rating` badge). `--warning-ink #7A4A00` **was chosen while porting the
+> primitives**: EMBER v2 doesn't define the `warn` badge's text. The same
+> applies to the backgrounds of the `success`, `tag`, and `dark` badges. If
+> the prototype shows up, it's worth contrasting them.
 
-### Superficies
-| Token | Hex | Uso |
+### Surfaces
+| Token | Hex | Use |
 |---|---|---|
-| `--surface` | `#F5F0E8` | Fondo (= cream) |
-| `--surface-card` | `#FFFCF8` | Tarjeta sobre fondo claro. **Nunca blanco puro** |
-| `--char-surface` | `#1E1812` | Tarjeta sobre fondo oscuro |
-| `--char-surface2` | `#241D14` | Elevada / hover sobre oscuro |
-| `--hairline` | `#E2DDD5` | Borde fino sobre claro |
-| `--hairline-dark` | `rgba(255,255,255,0.07)` | Borde fino sobre oscuro |
+| `--surface` | `#F5F0E8` | Background (= cream) |
+| `--surface-card` | `#FFFCF8` | Card over a light background. **Never pure white** |
+| `--char-surface` | `#1E1812` | Card over a dark background |
+| `--char-surface2` | `#241D14` | Elevated / hover over dark |
+| `--hairline` | `#E2DDD5` | Thin border over light |
+| `--hairline-dark` | `rgba(255,255,255,0.07)` | Thin border over dark |
 
-### Texto
-Sobre claro: `--fg-1 #1A1109` (principal) · `--fg-2 #5C5448` (secundario) · `--fg-3 #9E9589` (placeholder).
-Sobre oscuro: `--fg-on-dark #F5F0E8` · `--fg-on-dark-2` (55%) · `--fg-on-dark-3` (30%).
+### Text
+Over light: `--fg-1 #1A1109` (primary) · `--fg-2 #5C5448` (secondary) ·
+`--fg-3 #9E9589` (placeholder).
+Over dark: `--fg-on-dark #F5F0E8` · `--fg-on-dark-2` (55%) · `--fg-on-dark-3` (30%).
 
-**Nunca escribas un hex a mano.** Usá siempre la variable CSS.
+**Never hand-write a hex value.** Always use the CSS variable.
 
-## Tipografía
+## Typography
 
-Fuente única: **Bricolage Grotesque** (variable, pesos 200–800), self-hosted en
-[`src/app/fonts/`](../../src/app/fonts/). Se carga con `next/font/local`.
+Single font: **Bricolage Grotesque** (variable, weights 200-800),
+self-hosted in [`src/app/fonts/`](../../src/app/fonts/). Loaded with
+`next/font/local`.
 
-| Clase | Tamaño | Peso | Tracking |
+| Class | Size | Weight | Tracking |
 |---|---|---|---|
 | `.sp-display` | 78px | 800 | -0.03em |
 | `.sp-h1` | 50px | 800 | -0.02em |
@@ -78,236 +81,244 @@ Fuente única: **Bricolage Grotesque** (variable, pesos 200–800), self-hosted 
 | `.sp-body-lg` | 18px | 400 | — |
 | `.sp-body` | 16px | 400 | — |
 | `.sp-small` | 14px | 400 | — |
-| `.sp-label` | 12px | 600 | +0.05em, mayúsculas |
+| `.sp-label` | 12px | 600 | +0.05em, uppercase |
 
-> **Discrepancia con el documento entregable:** la Etapa 5 define H1 42px, H2 32px,
-> H3 24px. El design system evolucionó a 50 / 36 / 26. Vale la v2; conviene
-> actualizar el documento.
+> **Discrepancy with the delivery document:** Stage 5 defines H1 42px, H2
+> 32px, H3 24px. The design system evolved to 50 / 36 / 26. v2 is the one
+> that's valid; the document should be updated.
 
-## Espaciado, radios y sombras
+## Spacing, radii, and shadows
 
-**Espaciado** (escala de 4): `--s-1 4` · `--s-2 8` · `--s-3 12` · `--s-4 16` ·
+**Spacing** (scale of 4): `--s-1 4` · `--s-2 8` · `--s-3 12` · `--s-4 16` ·
 `--s-5 24` · `--s-6 32` · `--s-7 48` · `--s-8 64`.
 
-**Radios:** `--r-btn 10` (botones) · `--r-card 16` · `--r-card-sm 12` ·
-`--r-chip 99` (chips y badges) · `--r-pill 40`.
+**Radii:** `--r-btn 10` (buttons) · `--r-card 16` · `--r-card-sm 12` ·
+`--r-chip 99` (chips and badges) · `--r-pill 40`.
 
-**Sombras:** `--shadow-card 0 4px 16px rgba(0,0,0,.08)` sobre claro,
-`--shadow-card-dark 0 4px 20px rgba(0,0,0,.30)` sobre oscuro.
-Foco: `--focus-ember 0 0 0 3px rgba(232,93,32,.18)`.
+**Shadows:** `--shadow-card 0 4px 16px rgba(0,0,0,.08)` over light,
+`--shadow-card-dark 0 4px 20px rgba(0,0,0,.30)` over dark.
+Focus: `--focus-ember 0 0 0 3px rgba(232,93,32,.18)`.
 
-> `--focus-ember` es un **halo, no un indicador de foco**: al 18% sobre `--cream`
-> da 1.2:1 de contraste, muy por debajo del 3:1 que piden WCAG 1.4.11 y 2.4.11.
-> Nunca lo uses con `outline: none`. Acompañalo siempre de
-> `outline: 2px solid var(--ember); outline-offset: 2px`, como hacen `Button` y
-> `Chip`.
+> `--focus-ember` is a **glow, not a focus indicator**: at 18% over `--cream`
+> it gives 1.2:1 contrast, well below the 3:1 required by WCAG 1.4.11 and
+> 2.4.11. Never use it with `outline: none`. Always pair it with
+> `outline: 2px solid var(--ember); outline-offset: 2px`, as `Button` and
+> `Chip` do.
 
-**Layout:** navbar `60px` · ancho máximo `1200px` · separación vertical de sección `64px`.
+**Layout:** navbar `60px` · max width `1200px` · vertical section spacing `64px`.
 
-## ⚠️ El prototipo no está en el repositorio
+## ⚠️ The prototype isn't in the repository
 
-El kit de alta fidelidad —20 pantallas en React— vive en la carpeta
-`SmartPlanSystemDesign`, en la máquina de un integrante, **fuera de git por decisión
-del equipo**. No se va a subir.
+The high-fidelity kit —20 screens in React— lives in the
+`SmartPlanSystemDesign` folder, on one team member's machine, **kept out of
+git by team decision**. It won't be uploaded.
 
-**Esta sección es el único registro durable de ese diseño.** Está descrita para que
-puedas maquetar sin acceso al prototipo. Si tenés la carpeta a mano, se levanta así:
+**This section is the only durable record of that design.** It's described
+here so you can build screens without access to the prototype. If you do
+have the folder handy, it's served like this:
 
 ```powershell
-cd "<ruta>\SmartPlanSystemDesign"
+cd "<path>\SmartPlanSystemDesign"
 python -m http.server 8080
 # http://127.0.0.1:8080/SmartPlan%20v3.html
 ```
 
-Hace falta servidor HTTP porque Babel carga los `.jsx` por XHR y `file://` los bloquea.
-También existe `SmartPlan standalone.html`, con todo embebido, que abre con doble clic.
+An HTTP server is required because Babel loads the `.jsx` files via XHR and
+`file://` blocks that. There's also a `SmartPlan standalone.html`, with
+everything embedded, that opens with a double click.
 
-## Pantallas diseñadas
+## Designed screens
 
-### Públicas y de sesión
+### Public and session screens
 
 **Login** — CU1, CU2, CU3 · PAN 04
-Alterna entre iniciar sesión y registro. Medidor de fortaleza de contraseña
-(Débil / Media / Fuerte), mostrar-ocultar con icono `eye-off`, validación inline
-("Este campo es requerido", "Las contraseñas no coinciden", "Ingresá un email
-válido"). Superficie oscura con `blur(8px)`. Deriva a `admin-inicio` si el rol es
-administrador.
+Toggles between login and signup. Password strength meter (Débil / Media /
+Fuerte), show-hide with an `eye-off` icon, inline validation ("Este campo es
+requerido", "Las contraseñas no coinciden", "Ingresá un email válido"). Dark
+surface with `blur(8px)`. Redirects to `admin-inicio` if the role is admin.
 
-### Aplicación
+### Application
 
 **Landing / Home** — CU17, CU20 · PAN 07
-Hero sobre fondo oscuro con `MoodBackground` animado detrás. Campo central de
-lenguaje natural: *"Contale qué querés"*, se envía con Enter. Debajo, chips de
-sugerencias (*"Algo romántico y sorpresa para hoy"*, *"Aventura serrana familiar"*,
-*"Algo que no se me ocurriría nunca"*). Más abajo, carrusel de categorías y planes
-destacados con su secuencia resumida (*"Café → Paseo → Cena"*), distancia
-(*"A 2.5 km"*) y momento (*"Esta tarde"*). Ubicación por defecto: Mendoza.
+Hero over a dark background with an animated `MoodBackground` behind it.
+Central natural-language field: *"Contale qué querés"*, submitted with
+Enter. Below it, suggestion chips (*"Algo romántico y sorpresa para hoy"*,
+*"Aventura serrana familiar"*, *"Algo que no se me ocurriría nunca"*).
+Further down, a carousel of categories and featured plans with their
+summarized sequence (*"Café → Paseo → Cena"*), distance (*"A 2.5 km"*), and
+time (*"Esta tarde"*). Default location: Mendoza.
 
 **PlanGenerator** — CU17, CU19, CU31 · PAN 07 / PAN 09
-Formulario de parámetros: presupuesto, zona (barrios), momento, tipo de salida
-(Con amigos / En pareja / Familiar), características (Aire libre, Accesible,
-Con estacionamiento). Pantalla de espera con pasos progresivos —"Analizando tus
+Parameter form: budget, area (neighborhoods), time, outing type (Con amigos
+/ En pareja / Familiar), features (Aire libre, Accesible, Con
+estacionamiento). Waiting screen with progressive steps —"Analizando tus
 preferencias", "Buscando actividades compatibles", "Armando combinaciones
-perfectas"— en `--electric`, que es la única animación viva permitida.
+perfectas"— in `--electric`, the only live animation allowed.
 
 **Results** — CU9–CU12 · PAN 11
-Grilla de tarjetas de plan y actividad. Cada tarjeta lleva título, secuencia
-(*"Bodega → Almuerzo → Degustación"*), `Badge` de categoría (Cultural,
-Gastronómico, Romántico, Activo, Al aire libre), `Stars` con la valoración y
-distancia. Fila superior de chips de filtro con scroll horizontal sin barra.
-Estado de carga: *"Buscando lo mejor cerca tuyo..."*.
+Grid of plan and activity cards. Each card carries a title, sequence
+(*"Bodega → Almuerzo → Degustación"*), category `Badge` (Cultural,
+Gastronómico, Romántico, Activo, Al aire libre), `Stars` with the rating,
+and distance. Top row of filter chips with horizontal scroll and no visible
+scrollbar. Loading state: *"Buscando lo mejor cerca tuyo..."*.
 
 **PlanDetail** — CU13, CU25–CU30, CU43 · PAN 17
-Cabecera con nombre del plan y recorrido (*"Valle de Uco → Luján de Cuyo"*).
-Lista ordenada de actividades, cada una con horario, nombre del lugar, tipo
-(*"Bodega · Degustación"*), dirección y costo. `Divider` entre items. Costo total
-al pie y botón **Guardar plan**.
+Header with the plan's name and route (*"Valle de Uco → Luján de Cuyo"*).
+Ordered list of activities, each with a time, place name, type (*"Bodega ·
+Degustación"*), address, and cost. `Divider` between items. Total cost at
+the bottom and a **Guardar plan** button.
 
 **ActivityDetail** — CU14, CU15, CU35, CU44, CU45 · PAN 18
-Detalle con foto, descripción, horarios (*"Lun–Dom: 12:00–16:00"*), enlace a
-Google Maps y listado de valoraciones con autor y `Stars`. Botón de guardar con
-dos estados: **Guardar** / **Guardada**. Pestaña de Información.
+Detail with a photo, description, hours (*"Lun–Dom: 12:00–16:00"*), a link
+to Google Maps, and a list of ratings with author and `Stars`. Save button
+with two states: **Guardar** / **Guardada**. Información tab.
 
 **Favorites** — CU39–CU43 · PAN 12
-Tres solapas: Actividades, Planes y Colecciones. Cada una con su estado vacío
-propio: *"Aún no guardaste ninguna actividad"*, *"Aún no guardaste ningún plan"*,
-*"Aún no creaste ninguna colección"*. Las colecciones tienen nombre libre
-(*"Bodegas para visitar"*).
+Three tabs: Actividades, Planes, and Colecciones. Each with its own empty
+state: *"Aún no guardaste ninguna actividad"*, *"Aún no guardaste ningún
+plan"*, *"Aún no creaste ninguna colección"*. Collections have a free-form
+name (*"Bodegas para visitar"*).
 
 **History** — CU23 · PAN 13
-Listado de planes por estado, con badge `DRAFT` para los borradores y estados
-`generating` para los que están procesándose. Estado vacío: *"Tus planes guardados
-aparecerán acá"*.
+List of plans by status, with a `DRAFT` badge for drafts and a `generating`
+status for the ones still being processed. Empty state: *"Tus planes
+guardados aparecerán acá"*.
 
 **Profile** — CU5, CU7 · PAN 14
-Datos personales con validación inline. Incluye la sección de contraseña con las
-mismas reglas que Security.
+Personal data with inline validation. Includes the password section with
+the same rules as Security.
 
 **Preferences** — CU8, CU18 · PAN 15
-Categorías de interés como chips seleccionables (cultura, compras, gastronomía…),
-presupuesto habitual con validación (*"Ingresá un presupuesto válido mayor a $0"*)
-y zona de preferencia.
+Categories of interest as selectable chips (cultura, compras, gastronomía...),
+usual budget with validation (*"Ingresá un presupuesto válido mayor a $0"*),
+and preferred area.
 
 **Security** — CU6
-Cambio de contraseña con medidor de fortaleza y checklist de requisitos:
-*"Mínimo 8 caracteres"*, *"Al menos una mayúscula"*, *"Incluir números y símbolos"*.
+Password change with a strength meter and a requirements checklist:
+*"Mínimo 8 caracteres"*, *"Al menos una mayúscula"*, *"Incluir números y
+símbolos"*.
 
-### Panel de administración
+### Administration panel
 
 **AdminHome** — CU58 · REP-01
-Tarjetas de KPI: Total de Usuarios, Planes Activos, Actividades en Catálogo,
-Valoraciones Pendientes. Debajo, tasa de aceptación, valoración promedio y
-retención. Distribución por estado de ánimo (Relax, Festiva, Romántica, Aventura,
-Cultural) y por tamaño de grupo (En pareja, Grupo chico, Grupo grande) con barras
-de porcentaje. Ranking de actividades más populares y feed de actividad reciente.
-Selector de rango: Hoy / 7 días / 30 días / Este mes.
+KPI cards: Total de Usuarios, Planes Activos, Actividades en Catálogo,
+Valoraciones Pendientes. Below that, acceptance rate, average rating, and
+retention. Distribution by mood (Relax, Festiva, Romántica, Aventura,
+Cultural) and by group size (En pareja, Grupo chico, Grupo grande) with
+percentage bars. Ranking of most popular activities and a recent activity
+feed. Range selector: Hoy / 7 días / 30 días / Este mes.
 
 **AdminUsers** — CU57 · PAN 19 / REP-02
-Métricas de encabezado (total, activos hoy, nuevos registros de la semana) y tabla
-de usuarios con nombre, email, fecha de alta y estado: Activo, Suspendido, Baneado.
-Acciones por fila, entre ellas **Reactivar cuenta**. Filtro por estado.
+Header metrics (total, active today, new signups this week) and a user
+table with name, email, signup date, and status: Activo, Suspendido,
+Baneado. Per-row actions, including **Reactivar cuenta**. Filter by status.
 
 **AdminActivities** — CU53 · PAN 21
-Tabla del catálogo con filtros por categoría (Aventura, Cultura & Arte, Bienestar,
-Entretenimiento, Gastronomía) y por tipo de salida. Alta, edición y baja.
+Catalog table with filters by category (Aventura, Cultura & Arte,
+Bienestar, Entretenimiento, Gastronomía) and by outing type. Create, edit,
+and delete.
 
-**AdminPlanes** — CU60 · PAN 22
-Tabla de planes con estado y filtros. Edición y baja desde administración.
+**AdminPlans** — CU60 · PAN 22
+Plans table with status and filters. Edit and delete from administration.
 
 **AdminReviews** — CU55 · PAN 20
-Bandeja de moderación con solapas Pendientes / Aprobadas. Cada fila con autor,
-plan valorado y antigüedad relativa (*"Hace 2 horas"*, *"Hace 3 días"*).
+Moderation inbox with Pendientes / Aprobadas tabs. Each row shows the
+author, the rated plan, and a relative age (*"Hace 2 horas"*, *"Hace 3
+días"*).
 
-### Transversales
+### Cross-cutting
 
-**Navbar** — barra de 60px con `backdrop-filter: blur(18px)` sobre el hero.
-Navegación: Inicio, Explorar, Favoritos, Historial, y menú de usuario con Mi Perfil
-y Preferencias.
+**Navbar** — 60px bar with `backdrop-filter: blur(18px)` over the hero.
+Navigation: Inicio, Explorar, Favoritos, Historial, and a user menu with Mi
+Perfil and Preferencias.
 
-**Carousel** — carrusel infinito de categorías: Gastronomía, Vinos & Bodegas,
-Cultura & Arte, Vida nocturna, Cócteles, Café & Brunch, y de momentos: Con amigos,
-Noche especial, Tarde de semana, Fin de semana. El keyframe `sp-carousel` de
-`tokens.css` desplaza exactamente un set de 5 items.
+**Carousel** — infinite carousel of categories: Gastronomía, Vinos &
+Bodegas, Cultura & Arte, Vida nocturna, Cócteles, Café & Brunch, and of
+moments: Con amigos, Noche especial, Tarde de semana, Fin de semana. The
+`sp-carousel` keyframe in `tokens.css` shifts exactly one set of 5 items.
 
-**MoodBackground** — fondo animado del hero. Manchas de color muy tenues (opacidad
-5–10%) que transicionan en 1.4s según el estado de ánimo seleccionado. Es
-decorativo; no debe competir con el contenido.
+**MoodBackground** — animated hero background. Very subtle color blobs
+(5-10% opacity) that transition over 1.4s based on the selected mood. It's
+decorative; it must not compete with the content.
 
-### Lo que falta diseñar
+### What's still missing a design
 
-No hay pantalla en el kit para:
+There is no screen in the kit for:
 
-- **PAN 05** — Recuperar contraseña (CU3 tiene el formulario en Login, pero no el
-  flujo de token)
-- **PAN 08** — Búsqueda por mapa (CU16)
-- **PAN 10** — Planes recomendados (CU20 aparece embebido en el Home, sin pantalla propia)
-- **Módulo de colección completo** — CU32 a CU38. En Favorites hay una solapa de
-  colecciones, pero no están el detalle ni el alta.
+- **PAN 05** — Password recovery (CU3 has the form in Login, but not the
+  token flow)
+- **PAN 08** — Map search (CU16)
+- **PAN 10** — Recommended plans (CU20 appears embedded in Home, with no
+  screen of its own)
+- **Full collections module** — CU32 through CU38. Favorites has a
+  collections tab, but neither the detail view nor the creation flow exist.
 
-Son 7 casos de uso sin diseño. Hay que resolverlos al maquetar o pedirle las
-pantallas al diseñador.
+That's 7 use cases with no design. They need to be resolved while building
+the screens, or the designer needs to be asked for them.
 
-## Contenido de referencia
+## Reference content
 
-El prototipo usa datos de Mendoza y Buenos Aires: Ruta del vino en Luján de Cuyo,
-Bodega Zuccardi Valle de Uco, Termas de Cacheuta, Potrerillos, Chacras de Coria,
-Uspallata, San Telmo, Palermo. Los precios van en **pesos argentinos**.
+The prototype uses data from Mendoza and Buenos Aires: Ruta del vino in
+Luján de Cuyo, Bodega Zuccardi Valle de Uco, Termas de Cacheuta,
+Potrerillos, Chacras de Coria, Uspallata, San Telmo, Palermo. Prices are in
+**Argentine pesos**.
 
-Sirve como referencia de tono y de volumen de texto al maquetar. **No es contenido
-real**: son datos de ejemplo.
+It serves as a reference for tone and text volume when building screens.
+**It is not real content**: it's sample data.
 
-## Componentes primitivos
+## Primitive components
 
-Los siete de `v2/Primitives.jsx`. Al portarlos a React con TypeScript, respetá
-estas variantes:
+The seven from `v2/Primitives.jsx`. When porting them to React with
+TypeScript, keep these variants:
 
 ### Button
-Radio `--r-btn`, peso 700, `scale(0.97)` al presionar, `brightness(1.1)` en hover.
+Radius `--r-btn`, weight 700, `scale(0.97)` when pressed, `brightness(1.1)`
+on hover.
 
-| Variante | Fondo | Texto |
+| Variant | Background | Text |
 |---|---|---|
-| `primary` | `--ember` | blanco |
+| `primary` | `--ember` | white |
 | `secondary` | `--char` | `--cream` |
-| `ghost` | transparente | `--fg-on-dark`, borde `rgba(255,255,255,.15)` |
-| `ghostLight` | transparente | `--fg-1`, borde `--hairline` |
+| `ghost` | transparent | `--fg-on-dark`, border `rgba(255,255,255,.15)` |
+| `ghostLight` | transparent | `--fg-1`, border `--hairline` |
 | `ghostEmber` | `ember-15` | `--ember` |
-| `ai` | `--electric` | blanco |
-| `danger` | `--error` | blanco |
+| `ai` | `--electric` | white |
+| `danger` | `--error` | white |
 
-Tamaños: `sm` 12px/`7px 14px` · `md` 14px/`10px 20px` · `lg` 16px/`14px 28px`.
+Sizes: `sm` 12px/`7px 14px` · `md` 14px/`10px 20px` · `lg` 16px/`14px 28px`.
 
 ### Chip
-Radio `--r-chip`, peso 600, 14px. Activo: relleno `--ember` con texto blanco.
-Inactivo: transparente con borde (`--hairline` sobre claro, `rgba(255,255,255,.18)`
-sobre oscuro).
+Radius `--r-chip`, weight 600, 14px. Active: filled `--ember` with white
+text. Inactive: transparent with a border (`--hairline` over light,
+`rgba(255,255,255,.18)` over dark).
 
 ### Badge
-Radio 99, 12px, peso 600. Variantes: `ai` (electric-15), `cost` (ember-10),
-`rating` (gold-15 con texto `#7A5C00`), `success`, `tag`, `warn`, `dark`.
+Radius 99, 12px, weight 600. Variants: `ai` (electric-15), `cost`
+(ember-10), `rating` (gold-15 with `#7A5C00` text), `success`, `tag`,
+`warn`, `dark`.
 
 ### Icon
-Envuelve Lucide. Props: `name`, `size` (18 por defecto), `color`, `stroke` (2).
-Los nombres son los de Lucide en `kebab-case`, igual que en el prototipo, pero
-resueltos contra un **registro estático** en
-[`iconRegistry.ts`](../../src/components/ui/iconRegistry.ts) — ver más abajo.
+Wraps Lucide. Props: `name`, `size` (18 by default), `color`, `stroke` (2).
+The names are Lucide's in `kebab-case`, same as in the prototype, but
+resolved against a **static registry** in
+[`iconRegistry.ts`](../../src/components/ui/iconRegistry.ts) — see below.
 
 ### Stars
-Puntuación de 0 a 5 con medias estrellas. Relleno `#FFD166`, vacío
+Rating from 0 to 5 with half-stars. Filled `#FFD166`, empty
 `rgba(255,209,102,0.22)`. Props: `rating`, `size` (12).
 
 ### Logo
 Props: `variant` (`white` | `ink`), `kind` (`full` | `mark`), `height` (26).
-Resuelve el archivo por convención `logo-{kind}-{variant}.png`. Al portarlo,
-apuntá a `public/brand/` y usá `<Image>` de `next/image`.
+Resolves the file by convention `logo-{kind}-{variant}.png`. When porting
+it, point it to `public/brand/` and use `<Image>` from `next/image`.
 
 ### Divider
-Línea de 1px. `--hairline` sobre claro, `--hairline-dark` sobre oscuro.
-Prop `dark`.
+1px line. `--hairline` over light, `--hairline-dark` over dark. `dark` prop.
 
-### Implementación en React
+### React implementation
 
-Los primitivos viven en [`src/components/ui/`](../../src/components/ui/) y se
-importan desde su barrel público:
+The primitives live in [`src/components/ui/`](../../src/components/ui/) and
+are imported from their public barrel:
 
 ```tsx
 import { Badge, Button, Chip, Divider, Icon, Logo, Stars } from "@/components/ui";
@@ -321,138 +332,148 @@ import { Badge, Button, Chip, Divider, Icon, Logo, Stars } from "@/components/ui
 <Divider dark />
 ```
 
-- `Button` conserva las props nativas de `<button>` y usa `type="button"` por
-  defecto para no enviar formularios accidentalmente.
-- `Chip` expone el estado `active` como `aria-pressed`; `dark` selecciona el
-  borde correcto cuando está inactivo sobre superficies oscuras. Un chip que no
-  alterna estado (por ejemplo, uno que navega) puede quitar el atributo con
+- `Button` keeps `<button>`'s native props and uses `type="button"` by
+  default so it doesn't accidentally submit forms.
+- `Chip` exposes the `active` state as `aria-pressed`; `dark` selects the
+  right border when inactive over dark surfaces. A chip that doesn't toggle
+  state (for example, one that navigates) can remove the attribute with
   `aria-pressed={undefined}`.
-- `Badge` conserva las props nativas de `<span>`.
-- `Icon` acepta los nombres en `kebab-case` registrados en `iconRegistry.ts`. Un
-  icono sin `aria-label` ni `aria-labelledby` se considera decorativo.
-- `Stars` limita la puntuación al rango 0–5 y la redondea al medio punto más
-  cercano. Genera su etiqueta accesible automáticamente; se puede reemplazar con
-  `aria-label`, o delegar en una etiqueta externa con `aria-labelledby`.
-- `Logo` mantiene la proporción del asset para el `height` indicado y acepta
-  `alt`, `className` y `priority`.
-- `Divider` conserva las props nativas de `<hr>`.
+- `Badge` keeps `<span>`'s native props.
+- `Icon` accepts the `kebab-case` names registered in `iconRegistry.ts`. An
+  icon with no `aria-label` or `aria-labelledby` is treated as decorative.
+- `Stars` clamps the rating to the 0-5 range and rounds it to the nearest
+  half point. It generates its own accessible label automatically; it can
+  be overridden with `aria-label`, or delegated to an external label with
+  `aria-labelledby`.
+- `Logo` keeps the asset's aspect ratio for the given `height` and accepts
+  `alt`, `className`, and `priority`.
+- `Divider` keeps `<hr>`'s native props.
 
-Todos los contratos y variantes se exportan como tipos TypeScript desde
-`@/components/ui`; ninguno usa `any`.
+All contracts and variants are exported as TypeScript types from
+`@/components/ui`; none of them use `any`.
 
-Ninguno lleva `"use client"`: los siete renderizan en el servidor. Si un
-componente de pantalla necesita estado o eventos, el `"use client"` va en ese
-componente, no acá.
+None of them carry `"use client"`: all seven render on the server. If a
+screen component needs state or events, `"use client"` goes on that
+component, not here.
 
-#### Para usar un icono nuevo, agregalo al registro
+#### To use a new icon, add it to the registry
 
-`Icon` resuelve el nombre contra
-[`iconRegistry.ts`](../../src/components/ui/iconRegistry.ts), un mapa explícito de
-`kebab-case` al componente de Lucide. Si el nombre no está en el mapa, es un error
-de TypeScript. Para sumarlo: importá el icono de `lucide-react` en `PascalCase` y
-agregá la entrada en `kebab-case`, en orden alfabético. Los nombres válidos están
-en <https://lucide.dev/icons>.
+`Icon` resolves the name against
+[`iconRegistry.ts`](../../src/components/ui/iconRegistry.ts), an explicit
+map from `kebab-case` to the Lucide component. If the name isn't in the
+map, it's a TypeScript error. To add one: import the icon from
+`lucide-react` in `PascalCase` and add the `kebab-case` entry, in
+alphabetical order. Valid names are at <https://lucide.dev/icons>.
 
-**No uses `lucide-react/dynamic`.** `DynamicIcon` resuelve el icono en el cliente
-dentro de un `useEffect`, con estas consecuencias medidas en este repo:
+**Don't use `lucide-react/dynamic`.** `DynamicIcon` resolves the icon on
+the client inside a `useEffect`, with these consequences measured in this
+repo:
 
-| | Iconos en el HTML del servidor | Chunks emitidos | JS inicial de una página con un `<Button>` |
+| | Icons in server HTML | Chunks emitted | Initial JS for a page with one `<Button>` |
 |---|---|---|---|
-| `DynamicIcon` | ninguno | 1706 | 874 KB |
-| Registro estático | todos | 9 | 646 KB |
+| `DynamicIcon` | none | 1706 | 874 KB |
+| Static registry | all | 9 | 646 KB |
 
-Es el mismo problema que el script global de Lucide que el prototipo usaba —
-resolución por nombre en runtime— solo que con `import()` en vez de un `<script>`.
-El registro cuesta una línea por icono y a cambio da render en el servidor,
-tree-shaking y tipado estricto.
+It's the same problem as the global Lucide script the prototype used —
+runtime name resolution— just with `import()` instead of a `<script>`. The
+registry costs one line per icon and in exchange gives server rendering,
+tree-shaking, and strict typing.
 
-> **No existe un primitivo Card.** La tarjeta es un patrón, no un componente:
-> `--surface-card` sobre fondo claro, radio `--r-card`, borde `1px --hairline`,
-> sombra `--shadow-card`. Sobre oscuro, `--char-surface` con `--hairline-dark`.
+> **There is no Card primitive.** The card is a pattern, not a component:
+> `--surface-card` over a light background, `--r-card` radius, `1px
+> --hairline` border, `--shadow-card` shadow. Over dark, `--char-surface`
+> with `--hairline-dark`.
 
-## Iconografía
+## Iconography
 
-**Lucide**, ya instalado como `lucide-react`. Trazo `1.75–2`, color `currentColor`.
-Se consume siempre a través del primitivo `Icon` y su registro: ver
-[Para usar un icono nuevo](#para-usar-un-icono-nuevo-agregalo-al-registro).
+**Lucide**, already installed as `lucide-react`. Stroke `1.75-2`, color
+`currentColor`. Always consumed through the `Icon` primitive and its
+registry: see
+[To use a new icon](#to-use-a-new-icon-add-it-to-the-registry).
 
-No uses emoji como iconos. No uses iconos rellenos: siempre de línea, para que
-acompañen el trazo del isotipo.
+Don't use emoji as icons. Don't use filled icons: always outline, to match
+the isotype's stroke.
 
 ## Logos
 
-En [`public/brand/`](../../public/brand/):
+In [`public/brand/`](../../public/brand/):
 
-| Archivo | Cuándo |
+| File | When |
 |---|---|
-| `logo-full-ink.png` | Logo completo sobre fondo claro (cream) |
-| `logo-full-white.png` | Logo completo sobre fondo oscuro (char) |
-| `logo-mark-ink.png` | Solo isotipo sobre claro |
-| `logo-mark-white.png` | Solo isotipo sobre oscuro |
+| `logo-full-ink.png` | Full logo over a light background (cream) |
+| `logo-full-white.png` | Full logo over a dark background (char) |
+| `logo-mark-ink.png` | Isotype only, over light |
+| `logo-mark-white.png` | Isotype only, over dark |
 
-Todos con fondo transparente. Servilos siempre con `<Image>` de `next/image`.
+All with a transparent background. Always serve them with `<Image>` from
+`next/image`.
 
-## Movimiento
+## Motion
 
-Rápido y sobrio. Entradas con fade + desplazamiento de 8–12px, 180–320ms,
-`cubic-bezier(.2,.8,.2,1)`. Al presionar, `scale(0.97–0.98)`.
+Fast and restrained. Entrances with fade + 8-12px displacement, 180-320ms,
+`cubic-bezier(.2,.8,.2,1)`. On press, `scale(0.97-0.98)`.
 
-Keyframes ya definidos en `tokens.css`: `fadeUp`, `pulseDot`, `spin`, `glowPulse`,
-`shimmer`, `float`, `sp-carousel`.
+Keyframes already defined in `tokens.css`: `fadeUp`, `pulseDot`, `spin`,
+`glowPulse`, `shimmer`, `float`, `sp-carousel`.
 
-Sin rebotes ni animaciones decorativas infinitas. La única animación viva permitida
-es el loader de generación de plan, en `--electric`.
+No bouncing or infinite decorative animations. The only live animation
+allowed is the plan-generation loader, in `--electric`.
 
-## Voz de marca
+## Brand voice
 
-- La marca se escribe **`smartplan`**: una palabra, todo en minúscula. Nunca
-  "SmartPlan" ni "Smart Plan" en la interfaz.
-- Minúsculas como firma. Evitá Title Case y MAYÚSCULAS, salvo en `.sp-label`.
-- Tono cercano y concreto: hablá **del plan**, no de opciones.
-- Sin emoji en la interfaz de producto.
+- The brand is written **`smartplan`**: one word, all lowercase. Never
+  "SmartPlan" or "Smart Plan" in the interface.
+- Lowercase as a signature. Avoid Title Case and ALL CAPS, except in
+  `.sp-label`.
+- Warm and concrete tone: talk **about the plan**, not about options.
+- No emoji in the product interface.
 
-- **Voseo argentino**, no "tú". El prototipo ya está escrito así: *"Contale qué
-  querés"*, *"cerca tuyo"*, *"Aún no guardaste ninguna actividad"*, *"Ingresá un
-  email válido"*. Coincide con los criterios de aceptación del documento entregable.
-- **Pesos argentinos.**
+- **Argentine "vos" form**, not "tú". The prototype is already written this
+  way: *"Contale qué querés"*, *"cerca tuyo"*, *"Aún no guardaste ninguna
+  actividad"*, *"Ingresá un email válido"*. It matches the delivery
+  document's acceptance criteria.
+- **Argentine pesos.**
 
-> Existió un brief anterior escrito para España, con "tú" y euros. Pertenecía a la
-> versión v1 del design system y **se eliminó**. Si aparece en alguna copia vieja,
-> ignoralo.
+> An earlier brief was written for Spain, with "tú" and euros. It belonged
+> to design system v1 and **was removed**. If it shows up in an old copy,
+> ignore it.
 
-## Pendiente de integración
+## Pending integration
 
-Los assets ya están en el repo, pero **todavía no están cableados**:
+The assets are already in the repo, but **not wired up yet**:
 
-- [x] Cargar Bricolage Grotesque con `next/font/local` en `layout.tsx`
-- [x] Importar `src/styles/tokens.css` en `globals.css`. El `@font-face` propio
-      de `tokens.css` se borró (la fuente ya la carga `next/font/local`) y el
-      token `--font` ahora apunta a `var(--font-bricolage-grotesque)` en vez de
-      a un nombre de familia literal
-- [x] Exponer los tokens a Tailwind 4 con `@theme inline` en `globals.css`:
-      colores (`bg-ember`, `text-fg-1`, `bg-surface-card`, …) y radios
-      (`rounded-btn`, `rounded-card`, …) ya están disponibles como utilidades.
-      Sombras y espaciado (`--shadow-*`, `--s-*`) quedaron afuera a propósito:
-      sus nombres ya coinciden con el namespace de Tailwind (`--shadow-*`), y
-      mapearlos tal cual (`--shadow-card: var(--shadow-card)`) crea una
-      referencia circular. Si se necesitan como utilidad, primero hay que
-      renombrar el token fuente en `tokens.css`
-- [x] Portar los 7 primitivos de `v2/Primitives.jsx` a componentes React con TypeScript
+- [x] Load Bricolage Grotesque with `next/font/local` in `layout.tsx`
+- [x] Import `src/styles/tokens.css` in `globals.css`. `tokens.css`'s own
+      `@font-face` was removed (the font is now loaded by
+      `next/font/local`) and the `--font` token now points to
+      `var(--font-bricolage-grotesque)` instead of a literal family name
+- [x] Expose the tokens to Tailwind 4 with `@theme inline` in
+      `globals.css`: colors (`bg-ember`, `text-fg-1`, `bg-surface-card`,
+      ...) and radii (`rounded-btn`, `rounded-card`, ...) are already
+      available as utilities. Shadows and spacing (`--shadow-*`, `--s-*`)
+      were deliberately left out: their names already match Tailwind's
+      namespace (`--shadow-*`), and mapping them as-is
+      (`--shadow-card: var(--shadow-card)`) creates a circular reference.
+      If they're needed as a utility, the source token in `tokens.css`
+      needs to be renamed first
+- [x] Port the 7 primitives from `v2/Primitives.jsx` to React components
+      with TypeScript
 
-## Qué está en el repo y qué no
+## What's in the repo and what isn't
 
 | | |
 |---|---|
-| **En el repo** | Tokens (`src/styles/tokens.css`), logos (`public/brand/`), fuente (`src/app/fonts/`), imágenes de ejemplo (`public/mock/`) y esta documentación |
-| **Fuera del repo** | El prototipo React de 20 pantallas, por decisión del equipo |
+| **In the repo** | Tokens (`src/styles/tokens.css`), logos (`public/brand/`), font (`src/app/fonts/`), sample images (`public/mock/`), and this documentation |
+| **Not in the repo** | The 20-screen React prototype, by team decision |
 
-Consecuencia: **la sección "Pantallas diseñadas" de este archivo es el único
-registro versionado del diseño.** Si cambian una pantalla en el prototipo,
-actualizá acá también. Si no, la documentación y el diseño se separan y nadie
-sabe cuál vale.
+Consequence: **the "Designed screens" section of this file is the only
+versioned record of the design.** If a screen changes in the prototype,
+update it here too. Otherwise the documentation and the design drift apart
+and nobody knows which one is authoritative.
 
-## Imágenes de ejemplo
+## Sample images
 
-En [`public/mock/`](../../public/mock/) hay cinco fotos del prototipo (café, pizza,
-vino, martini, cámara). Son **placeholders para maquetar**, no contenido real del
-catálogo. Borralas cuando existan las imágenes de las actividades.
+In [`public/mock/`](../../public/mock/) there are five photos from the
+prototype (coffee, pizza, wine, martini, camera). They are **placeholders
+for building screens**, not real catalog content. Delete them once the
+actual activity images exist.
