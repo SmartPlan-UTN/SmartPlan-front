@@ -8,11 +8,12 @@ import type { ActivitySearchResult, PaginatedResult } from "@/types";
 import { ActivitySearch } from "./ActivitySearch";
 
 const searchActivities = vi.hoisted(() => vi.fn());
+const listCategories = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api", async () => {
   const actual =
     await vi.importActual<typeof import("@/lib/api")>("@/lib/api");
-  return { ...actual, searchActivities };
+  return { ...actual, searchActivities, listCategories };
 });
 
 function makeActivity(
@@ -52,6 +53,11 @@ function page(
 describe("ActivitySearch", () => {
   beforeEach(() => {
     searchActivities.mockReset();
+    listCategories.mockReset();
+    listCategories.mockResolvedValue({
+      data: [],
+      pagination: { page: 1, limit: 50, total: 0, totalPages: 0 },
+    });
   });
 
   afterEach(() => {
@@ -174,7 +180,7 @@ describe("ActivitySearch", () => {
     );
   });
 
-  it("loads the next page and appends it to the grid", async () => {
+  it("replaces the grid with the next page instead of appending to it", async () => {
     searchActivities.mockResolvedValueOnce(
       page([makeActivity({ id: 1, name: "Ruta del vino" })], {
         page: 1,
@@ -185,6 +191,9 @@ describe("ActivitySearch", () => {
     render(<ActivitySearch />);
 
     await screen.findByRole("heading", { name: "Ruta del vino" });
+    expect(
+      screen.getByRole("navigation", { name: "Paginación de resultados" }),
+    ).toBeInTheDocument();
 
     searchActivities.mockResolvedValueOnce(
       page([makeActivity({ id: 2, name: "Termas de Cacheuta" })], {
@@ -192,13 +201,29 @@ describe("ActivitySearch", () => {
         totalPages: 2,
       }),
     );
-    await user.click(screen.getByRole("button", { name: "Cargar más" }));
+    await user.click(screen.getByRole("button", { name: "Página siguiente" }));
 
     expect(
       await screen.findByRole("heading", { name: "Termas de Cacheuta" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Ruta del vino" }),
-    ).toBeInTheDocument();
+      screen.queryByRole("heading", { name: "Ruta del vino" }),
+    ).not.toBeInTheDocument();
+    expect(searchActivities).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 2 }),
+    );
+  });
+
+  it("doesn't show pagination controls when there's only one page", async () => {
+    searchActivities.mockResolvedValue(
+      page([makeActivity()], { page: 1, totalPages: 1 }),
+    );
+    render(<ActivitySearch />);
+
+    await screen.findByRole("heading", { name: "Ruta del vino" });
+
+    expect(
+      screen.queryByRole("navigation", { name: "Paginación de resultados" }),
+    ).not.toBeInTheDocument();
   });
 });

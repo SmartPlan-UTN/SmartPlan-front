@@ -10,6 +10,34 @@ import { normalizeError } from './errors';
 export type RequestConfig = Omit<AxiosRequestConfig, 'url' | 'method'>;
 
 /**
+ * Serializes query params as comma-separated values for arrays
+ * (`categoryIds=1,2`), not axios's default bracket notation
+ * (`categoryIds[]=1&categoryIds[]=2`). The backend's exploration filters
+ * (`docs/exploration-api.md` in SmartPlan-back) parse comma-separated
+ * values or a repeated key, never brackets — with the default serializer,
+ * `categoryIds` silently reaches the backend empty and every filter
+ * request quietly returns unfiltered results.
+ */
+function serializeParams(params: Record<string, unknown>): string {
+  const searchParams = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null) continue;
+
+    if (Array.isArray(value)) {
+      if (value.length > 0) {
+        searchParams.append(key, value.join(','));
+      }
+      continue;
+    }
+
+    searchParams.append(key, String(value));
+  }
+
+  return searchParams.toString();
+}
+
+/**
  * Private centralized Axios instance.
  * Configured with timeouts, default headers, and interceptors for JWT and error handling.
  */
@@ -18,6 +46,7 @@ const instance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  paramsSerializer: serializeParams,
 });
 
 /**

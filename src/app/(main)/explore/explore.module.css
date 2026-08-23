@@ -2,8 +2,13 @@
    the actual content at --max-w on top of it, matching Results.jsx in
    SmartPlanSystemDesign (the wave background spans the page, the content
    doesn't). */
+/* Never shorter than one screen: without a floor, a sparse results page
+   (e.g. only 3 plans) made `.backdrop` only as tall as its few cards, so
+   the wave background ended abruptly right where the content did instead
+   of reading as a full backdrop. */
 .backdrop {
   position: relative;
+  min-height: calc(100dvh - var(--navbar-h));
 }
 
 .page {

@@ -70,11 +70,80 @@ export interface ActivitySearchResult {
 export type ActivitySortField = 'relevance' | 'price' | 'rating' | 'distance';
 
 /**
- * Query params accepted by `GET /activities` (CU9's search box only sends
- * `search`, `page`, and `limit`; the rest belong to CU10's filters and
- * CU11's sorting).
+ * Query params accepted by `GET /activities`: `search` drives CU9, the
+ * rest of `ExplorationQueryParams` (`categoryIds`, `minPrice`/`maxPrice`,
+ * `minRating`, `maxDistanceKm`, ...) drives CU10, and `sortBy`/`direction`
+ * drive CU11.
  */
 export interface ActivitySearchParams extends ExplorationQueryParams {
   type?: string;
   sortBy?: ActivitySortField;
+}
+
+/**
+ * One meeting point of an activity, as embedded in `ActivityDetailResult`
+ * (CU14). Matches `ActivityLocationDto` in `SmartPlan-back` — a slimmer,
+ * response-shaped projection of the full geographic hierarchy in
+ * `src/types/places.ts`, not those entities themselves.
+ */
+export interface ActivityLocationSummary {
+  id: number;
+  latitude: number | null;
+  longitude: number | null;
+  notes: string | null;
+  place: {
+    id: number;
+    name: string;
+    description: string | null;
+    address: string;
+    department: {
+      id: number;
+      name: string;
+      city: {
+        id: number;
+        name: string;
+        country: { id: number; name: string };
+      };
+    };
+  };
+}
+
+/**
+ * Activity detail returned by `GET /activities/:id` (CU14): the search
+ * summary plus every meeting point.
+ */
+export interface ActivityDetailResult extends ActivitySearchResult {
+  locations: ActivityLocationSummary[];
+}
+
+/**
+ * One marker returned by `GET /activities/map` (CU16). Represents an
+ * `activity_place`, not an activity: one activity with two meeting points
+ * produces two markers.
+ */
+export interface ActivityMapMarker {
+  id: number;
+  activityId: number;
+  placeId: number;
+  name: string;
+  placeName: string;
+  address: string;
+  estimatedCost: number;
+  type: string | null;
+  averageRating: number;
+  latitude: number;
+  longitude: number;
+  distanceKm: number | null;
+  categories: ActivityCategorySummary[];
+}
+
+/**
+ * Query params accepted by `GET /activities/map`: the same filters as
+ * `ActivitySearchParams`, plus the viewport bounds.
+ */
+export interface MapActivitiesParams extends ActivitySearchParams {
+  south: number;
+  north: number;
+  west: number;
+  east: number;
 }

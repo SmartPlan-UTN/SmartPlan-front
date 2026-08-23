@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { ActivitySearch } from "@/components/activity";
+import { ExploreTabs } from "@/components/explore";
 import { Container, MoodBackground } from "@/components/layout";
 
 import styles from "./explore.module.css";
@@ -20,7 +20,7 @@ export default function ExplorePage() {
               title — it goes straight from the navbar into the search bar
               — but a page still needs a heading landmark. */}
           <h1 className="sp-sr-only">Explorar</h1>
-          <ActivitySearch />
+          <ExploreTabs />
         </div>
       </Container>
     </div>

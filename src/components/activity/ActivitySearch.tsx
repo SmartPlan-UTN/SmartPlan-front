@@ -1,24 +1,48 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import Link from "next/link";
 
+import {
+  CategoryChips,
+  FiltersPanel,
+  Pagination,
+  type SortOption,
+} from "@/components/explore";
 import { Button, Icon } from "@/components/ui";
-import { useDebouncedValue } from "@/hooks";
-import { ApiError, searchActivities } from "@/lib/api";
-import type { ActivitySearchResult, PaginationMetadata } from "@/types";
+import { useDebouncedValue, useExplorationFilters, useExplorationSearch } from "@/hooks";
+import { searchActivities } from "@/lib/api";
+import { ROUTES } from "@/lib/routes";
+import type { ActivitySearchParams, ActivitySortField } from "@/types";
 
 import { ActivityCard } from "./ActivityCard";
 import styles from "./activity.module.css";
+import exploreStyles from "../explore/explore.module.css";
 
-type Status = "loading" | "loading-more" | "error" | "idle";
-
-const PAGE_SIZE = 20;
+// 12 keeps a page light regardless of viewport: 4x3, 3x4, or 2x6 in the
+// responsive grid, never a wall of 20 cards on a narrow screen.
+const PAGE_SIZE = 12;
 const DEBOUNCE_MS = 400;
-const GENERIC_ERROR = "No pudimos completar la búsqueda. Intentá de nuevo.";
+
+// "Distancia" isn't offered: sorting/filtering by distance needs the user's
+// coordinates, and nothing in this screen captures geolocation yet — the
+// backend rejects a distance sort with no lat/lng (400 INCOMPLETE_LOCATION_FILTER).
+const SORT_OPTIONS: SortOption<ActivitySortField>[] = [
+  { value: "relevance", label: "Relevancia" },
+  { value: "price", label: "Precio" },
+  { value: "rating", label: "Rating" },
+];
+
+function toNumber(value: string): number | undefined {
+  if (value.trim() === "") return undefined;
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? undefined : parsed;
+}
 
 /**
- * Activity search box and results grid (CU9 · PAN 11). Debounces the query,
- * renders loading/empty/error states, and loads further pages on demand.
+ * Activity search box, filters, sort, and results grid (CU9-CU11 · PAN 11).
+ * Debounces the query, renders loading/empty/error states, and paginates
+ * page by page (not infinite scroll).
  */
 export function ActivitySearch() {
   const [query, setQuery] = useState("");
@@ -28,15 +52,23 @@ export function ActivitySearch() {
   // resumes driving the search normally.
   const [manualQuery, setManualQuery] = useState<string | null>(null);
   const effectiveQuery = manualQuery ?? debouncedQuery;
-  const [items, setItems] = useState<ActivitySearchResult[]>([]);
-  const [pagination, setPagination] = useState<PaginationMetadata | null>(
-    null,
-  );
-  const [status, setStatus] = useState<Status>("loading");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [retryToken, setRetryToken] = useState(0);
-  // Guards against an older, slower request overwriting a newer one's result.
-  const requestId = useRef(0);
+
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const {
+    categoryIds,
+    minPrice,
+    maxPrice,
+    minRating,
+    sortBy,
+    direction,
+    setMinPrice,
+    setMaxPrice,
+    setMinRating,
+    setSortBy,
+    setDirection,
+    toggleCategory,
+    clear: clearFilters,
+  } = useExplorationFilters<ActivitySortField>("relevance");
 
   const handleQueryChange = useCallback((value: string) => {
     setQuery(value);
@@ -47,80 +79,62 @@ export function ActivitySearch() {
     setManualQuery(query);
   }, [query]);
 
-  useEffect(() => {
-    const currentRequestId = ++requestId.current;
+  // Same debounce as the search box: typing a price/rating shouldn't fire a
+  // request per keystroke.
+  const debouncedMinPrice = useDebouncedValue(minPrice, DEBOUNCE_MS);
+  const debouncedMaxPrice = useDebouncedValue(maxPrice, DEBOUNCE_MS);
+  const debouncedMinRating = useDebouncedValue(minRating, DEBOUNCE_MS);
 
-    async function run() {
-      setStatus("loading");
-      setErrorMessage(null);
+  const params = useMemo<ActivitySearchParams>(
+    () => ({
+      search: effectiveQuery.trim() || undefined,
+      categoryIds: categoryIds.length > 0 ? categoryIds : undefined,
+      minPrice: toNumber(debouncedMinPrice),
+      maxPrice: toNumber(debouncedMaxPrice),
+      minRating: toNumber(debouncedMinRating),
+      sortBy,
+      direction,
+    }),
+    [
+      effectiveQuery,
+      categoryIds,
+      debouncedMinPrice,
+      debouncedMaxPrice,
+      debouncedMinRating,
+      sortBy,
+      direction,
+    ],
+  );
 
-      try {
-        const result = await searchActivities({
-          search: effectiveQuery.trim() || undefined,
-          page: 1,
-          limit: PAGE_SIZE,
-        });
-        if (currentRequestId !== requestId.current) return;
-        setItems(result.data);
-        setPagination(result.pagination);
-        setStatus("idle");
-      } catch (error) {
-        if (currentRequestId !== requestId.current) return;
-        setItems([]);
-        setPagination(null);
-        setStatus("error");
-        setErrorMessage(error instanceof ApiError ? error.message : GENERIC_ERROR);
-      }
+  const mapFiltersQuery = useMemo(() => {
+    const searchParams = new URLSearchParams();
+    if (params.search) searchParams.set("search", params.search);
+    if (params.categoryIds && params.categoryIds.length > 0) {
+      searchParams.set("categoryIds", params.categoryIds.join(","));
     }
+    if (params.minPrice != null) searchParams.set("minPrice", String(params.minPrice));
+    if (params.maxPrice != null) searchParams.set("maxPrice", String(params.maxPrice));
+    if (params.minRating != null) searchParams.set("minRating", String(params.minRating));
+    const query = searchParams.toString();
+    return query ? `${ROUTES.exploreMap}?${query}` : ROUTES.exploreMap;
+  }, [params]);
 
-    void run();
-  }, [effectiveQuery, retryToken]);
+  const { items, pagination, status, errorMessage, hasResults, page, goToPage, retry } =
+    useExplorationSearch(searchActivities, params, PAGE_SIZE);
 
-  const loadMore = useCallback(() => {
-    if (!pagination) return;
-
-    const nextPage = pagination.page + 1;
-    const currentRequestId = ++requestId.current;
-
-    async function run() {
-      setStatus("loading-more");
-      setErrorMessage(null);
-
-      try {
-        const result = await searchActivities({
-          search: effectiveQuery.trim() || undefined,
-          page: nextPage,
-          limit: PAGE_SIZE,
-        });
-        if (currentRequestId !== requestId.current) return;
-        setItems((previousItems) => [...previousItems, ...result.data]);
-        setPagination(result.pagination);
-        setStatus("idle");
-      } catch (error) {
-        if (currentRequestId !== requestId.current) return;
-        setStatus("error");
-        setErrorMessage(error instanceof ApiError ? error.message : GENERIC_ERROR);
-      }
-    }
-
-    void run();
-  }, [effectiveQuery, pagination]);
-
-  const retry = useCallback(() => {
-    setRetryToken((token) => token + 1);
-  }, []);
-
-  const hasMore = pagination != null && pagination.page < pagination.totalPages;
-  const hasResults = items.length > 0;
   const resultsCountLabel =
     pagination != null
       ? pagination.total === 1
         ? "actividad encontrada"
         : "actividades encontradas"
       : null;
+  // Once there's a grid on screen, a refetch (chip, filter, page) dims it
+  // in place instead of swapping it for the big loading state — that swap
+  // is what caused the flash on every click.
+  const isRefetching = status === "loading" && hasResults;
 
   return (
-    <div>
+    <div className={exploreStyles.searchScreen}>
       <div className={styles.searchField}>
         <Icon
           name="search"
@@ -148,13 +162,56 @@ export function ActivitySearch() {
         </Button>
       </div>
 
-      {hasResults && pagination != null ? (
-        <p className={`sp-body ${styles.resultsLabel}`}>
-          <strong>{pagination.total}</strong> {resultsCountLabel} cerca tuyo
-        </p>
+      <CategoryChips selectedIds={categoryIds} onToggle={toggleCategory} />
+
+      {pagination != null ? (
+        <div className={exploreStyles.toolbar}>
+          {hasResults ? (
+            <p className={`sp-body ${styles.resultsLabel}`}>
+              <strong>{pagination.total}</strong> {resultsCountLabel} cerca tuyo
+            </p>
+          ) : (
+            <span />
+          )}
+
+          <div className={exploreStyles.toolbarActions}>
+            <Link href={mapFiltersQuery} className={exploreStyles.toolbarLink}>
+              <Icon name="map" size={14} aria-hidden="true" />
+              Ver mapa
+            </Link>
+            <Button
+              variant="ghostLight"
+              size="sm"
+              aria-expanded={filtersOpen}
+              onClick={() => {
+                setFiltersOpen((open) => !open);
+              }}
+            >
+              <Icon name="sliders-horizontal" size={14} aria-hidden="true" />
+              Filtros
+            </Button>
+          </div>
+        </div>
       ) : null}
 
-      {status === "loading" ? (
+      {filtersOpen ? (
+        <FiltersPanel
+          minPrice={minPrice}
+          onMinPriceChange={setMinPrice}
+          maxPrice={maxPrice}
+          onMaxPriceChange={setMaxPrice}
+          minRating={minRating}
+          onMinRatingChange={setMinRating}
+          sortBy={sortBy}
+          onSortByChange={setSortBy}
+          sortOptions={SORT_OPTIONS}
+          direction={direction}
+          onDirectionChange={setDirection}
+          onClear={clearFilters}
+        />
+      ) : null}
+
+      {status === "loading" && !hasResults ? (
         <div className={styles.stateBlock}>
           <div className={styles.loadingDots}>
             <span className={styles.loadingDot} />
@@ -186,37 +243,36 @@ export function ActivitySearch() {
           <h2 className="sp-h3">Sin resultados</h2>
           <p className="sp-body">
             No encontramos actividades para tu búsqueda. Probá con otras
-            palabras.
+            palabras o ajustando los filtros.
           </p>
         </div>
       ) : null}
 
       {hasResults ? (
-        <>
-          <div className={styles.grid}>
+        <div
+          className={`${exploreStyles.resultsFade} ${isRefetching ? exploreStyles.resultsFadeLoading : ""}`}
+        >
+          <div className={exploreStyles.grid}>
             {items.map((activity) => (
               <ActivityCard activity={activity} key={activity.id} />
             ))}
           </div>
 
-          {hasMore ? (
-            <div className={styles.loadMoreRow}>
-              <Button
-                variant="ghostLight"
-                onClick={loadMore}
-                disabled={status === "loading-more"}
-              >
-                {status === "loading-more" ? "Cargando..." : "Cargar más"}
-              </Button>
-            </div>
+          {pagination ? (
+            <Pagination
+              page={page}
+              totalPages={pagination.totalPages}
+              onPageChange={goToPage}
+              disabled={isRefetching}
+            />
           ) : null}
 
-          {status === "error" && hasResults ? (
+          {status === "error" ? (
             <p className={`sp-small ${styles.errorIcon}`} role="alert">
               {errorMessage}
             </p>
           ) : null}
-        </>
+        </div>
       ) : null}
     </div>
   );
