@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 export type Mood =
   | "idle"
@@ -128,19 +128,42 @@ function generateWavePath(
  * float keyframes.
  */
 export function MoodBackground({ mood = "idle" }: MoodBackgroundProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const pathRefs = useRef<(SVGPathElement | null)[]>([]);
   const [dims, setDims] = useState({ w: 1200, h: 800 });
   const palette = WAVE_PALETTES[mood];
 
-  useEffect(() => {
+  // Measures the wrapper's own rendered box, not the viewport: this fills
+  // `.backdrop` (its `position: relative` parent) via `inset: 0`, which is
+  // as tall as the page's actual content — shorter than one screen for a
+  // sparse results page, taller for a long one. Sizing the SVG viewBox off
+  // `window.innerHeight` instead mismatched the coordinate system against
+  // the real box whenever content height differed from viewport height,
+  // stretching or squishing the waves and cutting them off at the edge.
+  // `ResizeObserver` keeps it in sync as content grows (more results,
+  // pagination) or shrinks (fewer results, switching tabs).
+  // `useLayoutEffect`, not `useEffect`: measuring after paint let the
+  // browser show one frame at the default 1200×800 guess first — visible as
+  // a flash of wrongly-proportioned waves before the real size kicked in.
+  // Measuring before paint means the first frame the user sees is already
+  // correct.
+  useLayoutEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+
     function measure() {
-      setDims({ w: window.innerWidth, h: window.innerHeight });
+      if (!node) return;
+      const rect = node.getBoundingClientRect();
+      setDims({ w: rect.width, h: rect.height });
     }
 
     measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
     window.addEventListener("resize", measure);
     return () => {
+      observer.disconnect();
       window.removeEventListener("resize", measure);
     };
   }, []);
@@ -182,6 +205,7 @@ export function MoodBackground({ mood = "idle" }: MoodBackgroundProps) {
 
   return (
     <div
+      ref={containerRef}
       aria-hidden="true"
       style={{
         position: "absolute",

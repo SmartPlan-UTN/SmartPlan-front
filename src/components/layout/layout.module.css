@@ -66,19 +66,26 @@
   }
 }
 
-/* Inner navbar row: logo, links, and user menu, capped at the content's
-   max width. Deliberately a class separate from `.navbar`: they are two
-   elements (sticky header vs. width-constrained row) with different
-   responsibilities. */
+/* Inner navbar row: logo, links, and user menu. Unlike `.container`, this
+   is NOT capped at `--max-w` — SmartPlanSystemDesign/v2/Navbar.jsx spans
+   the full window edge to edge with 48px of padding, not a centered,
+   content-width band; capping it made the bar look narrow and cramped on
+   a wide viewport compared to the mockup. Deliberately a class separate
+   from `.navbar`: they are two elements (sticky header vs. this row) with
+   different responsibilities. */
 .navbarInner {
   display: flex;
   align-items: center;
   gap: var(--s-3);
   height: var(--navbar-h);
   width: 100%;
-  max-width: var(--max-w);
-  margin-inline: auto;
   padding-inline: var(--s-4);
+}
+
+@media (min-width: 900px) {
+  .navbarInner {
+    padding-inline: var(--s-7);
+  }
 }
 
 .brand {
