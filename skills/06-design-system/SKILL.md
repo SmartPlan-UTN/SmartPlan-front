@@ -105,7 +105,18 @@ Focus: `--focus-ember 0 0 0 3px rgba(232,93,32,.18)`.
 > `outline: 2px solid var(--ember); outline-offset: 2px`, as `Button` and
 > `Chip` do.
 
-**Layout:** navbar `60px` · max width `1200px` · vertical section spacing `64px`.
+**Layout:** navbar `60px` · content max width `1200px` · vertical section
+spacing `64px`.
+
+> **The navbar itself is NOT capped at `1200px`.** `v2/Navbar.jsx` spans the
+> full window edge to edge with `padding: 0 48px` (`--s-7`); only the page
+> *content* below it (via `Container`) is capped at `--max-w`. Capping
+> `.navbarInner` at `--max-w` too — an easy mistake, since it's tempting to
+> reuse the same width as the content it sits above — makes the bar look
+> narrow and boxed-in on anything wider than 1200px, with dead space on
+> both sides that the prototype doesn't have. Found and fixed while
+> building CU9-CU16 (2026): see `.navbarInner` in
+> `src/components/layout/layout.module.css`.
 
 ## ⚠️ The prototype isn't in the repository
 
@@ -228,12 +239,14 @@ días"*).
 
 ### Cross-cutting
 
-**Navbar** — 60px bar with `backdrop-filter: blur(18px)`. Always the light
-variant: cream background, ink logo, `--fg-1`/`--fg-2` text. The `Navbar`
-component in `v2/Navbar.jsx` still has a `dark` prop, but the shipped
-`SmartPlan v3.html` hardcodes `navDark = false` ("Results is now light
-theme") — there's no dark-over-hero navbar in the current design, on any
-screen. Nav links center between the logo and the session control; the
+**Navbar** — 60px bar with `backdrop-filter: blur(18px)`, spanning the full
+window width with `48px` of side padding on desktop (`24px`/`--s-4` below
+900px) — **not** capped at `--max-w`, see the layout note above. Always the
+light variant: cream background, ink logo, `--fg-1`/`--fg-2` text. The
+`Navbar` component in `v2/Navbar.jsx` still has a `dark` prop, but the
+shipped `SmartPlan v3.html` hardcodes `navDark = false` ("Results is now
+light theme") — there's no dark-over-hero navbar in the current design, on
+any screen. Nav links center between the logo and the session control; the
 active one gets a small ember dot below it, not a filled pill. The border
 under the bar is transparent until the page scrolls past 10px. The account
 trigger is a circular ember-gradient avatar (icon-only until there's a real
@@ -248,10 +261,40 @@ Preferencias.
 Bodegas, Cultura & Arte, Vida nocturna, Cócteles, Café & Brunch, and of
 moments: Con amigos, Noche especial, Tarde de semana, Fin de semana. The
 `sp-carousel` keyframe in `tokens.css` shifts exactly one set of 5 items.
+The React port (CU10's category chip row, `CategoryChips.tsx` +
+`useMarqueeScroll`) diverges from a CSS-keyframe loop on purpose: it
+measures whether the row's *single* copy actually overflows the visible
+width before rendering a second, identical copy back to back — a set that
+already fits renders once and stays still, instead of visibly duplicating
+for no reason. Once it does need to loop, it scrolls one direction forever
+and wraps `scrollLeft` back by exactly one copy's width the instant it
+crosses that point (invisible, since the copy it wraps into is identical) —
+never a ping-pong bounce, and always a real animation regardless of how
+little the content actually overflows by (measuring only the "leftover"
+overflow, rather than a full copy's width, reads as stuck on a wide screen
+where the content barely spills past the edge). Pauses on hover/touch so a
+chip stays clickable.
 
 **MoodBackground** — animated hero background. Very subtle color blobs
 (5-10% opacity) that transition over 1.4s based on the selected mood. It's
 decorative; it must not compete with the content.
+
+> **Size the SVG off the actual container, not the viewport.** The React
+> port originally set the wave `viewBox` from `window.innerWidth/Height`,
+> which only matches the box it paints into (`position: absolute; inset:
+> 0` on a `position: relative` parent) when that parent happens to be
+> exactly one screen tall. A sparse results page (few cards) made the
+> parent shorter than the viewport, so the waves — positioned as a
+> fraction of the wrong, taller height — ended up compressed near the
+> bottom and cut off; a long page had the opposite mismatch, briefly
+> visible as one wrongly-proportioned frame before a resize handler
+> corrected it. Fixed by measuring the wrapper's own
+> `getBoundingClientRect()` via `ResizeObserver`, in `useLayoutEffect` (not
+> `useEffect` — that runs after the first paint, which is exactly the
+> flash this avoids). The page that hosts it also needs its own
+> `min-height` (e.g. `calc(100dvh - var(--navbar-h))` on `.backdrop`): a
+> background is expected to cover at least one screen even when its
+> content doesn't reach that far.
 
 ### What's still missing a design
 
@@ -267,6 +310,18 @@ There is no screen in the kit for:
 
 That's 7 use cases with no design. They need to be resolved while building
 the screens, or the designer needs to be asked for them.
+
+## Card image placeholders
+
+Neither activities nor plans have real photos yet (no catalog images, no
+S3 integration wired up). Both `ActivityCard` and `PlanCard` show the same
+"no photo" treatment instead: one of six warm pastel gradients
+(`gradientFor()` in `src/lib/utils/gradient.ts`, deterministic by id — the
+same item always gets the same tile) with a single centered `Icon`. **Use
+`route` for that icon on both entity types**, not `image` — an "image"
+glyph reads as "a broken photo," which is the wrong signal for "this
+catalog entry simply has no photo yet, by design." Same reasoning applies
+to `ActivityDetailView`'s hero (also `route`, larger).
 
 ## Reference content
 
@@ -395,6 +450,43 @@ tree-shaking, and strict typing.
 > `--surface-card` over a light background, `--r-card` radius, `1px
 > --hairline` border, `--shadow-card` shadow. Over dark, `--char-surface`
 > with `--hairline-dark`.
+
+> **A field nested inside a `--r-card` panel should use `--r-card` too, not
+> `--r-btn`.** `FiltersPanel`'s inputs originally used the button radius
+> (`10px`) inside a `16px`-rounded panel (CU10/CU11); the mismatch read as
+> "boxy" — a flat-ish rectangle sitting inside a visibly rounder container.
+> Matching the parent's own radius on a nested field reads as one coherent
+> shape instead of two different ones stacked together.
+
+### Select
+
+Not one of the original seven — added while building CU10/CU11's sort and
+direction dropdowns. **Never use a native `<select>` for anything that
+needs to look like the rest of the design system.** Its closed state can be
+restyled with CSS, but the open option list is painted by the OS/browser —
+on Windows Chrome/Edge specifically, that list ignores `border-radius`
+entirely, which is exactly the "rounded panel, square dropdown" mismatch
+that motivated this component. `Select` (`src/components/ui/Select.tsx`) is
+a `<button>` trigger plus an absolutely-positioned `role="listbox"` styled
+entirely with this system's own tokens (`--r-card` trigger, `--r-card-sm`
+list, `--ember` for the active option) — closes on `Escape` or an outside
+click, like the primitives' other small popovers (the user menu's
+dropdown). Reach for it any time a filter or form needs a closed set of
+options; reserve a native `<select>` for places where the browser's own
+mobile picker UX is actually wanted (there are none of those yet).
+
+### FloatingBackLink
+
+Also added outside the original seven, for CU13/CU14's detail views and the
+CU16 map view: a "Volver" pill that follows the scroll for the whole page
+(`position: fixed`, pinned just under the sticky navbar) instead of living
+inside the hero and disappearing the moment it scrolls past. When it starts
+over a dark hero, pass `heroRef` (a ref to that hero element) and it
+switches from a translucent dark pill to a light card-styled one via an
+`IntersectionObserver` on that element, the instant the hero scrolls behind
+the navbar — so it's always readable against whatever's now behind it.
+Omit `heroRef` on a page with no dark hero (the map view) and it stays in
+its light style throughout. See `src/components/ui/FloatingBackLink.tsx`.
 
 ## Iconography
 
