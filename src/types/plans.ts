@@ -1,7 +1,8 @@
 import { BaseEntity, CatalogEntity } from './common';
+import type { ExplorationQueryParams } from './common';
 import type { User } from './users';
 import type { PlanRequest } from './recommendation';
-import type { Activity } from './activities';
+import type { Activity, ActivityCategorySummary, ActivityLocationSummary } from './activities';
 
 /**
  * Plan made up of activities (CU12, CU13, CU17, CU24-CU31, CU60).
@@ -51,4 +52,68 @@ export type PlanStatusKey =
  */
 export interface PlanStatus extends CatalogEntity<PlanStatusKey> {
   key: PlanStatusKey;
+}
+
+/**
+ * Card-friendly projection of a plan returned by `GET /plans` (CU12).
+ * Matches `PlanSummaryDto` in `SmartPlan-back`. A public exploration
+ * projection: no owner, request criteria, or other sensitive fields.
+ */
+export interface PlanSearchResult {
+  id: number;
+  title: string;
+  description: string | null;
+  estimatedTotalCost: number;
+  estimatedTotalDuration: number;
+  activityCount: number;
+  averageRating: number;
+  distanceKm: number | null;
+  categories: ActivityCategorySummary[];
+  /** Activity names in itinerary order, e.g. `["Bodega", "Almuerzo"]`. */
+  activityNames: string[];
+  status: { key: PlanStatusKey; name: string };
+}
+
+/** Activity as embedded in a plan's itinerary (CU13). */
+export interface PlanItineraryActivity {
+  id: number;
+  name: string;
+  description: string;
+  estimatedCost: number;
+  estimatedDuration: number;
+  type: string | null;
+  averageRating: number;
+  ratingCount: number;
+  categories: ActivityCategorySummary[];
+  locations: ActivityLocationSummary[];
+}
+
+/** One ordered stop in a plan's itinerary (CU13). */
+export interface PlanItineraryItem {
+  id: number;
+  order: number;
+  estimatedCost: number;
+  estimatedDuration: number;
+  activity: PlanItineraryActivity;
+}
+
+/**
+ * Plan detail returned by `GET /plans/:id` (CU13): the search summary plus
+ * its ordered itinerary.
+ */
+export interface PlanDetailResult extends PlanSearchResult {
+  details: PlanItineraryItem[];
+}
+
+/** Sortable fields accepted by `GET /plans`. */
+export type PlanSortField = 'relevance' | 'price' | 'rating' | 'distance';
+
+/**
+ * Query params accepted by `GET /plans` (CU12's search box only sends
+ * `search`, `page`, and `limit`; the rest are the same filter/sort shape
+ * as activities, except `type` is replaced by `outingType`).
+ */
+export interface PlanSearchParams extends ExplorationQueryParams {
+  outingType?: string;
+  sortBy?: PlanSortField;
 }
