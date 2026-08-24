@@ -80,7 +80,7 @@ traceability matrix (`skills/01-domain/`).
 | CU | Feature | Screen | Status | Branch | PR |
 |---|---|---|---|---|---|
 | CU1 | Log in | PAN 04 | `In progress` | `SMART-13-cu1-iniciar-sesion` | |
-| CU2 | Register user | — | `Not started` | | |
+| CU2 | Register user | PAN 04 | `In progress` | `SMART-13-cu1-iniciar-sesion` | |
 | CU3 | Recover password | — | `Not started` | | |
 | CU4 | Log out | — | `Not started` | | |
 
@@ -247,6 +247,13 @@ Things that have been spotted but don't have an owner yet:
   GitHub silently ignores ones that don't. If the team wants a `use case`
   label, it needs to be created in Settings → Labels **before** adding it
   to the template.
+- **The "¿Sos admin?" link on `/login` (v2 design) is rendered but inert**
+  (`src/app/login/layout.tsx`, `.adminLink` in `layout.module.css`): the v2
+  prototype sends it to a separate admin-only login screen that has no
+  counterpart in this app — a real admin account already lands on `/admin`
+  after a normal login, based on its role. Needs its own ticket to decide
+  whether a dedicated admin entry point is actually wanted, and if so, what
+  it should do.
 
 ---
 

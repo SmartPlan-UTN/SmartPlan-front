@@ -16,12 +16,14 @@ import { onUnauthorized, setTokenGetter } from "@/lib/api";
 import {
   login as requestLogin,
   refreshSession,
+  register as requestRegister,
   type AuthenticatedUser,
   type AuthenticationResponse,
   type LoginCredentials,
+  type RegistrationData,
 } from "./api";
 
-export type { AuthenticatedUser, LoginCredentials };
+export type { AuthenticatedUser, LoginCredentials, RegistrationData };
 
 /**
  * Session state.
@@ -48,6 +50,13 @@ export interface Session {
    * it to a message.
    */
   login: (credentials: LoginCredentials) => Promise<AuthenticatedUser>;
+  /**
+   * Creates an account (CU2): calls `POST /users` and, on success, opens a
+   * session with the response — registering logs the account in immediately,
+   * the same way `login` does. Rejects with the `ApiError` thrown by the
+   * request so the form can map it to a message.
+   */
+  register: (data: RegistrationData) => Promise<AuthenticatedUser>;
   /** Clears the local session. Backend-side invalidation is part of CU4. */
   logout: () => void;
 }
@@ -131,6 +140,15 @@ export function SessionProvider({ children }: SessionProviderProps) {
     [applyAuthenticated],
   );
 
+  const register = useCallback(
+    async (data: RegistrationData) => {
+      const response = await requestRegister(data);
+      applyAuthenticated(response);
+      return response.user;
+    },
+    [applyAuthenticated],
+  );
+
   const logout = useCallback(() => {
     applyAnonymous();
   }, [applyAnonymous]);
@@ -141,9 +159,10 @@ export function SessionProvider({ children }: SessionProviderProps) {
       user,
       authenticated: status === "authenticated",
       login,
+      register,
       logout,
     }),
-    [status, user, login, logout],
+    [status, user, login, register, logout],
   );
 
   return <SessionContext value={value}>{children}</SessionContext>;

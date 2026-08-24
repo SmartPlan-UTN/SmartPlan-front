@@ -37,6 +37,13 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface RegistrationData {
+  name: string;
+  lastName: string;
+  email: string;
+  password: string;
+}
+
 /**
  * CU1: opens a session.
  *
@@ -60,4 +67,17 @@ export async function login(
  */
 export async function refreshSession(): Promise<AuthenticationResponse> {
   return apiClient.post<AuthenticationResponse>("/sessions/refresh");
+}
+
+/**
+ * CU2: creates an account.
+ *
+ * `POST /users` — a plain resource-creation endpoint, not under `/sessions`,
+ * but it opens a session on success just like `login` does: same
+ * `AuthenticationResponse` shape, same `smartplan_refresh` cookie.
+ */
+export async function register(
+  data: RegistrationData,
+): Promise<AuthenticationResponse> {
+  return apiClient.post<AuthenticationResponse>("/users", data);
 }

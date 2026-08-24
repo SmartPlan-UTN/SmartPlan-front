@@ -11,4 +11,5 @@ export type {
   SessionProviderProps,
   AuthenticatedUser,
   LoginCredentials,
+  RegistrationData,
 } from "./SessionProvider";

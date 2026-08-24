@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useId, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 
 import { Button, Icon } from "@/components/ui";
 import { useToggle } from "@/hooks";
@@ -10,12 +10,9 @@ import { ApiError } from "@/lib/api";
 import { useSession } from "@/lib/auth";
 import { ROUTES } from "@/lib/routes";
 
-import styles from "./auth.module.css";
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-/** Matches the backend's password length rule (12-128 characters). Client-side
- * check only: the backend remains the source of truth. */
-const MIN_PASSWORD_LENGTH = 12;
+import { AuthField } from "./AuthField";
+import styles from "./AuthForm.module.css";
+import { EMAIL_PATTERN, MIN_PASSWORD_LENGTH, REQUIRED_MESSAGE } from "./validation";
 
 export interface LoginFormProps {
   /** Where to return to after logging in. `null` falls back to Home, or to
@@ -99,13 +96,13 @@ function validate(email: string, password: string): FieldErrors {
   const errors: FieldErrors = {};
 
   if (!email.trim()) {
-    errors.email = "Este campo es requerido";
+    errors.email = REQUIRED_MESSAGE;
   } else if (!EMAIL_PATTERN.test(email.trim())) {
     errors.email = "Ingresá un email válido";
   }
 
   if (!password) {
-    errors.password = "Este campo es requerido";
+    errors.password = REQUIRED_MESSAGE;
   } else if (password.length < MIN_PASSWORD_LENGTH) {
     errors.password = `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres`;
   }
@@ -113,15 +110,11 @@ function validate(email: string, password: string): FieldErrors {
   return errors;
 }
 
-/** CU1 - Login form (PAN 04). Rendered inside the dark, blurred card that
- * `app/(auth)/layout.tsx` provides. */
+/** CU1 - Login form (PAN 04). Rendered inside the white card that
+ * `app/login/layout.tsx` provides. */
 export function LoginForm({ destination }: LoginFormProps) {
   const { login } = useSession();
   const router = useRouter();
-  const emailId = useId();
-  const passwordId = useId();
-  const emailErrorId = useId();
-  const passwordErrorId = useId();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -166,14 +159,16 @@ export function LoginForm({ destination }: LoginFormProps) {
 
   return (
     <>
-      <div className={styles.header}>
+      <div className={`${styles.header} ${styles.headerLogin}`}>
         <h1 className="sp-h2">Iniciar sesión</h1>
-        <p className={`sp-body ${styles.subtitle}`}>
-          Accedé para armar y guardar tus planes.
-        </p>
+        <p className={`sp-small ${styles.subtitle}`}>Bienvenido de vuelta ✦</p>
       </div>
 
-      <form className={styles.form} onSubmit={handleSubmit} noValidate>
+      <form
+        className={`${styles.form} ${styles.formLogin}`}
+        onSubmit={handleSubmit}
+        noValidate
+      >
         {formError ? (
           <p className={styles.formError} role="alert">
             <Icon name="circle-alert" size={18} />
@@ -181,82 +176,43 @@ export function LoginForm({ destination }: LoginFormProps) {
           </p>
         ) : null}
 
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor={emailId}>
-            Email
-          </label>
-          <div className={styles.inputWrapper}>
-            <input
-              id={emailId}
-              name="email"
-              type="email"
-              autoComplete="email"
-              className={
-                fieldErrors.email
-                  ? `${styles.input} ${styles.inputInvalid}`
-                  : styles.input
-              }
-              value={email}
-              onChange={(event) => {
-                setEmail(event.target.value);
-              }}
-              aria-invalid={fieldErrors.email ? true : undefined}
-              aria-describedby={fieldErrors.email ? emailErrorId : undefined}
-              disabled={submitting}
-              placeholder="vos@ejemplo.com"
-            />
-          </div>
-          {fieldErrors.email ? (
-            <p className={styles.fieldError} id={emailErrorId} role="alert">
-              {fieldErrors.email}
-            </p>
-          ) : null}
-        </div>
+        <AuthField
+          label="Email"
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={(event) => {
+            setEmail(event.target.value);
+          }}
+          error={fieldErrors.email}
+          disabled={submitting}
+          placeholder="tu@email.com"
+          required
+        />
 
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor={passwordId}>
-            Contraseña
-          </label>
-          <div className={styles.inputWrapper}>
-            <input
-              id={passwordId}
-              name="password"
-              type={showPassword ? "text" : "password"}
-              autoComplete="current-password"
-              className={[
-                styles.input,
-                styles.inputWithToggle,
-                fieldErrors.password ? styles.inputInvalid : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              value={password}
-              onChange={(event) => {
-                setPassword(event.target.value);
-              }}
-              aria-invalid={fieldErrors.password ? true : undefined}
-              aria-describedby={
-                fieldErrors.password ? passwordErrorId : undefined
-              }
-              disabled={submitting}
-            />
-            <button
-              type="button"
-              className={styles.toggleVisibility}
-              onClick={toggleShowPassword}
-              aria-label={
-                showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
-              }
-              aria-pressed={showPassword}
-            >
-              <Icon name={showPassword ? "eye-off" : "eye"} size={18} />
-            </button>
-          </div>
-          {fieldErrors.password ? (
-            <p className={styles.fieldError} id={passwordErrorId} role="alert">
-              {fieldErrors.password}
-            </p>
-          ) : null}
+        <div className={styles.passwordGroup}>
+          <AuthField
+            label="Contraseña"
+            type={showPassword ? "text" : "password"}
+            autoComplete="current-password"
+            value={password}
+            onChange={(event) => {
+              setPassword(event.target.value);
+            }}
+            error={fieldErrors.password}
+            disabled={submitting}
+            placeholder="••••••••"
+            required
+            rightSlot={{
+              icon: showPassword ? "eye-off" : "eye",
+              label: showPassword ? "Ocultar contraseña" : "Mostrar contraseña",
+              pressed: showPassword,
+              onClick: toggleShowPassword,
+            }}
+          />
+          <Link href={ROUTES.recoverPassword} className={styles.forgotLink}>
+            ¿Olvidaste tu contraseña?
+          </Link>
         </div>
 
         <Button type="submit" className={styles.submit} disabled={submitting}>
@@ -264,17 +220,12 @@ export function LoginForm({ destination }: LoginFormProps) {
         </Button>
       </form>
 
-      <div className={styles.footer}>
-        <Link href={ROUTES.recoverPassword} className={styles.footerLink}>
-          ¿Olvidaste tu contraseña?
+      <p className={`${styles.footer} ${styles.footerLogin}`}>
+        ¿No tenés cuenta?{" "}
+        <Link href={ROUTES.signup} className={styles.footerLink}>
+          Registrarse
         </Link>
-        <p>
-          ¿No tenés cuenta?{" "}
-          <Link href={ROUTES.signup} className={styles.footerLink}>
-            Registrate
-          </Link>
-        </p>
-      </div>
+      </p>
     </>
   );
 }
