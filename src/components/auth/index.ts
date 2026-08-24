@@ -3,3 +3,4 @@
  */
 
 export { ProtectedRoute, type ProtectedRouteProps } from "./ProtectedRoute";
+export { LoginForm, type LoginFormProps } from "./LoginForm";

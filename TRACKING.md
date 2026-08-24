@@ -43,7 +43,7 @@ rereading the entire git history.
 |---|---|
 | **Phase** | Foundations — layout and navigation ready, no use cases implemented |
 | **Base branch** | `develop` |
-| **Last update** | 2026-08-18 |
+| **Last update** | 2026-08-24 |
 | **Completed use cases** | 0 / 62 |
 
 ---
@@ -79,7 +79,7 @@ traceability matrix (`skills/01-domain/`).
 
 | CU | Feature | Screen | Status | Branch | PR |
 |---|---|---|---|---|---|
-| CU1 | Log in | — | `Not started` | | |
+| CU1 | Log in | PAN 04 | `In progress` | `SMART-13-cu1-iniciar-sesion` | |
 | CU2 | Register user | — | `Not started` | | |
 | CU3 | Recover password | — | `Not started` | | |
 | CU4 | Log out | — | `Not started` | | |
@@ -215,6 +215,9 @@ being re-discussed twice.
 | 2026-08-18 | Favoritos and Historial are shown in the navbar even without a session | Hiding the links leaves the application with no hints about what's behind the account. Someone without a session lands on the route and the guard sends them to login while preserving the destination in `?redirect=` |
 | 2026-08-18 | Catalog keys via literal unions | Prevents structural incompatibility between catalogs (`UserStatus`, `Role`, etc.) and prevents invalid keys in TypeScript. Verified against `SmartPlan-back` commit `8ec4d07a34d2058f2147220e69d494e4da183811`, and `openai` corrected to `gemini`. |
 | 2026-08-19/20 | Technical code and structure migrated from Spanish to English, in both `SmartPlan-front` and `SmartPlan-back` | Aligns identifiers, tables, routes, and API contracts with the shared `skills/01-domain/` convention. User-visible text, skills, and functional documentation continue to allow Spanish |
+| 2026-08-24 | CU1 access token lives in memory only (`SessionProvider` state), never `localStorage` | Matches `SmartPlan-back`'s actual CU1-CU4 contract (`docs/authentication.md` there): the access token expires in 15 min and is meant to be memory-only; the 30-day session is carried by the `smartplan_refresh` `httpOnly` cookie instead. Session persistence on reload comes from `POST /sessions/refresh` on `SessionProvider` mount, not from reading a stored token. This supersedes the 2026-08-18 decision below about `localStorage` |
+| 2026-08-24 | `ProtectedRoute` stays a client-side navigation barrier, not a server one, even after CU1 | Only the *refresh* token became an `httpOnly` cookie; the *access* token still lives in JS memory, which a Server Component or `proxy.ts` can't read either. Moving the guard server-side would require making the access token itself a cookie, which the backend contract doesn't do |
+| 2026-08-24 | `withCredentials: true` set globally on the shared Axios instance (`src/lib/api/client.ts`), not only for session endpoints | Required for the browser to send/receive the `smartplan_refresh` cookie on `/sessions*`. Sending credentials on every request is harmless for endpoints that ignore cookies, and keeping one shared instance (per `skills/03-frontend/`'s "don't instantiate a loose Axios") is simpler than branching per call |
 
 ---
 
@@ -263,3 +266,4 @@ Things that have been spotted but don't have an owner yet:
 | 2026-08-18 | F17: centralized Axios client in `src/lib/api/` with a JWT interceptor, decoupled token abstraction (`setTokenGetter`), response/network normalization in `ApiError`, debounced pub/sub for 401 (`onUnauthorized`), `.env.example` template, and updated documentation in `skills/03-frontend/SKILL.md`. `npx eslint .`, `npx tsc --noEmit`, and `npx next build` 100% clean. |
 | 2026-08-18 | F19: `src/app` structure with the `(auth)`, `(main)`, and `(private)` groups, layout with the 60px navbar and `backdrop-filter`, navigation for Inicio, Explorar, Favoritos, and Historial, user menu, and protected routes that redirect to login with the destination in `?redirect=`. Removed the `create-next-app` template page and left the screens as placeholders with their CU. `pnpm lint`, `pnpm test` (26), and `pnpm build` green. |
 | 2026-08-19/20 | Technical code and structure migrated from Spanish to English across the whole frontend: files, folders, components, hooks, types, routes, and imports. Catalog values, error-response field names, and a few real backend contract fields (`score`, `errorMessage`) were re-verified and corrected against the actual `SmartPlan-back` entities and seeds after the backend completed its own English migration and implemented CU1-CU4 (auth). Two CSS class references left over from a partial rename (`notaPendiente(Oscura)`) were fixed. `pnpm lint`, `pnpm test` (26), and `pnpm build` green. |
+| 2026-08-24 | CU1: implemented the login screen (PAN 04) and reworked the session foundation around SmartPlan-back's real CU1-CU4 contract. `POST /sessions` and startup `POST /sessions/refresh` in `src/lib/auth/api.ts`; `SessionProvider` now holds the access token and user in memory instead of `localStorage`, rehydrating on mount from the `smartplan_refresh` `httpOnly` cookie. Removed `src/lib/auth/session.ts` (the old `localStorage` module) and the now-dead `localStorage` fallback in `token-provider.ts`. Added `withCredentials: true` to the shared Axios instance. `LoginForm` (`src/components/auth/`) validates email/password client-side, maps the backend's documented error codes (`INVALID_CREDENTIALS`, `ACCOUNT_SUSPENDED`, `ACCOUNT_BANNED`, `ATTEMPT_LIMIT_EXCEEDED`, `VALIDATION_FAILED` with per-field mapping) to Spanish messages, and redirects to the saved destination, or to `/admin` for an admin account, or Home. Verified the exact contract (routes, DTOs, error codes, cookie name and `expiresIn`) by reading `SmartPlan-back`'s `origin/develop` directly — the shared integration doc had the rate-limit code wrong (`TOO_MANY_REQUESTS` vs. the real `ATTEMPT_LIMIT_EXCEEDED`); the code handles both. Rewrote `Navbar.test.tsx` and `ProtectedRoute.test.tsx`, which used to fake a session via `localStorage`, to mock `refreshSession` instead; added `LoginForm.test.tsx`. `pnpm lint`, `pnpm test` (33), and `pnpm build` green. |

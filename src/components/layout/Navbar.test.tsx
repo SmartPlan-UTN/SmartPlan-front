@@ -2,10 +2,15 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { DEFAULT_TOKEN_STORAGE_KEY } from "@/lib/api";
 import { SessionProvider } from "@/lib/auth";
+import { refreshSession } from "@/lib/auth/api";
 
 import { Navbar } from "./Navbar";
+
+vi.mock("@/lib/auth/api", () => ({
+  refreshSession: vi.fn(),
+  login: vi.fn(),
+}));
 
 const route = vi.hoisted(() => ({ actual: "/" }));
 
@@ -13,6 +18,30 @@ vi.mock("next/navigation", () => ({
   usePathname: () => route.actual,
   useRouter: () => ({ replace: vi.fn(), push: vi.fn(), refresh: vi.fn() }),
 }));
+
+/** What `POST /sessions` and `POST /sessions/refresh` return on success. */
+const authenticatedResponse = {
+  accessToken: "jwt-de-prueba",
+  tokenType: "Bearer" as const,
+  expiresIn: 900,
+  user: {
+    id: 1,
+    name: "Ana",
+    lastName: "Pérez",
+    email: "ana@example.com",
+    role: { key: "user", name: "User" },
+    permissions: [],
+  },
+};
+
+/** No refresh cookie, or an expired/revoked one: the normal anonymous case. */
+function mockAnonymousStartup() {
+  vi.mocked(refreshSession).mockRejectedValueOnce(new Error("no session"));
+}
+
+function mockAuthenticatedStartup() {
+  vi.mocked(refreshSession).mockResolvedValueOnce(authenticatedResponse);
+}
 
 function renderNavbar() {
   return render(
@@ -24,14 +53,14 @@ function renderNavbar() {
 
 describe("Navbar", () => {
   beforeEach(() => {
-    localStorage.clear();
     route.actual = "/";
   });
 
-  it("offers the four main navigation destinations", () => {
+  it("offers the four main navigation destinations", async () => {
+    mockAnonymousStartup();
     renderNavbar();
 
-    const nav = screen.getByRole("navigation", {
+    const nav = await screen.findByRole("navigation", {
       name: "Navegación principal",
     });
 
@@ -49,11 +78,12 @@ describe("Navbar", () => {
     ).toHaveAttribute("href", "/history");
   });
 
-  it("marks the current route's destination with aria-current", () => {
+  it("marks the current route's destination with aria-current", async () => {
     route.actual = "/favorites";
+    mockAnonymousStartup();
     renderNavbar();
 
-    const nav = screen.getByRole("navigation", {
+    const nav = await screen.findByRole("navigation", {
       name: "Navegación principal",
     });
 
@@ -65,32 +95,32 @@ describe("Navbar", () => {
     ).not.toHaveAttribute("aria-current");
   });
 
-  it("offers login instead of the user menu when there is no session", () => {
+  it("offers login instead of the user menu when there is no session", async () => {
+    mockAnonymousStartup();
     renderNavbar();
 
-    expect(screen.getByRole("link", { name: "Iniciar sesión" })).toHaveAttribute(
-      "href",
-      "/login",
-    );
+    expect(
+      await screen.findByRole("link", { name: "Iniciar sesión" }),
+    ).toHaveAttribute("href", "/login");
     expect(screen.queryByRole("button", { name: /mi cuenta/i })).toBeNull();
   });
 
-  it("keeps the login link pointing back to the screen the user came from", () => {
+  it("keeps the login link pointing back to the screen the user came from", async () => {
     route.actual = "/explore";
+    mockAnonymousStartup();
     renderNavbar();
 
-    expect(screen.getByRole("link", { name: "Iniciar sesión" })).toHaveAttribute(
-      "href",
-      "/login?redirect=%2Fexplore",
-    );
+    expect(
+      await screen.findByRole("link", { name: "Iniciar sesión" }),
+    ).toHaveAttribute("href", "/login?redirect=%2Fexplore");
   });
 
   it("expands the user menu when there is a session", async () => {
-    localStorage.setItem(DEFAULT_TOKEN_STORAGE_KEY, "jwt-de-prueba");
+    mockAuthenticatedStartup();
     const user = userEvent.setup();
     renderNavbar();
 
-    const trigger = screen.getByRole("button", { name: /mi cuenta/i });
+    const trigger = await screen.findByRole("button", { name: /mi cuenta/i });
     expect(trigger).toHaveAttribute("aria-expanded", "false");
 
     await user.click(trigger);
@@ -110,11 +140,11 @@ describe("Navbar", () => {
   });
 
   it("closes the user menu with Escape", async () => {
-    localStorage.setItem(DEFAULT_TOKEN_STORAGE_KEY, "jwt-de-prueba");
+    mockAuthenticatedStartup();
     const user = userEvent.setup();
     renderNavbar();
 
-    const trigger = screen.getByRole("button", { name: /mi cuenta/i });
+    const trigger = await screen.findByRole("button", { name: /mi cuenta/i });
     await user.click(trigger);
     await user.keyboard("{Escape}");
 
@@ -123,24 +153,26 @@ describe("Navbar", () => {
   });
 
   it("logging out returns the navbar to the anonymous state", async () => {
-    localStorage.setItem(DEFAULT_TOKEN_STORAGE_KEY, "jwt-de-prueba");
+    mockAuthenticatedStartup();
     const user = userEvent.setup();
     renderNavbar();
 
-    await user.click(screen.getByRole("button", { name: /mi cuenta/i }));
+    await user.click(await screen.findByRole("button", { name: /mi cuenta/i }));
     await user.click(screen.getByRole("button", { name: "Cerrar sesión" }));
 
-    expect(localStorage.getItem(DEFAULT_TOKEN_STORAGE_KEY)).toBeNull();
     expect(
-      screen.getByRole("link", { name: "Iniciar sesión" }),
+      await screen.findByRole("link", { name: "Iniciar sesión" }),
     ).toBeInTheDocument();
   });
 
   it("expands the collapsible navigation on small viewports", async () => {
+    mockAnonymousStartup();
     const user = userEvent.setup();
     renderNavbar();
 
-    const button = screen.getByRole("button", { name: "Abrir la navegación" });
+    const button = await screen.findByRole("button", {
+      name: "Abrir la navegación",
+    });
     await user.click(button);
 
     const collapsible = screen.getByRole("navigation", {
