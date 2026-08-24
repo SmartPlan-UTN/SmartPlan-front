@@ -26,6 +26,7 @@ interface LogoutConfirmModalProps {
  */
 function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const descriptionId = useId();
 
@@ -35,6 +36,29 @@ function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         onCancel();
+        return;
+      }
+
+      // Focus trap: `aria-modal` alone doesn't stop Tab from reaching the
+      // page behind the overlay — it's an accessibility hint, not a
+      // behavior. Wrap Tab/Shift+Tab between this dialog's own two buttons
+      // instead of letting focus escape it.
+      if (event.key !== "Tab" || !cardRef.current) return;
+
+      const focusable = cardRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
       }
     };
 
@@ -47,6 +71,7 @@ function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
   return (
     <div className={styles.modalOverlay} onClick={onCancel}>
       <div
+        ref={cardRef}
         className={styles.modalCard}
         role="alertdialog"
         aria-modal="true"
@@ -223,10 +248,15 @@ export function UserMenu() {
         <LogoutConfirmModal
           onCancel={() => {
             setConfirmingLogout(false);
+            // The "Cerrar sesión" option that opened this dialog already
+            // unmounted with the dropdown, so there's nothing there to
+            // return focus to — the avatar trigger is the next best thing.
+            triggerRef.current?.focus();
           }}
           onConfirm={() => {
             setConfirmingLogout(false);
             logout();
+            triggerRef.current?.focus();
           }}
         />
       ) : null}
