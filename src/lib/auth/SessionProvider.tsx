@@ -6,32 +6,58 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 
 import { onUnauthorized, setTokenGetter } from "@/lib/api";
 
-import { clearToken, saveToken, readToken, subscribeToSession } from "./session";
+import {
+  login as requestLogin,
+  refreshSession,
+  register as requestRegister,
+  type AuthenticatedUser,
+  type AuthenticationResponse,
+  type LoginCredentials,
+  type RegistrationData,
+} from "./api";
+
+export type { AuthenticatedUser, LoginCredentials, RegistrationData };
 
 /**
  * Session state.
  *
- * `loading` is the real state on the first render: the token lives in the
- * browser, so the server has no way to know whether there is a session.
- * Without this intermediate state, the guard would kick everyone to login
- * for an instant.
+ * `loading` is the real state on the first render: the access token lives
+ * only in memory (never in `localStorage`, never in a readable cookie), so
+ * on a page reload it's rebuilt from the `smartplan_refresh` httpOnly
+ * cookie via `POST /sessions/refresh`. Without this intermediate state, the
+ * guard would kick everyone to login while that request is in flight.
  */
 export type SessionStatus = "loading" | "authenticated" | "anonymous";
 
 export interface Session {
   status: SessionStatus;
-  token: string | null;
+  user: AuthenticatedUser | null;
   /** Shorthand: `status === "authenticated"`. */
   authenticated: boolean;
-  /** Saves the token issued by the backend and opens the session (CU1). */
-  login: (token: string) => void;
-  /** Clears the local token. Backend-side invalidation is part of CU4. */
+  /**
+   * Opens a session (CU1): calls `POST /sessions` and, on success, stores
+   * the access token and the user in memory. Resolves with the user, so a
+   * caller like the login form can decide where to redirect (e.g. an admin
+   * account) without waiting for a re-render to read it back from context.
+   * Rejects with the `ApiError` thrown by the request so the form can map
+   * it to a message.
+   */
+  login: (credentials: LoginCredentials) => Promise<AuthenticatedUser>;
+  /**
+   * Creates an account (CU2): calls `POST /users` and, on success, opens a
+   * session with the response — registering logs the account in immediately,
+   * the same way `login` does. Rejects with the `ApiError` thrown by the
+   * request so the form can map it to a message.
+   */
+  register: (data: RegistrationData) => Promise<AuthenticatedUser>;
+  /** Clears the local session. Backend-side invalidation is part of CU4. */
   logout: () => void;
 }
 
@@ -47,57 +73,96 @@ export interface SessionProviderProps {
  *
  * It does three things:
  *
- * 1. Reads the token on mount and listens for changes (this tab and others).
+ * 1. On mount, calls `POST /sessions/refresh` to rehydrate the session from
+ *    the refresh cookie, since the access token itself doesn't survive a
+ *    reload.
  * 2. Tells the `@/lib/api` client where to get the token from, via
- *    `setTokenGetter`, so the JWT interceptor doesn't depend on a
- *    hand-written `localStorage` key.
- * 3. Closes the session when the API responds with 401, using the event bus
- *    exposed by `onUnauthorized`.
+ *    `setTokenGetter`, reading it from a ref so the interceptor always sees
+ *    the latest value without resubscribing.
+ * 3. Closes the session when the API responds with 401 on some other
+ *    request, using the event bus exposed by `onUnauthorized`. There is no
+ *    automatic silent-refresh-and-retry: a 401 mid-session logs the user
+ *    out, same as an expired session would.
  */
 export function SessionProvider({ children }: SessionProviderProps) {
   const [status, setStatus] = useState<SessionStatus>("loading");
-  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<AuthenticatedUser | null>(null);
+  const tokenRef = useRef<string | null>(null);
+
+  const applyAuthenticated = useCallback((response: AuthenticationResponse) => {
+    tokenRef.current = response.accessToken;
+    setUser(response.user);
+    setStatus("authenticated");
+  }, []);
+
+  const applyAnonymous = useCallback(() => {
+    tokenRef.current = null;
+    setUser(null);
+    setStatus("anonymous");
+  }, []);
 
   useEffect(() => {
-    const sync = () => {
-      const currentToken = readToken();
-      setToken(currentToken);
-      setStatus(currentToken ? "authenticated" : "anonymous");
-    };
+    let cancelled = false;
 
-    sync();
+    setTokenGetter(() => tokenRef.current);
 
-    setTokenGetter(readToken);
+    refreshSession()
+      .then((response) => {
+        if (!cancelled) {
+          applyAuthenticated(response);
+        }
+      })
+      .catch(() => {
+        // No valid refresh cookie (never logged in, expired, or revoked):
+        // this is the normal anonymous case, not an error to surface.
+        if (!cancelled) {
+          applyAnonymous();
+        }
+      });
 
-    const unsubscribeSession = subscribeToSession(sync);
     const unsubscribeUnauthorized = onUnauthorized(() => {
-      clearToken();
+      applyAnonymous();
     });
 
     return () => {
-      unsubscribeSession();
+      cancelled = true;
       unsubscribeUnauthorized();
       setTokenGetter(null);
     };
-  }, []);
+  }, [applyAuthenticated, applyAnonymous]);
 
-  const login = useCallback((newToken: string) => {
-    saveToken(newToken);
-  }, []);
+  const login = useCallback(
+    async (credentials: LoginCredentials) => {
+      const response = await requestLogin(credentials);
+      applyAuthenticated(response);
+      return response.user;
+    },
+    [applyAuthenticated],
+  );
+
+  const register = useCallback(
+    async (data: RegistrationData) => {
+      const response = await requestRegister(data);
+      applyAuthenticated(response);
+      return response.user;
+    },
+    [applyAuthenticated],
+  );
 
   const logout = useCallback(() => {
-    clearToken();
-  }, []);
+    applyAnonymous();
+  }, [applyAnonymous]);
 
   const value = useMemo<Session>(
     () => ({
       status,
-      token,
+      user,
       authenticated: status === "authenticated",
       login,
+      register,
       logout,
     }),
-    [status, token, login, logout],
+    [status, user, login, register, logout],
   );
 
   return <SessionContext value={value}>{children}</SessionContext>;

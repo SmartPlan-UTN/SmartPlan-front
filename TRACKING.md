@@ -43,7 +43,7 @@ rereading the entire git history.
 |---|---|
 | **Phase** | Foundations — layout and navigation ready, no use cases implemented |
 | **Base branch** | `develop` |
-| **Last update** | 2026-08-18 |
+| **Last update** | 2026-08-24 |
 | **Completed use cases** | 0 / 62 |
 
 ---
@@ -80,8 +80,8 @@ traceability matrix (`skills/01-domain/`).
 
 | CU | Feature | Screen | Status | Branch | PR |
 |---|---|---|---|---|---|
-| CU1 | Log in | — | `Not started` | | |
-| CU2 | Register user | — | `Not started` | | |
+| CU1 | Log in | PAN 04 | `In progress` | `SMART-13-cu1-iniciar-sesion` | |
+| CU2 | Register user | PAN 04 | `In progress` | `SMART-13-cu1-iniciar-sesion` | |
 | CU3 | Recover password | — | `Not started` | | |
 | CU4 | Log out | — | `Not started` | | |
 
@@ -222,6 +222,9 @@ being re-discussed twice.
 | 2026-08-22 | `MoodBackground` measures its own wrapper (`ResizeObserver` + `useLayoutEffect`), not `window.innerHeight` | The wrapper's real height is the page's content height, not the viewport's — sizing the wave `viewBox` off the wrong one cut the waves off on a short page and briefly mis-proportioned them on a tall one before a resize event corrected it |
 | 2026-08-22 | Added a `Select` primitive instead of a native `<select>` for CU10/CU11's sort/direction | A native `<select>`'s open option list is painted by the OS/browser; on Windows Chrome/Edge it ignores `border-radius` entirely, which read as a square dropdown inside a rounded filters panel with no CSS fix available |
 | 2026-08-22 | CU10's category chip row loops via `useMarqueeScroll` (measure-then-duplicate, one direction, wrap by exactly one copy's width) instead of a CSS `sp-carousel` keyframe or a ping-pong bounce | A ping-pong reverse-at-the-edges version looked "stuck" on a wide screen where the row barely overflowed (little distance to bounce across); duplicating content only when it actually overflows keeps a single chip, or a set that already fits, from visibly rendering twice for no reason |
+| 2026-08-24 | CU1 access token lives in memory only (`SessionProvider` state), never `localStorage` | Matches `SmartPlan-back`'s actual CU1-CU4 contract (`docs/authentication.md` there): the access token expires in 15 min and is meant to be memory-only; the 30-day session is carried by the `smartplan_refresh` `httpOnly` cookie instead. Session persistence on reload comes from `POST /sessions/refresh` on `SessionProvider` mount, not from reading a stored token. This supersedes the 2026-08-18 decision below about `localStorage` |
+| 2026-08-24 | `ProtectedRoute` stays a client-side navigation barrier, not a server one, even after CU1 | Only the *refresh* token became an `httpOnly` cookie; the *access* token still lives in JS memory, which a Server Component or `proxy.ts` can't read either. Moving the guard server-side would require making the access token itself a cookie, which the backend contract doesn't do |
+| 2026-08-24 | `withCredentials: true` set globally on the shared Axios instance (`src/lib/api/client.ts`), not only for session endpoints | Required for the browser to send/receive the `smartplan_refresh` cookie on `/sessions*`. Sending credentials on every request is harmless for endpoints that ignore cookies, and keeping one shared instance (per `skills/03-frontend/`'s "don't instantiate a loose Axios") is simpler than branching per call |
 
 ---
 
@@ -251,6 +254,13 @@ Things that have been spotted but don't have an owner yet:
   GitHub silently ignores ones that don't. If the team wants a `use case`
   label, it needs to be created in Settings → Labels **before** adding it
   to the template.
+- **The "¿Sos admin?" link on `/login` (v2 design) is rendered but inert**
+  (`src/app/login/layout.tsx`, `.adminLink` in `layout.module.css`): the v2
+  prototype sends it to a separate admin-only login screen that has no
+  counterpart in this app — a real admin account already lands on `/admin`
+  after a normal login, based on its role. Needs its own ticket to decide
+  whether a dedicated admin entry point is actually wanted, and if so, what
+  it should do.
 
 ---
 
@@ -281,3 +291,5 @@ Things that have been spotted but don't have an owner yet:
 | 2026-08-22 | CU16: `MapView`, loading the Google Maps JS SDK, fetching markers for the current viewport on `idle`, and rendering a click-to-open info window built through DOM APIs (not raw HTML, since activity/place names are admin-editable catalog data). Requires `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`. `pnpm lint`, `pnpm test`, and `pnpm build` green. |
 | 2026-08-22 | Self-requested `/code-review` pass across the whole CU9-CU16 diff surfaced and fixed: a failed page/filter refetch was wiping already-shown results instead of preserving them; a stale, out-of-order map marker fetch could overwrite a newer one; `loadGoogleMaps`'s retry left a dead `<script>` tag in the DOM that could never fire its listeners again; `ActivityCard`/`PlanCard`'s new `aria-label` hid price/duration/rating from screen readers; the map view ignored the list's filters; and several efficiency issues (no debounce on the price/rating filter inputs, `CategoryChips` refetching on every tab switch, an unreleased map idle listener). Also reduced duplication: a shared `useDetailFetch` hook for both detail views, a shared `useGoogleMap` hook for both map consumers, a shared `gradientFor()` placeholder helper, and the card/grid CSS moved into the shared `explore.module.css`. `pnpm lint`, `pnpm test` (44), and `pnpm build` green. |
 | 2026-08-22 | Iterated on visual feedback against the running prototype and the app itself: the "Volver" back link on detail pages now follows the scroll and switches from a dark to a light style once its hero scrolls behind the navbar (`FloatingBackLink`, new primitive); the category chip row now loops continuously in one direction instead of a ping-pong bounce (`useMarqueeScroll`, only duplicating content when it actually overflows the row); `Select` replaces the native `<select>` for CU10/CU11's sort/direction (native option lists ignore `border-radius` on Windows Chrome/Edge); `Navbar`'s inner row is no longer capped at `--max-w`, matching the prototype's full-width bar; `MoodBackground` now measures its actual container instead of the viewport, fixing the wave background looking cut off on a sparse results page. Opened PRs: `SmartPlan-front#87` (CU9-CU14, CU16) and `SmartPlan-back#57` (supports CU12). `pnpm lint`, `pnpm test` (44), and `pnpm build` green in both repositories. |
+| 2026-08-24 | CU1: implemented the login screen (PAN 04) and reworked the session foundation around SmartPlan-back's real CU1-CU4 contract. `POST /sessions` and startup `POST /sessions/refresh` in `src/lib/auth/api.ts`; `SessionProvider` now holds the access token and user in memory instead of `localStorage`, rehydrating on mount from the `smartplan_refresh` `httpOnly` cookie. Removed `src/lib/auth/session.ts` (the old `localStorage` module) and the now-dead `localStorage` fallback in `token-provider.ts`. Added `withCredentials: true` to the shared Axios instance. `LoginForm` (`src/components/auth/`) validates email/password client-side, maps the backend's documented error codes (`INVALID_CREDENTIALS`, `ACCOUNT_SUSPENDED`, `ACCOUNT_BANNED`, `ATTEMPT_LIMIT_EXCEEDED`, `VALIDATION_FAILED` with per-field mapping) to Spanish messages, and redirects to the saved destination, or to `/admin` for an admin account, or Home. Verified the exact contract (routes, DTOs, error codes, cookie name and `expiresIn`) by reading `SmartPlan-back`'s `origin/develop` directly — the shared integration doc had the rate-limit code wrong (`TOO_MANY_REQUESTS` vs. the real `ATTEMPT_LIMIT_EXCEEDED`); the code handles both. Rewrote `Navbar.test.tsx` and `ProtectedRoute.test.tsx`, which used to fake a session via `localStorage`, to mock `refreshSession` instead; added `LoginForm.test.tsx`. `pnpm lint`, `pnpm test` (33), and `pnpm build` green. |
+| 2026-08-24 | Resolved the merge conflict between this branch and `develop`'s CU1 login work: `MoodBackground` moved from `@/components/layout` to `@/components/ui` on `develop` while this branch fixed its container-measurement bug in place — reapplied that fix (`ResizeObserver` + `useLayoutEffect`, `prefers-reduced-motion`) onto the moved `ui/MoodBackground.tsx`, keeping `develop`'s new `style` prop (used by `AuthSplitShell` to force `position: fixed`). `Navbar.test.tsx`'s logout tests were rewritten to use `mockAuthenticatedStartup()` instead of the now-removed `localStorage`-based session stub, while keeping the confirmation-dialog assertions `develop`'s simplified version had dropped (the dialog is still real, current behavior). Also fixed two PR review comments: `/explore/[id]` and `/plans/[id]` now reject a non-positive-integer route param with `notFound()` instead of forwarding `NaN` to the API, and `UserMenu`'s logout confirmation dialog traps focus and returns it to the "Cerrar sesión" trigger on close. `pnpm lint`, `pnpm test`, and `pnpm build` green. |

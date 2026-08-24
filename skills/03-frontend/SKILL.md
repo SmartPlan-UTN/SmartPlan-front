@@ -169,13 +169,26 @@ const { status, authenticated, login, logout } = useSession();
 ```
 
 `status` is `"loading" | "authenticated" | "anonymous"`. **Always account
-for `loading`**: the token lives in the browser, so on the first render —the
-one generated on the server— it's not yet known whether there's a session.
+for `loading`**: the access token lives only in memory (CU1 decision — see
+below), so on every fresh page load it's rebuilt from scratch and, until
+that resolves, it's not yet known whether there's a session.
 
 The provider also tells the HTTP client where to get the token from
 (`setTokenGetter`) and closes the session when the API responds with 401
-(`onUnauthorized`). Once CU1 is implemented, login only needs to call
-`login(token)` with the JWT the backend returns.
+(`onUnauthorized`). `login(credentials)` (`@/lib/auth`) calls `POST
+/sessions`, stores the access token and the user in memory on success, and
+resolves with the user — use its `role.key` to decide where to redirect
+before the destination-preserving fallback (`ROUTES.home`).
+
+**The access token is never persisted** (no `localStorage`, no readable
+cookie): it lives only in a `SessionProvider` ref, for the lifetime of the
+tab. Session persistence across a reload comes from `POST
+/sessions/refresh`, called once on mount, which rehydrates the session from
+the `smartplan_refresh` `httpOnly` cookie the backend sets on login. The
+frontend never reads or writes that cookie directly; `withCredentials: true`
+on the shared Axios instance (`@/lib/api/client.ts`) is what makes the
+browser send it automatically. See `@/lib/auth/api.ts` for the full CU1-CU4
+contract this implements.
 
 ### Protected routes
 
@@ -185,20 +198,18 @@ while it resolves, and if there's no token it replaces the route with
 `safeDestination()` before use: without that filter,
 `?redirect=https://other-site.com` would turn login into an open redirector.
 
-> **It's a navigation barrier, not a security one.** The JWT lives in
-> `localStorage`, which the server can't see: neither `proxy.ts` nor a
+> **It's a navigation barrier, not a security one.** The access token lives
+> only in memory, which the server can't see: neither `proxy.ts` nor a
 > Server Component can decide whether there's a session. What actually
-> authorizes is the backend on every request. If CU1 decides to store the
-> token in an `httpOnly` cookie, this check can move to the server without
-> touching the screens.
+> authorizes is the backend on every request. Only the *refresh* token moved
+> to an `httpOnly` cookie (CU1); the access token would have to as well for
+> this check to move to the server, and nothing currently plans that.
 
-To test the guard by hand, while login doesn't exist yet:
-
-```js
-// browser console
-localStorage.setItem("smartplan_token", "anything"); // gets you in
-localStorage.removeItem("smartplan_token");           // kicks you to login
-```
+To test the guard by hand, without a real backend session: mock
+`refreshSession` (`@/lib/auth/api`) to resolve or reject, the way
+`Navbar.test.tsx` and `ProtectedRoute.test.tsx` do. There's no `localStorage`
+trick anymore — the token was deliberately taken out of any storage an XSS
+payload could read.
 
 ### PendingScreen
 

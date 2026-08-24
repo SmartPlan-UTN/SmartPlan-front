@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 
 import { ExploreTabs } from "@/components/explore";
-import { Container, MoodBackground } from "@/components/layout";
+import { Container } from "@/components/layout";
+import { MoodBackground } from "@/components/ui";
 
 import styles from "./explore.module.css";
 

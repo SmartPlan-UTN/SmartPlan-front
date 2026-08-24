@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 
 export type Mood =
   | "idle"
@@ -12,6 +12,7 @@ export type Mood =
 
 export interface MoodBackgroundProps {
   mood?: Mood;
+  style?: CSSProperties;
 }
 
 interface WavePalette {
@@ -22,7 +23,9 @@ interface WavePalette {
   topGlow: string;
 }
 
-/** Ported from SmartPlanSystemDesign/v2/MoodBackground.jsx. */
+/** GPU-composited (transform + opacity only) animated wave background,
+ * ported from `SmartPlanSystemDesign/v2/MoodBackground.jsx`. Very subtle
+ * (5-10% opacity) color blobs that transition over 1.4s with the mood. */
 const WAVE_PALETTES: Record<Mood, WavePalette> = {
   idle: {
     wave1: "rgba(232,93,32,0.07)",
@@ -73,6 +76,7 @@ interface WaveLayer {
   frequency: number;
   speed: number;
   phase: number;
+  /** Fraction from the top where the wave rests. */
   yOffset: number;
   fillKey: keyof WavePalette;
 }
@@ -84,8 +88,6 @@ const WAVE_LAYERS: WaveLayer[] = [
   { amplitude: 16, frequency: 2.4, speed: 0.0018, phase: 5.2, yOffset: 0.78, fillKey: "wave4" },
 ];
 
-const WAVE_POINTS = 80;
-
 function generateWavePath(
   width: number,
   height: number,
@@ -94,10 +96,11 @@ function generateWavePath(
   phase: number,
   yBase: number,
 ): string {
-  const step = width / WAVE_POINTS;
+  const points = 80;
+  const step = width / points;
   let d = `M 0 ${height}`;
 
-  for (let i = 0; i <= WAVE_POINTS; i++) {
+  for (let i = 0; i <= points; i++) {
     const x = i * step;
     const normalX = (x / width) * Math.PI * 2 * frequency;
     const y =
@@ -105,7 +108,6 @@ function generateWavePath(
       Math.sin(normalX + phase) * amplitude +
       Math.sin(normalX * 0.6 + phase * 1.3) * (amplitude * 0.4) +
       Math.sin(normalX * 1.8 + phase * 0.7) * (amplitude * 0.15);
-
     if (i === 0) {
       d += ` L 0 ${y}`;
     }
@@ -116,38 +118,28 @@ function generateWavePath(
   return d;
 }
 
-/**
- * Decorative animated background of layered SVG waves, ported from
- * SmartPlanSystemDesign/v2/MoodBackground.jsx. Purely visual —
- * `aria-hidden` and `pointer-events: none` — so it never competes with the
- * content in front of it.
- *
- * The source drives the animation with `requestAnimationFrame`, recomputing
- * every path every frame; unlike the source, this stops entirely under
- * `prefers-reduced-motion: reduce` instead of just skipping the unrelated
- * float keyframes.
- */
-export function MoodBackground({ mood = "idle" }: MoodBackgroundProps) {
+/** Decorative, `aria-hidden` animated background: 4 layered SVG waves that
+ * undulate independently behind the content, plus a soft mood-tinted glow.
+ * Stops entirely under `prefers-reduced-motion: reduce`. */
+export function MoodBackground({ mood = "idle", style }: MoodBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const pathRefs = useRef<(SVGPathElement | null)[]>([]);
   const [dims, setDims] = useState({ w: 1200, h: 800 });
+
   const palette = WAVE_PALETTES[mood];
 
   // Measures the wrapper's own rendered box, not the viewport: this fills
-  // `.backdrop` (its `position: relative` parent) via `inset: 0`, which is
-  // as tall as the page's actual content — shorter than one screen for a
-  // sparse results page, taller for a long one. Sizing the SVG viewBox off
-  // `window.innerHeight` instead mismatched the coordinate system against
-  // the real box whenever content height differed from viewport height,
-  // stretching or squishing the waves and cutting them off at the edge.
-  // `ResizeObserver` keeps it in sync as content grows (more results,
-  // pagination) or shrinks (fewer results, switching tabs).
-  // `useLayoutEffect`, not `useEffect`: measuring after paint let the
-  // browser show one frame at the default 1200×800 guess first — visible as
-  // a flash of wrongly-proportioned waves before the real size kicked in.
-  // Measuring before paint means the first frame the user sees is already
-  // correct.
+  // its nearest positioned ancestor via `inset: 0` (or the viewport itself
+  // when a caller overrides `position: fixed` through `style`, as
+  // `AuthSplitShell` does), which isn't always exactly one screen tall —
+  // shorter for a sparse results page, taller for a long one. Sizing the
+  // SVG viewBox off `window.innerHeight` instead mismatched the coordinate
+  // system against the real box whenever content height differed from
+  // viewport height, stretching or squishing the waves and cutting them
+  // off at the edge. `ResizeObserver` keeps it in sync as content grows or
+  // shrinks; `useLayoutEffect`, not `useEffect`, so the first painted frame
+  // already uses the real size instead of the 1200×800 guess.
   useLayoutEffect(() => {
     const node = containerRef.current;
     if (!node) return;
@@ -169,18 +161,19 @@ export function MoodBackground({ mood = "idle" }: MoodBackgroundProps) {
   }, []);
 
   useEffect(() => {
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    if (prefersReducedMotion) {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       return;
     }
+
+    const svg = svgRef.current;
+    if (!svg) return;
 
     const startTime = Date.now();
     let animationFrame: number;
 
     function tick() {
-      const svg = svgRef.current;
+      // Re-checked, not just the outer guard: TS resets narrowing for a
+      // closed-over variable inside a nested function, even a `const`.
       if (!svg) return;
 
       const elapsed = Date.now() - startTime;
@@ -213,6 +206,7 @@ export function MoodBackground({ mood = "idle" }: MoodBackgroundProps) {
         overflow: "hidden",
         pointerEvents: "none",
         zIndex: 0,
+        ...style,
       }}
     >
       <div
@@ -239,7 +233,7 @@ export function MoodBackground({ mood = "idle" }: MoodBackgroundProps) {
         ref={svgRef}
         viewBox={`0 0 ${dims.w} ${dims.h}`}
         preserveAspectRatio="none"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 1 }}
       >
         {WAVE_LAYERS.map((layer, index) => (
           <path

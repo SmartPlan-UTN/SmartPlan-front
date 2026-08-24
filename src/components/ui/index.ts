@@ -11,5 +11,6 @@ export { FloatingBackLink, type FloatingBackLinkProps } from "./FloatingBackLink
 export { Icon, type IconName, type IconProps } from "./Icon";
 export { iconRegistry } from "./iconRegistry";
 export { Logo, type LogoKind, type LogoProps, type LogoVariant } from "./Logo";
+export { MoodBackground, type Mood, type MoodBackgroundProps } from "./MoodBackground";
 export { Select, type SelectOption, type SelectProps } from "./Select";
 export { Stars, type StarsProps } from "./Stars";

@@ -204,3 +204,63 @@ input::placeholder { color: var(--fg-3); }
   from { transform: translateX(0); }
   to   { transform: translateX(calc(-5 * (210px + 44px))); }
 }
+
+/* ── 3D float micro-interaction ───────────────────────── */
+/* Four distinct levitation curves so a row of floating chips/cards doesn't
+   move in lockstep. Apply .sp-float-1 through .sp-float-4 in rotation. */
+@keyframes sp-levitate-1 {
+  0%   { transform: translateY(0)    rotateX(0deg)   rotateZ(0deg)   scale(1);    }
+  20%  { transform: translateY(-8px) rotateX(2deg)   rotateZ(-1deg)  scale(1.01);  }
+  50%  { transform: translateY(-14px) rotateX(-1deg)  rotateZ(1.5deg) scale(1.02); }
+  80%  { transform: translateY(-6px) rotateX(1.5deg) rotateZ(-0.5deg) scale(1.005); }
+  100% { transform: translateY(0)    rotateX(0deg)   rotateZ(0deg)   scale(1);    }
+}
+@keyframes sp-levitate-2 {
+  0%   { transform: translateY(0)    rotateX(0deg)    rotateZ(0deg)   scale(1);    }
+  30%  { transform: translateY(-11px) rotateX(-2deg)   rotateZ(1deg)   scale(1.015); }
+  55%  { transform: translateY(-6px)  rotateX(1deg)    rotateZ(-1.5deg) scale(0.99); }
+  75%  { transform: translateY(-13px) rotateX(-1.5deg) rotateZ(0.8deg) scale(1.02); }
+  100% { transform: translateY(0)    rotateX(0deg)    rotateZ(0deg)   scale(1);    }
+}
+@keyframes sp-levitate-3 {
+  0%   { transform: translateY(0)     rotateX(0deg)   rotateZ(0deg)    scale(1);    }
+  15%  { transform: translateY(-5px)  rotateX(1.5deg) rotateZ(1deg)    scale(1.01); }
+  45%  { transform: translateY(-16px) rotateX(-2deg)  rotateZ(-1.2deg) scale(1.025); }
+  70%  { transform: translateY(-9px)  rotateX(0.5deg) rotateZ(0.6deg)  scale(0.995); }
+  100% { transform: translateY(0)     rotateX(0deg)   rotateZ(0deg)    scale(1);    }
+}
+@keyframes sp-levitate-4 {
+  0%   { transform: translateY(0)     rotateX(0deg)    rotateZ(0deg)    scale(1);    }
+  25%  { transform: translateY(-10px) rotateX(-1deg)   rotateZ(-1.2deg) scale(1.02); }
+  50%  { transform: translateY(-4px)  rotateX(2deg)    rotateZ(0.8deg)  scale(0.985); }
+  80%  { transform: translateY(-12px) rotateX(-0.5deg) rotateZ(-0.6deg) scale(1.015); }
+  100% { transform: translateY(0)     rotateX(0deg)    rotateZ(0deg)    scale(1);    }
+}
+
+.sp-float-1 {
+  animation: sp-levitate-1 4.2s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+  will-change: transform;
+  transform-style: preserve-3d;
+}
+.sp-float-2 {
+  animation: sp-levitate-2 5.0s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+  animation-delay: -1.3s;
+  will-change: transform;
+  transform-style: preserve-3d;
+}
+.sp-float-3 {
+  animation: sp-levitate-3 4.6s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+  animation-delay: -2.5s;
+  will-change: transform;
+  transform-style: preserve-3d;
+}
+.sp-float-4 {
+  animation: sp-levitate-4 5.4s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+  animation-delay: -0.7s;
+  will-change: transform;
+  transform-style: preserve-3d;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sp-float-1, .sp-float-2, .sp-float-3, .sp-float-4 { animation: none; }
+}

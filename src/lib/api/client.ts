@@ -47,6 +47,10 @@ const instance = axios.create({
     'Content-Type': 'application/json',
   },
   paramsSerializer: serializeParams,
+  // Required so the browser sends and stores the `smartplan_refresh`
+  // httpOnly cookie (session refresh, CU1; logout, CU4). The backend's
+  // CORS config must allow the exact frontend origin for this to work.
+  withCredentials: true,
 });
 
 /**
