@@ -146,6 +146,10 @@ export function MoodBackground({ mood = "idle", style }: MoodBackgroundProps) {
     const start = startTime.current;
 
     function tick() {
+      // Re-checked, not just the outer guard: TS resets narrowing for a
+      // closed-over variable inside a nested function, even a `const`.
+      if (!svg) return;
+
       const t = Date.now() - start;
       const w = svg.viewBox.baseVal.width;
       const h = svg.viewBox.baseVal.height;
