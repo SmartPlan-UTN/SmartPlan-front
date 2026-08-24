@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
-import { Icon } from "@/components/ui";
+import { Button, Icon } from "@/components/ui";
 import { useSession } from "@/lib/auth";
 import { loginRoute } from "@/lib/routes";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,100 @@ import { cn } from "@/lib/utils";
 import { NavLink } from "./NavLink";
 import { USER_LINKS } from "./links";
 import styles from "./layout.module.css";
+
+interface LogoutConfirmModalProps {
+  onCancel: () => void;
+  onConfirm: () => void;
+}
+
+/**
+ * Confirmation dialog for "Cerrar sesión", matching the `LogoutModal` in
+ * SmartPlanSystemDesign/v2/Navbar.jsx: closing the session is destructive
+ * enough to warrant a deliberate second step instead of firing on the first
+ * click.
+ */
+function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  const descriptionId = useId();
+
+  useEffect(() => {
+    cancelRef.current?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onCancel();
+        return;
+      }
+
+      // Focus trap: `aria-modal` alone doesn't stop Tab from reaching the
+      // page behind the overlay — it's an accessibility hint, not a
+      // behavior. Wrap Tab/Shift+Tab between this dialog's own two buttons
+      // instead of letting focus escape it.
+      if (event.key !== "Tab" || !cardRef.current) return;
+
+      const focusable = cardRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [onCancel]);
+
+  return (
+    <div className={styles.modalOverlay} onClick={onCancel}>
+      <div
+        ref={cardRef}
+        className={styles.modalCard}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+        onClick={(event) => {
+          event.stopPropagation();
+        }}
+      >
+        <div className={styles.modalIcon}>
+          <Icon name="log-out" size={24} />
+        </div>
+
+        <div>
+          <h2 id={titleId} className={`sp-h3 ${styles.modalTitle}`}>
+            Cerrar sesión
+          </h2>
+          <p id={descriptionId} className={styles.modalText}>
+            ¿Seguro que querés cerrar sesión?
+          </p>
+        </div>
+
+        <div className={styles.modalActions}>
+          <Button variant="ghostLight" ref={cancelRef} onClick={onCancel}>
+            Cancelar
+          </Button>
+          <Button variant="danger" onClick={onConfirm}>
+            Confirmar
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /**
  * Navbar user menu.
@@ -22,15 +116,21 @@ import styles from "./layout.module.css";
  *   the token resolves.
  * - `anonymous`: link to log in.
  * - `authenticated`: dropdown with Mi perfil, Preferencias, and Cerrar sesión.
+ *   The trigger is a circular avatar, not a text pill — there's no user
+ *   name or photo yet, so it shows the `user` icon.
  *
  * It's a *disclosure* pattern, not an ARIA `menu`: the dropdown is regular
  * links navigated with Tab. It closes on Escape —returning focus to the
  * trigger—, on outside click, and on navigation.
+ *
+ * "Cerrar sesión" doesn't log out on the first click: it opens a
+ * confirmation dialog first, same as the SmartPlanSystemDesign prototype.
  */
 export function UserMenu() {
   const { status, logout } = useSession();
   const currentRoute = usePathname();
   const [open, setOpen] = useState(false);
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelId = useId();
@@ -104,8 +204,7 @@ export function UserMenu() {
         ref={triggerRef}
         type="button"
         className={styles.trigger}
-        // The label is hidden on small viewports and the icons are
-        // decorative: without this aria-label the button would have no name.
+        // Icon-only: without this aria-label the button would have no name.
         aria-label="Mi cuenta"
         aria-expanded={open}
         aria-controls={panelId}
@@ -114,10 +213,6 @@ export function UserMenu() {
         }}
       >
         <Icon name="user" size={16} />
-        <span className={styles.labelSession} aria-hidden="true">
-          Mi cuenta
-        </span>
-        <Icon name="chevron-down" size={14} />
       </button>
 
       {open ? (
@@ -140,13 +235,30 @@ export function UserMenu() {
             className={styles.option}
             onClick={() => {
               close();
-              logout();
+              setConfirmingLogout(true);
             }}
           >
             <Icon name="log-out" size={16} />
             Cerrar sesión
           </button>
         </div>
+      ) : null}
+
+      {confirmingLogout ? (
+        <LogoutConfirmModal
+          onCancel={() => {
+            setConfirmingLogout(false);
+            // The "Cerrar sesión" option that opened this dialog already
+            // unmounted with the dropdown, so there's nothing there to
+            // return focus to — the avatar trigger is the next best thing.
+            triggerRef.current?.focus();
+          }}
+          onConfirm={() => {
+            setConfirmingLogout(false);
+            logout();
+            triggerRef.current?.focus();
+          }}
+        />
       ) : null}
     </div>
   );

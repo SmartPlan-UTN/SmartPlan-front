@@ -11,6 +11,8 @@
 export const ROUTES = {
   home: "/",
   explore: "/explore",
+  exploreMap: "/explore/map",
+  plans: "/plans",
   favorites: "/favorites",
   history: "/history",
   profile: "/profile",
@@ -22,6 +24,16 @@ export const ROUTES = {
 } as const;
 
 export type Route = (typeof ROUTES)[keyof typeof ROUTES];
+
+/** `/explore/:id` — activity detail (CU14). */
+export function activityDetailRoute(id: number): string {
+  return `${ROUTES.explore}/${id}`;
+}
+
+/** `/plans/:id` — plan detail (CU13). */
+export function planDetailRoute(id: number): string {
+  return `${ROUTES.plans}/${id}`;
+}
 
 /** Name of the query parameter that stores where to return after logging in. */
 export const REDIRECT_PARAM = "redirect";

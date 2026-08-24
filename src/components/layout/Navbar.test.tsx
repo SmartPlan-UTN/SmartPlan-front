@@ -152,7 +152,7 @@ describe("Navbar", () => {
     expect(screen.queryByRole("link", { name: "Mi perfil" })).toBeNull();
   });
 
-  it("logging out returns the navbar to the anonymous state", async () => {
+  it("asks for confirmation before logging out, and logs out on confirm", async () => {
     mockAuthenticatedStartup();
     const user = userEvent.setup();
     renderNavbar();
@@ -160,9 +160,32 @@ describe("Navbar", () => {
     await user.click(await screen.findByRole("button", { name: /mi cuenta/i }));
     await user.click(screen.getByRole("button", { name: "Cerrar sesión" }));
 
+    // Doesn't log out on the first click: a confirmation dialog opens first.
+    expect(
+      screen.getByRole("alertdialog", { name: "Cerrar sesión" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Iniciar sesión" })).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Confirmar" }));
+
     expect(
       await screen.findByRole("link", { name: "Iniciar sesión" }),
     ).toBeInTheDocument();
+  });
+
+  it("keeps the session open when the logout confirmation is cancelled", async () => {
+    mockAuthenticatedStartup();
+    const user = userEvent.setup();
+    renderNavbar();
+
+    await user.click(await screen.findByRole("button", { name: /mi cuenta/i }));
+    await user.click(screen.getByRole("button", { name: "Cerrar sesión" }));
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(
+      screen.queryByRole("alertdialog", { name: "Cerrar sesión" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Iniciar sesión" })).toBeNull();
   });
 
   it("expands the collapsible navigation on small viewports", async () => {

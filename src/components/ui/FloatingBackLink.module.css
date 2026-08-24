@@ -1,0 +1,40 @@
+.link {
+  position: fixed;
+  top: calc(var(--navbar-h) + var(--s-3));
+  left: var(--s-4);
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 7px 14px;
+  border-radius: var(--r-btn);
+  font-size: 12px;
+  font-weight: var(--w-label);
+  text-decoration: none;
+  transition:
+    background 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.onDark {
+  border: 1.5px solid var(--white-15);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--fg-on-dark);
+}
+
+.onDark:hover {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.onLight {
+  border: 1.5px solid var(--hairline);
+  background: var(--surface-card);
+  color: var(--fg-1);
+  box-shadow: var(--shadow-card);
+}
+
+.onLight:hover {
+  border-color: var(--ember-20);
+}
