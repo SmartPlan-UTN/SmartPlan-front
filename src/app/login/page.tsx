@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { PendingScreen } from "@/components/layout";
+import { LoginForm } from "@/components/auth";
 import { REDIRECT_PARAM, safeDestination } from "@/lib/routes";
 
 export const metadata: Metadata = {
@@ -18,19 +18,5 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   // would turn the login page into an open redirector to any domain.
   const destination = safeDestination(typeof value === "string" ? value : null);
 
-  return (
-    <PendingScreen
-      title="Iniciar sesión"
-      description="El formulario de acceso, el registro y el medidor de fortaleza de contraseña."
-      references="CU1–CU3 · PAN 04"
-      tone="dark"
-    >
-      {destination ? (
-        <p className="sp-small">
-          Cuando la sesión esté implementada, al iniciarla volvés a{" "}
-          <strong>{destination}</strong>.
-        </p>
-      ) : null}
-    </PendingScreen>
-  );
+  return <LoginForm destination={destination} />;
 }

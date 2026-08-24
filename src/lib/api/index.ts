@@ -14,11 +14,7 @@ export type {
   ApiErrorOptions,
 } from './errors';
 
-export {
-  getToken,
-  setTokenGetter,
-  DEFAULT_TOKEN_STORAGE_KEY,
-} from './token-provider';
+export { getToken, setTokenGetter } from './token-provider';
 export type { TokenGetter } from './token-provider';
 
 export { onUnauthorized, notifyUnauthorized } from './auth-events';

@@ -77,13 +77,10 @@ Navigation destinations and URLs come from
 [`src/lib/routes.ts`](src/lib/routes.ts); they're never hand-written in
 `<Link>`.
 
-While login doesn't exist yet (CU1), the session is simulated from the
-browser console:
-
-```js
-localStorage.setItem("smartplan_token", "anything");   // gets into protected screens
-localStorage.removeItem("smartplan_token");             // kicks the user to login
-```
+Logging in (CU1) opens a session against `POST /sessions` and keeps the
+access token in memory only — never in `localStorage` or a readable cookie.
+It survives a page reload through `POST /sessions/refresh`, which rehydrates
+it from the `httpOnly` refresh cookie the backend sets on login.
 
 The details —navbar, session, where each screen lives— are in
 [`skills/03-frontend/SKILL.md`](skills/03-frontend/SKILL.md).

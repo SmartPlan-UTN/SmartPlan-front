@@ -6,12 +6,13 @@ import { Logo } from "@/components/ui";
 import { ROUTES } from "@/lib/routes";
 
 /**
- * Layout for session screens: login, signup, and password recovery.
+ * Layout for the session screens still pending their own CU: password
+ * recovery. Login (CU1, `app/login/`) and signup (CU2, `app/signup/`) moved
+ * out — they share `AuthSplitShell`, the split-screen shell from the v2
+ * system design, and no longer use this dark, blurred card.
  *
- * Renders without the navbar and over a dark surface with `blur`, as
- * required by the EMBER design. Someone who hasn't logged in yet has
- * nowhere else to navigate within the application; all they need is a way
- * back home.
+ * Renders without the navbar. Someone who hasn't logged in yet has nowhere
+ * else to navigate within the application; all they need is a way back home.
  */
 export default function AuthLayout({
   children,

@@ -5,6 +5,11 @@
  */
 
 export { SessionProvider, useSession } from "./SessionProvider";
-export type { SessionStatus, Session, SessionProviderProps } from "./SessionProvider";
-
-export { clearToken, saveToken, readToken, subscribeToSession } from "./session";
+export type {
+  SessionStatus,
+  Session,
+  SessionProviderProps,
+  AuthenticatedUser,
+  LoginCredentials,
+  RegistrationData,
+} from "./SessionProvider";
