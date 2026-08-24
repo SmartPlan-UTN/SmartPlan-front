@@ -44,6 +44,15 @@ export interface RegistrationData {
   password: string;
 }
 
+export interface PasswordRecoveryRequest {
+  email: string;
+}
+
+export interface PasswordReset {
+  token: string;
+  newPassword: string;
+}
+
 /**
  * CU1: opens a session.
  *
@@ -80,4 +89,30 @@ export async function register(
   data: RegistrationData,
 ): Promise<AuthenticationResponse> {
   return apiClient.post<AuthenticationResponse>("/users", data);
+}
+
+/**
+ * CU3, step 1: requests a recovery email.
+ *
+ * `POST /password-recoveries` — 202 with no body, whether or not the email
+ * matches an account is decided by the backend (`404 EMAIL_NOT_REGISTERED`
+ * otherwise). Not tied to session state: doesn't go through `SessionProvider`.
+ */
+export async function requestPasswordRecovery(
+  data: PasswordRecoveryRequest,
+): Promise<void> {
+  await apiClient.post<void>("/password-recoveries", data);
+}
+
+/**
+ * CU3, step 2: sets a new password using the token from the recovery email
+ * link (`${FRONTEND_URL}/reset-password?token=...`).
+ *
+ * `PATCH /password-recoveries` — 204 with no body. Success revokes every
+ * active session for that account server-side; the frontend doesn't need to
+ * clear anything locally, since this screen is never reached with a session
+ * of its own (it's public, opened from an email link).
+ */
+export async function resetPassword(data: PasswordReset): Promise<void> {
+  await apiClient.patch<void>("/password-recoveries", data);
 }

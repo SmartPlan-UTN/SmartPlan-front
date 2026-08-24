@@ -296,7 +296,9 @@
   padding: var(--section-v) var(--s-4);
 }
 
-/* ── Centered shell: session screens and 404 ───────────────────── */
+/* ── Centered shell: 404 ───────────────────────────────────────────
+   Session screens (login, signup, password recovery) moved to
+   AuthSplitShell; this dark blurred-card shell is only 404's now. */
 .centeredScreen {
   flex: 1;
   display: flex;

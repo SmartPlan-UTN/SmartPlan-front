@@ -24,14 +24,14 @@ export interface AuthSplitShellProps {
 }
 
 /**
- * Split-screen shell for the CU1/CU2 auth screens (PAN 04), per the v2
- * "EMBER" system design: branding panel on the left (hidden below the `md`
- * breakpoint), form card over a light surface on the right.
+ * Split-screen shell for the CU1/CU2/CU3 auth screens (PAN 04/05), per the
+ * v2 "EMBER" system design: branding panel on the left (hidden below the
+ * `md` breakpoint), form card over a light surface on the right.
  *
- * Used by `app/login/layout.tsx` and `app/signup/layout.tsx`, which live
- * outside the `(auth)` route group so this shell doesn't affect password
- * recovery, which still uses the older dark `(auth)/layout.tsx` shell until
- * its own CU is implemented.
+ * Used by `app/login/layout.tsx`, `app/signup/layout.tsx`,
+ * `app/recover-password/layout.tsx`, and `app/reset-password/layout.tsx` —
+ * each screen lives at the top level, outside a shared route group, so this
+ * shell (and its `MoodBackground`) doesn't leak into unrelated routes.
  */
 export function AuthSplitShell({ children, cardVariant }: AuthSplitShellProps) {
   return (
