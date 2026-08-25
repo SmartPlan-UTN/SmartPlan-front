@@ -1,12 +1,21 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { Badge, Button, Divider, FloatingBackLink, Icon, Stars } from "@/components/ui";
+import {
+  Badge,
+  Button,
+  ConfirmationDialog,
+  Divider,
+  FloatingBackLink,
+  Icon,
+  Stars,
+} from "@/components/ui";
 import { useDetailFetch } from "@/hooks";
-import { getPlan, cancelOwnPlan, ApiError } from "@/lib/api";
+import { useSession } from "@/lib/auth";
+import { getPlan, getOwnPlan, cancelOwnPlan, ApiError } from "@/lib/api";
 import { activityDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
 import { formatArs, formatDuration, googleMapsUrl } from "@/lib/utils";
 import type { PlanDetailResult, PlanItineraryItem } from "@/types";
@@ -118,7 +127,23 @@ function ItineraryStep({
 /**
  * Plan detail (CU13, CU26, CU29 · PAN 17), matching
  * SmartPlanSystemDesign/v2/PlanDetail.jsx: a full-bleed dark hero, a
- * timeline itinerary, a dark cost breakdown card, and action options.
+ * timeline itinerary, a dark cost breakdown card, and a non-sticky action
+ * row (the mockup keeps it in normal flow, unlike ActivityDetail.jsx's
+ * fixed one).
+ *
+ * The mockup's social-proof strip ("312 personas hicieron este plan · 97%
+ * lo recomiendan") is fabricated demo data with no backend behind it —
+ * there's no "people who did this plan" tracking in the contract, so it's
+ * left out rather than invented. "Lo quiero hacer" needs CU22 (out of
+ * scope), so it stays disabled; "Compartir" is real — it copies the page
+ * URL.
+ *
+ * The owner-only actions (CU25's "Editar plan", CU26's "Cancelar plan")
+ * hang off `isOwner`, not off the plan itself: this screen reads from
+ * `GET /plans/:id`, which is public and returns the same projection to
+ * everyone, with no owner field to compare against. Probing
+ * `GET /users/me/plans/:id` is the only way to tell ownership apart under
+ * the current contract — it 403/404s for a plan that isn't yours.
  */
 export function PlanDetailView({ planId }: PlanDetailViewProps) {
   const router = useRouter();
@@ -127,9 +152,32 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
     planId,
     GENERIC_ERROR,
   );
+  const { authenticated } = useSession();
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
+
+  // Ownership probe (CU25, CU26): see the note above the component.
+  useEffect(() => {
+    // No reset on the anonymous branch: `isOwner` is only ever read
+    // through `isPlanOwner` below, which already folds in `authenticated`,
+    // so a logout hides the actions without a synchronous setState here.
+    if (!authenticated) return;
+
+    let active = true;
+    getOwnPlan(planId)
+      .then(() => {
+        if (active) setIsOwner(true);
+      })
+      .catch(() => {
+        if (active) setIsOwner(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [authenticated, planId]);
 
   // Cancellation state (CU26)
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -204,6 +252,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
   }
 
   const isCancelled = plan.status?.key === "cancelled";
+  const isPlanOwner = authenticated && isOwner;
   const routeSummary = plan.details
     .map((detail) => detail.activity.name)
     .join(" → ");
@@ -285,7 +334,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
         </div>
 
         <div className={styles.actionBar}>
-          {!isCancelled && (
+          {isPlanOwner && !isCancelled && (
             <>
               <Link href={planEditRoute(planId)} style={{ textDecoration: "none", display: "flex", flex: 1 }}>
                 <Button
@@ -328,52 +377,39 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
             <Icon name="share-2" size={16} aria-hidden="true" />
             {copied ? "¡Copiado!" : "Compartir"}
           </Button>
+          <Button
+            variant="primary"
+            className={styles.actionFlex2}
+            disabled
+            title="Próximamente"
+          >
+            Lo quiero hacer →
+          </Button>
         </div>
       </div>
 
       {/* Explicit Cancel Confirmation Dialog (CU26) */}
       {showCancelModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowCancelModal(false)}>
-          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalIcon}>
-              <Icon name="triangle-alert" size={24} />
-            </div>
-            <div>
-              <h2 className="sp-h3" style={{ margin: "0 0 6px" }}>¿Cancelar este plan?</h2>
-              <p style={{ margin: 0, color: "var(--fg-2)", fontSize: "14px", lineHeight: 1.5 }}>
-                El plan pasará a estar cancelado y se conservará únicamente como historial. No se podrá seguir editando ni modificando sus actividades.
-              </p>
-            </div>
-
-            {cancelError && (
-              <p style={{ color: "var(--error)", fontSize: "13px", margin: 0 }}>
-                {cancelError}
-              </p>
-            )}
-
-            <div className={styles.modalActions}>
-              <Button
-                variant="ghostLight"
-                style={{ flex: 1 }}
-                onClick={() => setShowCancelModal(false)}
-                disabled={isCancelling}
-              >
-                Volver
-              </Button>
-              <Button
-                variant="danger"
-                style={{ flex: 1 }}
-                onClick={() => {
-                  void handleConfirmCancel();
-                }}
-                disabled={isCancelling}
-              >
-                {isCancelling ? "Cancela..." : "Sí, cancelar plan"}
-              </Button>
-            </div>
-          </div>
-        </div>
+        <ConfirmationDialog
+          title="¿Cancelar este plan?"
+          confirmLabel="Sí, cancelar plan"
+          confirmingLabel="Cancelando..."
+          cancelLabel="Volver"
+          isConfirming={isCancelling}
+          error={cancelError}
+          onCancel={() => setShowCancelModal(false)}
+          onConfirm={() => {
+            void handleConfirmCancel();
+          }}
+        >
+          <p>
+            El plan pasará a estar cancelado y se conservará únicamente como
+            historial. No se podrá seguir editando ni modificando sus
+            actividades.
+          </p>
+        </ConfirmationDialog>
       )}
+
     </div>
   );
 }

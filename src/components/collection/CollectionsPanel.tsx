@@ -3,12 +3,11 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { Button, Icon } from "@/components/ui";
+import { Button, ConfirmationDialog, Icon } from "@/components/ui";
 import { ApiError, deleteCollection, listCollections } from "@/lib/api";
 import { collectionEditRoute, ROUTES } from "@/lib/routes";
 import type { CollectionSummary } from "@/types";
 
-import { ConfirmationDialog } from "./ConfirmationDialog";
 import styles from "./CollectionsPanel.module.css";
 
 type LoadStatus = "loading" | "idle" | "error";

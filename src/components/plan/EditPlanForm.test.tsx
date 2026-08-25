@@ -163,6 +163,12 @@ describe("EditPlanForm", () => {
     const removeBtn = await screen.findByRole("button", {
       name: "Quitar Degustación en Bodega",
     });
+
+    // The DELETE answers 204, so the form refetches the plan to pick up the
+    // itinerary the backend renumbered.
+    vi.mocked(getOwnPlan).mockResolvedValue(
+      mockPlan({ details: [], activityCount: 0 }),
+    );
     await user.click(removeBtn);
 
     expect(removePlanActivity).toHaveBeenCalledWith(12, 101);

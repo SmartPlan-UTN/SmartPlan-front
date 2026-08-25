@@ -1,4 +1,5 @@
 import type {
+  ListOwnPlansParams,
   PaginatedResult,
   PlanDetailResult,
   PlanSearchParams,
@@ -6,6 +7,7 @@ import type {
   CreatePlanDto,
   UpdatePlanDto,
   OwnPlanDetail,
+  OwnPlanSummary,
   Plan,
 } from '@/types';
 import { apiClient } from './client';
@@ -37,6 +39,18 @@ export async function getPlan(id: number): Promise<PlanDetailResult> {
  */
 export async function createPlan(dto: CreatePlanDto): Promise<Plan> {
   return apiClient.post<Plan>('/users/me/plans', dto);
+}
+
+/**
+ * Lists the plans owned by the logged-in user (CU29).
+ * Backend contract: `GET /users/me/plans`.
+ */
+export async function listOwnPlans(
+  params: ListOwnPlansParams = {}
+): Promise<PaginatedResult<OwnPlanSummary>> {
+  return apiClient.get<PaginatedResult<OwnPlanSummary>>('/users/me/plans', {
+    params,
+  });
 }
 
 /**

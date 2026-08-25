@@ -4,7 +4,7 @@ import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-import { Button, Icon } from "@/components/ui";
+import { Button, ConfirmationDialog, Icon } from "@/components/ui";
 import { useDebouncedValue, useDetailFetch } from "@/hooks";
 import {
   getOwnPlan,
@@ -51,7 +51,7 @@ export function EditPlanForm({ planId }: EditPlanFormProps) {
     return (
       <div className={activityStyles.stateBlock}>
         <Icon name="inbox" size={32} className={activityStyles.stateIcon} />
-        <h1 className="sp-h3">No encontramos este plan</h1>
+        <h2 className="sp-h3">No encontramos este plan</h2>
         <p className="sp-body">Puede haber sido eliminado o no pertenecer a tu cuenta.</p>
         <Link href={ROUTES.explore} className={activityStyles.backLink}>
           <Icon name="arrow-left" size={14} aria-hidden="true" />
@@ -65,7 +65,7 @@ export function EditPlanForm({ planId }: EditPlanFormProps) {
     return (
       <div className={activityStyles.stateBlock} role="alert">
         <Icon name="triangle-alert" size={32} className={activityStyles.errorIcon} />
-        <h1 className="sp-h3">Algo salió mal</h1>
+        <h2 className="sp-h3">Algo salió mal</h2>
         <p className="sp-body">{result.errorMessage ?? LOAD_ERROR}</p>
         <Link href={ROUTES.explore} className={activityStyles.backLink}>
           <Icon name="arrow-left" size={14} aria-hidden="true" />
@@ -79,7 +79,7 @@ export function EditPlanForm({ planId }: EditPlanFormProps) {
     return (
       <div className={activityStyles.stateBlock}>
         <Icon name="triangle-alert" size={32} className={activityStyles.stateIcon} />
-        <h1 className="sp-h3">El plan se encuentra cancelado</h1>
+        <h2 className="sp-h3">El plan se encuentra cancelado</h2>
         <p className="sp-body">Este plan fue cancelado y se conserva solo como historial de lectura.</p>
         <Link href={planDetailRoute(planId)} className={activityStyles.backLink}>
           <Icon name="arrow-left" size={14} aria-hidden="true" />
@@ -148,6 +148,11 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
     };
   }, [debouncedActivitySearch]);
 
+  // Suggestions minus what's already on the itinerary.
+  const availableSuggestions = activitySuggestions.filter(
+    (act) => !details.some((item) => item.activity.id === act.id),
+  );
+
   // Calculations
   const totalCost = details.reduce((sum, item) => sum + item.estimatedCost, 0);
   const totalDuration = details.reduce((sum, item) => sum + item.estimatedDuration, 0);
@@ -185,10 +190,10 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
 
     setActivityError(null);
     try {
+      // Same reasoning as CreatePlanForm: the box keeps its text, and
+      // stops already on the plan are filtered out of the suggestions.
       const updatedPlan = await addPlanActivity(plan.id, activity.id);
       setDetails(updatedPlan.details);
-      setActivitySearch("");
-      setActivitySuggestions([]);
     } catch (error: unknown) {
       const message =
         error instanceof ApiError
@@ -202,8 +207,13 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
   // Activity Management (CU28)
   const handleRemoveActivity = async (detailId: number) => {
     try {
+      // `DELETE .../details/:detailId` answers 204, so the itinerary has to
+      // be refetched rather than filtered locally: the backend renumbers
+      // `order` on the remaining stops, and a local filter would leave the
+      // timeline showing stale positions until the next full load.
       await removePlanActivity(plan.id, detailId);
-      setDetails((prev) => prev.filter((item) => item.id !== detailId));
+      const refreshed = await getOwnPlan(plan.id);
+      setDetails(refreshed.details);
     } catch (error: unknown) {
       const message =
         error instanceof ApiError
@@ -271,9 +281,6 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
     <div className={styles.container}>
       {/* LEFT: General details form */}
       <div>
-        <h1 className="sp-h2 styles.title" style={{ marginBottom: "var(--s-4)" }}>
-          Editar Plan
-        </h1>
         <div className={styles.card}>
           <form
             className={styles.form}
@@ -380,7 +387,7 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
                 disabled={isPending || (!isDirty() && submitSuccess == null)}
               >
                 {isPending ? (
-                  <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span className={styles.buttonContent}>
                     <Icon name="loader-circle" size={16} className="sp-animate-spin" />
                     Guardando...
                   </span>
@@ -395,87 +402,9 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
 
       {/* RIGHT: Itinerary stops and activity selector */}
       <div>
-        <h2 className="sp-h3" style={{ marginBottom: "var(--s-4)" }}>
+        <h2 className={`sp-h3 ${styles.panelTitle}`}>
           Actividades del plan
         </h2>
-
-        {/* Selected activities itinerary list */}
-        {details.length > 0 ? (
-          <div className={styles.itineraryList}>
-            {details.map((item, index) => (
-              <div key={item.id} className={styles.itineraryRow}>
-                <div className={styles.timeline}>
-                  <span className={styles.timelineDot}>{index + 1}</span>
-                  {index < details.length - 1 && (
-                    <span className={styles.timelineLine} />
-                  )}
-                </div>
-                <div className={styles.itineraryCard}>
-                  <div>
-                    <p className={styles.itineraryName}>{item.activity.name}</p>
-                    <div className={styles.itineraryMeta}>
-                      <span>{item.activity.type || "Actividad"}</span>
-                      <span>•</span>
-                      <span>{formatDuration(item.estimatedDuration)}</span>
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <span className={styles.itineraryCost}>
-                      {formatArs(item.estimatedCost)}
-                    </span>
-                    <button
-                      type="button"
-                      className={styles.removeButton}
-                      onClick={() => {
-                        void handleRemoveActivity(item.id);
-                      }}
-                      aria-label={`Quitar ${item.activity.name}`}
-                      disabled={isPending}
-                    >
-                      <Icon name="trash-2" size={15} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div
-            style={{
-              padding: "32px 20px",
-              textAlign: "center",
-              background: "rgba(26,17,9,0.03)",
-              border: "1.5px dashed var(--hairline)",
-              borderRadius: "var(--r-card-sm)",
-              marginBottom: "var(--s-4)",
-            }}
-          >
-            <p style={{ color: "var(--fg-3)", fontSize: "14px", margin: 0 }}>
-              El plan no tiene actividades actualmente. Usá el buscador de abajo para sumar paradas.
-            </p>
-          </div>
-        )}
-
-        {/* Real-time estimated totals breakdown card */}
-        <div className={styles.summarySection}>
-          <p className={styles.summaryTitle}>Resumen Estimado</p>
-          <div className={styles.summaryRow}>
-            <span>Actividades</span>
-            <span>{details.length}</span>
-          </div>
-          <div className={styles.summaryRow}>
-            <span>Duración total</span>
-            <span>{formatDuration(totalDuration)}</span>
-          </div>
-          <div className={styles.summaryRow}>
-            <span>Costo por persona</span>
-            <span>{formatArs(costPerPerson)}</span>
-          </div>
-          <div className={styles.summaryRowTotal}>
-            <span>Costo Total</span>
-            <span>{formatArs(totalCost)}</span>
-          </div>
-        </div>
 
         {/* Activity Search Selector (CU27) */}
         <div className={styles.activitySelector}>
@@ -504,16 +433,16 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
               disabled={isPending}
             />
             {isSearchingActivities && (
-              <div style={{ position: "absolute", right: "12px", top: "14px" }}>
+              <div className={styles.searchSpinner}>
                 <Icon name="loader-circle" size={18} className="sp-animate-spin" />
               </div>
             )}
           </div>
           {activityError && <p className={styles.fieldError}>{activityError}</p>}
 
-          {activitySuggestions.length > 0 && (
+          {availableSuggestions.length > 0 && (
             <div className={styles.activityList}>
-              {activitySuggestions.map((act) => (
+              {availableSuggestions.map((act) => (
                 <div key={act.id} className={styles.activityCard}>
                   <div className={styles.activityInfo}>
                     <p className={styles.activityName}>{act.name}</p>
@@ -539,41 +468,91 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
             </div>
           )}
         </div>
+
+        {/* Selected activities itinerary list */}
+        {details.length > 0 ? (
+          <div className={styles.itineraryList}>
+            {details.map((item, index) => (
+              <div key={item.id} className={styles.itineraryRow}>
+                <div className={styles.timeline}>
+                  <span className={styles.timelineDot}>{index + 1}</span>
+                  {index < details.length - 1 && (
+                    <span className={styles.timelineLine} />
+                  )}
+                </div>
+                <div className={styles.itineraryCard}>
+                  <div>
+                    <p className={styles.itineraryName}>{item.activity.name}</p>
+                    <div className={styles.itineraryMeta}>
+                      <span>{item.activity.type || "Actividad"}</span>
+                      <span>•</span>
+                      <span>{formatDuration(item.estimatedDuration)}</span>
+                    </div>
+                  </div>
+                  <div className={styles.itineraryTrailing}>
+                    <span className={styles.itineraryCost}>
+                      {formatArs(item.estimatedCost)}
+                    </span>
+                    <button
+                      type="button"
+                      className={styles.removeButton}
+                      onClick={() => {
+                        void handleRemoveActivity(item.id);
+                      }}
+                      aria-label={`Quitar ${item.activity.name}`}
+                      disabled={isPending}
+                    >
+                      <Icon name="trash-2" size={15} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className={styles.emptyState}>
+            <p className={styles.emptyStateText}>
+              El plan no tiene actividades actualmente. Usá el buscador de abajo para sumar paradas.
+            </p>
+          </div>
+        )}
+
+        {/* Real-time estimated totals breakdown card */}
+        <div className={styles.summarySection}>
+          <p className={styles.summaryTitle}>Resumen Estimado</p>
+          <div className={styles.summaryRow}>
+            <span>Actividades</span>
+            <span>{details.length}</span>
+          </div>
+          <div className={styles.summaryRow}>
+            <span>Duración total</span>
+            <span>{formatDuration(totalDuration)}</span>
+          </div>
+          <div className={styles.summaryRow}>
+            <span>Costo por persona</span>
+            <span>{formatArs(costPerPerson)}</span>
+          </div>
+          <div className={styles.summaryRowTotal}>
+            <span>Costo Total</span>
+            <span>{formatArs(totalCost)}</span>
+          </div>
+        </div>
       </div>
 
       {/* Cancel Confirmation Modal */}
       {showCancelModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowCancelModal(false)}>
-          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalIcon}>
-              <Icon name="triangle-alert" size={24} />
-            </div>
-            <div>
-              <h2 className="sp-h3" style={{ margin: "0 0 6px" }}>Descartar cambios</h2>
-              <p style={{ margin: 0, color: "var(--fg-2)", fontSize: "14px", lineHeight: 1.5 }}>
-                ¿Seguro que querés cancelar la edición del plan? Se descartarán las modificaciones en los datos del formulario.
-              </p>
-            </div>
-            <div className={styles.modalActions}>
-              <Button
-                variant="ghostLight"
-                style={{ flex: 1 }}
-                onClick={() => setShowCancelModal(false)}
-                type="button"
-              >
-                Seguir editando
-              </Button>
-              <Button
-                variant="danger"
-                style={{ flex: 1 }}
-                onClick={handleConfirmCancel}
-                type="button"
-              >
-                Descartar
-              </Button>
-            </div>
-          </div>
-        </div>
+        <ConfirmationDialog
+          title="Descartar cambios"
+          confirmLabel="Descartar"
+          cancelLabel="Seguir editando"
+          onCancel={() => setShowCancelModal(false)}
+          onConfirm={handleConfirmCancel}
+        >
+          <p>
+            ¿Seguro que querés cancelar la edición del plan? Se descartarán las
+            modificaciones en los datos del formulario.
+          </p>
+        </ConfirmationDialog>
       )}
     </div>
   );

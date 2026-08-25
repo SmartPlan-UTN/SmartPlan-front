@@ -26,6 +26,7 @@ export { searchActivities, getActivity, getActivityMapMarkers } from './activiti
 export {
   searchPlans,
   getPlan,
+  listOwnPlans,
   createPlan,
   addPlanActivity,
   getOwnPlan,
@@ -41,5 +42,3 @@ export {
   listCollections,
   updateCollection,
 } from './collections';
-export { searchPlaces } from './places';
-

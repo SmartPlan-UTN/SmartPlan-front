@@ -6,6 +6,10 @@ export {
   type ButtonVariant,
 } from "./Button";
 export { Chip, type ChipProps } from "./Chip";
+export {
+  ConfirmationDialog,
+  type ConfirmationDialogProps,
+} from "./ConfirmationDialog";
 export { Divider, type DividerProps } from "./Divider";
 export { FloatingBackLink, type FloatingBackLinkProps } from "./FloatingBackLink";
 export { Icon, type IconName, type IconProps } from "./Icon";

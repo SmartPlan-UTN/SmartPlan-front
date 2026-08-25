@@ -1,5 +1,5 @@
 import { BaseEntity, CatalogEntity } from './common';
-import type { ExplorationQueryParams } from './common';
+import type { ExplorationQueryParams, SortDirection } from './common';
 import type { User } from './users';
 import type { PlanRequest } from './recommendation';
 import type { Activity, ActivityCategorySummary, ActivityLocationSummary } from './activities';
@@ -116,6 +116,14 @@ export type PlanSortField = 'relevance' | 'price' | 'rating' | 'distance';
 export interface PlanSearchParams extends ExplorationQueryParams {
   outingType?: string;
   sortBy?: PlanSortField;
+}
+
+/** Query params accepted by `GET /users/me/plans` (CU29). */
+export interface ListOwnPlansParams {
+  page?: number;
+  limit?: number;
+  sortBy?: 'createdAt';
+  direction?: SortDirection;
 }
 
 export interface CreatePlanDto {
