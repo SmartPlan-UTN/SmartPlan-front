@@ -199,12 +199,19 @@ guardados aparecerán acá"*.
 Personal data with inline validation. Includes the password section with
 the same rules as Security.
 
-> **Only CU5 is built so far.** The prototype's `Profile.jsx` bundles CU5
-> (personal data), CU6 (password change, expandable section), and CU7
-> (delete account, danger zone) into one screen; the shipped `ProfileForm`
-> only covers CU5's card. It also drops the prototype's phone field and
-> avatar upload (no backing field in `GET`/`PATCH /users/me`) and the
-> role/status display the prototype itself never shows on this screen.
+> **CU5 and CU6 are built; CU7 isn't yet.** The prototype's `Profile.jsx`
+> bundles CU5 (personal data), CU6 (password change, expandable section),
+> and CU7 (delete account, danger zone) into one screen. The shipped
+> `ProfileScreen` composes CU5's `ProfileForm` and CU6's
+> `ChangePasswordForm` as two cards, matching that; CU7's danger zone isn't
+> built yet. It also drops the prototype's phone field, avatar upload (no
+> backing field in `GET`/`PATCH /users/me`), role/status display (the
+> prototype itself never shows either on this screen), and the password
+> section's requirements checklist ("Mínimo 8 caracteres", "Al menos una
+> mayúscula", "Incluir números y símbolos") — the real rule is 12-128
+> characters with no complexity requirement, so a pass/fail checklist for
+> those would misrepresent what `PATCH /users/me/password` actually
+> enforces.
 
 **Preferences** — CU8, CU18 · PAN 15
 Categories of interest as selectable chips (cultura, compras, gastronomía...),

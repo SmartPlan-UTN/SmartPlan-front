@@ -9,14 +9,18 @@ import { useToggle } from "@/hooks";
 import { ApiError } from "@/lib/api";
 import { useSession } from "@/lib/auth";
 import { ROUTES } from "@/lib/routes";
+import { EMAIL_PATTERN, MIN_PASSWORD_LENGTH, REQUIRED_MESSAGE } from "@/lib/utils";
 
 import styles from "./AuthForm.module.css";
-import { EMAIL_PATTERN, MIN_PASSWORD_LENGTH, REQUIRED_MESSAGE } from "./validation";
 
 export interface LoginFormProps {
   /** Where to return to after logging in. `null` falls back to Home, or to
    * Admin when the account's role is `admin`. */
   destination: string | null;
+  /** Set when CU6 (change password) redirected here after closing the
+   * session server-side: shows an explanatory notice instead of a silent,
+   * unexplained login form. */
+  passwordChanged?: boolean;
 }
 
 interface FieldErrors {
@@ -111,7 +115,7 @@ function validate(email: string, password: string): FieldErrors {
 
 /** CU1 - Login form (PAN 04). Rendered inside the white card that
  * `app/login/layout.tsx` provides. */
-export function LoginForm({ destination }: LoginFormProps) {
+export function LoginForm({ destination, passwordChanged }: LoginFormProps) {
   const { login } = useSession();
   const router = useRouter();
 
@@ -172,6 +176,13 @@ export function LoginForm({ destination }: LoginFormProps) {
           <p className={styles.formError} role="alert">
             <Icon name="circle-alert" size={18} />
             {formError}
+          </p>
+        ) : null}
+
+        {passwordChanged && !formError ? (
+          <p className={styles.formNotice} role="status">
+            <Icon name="circle-check" size={18} />
+            Tu contraseña fue actualizada. Iniciá sesión nuevamente.
           </p>
         ) : null}
 

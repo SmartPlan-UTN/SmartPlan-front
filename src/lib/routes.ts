@@ -39,6 +39,19 @@ export function planDetailRoute(id: number): string {
 export const REDIRECT_PARAM = "redirect";
 
 /**
+ * Query parameter that tells the login screen someone landed there because
+ * CU6 (change password) closed their session server-side, so it can show
+ * "Tu contraseña fue actualizada. Iniciá sesión nuevamente." instead of a
+ * silent, unexplained login form.
+ */
+export const PASSWORD_CHANGED_PARAM = "passwordChanged";
+
+/** `/login`, flagged so the screen explains why the session just closed. */
+export function passwordChangedLoginRoute(): string {
+  return `${ROUTES.login}?${PASSWORD_CHANGED_PARAM}=1`;
+}
+
+/**
  * Validates a redirect destination before navigating to it.
  *
  * Only internal routes are accepted: a value like `https://other-site.com` or

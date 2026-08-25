@@ -25,3 +25,20 @@ export async function updateProfile(
 ): Promise<UserProfile> {
   return apiClient.patch<UserProfile>('/users/me', data);
 }
+
+export interface ChangePasswordData {
+  currentPassword: string;
+  newPassword: string;
+}
+
+/**
+ * Changes the signed-in user's password (CU6). 204 with no body on success.
+ * The backend revokes every active session (including this one) and every
+ * pending password-recovery token as part of the same transaction — the
+ * caller is responsible for closing the local session afterward (see
+ * `ChangePasswordForm`, which calls `useSession().logout()`).
+ * Backend contract: `PATCH /users/me/password`.
+ */
+export async function changePassword(data: ChangePasswordData): Promise<void> {
+  await apiClient.patch<void>('/users/me/password', data);
+}

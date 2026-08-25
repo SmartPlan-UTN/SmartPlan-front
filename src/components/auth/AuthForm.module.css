@@ -1,9 +1,10 @@
 /* CU1/CU2 - Login and signup (PAN 04), per the v2 "EMBER" system design.
-   Shared by `PasswordStrength`, `LoginForm`, and `RegisterForm`. Rendered
-   inside the white card that `app/login/layout.tsx` (and its signup
-   counterpart) provides. Field-level styles (label, input, error) live in
-   `components/ui/Field.module.css` — promoted there once CU5's profile
-   form needed the same field. */
+   Shared by `LoginForm` and `RegisterForm`. Rendered inside the white card
+   that `app/login/layout.tsx` (and its signup counterpart) provides.
+   Field-level styles (label, input, error) live in
+   `components/ui/Field.module.css`, and the password-strength meter's in
+   `components/ui/PasswordStrength.module.css` — both promoted there once a
+   second domain (CU5/CU6's profile forms) needed them too. */
 
 /* Literal px below, not the --s-* scale: the v2 prototype gives login and
    register slightly different vertical rhythm (28/20px vs 24/16px) that the
@@ -54,6 +55,26 @@
 .formError svg {
   flex-shrink: 0;
   color: var(--error);
+  margin-top: 2px;
+}
+
+/* Login-only: the explanatory notice after CU6 closes the session
+   server-side ("Tu contraseña fue actualizada..."). Same shape as
+   `.formError`, success palette instead — it's good news, not a warning. */
+.formNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border-radius: var(--r-btn);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  color: var(--fg-1);
+  font-size: var(--t-small);
+}
+
+.formNotice svg {
+  flex-shrink: 0;
+  color: var(--success);
   margin-top: 2px;
 }
 
@@ -123,60 +144,6 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--s-3);
-}
-
-/* ── RegisterForm-only: password strength meter ──────────────────────
-   Reuses the semantic status tokens (not the prototype's literal hex)
-   so weak/medium/strong stay tied to --error/--warning/--success. */
-.strength {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-1);
-  margin-top: 8px;
-}
-
-.strengthBar {
-  display: flex;
-  gap: 6px;
-}
-
-/* 4px tall and a 6px gap, not the prototype's literal 3px/4px: at that size
-   the 3 segments read as one solid bar instead of 3 distinct ones. */
-.strengthSeg {
-  flex: 1;
-  height: 4px;
-  border-radius: var(--r-chip);
-  background: var(--hairline);
-}
-
-.strengthLabel {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.strengthFill1 {
-  background: var(--error);
-}
-
-.strengthFill2 {
-  background: var(--warning);
-}
-
-.strengthFill3 {
-  background: var(--success);
-}
-
-.strengthText1 {
-  color: var(--error);
-}
-
-.strengthText2 {
-  color: var(--warning);
-}
-
-.strengthText3 {
-  color: var(--success);
 }
 
 /* ── RegisterForm-only: terms checkbox ───────────────────────────────

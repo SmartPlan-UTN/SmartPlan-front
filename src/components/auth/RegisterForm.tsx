@@ -4,15 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
-import { Button, Field, Icon } from "@/components/ui";
+import { Button, Field, Icon, PasswordStrength } from "@/components/ui";
 import { useToggle } from "@/hooks";
 import { ApiError } from "@/lib/api";
 import { useSession } from "@/lib/auth";
 import { ROUTES } from "@/lib/routes";
+import { EMAIL_PATTERN, MIN_PASSWORD_LENGTH, REQUIRED_MESSAGE } from "@/lib/utils";
 
 import styles from "./AuthForm.module.css";
-import { PasswordStrength } from "./PasswordStrength";
-import { EMAIL_PATTERN, MIN_PASSWORD_LENGTH, REQUIRED_MESSAGE } from "./validation";
 
 interface FieldErrors {
   name?: string;

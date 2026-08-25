@@ -1,8 +1,8 @@
-/* CU5 - Edit profile (PAN 14), per the v2 "EMBER" system design's
+/* CU5/CU6 - Edit profile (PAN 14), per the v2 "EMBER" system design's
    `Profile.jsx`. The prototype's phone field and avatar upload were left
    out: the backend contract (`GET/PATCH /users/me`) has no fields for
-   either. The password-change and delete-account sections in the same
-   prototype screen are CU6/CU7 — separate tickets, not built here. */
+   either. The delete-account "danger zone" on the same prototype screen is
+   CU7 — a separate ticket, not built here. */
 
 .wrapper {
   display: flex;
@@ -126,6 +126,76 @@
   flex-shrink: 0;
   color: var(--error);
   margin-top: 2px;
+}
+
+/* ── CU6: expandable "Cambiar contraseña" card ──────────────
+   A second `.card`, toggled open/closed — matches `Profile.jsx`'s
+   collapsible password section. */
+.toggleRow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-4) var(--s-6);
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.toggleRow:hover {
+  background: var(--ember-04);
+}
+
+.toggleRowOpen {
+  border-bottom: 1px solid var(--hairline);
+}
+
+.toggleIcon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-btn);
+  background: var(--ember-10);
+  color: var(--ember);
+}
+
+.toggleText {
+  flex: 1;
+}
+
+.toggleTitle {
+  margin: 0;
+  color: var(--fg-1);
+  font-weight: 700;
+}
+
+.toggleSubtitle {
+  margin: 2px 0 0;
+  color: var(--fg-3);
+}
+
+.chevron {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  color: var(--fg-3);
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.passwordForm {
+  padding: var(--s-5) var(--s-6) var(--s-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
 }
 
 /* ── Load state ──────────────────────────────────────────── */

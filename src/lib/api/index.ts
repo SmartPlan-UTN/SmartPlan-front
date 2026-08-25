@@ -25,5 +25,5 @@ export { getApiBaseUrl } from './config';
 export { searchActivities, getActivity, getActivityMapMarkers } from './activities';
 export { searchPlans, getPlan } from './plans';
 export { listCategories } from './categories';
-export { getProfile, updateProfile } from './users';
-export type { UpdateProfileData } from './users';
+export { getProfile, updateProfile, changePassword } from './users';
+export type { UpdateProfileData, ChangePasswordData } from './users';

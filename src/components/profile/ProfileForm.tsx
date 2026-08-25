@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 
 import { Button, Field, Icon } from "@/components/ui";
 import { ApiError, getProfile, updateProfile } from "@/lib/api";
+import { REQUIRED_MESSAGE } from "@/lib/utils";
 import type { UserProfile } from "@/types";
 
 import styles from "./profile.module.css";
@@ -13,7 +14,6 @@ interface FieldErrors {
   lastName?: string;
 }
 
-const REQUIRED_MESSAGE = "Este campo es requerido";
 /** Matches `SmartPlan-back`'s `update-profile.dto.ts`: `name`/`lastName`
  * are each 1-80 characters. */
 const MAX_NAME_LENGTH = 80;
@@ -196,30 +196,26 @@ export function ProfileForm() {
 
   if (status === "loading") {
     return (
-      <div className={styles.wrapper}>
-        <p className="sp-body" role="status">
-          Cargando tu perfil…
-        </p>
-      </div>
+      <p className={`sp-body ${styles.loading}`} role="status">
+        Cargando tu perfil…
+      </p>
     );
   }
 
   if (status === "error" || !profile) {
     return (
-      <div className={styles.wrapper}>
-        <div className={styles.loadError} role="alert">
-          <Icon name="circle-alert" size={24} />
-          <p className="sp-body">No pudimos cargar tu perfil. Intentá de nuevo.</p>
-          <Button
-            type="button"
-            variant="ghostLight"
-            onClick={() => {
-              setRetryToken((token) => token + 1);
-            }}
-          >
-            Reintentar
-          </Button>
-        </div>
+      <div className={styles.loadError} role="alert">
+        <Icon name="circle-alert" size={24} />
+        <p className="sp-body">No pudimos cargar tu perfil. Intentá de nuevo.</p>
+        <Button
+          type="button"
+          variant="ghostLight"
+          onClick={() => {
+            setRetryToken((token) => token + 1);
+          }}
+        >
+          Reintentar
+        </Button>
       </div>
     );
   }
@@ -227,9 +223,7 @@ export function ProfileForm() {
   const initials = `${profile.name[0] ?? ""}${profile.lastName[0] ?? ""}`.toUpperCase();
 
   return (
-    <div className={styles.wrapper}>
-      <h1 className={`sp-h2 ${styles.heading}`}>Mi perfil</h1>
-
+    <>
       <div className={styles.card}>
         <div className={styles.cardHeader} />
 
@@ -317,6 +311,6 @@ export function ProfileForm() {
           Cambios guardados correctamente
         </div>
       ) : null}
-    </div>
+    </>
   );
 }

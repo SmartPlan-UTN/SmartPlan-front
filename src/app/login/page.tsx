@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { LoginForm } from "@/components/auth";
-import { REDIRECT_PARAM, safeDestination } from "@/lib/routes";
+import { PASSWORD_CHANGED_PARAM, REDIRECT_PARAM, safeDestination } from "@/lib/routes";
 
 export const metadata: Metadata = {
   title: "Iniciar sesión",
@@ -17,6 +17,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   // `safeDestination` discards external URLs: without that filter, `?redirect=`
   // would turn the login page into an open redirector to any domain.
   const destination = safeDestination(typeof value === "string" ? value : null);
+  const passwordChanged = parameters[PASSWORD_CHANGED_PARAM] !== undefined;
 
-  return <LoginForm destination={destination} />;
+  return <LoginForm destination={destination} passwordChanged={passwordChanged} />;
 }
