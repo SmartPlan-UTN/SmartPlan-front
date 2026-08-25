@@ -57,6 +57,7 @@
   /* ── Surfaces ────────────────────────────────────── */
   --surface:      var(--cream);
   --surface-card: #FFFCF8;    /* card on cream    */
+  --admin-surface: #FDFBF7;   /* admin canvas from v2 AdminActivities.jsx */
 
   /* ── Borders ─────────────────────────────────────── */
   --hairline:      #E2DDD5;

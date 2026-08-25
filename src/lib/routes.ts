@@ -24,6 +24,10 @@ export const ROUTES = {
   signup: "/signup",
   recoverPassword: "/recover-password",
   admin: "/admin",
+  adminActivities: "/admin/activities",
+  adminPlans: "/admin/plans",
+  adminRatings: "/admin/ratings",
+  adminUsers: "/admin/users",
 } as const;
 
 export type Route = (typeof ROUTES)[keyof typeof ROUTES];

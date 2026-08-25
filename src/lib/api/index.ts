@@ -36,6 +36,13 @@ export {
 } from './plans';
 export { listCategories } from './categories';
 export {
+  changeAdminUserStatus,
+  getAdminUserMetrics,
+  getDashboardMetrics,
+  listAdminUsers,
+  updateAdminUser,
+} from './administration';
+export {
   addActivityToCollection,
   createCollection,
   deleteCollection,
