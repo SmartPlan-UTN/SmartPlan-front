@@ -15,7 +15,7 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 280px));
   gap: var(--s-4);
   margin-top: var(--s-6);
 }
@@ -207,4 +207,58 @@
 .cost {
   color: var(--fg-1);
   font-weight: var(--w-label);
+}
+
+/* Spans the grid so the loader sits centred under the create card, and
+   holds a card's height so the rows below don't jump into place. */
+.loadingRow {
+  grid-column: 1 / -1;
+  min-height: 190px;
+}
+
+@media (max-width: 560px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: var(--s-5);
+  }
+
+  .createCard,
+  .stateCard,
+  .planCard {
+    width: 100%;
+    min-height: 0;
+  }
+
+  .createCard {
+    min-height: 150px;
+  }
+
+  /* Title and actions stop competing for one line: on a narrow card the
+     title wrapped to three lines while the two buttons squeezed it. */
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s-3);
+  }
+
+  .cardActions {
+    align-self: flex-end;
+    margin-top: calc(var(--s-2) * -1);
+  }
+
+  .metaRow {
+    gap: var(--s-2) var(--s-3);
+  }
+
+  .loadingRow {
+    min-height: 220px;
+  }
+}
+
+@media (max-width: 360px) {
+  .metaRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s-2);
+  }
 }

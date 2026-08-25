@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { Screen } from "@/components/layout";
 import { EditPlanForm } from "@/components/plan";
 import { Icon } from "@/components/ui";
 import { parsePositiveIntId } from "@/lib/utils";
@@ -25,7 +26,7 @@ export default async function EditPlanPage({
   }
 
   return (
-    <section className={styles.screen} aria-labelledby="edit-plan-title">
+    <Screen labelledBy="edit-plan-title">
       <header className={styles.header}>
         <Link href={ROUTES.plans} className={styles.backLink}>
           <Icon name="arrow-left" size={14} aria-hidden="true" />
@@ -42,6 +43,6 @@ export default async function EditPlanPage({
       </header>
 
       <EditPlanForm planId={planId} />
-    </section>
+    </Screen>
   );
 }

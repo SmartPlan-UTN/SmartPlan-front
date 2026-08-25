@@ -42,6 +42,21 @@ describe("MyPlansPanel (CU29)", () => {
     resolveWith([mockSummary()]);
   });
 
+  it("shows the waiting animation while the listing is in flight", async () => {
+    // A listing that never settles, so the loading state stays observable.
+    vi.mocked(listOwnPlans).mockReturnValue(new Promise(() => {}));
+    render(<MyPlansPanel />);
+
+    expect(screen.getByRole("status")).toHaveTextContent("Cargando tus planes");
+    // The empty state belongs to a finished, empty listing — not to one
+    // that hasn't answered yet.
+    expect(screen.queryByText(/Todavía no armaste/)).not.toBeInTheDocument();
+    // The create card stays reachable throughout.
+    expect(
+      screen.getByRole("link", { name: /Crear un plan nuevo/ }),
+    ).toBeInTheDocument();
+  });
+
   it("lists the user's plans with their totals", async () => {
     render(<MyPlansPanel />);
 

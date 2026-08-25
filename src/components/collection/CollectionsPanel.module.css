@@ -293,3 +293,10 @@
     padding: var(--s-5);
   }
 }
+
+/* Spans the grid so the loader sits centred under the create card, and
+   holds a card's height so the rows below don't jump into place. */
+.loadingRow {
+  grid-column: 1 / -1;
+  min-height: 180px;
+}

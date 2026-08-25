@@ -4,7 +4,7 @@ import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-import { Button, ConfirmationDialog, Icon } from "@/components/ui";
+import { Button, ConfirmationDialog, Icon, LoadingDots } from "@/components/ui";
 import { useDebouncedValue, useDetailFetch } from "@/hooks";
 import {
   getOwnPlan,
@@ -37,12 +37,7 @@ export function EditPlanForm({ planId }: EditPlanFormProps) {
   if (result.status === "loading") {
     return (
       <div className={activityStyles.stateBlock}>
-        <div className={activityStyles.loadingDots}>
-          <span className={activityStyles.loadingDot} />
-          <span className={activityStyles.loadingDot} />
-          <span className={activityStyles.loadingDot} />
-        </div>
-        <p className="sp-body">Cargando el plan...</p>
+        <LoadingDots label="Cargando el plan..." />
       </div>
     );
   }

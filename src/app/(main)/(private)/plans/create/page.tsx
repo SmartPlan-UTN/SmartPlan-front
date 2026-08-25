@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { Screen } from "@/components/layout";
 import { CreatePlanForm } from "@/components/plan";
 import { Icon } from "@/components/ui";
 import { ROUTES } from "@/lib/routes";
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function CreatePlanPage() {
   return (
-    <section className={styles.screen} aria-labelledby="create-plan-title">
+    <Screen labelledBy="create-plan-title">
       <header className={styles.header}>
         <Link href={ROUTES.plans} className={styles.backLink}>
           <Icon name="arrow-left" size={14} aria-hidden="true" />
@@ -30,6 +31,6 @@ export default function CreatePlanPage() {
       </header>
 
       <CreatePlanForm />
-    </section>
+    </Screen>
   );
 }

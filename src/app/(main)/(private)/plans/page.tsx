@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { Screen } from "@/components/layout";
 import { MyPlansPanel } from "@/components/plan";
 
 import styles from "./plans.module.css";
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function MyPlansPage() {
   return (
-    <section className={styles.screen} aria-labelledby="my-plans-title">
+    <Screen labelledBy="my-plans-title">
       <header className={styles.header}>
         <p className={`sp-label ${styles.eyebrow}`}>Para vos</p>
         <h1 id="my-plans-title" className="sp-h2">
@@ -23,6 +24,6 @@ export default function MyPlansPage() {
       </header>
 
       <MyPlansPanel />
-    </section>
+    </Screen>
   );
 }

@@ -52,7 +52,13 @@ function mockCreatedPlan(): Plan {
   return { id: 7 } as Plan;
 }
 
-/** Types into the activity box and waits for the debounced search. */
+/**
+ * Types into the activity box and waits for the debounced search.
+ *
+ * The generous timeout is the 400ms debounce plus room to spare: with the
+ * whole suite running in parallel this occasionally lost the race at 2s
+ * while passing on its own.
+ */
 async function searchActivity(user: ReturnType<typeof userEvent.setup>) {
   await user.type(
     screen.getByLabelText("Buscar Actividad"),
@@ -61,7 +67,7 @@ async function searchActivity(user: ReturnType<typeof userEvent.setup>) {
   return screen.findByRole(
     "button",
     { name: "+ Agregar" },
-    { timeout: 2000 },
+    { timeout: 5000 },
   );
 }
 
@@ -131,7 +137,7 @@ describe("CreatePlanForm (CU24)", () => {
       () => {
         expect(push).toHaveBeenCalledWith(`${ROUTES.plans}/7`);
       },
-      { timeout: 3000 },
+      { timeout: 5000 },
     );
   });
 
@@ -179,9 +185,12 @@ describe("CreatePlanForm (CU24)", () => {
     );
     await user.click(screen.getByRole("button", { name: "Guardar Plan" }));
 
-    await waitFor(() => {
-      expect(addPlanActivity).toHaveBeenCalledTimes(2);
-    });
+    await waitFor(
+      () => {
+        expect(addPlanActivity).toHaveBeenCalledTimes(2);
+      },
+      { timeout: 5000 },
+    );
     expect(createPlan).toHaveBeenCalledTimes(1);
   });
 

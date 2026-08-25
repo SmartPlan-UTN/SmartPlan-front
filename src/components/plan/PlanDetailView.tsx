@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -11,6 +11,7 @@ import {
   Divider,
   FloatingBackLink,
   Icon,
+  LoadingDots,
   Stars,
 } from "@/components/ui";
 import { useDetailFetch } from "@/hooks";
@@ -125,11 +126,16 @@ function ItineraryStep({
 }
 
 /**
- * Plan detail (CU13, CU26, CU29 · PAN 17), matching
- * SmartPlanSystemDesign/v2/PlanDetail.jsx: a full-bleed dark hero, a
- * timeline itinerary, a dark cost breakdown card, and a non-sticky action
- * row (the mockup keeps it in normal flow, unlike ActivityDetail.jsx's
- * fixed one).
+ * Plan detail (CU13, CU26, CU29 · PAN 17), after
+ * SmartPlanSystemDesign/v2/PlanDetail.jsx: a timeline itinerary, a dark
+ * cost breakdown card, and a non-sticky action row (the mockup keeps it in
+ * normal flow, unlike ActivityDetail.jsx's fixed one).
+ *
+ * The mockup opens on a 300px photo of the place. There are no photos in
+ * the catalog, and standing in a flat gradient with an oversized icon in
+ * the middle spent a third of the first screenful saying nothing, so the
+ * header is sized to its own content and sits on the app's wave background
+ * instead. That also frees the back pill from tracking a dark hero.
  *
  * The mockup's social-proof strip ("312 personas hicieron este plan · 97%
  * lo recomiendan") is fabricated demo data with no backend behind it —
@@ -156,7 +162,6 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
-  const heroRef = useRef<HTMLDivElement>(null);
 
   // Ownership probe (CU25, CU26): see the note above the component.
   useEffect(() => {
@@ -217,12 +222,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
   if (status === "loading") {
     return (
       <div className={activityStyles.stateBlock}>
-        <div className={activityStyles.loadingDots}>
-          <span className={activityStyles.loadingDot} />
-          <span className={activityStyles.loadingDot} />
-          <span className={activityStyles.loadingDot} />
-        </div>
-        <p className="sp-body">Cargando el plan...</p>
+        <LoadingDots label="Cargando el plan..." />
       </div>
     );
   }
@@ -259,132 +259,135 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
 
   return (
     <div>
-      <FloatingBackLink href={ROUTES.explore} label="Volver" heroRef={heroRef} />
+      <FloatingBackLink href={ROUTES.explore} label="Volver" />
 
-      <div className={styles.hero} ref={heroRef}>
-        <Icon name="route" size={110} className={styles.heroIcon} />
-        <Badge variant="cost" className={styles.heroCostBadge}>
-          {formatArs(plan.estimatedTotalCost)}
-        </Badge>
-
-        <div className={styles.heroTitleBlock}>
-          <div className={styles.heroMetaRow}>
-            <Stars rating={plan.averageRating} size={14} />
-            <span>{plan.averageRating.toFixed(1)}</span>
-            <span className={styles.heroMetaDot}>·</span>
-            <span>{formatDuration(plan.estimatedTotalDuration)}</span>
-          </div>
-          <h1 className={styles.heroTitle}>{plan.title}</h1>
-          {routeSummary ? (
-            <div className={styles.heroLocation}>
-              <Icon name="map-pin" size={14} />
-              {routeSummary}
-            </div>
-          ) : null}
+      <header className={styles.planHeader}>
+        <div className={styles.planHeaderMeta}>
+          <Stars rating={plan.averageRating} size={14} />
+          <span>{plan.averageRating.toFixed(1)}</span>
+          <span className={styles.planMetaDot}>·</span>
+          <span>{formatDuration(plan.estimatedTotalDuration)}</span>
+          <Badge variant="cost" className={styles.planCostBadge}>
+            {formatArs(plan.estimatedTotalCost)}
+          </Badge>
         </div>
-      </div>
 
-      <div className={styles.content}>
-        {isCancelled && (
-          <div className={styles.cancelledBanner}>
-            <Icon name="triangle-alert" size={20} />
-            <div>
-              <strong>Plan cancelado:</strong> Este plan se encuentra conservado como historial de lectura y no acepta modificaciones.
-            </div>
-          </div>
-        )}
+        <h1 className={styles.planTitle}>{plan.title}</h1>
 
-        {plan.description ? (
-          <p className={`sp-body-lg ${activityStyles.detailDescription}`}>
-            {plan.description}
+        {routeSummary ? (
+          <p className={styles.planRoute}>
+            <Icon name="map-pin" size={14} aria-hidden="true" />
+            {routeSummary}
           </p>
         ) : null}
+      </header>
 
-        <div className={styles.section}>
-          <p className={activityStyles.sectionLabel}>itinerario</p>
-          {plan.details.map((detail, index) => (
-            <ItineraryStep
-              detail={detail}
-              isFirst={index === 0}
-              isLast={index === plan.details.length - 1}
-              key={detail.id}
-            />
-          ))}
-        </div>
-
-        <div className={styles.costBox}>
-          <p className={styles.costBoxLabel}>estimación de costos</p>
-          <div className={styles.costBreakdown}>
-            {plan.details.map((detail) => (
-              <div className={styles.costRow} key={detail.id}>
-                <span className={styles.costRowLabel}>{detail.activity.name}</span>
-                <span className={styles.costRowValue}>
-                  {formatArs(detail.estimatedCost)}
-                </span>
+      <div className={styles.contentSurface}>
+        <div className={styles.content}>
+          {isCancelled && (
+            <div className={styles.cancelledBanner}>
+              <Icon name="triangle-alert" size={20} />
+              <div>
+                <strong>Plan cancelado:</strong> Este plan se encuentra
+                conservado como historial de lectura y no acepta modificaciones.
               </div>
-            ))}
-          </div>
-          <Divider dark />
-          <div className={styles.costTotalRow}>
-            <span className={styles.costRowLabel}>Total</span>
-            <span className={styles.costTotalValue}>
-              {formatArs(plan.estimatedTotalCost)}
-            </span>
-          </div>
-        </div>
-
-        <div className={styles.actionBar}>
-          {isPlanOwner && !isCancelled && (
-            <>
-              <Link href={planEditRoute(planId)} style={{ textDecoration: "none", display: "flex", flex: 1 }}>
-                <Button
-                  variant="ghostLight"
-                  style={{ width: "100%" }}
-                >
-                  <Icon name="pencil" size={16} aria-hidden="true" />
-                  Editar plan
-                </Button>
-              </Link>
-
-              <Button
-                variant="ghostLight"
-                style={{ flex: 1 }}
-                onClick={() => setShowCancelModal(true)}
-              >
-                <Icon name="trash-2" size={16} aria-hidden="true" />
-                Cancelar plan
-              </Button>
-            </>
+            </div>
           )}
 
-          <Button
-            variant={saved ? "secondary" : "ghostLight"}
-            className={styles.actionFlex1}
-            onClick={() => {
-              setSaved((current) => !current);
-            }}
-          >
-            <Icon name="bookmark" size={16} aria-hidden="true" />
-            {saved ? "¡Guardado!" : "Guardar plan"}
-          </Button>
-          <Button
-            variant="ghost"
-            className={styles.actionShare}
-            onClick={() => {
-              void handleShare();
-            }}
-          >
-            <Icon name="share-2" size={16} aria-hidden="true" />
-            {copied ? "¡Copiado!" : "Compartir"}
-          </Button>
-          <Button
-            variant="primary"
-            className={styles.actionFlex2}
-            disabled
-            title="Próximamente"
-          >
-            Lo quiero hacer →
-          </Button>
+          {plan.description ? (
+            <p className={`sp-body-lg ${activityStyles.detailDescription}`}>
+              {plan.description}
+            </p>
+          ) : null}
+
+          <div className={styles.section}>
+            <p className={activityStyles.sectionLabel}>itinerario</p>
+            {plan.details.map((detail, index) => (
+              <ItineraryStep
+                detail={detail}
+                isFirst={index === 0}
+                isLast={index === plan.details.length - 1}
+                key={detail.id}
+              />
+            ))}
+          </div>
+
+          <div className={styles.costBox}>
+            <p className={styles.costBoxLabel}>estimación de costos</p>
+            <div className={styles.costBreakdown}>
+              {plan.details.map((detail) => (
+                <div className={styles.costRow} key={detail.id}>
+                  <span className={styles.costRowLabel}>
+                    {detail.activity.name}
+                  </span>
+                  <span className={styles.costRowValue}>
+                    {formatArs(detail.estimatedCost)}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <Divider dark />
+            <div className={styles.costTotalRow}>
+              <span className={styles.costRowLabel}>Total</span>
+              <span className={styles.costTotalValue}>
+                {formatArs(plan.estimatedTotalCost)}
+              </span>
+            </div>
+          </div>
+
+          <div className={styles.actionBar}>
+            {isPlanOwner && !isCancelled && (
+              <>
+                <Link
+                  href={planEditRoute(planId)}
+                  style={{ textDecoration: "none", display: "flex", flex: 1 }}
+                >
+                  <Button variant="ghostLight" style={{ width: "100%" }}>
+                    <Icon name="pencil" size={16} aria-hidden="true" />
+                    Editar plan
+                  </Button>
+                </Link>
+
+                <Button
+                  variant="ghostLight"
+                  style={{ flex: 1 }}
+                  onClick={() => setShowCancelModal(true)}
+                >
+                  <Icon name="trash-2" size={16} aria-hidden="true" />
+                  Cancelar plan
+                </Button>
+              </>
+            )}
+
+            <Button
+              variant={saved ? "secondary" : "ghostLight"}
+              className={styles.actionFlex1}
+              onClick={() => {
+                setSaved((current) => !current);
+              }}
+            >
+              <Icon name="bookmark" size={16} aria-hidden="true" />
+              {saved ? "¡Guardado!" : "Guardar plan"}
+            </Button>
+            <Button
+              variant="ghost"
+              className={styles.actionShare}
+              onClick={() => {
+                void handleShare();
+              }}
+            >
+              <Icon name="share-2" size={16} aria-hidden="true" />
+              {copied ? "¡Copiado!" : "Compartir"}
+            </Button>
+            <Button
+              variant="primary"
+              className={styles.actionFlex2}
+              disabled
+              title="Próximamente"
+            >
+              Lo quiero hacer →
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -409,7 +412,6 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           </p>
         </ConfirmationDialog>
       )}
-
     </div>
   );
 }
