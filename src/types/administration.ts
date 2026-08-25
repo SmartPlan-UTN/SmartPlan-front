@@ -1,5 +1,7 @@
 import { BaseEntity } from './common';
+import type { PaginatedResult, SortDirection } from './common';
 import type { User } from './users';
+import type { RoleKey, UserStatusKey } from './users';
 
 /**
  * Possible actions recorded in the audit log.
@@ -102,3 +104,43 @@ export interface DashboardMetrics {
   popularActivities: DashboardPopularActivity[];
   recentActivity: DashboardRecentEntry[];
 }
+
+/** Safe user projection returned by the administration API (CU57). */
+export interface AdminUser {
+  id: number;
+  name: string;
+  lastName: string;
+  email: string;
+  role: { key: string; name: string };
+  status: { key: UserStatusKey; name: string };
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Filters and pagination accepted by `GET /admin/users`. */
+export interface AdminUsersQuery {
+  search?: string;
+  status?: UserStatusKey;
+  page?: number;
+  limit?: number;
+  sortBy?: 'createdAt' | 'name' | 'email' | 'role' | 'status';
+  direction?: SortDirection;
+}
+
+/** Header values for REP-02, assembled from the current users listing contract. */
+export interface AdminUserMetrics {
+  totalUsers: number;
+  activeUsers: number;
+  newUsersThisWeek: number;
+}
+
+/** Editable fields accepted by `PATCH /admin/users/:id`. */
+export interface UpdateAdminUserInput {
+  name?: string;
+  lastName?: string;
+  email?: string;
+  role?: RoleKey;
+  status?: UserStatusKey;
+}
+
+export type AdminUsersResult = PaginatedResult<AdminUser>;
