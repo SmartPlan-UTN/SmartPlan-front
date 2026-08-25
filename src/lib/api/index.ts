@@ -26,9 +26,11 @@ export { searchActivities, getActivity, getActivityMapMarkers } from './activiti
 export { searchPlans, getPlan } from './plans';
 export { listCategories } from './categories';
 export {
+  addActivityToCollection,
   createCollection,
   deleteCollection,
   getCollection,
   listCollections,
+  removeActivityFromCollection,
   updateCollection,
 } from './collections';
