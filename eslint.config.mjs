@@ -5,7 +5,7 @@
 //  ESLint 9 y el único soportado por Next.js 16, donde `next lint` fue
 //  eliminado y el análisis se ejecuta directamente con la CLI de ESLint.
 //
-//  Ejecución:  pnpm lint          -> reporta errores y advertencias
+//  Ejecución:  pnpm lint          -> reporta errors y advertencias
 //              pnpm lint:fix      -> corrige automáticamente lo autocorregible
 // ============================================================================
 
@@ -27,8 +27,8 @@ const eslintConfig = defineConfig([
 
   // --------------------------------------------------------------------
   // 2. ANÁLISIS CON INFORMACIÓN DE TIPOS
-  //    Habilita el "type-aware linting": ESLint consulta el compilador de
-  //    TypeScript para detectar errores que el análisis sintáctico solo no
+  //    Habilita el "type-aware linting": ESLint query el compilador de
+  //    TypeScript para detectar errors que el análisis sintáctico solo no
   //    puede ver (ej.: un `await` faltante sobre una promesa).
   //    Se limita a los archivos .ts/.tsx incluidos en tsconfig.json.
   // --------------------------------------------------------------------
@@ -50,10 +50,10 @@ const eslintConfig = defineConfig([
   {
     files: ["src/**/*.{ts,tsx}"],
     rules: {
-      // ---- Seguridad de tipos ------------------------------------------
+      // ---- Seguridad de types ------------------------------------------
       // Prohíbe `any`: anula las garantías de TypeScript y esconde bugs.
       "@typescript-eslint/no-explicit-any": "error",
-      // Prohíbe la aserción no-nula `!`, que puede provocar errores en runtime.
+      // Prohíbe la aserción no-nula `!`, que puede provocar errors en runtime.
       "@typescript-eslint/no-non-null-assertion": "warn",
 
       // ---- Manejo de promesas (crítico: el front consume la API con axios)
@@ -98,7 +98,7 @@ const eslintConfig = defineConfig([
       // stale closures y renders desincronizados. Por defecto es warning,
       // acá se eleva a error por ser fuente frecuente de bugs.
       "react-hooks/exhaustive-deps": "error",
-      // Obliga <Image> de next/image en lugar de <img> (optimización de LCP).
+      // Obliga <Image> de next/image en place de <img> (optimización de LCP).
       "@next/next/no-img-element": "error",
       // Obliga <Link> de next/link para rutas internas (evita full reload).
       "@next/next/no-html-link-for-pages": "error",
@@ -109,7 +109,7 @@ const eslintConfig = defineConfig([
   // 4. EXCEPCIÓN PARA ARCHIVOS DE CONFIGURACIÓN
   //    Los .mjs de la raíz (este mismo archivo, postcss.config.mjs) no están
   //    dentro del proyecto de TypeScript, por lo que se los excluye del
-  //    análisis con tipos para que el parser no falle.
+  //    análisis con types para que el parser no falle.
   // --------------------------------------------------------------------
   {
     files: ["*.mjs", "*.js"],
@@ -125,11 +125,11 @@ const eslintConfig = defineConfig([
   //    Código generado o de terceros: no se analiza.
   // --------------------------------------------------------------------
   globalIgnores([
-    ".next/**", // build de desarrollo/producción de Next.js
+    ".next/**", // build de desarrolelo/producción de Next.js
     "out/**", // export estático
     "build/**", // artefactos de compilación
     "node_modules/**", // dependencias de terceros
-    "next-env.d.ts", // tipos autogenerados por Next.js
+    "next-env.d.ts", // types autogenerados por Next.js
   ]),
 ]);
 

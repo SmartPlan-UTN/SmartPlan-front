@@ -1,267 +1,285 @@
 ---
 name: smartplan-frontend
-description: Convenciones del frontend Next.js 16 — estructura, Tailwind 4, guía visual, consumo de la API. Leer antes de escribir cualquier componente o página.
+description: Next.js 16 frontend conventions — structure, Tailwind 4, visual guide, API consumption. Read before writing any component or page.
 ---
 
-# SmartPlan Front — Convenciones
+# SmartPlan Front - Conventions
 
-Específico de `SmartPlan-front`.
+Specific to `SmartPlan-front`.
 
-## ⚠️ Antes de escribir código de Next.js
+## ⚠️ Before writing Next.js code
 
-**Esta versión de Next.js no es la que conocés.** El repositorio usa Next.js
-`16.2.3`, que trae cambios de ruptura en APIs, convenciones y estructura de
-archivos respecto de versiones anteriores.
+**This version of Next.js is not the one you know.** The repository uses
+Next.js `16.2.3`, which brings breaking changes in APIs, conventions, and
+file structure compared to previous versions.
 
-**Leé la guía correspondiente en `node_modules/next/dist/docs/` antes de escribir
-código**, y prestá atención a los avisos de deprecación. No asumas APIs de memoria.
+**Read the relevant guide in `node_modules/next/dist/docs/` before writing
+code**, and pay attention to deprecation notices. Don't assume APIs from memory.
 
-Un ejemplo concreto de por qué importa: `next lint` **fue eliminado** en Next.js 16.
-El análisis estático se ejecuta con la CLI de ESLint directamente.
+A concrete example of why it matters: `next lint` **was removed** in Next.js 16.
+Static analysis runs directly through the ESLint CLI.
 
 ## Stack
 
-| Pieza | Versión | Nota |
+| Piece | Version | Note |
 |---|---|---|
 | Next.js | 16.2.3 | App Router |
 | React | 19.2.4 | |
 | TypeScript | 5.x | `strict: true` |
-| Tailwind CSS | 4.x | vía `@tailwindcss/postcss` |
-| axios | 1.15.x | consumo de la API |
-| lucide-react | 1.8.x | iconografía |
-| ESLint | 9.x | ver `skills/04-calidad/` |
+| Tailwind CSS | 4.x | via `@tailwindcss/postcss` |
+| axios | 1.15.x | API consumption |
+| lucide-react | 1.8.x | iconography |
+| ESLint | 9.x | see `skills/04-quality/` |
 
-Gestor de paquetes: **pnpm**. No uses `npm install` ni `yarn` — romperías el
-lockfile.
+Package manager: **pnpm**. Don't use `npm install` or `yarn` — it would break
+the lockfile.
 
-## Comandos
+## Commands
 
 ```bash
-pnpm install      # instalar dependencias
-pnpm dev          # servidor de desarrollo
-pnpm build        # build de producción
-pnpm lint         # análisis estático
-pnpm lint:fix     # corrige lo autocorregible
+pnpm install      # install dependencies
+pnpm dev          # development server
+pnpm build        # production build
+pnpm lint         # static analysis
+pnpm lint:fix     # fix what's auto-fixable
 ```
 
-## Estructura
+## Structure
 
-La dejó armada F19. Así está hoy:
+Set up by F19. This is what it looks like today:
 
 ```
 src/
-├── app/                    rutas (App Router)
-│   ├── layout.tsx          html/body, fuente y SesionProvider
-│   ├── not-found.tsx       404 de toda la aplicación
+├── app/                    routes (App Router)
+│   ├── layout.tsx          html/body, font, and SessionProvider
+│   ├── not-found.tsx       404 for the whole application
 │   ├── globals.css
-│   ├── (auth)/             login, registro y recuperar contraseña, sin navbar
-│   ├── (main)/             pantallas con navbar
-│   │   ├── layout.tsx      navbar + contenedor del contenido
-│   │   ├── page.tsx        inicio
-│   │   ├── explorar/
-│   │   └── (privado)/      lo que exige sesión: favoritos, historial,
-│   │       └── layout.tsx  perfil, preferencias. El layout es RutaProtegida
-│   └── admin/              panel de administración
+│   ├── (auth)/             login, signup, and password recovery, no navbar
+│   ├── (main)/             screens with a navbar
+│   │   ├── layout.tsx      navbar + content container
+│   │   ├── page.tsx        home
+│   │   ├── explore/
+│   │   └── (private)/      what requires a session: favorites, history,
+│   │       └── layout.tsx  profile, preferences. The layout uses ProtectedRoute
+│   └── admin/              administration panel
 ├── components/
-│   ├── ui/                 primitivos del design system
-│   ├── layout/             navbar, menú de usuario y contenedores
-│   ├── auth/               guardián de rutas
-│   └── <dominio>/          componentes por dominio (plan, actividad, coleccion)
-├── hooks/                  hooks de React
+│   ├── ui/                 design system primitives
+│   ├── layout/             navbar, user menu, and containers
+│   ├── auth/               route guard
+│   └── <domain>/           components by domain (plan, activity, collection)
+├── hooks/                  React hooks
 ├── lib/
-│   ├── api/                cliente axios y llamadas por módulo
-│   ├── auth/               estado de sesión: token, provider y hook
-│   ├── utils/              helpers sin dominio
-│   └── rutas.ts            mapa de rutas de la aplicación
-├── styles/                 tokens del design system
-├── test/                   setup y mocks de Vitest
-└── types/                  tipos del dominio
+│   ├── api/                axios client and per-module calls
+│   ├── auth/               session state: token, provider, and hook
+│   ├── utils/               domain-agnostic helpers
+│   └── routes.ts           application route map
+├── styles/                 design system tokens
+├── test/                   Vitest setup and mocks
+└── types/                  domain types
 ```
 
-Cada carpeta con más de un archivo público expone un barrel (`index.ts`) y se
-importa desde ahí: `@/components/ui`, `@/components/layout`, `@/components/auth`,
-`@/lib/api`, `@/lib/auth`, `@/lib/utils`. No importes los archivos internos.
+Every folder with more than one public file exposes a barrel (`index.ts`) and
+is imported from there: `@/components/ui`, `@/components/layout`,
+`@/components/auth`, `@/lib/api`, `@/lib/auth`, `@/lib/utils`. Don't import
+the internal files.
 
-El alias `@/*` apunta a `./src/*` (definido en `tsconfig.json`). Usalo en lugar de
-rutas relativas largas.
+The `@/*` alias points to `./src/*` (defined in `tsconfig.json`). Use it
+instead of long relative paths.
 
-## Layout, navegación y sesión
+## Layout, navigation, and session
 
-### Dónde va una pantalla nueva
+### Where a new screen goes
 
-| La pantalla… | Va en | Qué hereda |
+| The screen... | Goes in | Inherits |
 |---|---|---|
-| es pública | `app/(main)/<ruta>/page.tsx` | navbar y contenedor |
-| exige sesión | `app/(main)/(privado)/<ruta>/page.tsx` | navbar, contenedor y `RutaProtegida` |
-| es de sesión (login, registro…) | `app/(auth)/<ruta>/page.tsx` | superficie oscura, sin navbar |
-| es de administración | `app/admin/<ruta>/page.tsx` | navbar y `RutaProtegida` |
+| is public | `app/(main)/<route>/page.tsx` | navbar and container |
+| requires a session | `app/(main)/(private)/<route>/page.tsx` | navbar, container, and `ProtectedRoute` |
+| is a session screen (login, signup...) | `app/(auth)/<route>/page.tsx` | dark surface, no navbar |
+| is an admin screen | `app/admin/<route>/page.tsx` | navbar and `ProtectedRoute` |
 
-Los paréntesis son [grupos de ruta](https://nextjs.org/docs/app/api-reference/file-conventions/route-groups):
-organizan carpetas sin aparecer en la URL. `(main)/(privado)/favoritos` es
-`/favoritos`.
+The parentheses are [route groups](https://nextjs.org/docs/app/api-reference/file-conventions/route-groups):
+they organize folders without appearing in the URL. `(main)/(private)/favorites`
+is `/favorites`.
 
-**Una pantalla se protege por dónde vive, no por lo que escribe.** Crearla dentro
-de `(privado)` alcanza: el layout del grupo la envuelve en `RutaProtegida`.
+**A screen is protected by where it lives, not by what it writes.** Creating
+it inside `(private)` is enough: the group's layout wraps it in `ProtectedRoute`.
 
-### Ancho del contenido
+### Content width
 
-El `<main>` **no impone ancho**. Las pantallas que no van a fondo completo se
-envuelven en `Contenedor`, que aplica los 1200px de `--max-w` y el aire de
-sección:
-
-```tsx
-import { Contenedor } from "@/components/layout";
-
-<Contenedor>{/* la pantalla */}</Contenedor>
-```
-
-El grupo `(privado)` y `admin/` ya lo ponen en su layout, así que sus pantallas
-no lo repiten. Las públicas lo eligen: el hero del inicio, con `MoodBackground`
-detrás, va a fondo completo, y un contenedor impuesto desde el layout lo dejaría
-encajonado.
-
-### Rutas
-
-Las rutas se escriben una sola vez, en [`src/lib/rutas.ts`](../../src/lib/rutas.ts):
+The `<main>` **does not constrain width**. Screens that don't go full-bleed
+wrap themselves in `Container`, which applies the 1200px `--max-w` and the
+section's vertical spacing:
 
 ```tsx
-import { RUTAS } from "@/lib/rutas";
+import { Container } from "@/components/layout";
 
-<Link href={RUTAS.favoritos}>Favoritos</Link>
+<Container>{/* the screen */}</Container>
 ```
 
-Nunca pongas el string a mano en un `<Link>`: cuando la carpeta se renombra, la
-constante rompe la compilación y el string se rompe en silencio.
+The `(private)` group and `admin/` already set it in their layout, so their
+screens don't repeat it. Public screens opt in: the home hero, with
+`MoodBackground` behind it, goes full-bleed, and a container imposed from
+the layout would box it in.
+
+### Routes
+
+Routes are written once, in [`src/lib/routes.ts`](../../src/lib/routes.ts):
+
+```tsx
+import { ROUTES } from "@/lib/routes";
+
+<Link href={ROUTES.favorites}>Favoritos</Link>
+```
+
+Never hand-write the string in a `<Link>`: when the folder is renamed, the
+constant breaks the build and the string breaks silently.
 
 ### Navbar
 
-`Navbar` (en `@/components/layout`) es la barra de 60px (`--navbar-h`) con
-`backdrop-filter`, fija arriba. Lleva Inicio, Explorar, Favoritos e Historial, y
-el menú de usuario con Mi perfil, Preferencias y Cerrar sesión. Debajo de 900px
-los enlaces se pliegan en un panel.
+`Navbar` (in `@/components/layout`) is the 60px bar (`--navbar-h`) with
+`backdrop-filter`, fixed at the top. It carries Inicio, Explorar, Favoritos,
+and Historial, plus the user menu with Mi perfil, Preferencias, and Cerrar
+sesión. Below 900px the links collapse into a panel.
 
-Los destinos salen de `ENLACES_PRINCIPALES` y `ENLACES_USUARIO`
-([`enlaces.ts`](../../src/components/layout/enlaces.ts)): para agregar uno, sumá
-la entrada ahí, no un `<Link>` suelto en el JSX.
+**The navbar's inner row is not capped at `Container`'s `--max-w`.** Unlike
+every screen's content, `.navbarInner` spans the full window width (48px
+side padding above 900px) to match `SmartPlanSystemDesign/v2/Navbar.jsx` —
+see the note in `skills/06-design-system/SKILL.md`'s Layout section before
+"fixing" it to look consistent with the boxed content below it.
 
-Favoritos e Historial se muestran también sin sesión. Quien entre sin estar
-logueado llega a la ruta y el guardián lo manda al login: esconder los enlaces
-dejaría la aplicación sin pistas de qué hay detrás de la cuenta.
+Destinations come from `MAIN_LINKS` and `USER_LINKS`
+([`links.ts`](../../src/components/layout/links.ts)): to add one, add the
+entry there, not a loose `<Link>` in the JSX.
 
-### Sesión
+Favoritos and Historial are also shown without a session. Someone who enters
+without being logged in lands on the route and the guard sends them to
+login: hiding the links would leave the application with no hints about
+what's behind the account.
 
-El estado vive en `SesionProvider`, montado una vez en `app/layout.tsx`. Se lee
-con `useSesion()`:
+### Session
+
+The state lives in `SessionProvider`, mounted once in `app/layout.tsx`.
+It's read with `useSession()`:
 
 ```tsx
 "use client";
-import { useSesion } from "@/lib/auth";
+import { useSession } from "@/lib/auth";
 
-const { estado, autenticado, iniciarSesion, cerrarSesion } = useSesion();
+const { status, authenticated, login, logout } = useSession();
 ```
 
-`estado` es `"cargando" | "autenticado" | "anonimo"`. **Contemplá siempre
-`cargando`**: el token vive en el navegador, así que en el primer render —el que
-se genera en el servidor— todavía no se sabe si hay sesión.
+`status` is `"loading" | "authenticated" | "anonymous"`. **Always account
+for `loading`**: the access token lives only in memory (CU1 decision — see
+below), so on every fresh page load it's rebuilt from scratch and, until
+that resolves, it's not yet known whether there's a session.
 
-El provider además le enseña al cliente HTTP de dónde sacar el token
-(`setTokenGetter`) y cierra la sesión cuando la API responde 401
-(`onUnauthorized`). Cuando se implemente CU1, el login solo tiene que llamar a
-`iniciarSesion(token)` con el JWT que devuelva el back.
+The provider also tells the HTTP client where to get the token from
+(`setTokenGetter`) and closes the session when the API responds with 401
+(`onUnauthorized`). `login(credentials)` (`@/lib/auth`) calls `POST
+/sessions`, stores the access token and the user in memory on success, and
+resolves with the user — use its `role.key` to decide where to redirect
+before the destination-preserving fallback (`ROUTES.home`).
 
-### Rutas protegidas
+**The access token is never persisted** (no `localStorage`, no readable
+cookie): it lives only in a `SessionProvider` ref, for the lifetime of the
+tab. Session persistence across a reload comes from `POST
+/sessions/refresh`, called once on mount, which rehydrates the session from
+the `smartplan_refresh` `httpOnly` cookie the backend sets on login. The
+frontend never reads or writes that cookie directly; `withCredentials: true`
+on the shared Axios instance (`@/lib/api/client.ts`) is what makes the
+browser send it automatically. See `@/lib/auth/api.ts` for the full CU1-CU4
+contract this implements.
 
-`RutaProtegida` muestra el contenido si hay sesión, un estado de espera mientras
-se resuelve, y si no hay token reemplaza la ruta por `/login?redirect=<ruta>`.
-El destino se valida con `destinoSeguro()` antes de usarlo: sin ese filtro,
-`?redirect=https://otro-sitio.com` convertiría el login en un redirector abierto.
+### Protected routes
 
-> **Es una barrera de navegación, no de seguridad.** El JWT vive en
-> `localStorage`, que el servidor no ve: ni `proxy.ts` ni un Server Component
-> pueden decidir si hay sesión. Quien autoriza de verdad es el back en cada
-> request. Si CU1 decide guardar el token en una cookie `httpOnly`, la
-> comprobación se puede mover al servidor sin tocar las pantallas.
+`ProtectedRoute` shows the content when there's a session, a waiting state
+while it resolves, and if there's no token it replaces the route with
+`/login?redirect=<route>`. The destination is validated with
+`safeDestination()` before use: without that filter,
+`?redirect=https://other-site.com` would turn login into an open redirector.
 
-Para probar el guardián a mano, mientras el login no exista:
+> **It's a navigation barrier, not a security one.** The access token lives
+> only in memory, which the server can't see: neither `proxy.ts` nor a
+> Server Component can decide whether there's a session. What actually
+> authorizes is the backend on every request. Only the *refresh* token moved
+> to an `httpOnly` cookie (CU1); the access token would have to as well for
+> this check to move to the server, and nothing currently plans that.
 
-```js
-// consola del navegador
-localStorage.setItem("smartplan_token", "lo-que-sea"); // entra
-localStorage.removeItem("smartplan_token");            // lo expulsa al login
-```
+To test the guard by hand, without a real backend session: mock
+`refreshSession` (`@/lib/auth/api`) to resolve or reject, the way
+`Navbar.test.tsx` and `ProtectedRoute.test.tsx` do. There's no `localStorage`
+trick anymore — the token was deliberately taken out of any storage an XSS
+payload could read.
 
-### PantallaPendiente
+### PendingScreen
 
-Las pantallas cuyo CU todavía no se implementó usan `PantallaPendiente`: título,
-descripción y trazabilidad (`"CU39–CU43 · PAN 12"`). Está para que la navegación
-se pueda recorrer entera sin chocar con un 404. **Se borra al implementar la
-pantalla**; cuando no quede ninguna, se borra el componente.
+Screens whose CU hasn't been implemented yet use `PendingScreen`: title,
+description, and traceability (`"CU39–CU43 · PAN 12"`). It exists so the
+navigation can be fully exercised without hitting a 404. **It gets removed
+once the screen is implemented**; once none remain, the component is removed.
 
-## Nombres
+## Names
 
-| Qué | Convención | Ejemplo |
+| What | Convention | Example |
 |---|---|---|
-| Componentes | `PascalCase` | `PlanCard.tsx` |
-| Hooks | `camelCase` con prefijo `use` | `usePlanes.ts` |
-| Carpetas de ruta | `kebab-case` | `app/consultar-plan/` |
-| Tipos del dominio | `PascalCase`, en español | `DetallePlan` |
+| Components | `PascalCase` | `PlanCard.tsx` |
+| Hooks | `camelCase` with a `use` prefix | `usePlans.ts` |
+| Route folders | `kebab-case` | `app/view-plan/` |
+| Domain types | `PascalCase`, in English | `PlanDetail` |
 
-Los nombres del dominio van **en español** (ver `skills/01-dominio/`). El código
-técnico (hooks, utilidades, props) puede ir en inglés si es más natural.
+Domain names are **in English** (see `skills/01-domain/`), same as the rest
+of the technical code (hooks, utilities, props).
 
-## Consumo de la API
+## API consumption
 
-- Todas las llamadas pasan por el cliente HTTP centralizado en `src/lib/api/` (`import { apiClient } from '@/lib/api'`). **No instancies Axios suelto en componentes o servicios**.
-- La URL base se configura dinámicamente mediante `NEXT_PUBLIC_API_URL` (definida en `.env.local`, ver `.env.example`).
-- **Autenticación JWT**: El cliente inyecta automáticamente `Authorization: Bearer <token>` cuando hay un token disponible. Por defecto consulta `localStorage` de forma SSR-safe. Se puede registrar un proveedor de token dinámico mediante `setTokenGetter(customGetter)`.
-- **Manejo de errores**: Las peticiones fallidas arrojan una instancia de `ApiError` (`import { ApiError } from '@/lib/api'`).
-  - `error.es401`: Sesión o token inválido (desencadena automáticamente eventos registrados en `onUnauthorized(cb)`).
-  - `error.es403`: Falta de permisos (no borra la sesión).
-  - `error.esRed`: Problemas de red o tiempo de espera (timeout).
-  - `error.mensaje`: Mensaje descriptivo retornado por el backend o fallback formateado.
-- **Toda promesa se maneja.** ESLint tiene `@typescript-eslint/no-floating-promises` en error: una promesa sin `await` ni `.catch()` romperá el build.
+- All calls go through the centralized HTTP client in `src/lib/api/` (`import { apiClient } from '@/lib/api'`). **Don't instantiate a loose Axios in components or services**.
+- The base URL is configured dynamically through `NEXT_PUBLIC_API_URL` (defined in `.env.local`, see `.env.example`).
+- **JWT authentication**: the client automatically injects `Authorization: Bearer <token>` when a token is available. By default it reads `localStorage` in an SSR-safe way. A dynamic token provider can be registered with `setTokenGetter(customGetter)`.
+- **Error handling**: failed requests throw an `ApiError` instance (`import { ApiError } from '@/lib/api'`).
+  - `error.isUnauthorized`: invalid or missing session token (automatically triggers events registered with `onUnauthorized(cb)`).
+  - `error.isForbidden`: insufficient permissions (does not clear the session).
+  - `error.isNetworkError`: network problems or a timeout.
+  - `error.message`: descriptive message returned by the backend (the backend's `message` field) or a formatted fallback.
+- **Every promise is handled.** ESLint has `@typescript-eslint/no-floating-promises` set to error: a promise without `await` or `.catch()` will break the build.
 
 ```ts
 import { apiClient, ApiError } from '@/lib/api';
 import type { Plan } from '@/types';
 
-// Ejemplo de consumo en un servicio
-export async function obtenerPlan(id: number): Promise<Plan> {
+// Example usage in a service
+export async function getPlan(id: number): Promise<Plan> {
   try {
-    return await apiClient.get<Plan>(`/planes/${id}`);
+    return await apiClient.get<Plan>(`/plans/${id}`);
   } catch (error) {
-    if (error instanceof ApiError && error.es404) {
-      // Manejo específico si es necesario
+    if (error instanceof ApiError && error.status === 404) {
+      // Specific handling if needed
     }
     throw error;
   }
 }
 ```
 
-## Guía visual
+## Visual guide
 
-El design system completo —paleta, tipografía, espaciado, radios, componentes
-primitivos y voz de marca— está en **[`skills/06-design-system/`](../06-design-system/SKILL.md)**.
-Leelo antes de escribir cualquier estilo.
+The complete design system —palette, typography, spacing, radii, primitive
+components, and brand voice— is in
+**[`skills/06-design-system/`](../06-design-system/SKILL.md)**. Read it
+before writing any style.
 
-Los tokens vigentes están en [`src/styles/tokens.css`](../../src/styles/tokens.css) y
-los logos en [`public/brand/`](../../public/brand/).
+The current tokens are in
+[`src/styles/tokens.css`](../../src/styles/tokens.css) and the logos in
+[`public/brand/`](../../public/brand/).
 
-Resumen de la paleta: `--ember #E85D20` (primario) · `--char #1A1109` (texto y
-superficies oscuras) · `--cream #F5F0E8` (fondo) · `--electric #2B5BFF` (IA) ·
-`--gold #FFD166` (valoraciones).
+Palette summary: `--ember #E85D20` (primary) · `--char #1A1109` (text and
+dark surfaces) · `--cream #F5F0E8` (background) · `--electric #2B5BFF` (AI) ·
+`--gold #FFD166` (ratings).
 
-**Nunca escribas un hex a mano**: usá la variable CSS.
+**Never hand-write a hex value**: use the CSS variable.
 
-> **Discrepancia pendiente:** `src/app/layout.tsx` todavía carga **Geist** y
-> **Geist Mono**, que vienen del template de `create-next-app`. El design system
-> define **Bricolage Grotesque**, ya self-hosted en `src/app/fonts/`. Falta
-> cablearlo con `next/font/local`.
+## Accessibility and performance
 
-## Accesibilidad y rendimiento
+These rules are active as **errors** in ESLint, not suggestions:
 
-Estas reglas están activas como **error** en ESLint, no son sugerencias:
-
-- Usá `<Image>` de `next/image`, nunca `<img>` (afecta el LCP).
-- Usá `<Link>` de `next/link` para rutas internas, nunca `<a>` (evita full reload).
-- Las dependencias de `useEffect` / `useMemo` / `useCallback` deben estar completas.
+- Use `<Image>` from `next/image`, never `<img>` (affects LCP).
+- Use `<Link>` from `next/link` for internal routes, never `<a>` (avoids a full reload).
+- `useEffect` / `useMemo` / `useCallback` dependencies must be complete.

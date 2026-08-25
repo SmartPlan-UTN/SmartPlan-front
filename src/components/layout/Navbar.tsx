@@ -2,86 +2,108 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Icon, Logo } from "@/components/ui";
-import { RUTAS } from "@/lib/rutas";
+import { ROUTES } from "@/lib/routes";
+import { cn } from "@/lib/utils";
 
-import { EnlaceNav } from "./EnlaceNav";
-import { ENLACES_PRINCIPALES } from "./enlaces";
-import { MenuUsuario } from "./MenuUsuario";
+import { NavLink } from "./NavLink";
+import { MAIN_LINKS } from "./links";
+import { UserMenu } from "./UserMenu";
 import styles from "./layout.module.css";
 
 /**
- * Barra de navegación de 60px (`--navbar-h`), fija arriba y con
- * `backdrop-filter` sobre el contenido, como pide el design system EMBER.
+ * 60px navigation bar (`--navbar-h`), fixed at the top with a
+ * `backdrop-filter` over the content, as required by the EMBER design system.
  *
- * Debajo de 900px los enlaces se pliegan en un panel desplegable; el menú de
- * usuario se mantiene visible en todos los tamaños.
+ * Always the light variant (cream, ink logo, dark text): the
+ * SmartPlanSystemDesign prototype's `Navbar` component still has a `dark`
+ * prop, but the shipped build hardcodes it to light for every screen. The
+ * border below the bar stays transparent until the page scrolls, same as
+ * the prototype.
+ *
+ * Below 900px the links collapse into a dropdown panel; the user menu
+ * stays visible at every size.
  */
 export function Navbar() {
-  const [menuAbierto, setMenuAbierto] = useState(false);
-  const rutaActual = usePathname();
-  const [rutaDelMenu, setRutaDelMenu] = useState(rutaActual);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const currentRoute = usePathname();
+  const [menuRoute, setMenuRoute] = useState(currentRoute);
 
-  // Navegar tiene que cerrar el panel: si no, la pantalla nueva aparece tapada.
-  // Se ajusta durante el render en vez de con un efecto, que dispararía un
-  // segundo render con el panel todavía abierto:
+  // Navigating has to close the panel: otherwise the new screen appears
+  // covered. This is adjusted during render instead of with an effect,
+  // which would trigger a second render with the panel still open:
   // https://react.dev/learn/you-might-not-need-an-effect
-  if (rutaActual !== rutaDelMenu) {
-    setRutaDelMenu(rutaActual);
-    setMenuAbierto(false);
+  if (currentRoute !== menuRoute) {
+    setMenuRoute(currentRoute);
+    setMenuOpen(false);
   }
 
+  useEffect(() => {
+    const onScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+
   return (
-    <header className={styles.navbar}>
-      <div className={styles.barra}>
-        <Link href={RUTAS.inicio} className={styles.marca}>
-          <Logo variant="white" kind="full" height={22} priority />
+    <header
+      className={cn(styles.navbar, scrolled && styles.navbarScrolled)}
+    >
+      <div className={styles.navbarInner}>
+        <Link href={ROUTES.home} className={styles.brand}>
+          <Logo variant="ink" kind="full" height={22} priority />
         </Link>
 
-        <nav className={styles.navegacion} aria-label="Navegación principal">
-          {ENLACES_PRINCIPALES.map((enlace) => (
-            <EnlaceNav
-              key={enlace.href}
-              href={enlace.href}
-              etiqueta={enlace.etiqueta}
-              icono={enlace.icono}
+        <nav className={styles.nav} aria-label="Navegación principal">
+          {MAIN_LINKS.map((link) => (
+            <NavLink
+              key={link.href}
+              href={link.href}
+              label={link.label}
+              icon={link.icon}
             />
           ))}
         </nav>
 
-        <MenuUsuario />
+        <UserMenu />
 
         <button
           type="button"
-          className={styles.botonMenu}
-          aria-expanded={menuAbierto}
-          aria-controls="navegacion-plegable"
-          aria-label={menuAbierto ? "Cerrar la navegación" : "Abrir la navegación"}
+          className={styles.menuButton}
+          aria-expanded={menuOpen}
+          aria-controls="collapsible-navigation"
+          aria-label={menuOpen ? "Cerrar la navegación" : "Abrir la navegación"}
           onClick={() => {
-            setMenuAbierto((estaAbierto) => !estaAbierto);
+            setMenuOpen((isOpen) => !isOpen);
           }}
         >
-          <Icon name={menuAbierto ? "x" : "menu"} size={20} />
+          <Icon name={menuOpen ? "x" : "menu"} size={20} />
         </button>
       </div>
 
-      {menuAbierto ? (
+      {menuOpen ? (
         <nav
-          id="navegacion-plegable"
-          className={styles.panelMovil}
+          id="collapsible-navigation"
+          className={styles.mobilePanel}
           aria-label="Navegación principal plegable"
         >
-          {ENLACES_PRINCIPALES.map((enlace) => (
-            <EnlaceNav
-              key={enlace.href}
-              href={enlace.href}
-              etiqueta={enlace.etiqueta}
-              icono={enlace.icono}
-              variante="opcion"
-              onNavegar={() => {
-                setMenuAbierto(false);
+          {MAIN_LINKS.map((link) => (
+            <NavLink
+              key={link.href}
+              href={link.href}
+              label={link.label}
+              icon={link.icon}
+              variant="option"
+              onNavigate={() => {
+                setMenuOpen(false);
               }}
             />
           ))}

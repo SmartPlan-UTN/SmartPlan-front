@@ -1,32 +1,33 @@
 ---
 name: smartplan-testing-frontend
-description: Cómo escribir y ejecutar tests de componentes y hooks con Vitest y React Testing Library. Leer antes de agregar o modificar tests del frontend.
+description: How to write and run component and hook tests with Vitest and React Testing Library. Read before adding or modifying frontend tests.
 ---
 
-# SmartPlan Front — Testing
+# SmartPlan Front - Testing
 
 ## Stack
 
-Los tests unitarios usan **Vitest**, **React Testing Library** y **jsdom**. Esta
-combinación permite probar el comportamiento observable de componentes y hooks
-sin levantar el servidor de Next.js.
+Unit tests use **Vitest**, **React Testing Library**, and **jsdom**. This
+combination allows testing the observable behavior of components and hooks
+without spinning up the Next.js server.
 
-Vitest no soporta Server Components asíncronos. Esos flujos se prueban con tests
-end-to-end cuando el proyecto incorpore esa infraestructura; los componentes de
-cliente y los Server Components sincrónicos sí pueden cubrirse con unitarios.
+Vitest doesn't support asynchronous Server Components. Those flows are
+tested with end-to-end tests once the project adopts that infrastructure;
+client components and synchronous Server Components can be covered with
+unit tests.
 
-## Comandos
+## Commands
 
 ```bash
-pnpm test          # una corrida completa; es el comando usado por CI
-pnpm test:watch    # vuelve a ejecutar los tests afectados mientras trabajás
+pnpm test          # a single full run; this is the command CI uses
+pnpm test:watch    # reruns affected tests while you work
 ```
 
-Antes de abrir un PR deben pasar `pnpm lint`, `pnpm test` y `pnpm build`.
+`pnpm lint`, `pnpm test`, and `pnpm build` must all pass before opening a PR.
 
-## Ubicación y nombres
+## Location and naming
 
-Los tests se colocan junto al código que cubren:
+Tests are placed next to the code they cover:
 
 ```text
 src/components/ui/Button.tsx
@@ -35,43 +36,44 @@ src/hooks/useToggle.ts
 src/hooks/useToggle.test.ts
 ```
 
-Usá `.test.tsx` cuando el archivo renderiza JSX y `.test.ts` para hooks o lógica
-sin JSX. El setup común vive en `src/test/setup.ts`; no repitas `cleanup` ni la
-configuración de `jest-dom` en cada suite.
+Use `.test.tsx` when the file renders JSX and `.test.ts` for hooks or logic
+without JSX. The shared setup lives in `src/test/setup.ts`; don't repeat
+`cleanup` or `jest-dom` configuration in every suite.
 
-Solo `.test.ts` y `.test.tsx` se ejecutan. Un archivo que se verifica al
-compilar y no en runtime —como `src/types/catalogos.type-check.ts`— no lleva ese
-sufijo, justamente para que se note que lo valida `pnpm build` y no `pnpm test`.
+Only `.test.ts` and `.test.tsx` run. A file that's checked at compile time
+instead of at runtime —like `src/types/catalogs.type-check.ts`— doesn't
+carry that suffix, precisely so it's clear `pnpm build` validates it, not
+`pnpm test`.
 
-## Componentes
+## Components
 
-- Consultá por rol, nombre accesible, label o texto visible. Evitá `data-testid`
-  salvo que no exista una alternativa semántica.
-- Interactuá mediante `userEvent`, porque reproduce mejor la secuencia real de
-  eventos que invocar handlers directamente.
-- Verificá resultados visibles y callbacks públicos, no clases internas ni
-  detalles de implementación.
-- Para operaciones asíncronas, esperá la interacción y usá `findBy*` o
-  `waitFor` cuando corresponda. Toda promesa debe quedar manejada.
+- Query by role, accessible name, label, or visible text. Avoid
+  `data-testid` unless there's no semantic alternative.
+- Interact through `userEvent`, since it better reproduces the real
+  sequence of events than calling handlers directly.
+- Verify visible results and public callbacks, not internal classes or
+  implementation details.
+- For asynchronous operations, wait for the interaction and use `findBy*`
+  or `waitFor` when appropriate. Every promise must be handled.
 
-`Button.test.tsx` es el molde de referencia para render, consultas accesibles y
-una interacción de usuario.
+`Button.test.tsx` is the reference template for rendering, accessible
+queries, and a user interaction.
 
-## Módulos que resuelve el compilador de Next
+## Modules resolved by the Next compiler
 
-`next/font` no existe fuera del build de Next. Cualquier test que alcance —aunque
-sea de forma indirecta— un archivo que declare una fuente, como
-`src/app/layout.tsx`, muere con `TypeError: default is not a function` y ninguna
-pista de por qué. Por eso `vitest.config.mts` redirige `next/font/local` a
+`next/font` doesn't exist outside a Next build. Any test that reaches —even
+indirectly— a file that declares a font, like `src/app/layout.tsx`, dies
+with `TypeError: default is not a function` and no clue as to why. That's
+why `vitest.config.mts` redirects `next/font/local` to
 `src/test/mocks/next-font.ts`.
 
-Si algún día se importa `next/font/google`, necesita su propio mock: ahí las
-fuentes son exports con nombre y un default no alcanza.
+If `next/font/google` is ever imported, it will need its own mock: there,
+fonts are named exports and a default export isn't enough.
 
 ## Hooks
 
-Usá `renderHook` para ejecutar el hook y `act` para cualquier operación que
-actualice su estado:
+Use `renderHook` to run the hook and `act` for any operation that updates
+its state:
 
 ```ts
 const { result } = renderHook(() => useToggle());
@@ -81,11 +83,11 @@ act(() => {
 });
 ```
 
-Probá el valor inicial, las transiciones relevantes y cualquier opción pública.
-`useToggle.test.ts` es el molde de referencia.
+Test the initial value, the relevant transitions, and any public option.
+`useToggle.test.ts` is the reference template.
 
-## Alcance actual
+## Current scope
 
-F20 instala tests unitarios y ejemplos, pero no define un umbral global de
-cobertura, snapshots ni infraestructura end-to-end. Agregar esas políticas
-requiere una decisión separada del equipo.
+F20 sets up unit tests and examples, but doesn't define a global coverage
+threshold, snapshots, or end-to-end infrastructure. Adding those policies
+requires a separate team decision.

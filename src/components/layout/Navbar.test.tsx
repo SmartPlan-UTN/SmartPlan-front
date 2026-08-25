@@ -2,154 +2,209 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { DEFAULT_TOKEN_STORAGE_KEY } from "@/lib/api";
-import { SesionProvider } from "@/lib/auth";
+import { SessionProvider } from "@/lib/auth";
+import { refreshSession } from "@/lib/auth/api";
 
 import { Navbar } from "./Navbar";
 
-const ruta = vi.hoisted(() => ({ actual: "/" }));
+vi.mock("@/lib/auth/api", () => ({
+  refreshSession: vi.fn(),
+  login: vi.fn(),
+}));
+
+const route = vi.hoisted(() => ({ actual: "/" }));
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => ruta.actual,
+  usePathname: () => route.actual,
   useRouter: () => ({ replace: vi.fn(), push: vi.fn(), refresh: vi.fn() }),
 }));
 
+/** What `POST /sessions` and `POST /sessions/refresh` return on success. */
+const authenticatedResponse = {
+  accessToken: "jwt-de-prueba",
+  tokenType: "Bearer" as const,
+  expiresIn: 900,
+  user: {
+    id: 1,
+    name: "Ana",
+    lastName: "Pérez",
+    email: "ana@example.com",
+    role: { key: "user", name: "User" },
+    permissions: [],
+  },
+};
+
+/** No refresh cookie, or an expired/revoked one: the normal anonymous case. */
+function mockAnonymousStartup() {
+  vi.mocked(refreshSession).mockRejectedValueOnce(new Error("no session"));
+}
+
+function mockAuthenticatedStartup() {
+  vi.mocked(refreshSession).mockResolvedValueOnce(authenticatedResponse);
+}
+
 function renderNavbar() {
   return render(
-    <SesionProvider>
+    <SessionProvider>
       <Navbar />
-    </SesionProvider>,
+    </SessionProvider>,
   );
 }
 
 describe("Navbar", () => {
   beforeEach(() => {
-    localStorage.clear();
-    ruta.actual = "/";
+    route.actual = "/";
   });
 
-  it("ofrece los cuatro destinos de la navegación principal", () => {
+  it("offers the four main navigation destinations", async () => {
+    mockAnonymousStartup();
     renderNavbar();
 
-    const navegacion = screen.getByRole("navigation", {
+    const nav = await screen.findByRole("navigation", {
       name: "Navegación principal",
     });
 
     expect(
-      within(navegacion).getByRole("link", { name: "Inicio" }),
+      within(nav).getByRole("link", { name: "Inicio" }),
     ).toHaveAttribute("href", "/");
     expect(
-      within(navegacion).getByRole("link", { name: "Explorar" }),
-    ).toHaveAttribute("href", "/explorar");
+      within(nav).getByRole("link", { name: "Explorar" }),
+    ).toHaveAttribute("href", "/explore");
     expect(
-      within(navegacion).getByRole("link", { name: "Favoritos" }),
-    ).toHaveAttribute("href", "/favoritos");
+      within(nav).getByRole("link", { name: "Favoritos" }),
+    ).toHaveAttribute("href", "/favorites");
     expect(
-      within(navegacion).getByRole("link", { name: "Historial" }),
-    ).toHaveAttribute("href", "/historial");
+      within(nav).getByRole("link", { name: "Historial" }),
+    ).toHaveAttribute("href", "/history");
   });
 
-  it("marca con aria-current el destino de la ruta actual", () => {
-    ruta.actual = "/favoritos";
+  it("marks the current route's destination with aria-current", async () => {
+    route.actual = "/favorites";
+    mockAnonymousStartup();
     renderNavbar();
 
-    const navegacion = screen.getByRole("navigation", {
+    const nav = await screen.findByRole("navigation", {
       name: "Navegación principal",
     });
 
     expect(
-      within(navegacion).getByRole("link", { name: "Favoritos" }),
+      within(nav).getByRole("link", { name: "Favoritos" }),
     ).toHaveAttribute("aria-current", "page");
     expect(
-      within(navegacion).getByRole("link", { name: "Inicio" }),
+      within(nav).getByRole("link", { name: "Inicio" }),
     ).not.toHaveAttribute("aria-current");
   });
 
-  it("sin sesión ofrece iniciar sesión en lugar del menú de usuario", () => {
+  it("offers login instead of the user menu when there is no session", async () => {
+    mockAnonymousStartup();
     renderNavbar();
 
-    expect(screen.getByRole("link", { name: "Iniciar sesión" })).toHaveAttribute(
-      "href",
-      "/login",
-    );
+    expect(
+      await screen.findByRole("link", { name: "Iniciar sesión" }),
+    ).toHaveAttribute("href", "/login");
     expect(screen.queryByRole("button", { name: /mi cuenta/i })).toBeNull();
   });
 
-  it("el enlace de login conserva la pantalla desde la que se entra", () => {
-    ruta.actual = "/explorar";
+  it("keeps the login link pointing back to the screen the user came from", async () => {
+    route.actual = "/explore";
+    mockAnonymousStartup();
     renderNavbar();
 
-    expect(screen.getByRole("link", { name: "Iniciar sesión" })).toHaveAttribute(
-      "href",
-      "/login?redirect=%2Fexplorar",
-    );
+    expect(
+      await screen.findByRole("link", { name: "Iniciar sesión" }),
+    ).toHaveAttribute("href", "/login?redirect=%2Fexplore");
   });
 
-  it("con sesión despliega el menú de usuario", async () => {
-    localStorage.setItem(DEFAULT_TOKEN_STORAGE_KEY, "jwt-de-prueba");
+  it("expands the user menu when there is a session", async () => {
+    mockAuthenticatedStartup();
     const user = userEvent.setup();
     renderNavbar();
 
-    const disparador = screen.getByRole("button", { name: /mi cuenta/i });
-    expect(disparador).toHaveAttribute("aria-expanded", "false");
+    const trigger = await screen.findByRole("button", { name: /mi cuenta/i });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
 
-    await user.click(disparador);
+    await user.click(trigger);
 
-    expect(disparador).toHaveAttribute("aria-expanded", "true");
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByRole("link", { name: "Mi perfil" })).toHaveAttribute(
       "href",
-      "/perfil",
+      "/profile",
     );
     expect(screen.getByRole("link", { name: "Preferencias" })).toHaveAttribute(
       "href",
-      "/preferencias",
+      "/preferences",
     );
     expect(
       screen.getByRole("button", { name: "Cerrar sesión" }),
     ).toBeInTheDocument();
   });
 
-  it("cierra el menú de usuario con Escape", async () => {
-    localStorage.setItem(DEFAULT_TOKEN_STORAGE_KEY, "jwt-de-prueba");
+  it("closes the user menu with Escape", async () => {
+    mockAuthenticatedStartup();
     const user = userEvent.setup();
     renderNavbar();
 
-    const disparador = screen.getByRole("button", { name: /mi cuenta/i });
-    await user.click(disparador);
+    const trigger = await screen.findByRole("button", { name: /mi cuenta/i });
+    await user.click(trigger);
     await user.keyboard("{Escape}");
 
-    expect(disparador).toHaveAttribute("aria-expanded", "false");
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
     expect(screen.queryByRole("link", { name: "Mi perfil" })).toBeNull();
   });
 
-  it("cerrar sesión devuelve la barra al estado anónimo", async () => {
-    localStorage.setItem(DEFAULT_TOKEN_STORAGE_KEY, "jwt-de-prueba");
+  it("asks for confirmation before logging out, and logs out on confirm", async () => {
+    mockAuthenticatedStartup();
     const user = userEvent.setup();
     renderNavbar();
 
-    await user.click(screen.getByRole("button", { name: /mi cuenta/i }));
+    await user.click(await screen.findByRole("button", { name: /mi cuenta/i }));
     await user.click(screen.getByRole("button", { name: "Cerrar sesión" }));
 
-    expect(localStorage.getItem(DEFAULT_TOKEN_STORAGE_KEY)).toBeNull();
+    // Doesn't log out on the first click: a confirmation dialog opens first.
     expect(
-      screen.getByRole("link", { name: "Iniciar sesión" }),
+      screen.getByRole("alertdialog", { name: "Cerrar sesión" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Iniciar sesión" })).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Confirmar" }));
+
+    expect(
+      await screen.findByRole("link", { name: "Iniciar sesión" }),
     ).toBeInTheDocument();
   });
 
-  it("despliega la navegación plegable en viewport chico", async () => {
+  it("keeps the session open when the logout confirmation is cancelled", async () => {
+    mockAuthenticatedStartup();
     const user = userEvent.setup();
     renderNavbar();
 
-    const boton = screen.getByRole("button", { name: "Abrir la navegación" });
-    await user.click(boton);
+    await user.click(await screen.findByRole("button", { name: /mi cuenta/i }));
+    await user.click(screen.getByRole("button", { name: "Cerrar sesión" }));
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
 
-    const plegable = screen.getByRole("navigation", {
+    expect(
+      screen.queryByRole("alertdialog", { name: "Cerrar sesión" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Iniciar sesión" })).toBeNull();
+  });
+
+  it("expands the collapsible navigation on small viewports", async () => {
+    mockAnonymousStartup();
+    const user = userEvent.setup();
+    renderNavbar();
+
+    const button = await screen.findByRole("button", {
+      name: "Abrir la navegación",
+    });
+    await user.click(button);
+
+    const collapsible = screen.getByRole("navigation", {
       name: "Navegación principal plegable",
     });
 
     expect(
-      within(plegable).getByRole("link", { name: "Historial" }),
+      within(collapsible).getByRole("link", { name: "Historial" }),
     ).toBeInTheDocument();
-    expect(boton).toHaveAccessibleName("Cerrar la navegación");
+    expect(button).toHaveAccessibleName("Cerrar la navegación");
   });
 });

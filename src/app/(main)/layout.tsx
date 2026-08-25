@@ -1,16 +1,16 @@
 import type { ReactNode } from "react";
 
-import { CascaraApp } from "@/components/layout";
+import { AppShell } from "@/components/layout";
 
 /**
- * Layout de la aplicación: navbar arriba y contenido debajo.
+ * Application layout: navbar on top, content below.
  *
- * Cubre las pantallas públicas y, a través del grupo `(privado)`, también las
- * que exigen sesión. Las pantallas de login y registro viven en `(auth)`, que
- * no lleva navbar.
+ * Covers public screens and, through the `(private)` group, also the ones
+ * that require a session. Login and signup screens live in `(auth)`, which
+ * has no navbar.
  */
-export default function LayoutPrincipal({
+export default function MainLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
-  return <CascaraApp>{children}</CascaraApp>;
+  return <AppShell>{children}</AppShell>;
 }

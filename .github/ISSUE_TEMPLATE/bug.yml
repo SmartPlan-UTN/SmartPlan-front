@@ -1,28 +1,28 @@
 name: Bug
-description: Algo que ya está implementado y no funciona como debería.
+description: Something already implemented that isn't working as it should.
 title: "[BUG] "
 labels: ["bug", "frontend"]
 body:
   - type: markdown
     attributes:
       value: |
-        Para trabajo nuevo usá la plantilla de **caso de uso**. Esta es para algo
-        que ya existe en `develop` y falla.
+        For new work, use the **use case** template. This one is for
+        something that already exists in `develop` and is broken.
 
   - type: textarea
-    id: que-pasa
+    id: what-happens
     attributes:
-      label: Qué pasa
-      description: Una o dos frases. Sin interpretar la causa todavía.
+      label: What happens
+      description: One or two sentences. Don't try to interpret the cause yet.
       placeholder: Al guardar un plan desde el detalle, el botón queda cargando para siempre y el plan no aparece en Guardados.
     validations:
       required: true
 
   - type: textarea
-    id: pasos
+    id: steps
     attributes:
-      label: Pasos para reproducirlo
-      description: Numerados, desde una sesión limpia. Si no se puede reproducir a pedido, decilo y contá cuándo apareció.
+      label: Steps to reproduce it
+      description: Numbered, starting from a clean session. If it can't be reproduced on demand, say so and mention when it appeared.
       value: |
         1.
         2.
@@ -31,63 +31,63 @@ body:
       required: true
 
   - type: input
-    id: esperado
+    id: expected
     attributes:
-      label: Qué esperabas que pase
+      label: What you expected to happen
     validations:
       required: true
 
   - type: input
-    id: obtenido
+    id: actual
     attributes:
-      label: Qué pasó en cambio
-      description: Si hay un error en la consola o una respuesta HTTP con código de error, ponelo acá.
+      label: What happened instead
+      description: If there's a console error or an HTTP response with an error code, put it here.
     validations:
       required: true
 
   - type: input
-    id: donde
+    id: where
     attributes:
-      label: Dónde
-      description: Ruta y pantalla del prototipo, si aplica.
-      placeholder: /planes/17 — PAN 17
+      label: Where
+      description: Route and prototype screen, if applicable.
+      placeholder: /plans/17 — PAN 17
     validations:
       required: true
 
   - type: dropdown
-    id: severidad
+    id: severity
     attributes:
-      label: Severidad
-      description: Bloqueante y grave entran al sprint en curso; el resto se prioriza en el refinamiento.
+      label: Severity
+      description: Blocking and severe go into the current sprint; the rest is prioritized during refinement.
       options:
-        - Bloqueante — no se puede usar la funcionalidad ni hay forma de esquivarlo
-        - Grave — falla seguido o pierde datos, pero hay una vuelta
-        - Molesto — falla en un caso puntual
-        - Cosmético — se ve mal, funciona bien
+        - Blocking — the feature can't be used and there's no workaround
+        - Severe — fails often or loses data, but there's a workaround
+        - Annoying — fails in a specific case
+        - Cosmetic — looks wrong, works fine
     validations:
       required: true
 
   - type: input
-    id: entorno
+    id: environment
     attributes:
-      label: Entorno
-      description: Navegador y versión, rama o commit donde lo viste, y si el back estaba corriendo local.
+      label: Environment
+      description: Browser and version, branch or commit where you saw it, and whether the backend was running locally.
       placeholder: Chrome 141, rama develop (9658f3e), back local en :3001
     validations:
       required: true
 
   - type: textarea
-    id: evidencia
+    id: evidence
     attributes:
-      label: Capturas, logs o respuesta de la API
-      description: Arrastrá las imágenes acá. Pegá los logs entre triple backtick. **Borrá tokens y credenciales antes de pegar.**
+      label: Screenshots, logs, or API response
+      description: Drag images here. Paste logs between triple backticks. **Remove tokens and credentials before pasting.**
 
   - type: checkboxes
-    id: chequeos
+    id: checks
     attributes:
-      label: Antes de enviarlo
+      label: Before submitting
       options:
-        - label: Busqué en los issues abiertos y no está reportado
+        - label: I searched open issues and this isn't already reported
           required: true
-        - label: Lo reproduje con la última `develop` (`git switch develop && git pull && pnpm install`)
+        - label: I reproduced it on the latest `develop` (`git switch develop && git pull && pnpm install`)
           required: true

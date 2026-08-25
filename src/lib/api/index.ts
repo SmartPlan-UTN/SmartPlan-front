@@ -1,27 +1,27 @@
 /**
- * Barrel export público para la infraestructura HTTP centralizada de SmartPlan.
+ * Public barrel export for SmartPlan's centralized HTTP infrastructure.
  *
- * Importar únicamente desde `@/lib/api`.
+ * Import only from `@/lib/api`.
  */
 
 export { apiClient } from './client';
 export type { RequestConfig } from './client';
 
-export { ApiError, normalizarError } from './errors';
+export { ApiError, normalizeError } from './errors';
 export type {
-  TipoErrorApi,
+  ApiErrorType,
   ErrorResponseData,
-  OpcionesApiError,
+  ApiErrorOptions,
 } from './errors';
 
-export {
-  getToken,
-  setTokenGetter,
-  DEFAULT_TOKEN_STORAGE_KEY,
-} from './token-provider';
+export { getToken, setTokenGetter } from './token-provider';
 export type { TokenGetter } from './token-provider';
 
 export { onUnauthorized, notifyUnauthorized } from './auth-events';
-export type { ListenerNoAutorizado } from './auth-events';
+export type { UnauthorizedListener } from './auth-events';
 
 export { getApiBaseUrl } from './config';
+
+export { searchActivities, getActivity, getActivityMapMarkers } from './activities';
+export { searchPlans, getPlan } from './plans';
+export { listCategories } from './categories';

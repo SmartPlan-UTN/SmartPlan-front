@@ -18,6 +18,7 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
+  FolderPlus,
   Heart,
   House,
   Image,
@@ -32,6 +33,7 @@ import {
   MapPin,
   Martini,
   Menu,
+  MessageCircle,
   Moon,
   Palette,
   Pencil,
@@ -44,6 +46,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   Star,
+  Tag,
   Trash2,
   Trees,
   TriangleAlert,
@@ -57,18 +60,18 @@ import {
 } from "lucide-react";
 
 /**
- * Iconografía del proyecto: nombres de Lucide en kebab-case (los mismos que usa
- * el prototipo) mapeados a su componente.
+ * Project iconography: Lucide names in kebab-case (the same ones the
+ * prototype uses) mapped to their component.
  *
- * Es un registro explícito a propósito. `lucide-react/dynamic` resuelve el icono
- * en el cliente dentro de un `useEffect`, así que ningún icono llega en el HTML
- * del servidor y el bundler tiene que emitir un chunk por cada uno de los ~1600
- * iconos de la librería. Con este mapa los iconos se renderizan en el servidor y
- * solo entran al bundle los que están acá.
+ * This is deliberately an explicit registry. `lucide-react/dynamic` resolves
+ * the icon on the client inside a `useEffect`, so no icon ever reaches the
+ * server-rendered HTML, and the bundler would have to emit a chunk for each
+ * of the library's ~1600 icons. With this map, icons render on the server
+ * and only the ones listed here end up in the bundle.
  *
- * **Para usar un icono nuevo hay que agregarlo a este mapa.** Importalo de
- * `lucide-react` en PascalCase y sumá la entrada en kebab-case, respetando el
- * orden alfabético. El nombre correcto está en https://lucide.dev/icons.
+ * **To use a new icon, add it to this map.** Import it from `lucide-react`
+ * in PascalCase and add the kebab-case entry, keeping alphabetical order.
+ * The correct name is at https://lucide.dev/icons.
  */
 export const iconRegistry = {
   accessibility: Accessibility,
@@ -90,6 +93,7 @@ export const iconRegistry = {
   "external-link": ExternalLink,
   eye: Eye,
   "eye-off": EyeOff,
+  "folder-plus": FolderPlus,
   heart: Heart,
   house: House,
   image: Image,
@@ -104,6 +108,7 @@ export const iconRegistry = {
   "map-pin": MapPin,
   martini: Martini,
   menu: Menu,
+  "message-circle": MessageCircle,
   moon: Moon,
   palette: Palette,
   pencil: Pencil,
@@ -116,6 +121,7 @@ export const iconRegistry = {
   "sliders-horizontal": SlidersHorizontal,
   sparkles: Sparkles,
   star: Star,
+  tag: Tag,
   "trash-2": Trash2,
   trees: Trees,
   "triangle-alert": TriangleAlert,
@@ -127,5 +133,5 @@ export const iconRegistry = {
   x: X,
 } satisfies Record<string, LucideIcon>;
 
-/** Nombres de icono disponibles. Se deriva del registro: no hay que mantenerlo aparte. */
+/** Available icon names. Derived from the registry: no need to maintain it separately. */
 export type IconName = keyof typeof iconRegistry;

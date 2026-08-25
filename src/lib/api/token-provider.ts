@@ -1,55 +1,44 @@
 /**
- * Abstracción de acceso al JWT desacoplada del almacenamiento concreto.
- * Permite integrarse con cualquier estrategia de autenticación (localStorage, Cookies, React Context, NextAuth, etc.)
- * manteniendo compatibilidad con SSR / Next.js App Router.
+ * JWT access abstraction decoupled from the concrete storage mechanism.
+ * Allows integrating with any authentication strategy (in-memory state,
+ * React Context, NextAuth, etc.) while remaining compatible with SSR / the
+ * Next.js App Router.
  */
 
 /**
- * Función que retorna un token JWT síncrono o asíncrono, o `null` si no hay sesión activa.
+ * Function that returns a JWT token synchronously or asynchronously, or `null` if there is no active session.
  */
 export type TokenGetter = () => string | null | Promise<string | null>;
 
 let customTokenGetter: TokenGetter | null = null;
 
 /**
- * Clave predeterminada utilizada en `localStorage` si no se registra un getter personalizado.
- */
-export const DEFAULT_TOKEN_STORAGE_KEY = 'smartplan_token';
-
-/**
- * Permite registrar un proveedor personalizado para obtener el JWT.
- * Útil para cablear el estado de autenticación real cuando se implemente la UI/Context.
+ * Registers a custom provider for obtaining the JWT.
  *
- * @param getter Función proveedora del token o `null` para restablecer al comportamiento por defecto.
+ * `SessionProvider` (`@/lib/auth`) registers one on mount that reads the
+ * access token from memory: the token is never persisted in `localStorage`
+ * or a readable cookie, so an XSS payload can't exfiltrate it from storage.
+ *
+ * @param getter Function that provides the token, or `null` to reset to the default behavior.
  */
 export function setTokenGetter(getter: TokenGetter | null): void {
   customTokenGetter = getter;
 }
 
 /**
- * Obtiene el token JWT actual.
- * Es compatible con SSR y seguro de invocar en Server Components o Client Components.
+ * Gets the current JWT token.
+ * Safe to call in Server Components or Client Components, and SSR-compatible.
  *
- * @returns El token JWT o `null` si no hay token disponible.
+ * @returns The JWT token, or `null` if no getter is registered or there is no active session.
  */
 export async function getToken(): Promise<string | null> {
-  if (customTokenGetter) {
-    try {
-      return await customTokenGetter();
-    } catch {
-      return null;
-    }
+  if (!customTokenGetter) {
+    return null;
   }
 
-  // Fallback predeterminado seguro para entorno del navegador
-  if (typeof window !== 'undefined') {
-    try {
-      return localStorage.getItem(DEFAULT_TOKEN_STORAGE_KEY) ?? localStorage.getItem('token');
-    } catch {
-      // En caso de que localStorage esté restringido (modo incógnito privado estricto, etc.)
-      return null;
-    }
+  try {
+    return await customTokenGetter();
+  } catch {
+    return null;
   }
-
-  return null;
 }
