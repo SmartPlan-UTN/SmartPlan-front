@@ -199,6 +199,13 @@ guardados aparecerán acá"*.
 Personal data with inline validation. Includes the password section with
 the same rules as Security.
 
+> **Only CU5 is built so far.** The prototype's `Profile.jsx` bundles CU5
+> (personal data), CU6 (password change, expandable section), and CU7
+> (delete account, danger zone) into one screen; the shipped `ProfileForm`
+> only covers CU5's card. It also drops the prototype's phone field and
+> avatar upload (no backing field in `GET`/`PATCH /users/me`) and the
+> role/status display the prototype itself never shows on this screen.
+
 **Preferences** — CU8, CU18 · PAN 15
 Categories of interest as selectable chips (cultura, compras, gastronomía...),
 usual budget with validation (*"Ingresá un presupuesto válido mayor a $0"*),

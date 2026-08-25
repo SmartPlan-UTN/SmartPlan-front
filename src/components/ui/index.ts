@@ -7,6 +7,7 @@ export {
 } from "./Button";
 export { Chip, type ChipProps } from "./Chip";
 export { Divider, type DividerProps } from "./Divider";
+export { Field, type FieldProps, type FieldRightSlot } from "./Field";
 export { FloatingBackLink, type FloatingBackLinkProps } from "./FloatingBackLink";
 export { Icon, type IconName, type IconProps } from "./Icon";
 export { iconRegistry } from "./iconRegistry";

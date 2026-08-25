@@ -4,13 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
-import { Button, Icon } from "@/components/ui";
+import { Button, Field, Icon } from "@/components/ui";
 import { useToggle } from "@/hooks";
 import { ApiError } from "@/lib/api";
 import { useSession } from "@/lib/auth";
 import { ROUTES } from "@/lib/routes";
 
-import { AuthField } from "./AuthField";
 import styles from "./AuthForm.module.css";
 import { EMAIL_PATTERN, MIN_PASSWORD_LENGTH, REQUIRED_MESSAGE } from "./validation";
 
@@ -176,7 +175,7 @@ export function LoginForm({ destination }: LoginFormProps) {
           </p>
         ) : null}
 
-        <AuthField
+        <Field
           label="Email"
           type="email"
           autoComplete="email"
@@ -191,7 +190,7 @@ export function LoginForm({ destination }: LoginFormProps) {
         />
 
         <div className={styles.passwordGroup}>
-          <AuthField
+          <Field
             label="Contraseña"
             type={showPassword ? "text" : "password"}
             autoComplete="current-password"

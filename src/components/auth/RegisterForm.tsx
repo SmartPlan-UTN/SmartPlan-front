@@ -4,13 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
-import { Button, Icon } from "@/components/ui";
+import { Button, Field, Icon } from "@/components/ui";
 import { useToggle } from "@/hooks";
 import { ApiError } from "@/lib/api";
 import { useSession } from "@/lib/auth";
 import { ROUTES } from "@/lib/routes";
 
-import { AuthField } from "./AuthField";
 import styles from "./AuthForm.module.css";
 import { PasswordStrength } from "./PasswordStrength";
 import { EMAIL_PATTERN, MIN_PASSWORD_LENGTH, REQUIRED_MESSAGE } from "./validation";
@@ -198,7 +197,7 @@ export function RegisterForm() {
         ) : null}
 
         <div className={styles.row2}>
-          <AuthField
+          <Field
             label="Nombre"
             type="text"
             autoComplete="given-name"
@@ -211,7 +210,7 @@ export function RegisterForm() {
             placeholder="Martina"
             required
           />
-          <AuthField
+          <Field
             label="Apellido"
             type="text"
             autoComplete="family-name"
@@ -226,7 +225,7 @@ export function RegisterForm() {
           />
         </div>
 
-        <AuthField
+        <Field
           label="Email"
           type="email"
           autoComplete="email"
@@ -241,7 +240,7 @@ export function RegisterForm() {
         />
 
         <div>
-          <AuthField
+          <Field
             label="Contraseña"
             type={showPassword ? "text" : "password"}
             autoComplete="new-password"
@@ -263,7 +262,7 @@ export function RegisterForm() {
           <PasswordStrength password={password} />
         </div>
 
-        <AuthField
+        <Field
           label="Confirmar contraseña"
           type={showConfirmPassword ? "text" : "password"}
           autoComplete="new-password"
