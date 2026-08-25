@@ -3,6 +3,7 @@
   align-items: center;
   gap: var(--s-2);
   width: fit-content;
+  max-width: 100%;
   margin-top: var(--s-5);
   padding: var(--s-3) var(--s-4);
   border-radius: var(--r-btn);
@@ -133,8 +134,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: 1px solid var(--hairline);
   border-radius: var(--r-btn);
@@ -175,4 +176,21 @@
   margin-top: var(--s-3);
   color: var(--fg-3);
   font-size: var(--t-small);
+}
+
+@media (max-width: 560px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: var(--s-5);
+  }
+
+  .createCard,
+  .stateCard,
+  .collectionCard {
+    width: 100%;
+  }
+
+  .cardHeader {
+    gap: var(--s-3);
+  }
 }

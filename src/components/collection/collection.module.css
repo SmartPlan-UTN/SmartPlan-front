@@ -270,8 +270,17 @@
 
   .card,
   .success,
-  .dialog {
+  .dialog,
+  .pageState {
     padding: var(--s-5);
+  }
+
+  .pageState {
+    min-height: 240px;
+  }
+
+  .limit {
+    flex-shrink: 0;
   }
 
   .actions,
@@ -282,6 +291,23 @@
   .actions button,
   .dialogActions button {
     width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .screen {
+    gap: var(--s-5);
+  }
+
+  .header {
+    gap: var(--s-3);
+  }
+
+  .card,
+  .success,
+  .dialog,
+  .pageState {
+    padding: var(--s-4);
   }
 }
 
