@@ -335,18 +335,25 @@
   gap: 4px;
 }
 
-/* The active step's segment is wider (20px vs. 8px) so the bar reads as
-   "step 1 of 2 segments", not two identical dots. */
+/* Width is fixed per position, not per active state: the v2 prototype's
+   `StepBar` always renders the first segment at 20px and the second at 8px
+   — `i === 1 ? 20 : 8`, independent of the current step — so the bar reads
+   as one accent-lead progress track, not two dots that swap size as you
+   advance. Only the background (this segment's step reached or not)
+   changes with progress. */
 .stepSegment {
   width: 8px;
   height: 4px;
   border-radius: var(--r-chip);
   background: var(--ember-15);
-  transition: width 300ms, background 300ms;
+  transition: background 300ms;
+}
+
+.stepSegmentFirst {
+  width: 20px;
 }
 
 .stepSegmentActive {
-  width: 20px;
   background: var(--ember);
 }
 
@@ -387,6 +394,28 @@
   margin: 0 0 var(--s-6);
   color: var(--fg-3);
   line-height: 1.6;
+}
+
+/* CU3-only: "Reenviar" on the recovery-sent state, layered on top of
+   `variant="ghostLight"` (transparent background — the part no existing
+   variant needed overriding). No `Button` variant matches the prototype's
+   outline treatment exactly: `ghostEmber` fills with an ember tint instead
+   of staying transparent with a 1.5px ember border that only tints on
+   hover. Overridden locally instead of adding a variant to the shared
+   primitive for one button.
+
+   `button.resendButton`, not just `.resendButton`: this class lives in a
+   different CSS Module than `.buttonGhostLight` (`primitives.module.css`),
+   so which one's rule ends up later in the compiled stylesheet isn't
+   something to rely on. The extra element-type selector raises specificity
+   instead, so this wins regardless of source order. Hover feedback still
+   comes from the shared `.button:hover { filter: brightness(1.1) }` rule —
+   not worth fighting that one's specificity too just to swap the
+   prototype's background-tint hover for an equivalent brightened one. */
+button.resendButton {
+  border-width: 1.5px;
+  border-color: var(--ember);
+  color: var(--ember);
 }
 
 /* Centered, muted link back to a previous step — unlike `.footerLink`,

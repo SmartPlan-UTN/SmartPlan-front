@@ -59,11 +59,13 @@ function StepBar({ step }: { step: 1 | 2 }) {
         {[1, 2].map((segment) => (
           <div
             key={segment}
-            className={
-              segment <= step
-                ? `${styles.stepSegment} ${styles.stepSegmentActive}`
-                : styles.stepSegment
-            }
+            className={[
+              styles.stepSegment,
+              segment === 1 ? styles.stepSegmentFirst : "",
+              segment <= step ? styles.stepSegmentActive : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
           />
         ))}
       </div>
@@ -130,8 +132,8 @@ export function RecoverPasswordForm() {
 
         <Button
           type="button"
-          variant="ghostEmber"
-          className={styles.submit}
+          variant="ghostLight"
+          className={`${styles.submit} ${styles.resendButton}`}
           onClick={() => {
             setSent(false);
           }}
