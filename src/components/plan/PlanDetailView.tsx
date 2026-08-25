@@ -2,10 +2,11 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { Badge, Button, Divider, FloatingBackLink, Icon, Stars } from "@/components/ui";
 import { useDetailFetch } from "@/hooks";
-import { getPlan } from "@/lib/api";
+import { getPlan, cancelOwnPlan, ApiError } from "@/lib/api";
 import { activityDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
 import { formatArs, formatDuration, googleMapsUrl } from "@/lib/utils";
 import type { PlanDetailResult, PlanItineraryItem } from "@/types";
@@ -115,20 +116,12 @@ function ItineraryStep({
 }
 
 /**
- * Plan detail (CU13 · PAN 17), matching
+ * Plan detail (CU13, CU26, CU29 · PAN 17), matching
  * SmartPlanSystemDesign/v2/PlanDetail.jsx: a full-bleed dark hero, a
- * timeline itinerary, a dark cost breakdown card, and a non-sticky action
- * row (the mockup keeps it in normal flow, unlike ActivityDetail.jsx's
- * fixed one).
- *
- * The mockup's social-proof strip ("312 personas hicieron este plan · 97%
- * lo recomiendan") and per-person cost split are fabricated demo numbers
- * with no backend behind them — there's no "people who did this plan"
- * tracking or party-size field in the contract, so both are left out
- * rather than inventing data. "Lo quiero hacer" needs CU22 (out of scope
- * here), so it's disabled; "Compartir" is real — it copies the page URL.
+ * timeline itinerary, a dark cost breakdown card, and action options.
  */
 export function PlanDetailView({ planId }: PlanDetailViewProps) {
+  const router = useRouter();
   const { data: plan, status, errorMessage } = useDetailFetch<PlanDetailResult>(
     getPlan,
     planId,
@@ -137,6 +130,11 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
+
+  // Cancellation state (CU26)
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   async function handleShare() {
     try {
@@ -148,6 +146,23 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
     } catch {
       // Clipboard access can be denied by the browser; the button just
       // stays as "Compartir" instead of throwing at the user.
+    }
+  }
+
+  async function handleConfirmCancel() {
+    setIsCancelling(true);
+    setCancelError(null);
+    try {
+      await cancelOwnPlan(planId);
+      setShowCancelModal(false);
+      router.push(ROUTES.explore);
+    } catch (error: unknown) {
+      setIsCancelling(false);
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : "No pudimos cancelar el plan. Intentá de nuevo.";
+      setCancelError(message);
     }
   }
 
@@ -188,6 +203,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
     );
   }
 
+  const isCancelled = plan.status?.key === "cancelled";
   const routeSummary = plan.details
     .map((detail) => detail.activity.name)
     .join(" → ");
@@ -220,6 +236,15 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
       </div>
 
       <div className={styles.content}>
+        {isCancelled && (
+          <div className={styles.cancelledBanner}>
+            <Icon name="triangle-alert" size={20} />
+            <div>
+              <strong>Plan cancelado:</strong> Este plan se encuentra conservado como historial de lectura y no acepta modificaciones.
+            </div>
+          </div>
+        )}
+
         {plan.description ? (
           <p className={`sp-body-lg ${activityStyles.detailDescription}`}>
             {plan.description}
@@ -260,15 +285,29 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
         </div>
 
         <div className={styles.actionBar}>
-          <Link href={planEditRoute(planId)} style={{ textDecoration: "none", display: "flex", flex: 1 }}>
-            <Button
-              variant="ghostLight"
-              style={{ width: "100%" }}
-            >
-              <Icon name="pencil" size={16} aria-hidden="true" />
-              Editar plan
-            </Button>
-          </Link>
+          {!isCancelled && (
+            <>
+              <Link href={planEditRoute(planId)} style={{ textDecoration: "none", display: "flex", flex: 1 }}>
+                <Button
+                  variant="ghostLight"
+                  style={{ width: "100%" }}
+                >
+                  <Icon name="pencil" size={16} aria-hidden="true" />
+                  Editar plan
+                </Button>
+              </Link>
+
+              <Button
+                variant="ghostLight"
+                style={{ flex: 1 }}
+                onClick={() => setShowCancelModal(true)}
+              >
+                <Icon name="trash-2" size={16} aria-hidden="true" />
+                Cancelar plan
+              </Button>
+            </>
+          )}
+
           <Button
             variant={saved ? "secondary" : "ghostLight"}
             className={styles.actionFlex1}
@@ -289,16 +328,52 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
             <Icon name="share-2" size={16} aria-hidden="true" />
             {copied ? "¡Copiado!" : "Compartir"}
           </Button>
-          <Button
-            variant="primary"
-            className={styles.actionFlex2}
-            disabled
-            title="Próximamente"
-          >
-            Lo quiero hacer →
-          </Button>
         </div>
       </div>
+
+      {/* Explicit Cancel Confirmation Dialog (CU26) */}
+      {showCancelModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowCancelModal(false)}>
+          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalIcon}>
+              <Icon name="triangle-alert" size={24} />
+            </div>
+            <div>
+              <h2 className="sp-h3" style={{ margin: "0 0 6px" }}>¿Cancelar este plan?</h2>
+              <p style={{ margin: 0, color: "var(--fg-2)", fontSize: "14px", lineHeight: 1.5 }}>
+                El plan pasará a estar cancelado y se conservará únicamente como historial. No se podrá seguir editando ni modificando sus actividades.
+              </p>
+            </div>
+
+            {cancelError && (
+              <p style={{ color: "var(--error)", fontSize: "13px", margin: 0 }}>
+                {cancelError}
+              </p>
+            )}
+
+            <div className={styles.modalActions}>
+              <Button
+                variant="ghostLight"
+                style={{ flex: 1 }}
+                onClick={() => setShowCancelModal(false)}
+                disabled={isCancelling}
+              >
+                Volver
+              </Button>
+              <Button
+                variant="danger"
+                style={{ flex: 1 }}
+                onClick={() => {
+                  void handleConfirmCancel();
+                }}
+                disabled={isCancelling}
+              >
+                {isCancelling ? "Cancela..." : "Sí, cancelar plan"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

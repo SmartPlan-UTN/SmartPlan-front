@@ -358,3 +358,58 @@
 .actionShare {
   background: var(--char);
 }
+
+/* Modal Overlay for explicit cancel confirmation (CU26) */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 17, 9, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: var(--s-4);
+}
+
+.modalCard {
+  background: var(--surface-card);
+  border-radius: var(--r-card);
+  padding: var(--s-5) var(--s-5) var(--s-4);
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.modalIcon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--error);
+}
+
+.modalActions {
+  display: flex;
+  gap: 10px;
+  margin-top: var(--s-2);
+}
+
+.cancelledBanner {
+  background: color-mix(in srgb, var(--warning) 12%, #fff);
+  border: 1.5px solid var(--warning);
+  border-radius: var(--r-card-sm);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--fg-1);
+  font-size: 14px;
+  margin-bottom: var(--s-4);
+}

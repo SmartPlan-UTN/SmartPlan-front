@@ -126,7 +126,7 @@ traceability matrix (`skills/01-domain/`).
 |---|---|---|---|---|---|
 | CU24 | Create plan | — | `In progress` | SMART-cu24-crear-plan | |
 | CU25 | Edit plan | PAN 17 | `In progress` | `SMART-37-cu25-editar-plan` | |
-| CU26 | Delete plan | PAN 17 | `Not started` | | |
+| CU26 | Delete plan | PAN 17 | `In progress` | `SMART-38-cu26-eliminar-plan` | |
 | CU27 | Add activity to plan | PAN 17, PAN 18 | `Not started` | | |
 | CU28 | Remove activity from plan | PAN 17 | `Not started` | | |
 | CU29 | View plan | PAN 17 | `Not started` | | |
