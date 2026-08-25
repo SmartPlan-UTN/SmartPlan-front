@@ -151,17 +151,20 @@ export function MoodBackground({ mood = "idle", style }: MoodBackgroundProps) {
     }
 
     measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(node);
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(measure);
+    observer?.observe(node);
     window.addEventListener("resize", measure);
     return () => {
-      observer.disconnect();
+      observer?.disconnect();
       window.removeEventListener("resize", measure);
     };
   }, []);
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
       return;
     }
 

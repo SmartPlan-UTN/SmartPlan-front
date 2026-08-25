@@ -68,3 +68,33 @@ export interface UserPreference extends BaseEntity {
   user?: User;
   category?: Category;
 }
+
+/**
+ * A single category in the signed-in user's preference set (CU8, CU18).
+ * Matches the category projection inside `UserPreferencesResponseDto` in
+ * `SmartPlan-back` — same three fields as `CategoryOption`, but reached
+ * through `/users/me/preferences` rather than the public catalog.
+ */
+export interface PreferenceCategory {
+  id: number;
+  name: string;
+  description: string | null;
+}
+
+/**
+ * Response of `GET /users/me/preferences` and `PATCH /users/me/preferences`
+ * (CU8, CU18). Distinct from `UserPreference`, which is the raw N:M join
+ * row: this is the flattened view the API actually returns.
+ */
+export interface UserPreferencesResponse {
+  categories: PreferenceCategory[];
+  usualBudget: number | null;
+  preferredArea: string | null;
+}
+
+/** Complete editable recommendation profile for PAN 15 (CU8, CU18). */
+export interface UpdateUserPreferencesInput {
+  categoryIds: number[];
+  usualBudget: number | null;
+  preferredArea: string | null;
+}

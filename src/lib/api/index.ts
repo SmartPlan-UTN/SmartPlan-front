@@ -25,3 +25,4 @@ export { getApiBaseUrl } from './config';
 export { searchActivities, getActivity, getActivityMapMarkers } from './activities';
 export { searchPlans, getPlan } from './plans';
 export { listCategories } from './categories';
+export { getPreferences, updatePreferences } from './users';
