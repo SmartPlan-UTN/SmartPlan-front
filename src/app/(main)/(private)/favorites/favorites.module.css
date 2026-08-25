@@ -1,0 +1,93 @@
+.screen {
+  width: 100%;
+  animation: fadeUp 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.header {
+  border-bottom: 1px solid var(--hairline);
+}
+
+.eyebrow {
+  margin-bottom: var(--s-2);
+  color: var(--ember);
+}
+
+.sectionNav {
+  margin-top: var(--s-5);
+}
+
+.sectionList {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pendingSection,
+.activeSection {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: var(--s-1);
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+}
+
+.pendingSection {
+  color: var(--fg-3);
+  cursor: not-allowed;
+}
+
+.activeSection {
+  color: var(--fg-1);
+}
+
+.activeSection::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 3px;
+  border-radius: var(--r-chip) var(--r-chip) 0 0;
+  background: var(--ember);
+}
+
+@media (max-width: 560px) {
+  .sectionNav {
+    margin-top: var(--s-4);
+  }
+
+  .sectionList {
+    width: 100%;
+    justify-content: space-between;
+    gap: var(--s-2);
+  }
+
+  .pendingSection,
+  .activeSection {
+    min-width: 0;
+    padding-inline: 0;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 360px) {
+  .sectionList {
+    gap: var(--s-1);
+  }
+
+  .pendingSection,
+  .activeSection {
+    font-size: var(--t-label);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen {
+    animation: none;
+  }
+}
