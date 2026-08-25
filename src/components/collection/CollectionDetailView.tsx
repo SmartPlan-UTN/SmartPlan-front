@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-import { Badge, Icon } from "@/components/ui";
+import { Badge, ConfirmationDialog, Icon } from "@/components/ui";
 import { useDetailFetch } from "@/hooks";
 import { ApiError, getCollection, removeActivityFromCollection } from "@/lib/api";
 import {
@@ -14,7 +14,6 @@ import {
 import { formatArs, formatDuration, gradientFor } from "@/lib/utils";
 import type { CollectionActivityDetail, CollectionDetail } from "@/types";
 
-import { ConfirmationDialog } from "./ConfirmationDialog";
 import styles from "./CollectionDetailView.module.css";
 
 const LOAD_ERROR = "No pudimos cargar la colección. Intentá nuevamente.";

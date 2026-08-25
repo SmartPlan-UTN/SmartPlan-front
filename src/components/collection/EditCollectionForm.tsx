@@ -3,13 +3,12 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
-import { Button, Icon } from "@/components/ui";
+import { Button, ConfirmationDialog, Icon } from "@/components/ui";
 import { useDetailFetch } from "@/hooks";
 import { ApiError, getCollection, updateCollection } from "@/lib/api";
 import { ROUTES } from "@/lib/routes";
 import type { CollectionDetail } from "@/types";
 
-import { ConfirmationDialog } from "./ConfirmationDialog";
 import {
   MAX_COLLECTION_DESCRIPTION_LENGTH,
   MAX_COLLECTION_NAME_LENGTH,

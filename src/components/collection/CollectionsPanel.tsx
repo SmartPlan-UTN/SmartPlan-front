@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { Button, Icon } from "@/components/ui";
+import { Button, ConfirmationDialog, Icon, LoadingDots } from "@/components/ui";
 import { ApiError, deleteCollection, listCollections } from "@/lib/api";
 import {
   collectionDetailRoute,
@@ -12,7 +12,6 @@ import {
 } from "@/lib/routes";
 import type { CollectionSummary, PaginationMetadata } from "@/types";
 
-import { ConfirmationDialog } from "./ConfirmationDialog";
 import styles from "./CollectionsPanel.module.css";
 
 type LoadStatus = "loading" | "idle" | "error";
@@ -133,10 +132,10 @@ export function CollectionsPanel() {
         ) : null}
 
         {status === "loading" ? (
-          <p className={styles.stateCard} role="status">
-            <Icon name="loader-circle" className="sp-spin" />
-            Cargando tus colecciones...
-          </p>
+          <LoadingDots
+            className={styles.loadingRow}
+            label="Cargando tus colecciones..."
+          />
         ) : null}
 
         {status === "error" ? (

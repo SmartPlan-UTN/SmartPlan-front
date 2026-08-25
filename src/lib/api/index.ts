@@ -23,7 +23,17 @@ export type { UnauthorizedListener } from './auth-events';
 export { getApiBaseUrl } from './config';
 
 export { searchActivities, getActivity, getActivityMapMarkers } from './activities';
-export { searchPlans, getPlan } from './plans';
+export {
+  searchPlans,
+  getPlan,
+  listOwnPlans,
+  createPlan,
+  addPlanActivity,
+  getOwnPlan,
+  updateOwnPlan,
+  cancelOwnPlan,
+  removePlanActivity,
+} from './plans';
 export { listCategories } from './categories';
 export {
   addActivityToCollection,
