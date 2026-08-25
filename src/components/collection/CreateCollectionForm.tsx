@@ -47,6 +47,7 @@ export function CreateCollectionForm() {
     useState<CollectionDetail | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const keepEditingRef = useRef<HTMLButtonElement>(null);
+  const discardRef = useRef<HTMLButtonElement>(null);
   const isDirty = name.length > 0 || description.length > 0;
 
   useEffect(() => {
@@ -54,7 +55,19 @@ export function CreateCollectionForm() {
     keepEditingRef.current?.focus();
 
     function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setShowDiscardPrompt(false);
+      if (event.key === "Escape") {
+        setShowDiscardPrompt(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      if (event.shiftKey && document.activeElement === keepEditingRef.current) {
+        event.preventDefault();
+        discardRef.current?.focus();
+      } else if (!event.shiftKey && document.activeElement === discardRef.current) {
+        event.preventDefault();
+        keepEditingRef.current?.focus();
+      }
     }
 
     window.addEventListener("keydown", closeOnEscape);
@@ -286,7 +299,11 @@ export function CreateCollectionForm() {
               >
                 Seguir editando
               </Button>
-              <Button variant="danger" onClick={() => router.push(ROUTES.favorites)}>
+              <Button
+                ref={discardRef}
+                variant="danger"
+                onClick={() => router.push(ROUTES.favorites)}
+              >
                 Descartar
               </Button>
             </div>

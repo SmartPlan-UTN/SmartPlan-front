@@ -109,6 +109,11 @@ describe("CreateCollectionForm", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Seguir editando" })).toHaveFocus();
 
+    await user.keyboard("{Shift>}{Tab}{/Shift}");
+    expect(screen.getByRole("button", { name: "Descartar" })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("button", { name: "Seguir editando" })).toHaveFocus();
+
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
