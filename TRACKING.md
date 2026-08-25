@@ -43,7 +43,7 @@ rereading the entire git history.
 |---|---|
 | **Phase** | Foundations — layout and navigation ready, no use cases implemented |
 | **Base branch** | `develop` |
-| **Last update** | 2026-08-24 |
+| **Last update** | 2026-08-25 |
 | **Completed use cases** | 0 / 62 |
 
 ---
@@ -68,6 +68,7 @@ rereading the entire git history.
 | [F17] Environment variables (`NEXT_PUBLIC_API_URL`) | `Completed` | `Smart-f17-cliente-axios-centralizado-con-interceptor-de-jwt` | — | `.env.example` template added and dynamic integration in `config.ts` |
 | [F19] Folder structure, base layout, and navbar | `Completed` | `SMART-f19-estructura-de-carpetas-layout-base-y-navbar` | #80 | `(auth)`, `(main)`, and `(private)` groups in `src/app/`, 60px navbar with `backdrop-filter`, user menu, route map in `src/lib/routes.ts`, session in `src/lib/auth/`, and `ProtectedRoute` guard. Screens are placeholders until each CU is implemented. Status corrected 2026-08-22: the branch's tip was already an ancestor of `develop` (merged via PR #80), the row had just never been updated |
 | Align Navbar with the SmartPlanSystemDesign prototype | `In progress` | `feature/navbar-alineado-al-diseno` | — | F19 shipped from the written design-system skill only, without access to the actual `SmartPlanSystemDesign/v2/Navbar.jsx` prototype file. Once that file was located, fixed: centered nav links, dot-style active indicator, circular avatar trigger, and a confirmation dialog before logging out |
+| [F06] Continuous integration: lint and tests on every PR | `In review` | `SMART-f06-integracion-continua-lint-y-tests-en-prs` | [#84](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/84) | Ref [`SmartPlan-back#28`](https://github.com/SmartPlan-UTN/SmartPlan-back/issues/28). F20's `ci.yml` already covered lint/test/build on push and PR against develop/main; this ticket aligns the job id to `ci` (was `quality`) and the setup to `pnpm/action-setup` + `actions/setup-node` with `node-version-file: '.nvmrc'` (was the composite `pnpm/setup`), matching `SmartPlan-back`. The branch-protection row above says `Completed`, but there was no evidence the check was configured as a required status check — F06 confirms and configures it. The manual GitHub step is still pending (exact check name after the first run) |
 
 ---
 
@@ -136,9 +137,9 @@ traceability matrix (`skills/01-domain/`).
 
 | CU | Feature | Screen | Status | Branch | PR |
 |---|---|---|---|---|---|
-| CU32 | Create collection | — | `Not started` | | |
-| CU33 | Edit collection | — | `Not started` | | |
-| CU34 | Delete collection | — | `Not started` | | |
+| CU32 | Create collection | `/collections/new` | `In review` | `SMART-44-cu32-create-collection` | #93 |
+| CU33 | Edit collection | `/collections/:id/edit` | `In review` | `SMART-44-cu32-create-collection` | #93 |
+| CU34 | Delete collection | `/favorites` collections section | `In review` | `SMART-44-cu32-create-collection` | #93 |
 | CU35 | Add activity to collection | PAN 18 | `Not started` | | |
 | CU36 | Remove activity from collection | — | `Not started` | | |
 | CU37 | View collection details | — | `Not started` | | |
@@ -200,6 +201,7 @@ being re-discussed twice.
 
 | Date | Decision | Reason |
 |---|---|---|
+| 2026-08-25 | Collection management uses the Colecciones section of `/favorites`, with dedicated create and edit routes | The v2 design groups access under one saved-content screen, but the domain remains separate: collections are named activity groupings, while favorites are quick saves of activities or plans. The inactive Planes and Actividades sections contain no CU39-CU43 behavior; only real collections are loaded for CU32-CU34 management. |
 | 2026-08-06 | ESLint as the static analyzer | Ecosystem standard for TS/JS, official Next.js integration, type-aware analysis, no additional infrastructure (unlike SonarQube) |
 | 2026-08-06 | Type-aware ESLint analysis (`projectService`) | Allows detecting unhandled promises, the most likely error when consuming the API with axios |
 | 2026-08-06 | Domain names in Spanish | *(Superseded — see the 2026-08-19/20 language migration.)* Matched the delivery document's traceability matrix at the time; translating them was thought to break CU → code traceability |
@@ -272,6 +274,7 @@ Things that have been spotted but don't have an owner yet:
 
 | Date | What happened |
 |---|---|
+| 2026-08-25 | CU32-CU34 moved to review together in PR #93 as the collections ABM: real collection cards in the Colecciones section, protected create/edit forms, duplicate-name validation, guarded cancellation, and confirmed soft deletion that preserves activities. Integrated with backend PR SmartPlan-back#70. `pnpm lint`, `pnpm test` (66), and `pnpm build` pass. |
 | 2026-08-06 | ESLint 9 configured with the project's own rules. First run: 0 errors, 0 warnings (scaffold with no application code yet). |
 | 2026-08-06 | Created `skills/` and this tracking file. |
 | 2026-08-11 | F21: Definition of Done agreed on, issue templates (use case and bug) and PR template in `.github/`. The `02-git-flow` core was synced with the backend's, which was newer. |
@@ -299,3 +302,5 @@ Things that have been spotted but don't have an owner yet:
 | 2026-08-24 | Resolved the merge conflict between this branch and `develop`'s CU1 login work: `MoodBackground` moved from `@/components/layout` to `@/components/ui` on `develop` while this branch fixed its container-measurement bug in place — reapplied that fix (`ResizeObserver` + `useLayoutEffect`, `prefers-reduced-motion`) onto the moved `ui/MoodBackground.tsx`, keeping `develop`'s new `style` prop (used by `AuthSplitShell` to force `position: fixed`). `Navbar.test.tsx`'s logout tests were rewritten to use `mockAuthenticatedStartup()` instead of the now-removed `localStorage`-based session stub, while keeping the confirmation-dialog assertions `develop`'s simplified version had dropped (the dialog is still real, current behavior). Also fixed two PR review comments: `/explore/[id]` and `/plans/[id]` now reject a non-positive-integer route param with `notFound()` instead of forwarding `NaN` to the API, and `UserMenu`'s logout confirmation dialog traps focus and returns it to the "Cerrar sesión" trigger on close. `pnpm lint`, `pnpm test`, and `pnpm build` green. |
 | 2026-08-25 | CU4: implemented logout. `logout()` in `src/lib/auth/api.ts` (`DELETE /sessions`, no body, 204, `@Public()` on the backend since it reads the session from the refresh cookie, not the `Authorization` header). `SessionProvider.logout` calls it best-effort inside a `try`/`finally` — local state (token, user, status) always clears, even if the request fails, matching the backend's own idempotent-logout guarantee. `UserMenu`'s existing confirmation dialog (from the Navbar-alignment pass) now awaits `logout()` on confirm and `router.replace(ROUTES.login)`, instead of only clearing local state with no redirect. Extended `Navbar.test.tsx`'s confirm-logout test to assert the redirect, and added a test for the DELETE call failing. `pnpm lint`, `pnpm test`, and `pnpm build` green. |
 | 2026-08-25 | Visual audit against `SmartPlanSystemDesign-v2/v2/Navbar.jsx`'s `LogoutModal` surfaced real drift in the confirmation dialog, all fixed: the "Confirmar" button was `variant="danger"` (red) — the prototype's confirm button is ember (`--ember`, same as any primary action); only the icon above it is tinted with a distinct danger rust the prototype never treats as a form-validation red. Added `--danger #D94B2B` / `--danger-10` to `tokens.css` for that icon (same reasoning as `--rating-ink`/`--warning-ink`: a literal the base v2 tokens don't define, needed once this screen was ported, and reused again by Profile's "Eliminar cuenta" danger zone once CU7 lands). Also matched the card's literal 20px radius, 36/32/28px padding, and dramatic double box-shadow (the prototype's modal card is visibly more elevated than an inline `--shadow-card`), and the title's `--w-display` weight (800, not the shared `.sp-h3` utility's 700) |
+| 2026-08-25 | F06 (ref back#28): F20's `ci.yml` already met most of the ticket (lint + test + build on push/PR against develop/main); aligned the job id to `ci` (was `quality`) and the setup to `pnpm/action-setup@v6` + `actions/setup-node@v7` with `node-version-file: '.nvmrc'`, making explicit where Node comes from (it used to be fully delegated to the composite `pnpm/setup@v2` action) — the same pattern implemented in `SmartPlan-back`. No trigger changes and no changes to the three real checks. Documented the `CI` check as a required status check in `skills/02-git-flow/` (SKILL.md and DEFINITION-OF-DONE.md), and fixed SKILL.md's broken link to the testing skill (`skills/06-testing/` → `skills/07-testing/`). Still pending: configuring the `CI` status check as required in `develop` and `main` branch protection, using the exact name GitHub reports after the first run, and removing the old `Quality` check if it was configured. `pnpm lint`, `pnpm test`, and `pnpm build` green. |
+| 2026-08-25 | Merged the latest `develop` (CU32-CU34 collections work, F06's CI alignment) into this CU4 branch to clear the merge-conflict block GitHub reported on the PR after `develop` moved again. Only `TRACKING.md` conflicted — resolved by keeping both sides' log entries. |
