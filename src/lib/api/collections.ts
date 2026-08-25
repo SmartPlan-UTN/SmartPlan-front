@@ -1,4 +1,5 @@
 import type {
+  AddCollectionActivityInput,
   CollectionDetail,
   CollectionSummary,
   CreateCollectionInput,
@@ -40,4 +41,26 @@ export async function updateCollection(
 /** Soft-deletes an owned collection without deleting catalog activities (CU34). */
 export async function deleteCollection(id: number): Promise<void> {
   await apiClient.delete<void>(`/collections/${id}`);
+}
+
+/** Adds one catalog activity to an owned collection (CU35). */
+export async function addActivityToCollection(
+  collectionId: number,
+  activityId: number,
+): Promise<CollectionDetail> {
+  const input: AddCollectionActivityInput = { idActivity: activityId };
+  return apiClient.post<CollectionDetail>(
+    `/collections/${collectionId}/activities`,
+    input,
+  );
+}
+
+/** Removes one membership without deleting the catalog activity (CU36). */
+export async function removeActivityFromCollection(
+  collectionId: number,
+  activityId: number,
+): Promise<void> {
+  await apiClient.delete<void>(
+    `/collections/${collectionId}/activities/${activityId}`,
+  );
 }

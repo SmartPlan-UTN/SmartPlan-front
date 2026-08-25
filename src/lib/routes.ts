@@ -47,6 +47,11 @@ export function collectionEditRoute(id: number): string {
   return `/collections/${id}/edit`;
 }
 
+/** `/collections/:id` — view an owned collection and its activities (CU37). */
+export function collectionDetailRoute(id: number): string {
+  return `/collections/${id}`;
+}
+
 /** Name of the query parameter that stores where to return after logging in. */
 export const REDIRECT_PARAM = "redirect";
 

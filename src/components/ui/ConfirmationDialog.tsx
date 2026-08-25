@@ -25,9 +25,10 @@ export interface ConfirmationDialogProps {
  *
  * `role="alertdialog"` plus `aria-modal` announces it, but neither stops
  * `Tab` from walking out into the page behind, so focus is moved to the
- * cancel button on mount and trapped between the two actions. `Escape`
- * cancels, except mid-confirmation, when there's a request in flight the
- * user can no longer call off.
+ * cancel button on mount, trapped between the two actions, and handed back
+ * to whatever was focused before on close. `Escape` cancels, except
+ * mid-confirmation, when there's a request in flight the user can no
+ * longer call off.
  */
 export function ConfirmationDialog({
   title,
@@ -42,6 +43,7 @@ export function ConfirmationDialog({
 }: ConfirmationDialogProps) {
   const cancelRef = useRef<HTMLButtonElement>(null);
   const confirmRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
   // `useId` instead of fixed ids: two dialogs can be mounted at once (a
   // page-level one and a form-level one), and duplicate ids would point
   // both `aria-labelledby`s at the same node.
@@ -49,8 +51,18 @@ export function ConfirmationDialog({
   const descriptionId = useId();
 
   useEffect(() => {
+    previousFocusRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     cancelRef.current?.focus();
 
+    return () => {
+      previousFocusRef.current?.focus();
+    };
+  }, []);
+
+  useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape" && !isConfirming) {
         onCancel();
