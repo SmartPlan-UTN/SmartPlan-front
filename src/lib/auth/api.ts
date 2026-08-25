@@ -81,3 +81,16 @@ export async function register(
 ): Promise<AuthenticationResponse> {
   return apiClient.post<AuthenticationResponse>("/users", data);
 }
+
+/**
+ * CU4: closes the session.
+ *
+ * `DELETE /sessions`. No body, no response body (204). Idempotent on the
+ * backend: it still succeeds with no refresh cookie, or one that's already
+ * expired or revoked. `@Public()` on the backend — it reads the session to
+ * close from the cookie, not the `Authorization` header — so this still
+ * works if the in-memory access token is already gone.
+ */
+export async function logout(): Promise<void> {
+  await apiClient.delete<void>("/sessions");
+}

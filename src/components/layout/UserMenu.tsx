@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { Button, Icon } from "@/components/ui";
 import { useSession } from "@/lib/auth";
-import { loginRoute } from "@/lib/routes";
+import { loginRoute, ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 import { NavLink } from "./NavLink";
@@ -125,10 +125,13 @@ function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
  *
  * "Cerrar sesión" doesn't log out on the first click: it opens a
  * confirmation dialog first, same as the SmartPlanSystemDesign prototype.
+ * Confirming closes the session (CU4: `DELETE /sessions`, best-effort — see
+ * `SessionProvider.logout`) and replaces the current entry with `/login`.
  */
 export function UserMenu() {
   const { status, logout } = useSession();
   const currentRoute = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -138,6 +141,15 @@ export function UserMenu() {
   const close = useCallback(() => {
     setOpen(false);
   }, []);
+
+  const confirmLogout = useCallback(async () => {
+    setConfirmingLogout(false);
+    await logout();
+    // `replace`, not `push`: same reasoning as `ProtectedRoute`'s redirect
+    // and the post-login navigation in `LoginForm`/`RegisterForm` — "back"
+    // shouldn't return to a page that required the session just closed.
+    router.replace(ROUTES.login);
+  }, [logout, router]);
 
   useEffect(() => {
     if (!open) {
@@ -254,9 +266,7 @@ export function UserMenu() {
             triggerRef.current?.focus();
           }}
           onConfirm={() => {
-            setConfirmingLogout(false);
-            logout();
-            triggerRef.current?.focus();
+            void confirmLogout();
           }}
         />
       ) : null}
