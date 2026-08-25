@@ -137,9 +137,9 @@ traceability matrix (`skills/01-domain/`).
 
 | CU | Feature | Screen | Status | Branch | PR |
 |---|---|---|---|---|---|
-| CU32 | Create collection | — | `Not started` | | |
-| CU33 | Edit collection | — | `Not started` | | |
-| CU34 | Delete collection | — | `Not started` | | |
+| CU32 | Create collection | `/collections/new` | `In review` | `SMART-44-cu32-create-collection` | #93 |
+| CU33 | Edit collection | `/collections/:id/edit` | `In review` | `SMART-44-cu32-create-collection` | #93 |
+| CU34 | Delete collection | `/favorites` collections section | `In review` | `SMART-44-cu32-create-collection` | #93 |
 | CU35 | Add activity to collection | PAN 18 | `Not started` | | |
 | CU36 | Remove activity from collection | — | `Not started` | | |
 | CU37 | View collection details | — | `Not started` | | |
@@ -201,6 +201,7 @@ being re-discussed twice.
 
 | Date | Decision | Reason |
 |---|---|---|
+| 2026-08-25 | Collection management uses the Colecciones section of `/favorites`, with dedicated create and edit routes | The v2 design groups access under one saved-content screen, but the domain remains separate: collections are named activity groupings, while favorites are quick saves of activities or plans. The inactive Planes and Actividades sections contain no CU39-CU43 behavior; only real collections are loaded for CU32-CU34 management. |
 | 2026-08-06 | ESLint as the static analyzer | Ecosystem standard for TS/JS, official Next.js integration, type-aware analysis, no additional infrastructure (unlike SonarQube) |
 | 2026-08-06 | Type-aware ESLint analysis (`projectService`) | Allows detecting unhandled promises, the most likely error when consuming the API with axios |
 | 2026-08-06 | Domain names in Spanish | *(Superseded — see the 2026-08-19/20 language migration.)* Matched the delivery document's traceability matrix at the time; translating them was thought to break CU → code traceability |
@@ -269,6 +270,7 @@ Things that have been spotted but don't have an owner yet:
 
 | Date | What happened |
 |---|---|
+| 2026-08-25 | CU32-CU34 moved to review together in PR #93 as the collections ABM: real collection cards in the Colecciones section, protected create/edit forms, duplicate-name validation, guarded cancellation, and confirmed soft deletion that preserves activities. Integrated with backend PR SmartPlan-back#70. `pnpm lint`, `pnpm test` (66), and `pnpm build` pass. |
 | 2026-08-06 | ESLint 9 configured with the project's own rules. First run: 0 errors, 0 warnings (scaffold with no application code yet). |
 | 2026-08-06 | Created `skills/` and this tracking file. |
 | 2026-08-11 | F21: Definition of Done agreed on, issue templates (use case and bug) and PR template in `.github/`. The `02-git-flow` core was synced with the backend's, which was newer. |
