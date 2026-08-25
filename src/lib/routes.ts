@@ -14,6 +14,7 @@ export const ROUTES = {
   exploreMap: "/explore/map",
   plans: "/plans",
   favorites: "/favorites",
+  createCollection: "/collections/new",
   history: "/history",
   profile: "/profile",
   preferences: "/preferences",
