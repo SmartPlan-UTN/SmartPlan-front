@@ -1,0 +1,10 @@
+/* Waiting state for the route guard. */
+.waiting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  color: var(--fg-2);
+  font-size: var(--t-body);
+  text-align: center;
+}

@@ -1,0 +1,360 @@
+/* ================================================================
+   Plan search results and detail (CU12, CU13).
+   Card/grid/state patterns live in ../explore/explore.module.css, shared
+   with src/components/activity/ — only plan-specific pieces are here.
+   ================================================================ */
+
+/* `.card`, `.imageWrapper`, `.imagePlaceholder`, `.body`, `.name`,
+   `.metaRow`, `.metaItem`, `.tagRow`, and `.grid` live in
+   `../explore/explore.module.css` — shared with `ActivityCard`, which uses
+   the exact same shell. Only plan-specific card pieces stay here. */
+.chain {
+  overflow: hidden;
+  margin: 0;
+  color: var(--fg-3);
+  font-size: var(--t-label);
+  font-weight: var(--w-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ── Plan detail (CU13), matching
+   SmartPlanSystemDesign/v2/PlanDetail.jsx ─────────────────────── */
+.hero {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  height: 300px;
+  overflow: hidden;
+  background: linear-gradient(155deg, #2d1506 0%, var(--char) 100%);
+}
+
+.heroIcon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(255, 255, 255, 0.18);
+}
+
+.heroCostBadge {
+  position: absolute;
+  top: var(--s-3);
+  right: var(--s-4);
+  font-size: var(--t-small);
+  padding: 6px 14px;
+}
+
+.heroTitleBlock {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 0 var(--s-6) var(--s-5);
+  background: linear-gradient(to top, rgba(26, 17, 9, 0.92) 0%, transparent 65%);
+  padding-top: var(--s-8);
+}
+
+.heroMetaRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-2);
+  color: var(--fg-on-dark-2);
+  font-size: var(--t-small);
+}
+
+.heroMetaDot {
+  color: var(--fg-on-dark-3);
+}
+
+.heroTitle {
+  margin: 0;
+  color: var(--fg-on-dark);
+  font-size: 42px;
+  font-weight: var(--w-display);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+.heroLocation {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+  color: var(--fg-on-dark-2);
+  font-size: var(--t-small);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  max-width: 760px;
+  margin: 0 auto;
+  padding: var(--s-6) var(--s-4) var(--s-7);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+/* ── Itinerary timeline ──────────────────────────────────────── */
+.stepRow {
+  display: flex;
+  gap: var(--s-4);
+}
+
+/* `.stepRow` stretches `.stepTimeline` to match `.stepCard`'s height (flex
+   row's default cross-axis stretch); a `flex: 1` line above and below the
+   badge — invisible past the first/last step, so there's nothing to
+   connect to — keeps the badge centered on the card regardless of how
+   tall it is, instead of pinned to the top. */
+.stepTimeline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.stepBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-chip);
+  background: var(--ember);
+  box-shadow: 0 0 0 5px var(--ember-15);
+  color: var(--white);
+  font-size: var(--t-body);
+  font-weight: var(--w-heading);
+}
+
+.stepLine {
+  flex: 1;
+  width: 1.5px;
+  min-height: var(--s-2);
+  background: transparent;
+}
+
+.stepLineVisible {
+  background: var(--ember-20);
+}
+
+.stepCard {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-3);
+  width: 100%;
+  padding: var(--s-4) var(--s-5);
+  margin-bottom: var(--s-2);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card-sm);
+  background: var(--surface-card);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.stepCard:hover {
+  border-color: var(--ember-20);
+  box-shadow: var(--shadow-card);
+}
+
+/* Makes the whole card a link target without nesting an `<a>` inside one
+   (the real "Ver en mapa" anchor needs to keep its own click, hence the
+   higher z-index there). */
+.stepStretchedLink {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+}
+
+.stepStretchedLink:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.stepBadgeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-1);
+}
+
+.stepRating {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--fg-3);
+  font-size: var(--t-label);
+}
+
+.stepName {
+  margin: 0 0 var(--s-1);
+  color: var(--fg-1);
+  font-size: var(--t-h4);
+  font-weight: var(--w-heading);
+}
+
+.stepMetaRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.stepMetaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--fg-3);
+  font-size: var(--t-small);
+}
+
+.stepActions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+  gap: var(--s-2);
+}
+
+.stepCost {
+  margin: 0;
+  color: var(--ember);
+  font-size: var(--t-h4);
+  font-weight: var(--w-heading);
+  line-height: 1;
+}
+
+.stepLinks {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.stepMapLink {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-btn);
+  color: var(--fg-1);
+  font-size: 12px;
+  font-weight: var(--w-heading);
+  text-decoration: none;
+}
+
+.stepMapLink:hover {
+  border-color: var(--ember);
+  color: var(--ember);
+}
+
+/* Decorative — the click affordance is the stretched link on `.stepCard`,
+   not this span; matches PlanDetail.jsx, which renders "Ver detalle" as
+   plain text too. */
+.stepDetailHint {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--fg-3);
+  font-size: 11px;
+}
+
+.stepCard:hover .stepDetailHint {
+  color: var(--ember);
+}
+
+/* ── Cost breakdown ──────────────────────────────────────────── */
+.costBox {
+  padding: var(--s-5);
+  border-radius: var(--r-card);
+  background: var(--char);
+}
+
+.costBoxLabel {
+  margin: 0 0 var(--s-4);
+  color: var(--fg-on-dark-2);
+  font-size: var(--t-label);
+  font-weight: var(--w-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.costBreakdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.costRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.costRowLabel {
+  color: var(--fg-on-dark-2);
+  font-size: var(--t-small);
+}
+
+.costRowValue {
+  color: var(--fg-on-dark);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+}
+
+.costTotalRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: var(--s-2);
+}
+
+.costTotalValue {
+  color: var(--ember);
+  font-size: 28px;
+  font-weight: var(--w-display);
+  letter-spacing: -0.02em;
+}
+
+/* ── Action row (not sticky — normal document flow) ───────────── */
+.actionBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.actionFlex1 {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+}
+
+.actionFlex2 {
+  display: flex;
+  flex: 2;
+  align-items: center;
+  justify-content: center;
+}
+
+/* `Button variant="ghost"` already sets the border and text color this
+   needs (`--white-15` / `--fg-on-dark`) — only the opaque background is a
+   real override, so this doesn't fight the variant's own cascade. */
+.actionShare {
+  background: var(--char);
+}
