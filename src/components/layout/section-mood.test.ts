@@ -8,6 +8,9 @@ describe("moodForRoute", () => {
     expect(moodForRoute("/favorites")).toBe("cultural");
     expect(moodForRoute("/history")).toBe("nocturna");
     expect(moodForRoute("/explore")).toBe("idle");
+    expect(moodForRoute("/login")).toBe("romantica");
+    expect(moodForRoute("/signup")).toBe("romantica");
+    expect(moodForRoute("/recover-password")).toBe("romantica");
   });
 
   it("keeps a section's palette on its nested routes", () => {

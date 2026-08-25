@@ -454,7 +454,7 @@
 /* ── App-wide wave background ──────────────────────────────────── */
 .appBackground {
   position: fixed;
-  top: var(--navbar-h);
+  top: 0;
   right: 0;
   bottom: 0;
   left: 0;
@@ -463,6 +463,14 @@
   /* The waves repaint continuously; `contain` keeps that work from
      invalidating layout or paint for the content scrolling above them. */
   contain: strict;
+}
+
+.appBackgroundBelowNavbar {
+  top: var(--navbar-h);
+}
+
+.appBackgroundHidden {
+  visibility: hidden;
 }
 
 /* ── Screen wrapper ────────────────────────────────────────────── */

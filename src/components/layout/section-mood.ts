@@ -13,10 +13,13 @@ import { ROUTES } from "@/lib/routes";
 const SECTION_MOODS: ReadonlyArray<readonly [string, Mood]> = [
   [ROUTES.plans, "gastronomia"],
   [ROUTES.favorites, "cultural"],
-  ["/collections", "cultural"],
+  [ROUTES.collections, "cultural"],
   [ROUTES.history, "nocturna"],
   [ROUTES.exploreMap, "aire_libre"],
   [ROUTES.explore, "idle"],
+  [ROUTES.login, "romantica"],
+  [ROUTES.signup, "romantica"],
+  [ROUTES.recoverPassword, "romantica"],
 ];
 
 export function moodForRoute(pathname: string): Mood {

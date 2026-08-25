@@ -1,6 +1,10 @@
 /// <reference lib="webworker" />
 
-import { createWaveScene, type Mood, type WaveScene } from "./wave-scene";
+import {
+  createWaveScene,
+  type Mood,
+  type WaveScene,
+} from "./wave-scene";
 
 /**
  * Draws the wave background off the main thread.
@@ -32,7 +36,7 @@ export type WavesRequest =
       mood: Mood;
     }
   | { type: "resize"; width: number; height: number; dpr: number }
-  | { type: "mood"; mood: Mood }
+  | { type: "mood"; mood: Mood; animate: boolean }
   | { type: "tide" }
   | { type: "running"; running: boolean };
 
@@ -79,7 +83,8 @@ workerScope.onmessage = (event: MessageEvent<WavesRequest>) => {
       scene?.draw(performance.now());
       return;
     case "mood":
-      scene?.setMood(message.mood, performance.now());
+      scene?.setMood(message.mood, performance.now(), message.animate);
+      if (!message.animate) scene?.draw(performance.now());
       return;
     case "tide":
       // Just an impulse — whether the water is drawn is `running`'s call.

@@ -35,6 +35,10 @@
   --white-15:      rgba(255,255,255,0.15);
   --white-18:      rgba(255,255,255,0.18);
 
+  /* Fixed glow under the animated wave canvas. Mood palettes live in
+     styles/wave-palettes.ts because the Web Worker cannot read the DOM. */
+  --wave-bottom-glow: rgba(232,93,32,0.06);
+
   /* ── Dark surfaces ───────────────────────────────── */
   --char-surface:  #1E1812;   /* card on dark bg        */
   --char-surface2: #241D14;   /* elevated/hover on dark */

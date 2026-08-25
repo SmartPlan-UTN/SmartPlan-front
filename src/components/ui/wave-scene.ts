@@ -7,68 +7,13 @@
  * same renderer, so the water looks identical either way.
  */
 
-export type Mood =
-  | "idle"
-  | "romantica"
-  | "nocturna"
-  | "aire_libre"
-  | "cultural"
-  | "gastronomia";
+import {
+  WAVE_PALETTES,
+  type Mood,
+  type WavePalette,
+} from "@/styles/wave-palettes";
 
-export interface WavePalette {
-  wave1: string;
-  wave2: string;
-  wave3: string;
-  wave4: string;
-  topGlow: string;
-}
-
-/** Very subtle (5-10% opacity) color blobs that transition over 1.4s with
- * the mood. Ported from `SmartPlanSystemDesign/v2/MoodBackground.jsx`. */
-export const WAVE_PALETTES: Record<Mood, WavePalette> = {
-  idle: {
-    wave1: "rgba(232,93,32,0.07)",
-    wave2: "rgba(255,209,102,0.08)",
-    wave3: "rgba(232,93,32,0.05)",
-    wave4: "rgba(43,91,255,0.04)",
-    topGlow: "transparent",
-  },
-  romantica: {
-    wave1: "rgba(232,93,32,0.14)",
-    wave2: "rgba(196,74,20,0.10)",
-    wave3: "rgba(255,170,80,0.09)",
-    wave4: "rgba(180,40,80,0.06)",
-    topGlow: "rgba(232,93,32,0.03)",
-  },
-  nocturna: {
-    wave1: "rgba(43,91,255,0.12)",
-    wave2: "rgba(100,60,180,0.10)",
-    wave3: "rgba(26,17,9,0.08)",
-    wave4: "rgba(232,93,32,0.05)",
-    topGlow: "rgba(26,17,9,0.05)",
-  },
-  aire_libre: {
-    wave1: "rgba(34,192,107,0.10)",
-    wave2: "rgba(43,91,255,0.08)",
-    wave3: "rgba(255,209,102,0.07)",
-    wave4: "rgba(34,192,107,0.05)",
-    topGlow: "transparent",
-  },
-  cultural: {
-    wave1: "rgba(43,91,255,0.11)",
-    wave2: "rgba(100,60,180,0.09)",
-    wave3: "rgba(232,93,32,0.07)",
-    wave4: "rgba(255,209,102,0.05)",
-    topGlow: "rgba(43,91,255,0.02)",
-  },
-  gastronomia: {
-    wave1: "rgba(232,93,32,0.13)",
-    wave2: "rgba(200,121,65,0.10)",
-    wave3: "rgba(255,209,102,0.08)",
-    wave4: "rgba(139,34,82,0.05)",
-    topGlow: "rgba(232,93,32,0.02)",
-  },
-};
+export type { Mood, WavePalette } from "@/styles/wave-palettes";
 
 interface WaveLayer {
   amplitude: number;
@@ -190,10 +135,12 @@ interface Swell {
 const SWELL_PEAK_MS = 320;
 /** After this a packet is off-screen and spent; it gets dropped. */
 const SWELL_LIFE_MS = 2400;
-/** Ceiling on the summed strength of every live packet. New ones are
- * scaled by the headroom left below it, so navigating fast builds a
- * bigger swell that still can't climb off the top of the screen. */
+/** Ceiling approached by the summed strength of every live packet. A smooth
+ * saturation curve keeps every new impulse visible without crossing it. */
 const SWELL_MAX = 1.5;
+/** Makes one packet retain strength 1 while additional packets approach the
+ * ceiling smoothly instead of being ignored once the water is busy. */
+const SWELL_SATURATION_RATE = -Math.log(1 - 1 / SWELL_MAX);
 /** Where a packet enters, in screen widths — just past the right edge. */
 const SWELL_START_X = 1.3;
 /** How fast it travels, in screen widths per second, leftward with the
@@ -222,6 +169,17 @@ function swellEnvelope(age: number): number {
   return t * Math.exp(1 - t);
 }
 
+/** Compresses any number of overlapping packets below `SWELL_MAX` while
+ * remaining strictly increasing: every navigation still changes the water,
+ * including a rapid burst, but no burst can send it outside its safe range. */
+export function boundedSwellStrength(rawStrength: number): number {
+  if (rawStrength <= 0) return 0;
+  return (
+    SWELL_MAX *
+    (1 - Math.exp(-rawStrength * SWELL_SATURATION_RATE))
+  );
+}
+
 type Rgba = [number, number, number, number];
 
 /** Parses the `rgba(r,g,b,a)` literals above. Not a general CSS color
@@ -238,21 +196,25 @@ function parseRgba(color: string): Rgba {
   ];
 }
 
-/** Palettes pre-parsed once, so a frame never touches a regex. */
+function parsedColors(palette: WavePalette): Rgba[] {
+  return WAVE_LAYERS.map((layer) => parseRgba(palette[layer.fillKey]));
+}
+
+function fillStrings(palette: WavePalette): string[] {
+  return WAVE_LAYERS.map((layer) => palette[layer.fillKey]);
+}
+
 const PARSED_PALETTES = Object.fromEntries(
   Object.entries(WAVE_PALETTES).map(([mood, palette]) => [
     mood,
-    WAVE_LAYERS.map((layer) => parseRgba(palette[layer.fillKey])),
+    parsedColors(palette),
   ]),
 ) as Record<Mood, Rgba[]>;
 
-/** The same palettes as ready-made `fillStyle` strings, in layer order.
- * A settled mood is the common case by far, and reusing these keeps it
- * from allocating four strings every frame forever. */
 const PALETTE_STRINGS = Object.fromEntries(
   Object.entries(WAVE_PALETTES).map(([mood, palette]) => [
     mood,
-    WAVE_LAYERS.map((layer) => palette[layer.fillKey]),
+    fillStrings(palette),
   ]),
 ) as Record<Mood, string[]>;
 
@@ -277,7 +239,7 @@ type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 export interface WaveScene {
   /** CSS pixel size of the box plus the backing-store ratio to draw at. */
   resize(width: number, height: number, dpr: number): void;
-  setMood(mood: Mood, now: number): void;
+  setMood(mood: Mood, now: number, animate?: boolean): void;
   /** Breaks a wave: sends one more swell across the water. */
   tide(now: number): void;
   /** Draws the frame for `now` (a `performance.now()`-style timestamp). */
@@ -306,7 +268,7 @@ export function createWaveScene(
 
   // `-Infinity` reads as a fade that finished long ago, so the first frame
   // is painted in the mood it was built with rather than fading up to it.
-  let mood: Mood = initialMood;
+  let mood = initialMood;
   let moodStart = -Infinity;
   // The fade's starting colors are a *snapshot*, not a palette. Changing
   // mood again mid-fade has to continue from the color actually on screen;
@@ -355,25 +317,19 @@ export function createWaveScene(
       ctx.canvas.height = Math.max(1, Math.round(height * dpr));
     },
 
-    setMood(nextMood, now) {
+    setMood(nextMood, now, animate = true) {
       if (nextMood === mood) return;
       fadeFrom = colorsAt(now);
       mood = nextMood;
-      moodStart = now;
+      moodStart = animate ? now : -Infinity;
     },
 
     tide(now) {
-      const { strengths } = livePackets(now);
-      let total = 0;
-      for (const strength of strengths) total += strength;
-
-      const energy = clamp01(1 - total / SWELL_MAX);
-      if (energy <= 0) return;
-      swells.push({ born: now, energy });
-
-      if (swells.length > MAX_SWELLS) {
-        // Retire the faintest rather than the oldest: it is the one whose
-        // disappearance is least visible.
+      livePackets(now);
+      if (swells.length >= MAX_SWELLS) {
+        // Make room before adding the new impulse. Choosing after the push
+        // always selected the newborn packet (its envelope starts at zero),
+        // which made navigation stop reacting once the list was full.
         let weakest = 0;
         for (let i = 1; i < swells.length; i++) {
           const age = now - swells[i].born;
@@ -385,6 +341,8 @@ export function createWaveScene(
         }
         swells.splice(weakest, 1);
       }
+
+      swells.push({ born: now, energy: 1 });
     },
 
     draw(now) {
@@ -437,7 +395,7 @@ export function createWaveScene(
             const d = (u - (centers[k] + lag)) / SWELL_WIDTH;
             swell += strengths[k] * Math.exp(-d * d);
           }
-          swell *= depth;
+          swell = boundedSwellStrength(swell) * depth;
 
           const amplitude = baseAmplitude * (1 + TIDE_STRENGTH * swell);
           const steepness = steepnessFor(swell);
