@@ -11,12 +11,6 @@ vi.mock("@/components/collection", () => ({
   ),
 }));
 
-vi.mock("@/components/ui", () => ({
-  MoodBackground: ({ mood }: { mood: string }) => (
-    <div data-testid="mood-background" data-mood={mood} />
-  ),
-}));
-
 describe("FavoritesPage collection navigation", () => {
   it("separates the pending favorites sections from the active collections section", () => {
     render(<FavoritesPage />);
@@ -33,10 +27,6 @@ describe("FavoritesPage collection navigation", () => {
     expect(
       screen.getByRole("link", { name: "Crear nueva colección" }),
     ).toHaveAttribute("href", ROUTES.createCollection);
-    expect(screen.getByTestId("mood-background")).toHaveAttribute(
-      "data-mood",
-      "idle",
-    );
   });
 
   it("does not render mock favorite or collection data", () => {

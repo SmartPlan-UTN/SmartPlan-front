@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 
+import { AppBackground } from "@/components/layout";
 import { SessionProvider } from "@/lib/auth";
 
 import "./globals.css";
@@ -33,6 +34,7 @@ export default function RootLayout({
       className={`${bricolageGrotesque.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <AppBackground />
         <SessionProvider>{children}</SessionProvider>
       </body>
     </html>

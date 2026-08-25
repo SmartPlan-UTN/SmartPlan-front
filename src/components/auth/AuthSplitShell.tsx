@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { Icon, Logo, MoodBackground } from "@/components/ui";
+import { Icon, Logo } from "@/components/ui";
 
 import styles from "./AuthSplitShell.module.css";
 
@@ -36,8 +36,6 @@ export interface AuthSplitShellProps {
 export function AuthSplitShell({ children, cardVariant }: AuthSplitShellProps) {
   return (
     <div className={styles.shell}>
-      <MoodBackground mood="romantica" style={{ position: "fixed" }} />
-
       <div className={styles.leftPanel}>
         <Logo
           variant="white"
