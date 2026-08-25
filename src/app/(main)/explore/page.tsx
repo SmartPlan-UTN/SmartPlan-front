@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 
-import { Container, PendingScreen } from "@/components/layout";
+import { ExploreTabs } from "@/components/explore";
+import { Container } from "@/components/layout";
+import { MoodBackground } from "@/components/ui";
+
+import styles from "./explore.module.css";
 
 export const metadata: Metadata = {
   title: "Explorar",
@@ -8,12 +12,18 @@ export const metadata: Metadata = {
 
 export default function ExplorePage() {
   return (
-    <Container>
-      <PendingScreen
-        title="Explorar"
-        description="Búsqueda de actividades y planes, con filtros, orden y la grilla de resultados."
-        references="CU9–CU12 · PAN 11"
-      />
-    </Container>
+    <div className={styles.backdrop}>
+      <MoodBackground mood="idle" />
+
+      <Container>
+        <div className={styles.page}>
+          {/* SmartPlanSystemDesign's Results screen has no visible page
+              title — it goes straight from the navbar into the search bar
+              — but a page still needs a heading landmark. */}
+          <h1 className="sp-sr-only">Explorar</h1>
+          <ExploreTabs />
+        </div>
+      </Container>
+    </div>
   );
 }

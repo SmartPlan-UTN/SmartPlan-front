@@ -1,0 +1,420 @@
+/* ================================================================
+   Activity search results: card, grid, and search states (CU9).
+
+   All values come from the tokens in src/styles/tokens.css.
+   ================================================================ */
+
+/* ── Card ────────────────────────────────────────────────────── */
+/* `.card`, `.imageWrapper`, `.imagePlaceholder`, `.body`, `.name`,
+   `.metaRow`, `.metaItem`, `.tagRow`, and `.grid` live in
+   `../explore/explore.module.css` — shared with `PlanCard`, which uses the
+   exact same shell. Only activity-specific card pieces stay here. */
+.description {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--fg-2);
+  font-size: var(--t-small);
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  min-height: calc(var(--t-small) * 1.45 * 2);
+}
+
+/* ── Search box ──────────────────────────────────────────────── */
+/* One pill-shaped row — icon, input, "Buscar" button — matching the sticky
+   search bar in Results.jsx, not a bare input with a floating icon. */
+.searchField {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  max-width: 680px;
+  padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-pill);
+  background: var(--surface-card);
+  box-shadow: 0 2px 8px rgba(26, 17, 9, 0.04);
+  transition: border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.searchField:focus-within {
+  border-color: var(--ember);
+  box-shadow: var(--focus-ember);
+}
+
+.searchIcon {
+  flex-shrink: 0;
+  color: var(--fg-3);
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  padding: var(--s-2) 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--fg-1);
+  font-size: var(--t-body);
+}
+
+/* No focus ring of its own: the parent `.searchField` already shows one
+   (border + glow) on `:focus-within`. A second ring around just the input
+   read as a "double outline" bug. */
+.searchInput:focus-visible {
+  outline: none;
+}
+
+.resultsLabel {
+  color: var(--fg-2);
+}
+
+.resultsLabel strong {
+  color: var(--fg-1);
+  font-weight: var(--w-heading);
+}
+
+/* ── States: loading, empty, error ──────────────────────────── */
+.stateBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 480px;
+  margin-inline: auto;
+  gap: var(--s-3);
+  padding: var(--s-8) var(--s-4);
+  text-align: center;
+  color: var(--fg-2);
+}
+
+.stateIcon {
+  color: var(--fg-3);
+}
+
+.errorIcon {
+  color: var(--error);
+}
+
+/* Matches ResultsLoading in Results.jsx: three dots pulsing in sequence,
+   using the `pulseDot` keyframe already defined in tokens.css. */
+.loadingDots {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.loadingDot {
+  width: 11px;
+  height: 11px;
+  border-radius: var(--r-chip);
+  background: var(--ember);
+  animation: pulseDot 1.3s ease-in-out infinite;
+}
+
+.loadingDot:nth-child(2) {
+  animation-delay: 0.22s;
+}
+
+.loadingDot:nth-child(3) {
+  animation-delay: 0.44s;
+}
+
+
+/* ── Activity detail (CU14) ───────────────────────────────────── */
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  max-width: 760px;
+  margin-inline: auto;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: fit-content;
+  color: var(--fg-2);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: var(--fg-1);
+}
+
+.detailHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.detailDescription {
+  color: var(--fg-2);
+}
+
+/* ── Activity detail (CU14), matching
+   SmartPlanSystemDesign/v2/ActivityDetail.jsx ─────────────────── */
+.hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 240px;
+  overflow: hidden;
+  background: linear-gradient(155deg, var(--char) 0%, #2d1506 100%);
+}
+
+.heroIcon {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.heroBadge {
+  position: absolute;
+  top: var(--s-3);
+  right: 64px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.38);
+  color: var(--fg-on-dark-2);
+  font-size: 11px;
+}
+
+.heroBookmark {
+  position: absolute;
+  top: var(--s-3);
+  right: var(--s-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1.5px solid var(--white-18);
+  border-radius: var(--r-chip);
+  background: rgba(0, 0, 0, 0.38);
+  color: var(--white);
+  cursor: pointer;
+}
+
+.heroBookmarkSaved {
+  color: var(--gold);
+}
+
+.titleBlock {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--s-5) var(--s-4) 0;
+}
+
+.badgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-2);
+}
+
+.ratingSummary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--fg-3);
+}
+
+.title {
+  margin: 0 0 var(--s-2);
+  color: var(--fg-1);
+  font-size: 32px;
+  font-weight: var(--w-display);
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.addressRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--fg-2);
+  font-size: var(--t-small);
+}
+
+.addressIcon {
+  flex-shrink: 0;
+  color: var(--ember);
+}
+
+.missing {
+  margin: 0;
+  color: var(--fg-3);
+  font-size: var(--t-small);
+  font-style: italic;
+}
+
+.tabBar {
+  display: flex;
+  max-width: 720px;
+  margin: var(--s-5) auto 0;
+  padding: 0 var(--s-4);
+  border-bottom: 1.5px solid var(--hairline);
+}
+
+.tabButton {
+  padding: var(--s-3) var(--s-5);
+  border: 0;
+  border-bottom: 2.5px solid transparent;
+  margin-bottom: -1.5px;
+  background: transparent;
+  color: var(--fg-3);
+  font-family: inherit;
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.tabButton:hover {
+  color: var(--fg-1);
+}
+
+.tabButtonActive,
+.tabButtonActive:hover {
+  border-bottom-color: var(--ember);
+  color: var(--ember);
+}
+
+.tabContent {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--s-5) var(--s-4) 0;
+}
+
+.section {
+  margin-bottom: var(--s-6);
+}
+
+.sectionLabel {
+  margin: 0 0 var(--s-3);
+  color: var(--ember);
+  font-size: var(--t-label);
+  font-weight: var(--w-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.detailsCard {
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card-sm);
+  background: var(--surface-card);
+  padding: 0 var(--s-4);
+}
+
+.infoRow {
+  display: flex;
+  gap: var(--s-3);
+  align-items: flex-start;
+  padding: var(--s-3) 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.infoRowLast {
+  border-bottom: 0;
+}
+
+.infoIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--ember);
+}
+
+.infoLabel {
+  margin: 0 0 3px;
+  color: var(--fg-3);
+  font-size: 11px;
+  font-weight: var(--w-label);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.infoValue {
+  margin: 0;
+  color: var(--fg-1);
+  font-size: var(--t-small);
+  font-weight: 500;
+}
+
+.costValue {
+  margin: 0;
+  color: var(--ember);
+  font-size: 22px;
+  font-weight: var(--w-display);
+  line-height: 1;
+}
+
+.costNote {
+  margin: 3px 0 0;
+  color: var(--fg-3);
+  font-size: 11px;
+}
+
+.ratingSummaryCard {
+  display: flex;
+  align-items: center;
+  gap: var(--s-6);
+  padding: var(--s-5);
+  margin-bottom: var(--s-5);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+}
+
+.ratingBigBlock {
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.ratingBig {
+  margin: 0;
+  color: var(--fg-1);
+  font-size: 52px;
+  font-weight: var(--w-display);
+  line-height: 1;
+}
+
+.ratingCountNote {
+  margin: var(--s-1) 0 0;
+  color: var(--fg-3);
+  font-size: 11px;
+}
+
+.reviewsEmptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-8) var(--s-4);
+  text-align: center;
+  color: var(--fg-2);
+}
+
+/* Not sticky/fixed: the running SmartPlanSystemDesign build scrolls this
+   away with the rest of the content, same as PlanDetail.jsx's action row —
+   only the source ActivityDetail.jsx pinned it. */
+.actionBar {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--s-5) var(--s-4) var(--s-7);
+  border-top: 1.5px solid var(--hairline);
+}
+
+.actionBarInner {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.actionBarPrimary {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+}

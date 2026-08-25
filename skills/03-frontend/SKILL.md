@@ -141,6 +141,12 @@ constant breaks the build and the string breaks silently.
 and Historial, plus the user menu with Mi perfil, Preferencias, and Cerrar
 sesión. Below 900px the links collapse into a panel.
 
+**The navbar's inner row is not capped at `Container`'s `--max-w`.** Unlike
+every screen's content, `.navbarInner` spans the full window width (48px
+side padding above 900px) to match `SmartPlanSystemDesign/v2/Navbar.jsx` —
+see the note in `skills/06-design-system/SKILL.md`'s Layout section before
+"fixing" it to look consistent with the boxed content below it.
+
 Destinations come from `MAIN_LINKS` and `USER_LINKS`
 ([`links.ts`](../../src/components/layout/links.ts)): to add one, add the
 entry there, not a loose `<Link>` in the JSX.

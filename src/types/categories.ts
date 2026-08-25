@@ -22,3 +22,20 @@ export type CategoryStatusKey = 'active' | 'inactive';
 export interface CategoryStatus extends CatalogEntity<CategoryStatusKey> {
   key: CategoryStatusKey;
 }
+
+/**
+ * Active-category projection returned by `GET /categories` (CU10): just
+ * enough to build a filter chip, without the full catalog entity.
+ */
+export interface CategoryOption {
+  id: number;
+  name: string;
+  description: string | null;
+}
+
+/** Query params accepted by `GET /categories`. */
+export interface CategoryListParams {
+  search?: string;
+  page?: number;
+  limit?: number;
+}

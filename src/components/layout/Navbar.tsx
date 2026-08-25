@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Icon, Logo } from "@/components/ui";
 import { ROUTES } from "@/lib/routes";
+import { cn } from "@/lib/utils";
 
 import { NavLink } from "./NavLink";
 import { MAIN_LINKS } from "./links";
@@ -16,11 +17,18 @@ import styles from "./layout.module.css";
  * 60px navigation bar (`--navbar-h`), fixed at the top with a
  * `backdrop-filter` over the content, as required by the EMBER design system.
  *
+ * Always the light variant (cream, ink logo, dark text): the
+ * SmartPlanSystemDesign prototype's `Navbar` component still has a `dark`
+ * prop, but the shipped build hardcodes it to light for every screen. The
+ * border below the bar stays transparent until the page scrolls, same as
+ * the prototype.
+ *
  * Below 900px the links collapse into a dropdown panel; the user menu
  * stays visible at every size.
  */
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const currentRoute = usePathname();
   const [menuRoute, setMenuRoute] = useState(currentRoute);
 
@@ -33,11 +41,25 @@ export function Navbar() {
     setMenuOpen(false);
   }
 
+  useEffect(() => {
+    const onScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+
   return (
-    <header className={styles.navbar}>
+    <header
+      className={cn(styles.navbar, scrolled && styles.navbarScrolled)}
+    >
       <div className={styles.navbarInner}>
         <Link href={ROUTES.home} className={styles.brand}>
-          <Logo variant="white" kind="full" height={22} priority />
+          <Logo variant="ink" kind="full" height={22} priority />
         </Link>
 
         <nav className={styles.nav} aria-label="Navegación principal">

@@ -36,6 +36,12 @@ const ACTIVE_CLASS: Record<LinkVariant, string> = {
  * within its destination. The active state is communicated with
  * `aria-current="page"`, not just color: screen reader users also need to
  * know where they are.
+ *
+ * The `navbar` variant is text-only, matching
+ * SmartPlanSystemDesign/v2/Navbar.jsx's horizontal links — `icon` is
+ * accepted but only rendered for `option` (dropdown and mobile-panel
+ * items). An icon there also threw off `.activeLink`'s dot indicator: it
+ * centers under the whole link, icon included, not just the label.
  */
 export function NavLink({
   href,
@@ -54,7 +60,7 @@ export function NavLink({
       aria-current={active ? "page" : undefined}
       onClick={onNavigate}
     >
-      {icon ? <Icon name={icon} size={16} /> : null}
+      {icon && variant === "option" ? <Icon name={icon} size={16} /> : null}
       {label}
     </Link>
   );

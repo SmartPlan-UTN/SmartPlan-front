@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 
 export type Mood =
   | "idle"
@@ -119,60 +119,86 @@ function generateWavePath(
 }
 
 /** Decorative, `aria-hidden` animated background: 4 layered SVG waves that
- * undulate independently behind the content, plus a soft mood-tinted glow. */
+ * undulate independently behind the content, plus a soft mood-tinted glow.
+ * Stops entirely under `prefers-reduced-motion: reduce`. */
 export function MoodBackground({ mood = "idle", style }: MoodBackgroundProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  const frameRef = useRef<number | null>(null);
-  const startTime = useRef<number | null>(null);
   const pathRefs = useRef<(SVGPathElement | null)[]>([]);
   const [dims, setDims] = useState({ w: 1200, h: 800 });
 
   const palette = WAVE_PALETTES[mood];
 
-  useEffect(() => {
+  // Measures the wrapper's own rendered box, not the viewport: this fills
+  // its nearest positioned ancestor via `inset: 0` (or the viewport itself
+  // when a caller overrides `position: fixed` through `style`, as
+  // `AuthSplitShell` does), which isn't always exactly one screen tall —
+  // shorter for a sparse results page, taller for a long one. Sizing the
+  // SVG viewBox off `window.innerHeight` instead mismatched the coordinate
+  // system against the real box whenever content height differed from
+  // viewport height, stretching or squishing the waves and cutting them
+  // off at the edge. `ResizeObserver` keeps it in sync as content grows or
+  // shrinks; `useLayoutEffect`, not `useEffect`, so the first painted frame
+  // already uses the real size instead of the 1200×800 guess.
+  useLayoutEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+
     function measure() {
-      setDims({ w: window.innerWidth, h: window.innerHeight });
+      if (!node) return;
+      const rect = node.getBoundingClientRect();
+      setDims({ w: rect.width, h: rect.height });
     }
+
     measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
     window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
   }, []);
 
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+
     const svg = svgRef.current;
     if (!svg) return;
 
-    startTime.current ??= Date.now();
-    const start = startTime.current;
+    const startTime = Date.now();
+    let animationFrame: number;
 
     function tick() {
       // Re-checked, not just the outer guard: TS resets narrowing for a
       // closed-over variable inside a nested function, even a `const`.
       if (!svg) return;
 
-      const t = Date.now() - start;
-      const w = svg.viewBox.baseVal.width;
-      const h = svg.viewBox.baseVal.height;
+      const elapsed = Date.now() - startTime;
+      const width = svg.viewBox.baseVal.width;
+      const height = svg.viewBox.baseVal.height;
 
-      WAVE_LAYERS.forEach((layer, i) => {
-        const phase = layer.phase + t * layer.speed;
-        const yBase = h * layer.yOffset;
-        const d = generateWavePath(w, h, layer.amplitude, layer.frequency, phase, yBase);
-        pathRefs.current[i]?.setAttribute("d", d);
+      WAVE_LAYERS.forEach((layer, index) => {
+        const phase = layer.phase + elapsed * layer.speed;
+        const yBase = height * layer.yOffset;
+        const d = generateWavePath(width, height, layer.amplitude, layer.frequency, phase, yBase);
+        pathRefs.current[index]?.setAttribute("d", d);
       });
 
-      frameRef.current = requestAnimationFrame(tick);
+      animationFrame = requestAnimationFrame(tick);
     }
 
     tick();
-
     return () => {
-      if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
+      cancelAnimationFrame(animationFrame);
     };
   }, [dims]);
 
   return (
     <div
+      ref={containerRef}
       aria-hidden="true"
       style={{
         position: "absolute",
@@ -209,11 +235,11 @@ export function MoodBackground({ mood = "idle", style }: MoodBackgroundProps) {
         preserveAspectRatio="none"
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 1 }}
       >
-        {WAVE_LAYERS.map((layer, i) => (
+        {WAVE_LAYERS.map((layer, index) => (
           <path
             key={layer.fillKey}
             ref={(el) => {
-              pathRefs.current[i] = el;
+              pathRefs.current[index] = el;
             }}
             fill={palette[layer.fillKey]}
             style={{ transition: "fill 1.4s ease" }}

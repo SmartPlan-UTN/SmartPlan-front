@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes } from "react";
+import type { ButtonHTMLAttributes, Ref } from "react";
 
 import styles from "./primitives.module.css";
 
@@ -16,6 +16,8 @@ export type ButtonSize = "sm" | "md" | "lg";
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
+  /** React 19 accepts `ref` as a plain prop; no `forwardRef` needed. */
+  ref?: Ref<HTMLButtonElement>;
 }
 
 const VARIANT_CLASS: Record<ButtonVariant, string> = {
@@ -39,6 +41,7 @@ export function Button({
   size = "md",
   type = "button",
   className,
+  ref,
   ...props
 }: ButtonProps) {
   const classes = [
@@ -50,5 +53,5 @@ export function Button({
     .filter(Boolean)
     .join(" ");
 
-  return <button type={type} className={classes} {...props} />;
+  return <button ref={ref} type={type} className={classes} {...props} />;
 }
