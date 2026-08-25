@@ -117,3 +117,14 @@ export interface PlanSearchParams extends ExplorationQueryParams {
   outingType?: string;
   sortBy?: PlanSortField;
 }
+
+export interface CreatePlanDto {
+  title: string;
+  description?: string | null;
+  peopleCount: number;
+}
+
+export interface AddPlanDetailDto {
+  activityId: number;
+}
+

@@ -1,0 +1,400 @@
+/* CSS for Plan creation form (CU24) following EMBER v2 Design System */
+
+.container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--s-6);
+  padding: var(--s-5) 0 var(--s-8);
+}
+
+@media (min-width: 1024px) {
+  .container {
+    grid-template-columns: 1.2fr 1fr;
+  }
+}
+
+.title {
+  margin-bottom: var(--s-5);
+  color: var(--fg-1);
+}
+
+.card {
+  background: var(--surface-card);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card);
+  padding: var(--s-5);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.label {
+  color: var(--fg-2);
+  font-weight: 600;
+}
+
+.required {
+  color: var(--ember);
+  font-weight: 700;
+}
+
+.input, .textarea {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card-sm);
+  background: color-mix(in srgb, var(--cream) 70%, transparent);
+  color: var(--fg-1);
+  font-size: var(--t-body);
+  font-family: inherit;
+  transition: border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.input:focus, .textarea:focus {
+  outline: none;
+  border-color: var(--ember);
+  background: #fff;
+  box-shadow: var(--focus-ember);
+}
+
+.inputInvalid {
+  border-color: var(--error);
+  background: color-mix(in srgb, var(--error) 4%, #fff);
+}
+
+.fieldError {
+  color: var(--error);
+  font-size: var(--t-small);
+  margin-top: 2px;
+}
+
+.autocompleteContainer {
+  position: relative;
+}
+
+.suggestionsList {
+  position: absolute;
+  top: 105%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card-sm);
+  box-shadow: var(--shadow-card);
+  z-index: 10;
+  max-height: 220px;
+  overflow-y: auto;
+  list-style: none;
+  padding: 4px;
+  margin: 0;
+}
+
+.suggestionItem {
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: none;
+  text-align: left;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: background 120ms;
+}
+
+.suggestionItem:hover {
+  background: rgba(232, 93, 32, 0.08);
+}
+
+.suggestionItemTitle {
+  font-weight: 600;
+  font-size: var(--t-body);
+  color: var(--fg-1);
+}
+
+.suggestionItemAddress {
+  font-size: var(--t-small);
+  color: var(--fg-2);
+}
+
+/* Activity Selector */
+.activitySelector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin-top: var(--s-3);
+}
+
+.activitySearchInput {
+  composes: input;
+  background: #fff;
+}
+
+.activityList {
+  max-height: 250px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-right: var(--s-1);
+}
+
+.activityCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--s-3);
+  background: #fff;
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card-sm);
+  transition: transform 150ms, box-shadow 150ms;
+}
+
+.activityCard:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-card);
+}
+
+.activityInfo {
+  flex: 1;
+  min-width: 0;
+  padding-right: var(--s-2);
+}
+
+.activityName {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--fg-1);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activityMeta {
+  display: flex;
+  gap: var(--s-3);
+  font-size: 12px;
+  color: var(--fg-3);
+}
+
+/* Itinerary Timeline */
+.itineraryList {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--s-3);
+}
+
+.itineraryRow {
+  display: flex;
+  gap: var(--s-4);
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.timelineLine {
+  width: 2px;
+  background: rgba(232, 93, 32, 0.22);
+  flex: 1;
+}
+
+.timelineDot {
+  width: 28px;
+  height: 28px;
+  border-radius: 99px;
+  background: var(--ember);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 4px rgba(232, 93, 32, 0.14);
+}
+
+.itineraryCard {
+  flex: 1;
+  background: #fff;
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card-sm);
+  padding: 12px var(--s-4);
+  margin-bottom: var(--s-3);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.itineraryName {
+  font-weight: 700;
+  font-size: var(--t-body);
+  color: var(--fg-1);
+}
+
+.itineraryCost {
+  font-size: 14px;
+  color: var(--ember);
+  font-weight: 700;
+}
+
+.itineraryMeta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--fg-3);
+  margin-top: 2px;
+}
+
+.removeButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--fg-3);
+  border-radius: var(--r-btn);
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 150ms, color 150ms;
+}
+
+.removeButton:hover {
+  background: rgba(240, 64, 64, 0.08);
+  color: var(--error);
+}
+
+.summarySection {
+  background: var(--char);
+  color: var(--fg-on-dark);
+  border-radius: var(--r-card);
+  padding: var(--s-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.summaryTitle {
+  font-size: var(--t-h4);
+  font-weight: 700;
+  margin-bottom: var(--s-1);
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: var(--fg-on-dark-2);
+}
+
+.summaryRowTotal {
+  display: flex;
+  justify-content: space-between;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--fg-on-dark);
+  border-top: 1.5px solid var(--hairline-dark);
+  padding-top: var(--s-3);
+  margin-top: var(--s-2);
+}
+
+.actionRow {
+  display: flex;
+  gap: var(--s-3);
+  justify-content: flex-end;
+  margin-top: var(--s-2);
+}
+
+.toast {
+  padding: 12px var(--s-4);
+  border-radius: var(--r-card-sm);
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toastSuccess {
+  background: color-mix(in srgb, var(--success) 12%, #fff);
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+
+.toastError {
+  background: color-mix(in srgb, var(--error) 12%, #fff);
+  color: var(--error);
+  border: 1px solid var(--error);
+}
+
+/* Modal Overlay for dirty cancel confirmation */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 17, 9, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: var(--s-4);
+}
+
+.modalCard {
+  background: var(--surface-card);
+  border-radius: var(--r-card);
+  padding: var(--s-5) var(--s-5) var(--s-4);
+  width: 100%;
+  maxWidth: 400px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.modalIcon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--warning);
+}
+
+.modalActions {
+  display: flex;
+  gap: 10px;
+  margin-top: var(--s-2);
+}

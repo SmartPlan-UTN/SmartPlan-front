@@ -13,6 +13,7 @@ export const ROUTES = {
   explore: "/explore",
   exploreMap: "/explore/map",
   plans: "/plans",
+  createPlan: "/plans/create",
   favorites: "/favorites",
   createCollection: "/collections/new",
   history: "/history",

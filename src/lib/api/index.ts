@@ -23,7 +23,7 @@ export type { UnauthorizedListener } from './auth-events';
 export { getApiBaseUrl } from './config';
 
 export { searchActivities, getActivity, getActivityMapMarkers } from './activities';
-export { searchPlans, getPlan } from './plans';
+export { searchPlans, getPlan, createPlan, addPlanActivity } from './plans';
 export { listCategories } from './categories';
 export {
   createCollection,
@@ -32,3 +32,5 @@ export {
   listCollections,
   updateCollection,
 } from './collections';
+export { searchPlaces } from './places';
+

@@ -3,6 +3,8 @@ import type {
   PlanDetailResult,
   PlanSearchParams,
   PlanSearchResult,
+  CreatePlanDto,
+  Plan,
 } from '@/types';
 import { apiClient } from './client';
 
@@ -25,4 +27,20 @@ export async function searchPlans(
  */
 export async function getPlan(id: number): Promise<PlanDetailResult> {
   return apiClient.get<PlanDetailResult>(`/plans/${id}`);
+}
+
+/**
+ * Creates a new plan for the logged-in user (CU24).
+ * Backend contract: `POST /users/me/plans`.
+ */
+export async function createPlan(dto: CreatePlanDto): Promise<Plan> {
+  return apiClient.post<Plan>('/users/me/plans', dto);
+}
+
+/**
+ * Adds an activity stop to a plan (CU24/CU27).
+ * Backend contract: `POST /users/me/plans/:id/details`.
+ */
+export async function addPlanActivity(planId: number, activityId: number): Promise<Plan> {
+  return apiClient.post<Plan>(`/users/me/plans/${planId}/details`, { activityId });
 }
