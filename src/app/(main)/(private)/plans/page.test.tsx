@@ -24,10 +24,12 @@ describe("MyPlansPage", () => {
   it("labels the section with its heading", () => {
     render(<MyPlansPage />);
 
-    const heading = screen.getByRole("heading", { name: "Mis planes" });
     expect(
       screen.getByRole("region", { name: "Mis planes" }),
     ).toBeInTheDocument();
-    expect(heading).toHaveAttribute("id", "my-plans-title");
+    expect(screen.getByRole("heading", { name: "Mis planes" })).toHaveAttribute(
+      "id",
+      "my-plans-title",
+    );
   });
 });

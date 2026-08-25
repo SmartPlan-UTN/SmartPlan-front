@@ -74,14 +74,6 @@
   }
 }
 
-/* Full-bleed cream under the content, matching PlanDetail.jsx's screen
-   background in SmartPlanSystemDesign. `Button variant="ghostLight"` is
-   transparent by design — it reads against this surface, not against the
-   app's wave background, which stays visible behind the header above. */
-.contentSurface {
-  background: var(--cream);
-}
-
 .content {
   display: flex;
   flex-direction: column;

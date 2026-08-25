@@ -282,113 +282,111 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
         ) : null}
       </header>
 
-      <div className={styles.contentSurface}>
-        <div className={styles.content}>
-          {isCancelled && (
-            <div className={styles.cancelledBanner}>
-              <Icon name="triangle-alert" size={20} />
-              <div>
-                <strong>Plan cancelado:</strong> Este plan se encuentra
-                conservado como historial de lectura y no acepta modificaciones.
-              </div>
+      <div className={styles.content}>
+        {isCancelled && (
+          <div className={styles.cancelledBanner}>
+            <Icon name="triangle-alert" size={20} />
+            <div>
+              <strong>Plan cancelado:</strong> Este plan se encuentra
+              conservado como historial de lectura y no acepta modificaciones.
             </div>
-          )}
+          </div>
+        )}
 
-          {plan.description ? (
-            <p className={`sp-body-lg ${activityStyles.detailDescription}`}>
-              {plan.description}
-            </p>
-          ) : null}
+        {plan.description ? (
+          <p className={`sp-body-lg ${activityStyles.detailDescription}`}>
+            {plan.description}
+          </p>
+        ) : null}
 
-          <div className={styles.section}>
-            <p className={activityStyles.sectionLabel}>itinerario</p>
-            {plan.details.map((detail, index) => (
-              <ItineraryStep
-                detail={detail}
-                isFirst={index === 0}
-                isLast={index === plan.details.length - 1}
-                key={detail.id}
-              />
+        <div className={styles.section}>
+          <p className={activityStyles.sectionLabel}>itinerario</p>
+          {plan.details.map((detail, index) => (
+            <ItineraryStep
+              detail={detail}
+              isFirst={index === 0}
+              isLast={index === plan.details.length - 1}
+              key={detail.id}
+            />
+          ))}
+        </div>
+
+        <div className={styles.costBox}>
+          <p className={styles.costBoxLabel}>estimación de costos</p>
+          <div className={styles.costBreakdown}>
+            {plan.details.map((detail) => (
+              <div className={styles.costRow} key={detail.id}>
+                <span className={styles.costRowLabel}>
+                  {detail.activity.name}
+                </span>
+                <span className={styles.costRowValue}>
+                  {formatArs(detail.estimatedCost)}
+                </span>
+              </div>
             ))}
           </div>
-
-          <div className={styles.costBox}>
-            <p className={styles.costBoxLabel}>estimación de costos</p>
-            <div className={styles.costBreakdown}>
-              {plan.details.map((detail) => (
-                <div className={styles.costRow} key={detail.id}>
-                  <span className={styles.costRowLabel}>
-                    {detail.activity.name}
-                  </span>
-                  <span className={styles.costRowValue}>
-                    {formatArs(detail.estimatedCost)}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <Divider dark />
-            <div className={styles.costTotalRow}>
-              <span className={styles.costRowLabel}>Total</span>
-              <span className={styles.costTotalValue}>
-                {formatArs(plan.estimatedTotalCost)}
-              </span>
-            </div>
-          </div>
-
-          <div className={styles.actionBar}>
-            {isPlanOwner && !isCancelled && (
-              <>
-                <Link
-                  href={planEditRoute(planId)}
-                  style={{ textDecoration: "none", display: "flex", flex: 1 }}
-                >
-                  <Button variant="ghostLight" style={{ width: "100%" }}>
-                    <Icon name="pencil" size={16} aria-hidden="true" />
-                    Editar plan
-                  </Button>
-                </Link>
-
-                <Button
-                  variant="ghostLight"
-                  style={{ flex: 1 }}
-                  onClick={() => setShowCancelModal(true)}
-                >
-                  <Icon name="trash-2" size={16} aria-hidden="true" />
-                  Cancelar plan
-                </Button>
-              </>
-            )}
-
-            <Button
-              variant={saved ? "secondary" : "ghostLight"}
-              className={styles.actionFlex1}
-              onClick={() => {
-                setSaved((current) => !current);
-              }}
-            >
-              <Icon name="bookmark" size={16} aria-hidden="true" />
-              {saved ? "¡Guardado!" : "Guardar plan"}
-            </Button>
-            <Button
-              variant="ghost"
-              className={styles.actionShare}
-              onClick={() => {
-                void handleShare();
-              }}
-            >
-              <Icon name="share-2" size={16} aria-hidden="true" />
-              {copied ? "¡Copiado!" : "Compartir"}
-            </Button>
-            <Button
-              variant="primary"
-              className={styles.actionFlex2}
-              disabled
-              title="Próximamente"
-            >
-              Lo quiero hacer →
-            </Button>
+          <Divider dark />
+          <div className={styles.costTotalRow}>
+            <span className={styles.costRowLabel}>Total</span>
+            <span className={styles.costTotalValue}>
+              {formatArs(plan.estimatedTotalCost)}
+            </span>
           </div>
         </div>
+
+        <div className={styles.actionBar}>
+          {isPlanOwner && !isCancelled && (
+            <>
+              <Link
+                href={planEditRoute(planId)}
+                style={{ textDecoration: "none", display: "flex", flex: 1 }}
+              >
+                <Button variant="ghostLight" style={{ width: "100%" }}>
+                  <Icon name="pencil" size={16} aria-hidden="true" />
+                  Editar plan
+                </Button>
+              </Link>
+
+              <Button
+                variant="ghostLight"
+                style={{ flex: 1 }}
+                onClick={() => setShowCancelModal(true)}
+              >
+                <Icon name="trash-2" size={16} aria-hidden="true" />
+                Cancelar plan
+              </Button>
+            </>
+          )}
+
+          <Button
+            variant={saved ? "secondary" : "ghostLight"}
+            className={styles.actionFlex1}
+            onClick={() => {
+              setSaved((current) => !current);
+            }}
+          >
+            <Icon name="bookmark" size={16} aria-hidden="true" />
+            {saved ? "¡Guardado!" : "Guardar plan"}
+          </Button>
+          <Button
+            variant="ghost"
+            className={styles.actionShare}
+            onClick={() => {
+              void handleShare();
+            }}
+          >
+            <Icon name="share-2" size={16} aria-hidden="true" />
+            {copied ? "¡Copiado!" : "Compartir"}
+          </Button>
+          <Button
+            variant="primary"
+            className={styles.actionFlex2}
+            disabled
+            title="Próximamente"
+          >
+            Lo quiero hacer →
+          </Button>
+      </div>
       </div>
 
       {/* Explicit Cancel Confirmation Dialog (CU26) */}
