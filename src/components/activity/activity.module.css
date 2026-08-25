@@ -418,3 +418,25 @@
   align-items: center;
   justify-content: center;
 }
+
+@media (max-width: 560px) {
+  .actionBar {
+    padding: var(--s-4) var(--s-3) var(--s-5);
+  }
+
+  .actionBarInner {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .actionBarInner button {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  .actionBarPrimary {
+    grid-row: 1;
+    grid-column: 1 / -1;
+  }
+}
