@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Badge, Button, Divider, FloatingBackLink, Icon, Stars } from "@/components/ui";
 import { useDetailFetch } from "@/hooks";
 import { getPlan } from "@/lib/api";
-import { activityDetailRoute, ROUTES } from "@/lib/routes";
+import { activityDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
 import { formatArs, formatDuration, googleMapsUrl } from "@/lib/utils";
 import type { PlanDetailResult, PlanItineraryItem } from "@/types";
 
@@ -260,6 +260,15 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
         </div>
 
         <div className={styles.actionBar}>
+          <Link href={planEditRoute(planId)} style={{ textDecoration: "none", display: "flex", flex: 1 }}>
+            <Button
+              variant="ghostLight"
+              style={{ width: "100%" }}
+            >
+              <Icon name="pencil" size={16} aria-hidden="true" />
+              Editar plan
+            </Button>
+          </Link>
           <Button
             variant={saved ? "secondary" : "ghostLight"}
             className={styles.actionFlex1}

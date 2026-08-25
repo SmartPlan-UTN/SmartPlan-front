@@ -124,7 +124,49 @@ export interface CreatePlanDto {
   peopleCount: number;
 }
 
+export interface UpdatePlanDto {
+  title?: string;
+  description?: string | null;
+  peopleCount?: number;
+}
+
 export interface AddPlanDetailDto {
   activityId: number;
+}
+
+export interface OwnPlanCostSummary {
+  estimatedTotalCost: number;
+  peopleCount: number;
+  estimatedCostPerPerson: number;
+  estimatedTotalDuration: number;
+}
+
+export interface OwnPlanSummary extends OwnPlanCostSummary {
+  id: number;
+  title: string;
+  description: string | null;
+  activityCount: number;
+  status: { key: PlanStatusKey; name: string };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OwnPlanDetailItem {
+  id: number;
+  order: number;
+  estimatedCost: number;
+  estimatedDuration: number;
+  activity: {
+    id: number;
+    name: string;
+    description: string;
+    estimatedCost: number;
+    estimatedDuration: number;
+    type: string | null;
+  };
+}
+
+export interface OwnPlanDetail extends OwnPlanSummary {
+  details: OwnPlanDetailItem[];
 }
 
