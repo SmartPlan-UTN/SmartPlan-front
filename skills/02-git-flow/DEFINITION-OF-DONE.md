@@ -40,6 +40,8 @@ all applicable items below are satisfied.
 - State what the PR does, how to test it, and what remains out of scope.
 - Close the issue with `Closes #NN`.
 - Obtain two approvals and resolve conflicts with `develop`.
+- The `CI` check passes (lint, test, and build). It is a required status
+  check, enforced by the same branch protection.
 
 ## Documentation
 

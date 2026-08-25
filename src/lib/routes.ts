@@ -14,6 +14,7 @@ export const ROUTES = {
   exploreMap: "/explore/map",
   plans: "/plans",
   favorites: "/favorites",
+  createCollection: "/collections/new",
   history: "/history",
   profile: "/profile",
   preferences: "/preferences",
@@ -37,6 +38,11 @@ export function activityDetailRoute(id: number): string {
 /** `/plans/:id` — plan detail (CU13). */
 export function planDetailRoute(id: number): string {
   return `${ROUTES.plans}/${id}`;
+}
+
+/** `/collections/:id/edit` — edit an owned collection (CU33). */
+export function collectionEditRoute(id: number): string {
+  return `/collections/${id}/edit`;
 }
 
 /** Name of the query parameter that stores where to return after logging in. */
