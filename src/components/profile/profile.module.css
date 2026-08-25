@@ -8,7 +8,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--s-6);
-  max-width: 640px;
+  max-width: 680px;
   margin-inline: auto;
 }
 
@@ -16,11 +16,15 @@
   color: var(--fg-1);
 }
 
+/* Literal radius/shadow, not --r-card/--shadow-card: the prototype's
+   profile cards are more rounded (24px vs. --r-card's 16) and float on a
+   softer, wider shadow alone — no border at all, unlike most cards
+   elsewhere in the app. */
 .card {
   background: var(--surface-card);
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-card);
-  box-shadow: var(--shadow-card);
+  border-radius: 24px;
+  box-shadow: 0 8px 40px color-mix(in srgb, var(--char) 7%, transparent),
+    0 2px 8px color-mix(in srgb, var(--char) 4%, transparent);
   overflow: hidden;
 }
 
@@ -34,16 +38,20 @@
   border-bottom: 1px solid var(--hairline);
 }
 
+/* Bottom padding is literal 28px, not --s-5's 24. */
 .identity {
-  padding: 0 var(--s-6) var(--s-5);
+  padding: 0 var(--s-6) 28px;
   position: relative;
 }
 
+/* Literal sizing below, not the --t-h4/--ember-20 tokens: the prototype's
+   avatar circle is bigger (72px, not 64) with a stronger shadow (32%, not
+   --ember-20's 20%) and larger initials (26px, not --t-h4's 20). */
 .avatar {
   position: absolute;
-  top: -32px;
-  width: 64px;
-  height: 64px;
+  top: -36px;
+  width: 72px;
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -55,14 +63,14 @@
     color-mix(in srgb, var(--ember) 65%, black) 100%
   );
   color: var(--white);
-  font-size: var(--t-h4);
+  font-size: 26px;
   font-weight: var(--w-display);
-  box-shadow: 0 4px 20px var(--ember-20);
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--ember) 32%, transparent);
   user-select: none;
 }
 
 .identityText {
-  padding-top: 40px;
+  padding-top: 44px;
 }
 
 .name {
@@ -75,8 +83,10 @@
   color: var(--fg-3);
 }
 
+/* Bottom padding is literal 36px, not --s-6's 32: matches the prototype's
+   own one-off rhythm for this form. */
 .form {
-  padding: 0 var(--s-6) var(--s-6);
+  padding: 0 var(--s-6) 36px;
   display: flex;
   flex-direction: column;
   gap: var(--s-5);
@@ -96,7 +106,7 @@
 .row2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--s-3);
+  gap: var(--s-4);
 }
 
 @media (max-width: 480px) {
@@ -131,12 +141,14 @@
 /* ── CU6: expandable "Cambiar contraseña" card ──────────────
    A second `.card`, toggled open/closed — matches `Profile.jsx`'s
    collapsible password section. */
+/* Literal gap/padding, not --s-4/--s-6: the prototype's toggle row rhythm
+   (14px gap, 18px/24px padding) doesn't land on the spacing scale. */
 .toggleRow {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: var(--s-4);
-  padding: var(--s-4) var(--s-6);
+  gap: 14px;
+  padding: 18px 24px;
   border: 0;
   background: transparent;
   text-align: left;
@@ -174,9 +186,16 @@
   font-weight: 700;
 }
 
-.toggleSubtitle {
+/* `p.toggleSubtitle`, not just `.toggleSubtitle`: the JSX applies `sp-small`
+   (14px, from the globally loaded tokens.css) alongside this class for the
+   line-height/weight it wants, but the prototype's subtitle is 12px, a
+   size smaller than its 14px title. The element qualifier raises
+   specificity so this 12px override doesn't depend on which stylesheet the
+   bundler happens to place later. */
+p.toggleSubtitle {
   margin: 2px 0 0;
   color: var(--fg-3);
+  font-size: 12px;
 }
 
 .chevron {
@@ -191,11 +210,13 @@
   transform: rotate(180deg);
 }
 
+/* Literal 24/28/20px, not --s-5/--s-6: the prototype's expanded password
+   form has its own rhythm, close to but not exactly the spacing scale. */
 .passwordForm {
-  padding: var(--s-5) var(--s-6) var(--s-6);
+  padding: 24px 28px 28px;
   display: flex;
   flex-direction: column;
-  gap: var(--s-5);
+  gap: 20px;
 }
 
 /* ── Load state ──────────────────────────────────────────── */
@@ -233,6 +254,8 @@
   }
 }
 
+/* Literal shadow, not --shadow-card-dark: the prototype's toast floats
+   more, with a wider and less opaque shadow than the standard dark card. */
 .toast {
   position: fixed;
   bottom: var(--s-6);
@@ -248,7 +271,7 @@
   font-size: var(--t-small);
   font-weight: 600;
   white-space: nowrap;
-  box-shadow: var(--shadow-card-dark);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
   animation: profileToastIn 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
