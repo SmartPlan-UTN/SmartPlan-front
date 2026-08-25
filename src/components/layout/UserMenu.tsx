@@ -98,7 +98,11 @@ function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
           <Button variant="ghostLight" ref={cancelRef} onClick={onCancel}>
             Cancelar
           </Button>
-          <Button variant="danger" onClick={onConfirm}>
+          {/* `primary` (ember), not `danger`: the prototype's LogoutModal
+           * only tints the icon above with the danger color — its Confirmar
+           * button stays on-brand ember, treating logout as a normal
+           * action, not a destructive one the way deleting an account is. */}
+          <Button variant="primary" onClick={onConfirm}>
             Confirmar
           </Button>
         </div>

@@ -39,14 +39,20 @@ The current tokens are copied into
 `--success #22C06B` · `--warning #F5A623` · `--error #F04040`
 
 Auxiliary shades needed by the primitives are also tokens: `--white`,
-`--white-15`, `--white-18`, `--gold-22`, `--warning-15`, `--rating-ink`, and
-`--warning-ink`. Their values are never repeated inline inside components.
+`--white-15`, `--white-18`, `--gold-22`, `--warning-15`, `--rating-ink`,
+`--warning-ink`, `--danger`, and `--danger-10`. Their values are never
+repeated inline inside components.
 
 > `--rating-ink #7A5C00` comes from the prototype (it's the text of the
 > `rating` badge). `--warning-ink #7A4A00` **was chosen while porting the
 > primitives**: EMBER v2 doesn't define the `warn` badge's text. The same
 > applies to the backgrounds of the `success`, `tag`, and `dark` badges. If
 > the prototype shows up, it's worth contrasting them.
+>
+> `--danger #D94B2B` is also from the prototype — distinct from `--error
+> #F04040`, it's the muted rust used only for destructive-but-not-a-form
+> moments: `Navbar.jsx`'s `LogoutModal` icon (CU4) and `Profile.jsx`'s
+> "Eliminar cuenta" danger zone (CU7).
 
 ### Surfaces
 | Token | Hex | Use |

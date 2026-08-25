@@ -407,16 +407,24 @@
   animation: fadeUp 180ms ease both;
 }
 
+/* Literal px below, not the spacing/radius token scales: matches the
+   prototype's `.sp-modal-card`/`.sp-modal-btn` exactly, which the scales
+   can't express (20px radius sits between --r-card-sm 12 and --r-card 16;
+   the padding and gaps are their own one-off rhythm, not the spacing
+   scale's 24/32/48). */
 .modalCard {
   display: flex;
   flex-direction: column;
-  gap: var(--s-5);
+  gap: 20px;
   width: 100%;
   max-width: 380px;
-  padding: var(--s-6) var(--s-5) var(--s-5);
-  border-radius: var(--r-card);
+  padding: 36px 32px 28px;
+  border-radius: 20px;
   background: var(--surface-card);
-  box-shadow: var(--shadow-card);
+  /* A more dramatic elevation than --shadow-card: this card floats over a
+     blurred overlay, not just above the page. */
+  box-shadow: 0 24px 60px color-mix(in srgb, var(--char) 18%, transparent),
+    0 4px 16px color-mix(in srgb, var(--char) 8%, transparent);
 }
 
 .modalIcon {
@@ -425,14 +433,22 @@
   justify-content: center;
   width: 52px;
   height: 52px;
-  border-radius: var(--r-card-sm);
-  background: color-mix(in srgb, var(--error) 10%, transparent);
-  color: var(--error);
+  border-radius: 14px;
+  /* --danger, not --error: this isn't a form validation color, it's the
+     prototype's distinct "destructive moment" rust — see tokens.css. */
+  background: var(--danger-10);
+  color: var(--danger);
 }
 
 .modalTitle {
   margin: 0 0 var(--s-1);
   color: var(--fg-1);
+  /* sp-h3 (applied alongside this class) gives --w-heading (700); the
+     prototype's modal title is --w-display (800), a step bolder than the
+     rest of the app's h3s, so it's overridden here rather than in the
+     shared utility class. */
+  font-weight: var(--w-display);
+  letter-spacing: -0.02em;
 }
 
 .modalText {
@@ -442,7 +458,7 @@
 
 .modalActions {
   display: flex;
-  gap: var(--s-2);
+  gap: 10px;
 }
 
 .modalActions > * {
