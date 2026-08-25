@@ -27,3 +27,10 @@ export { searchPlans, getPlan } from './plans';
 export { listCategories } from './categories';
 export { getProfile, updateProfile } from './users';
 export type { UpdateProfileData } from './users';
+export {
+  createCollection,
+  deleteCollection,
+  getCollection,
+  listCollections,
+  updateCollection,
+} from './collections';

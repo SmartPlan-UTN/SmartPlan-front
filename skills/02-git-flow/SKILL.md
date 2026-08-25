@@ -35,7 +35,7 @@ Applies to `main` and `develop`:
 - Require a pull request before merging.
 - Require **two approvals**.
 - Dismiss stale pull-request approvals when new commits are pushed.
-- Require the `CI` check (lint, test, and build; see `skills/06-testing/`).
+- Require the `CI` check (lint, test, and build; see `skills/07-testing/`).
 - Do not allow bypassing these settings.
 
 There are no shortcuts, including for administrators. Every change enters through a
