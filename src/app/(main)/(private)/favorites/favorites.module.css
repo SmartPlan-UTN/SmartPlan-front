@@ -56,59 +56,6 @@
   background: var(--ember);
 }
 
-.collectionGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 280px));
-  gap: var(--s-4);
-  margin-top: var(--s-6);
-}
-
-.createCard {
-  display: flex;
-  min-height: 180px;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--s-3);
-  padding: var(--s-5);
-  border: 2px dashed var(--hairline);
-  border-radius: var(--r-card);
-  background: color-mix(in srgb, var(--surface-card) 45%, transparent);
-  color: var(--ember);
-  font-size: var(--t-small);
-  font-weight: var(--w-heading);
-  text-decoration: none;
-  transition: border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    background 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.createCard:hover {
-  border-color: var(--ember);
-  background: var(--ember-04);
-  transform: translateY(-2px);
-}
-
-.createCard:active {
-  transform: scale(0.97);
-}
-
-.createCard:focus-visible {
-  outline: 2px solid var(--ember);
-  outline-offset: 2px;
-}
-
-.createIcon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border: 1px solid var(--ember-20);
-  border-radius: var(--r-card-sm);
-  background: var(--ember-10);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .screen {
     animation: none;

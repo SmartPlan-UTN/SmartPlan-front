@@ -1,0 +1,178 @@
+.notice {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: fit-content;
+  margin-top: var(--s-5);
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-btn);
+  background: var(--success-15);
+  color: var(--success);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 280px));
+  gap: var(--s-4);
+  margin-top: var(--s-6);
+}
+
+.createCard,
+.stateCard,
+.collectionCard {
+  min-height: 180px;
+  border-radius: var(--r-card);
+}
+
+.createCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-3);
+  padding: var(--s-5);
+  border: 2px dashed var(--hairline);
+  background: color-mix(in srgb, var(--surface-card) 45%, transparent);
+  color: var(--ember);
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  text-decoration: none;
+  transition: border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.createCard:hover {
+  border-color: var(--ember);
+  background: var(--ember-04);
+  transform: translateY(-2px);
+}
+
+.createCard:active {
+  transform: scale(0.97);
+}
+
+.createCard:focus-visible,
+.iconAction:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.createIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--ember-20);
+  border-radius: var(--r-card-sm);
+  background: var(--ember-10);
+}
+
+.stateCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-3);
+  padding: var(--s-5);
+  border: 1px solid var(--hairline);
+  color: var(--fg-2);
+  text-align: center;
+}
+
+.collectionCard {
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
+}
+
+.cardVisual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 88px;
+  background: linear-gradient(
+    135deg,
+    var(--ember-10),
+    color-mix(in srgb, var(--gold) 18%, var(--surface-card))
+  );
+  color: var(--ember);
+}
+
+.cardBody {
+  padding: var(--s-4);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+
+.cardTitle {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--fg-1);
+  font-size: var(--t-body);
+  font-weight: var(--w-heading);
+  line-height: 1.25;
+}
+
+.cardActions {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--s-1);
+}
+
+.iconAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-btn);
+  background: transparent;
+  color: var(--fg-2);
+  cursor: pointer;
+  transition: color 180ms ease, border-color 180ms ease,
+    background 180ms ease;
+}
+
+.iconAction:hover {
+  border-color: var(--ember);
+  background: var(--ember-04);
+  color: var(--ember);
+}
+
+.deleteAction:hover {
+  border-color: var(--error);
+  background: color-mix(in srgb, var(--error) 8%, transparent);
+  color: var(--error);
+}
+
+.description {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: var(--s-2);
+  color: var(--fg-2);
+  font-size: var(--t-small);
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.activityCount {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  margin-top: var(--s-3);
+  color: var(--fg-3);
+  font-size: var(--t-small);
+}

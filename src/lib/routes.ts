@@ -36,6 +36,11 @@ export function planDetailRoute(id: number): string {
   return `${ROUTES.plans}/${id}`;
 }
 
+/** `/collections/:id/edit` — edit an owned collection (CU33). */
+export function collectionEditRoute(id: number): string {
+  return `/collections/${id}/edit`;
+}
+
 /** Name of the query parameter that stores where to return after logging in. */
 export const REDIRECT_PARAM = "redirect";
 

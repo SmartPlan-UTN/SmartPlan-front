@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
-import { Icon } from "@/components/ui";
-import { ROUTES } from "@/lib/routes";
+import { CollectionsPanel } from "@/components/collection";
 
 import styles from "./favorites.module.css";
 
@@ -43,14 +41,7 @@ export default function FavoritesPage() {
         </nav>
       </header>
 
-      <div className={styles.collectionGrid}>
-        <Link className={styles.createCard} href={ROUTES.createCollection}>
-          <span className={styles.createIcon} aria-hidden="true">
-            <Icon name="folder-plus" size={22} />
-          </span>
-          <span>Crear nueva colección</span>
-        </Link>
-      </div>
+      <CollectionsPanel />
     </section>
   );
 }

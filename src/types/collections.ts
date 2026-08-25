@@ -1,6 +1,7 @@
 import { BaseEntity } from './common';
 import type { User } from './users';
 import type { Activity } from './activities';
+import type { SortDirection } from './common';
 
 /**
  * Custom grouping of activities created by the user (CU32-CU38).
@@ -30,6 +31,31 @@ export interface CreateCollectionInput {
   description?: string;
 }
 
+/** Fields accepted by PATCH /collections/:id (CU33). */
+export interface UpdateCollectionInput {
+  nameCollection?: string;
+  description?: string | null;
+}
+
+/** Query accepted by GET /collections. */
+export interface ListCollectionsParams {
+  page?: number;
+  limit?: number;
+  sortBy?: 'nameCollection' | 'savedAt';
+  direction?: SortDirection;
+}
+
+/** Collection card returned by the authenticated user's listing. */
+export interface CollectionSummary {
+  id: number;
+  nameCollection: string;
+  description: string | null;
+  savedAt: string;
+  activityCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 /** Activity membership projected by a collection detail response. */
 export interface CollectionActivityDetail {
   id: number;
@@ -47,13 +73,6 @@ export interface CollectionActivityDetail {
 }
 
 /** Safe collection detail returned by the collections API. */
-export interface CollectionDetail {
-  id: number;
-  nameCollection: string;
-  description: string | null;
-  savedAt: string;
-  activityCount: number;
-  createdAt: string;
-  updatedAt: string;
+export interface CollectionDetail extends CollectionSummary {
   activities: CollectionActivityDetail[];
 }

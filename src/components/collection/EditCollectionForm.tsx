@@ -4,7 +4,8 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button, Icon } from "@/components/ui";
-import { ApiError, createCollection } from "@/lib/api";
+import { useDetailFetch } from "@/hooks";
+import { ApiError, getCollection, updateCollection } from "@/lib/api";
 import { ROUTES } from "@/lib/routes";
 import type { CollectionDetail } from "@/types";
 
@@ -17,48 +18,112 @@ import {
 } from "./collection-validation";
 import styles from "./collection.module.css";
 
-export function CreateCollectionForm() {
+const LOAD_ERROR = "No pudimos cargar la colección. Intentá nuevamente";
+
+export interface EditCollectionFormProps {
+  collectionId: number;
+}
+
+export function EditCollectionForm({ collectionId }: EditCollectionFormProps) {
+  const result = useDetailFetch(getCollection, collectionId, LOAD_ERROR);
+
+  if (result.status === "loading") {
+    return (
+      <p className={styles.pageState} role="status">
+        <Icon name="loader-circle" className="sp-spin" />
+        Cargando la colección...
+      </p>
+    );
+  }
+
+  if (result.status === "not-found") {
+    return <UnavailableCollection />;
+  }
+
+  if (result.status === "error" || !result.data) {
+    return (
+      <section className={styles.pageState} role="alert">
+        <Icon name="triangle-alert" size={24} />
+        <h1 className="sp-h3">No pudimos cargar la colección</h1>
+        <p>{result.errorMessage ?? LOAD_ERROR}</p>
+        <BackToCollectionsButton />
+      </section>
+    );
+  }
+
+  return <LoadedEditCollectionForm collection={result.data} />;
+}
+
+function UnavailableCollection() {
+  return (
+    <section className={styles.pageState} role="alert">
+      <Icon name="folder-plus" size={28} />
+      <h1 className="sp-h3">La colección no se encuentra disponible</h1>
+      <p>Puede haber sido eliminada o no pertenecer a tu cuenta.</p>
+      <BackToCollectionsButton />
+    </section>
+  );
+}
+
+function BackToCollectionsButton() {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  return (
+    <Button onClick={() => router.push(ROUTES.favorites)}>
+      Volver a colecciones
+    </Button>
+  );
+}
+
+function LoadedEditCollectionForm({ collection }: { collection: CollectionDetail }) {
+  const router = useRouter();
+  const [name, setName] = useState(collection.nameCollection);
+  const [description, setDescription] = useState(collection.description ?? "");
+  const [savedName, setSavedName] = useState(collection.nameCollection);
+  const [savedDescription, setSavedDescription] = useState(
+    collection.description ?? "",
+  );
   const [errors, setErrors] = useState<CollectionFormErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDiscardPrompt, setShowDiscardPrompt] = useState(false);
-  const [createdCollection, setCreatedCollection] =
-    useState<CollectionDetail | null>(null);
+  const [unavailable, setUnavailable] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
-  const isDirty = name.length > 0 || description.length > 0;
+  const isDirty = name !== savedName || description !== savedDescription;
 
   useEffect(() => {
     if (errors.name) nameRef.current?.focus();
   }, [errors.name]);
 
-  async function submit() {
+  async function save() {
     const nextErrors = validateCollection(name, description);
     setErrors(nextErrors);
     setFormError(null);
-
-    if (Object.keys(nextErrors).length > 0) {
-      return;
-    }
+    setFeedback(null);
+    if (Object.keys(nextErrors).length > 0) return;
 
     setIsSubmitting(true);
     try {
-      const trimmedDescription = description.trim();
-      const collection = await createCollection({
+      const updated = await updateCollection(collection.id, {
         nameCollection: name.trim(),
-        ...(trimmedDescription ? { description: trimmedDescription } : {}),
+        description: description.trim() || null,
       });
-      setCreatedCollection(collection);
+      const nextDescription = updated.description ?? "";
+      setName(updated.nameCollection);
+      setDescription(nextDescription);
+      setSavedName(updated.nameCollection);
+      setSavedDescription(nextDescription);
+      setFeedback("Colección actualizada correctamente");
     } catch (error) {
       if (
         error instanceof ApiError &&
         error.code === "COLLECTION_NAME_ALREADY_EXISTS"
       ) {
         setErrors({ name: "Ya tenés una colección con ese nombre" });
+      } else if (error instanceof ApiError && error.status === 404) {
+        setUnavailable(true);
       } else {
-        setFormError("No pudimos crear la colección. Intentá nuevamente");
+        setFormError("No pudimos actualizar la colección. Intentá nuevamente");
       }
     } finally {
       setIsSubmitting(false);
@@ -67,15 +132,7 @@ export function CreateCollectionForm() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    void submit();
-  }
-
-  function resetForm() {
-    setName("");
-    setDescription("");
-    setErrors({});
-    setFormError(null);
-    setCreatedCollection(null);
+    void save();
   }
 
   function handleCancel() {
@@ -86,49 +143,21 @@ export function CreateCollectionForm() {
     router.push(ROUTES.favorites);
   }
 
-  if (createdCollection) {
-    return (
-      <section className={styles.success} aria-labelledby="collection-success-title">
-        <span className={styles.successIcon} aria-hidden="true">
-          <Icon name="circle-check" size={32} />
-        </span>
-        <p className={`sp-label ${styles.eyebrow}`}>CU32 · Colecciones</p>
-        <h1 id="collection-success-title" className="sp-h2">
-          Colección creada correctamente
-        </h1>
-        <p className={`sp-body-lg ${styles.successCopy}`}>
-          <strong>{createdCollection.nameCollection}</strong> ya está lista para
-          que agregues actividades cuando quieras.
-        </p>
-        <div className={styles.actions}>
-          <Button variant="ghostLight" size="lg" onClick={resetForm}>
-            Crear otra
-          </Button>
-          <Button
-            size="lg"
-            onClick={() => router.push(ROUTES.favorites)}
-          >
-            Ir a mis colecciones
-          </Button>
-        </div>
-      </section>
-    );
-  }
+  if (unavailable) return <UnavailableCollection />;
 
   return (
-    <section className={styles.screen} aria-labelledby="create-collection-title">
+    <section className={styles.screen} aria-labelledby="edit-collection-title">
       <header className={styles.header}>
         <div className={styles.iconTile} aria-hidden="true">
-          <Icon name="folder-plus" size={28} />
+          <Icon name="pencil" size={26} />
         </div>
         <div>
-          <p className={`sp-label ${styles.eyebrow}`}>CU32 · Colecciones</p>
-          <h1 id="create-collection-title" className="sp-h2">
-            Creá una colección
+          <p className={`sp-label ${styles.eyebrow}`}>CU33 · Colecciones</p>
+          <h1 id="edit-collection-title" className="sp-h2">
+            Editá tu colección
           </h1>
           <p className={`sp-body-lg ${styles.intro}`}>
-            Agrupá actividades por tema, momento o idea. Los planes y tus
-            favoritos se guardan por separado.
+            Actualizá el nombre o la descripción de esta agrupación de actividades.
           </p>
         </div>
       </header>
@@ -150,24 +179,22 @@ export function CreateCollectionForm() {
             value={name}
             onChange={(event) => {
               setName(event.target.value);
-              if (errors.name) setErrors((current) => ({ ...current, name: undefined }));
+              setFeedback(null);
+              if (errors.name) {
+                setErrors((current) => ({ ...current, name: undefined }));
+              }
             }}
             maxLength={MAX_COLLECTION_NAME_LENGTH}
-            placeholder="Ej. Bodegas para visitar"
             autoComplete="off"
             aria-invalid={errors.name ? true : undefined}
-            aria-describedby={errors.name ? "collection-name-error" : "collection-name-help"}
+            aria-describedby={errors.name ? "collection-name-error" : undefined}
             disabled={isSubmitting}
           />
           {errors.name ? (
             <p id="collection-name-error" className={styles.fieldError} role="alert">
               {errors.name}
             </p>
-          ) : (
-            <p id="collection-name-help" className={styles.help}>
-              Elegí un nombre único dentro de tus colecciones.
-            </p>
-          )}
+          ) : null}
         </div>
 
         <div className={styles.field}>
@@ -185,24 +212,36 @@ export function CreateCollectionForm() {
             value={description}
             onChange={(event) => {
               setDescription(event.target.value);
+              setFeedback(null);
               if (errors.description) {
                 setErrors((current) => ({ ...current, description: undefined }));
               }
             }}
             maxLength={MAX_COLLECTION_DESCRIPTION_LENGTH}
             rows={5}
-            placeholder="Contá qué tipo de actividades querés reunir"
             aria-invalid={errors.description ? true : undefined}
-            aria-describedby={errors.description ? "collection-description-error" : undefined}
+            aria-describedby={
+              errors.description ? "collection-description-error" : undefined
+            }
             disabled={isSubmitting}
           />
           {errors.description ? (
-            <p id="collection-description-error" className={styles.fieldError} role="alert">
+            <p
+              id="collection-description-error"
+              className={styles.fieldError}
+              role="alert"
+            >
               {errors.description}
             </p>
           ) : null}
         </div>
 
+        {feedback ? (
+          <p className={styles.successFeedback} role="status">
+            <Icon name="circle-check" size={18} />
+            {feedback}
+          </p>
+        ) : null}
         {formError ? (
           <p className={styles.formError} role="alert">
             <Icon name="triangle-alert" size={18} />
@@ -219,16 +258,8 @@ export function CreateCollectionForm() {
           >
             Cancelar
           </Button>
-          <Button type="submit" size="lg" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Icon name="loader-circle" className="sp-spin" /> Creando...
-              </>
-            ) : (
-              <>
-                <Icon name="folder-plus" /> Crear colección
-              </>
-            )}
+          <Button type="submit" size="lg" disabled={isSubmitting || !isDirty}>
+            {isSubmitting ? "Guardando..." : "Guardar cambios"}
           </Button>
         </div>
       </form>
@@ -241,7 +272,7 @@ export function CreateCollectionForm() {
           onCancel={() => setShowDiscardPrompt(false)}
           onConfirm={() => router.push(ROUTES.favorites)}
         >
-          La colección todavía no fue creada y vas a perder los datos ingresados.
+          La colección conservará el nombre y la descripción que tenía antes.
         </ConfirmationDialog>
       ) : null}
     </section>
