@@ -210,11 +210,15 @@ export function AddToCollectionDialog({
         );
         setSelectedId(null);
         setPendingCreatedCollection(null);
+        setCreating(false);
         setSubmitError("La colección ya no se encuentra disponible.");
       } else if (
         error instanceof ApiError &&
         error.code === "ACTIVITY_NOT_FOUND"
       ) {
+        setPendingCreatedCollection(null);
+        setSelectedId(null);
+        setCreating(false);
         setSubmitError("La actividad ya no se encuentra disponible.");
       } else if (wasJustCreated) {
         setPendingCreatedCollection(collection);

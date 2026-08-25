@@ -157,6 +157,31 @@ describe("AddToCollectionDialog", () => {
     expect(await screen.findByText(/Guardamos la actividad en “Escapadas”/)).toBeInTheDocument();
   });
 
+  it("does not offer an impossible retry when the activity disappears after creation", async () => {
+    vi.mocked(listCollections).mockResolvedValueOnce(collectionPage([]));
+    vi.mocked(createCollection).mockResolvedValueOnce(createdCollection());
+    vi.mocked(addActivityToCollection).mockRejectedValueOnce(
+      apiError("ACTIVITY_NOT_FOUND", 404),
+    );
+    const user = userEvent.setup();
+    render(
+      <AddToCollectionDialog activityId={42} activityName="Degustación" onClose={vi.fn()} />,
+    );
+
+    await user.click(await screen.findByRole("button", { name: "Crear nueva colección" }));
+    await user.type(screen.getByRole("textbox", { name: "Nombre" }), "Escapadas");
+    await user.click(screen.getByRole("button", { name: "Crear y agregar" }));
+
+    expect(
+      await screen.findByText("La actividad ya no se encuentra disponible."),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Reintentar agregado" }),
+    ).not.toBeInTheDocument();
+    expect(createCollection).toHaveBeenCalledOnce();
+    expect(addActivityToCollection).toHaveBeenCalledOnce();
+  });
+
   it("closes with Escape and restores focus to its trigger", async () => {
     const onClose = vi.fn();
     const user = userEvent.setup();
