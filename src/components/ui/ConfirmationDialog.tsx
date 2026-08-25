@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 
-import { Button, Icon } from "@/components/ui";
+import { Button } from "./Button";
+import { Icon } from "./Icon";
 
-import styles from "./collection.module.css";
+import styles from "./confirmation-dialog.module.css";
 
 export interface ConfirmationDialogProps {
   title: string;
@@ -18,6 +19,17 @@ export interface ConfirmationDialogProps {
   onConfirm: () => void;
 }
 
+/**
+ * Modal confirmation for a destructive or lossy action (CU26, CU33, CU34,
+ * and the discard-changes prompts in CU24/CU25).
+ *
+ * `role="alertdialog"` plus `aria-modal` announces it, but neither stops
+ * `Tab` from walking out into the page behind, so focus is moved to the
+ * cancel button on mount, trapped between the two actions, and handed back
+ * to whatever was focused before on close. `Escape` cancels, except
+ * mid-confirmation, when there's a request in flight the user can no
+ * longer call off.
+ */
 export function ConfirmationDialog({
   title,
   children,
@@ -31,10 +43,26 @@ export function ConfirmationDialog({
 }: ConfirmationDialogProps) {
   const cancelRef = useRef<HTMLButtonElement>(null);
   const confirmRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  // `useId` instead of fixed ids: two dialogs can be mounted at once (a
+  // page-level one and a form-level one), and duplicate ids would point
+  // both `aria-labelledby`s at the same node.
+  const titleId = useId();
+  const descriptionId = useId();
 
   useEffect(() => {
+    previousFocusRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     cancelRef.current?.focus();
 
+    return () => {
+      previousFocusRef.current?.focus();
+    };
+  }, []);
+
+  useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape" && !isConfirming) {
         onCancel();
@@ -61,20 +89,20 @@ export function ConfirmationDialog({
         className={styles.dialog}
         role="alertdialog"
         aria-modal="true"
-        aria-labelledby="confirmation-title"
-        aria-describedby="confirmation-description"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
       >
         <span className={styles.warningIcon} aria-hidden="true">
           <Icon name="triangle-alert" size={24} />
         </span>
-        <h2 id="confirmation-title" className="sp-h4">
+        <h2 id={titleId} className="sp-h4">
           {title}
         </h2>
-        <div id="confirmation-description" className={`sp-body ${styles.dialogCopy}`}>
+        <div id={descriptionId} className={`sp-body ${styles.dialogCopy}`}>
           {children}
         </div>
         {error ? (
-          <p className={styles.formError} role="alert">
+          <p className={styles.dialogError} role="alert">
             <Icon name="triangle-alert" size={18} />
             {error}
           </p>

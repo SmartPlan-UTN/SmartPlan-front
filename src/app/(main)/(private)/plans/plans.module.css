@@ -1,0 +1,65 @@
+.screen {
+  width: 100%;
+  animation: fadeUp 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.header {
+  padding-bottom: var(--s-4);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.eyebrow {
+  margin-bottom: var(--s-2);
+  color: var(--ember);
+}
+
+.lead {
+  max-width: 56ch;
+  margin-top: var(--s-3);
+  color: var(--fg-2);
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-4);
+  color: var(--fg-2);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+  text-decoration: none;
+  transition: color 160ms;
+}
+
+.backLink:hover {
+  color: var(--ember);
+}
+
+.backLink:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 3px;
+  border-radius: var(--r-btn);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen {
+    animation: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .header {
+    padding-bottom: var(--s-3);
+  }
+
+  .lead {
+    max-width: none;
+    margin-top: var(--s-2);
+  }
+
+  /* A tap target you can actually hit: the inline link was 18px tall. */
+  .backLink {
+    min-height: 44px;
+    margin-bottom: var(--s-2);
+  }
+}

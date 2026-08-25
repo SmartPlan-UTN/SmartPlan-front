@@ -1,5 +1,5 @@
 import { BaseEntity, CatalogEntity } from './common';
-import type { ExplorationQueryParams } from './common';
+import type { ExplorationQueryParams, SortDirection } from './common';
 import type { User } from './users';
 import type { PlanRequest } from './recommendation';
 import type { Activity, ActivityCategorySummary, ActivityLocationSummary } from './activities';
@@ -117,3 +117,64 @@ export interface PlanSearchParams extends ExplorationQueryParams {
   outingType?: string;
   sortBy?: PlanSortField;
 }
+
+/** Query params accepted by `GET /users/me/plans` (CU29). */
+export interface ListOwnPlansParams {
+  page?: number;
+  limit?: number;
+  sortBy?: 'createdAt';
+  direction?: SortDirection;
+}
+
+export interface CreatePlanDto {
+  title: string;
+  description?: string | null;
+  peopleCount: number;
+}
+
+export interface UpdatePlanDto {
+  title?: string;
+  description?: string | null;
+  peopleCount?: number;
+}
+
+export interface AddPlanDetailDto {
+  activityId: number;
+}
+
+export interface OwnPlanCostSummary {
+  estimatedTotalCost: number;
+  peopleCount: number;
+  estimatedCostPerPerson: number;
+  estimatedTotalDuration: number;
+}
+
+export interface OwnPlanSummary extends OwnPlanCostSummary {
+  id: number;
+  title: string;
+  description: string | null;
+  activityCount: number;
+  status: { key: PlanStatusKey; name: string };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OwnPlanDetailItem {
+  id: number;
+  order: number;
+  estimatedCost: number;
+  estimatedDuration: number;
+  activity: {
+    id: number;
+    name: string;
+    description: string;
+    estimatedCost: number;
+    estimatedDuration: number;
+    type: string | null;
+  };
+}
+
+export interface OwnPlanDetail extends OwnPlanSummary {
+  details: OwnPlanDetailItem[];
+}
+

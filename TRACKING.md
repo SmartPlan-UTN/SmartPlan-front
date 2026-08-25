@@ -124,12 +124,12 @@ traceability matrix (`skills/01-domain/`).
 
 | CU | Feature | Screen | Status | Branch | PR |
 |---|---|---|---|---|---|
-| CU24 | Create plan | — | `Not started` | | |
-| CU25 | Edit plan | PAN 17 | `Not started` | | |
-| CU26 | Delete plan | PAN 17 | `Not started` | | |
-| CU27 | Add activity to plan | PAN 17, PAN 18 | `Not started` | | |
-| CU28 | Remove activity from plan | PAN 17 | `Not started` | | |
-| CU29 | View plan | PAN 17 | `Not started` | | |
+| CU24 | Create plan | — | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96 |
+| CU25 | Edit plan | PAN 17 | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96 |
+| CU26 | Delete plan | PAN 17 | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96 |
+| CU27 | Add activity to plan | PAN 17, PAN 18 | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96 |
+| CU28 | Remove activity from plan | PAN 17 | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96 |
+| CU29 | View plan | PAN 17 | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96 |
 | CU30 | Calculate plan cost | PAN 17 | `Not started` | | |
 | CU31 | Generate suggested plan | — | `Not started` | | |
 
@@ -140,10 +140,10 @@ traceability matrix (`skills/01-domain/`).
 | CU32 | Create collection | `/collections/new` | `In review` | `SMART-44-cu32-create-collection` | #93 |
 | CU33 | Edit collection | `/collections/:id/edit` | `In review` | `SMART-44-cu32-create-collection` | #93 |
 | CU34 | Delete collection | `/favorites` collections section | `In review` | `SMART-44-cu32-create-collection` | #93 |
-| CU35 | Add activity to collection | PAN 18 | `Not started` | | |
-| CU36 | Remove activity from collection | — | `Not started` | | |
-| CU37 | View collection details | — | `Not started` | | |
-| CU38 | View collection | — | `Not started` | | |
+| CU35 | Add activity to collection | PAN 18 | `In review` | `SMART-47-cu35-cu38-collections` | #94 |
+| CU36 | Remove activity from collection | `/collections/:id` | `In review` | `SMART-47-cu35-cu38-collections` | #94 |
+| CU37 | View collection details | `/collections/:id` | `In review` | `SMART-47-cu35-cu38-collections` | #94 |
+| CU38 | View collection | `/favorites` collections section | `In review` | `SMART-47-cu35-cu38-collections` | #94 |
 
 ### Favorites
 
@@ -185,8 +185,8 @@ traceability matrix (`skills/01-domain/`).
 | CU54 | Manage categories | — | `Not started` | | |
 | CU55 | Moderate ratings | PAN 20 | `Not started` | | |
 | CU56 | Delete content | — | `Not started` | | |
-| CU57 | Manage users | PAN 19 | `In progress` | `SMART-62-cu58-panel-de-control` | |
-| CU58 | View system metrics | REP-01 | `Not started` | | |
+| CU57 | Manage users | PAN 19 | `In review` | `SMART-62-cu58-panel-de-control` | #99 |
+| CU58 | View system metrics | REP-01 | `In review` | `SMART-62-cu58-panel-de-control` | #99 |
 | CU59 | Review user suggestion | — | `Not started` | | |
 | CU60 | Manage plans | PAN 22 | `Not started` | | |
 | CU61 | Manage permissions | — | `Not started` | | |
@@ -202,6 +202,7 @@ being re-discussed twice.
 | Date | Decision | Reason |
 |---|---|---|
 | 2026-08-25 | CU57's REP-02 header reports active accounts, not “active today” | `SmartPlan-back`'s merged administration contract exposes account status and registration timestamps, but no last-activity/session timestamp. Presenting `status=active` as daily activity would be false. Total and active counts come from pagination metadata; weekly registrations are counted newest-first until the seven-day cutoff. |
+| 2026-08-25 | Creating a collection from PAN 18 is a two-request flow that preserves the new collection if adding its activity fails | The backend deliberately exposes collection creation and activity membership as separate CU32/CU35 endpoints. The selector keeps the successfully created collection and retries only the membership request, avoiding duplicate collection creation after a partial failure. |
 | 2026-08-25 | Collection management uses the Colecciones section of `/favorites`, with dedicated create and edit routes | The v2 design groups access under one saved-content screen, but the domain remains separate: collections are named activity groupings, while favorites are quick saves of activities or plans. The inactive Planes and Actividades sections contain no CU39-CU43 behavior; only real collections are loaded for CU32-CU34 management. |
 | 2026-08-06 | ESLint as the static analyzer | Ecosystem standard for TS/JS, official Next.js integration, type-aware analysis, no additional infrastructure (unlike SonarQube) |
 | 2026-08-06 | Type-aware ESLint analysis (`projectService`) | Allows detecting unhandled promises, the most likely error when consuming the API with axios |
@@ -246,6 +247,20 @@ Things that have been spotted but don't have an owner yet:
   "vos" form and pesos. Define the variant with the team and fix the brief.
 - The concrete database engine isn't defined in the documentation, which
   only says "relational database."
+- **A plan has no date and no location.** CU24's form asked for both, but
+  `CreatePlanDto` is `{title, description, peopleCount}`, so neither was
+  ever persisted and both were dropped from the form (PR #96). Putting them
+  back means extending `Plan` in `SmartPlan-back` (`scheduledFor`, a place
+  reference) with its migration, and re-adding the fields here.
+- **`GET /plans/:id` can't tell you whose plan it is.** The public
+  projection has no owner field, so PAN 17 probes `GET /users/me/plans/:id`
+  to decide whether to offer "Editar plan" / "Cancelar plan" — an extra
+  request per detail view. An `isOwner` flag on the public projection would
+  remove it.
+- **`tsc --noEmit` isn't part of CI.** `pnpm build` skips test files, so
+  type errors inside `*.test.tsx` pass lint, tests, and build (PR #96
+  shipped four before review caught them). Worth adding a `typecheck`
+  script to `ci.yml`.
 - The `skills/` core (`00-project`, `01-domain`, `02-git-flow`) is
   duplicated in `SmartPlan-back`. When modifying it, replicate the change
   in the other repository.
@@ -271,6 +286,7 @@ Things that have been spotted but don't have an owner yet:
 
 | Date | What happened |
 |---|---|
+| 2026-08-25 | CU35-CU38 moved to review together in PR #94: PAN 18 now adds activities to existing or inline-created collections; `/collections/:id` shows the real activity list and confirms membership removal; `/favorites` links collection cards to their detail, paginates them, provides an explicit empty state, and reuses the shared animated `MoodBackground` from Explorar. Responsive behavior covers 360px through desktop, dialogs trap and restore focus, and partial collection-creation failures retry only the missing membership (except terminal missing-activity/collection errors). Integrated against the existing SmartPlan-back `develop` collections contract. `pnpm lint`, `pnpm test` (84), and `pnpm build` pass. |
 | 2026-08-25 | CU32-CU34 moved to review together in PR #93 as the collections ABM: real collection cards in the Colecciones section, protected create/edit forms, duplicate-name validation, guarded cancellation, and confirmed soft deletion that preserves activities. Integrated with backend PR SmartPlan-back#70. `pnpm lint`, `pnpm test` (66), and `pnpm build` pass. |
 | 2026-08-06 | ESLint 9 configured with the project's own rules. First run: 0 errors, 0 warnings (scaffold with no application code yet). |
 | 2026-08-06 | Created `skills/` and this tracking file. |
@@ -298,3 +314,4 @@ Things that have been spotted but don't have an owner yet:
 | 2026-08-24 | CU1: implemented the login screen (PAN 04) and reworked the session foundation around SmartPlan-back's real CU1-CU4 contract. `POST /sessions` and startup `POST /sessions/refresh` in `src/lib/auth/api.ts`; `SessionProvider` now holds the access token and user in memory instead of `localStorage`, rehydrating on mount from the `smartplan_refresh` `httpOnly` cookie. Removed `src/lib/auth/session.ts` (the old `localStorage` module) and the now-dead `localStorage` fallback in `token-provider.ts`. Added `withCredentials: true` to the shared Axios instance. `LoginForm` (`src/components/auth/`) validates email/password client-side, maps the backend's documented error codes (`INVALID_CREDENTIALS`, `ACCOUNT_SUSPENDED`, `ACCOUNT_BANNED`, `ATTEMPT_LIMIT_EXCEEDED`, `VALIDATION_FAILED` with per-field mapping) to Spanish messages, and redirects to the saved destination, or to `/admin` for an admin account, or Home. Verified the exact contract (routes, DTOs, error codes, cookie name and `expiresIn`) by reading `SmartPlan-back`'s `origin/develop` directly — the shared integration doc had the rate-limit code wrong (`TOO_MANY_REQUESTS` vs. the real `ATTEMPT_LIMIT_EXCEEDED`); the code handles both. Rewrote `Navbar.test.tsx` and `ProtectedRoute.test.tsx`, which used to fake a session via `localStorage`, to mock `refreshSession` instead; added `LoginForm.test.tsx`. `pnpm lint`, `pnpm test` (33), and `pnpm build` green. |
 | 2026-08-24 | Resolved the merge conflict between this branch and `develop`'s CU1 login work: `MoodBackground` moved from `@/components/layout` to `@/components/ui` on `develop` while this branch fixed its container-measurement bug in place — reapplied that fix (`ResizeObserver` + `useLayoutEffect`, `prefers-reduced-motion`) onto the moved `ui/MoodBackground.tsx`, keeping `develop`'s new `style` prop (used by `AuthSplitShell` to force `position: fixed`). `Navbar.test.tsx`'s logout tests were rewritten to use `mockAuthenticatedStartup()` instead of the now-removed `localStorage`-based session stub, while keeping the confirmation-dialog assertions `develop`'s simplified version had dropped (the dialog is still real, current behavior). Also fixed two PR review comments: `/explore/[id]` and `/plans/[id]` now reject a non-positive-integer route param with `notFound()` instead of forwarding `NaN` to the API, and `UserMenu`'s logout confirmation dialog traps focus and returns it to the "Cerrar sesión" trigger on close. `pnpm lint`, `pnpm test`, and `pnpm build` green. |
 | 2026-08-25 | F06 (ref back#28): F20's `ci.yml` already met most of the ticket (lint + test + build on push/PR against develop/main); aligned the job id to `ci` (was `quality`) and the setup to `pnpm/action-setup@v6` + `actions/setup-node@v7` with `node-version-file: '.nvmrc'`, making explicit where Node comes from (it used to be fully delegated to the composite `pnpm/setup@v2` action) — the same pattern implemented in `SmartPlan-back`. No trigger changes and no changes to the three real checks. Documented the `CI` check as a required status check in `skills/02-git-flow/` (SKILL.md and DEFINITION-OF-DONE.md), and fixed SKILL.md's broken link to the testing skill (`skills/06-testing/` → `skills/07-testing/`). Still pending: configuring the `CI` status check as required in `develop` and `main` branch protection, using the exact name GitHub reports after the first run, and removing the old `Quality` check if it was configured. `pnpm lint`, `pnpm test`, and `pnpm build` green. |
+| 2026-08-25 | CU24, CU25, CU26 (+CU27, CU28) — PR #96: planning module. `/plans/create` (CU24) posts `POST /users/me/plans` and then one `POST /users/me/plans/:id/details` per stop; the two-step submit is resumable, so a failure partway through resumes on the created plan instead of duplicating it. `/plans/:id/edit` (CU25) preloads from `GET /users/me/plans/:id`, patches title/description/peopleCount, and adds (CU27) / removes (CU28) stops, refetching after a remove because the backend renumbers `order`. CU26 cancels from PAN 17 via `DELETE /users/me/plans/:id` (204) and leaves the plan read-only with a banner. `PlanDetailView`'s owner actions hang off an ownership probe against `GET /users/me/plans/:id`: the screen reads from the public `GET /plans/:id`, which returns the same projection to everyone and has no owner field. Date and location were dropped from the create form — `CreatePlanDto` is `{title, description, peopleCount}` and neither field was persisted; adding them needs a backend change (see Pending below). Added `/plans` (CU29), a "Mis planes" listing off the navbar that reads `GET /users/me/plans` and carries the create-plan entry point, built on the same grid as `CollectionsPanel` so both private listings read alike; cancelling is offered there too, leaving the plan in place as read-only history. The create and edit screens now share that page shell (eyebrow, heading, back link), so the forms no longer carry their own `h1`, and the activity panel goes search -> itinerary -> totals instead of burying the search box under the summary. `ConfirmationDialog` moved from `components/collection/` to `components/ui/` and now backs all four prompts, and the three-dot waiting animation moved out of `activity.module.css` into a `LoadingDots` primitive that six components across three folders were already reaching across for. The plan detail's 300px hero is gone: there are no photos in the catalog, so it was a flat gradient with an oversized icon taking a third of the first screenful — replaced by a header sized to its own content, which also frees `FloatingBackLink` from tracking a dark hero. `pnpm lint`, `pnpm test` (116), and `pnpm build` green, plus `tsc --noEmit` clean. |

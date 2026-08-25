@@ -3,8 +3,16 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 
+import { AddToCollectionDialog } from "@/components/collection";
 import { LocationPreview } from "@/components/explore";
-import { Badge, Button, FloatingBackLink, Icon, Stars } from "@/components/ui";
+import {
+  Badge,
+  Button,
+  FloatingBackLink,
+  Icon,
+  LoadingDots,
+  Stars,
+} from "@/components/ui";
 import { useDetailFetch } from "@/hooks";
 import { getActivity } from "@/lib/api";
 import { ROUTES } from "@/lib/routes";
@@ -30,9 +38,8 @@ const GENERIC_ERROR = "No pudimos cargar la actividad. Intentá de nuevo.";
  * linking out to Google Maps, and a sticky action bar.
  *
  * "Guardar" mirrors the mockup exactly: a local, unpersisted toggle. CU15
- * (real favorites) isn't part of this delivery, so "Agregar a plan" and
- * "Colección" — which need a plan builder and collections that don't exist
- * yet either — are rendered but disabled instead of wired to nothing.
+ * (real favorites) isn't part of this delivery, so "Agregar a plan" remains
+ * disabled. "Colección" opens the real CU35 selector.
  */
 export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
   const { data: activity, status, errorMessage } = useDetailFetch<ActivityDetailResult>(
@@ -42,17 +49,13 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
   );
   const [tab, setTab] = useState<Tab>("info");
   const [saved, setSaved] = useState(false);
+  const [showCollectionDialog, setShowCollectionDialog] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
 
   if (status === "loading") {
     return (
       <div className={styles.stateBlock}>
-        <div className={styles.loadingDots}>
-          <span className={styles.loadingDot} />
-          <span className={styles.loadingDot} />
-          <span className={styles.loadingDot} />
-        </div>
-        <p className="sp-body">Cargando la actividad...</p>
+        <LoadingDots label="Cargando la actividad..." />
       </div>
     );
   }
@@ -260,12 +263,23 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
             <Icon name="plus" size={16} aria-hidden="true" />
             Agregar a plan
           </Button>
-          <Button variant="ghostLight" disabled title="Próximamente">
+          <Button
+            variant="ghostLight"
+            onClick={() => setShowCollectionDialog(true)}
+          >
             <Icon name="folder-plus" size={16} aria-hidden="true" />
             Colección
           </Button>
         </div>
       </div>
+
+      {showCollectionDialog ? (
+        <AddToCollectionDialog
+          activityId={activity.id}
+          activityName={activity.name}
+          onClose={() => setShowCollectionDialog(false)}
+        />
+      ) : null}
     </div>
   );
 }
