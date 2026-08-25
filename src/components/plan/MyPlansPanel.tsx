@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { Badge, Button, ConfirmationDialog, Icon } from "@/components/ui";
+import { Badge, Button, ConfirmationDialog, Icon, LoadingDots } from "@/components/ui";
 import { ApiError, cancelOwnPlan, listOwnPlans } from "@/lib/api";
 import { planDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
 import { formatArs, formatDuration } from "@/lib/utils";
@@ -116,10 +116,10 @@ export function MyPlansPanel() {
         </Link>
 
         {status === "loading" ? (
-          <p className={styles.stateCard} role="status">
-            <Icon name="loader-circle" className="sp-spin" />
-            Cargando tus planes...
-          </p>
+          <LoadingDots
+            className={styles.loadingRow}
+            label="Cargando tus planes..."
+          />
         ) : null}
 
         {status === "error" ? (

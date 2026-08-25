@@ -5,7 +5,14 @@ import Link from "next/link";
 
 import { AddToCollectionDialog } from "@/components/collection";
 import { LocationPreview } from "@/components/explore";
-import { Badge, Button, FloatingBackLink, Icon, Stars } from "@/components/ui";
+import {
+  Badge,
+  Button,
+  FloatingBackLink,
+  Icon,
+  LoadingDots,
+  Stars,
+} from "@/components/ui";
 import { useDetailFetch } from "@/hooks";
 import { getActivity } from "@/lib/api";
 import { ROUTES } from "@/lib/routes";
@@ -48,12 +55,7 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
   if (status === "loading") {
     return (
       <div className={styles.stateBlock}>
-        <div className={styles.loadingDots}>
-          <span className={styles.loadingDot} />
-          <span className={styles.loadingDot} />
-          <span className={styles.loadingDot} />
-        </div>
-        <p className="sp-body">Cargando la actividad...</p>
+        <LoadingDots label="Cargando la actividad..." />
       </div>
     );
   }

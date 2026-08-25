@@ -20,71 +20,58 @@
   text-overflow: ellipsis;
 }
 
-/* ── Plan detail (CU13), matching
+/* ── Plan detail (CU13), after
    SmartPlanSystemDesign/v2/PlanDetail.jsx ─────────────────────── */
-.hero {
-  position: relative;
+
+/* Sized by its content instead of the mockup's fixed 300px photo band:
+   there are no photos yet, and the app's wave background shows through. */
+.planHeader {
+  max-width: 760px;
+  margin-inline: auto;
+  padding: var(--s-6) var(--s-4) var(--s-5);
+}
+
+.planHeaderMeta {
   display: flex;
-  align-items: flex-end;
-  height: 300px;
-  overflow: hidden;
-  background: linear-gradient(155deg, #2d1506 0%, var(--char) 100%);
-}
-
-.heroIcon {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: rgba(255, 255, 255, 0.18);
-}
-
-.heroCostBadge {
-  position: absolute;
-  top: var(--s-3);
-  right: var(--s-4);
-  font-size: var(--t-small);
-  padding: 6px 14px;
-}
-
-.heroTitleBlock {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  padding: 0 var(--s-6) var(--s-5);
-  background: linear-gradient(to top, rgba(26, 17, 9, 0.92) 0%, transparent 65%);
-  padding-top: var(--s-8);
-}
-
-.heroMetaRow {
-  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--s-2);
-  margin-bottom: var(--s-2);
-  color: var(--fg-on-dark-2);
+  color: var(--fg-2);
   font-size: var(--t-small);
 }
 
-.heroMetaDot {
-  color: var(--fg-on-dark-3);
+.planMetaDot {
+  color: var(--fg-3);
 }
 
-.heroTitle {
-  margin: 0;
-  color: var(--fg-on-dark);
-  font-size: 42px;
+.planCostBadge {
+  margin-left: auto;
+  padding: 6px 14px;
+  font-size: var(--t-small);
+}
+
+.planTitle {
+  margin: var(--s-3) 0 0;
+  color: var(--fg-1);
+  font-size: var(--t-h2);
   font-weight: var(--w-display);
   letter-spacing: -0.02em;
   line-height: 1.05;
 }
 
-.heroLocation {
+.planRoute {
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
-  margin-top: var(--s-2);
-  color: var(--fg-on-dark-2);
+  margin: var(--s-3) 0 0;
+  color: var(--fg-2);
   font-size: var(--t-small);
+}
+
+@media (max-width: 560px) {
+  .planCostBadge {
+    margin-left: 0;
+  }
 }
 
 .content {

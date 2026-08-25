@@ -19,12 +19,6 @@
   color: var(--fg-2);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .screen {
-    animation: none;
-  }
-}
-
 .backLink {
   display: inline-flex;
   align-items: center;
@@ -45,4 +39,27 @@
   outline: 2px solid var(--ember);
   outline-offset: 3px;
   border-radius: var(--r-btn);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen {
+    animation: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .header {
+    padding-bottom: var(--s-3);
+  }
+
+  .lead {
+    max-width: none;
+    margin-top: var(--s-2);
+  }
+
+  /* A tap target you can actually hit: the inline link was 18px tall. */
+  .backLink {
+    min-height: 44px;
+    margin-bottom: var(--s-2);
+  }
 }
