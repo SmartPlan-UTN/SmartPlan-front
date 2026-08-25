@@ -185,8 +185,8 @@ traceability matrix (`skills/01-domain/`).
 | CU54 | Manage categories | — | `Not started` | | |
 | CU55 | Moderate ratings | PAN 20 | `Not started` | | |
 | CU56 | Delete content | — | `Not started` | | |
-| CU57 | Manage users | PAN 19 | `Not started` | | |
-| CU58 | View system metrics | REP-01 | `Not started` | | |
+| CU57 | Manage users | PAN 19 | `In review` | `SMART-62-cu58-panel-de-control` | #99 |
+| CU58 | View system metrics | REP-01 | `In review` | `SMART-62-cu58-panel-de-control` | #99 |
 | CU59 | Review user suggestion | — | `Not started` | | |
 | CU60 | Manage plans | PAN 22 | `Not started` | | |
 | CU61 | Manage permissions | — | `Not started` | | |
@@ -201,6 +201,7 @@ being re-discussed twice.
 
 | Date | Decision | Reason |
 |---|---|---|
+| 2026-08-25 | CU57's REP-02 header reports active accounts, not “active today” | `SmartPlan-back`'s merged administration contract exposes account status and registration timestamps, but no last-activity/session timestamp. Presenting `status=active` as daily activity would be false. Total and active counts come from pagination metadata; weekly registrations are counted newest-first until the seven-day cutoff. |
 | 2026-08-25 | Creating a collection from PAN 18 is a two-request flow that preserves the new collection if adding its activity fails | The backend deliberately exposes collection creation and activity membership as separate CU32/CU35 endpoints. The selector keeps the successfully created collection and retries only the membership request, avoiding duplicate collection creation after a partial failure. |
 | 2026-08-25 | Collection management uses the Colecciones section of `/favorites`, with dedicated create and edit routes | The v2 design groups access under one saved-content screen, but the domain remains separate: collections are named activity groupings, while favorites are quick saves of activities or plans. The inactive Planes and Actividades sections contain no CU39-CU43 behavior; only real collections are loaded for CU32-CU34 management. |
 | 2026-08-06 | ESLint as the static analyzer | Ecosystem standard for TS/JS, official Next.js integration, type-aware analysis, no additional infrastructure (unlike SonarQube) |
