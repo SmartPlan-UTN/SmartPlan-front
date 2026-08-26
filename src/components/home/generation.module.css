@@ -1,0 +1,247 @@
+/* ================================================================
+   Generation and results — the two states that replace the landing
+   hero's composer in place while a plan is being made (CU17, CU19).
+
+   These belong to the plan-request machinery rather than to the
+   landing's visual language, which is why they live here next to the
+   components that use them and not in `components/landing/`.
+   ================================================================ */
+
+/* Scoped to this module: `.resultCard` below animates by this name, and
+   a CSS module rewrites both the declaration and the reference. */
+@keyframes hero-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.generatingCard, .failedCard {
+  z-index: 1;
+  justify-content: center;
+  align-items: center;
+  gap: var(--s-5);
+  width: 100%;
+  max-width: 520px;
+  min-height: 380px;
+  padding: var(--s-7) var(--s-5);
+  text-align: center;
+  flex-direction: column;
+  margin-inline: auto;
+  display: flex;
+  position: relative;
+}
+
+.ringStack {
+  width: 96px;
+  height: 96px;
+  position: relative;
+}
+
+.ring {
+  border: 1.5px solid var(--electric-15);
+  border-radius: 50%;
+  animation: 2s ease-in-out infinite hero-ring-pulse;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+}
+
+.ringTrack {
+  border: 3px solid var(--electric-15);
+  border-radius: 50%;
+  position: absolute;
+  inset: 0;
+}
+
+.ringSpinner {
+  border: 3px solid #0000;
+  border-top-color: var(--electric);
+  border-radius: 50%;
+  animation: .9s linear infinite spin;
+  position: absolute;
+  inset: 0;
+}
+
+.ringCore {
+  background: var(--electric);
+  width: 34px;
+  height: 34px;
+  box-shadow: 0 5px 20px var(--electric-15);
+  color: var(--white);
+  border-radius: 50%;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.generatingLabel {
+  color: var(--fg-1);
+  font-size: var(--t-h4);
+  font-weight: var(--w-heading);
+  margin: 0;
+}
+
+.generatingAmbient {
+  min-height: 1.4em;
+  color: var(--fg-3);
+  font-size: var(--t-small);
+  margin: 0;
+}
+
+.timedOutActions {
+  gap: var(--s-3);
+  display: flex;
+}
+
+.failedIcon {
+  color: var(--error);
+}
+
+@keyframes hero-ring-pulse {
+  0%, 100% {
+    opacity: .12;
+  }
+
+  50% {
+    opacity: .34;
+  }
+}
+
+.resultsWrapper {
+  z-index: 1;
+  align-items: center;
+  gap: var(--s-5);
+  flex-direction: column;
+  width: 100%;
+  max-width: 960px;
+  margin-inline: auto;
+  display: flex;
+  position: relative;
+}
+
+.resultsHeader {
+  gap: var(--s-1);
+  text-align: center;
+  flex-direction: column;
+  display: flex;
+}
+
+.resultsTitle, .resultsSubtitle {
+  margin: 0;
+}
+
+.resultsTitle {
+  color: var(--fg-1);
+}
+
+.resultsSubtitle {
+  color: var(--fg-2);
+}
+
+.resultsGrid {
+  gap: var(--s-4);
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  width: 100%;
+  display: grid;
+}
+
+.resultCard {
+  opacity: 0;
+  animation: .34s cubic-bezier(.2, .8, .2, 1) forwards hero-rise;
+}
+
+.resultsFooter {
+  justify-content: center;
+  display: flex;
+}
+
+.emptyResults {
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-6) var(--s-4);
+  color: var(--fg-2);
+  text-align: center;
+  flex-direction: column;
+  display: flex;
+}
+
+@media (max-width: 640px) {
+  .generatingCard, .failedCard {
+    min-height: 340px;
+    padding-inline: 0;
+  }
+  .timedOutActions {
+    flex-direction: column;
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resultCard, .ring, .ringSpinner {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
+}
+
+/* ── CU17 result actions: accept · adjust · discard ──────────────── */
+
+/* "Elegir este plan" — the accept affordance. It is a span inside the
+   card's own link, not a button: a control nested in an anchor is invalid
+   HTML and gives keyboard users two targets for one destination. */
+.resultChoose {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--s-3);
+  color: var(--ember);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+}
+
+.resultChoose svg {
+  transition: transform var(--d-fast, 180ms) var(--ease-out, ease);
+}
+
+a:hover .resultChoose svg {
+  transform: translateX(3px);
+}
+
+.resultsFooter,
+.resultsActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-3);
+}
+
+@media (max-width: 560px) {
+  /* Stacked, full-width targets: three actions side by side at this width
+     make each one too narrow to read or to hit. */
+  .resultsFooter,
+  .resultsActions,
+  .timedOutActions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .resultsFooter > *,
+  .resultsActions > *,
+  .timedOutActions > * {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resultChoose svg {
+    transition: none;
+  }
+
+  a:hover .resultChoose svg {
+    transform: none;
+  }
+}

@@ -26,3 +26,8 @@ export { searchActivities, getActivity, getActivityMapMarkers } from './activiti
 export { searchPlans, getPlan } from './plans';
 export { listCategories } from './categories';
 export { getPreferences, updatePreferences } from './users';
+export {
+  createPlanRequest,
+  createSurprisePlanRequest,
+  getPlanRequestStatus,
+} from './plan-requests';

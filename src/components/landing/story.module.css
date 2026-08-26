@@ -1,0 +1,229 @@
+/* ================================================================
+   The immersive section.
+
+   Dark, full-bleed, and the only place on the page where the product
+   is explained by watching something happen rather than by reading.
+   ================================================================ */
+
+.section {
+  position: relative;
+  background: var(--char);
+  color: var(--fg-on-dark);
+  /* The gradient at the top is the transition: the cream page darkens
+     into this rather than butting against it. */
+  background-image:
+    linear-gradient(180deg, color-mix(in srgb, var(--char) 88%, var(--ember)) 0%, var(--char) 22%);
+}
+
+/* Only the pinned build gets extra height to scrub through. Without
+   this attribute the section is exactly as tall as its contents, which
+   is what the phone build wants. */
+.section[data-pinned="true"] {
+  height: 300vh;
+}
+
+.viewport {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  min-height: clamp(520px, 76vh, 760px);
+}
+
+.section[data-pinned="true"] .viewport {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  min-height: 0;
+}
+
+/* ── The scene's box ───────────────────────────────────────────── */
+
+.stage {
+  position: absolute;
+  inset: 0;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* Inherited by the canvas's own text rendering: the component reads
+     `fontFamily` off this element so labels match the page. */
+  font-family: var(--font);
+}
+
+/* A scrim between the scene and the copy.
+   The cloud drifts across the whole box by design, which means labels
+   pass behind the headline — and two pieces of text on top of each other
+   is the one thing this section cannot afford. Sitting above the canvas
+   and below the copy, this keeps the type readable at every point in the
+   animation without having to fence the scene out of half the frame. */
+.stage::after {
+  position: absolute;
+  inset: 0;
+  /* Vertical, and spent by 46%. An angled scrim across the left half
+     also covered the route's first stop and greyed it out; the copy only
+     ever occupies the top band, so that is the only part that needs
+     protecting. Everything the scene does happens below it. */
+  background: linear-gradient(
+    180deg,
+    var(--char) 0%,
+    color-mix(in srgb, var(--char) 82%, transparent) 26%,
+    transparent 46%
+  );
+  content: "";
+  pointer-events: none;
+}
+
+/* ── Copy over the scene ───────────────────────────────────────── */
+
+.overlay {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  max-width: var(--max-w);
+  height: 100%;
+  padding: clamp(36px, 7vh, 76px) clamp(20px, 5vw, 48px);
+  margin-inline: auto;
+  gap: var(--s-6);
+  pointer-events: none;
+}
+
+.copy {
+  position: relative;
+  z-index: 1;
+  max-width: 620px;
+  /* The scene draws behind the copy; a soft ground keeps the type
+     legible without boxing it into a card. */
+  text-shadow: 0 2px 20px color-mix(in srgb, var(--char) 92%, transparent);
+}
+
+.kicker {
+  margin: 0 0 var(--s-3);
+  color: var(--gold);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(26px, 3.9vw, 46px);
+  font-weight: var(--w-display);
+  letter-spacing: var(--track-h1);
+  line-height: 1.06;
+  text-wrap: balance;
+}
+
+.titleAccent {
+  color: var(--ember);
+}
+
+.lead {
+  max-width: 54ch;
+  margin: var(--s-4) 0 0;
+  color: var(--fg-on-dark-2);
+  font-size: clamp(14px, 1.4vw, 16.5px);
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+/* ── The written equivalent of the animation ───────────────────── */
+
+.phases {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(12px, 2vw, 28px);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.phase {
+  position: relative;
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--hairline-dark);
+}
+
+.phaseDot {
+  position: absolute;
+  top: -4px;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ember);
+}
+
+.phase[data-index="1"] .phaseDot { background: var(--gold); }
+.phase[data-index="2"] .phaseDot { background: var(--fg-on-dark); }
+
+.phaseAt {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--fg-on-dark);
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+}
+
+.phaseCopy {
+  display: block;
+  color: var(--fg-on-dark-2);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+/* ── Responsive ────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  /* The scene stops being a backdrop and becomes a band of its own,
+     between the copy and the phases. Reserving real layout space is the
+     only thing that keeps the route off the text: while the canvas
+     filled the section, every gap added to push the phases clear also
+     made the canvas taller, and the route — positioned as a fraction of
+     that height — simply moved down with it. */
+  .stage {
+    position: relative;
+    inset: auto;
+    flex: 1 1 auto;
+    min-height: clamp(260px, 46vh, 360px);
+    /* The stage is first in the DOM so that on a wide screen it paints
+       *behind* the copy. Here it has to sit between the copy and the
+       phases instead, and `order` moves it without disturbing that. */
+    order: 2;
+  }
+
+  .copy { order: 1; }
+  .phases { order: 3; }
+
+  /* Nothing overlaps here any more, so the scrim would only dim the
+     top of the scene for no reason. */
+  .stage::after {
+    display: none;
+  }
+
+  .overlay {
+    justify-content: flex-start;
+    gap: var(--s-6);
+  }
+
+  .phases {
+    grid-template-columns: 1fr;
+    gap: var(--s-4);
+  }
+
+  .phase {
+    padding-top: var(--s-3);
+  }
+}
+
+@media (max-width: 620px) {
+  .viewport {
+    min-height: 0;
+    padding-block: 0;
+  }
+}
