@@ -17,4 +17,17 @@ export {
   type ExplorationStatus,
   type UseExplorationSearchResult,
 } from "./useExplorationSearch";
+export { useReducedMotion } from "./useReducedMotion";
+export {
+  useScrollProgress,
+  type UseScrollProgressResult,
+} from "./useScrollProgress";
 export { useToggle } from "./useToggle";
+export { useTypewriter, type UseTypewriterResult } from "./useTypewriter";
+export {
+  usePlanRequestPolling,
+  type PlanRequestPhase,
+  type PlanRequestFailure,
+  type UsePlanRequestPollingResult,
+  type LastSubmission,
+} from "./usePlanRequestPolling";

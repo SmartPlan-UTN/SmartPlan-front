@@ -1,0 +1,381 @@
+/* ================================================================
+   Landing hero.
+
+   The layout has exactly one job: put the composer at the viewport's
+   optical centre. Everything above it is two short blocks, everything
+   below it is one row, and the asymmetric block padding compensates
+   for the headline's visual weight so the field itself — not the copy
+   — lands in the middle of the screen.
+   ================================================================ */
+
+.hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  /* Deliberately short of a full viewport. The gallery below is meant to
+     break this bottom edge, so there is something real to scroll toward
+     and the page never needs a "scroll down" ornament to ask for it. */
+  min-height: calc(100svh - var(--navbar-h) - 132px);
+  padding:
+    clamp(26px, 4vh, 56px)
+    clamp(20px, 5vw, 48px)
+    clamp(52px, 12vh, 132px);
+  /* A gradient, not flat cream: the page warms as it descends, which is
+     what lets the gallery below land as a continuation rather than a cut. */
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--white) 45%, var(--cream)) 0%,
+      var(--cream) 44%,
+      color-mix(in srgb, var(--ember) 5%, var(--cream)) 100%
+    );
+  transition: background var(--d-slow) var(--ease-inout);
+}
+
+/* Writing warms the whole field very slightly — the page acknowledging
+   that someone started, without anything moving. */
+.hero[data-writing="true"] {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--white) 52%, var(--cream)) 0%,
+      var(--cream) 40%,
+      color-mix(in srgb, var(--ember) 8%, var(--cream)) 100%
+    );
+}
+
+/* ── Background layers ─────────────────────────────────────────── */
+
+/* The mood waves are atmosphere and nothing else. At full strength they
+   stack into a band across the lower half that competes with the field,
+   so they are halved and masked to fade in and out rather than ending on
+   a hard edge that reads as a horizon behind the product's main control. */
+.waves {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.42;
+  -webkit-mask-image: linear-gradient(180deg, transparent 34%, #000 68%, #000 88%, transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 34%, #000 68%, #000 88%, transparent 100%);
+  pointer-events: none;
+  transition: opacity var(--d-slow) var(--ease-inout);
+}
+
+.hero[data-writing="true"] .waves {
+  opacity: 0.26;
+}
+
+.motes {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hero::before {
+  position: absolute;
+  top: -320px;
+  right: -220px;
+  width: min(820px, 78vw);
+  height: 660px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, var(--ember-10), transparent 68%);
+  content: "";
+  pointer-events: none;
+}
+
+/* Lifts the cream back up right where the composer sits, so both layers
+   behind it stay atmosphere and never become contrast behind the field. */
+.veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: radial-gradient(
+    ellipse 58% 42% at 50% 48%,
+    color-mix(in srgb, var(--cream) 72%, transparent),
+    transparent 72%
+  );
+  pointer-events: none;
+}
+
+.inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: var(--max-w);
+}
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* ── Copy above the field ──────────────────────────────────────── */
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0 0 var(--s-5);
+  color: var(--ember);
+  font-size: var(--t-label);
+  font-weight: var(--w-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+/* A slow beacon, not a blink: the ring breathes outward and fades, which
+   reads as "this is live" without ever pulling the eye off the field. */
+.eyebrowDot {
+  position: relative;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ember);
+  box-shadow: 0 0 0 4px var(--ember-10);
+}
+
+.eyebrowDot::after {
+  position: absolute;
+  inset: -3px;
+  border: 1px solid var(--ember);
+  border-radius: 50%;
+  content: "";
+  animation: sp-beacon 3.4s var(--ease-out) infinite;
+}
+
+@keyframes sp-beacon {
+  0%       { opacity: 0.5; transform: scale(0.6); }
+  70%, 100% { opacity: 0;   transform: scale(2.4); }
+}
+
+.headline {
+  margin: 0;
+  font-size: clamp(38px, 7.4vw, 74px);
+  font-weight: var(--w-display);
+  letter-spacing: var(--track-display);
+  line-height: 1.0;
+  text-wrap: balance;
+}
+
+/* Each line clips its own ink, so the uncover animation reveals type the
+   way a printed page does instead of dissolving it into view. */
+.headlineLine {
+  display: block;
+  overflow: hidden;
+  /* Descenders ("g", "p") are clipped by `overflow: hidden` at exactly the
+     line box, so the box is padded and pulled back by the same amount. */
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+}
+
+.headlineInk {
+  display: block;
+}
+
+/* The second line is the promise, and carries the accent.
+
+   The gradient is wider than the text and drifts slowly across it, so
+   the ember catches gold and lets it go the way light moves over a
+   surface. Very slow on purpose — at any speed you would notice as
+   "an animation", it stops being the headline and starts being an
+   effect. Only `background-position` moves, and only on one element. */
+.headlineLine:last-child .headlineInk {
+  background: linear-gradient(
+    100deg,
+    var(--ember) 0%,
+    var(--ember) 22%,
+    color-mix(in srgb, var(--gold) 78%, var(--ember)) 42%,
+    color-mix(in srgb, var(--ember) 60%, var(--gold)) 52%,
+    var(--ember) 74%,
+    var(--ember) 100%
+  );
+  background-size: 260% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: sp-headline-sheen 7.5s var(--ease-inout) 1.4s infinite;
+}
+
+@keyframes sp-headline-sheen {
+  0%,  8%  { background-position: 100% 0; }
+  58%, 66% { background-position: 0% 0; }
+  100%     { background-position: 100% 0; }
+}
+
+.subheadline {
+  max-width: 54ch;
+  margin: var(--s-5) 0 0;
+  color: var(--fg-2);
+  font-size: clamp(15px, 1.6vw, 17.5px);
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.composerSlot {
+  width: 100%;
+  margin-top: clamp(26px, 4vh, 40px);
+}
+
+.intentsSlot {
+  width: 100%;
+  margin-top: clamp(20px, 3vh, 30px);
+}
+
+/* ── Intent chips ──────────────────────────────────────────────── */
+
+.intents {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.intentsLabel {
+  color: var(--fg-3);
+  font-size: var(--t-label);
+  font-weight: var(--w-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.intentList {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  /* Wide enough that all seven intents hold one row on a laptop. At
+     720px the seventh wrapped alone underneath, which reads as an
+     accident rather than as a row. */
+  max-width: 940px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.intentItem {
+  display: block;
+}
+
+.intent {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-chip);
+  background: color-mix(in srgb, var(--surface-card) 76%, transparent);
+  color: var(--fg-2);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: var(--w-label);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition:
+    transform var(--d-fast) var(--ease-out),
+    border-color var(--d-fast) var(--ease-out),
+    background var(--d-fast) var(--ease-out),
+    color var(--d-fast) var(--ease-out),
+    box-shadow var(--d-fast) var(--ease-out);
+}
+
+.intent svg {
+  color: var(--fg-3);
+  transition: color var(--d-fast) var(--ease-out);
+}
+
+.intent:hover:not(:disabled),
+.intent:focus-visible {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--ember) 55%, transparent);
+  background: var(--surface-card);
+  color: var(--ember);
+  box-shadow: 0 8px 18px -10px color-mix(in srgb, var(--ember) 60%, transparent);
+}
+
+.intent:hover:not(:disabled) svg,
+.intent:focus-visible svg {
+  color: var(--ember);
+}
+
+.intent:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.intent:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
+}
+
+.intent:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Responsive ────────────────────────────────────────────────── */
+
+@media (max-width: 760px) {
+  .hero {
+    min-height: calc(100svh - var(--navbar-h) - 96px);
+  }
+
+  .subheadline {
+    max-width: 40ch;
+    margin-top: var(--s-4);
+  }
+
+  .intentList {
+    /* Wrapping seven chips onto three ragged rows turns a quiet hint into
+       a block of UI. A single scrolling row keeps the hero's silhouette,
+       and the row is still fully reachable by keyboard. */
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    max-width: none;
+    padding: 2px clamp(20px, 5vw, 48px) 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    /* No scroll snapping here. With `scroll-snap-align: center` on the
+       items the browser centres one on load, so the row opened already
+       scrolled and the first intent was cut off the left edge — the
+       opposite of a hint. These are small chips; free scrolling is the
+       right gesture for them anyway. */
+    /* Pulls the rail out to the section's padding so chips can scroll
+       from edge to edge instead of inside a boxed-in strip. */
+    margin-inline: calc(-1 * clamp(20px, 5vw, 48px));
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 22px, #000 calc(100% - 22px), transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 22px, #000 calc(100% - 22px), transparent);
+  }
+
+  .intentList::-webkit-scrollbar {
+    display: none;
+  }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero,
+  .waves,
+  .intent,
+  .intent svg {
+    transition: none;
+  }
+
+  /* The headline keeps its gradient, it just stops moving through it. */
+  .headlineLine:last-child .headlineInk {
+    background-position: 0 0;
+    animation: none;
+  }
+
+  .eyebrowDot::after {
+    animation: none;
+    opacity: 0;
+  }
+}

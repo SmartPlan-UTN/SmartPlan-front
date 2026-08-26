@@ -1,0 +1,113 @@
+/* ================================================================
+   smartplan — motion language
+
+   One vocabulary for the whole landing, so that a chip hover, a
+   section reveal and the hero choreography all read as the same
+   product moving, not as five people animating five components.
+
+   Two rules hold everywhere:
+   1. Only `transform` and `opacity` are animated. Anything that
+      touches layout (width, top, margin) is off the table — it
+      forces layout on every frame and drops the page off 60fps.
+   2. Nothing overshoots. There is no bounce and no spring in this
+      product's vocabulary; `--ease-out` decelerates hard and stops.
+   ================================================================ */
+
+:root {
+  /* ── Easing ──────────────────────────────────────────────────
+     `--ease-out` is the entrance curve: it starts fast and settles,
+     which is what makes an element feel like it *arrived* rather
+     than faded. `--ease-inout` is for state changes that have to
+     look reversible (open/close, on/off). */
+  --ease-out:   cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* ── Durations ───────────────────────────────────────────────
+     Hover has to feel instant, reveals have to feel composed, and
+     the hero gets the only budget long enough to be choreography. */
+  --d-fast: 180ms;
+  --d-base: 420ms;
+  --d-slow: 900ms;
+
+  /* Distance a revealing element travels. Small on purpose: a long
+     travel reads as a slide transition, not as content settling. */
+  --reveal-y: 20px;
+}
+
+/* ── Scroll reveal ─────────────────────────────────────────────
+   The resting state is *visible*. `.sp-reveal` alone renders normal
+   content, so a no-JS page and a crawler see everything; the hidden
+   state is only applied by JS via `.sp-reveal-armed`, and removed
+   again by `.sp-reveal-in`. Arming in JS rather than in CSS is what
+   prevents the classic failure where the observer never fires and
+   the page is left permanently blank. */
+.sp-reveal-armed {
+  opacity: 0;
+  transform: translate3d(0, var(--reveal-y), 0);
+}
+
+.sp-reveal-in {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition:
+    opacity   var(--d-base) var(--ease-out),
+    transform var(--d-base) var(--ease-out);
+  /* Staggered children read as one gesture with a delay, not as
+     separate animations, so the delay lives on the transition. */
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+/* ── Hero entrance ─────────────────────────────────────────────
+   A clip-path reveal, not a fade: the headline is uncovered like
+   type on a printed page instead of dissolving into view. */
+@keyframes sp-rise {
+  from { opacity: 0; transform: translate3d(0, 14px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes sp-uncover {
+  from {
+    opacity: 0;
+    clip-path: inset(0 0 105% 0);
+    transform: translate3d(0, 0.22em, 0);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 -20% 0);
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* The composer does not rise with the copy — it scales up into
+   place, which is what makes it read as the thing that arrived
+   last and matters most. */
+@keyframes sp-settle {
+  from { opacity: 0; transform: scale(0.985) translate3d(0, 10px, 0); }
+  to   { opacity: 1; transform: scale(1) translate3d(0, 0, 0); }
+}
+
+.sp-anim-rise    { animation: sp-rise    var(--d-base) var(--ease-out) both; }
+.sp-anim-uncover { animation: sp-uncover 760ms         var(--ease-out) both; }
+.sp-anim-settle  { animation: sp-settle  var(--d-slow) var(--ease-out) both; }
+
+/* ── Reduced motion ────────────────────────────────────────────
+   One global switch. Everything lands in its final state instantly
+   rather than being hidden: `animation: none` on a `both`-filled
+   keyframe would otherwise leave elements stuck at `from`. */
+@media (prefers-reduced-motion: reduce) {
+  .sp-anim-rise,
+  .sp-anim-uncover,
+  .sp-anim-settle {
+    animation: none;
+    opacity: 1;
+    clip-path: none;
+    transform: none;
+  }
+
+  .sp-reveal-armed,
+  .sp-reveal-in {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

@@ -1,0 +1,503 @@
+/* ================================================================
+   Plan composer — the Home's centre of gravity.
+
+   The whole point of this file is restraint: one hairline field, one
+   ember action, and everything optional demoted to a rail underneath.
+   Anything that grows the field's visual weight (a heading, a second
+   surface, an inner card) belongs outside it.
+   ================================================================ */
+
+.composer {
+  position: relative;
+  width: 100%;
+  max-width: 660px;
+  margin-inline: auto;
+  scroll-margin-top: calc(var(--navbar-h) + var(--s-6));
+}
+
+/* Ambient warmth under the field, not a border: it reads as light coming
+   off the composer rather than as another box around it. */
+.glow {
+  position: absolute;
+  top: -34px;
+  left: 50%;
+  z-index: 0;
+  width: 118%;
+  height: 168px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, var(--ember-15), transparent 70%);
+  filter: blur(22px);
+  opacity: 0.55;
+  transform: translateX(-50%);
+  transition: opacity 520ms ease, transform 520ms ease;
+  pointer-events: none;
+}
+
+.glowActive {
+  opacity: 1;
+  transform: translateX(-50%) scale(1.05);
+}
+
+/* ── The field ─────────────────────────────────────────────────── */
+
+.field {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--s-3);
+  align-items: center;
+  min-height: 64px;
+  padding: 9px 9px 9px var(--s-5);
+  border: 1px solid var(--hairline);
+  /* The hero centres its copy; the field must not inherit that. Centred
+     text in a growing textarea reflows around the caret on every keystroke. */
+  text-align: left;
+  border-radius: 19px;
+  background: var(--surface-card);
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--char) 5%, transparent),
+    0 18px 44px -22px color-mix(in srgb, var(--char) 30%, transparent);
+  transition:
+    border-color 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* The ember ring is the focus indicator, not the halo behind it: ember on
+   cream is 3.14:1, which clears WCAG 1.4.11, while the soft shadow around
+   it is far too low-contrast to qualify on its own. */
+.fieldFocused {
+  border-color: var(--ember);
+  box-shadow:
+    0 0 0 1px var(--ember),
+    0 0 0 5px var(--ember-10),
+    0 22px 50px -24px color-mix(in srgb, var(--ember) 55%, transparent);
+  transform: translateY(-1px);
+}
+
+.fieldInvalid {
+  border-color: var(--error);
+  box-shadow:
+    0 0 0 1px var(--error),
+    0 0 0 5px color-mix(in srgb, var(--error) 10%, transparent);
+}
+
+.fieldIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-3);
+  transition: color 220ms ease;
+}
+
+.fieldFocused .fieldIcon {
+  color: var(--ember);
+}
+
+.inputArea {
+  position: relative;
+  min-width: 0;
+}
+
+.textarea {
+  display: block;
+  width: 100%;
+  max-height: 116px;
+  padding: 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: var(--fg-1);
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 26px;
+}
+
+.textarea::placeholder {
+  color: var(--fg-3);
+  font-weight: var(--w-body);
+}
+
+/* While the animated overlay is on screen the real placeholder must not
+   show through it — but it stays in the DOM: it is the only placeholder a
+   screen reader, a no-JS render, or a paused animation ever sees. */
+.textareaGhosted::placeholder {
+  color: transparent;
+}
+
+.ghost {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  margin: 0;
+  color: var(--fg-3);
+  font-size: 17px;
+  font-weight: var(--w-body);
+  line-height: 26px;
+  white-space: pre;
+  pointer-events: none;
+  /* A phrase longer than the field fades out instead of being guillotined
+     at the edge, which is what makes the overflow read as deliberate. */
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 38px), transparent);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 38px), transparent);
+}
+
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 17px;
+  margin-left: 3px;
+  background: var(--ember);
+  vertical-align: -2px;
+  animation: composer-caret 1.06s step-end infinite;
+}
+
+@keyframes composer-caret {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+
+/* ── Action ────────────────────────────────────────────────────── */
+
+.submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 46px;
+  padding: 0 var(--s-5);
+  border: 0;
+  border-radius: 13px;
+  background: var(--ember);
+  box-shadow: 0 8px 20px -8px color-mix(in srgb, var(--ember) 70%, transparent);
+  color: var(--white);
+  font-family: inherit;
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    filter 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.submit:hover:not(:disabled) {
+  filter: brightness(1.07);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px -8px color-mix(in srgb, var(--ember) 75%, transparent);
+}
+
+.submit:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.submit:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 3px;
+}
+
+.submit:disabled {
+  cursor: wait;
+  opacity: 0.8;
+}
+
+.submit svg {
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.submit:hover:not(:disabled) svg {
+  transform: translateX(2px);
+}
+
+.submitDots {
+  display: inline-flex;
+  gap: 5px;
+}
+
+.submitDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--white-18);
+  animation: pulseDot 1s ease-in-out infinite;
+}
+
+.submitDot:nth-child(2) { animation-delay: 0.2s; }
+.submitDot:nth-child(3) { animation-delay: 0.4s; }
+
+/* ── Rail: everything optional, demoted under the field ────────── */
+
+.rail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  margin-top: var(--s-3);
+}
+
+.railSeparator {
+  width: 1px;
+  height: 15px;
+  margin-inline: var(--s-1);
+  background: var(--hairline);
+}
+
+/* ── Hint slot ─────────────────────────────────────────────────── */
+/* One reserved line that swaps content instead of pushing the page: the
+   starters invite a first click while the field is untouched, and step
+   aside for the keyboard hint the moment someone engages with it. */
+
+.hintSlot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  margin-top: var(--s-3);
+  text-align: center;
+}
+
+.starters,
+.keyboardHint,
+.error {
+  margin: 0;
+  animation: composer-hint-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes composer-hint-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.starters {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-3);
+  font-size: 13px;
+}
+
+.startersLabel {
+  color: var(--fg-3);
+}
+
+.starter {
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--fg-3) 45%, transparent);
+  background: transparent;
+  color: var(--fg-2);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: var(--w-label);
+  cursor: pointer;
+  transition: color 180ms ease, border-color 180ms ease;
+}
+
+.starter:hover:not(:disabled),
+.starter:focus-visible {
+  border-bottom-color: var(--ember);
+  color: var(--ember);
+}
+
+.starter:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 3px;
+}
+
+.keyboardHint {
+  color: var(--fg-3);
+  font-size: 12px;
+}
+
+.keyboardHint kbd {
+  padding: 2px 6px;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--white) 55%, transparent);
+  color: var(--fg-2);
+  font-family: inherit;
+  font-size: 11px;
+}
+
+.error {
+  color: var(--error);
+  font-size: 13px;
+  font-weight: var(--w-label);
+}
+
+/* ── "Sorpréndeme" ─────────────────────────────────────────────── */
+
+.surprise {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px var(--s-3);
+  border: 0;
+  border-radius: var(--r-chip);
+  background: transparent;
+  color: var(--fg-2);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: var(--w-label);
+  cursor: pointer;
+  transition: color 180ms ease, background 180ms ease, transform 150ms ease;
+}
+
+.surprise:hover:not(:disabled),
+.surprise:focus-visible {
+  background: var(--ember-04);
+  color: var(--ember);
+}
+
+.surprise:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.surprise:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.surpriseIcon {
+  color: var(--ember);
+  transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.surprise:hover:not(:disabled) .surpriseIcon {
+  transform: rotate(16deg) scale(1.08);
+}
+
+.surpriseNote {
+  flex-basis: 100%;
+  max-width: 440px;
+  margin: var(--s-1) auto 0;
+  color: var(--error);
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+/* ── Responsive ────────────────────────────────────────────────── */
+
+@media (max-width: 560px) {
+  .field {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--s-2);
+    min-height: 60px;
+    padding: 8px 8px 8px var(--s-4);
+  }
+
+  .fieldIcon {
+    display: none;
+  }
+
+  .textarea,
+  .ghost {
+    font-size: 16px;
+    line-height: 24px;
+  }
+
+  .caret {
+    height: 16px;
+  }
+
+  .submit {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 12px;
+  }
+
+  .submitLabel {
+    display: none;
+  }
+
+  .hintSlot {
+    min-height: 0;
+  }
+
+  /* With the rail wrapped onto two rows the separator ends up dangling at
+     the start of the second one, pointing at nothing. */
+  .railSeparator {
+    display: none;
+  }
+
+  .keyboardHint {
+    display: none;
+  }
+
+  .starters {
+    gap: var(--s-2) var(--s-3);
+    font-size: 12.5px;
+  }
+
+  /* Three fit on one line at this width; a fourth wraps alone underneath
+     and turns a quiet hint into a second row of UI. */
+  .starter:nth-of-type(4) {
+    display: none;
+  }
+}
+
+@media (max-width: 400px) {
+  .starter:nth-of-type(3) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field,
+  .glow,
+  .submit,
+  .submit svg,
+  .surprise,
+  .surpriseIcon,
+  .starter,
+  .fieldIcon {
+    transition: none;
+  }
+
+  .caret,
+  .submitDot {
+    animation: none;
+  }
+
+  .starters,
+  .keyboardHint,
+  .error {
+    animation: none;
+  }
+}
+
+/* ── Compact variant ───────────────────────────────────────────── */
+/* Same control, less voltage. Used by the closing section, where a
+   second full-strength hero field would read as the page restarting
+   rather than as it inviting one last action. */
+
+.composerCompact {
+  max-width: 580px;
+}
+
+.composerCompact .field {
+  min-height: 58px;
+  border-radius: 17px;
+}
+
+.composerCompact .glow {
+  opacity: 0.34;
+}
+
+.composerCompact .glowActive {
+  opacity: 0.7;
+}
+
+.composerCompact .textarea,
+.composerCompact .ghost {
+  font-size: 16px;
+}
