@@ -6,9 +6,11 @@ import {
   GenerationState,
   PlanComposer,
   PlanResults,
-  SurpriseAction,
+  SurpriseButton,
   detectMood,
   type PlanComposerHandle,
+  type SurpriseCoords,
+  type SurpriseResolvedMeta,
 } from "@/components/home";
 import { MoodBackground, type Mood } from "@/components/ui";
 import type { UsePlanRequestPollingResult } from "@/hooks";
@@ -24,7 +26,11 @@ export interface LandingHeroProps {
   planning: UsePlanRequestPollingResult;
   sessionLoading: boolean;
   onSubmit: (query: string, context: PlanRequestContext) => void;
-  onSurprise: (latitude: number, longitude: number) => void;
+  onSurprise: (coords: SurpriseCoords, meta: SurpriseResolvedMeta) => void;
+  /** Creates a fresh surprise request from the same coordinates (CU19). */
+  onRegenerate: () => void;
+  /** One-line note under the surprise waiting / results copy (CU19). */
+  surpriseNote?: string | null;
   /** Returns to the composer carrying the previous idea. */
   onAdjust: () => void;
   /**
@@ -60,6 +66,8 @@ export function LandingHero({
   sessionLoading,
   onSubmit,
   onSurprise,
+  onRegenerate,
+  surpriseNote,
   onAdjust,
   prefill,
   onPrefillConsumed,
@@ -70,6 +78,7 @@ export function LandingHero({
 
   const { phase, plans, failure, keepWaiting, discard, retry, lastSubmission } = planning;
   const canRepeat = lastSubmission?.kind === "auto";
+  const generationMode = lastSubmission?.kind === "surprise" ? "surprise" : "auto";
   const composing = phase === "idle";
   const generating =
     phase === "submitting" ||
@@ -138,8 +147,12 @@ export function LandingHero({
                 ref={composer}
                 id={HERO_COMPOSER_ID}
                 submitting={sessionLoading}
-                trailing={
-                  <SurpriseAction submitting={sessionLoading} onSubmit={onSurprise} />
+                hideContext
+                belowField={
+                  <SurpriseButton
+                    submitting={sessionLoading}
+                    onResolved={onSurprise}
+                  />
                 }
                 onTextChange={(text) => setMood(detectMood(text))}
                 onFocusChange={setWriting}
@@ -167,6 +180,8 @@ export function LandingHero({
             onRetry={retry}
             onDiscard={discard}
             canRetry={lastSubmission != null}
+            mode={generationMode}
+            note={generationMode === "surprise" ? surpriseNote : null}
           />
         ) : null}
 
@@ -176,6 +191,9 @@ export function LandingHero({
             onAdjust={onAdjust}
             onDiscard={discard}
             canAdjust={canRepeat}
+            mode={generationMode}
+            note={generationMode === "surprise" ? surpriseNote : null}
+            onRegenerate={onRegenerate}
           />
         ) : null}
       </div>

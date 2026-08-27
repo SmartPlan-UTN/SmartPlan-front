@@ -249,21 +249,27 @@
 }
 
 /* ── Hint slot ─────────────────────────────────────────────────── */
-/* One reserved line that swaps content instead of pushing the page: the
-   starters invite a first click while the field is untouched, and step
-   aside for the keyboard hint the moment someone engages with it. */
+/* One reserved line under the field: the starters invite a first click
+   while it is untouched, "Sorpréndeme" sits here otherwise, and a
+   validation error takes the line when there is one. */
 
 .hintSlot {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 24px;
+  min-height: 36px;
   margin-top: var(--s-3);
   text-align: center;
 }
 
+/* The closing composer has no starter/surprise line under it — collapse
+   the reserved space instead of leaving a gap before the hint. */
+.hintSlot:empty {
+  min-height: 0;
+  margin-top: 0;
+}
+
 .starters,
-.keyboardHint,
 .error {
   margin: 0;
   animation: composer-hint-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
@@ -311,77 +317,10 @@
   outline-offset: 3px;
 }
 
-.keyboardHint {
-  color: var(--fg-3);
-  font-size: 12px;
-}
-
-.keyboardHint kbd {
-  padding: 2px 6px;
-  border: 1px solid var(--hairline);
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--white) 55%, transparent);
-  color: var(--fg-2);
-  font-family: inherit;
-  font-size: 11px;
-}
-
 .error {
   color: var(--error);
   font-size: 13px;
   font-weight: var(--w-label);
-}
-
-/* ── "Sorpréndeme" ─────────────────────────────────────────────── */
-
-.surprise {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px var(--s-3);
-  border: 0;
-  border-radius: var(--r-chip);
-  background: transparent;
-  color: var(--fg-2);
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: var(--w-label);
-  cursor: pointer;
-  transition: color 180ms ease, background 180ms ease, transform 150ms ease;
-}
-
-.surprise:hover:not(:disabled),
-.surprise:focus-visible {
-  background: var(--ember-04);
-  color: var(--ember);
-}
-
-.surprise:focus-visible {
-  outline: 2px solid var(--ember);
-  outline-offset: 2px;
-}
-
-.surprise:active:not(:disabled) {
-  transform: scale(0.97);
-}
-
-.surpriseIcon {
-  color: var(--ember);
-  transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.surprise:hover:not(:disabled) .surpriseIcon {
-  transform: rotate(16deg) scale(1.08);
-}
-
-.surpriseNote {
-  flex-basis: 100%;
-  max-width: 440px;
-  margin: var(--s-1) auto 0;
-  color: var(--error);
-  font-size: 12px;
-  line-height: 1.45;
-  text-align: center;
 }
 
 /* ── Responsive ────────────────────────────────────────────────── */
@@ -420,16 +359,12 @@
   }
 
   .hintSlot {
-    min-height: 0;
+    min-height: 34px;
   }
 
   /* With the rail wrapped onto two rows the separator ends up dangling at
      the start of the second one, pointing at nothing. */
   .railSeparator {
-    display: none;
-  }
-
-  .keyboardHint {
     display: none;
   }
 
@@ -456,8 +391,6 @@
   .glow,
   .submit,
   .submit svg,
-  .surprise,
-  .surpriseIcon,
   .starter,
   .fieldIcon {
     transition: none;
@@ -469,7 +402,6 @@
   }
 
   .starters,
-  .keyboardHint,
   .error {
     animation: none;
   }

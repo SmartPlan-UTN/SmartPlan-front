@@ -7,6 +7,10 @@ import type { UsePlanRequestPollingResult } from "@/hooks";
 import { LandingHero } from "./LandingHero";
 import { HERO } from "./landingContent";
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
+}));
+
 function polling(
   overrides: Partial<UsePlanRequestPollingResult> = {},
 ): UsePlanRequestPollingResult {
@@ -19,6 +23,7 @@ function polling(
     keepWaiting: vi.fn(),
     discard: vi.fn(),
     retry: vi.fn(),
+    regenerate: vi.fn(),
     lastSubmission: null,
     ...overrides,
   } as UsePlanRequestPollingResult;
@@ -32,6 +37,7 @@ function renderHero(overrides: Partial<UsePlanRequestPollingResult> = {}) {
       sessionLoading={false}
       onSubmit={onSubmit}
       onSurprise={vi.fn()}
+      onRegenerate={vi.fn()}
       onAdjust={vi.fn()}
     />,
   );

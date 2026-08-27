@@ -71,6 +71,7 @@ describe("usePlanRequestPolling", () => {
               averageRating: 4.5,
               distanceKm: 2.5,
               categories: [],
+              activityNames: ["Degustación", "Almuerzo", "Paseo"],
               status: { key: "generated", name: "Generated" },
             },
           ],
@@ -219,6 +220,52 @@ describe("usePlanRequestPolling", () => {
 
     expect(createSurprisePlanRequest).toHaveBeenCalledWith({ latitude: -32.9, longitude: -68.8 });
     expect(result.current.planRequestId).toBe(42);
+  });
+
+  it("regenerate creates a brand-new surprise request from the same coordinates", async () => {
+    createSurprisePlanRequest.mockResolvedValueOnce(accepted({ id: 42, mode: "surprise" }));
+    getPlanRequestStatus.mockResolvedValueOnce(
+      status({ statusKey: "generated", mode: "surprise", plans: [] }),
+    );
+
+    const { result } = renderHook(() => usePlanRequestPolling());
+
+    await act(async () => {
+      result.current.submitSurprise({ latitude: -32.9, longitude: -68.8 });
+    });
+    await waitFor(() => expect(result.current.phase).toBe("generated"));
+
+    createSurprisePlanRequest.mockResolvedValueOnce(accepted({ id: 43, mode: "surprise" }));
+    getPlanRequestStatus.mockResolvedValue(status({ statusKey: "pending", mode: "surprise" }));
+
+    await act(async () => {
+      result.current.regenerate();
+    });
+
+    await waitFor(() => expect(result.current.planRequestId).toBe(43));
+    expect(createSurprisePlanRequest).toHaveBeenCalledTimes(2);
+    expect(createSurprisePlanRequest).toHaveBeenLastCalledWith({
+      latitude: -32.9,
+      longitude: -68.8,
+    });
+  });
+
+  it("regenerate is a no-op while a generation is in flight and for automatic submissions", async () => {
+    createPlanRequest.mockResolvedValue(accepted());
+    getPlanRequestStatus.mockResolvedValue(status({ statusKey: "processing" }));
+
+    const { result } = renderHook(() => usePlanRequestPolling());
+
+    await act(async () => {
+      result.current.submit({ query: "algo tranquilo" });
+    });
+    await waitFor(() => expect(result.current.phase).toBe("processing"));
+
+    act(() => {
+      result.current.regenerate();
+    });
+
+    expect(createSurprisePlanRequest).not.toHaveBeenCalled();
   });
   it("retry issues the same request again after a failure, and keeps the idea for adjusting", async () => {
     createPlanRequest.mockRejectedValueOnce(new ApiError({

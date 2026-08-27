@@ -70,3 +70,41 @@ describe("GenerationState (CU17)", () => {
     expect(screen.getByRole("button", { name: /volver al buscador/i })).toBeInTheDocument();
   });
 });
+
+describe("GenerationState (CU19 surprise)", () => {
+  it("waits with its own copy and a non-intrusive note", () => {
+    render(
+      <GenerationState
+        phase="pending"
+        failure={null}
+        mode="surprise"
+        note="Aún no tenés preferencias guardadas, así que te sorprendemos con algo completamente nuevo."
+        onKeepWaiting={vi.fn()}
+        onRetry={vi.fn()}
+        onDiscard={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(/estamos eligiendo algo para vos/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/te sorprendemos con algo completamente nuevo/i),
+    ).toBeInTheDocument();
+  });
+
+  it("maps a NO_LOCATION_AVAILABLE failure to the spec copy", () => {
+    render(
+      <GenerationState
+        phase="failed"
+        failure={{ code: "NO_LOCATION_AVAILABLE", message: "ignored" }}
+        mode="surprise"
+        onKeepWaiting={vi.fn()}
+        onRetry={vi.fn()}
+        onDiscard={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByText(/no encontramos suficientes actividades cerca/i),
+    ).toBeInTheDocument();
+  });
+});

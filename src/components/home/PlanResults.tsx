@@ -15,7 +15,16 @@ export interface PlanResultsProps {
   onDiscard: () => void;
   /** Hidden when there is nothing to adjust (a surprise plan has no query). */
   canAdjust?: boolean;
+  /** `surprise` swaps the copy and offers "Sorpréndeme de nuevo" (CU19). */
+  mode?: "auto" | "surprise";
+  /** One-line note under the header (e.g. fallback / no-preferences, CU19). */
+  note?: string | null;
+  /** Creates a fresh surprise request from the same coordinates (CU19). */
+  onRegenerate?: () => void;
 }
+
+/** CU17 and CU19 both surface at most three alternatives. */
+const MAX_VISIBLE_PLANS = 3;
 
 /**
  * Up to 3 generated plans (CU17, CU19), shown as a continuation of the
@@ -38,22 +47,42 @@ export function PlanResults({
   onAdjust,
   onDiscard,
   canAdjust = true,
+  mode = "auto",
+  note = null,
+  onRegenerate,
 }: PlanResultsProps) {
+  const surprise = mode === "surprise";
+  const visiblePlans = plans.slice(0, MAX_VISIBLE_PLANS);
+
   if (plans.length === 0) {
     return (
       <div className={styles.resultsWrapper}>
         <div className={styles.emptyResults}>
           <Icon name="inbox" size={32} />
-          <p className="sp-h4">No encontramos un plan para eso</p>
-          <p className="sp-body">Probá contarnos tu idea de otra forma.</p>
+          <p className="sp-h4">
+            {surprise
+              ? "No encontramos suficientes actividades cerca de tu ubicación"
+              : "No encontramos un plan para eso"}
+          </p>
+          <p className="sp-body">
+            {surprise
+              ? "Intentá en otro momento o explorá otras zonas."
+              : "Probá contarnos tu idea de otra forma."}
+          </p>
           <div className={styles.resultsActions}>
             {canAdjust ? (
               <Button variant="ghostEmber" onClick={onAdjust}>
                 Ajustar la idea
               </Button>
             ) : null}
+            {surprise && onRegenerate ? (
+              <Button variant="ghostEmber" onClick={onRegenerate}>
+                <Icon name="sparkles" size={15} aria-hidden="true" />
+                Sorpréndeme de nuevo
+              </Button>
+            ) : null}
             <Button variant="ghostLight" onClick={onDiscard}>
-              Empezar de nuevo
+              {surprise ? "Volver al inicio" : "Empezar de nuevo"}
             </Button>
           </div>
         </div>
@@ -64,14 +93,21 @@ export function PlanResults({
   return (
     <div className={styles.resultsWrapper}>
       <div className={styles.resultsHeader}>
-        <h2 className={`sp-h2 ${styles.resultsTitle}`}>Tu plan ya está listo</h2>
+        <h2 className={`sp-h2 ${styles.resultsTitle}`}>
+          {surprise ? "Elegimos estas ideas para vos" : "Tu plan ya está listo"}
+        </h2>
         <p className={`sp-body ${styles.resultsSubtitle}`}>
-          Elegí la alternativa que más te guste.
+          {surprise
+            ? "Cualquiera de las alternativas es un buen plan."
+            : "Elegí la alternativa que más te guste."}
         </p>
+        {note ? (
+          <p className={`sp-small ${styles.resultsSubtitle}`}>{note}</p>
+        ) : null}
       </div>
 
       <div className={styles.resultsGrid}>
-        {plans.map((plan, index) => (
+        {visiblePlans.map((plan, index) => (
           <div
             key={plan.id}
             className={styles.resultCard}
@@ -106,6 +142,12 @@ export function PlanResults({
                   ) : null}
                 </div>
 
+                {plan.activityNames && plan.activityNames.length > 0 ? (
+                  <p className={styles.resultActivities}>
+                    {plan.activityNames.join(" · ")}
+                  </p>
+                ) : null}
+
                 <div className={exploreStyles.tagRow}>
                   {plan.categories.slice(0, 2).map((category) => (
                     <Badge variant="tag" key={category.id}>
@@ -134,8 +176,14 @@ export function PlanResults({
             Ajustar la búsqueda
           </Button>
         ) : null}
+        {surprise && onRegenerate ? (
+          <Button variant="ghostEmber" onClick={onRegenerate}>
+            <Icon name="sparkles" size={15} aria-hidden="true" />
+            Sorpréndeme de nuevo
+          </Button>
+        ) : null}
         <Button variant="ghostLight" onClick={onDiscard}>
-          Descartar
+          {surprise ? "Volver al inicio" : "Descartar"}
         </Button>
       </div>
     </div>

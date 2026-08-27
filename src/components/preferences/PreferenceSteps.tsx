@@ -2,47 +2,73 @@ import { Icon } from "@/components/ui";
 
 import styles from "./preferences.module.css";
 
-export type PreferenceStep = "interests" | "budget" | "area";
+export type PreferenceStep = "interests" | "outing" | "location";
 
-interface PreferenceStepsProps {
-  activeStep: PreferenceStep;
-  completed: Record<PreferenceStep, boolean>;
+interface PreferenceStepsSummary {
   interestCount: number;
   budgetValue: number | null;
-  areaValue: string | null;
+  peopleValue: number | null;
+  areaLabel: string | null;
+  maxDistanceKm: number | null;
+}
+
+interface PreferenceStepsProps extends PreferenceStepsSummary {
+  activeStep: PreferenceStep;
+  completed: Record<PreferenceStep, boolean>;
   onChange: (step: PreferenceStep) => void;
 }
 
-const CURRENCY_FORMAT = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 });
+const CURRENCY_FORMAT = new Intl.NumberFormat("es-AR", {
+  maximumFractionDigits: 0,
+});
 
-const STEPS: ReadonlyArray<{ id: PreferenceStep; number: number; label: string }> = [
+const STEPS: ReadonlyArray<{
+  id: PreferenceStep;
+  number: number;
+  label: string;
+}> = [
   { id: "interests", number: 1, label: "Intereses" },
-  { id: "budget", number: 2, label: "Presupuesto por salida" },
-  { id: "area", number: 3, label: "Zona preferida" },
+  { id: "outing", number: 2, label: "Tu salida habitual" },
+  { id: "location", number: 3, label: "Zona y distancia" },
 ];
 
 function stepSummary(
   step: PreferenceStep,
-  interestCount: number,
-  budgetValue: number | null,
-  areaValue: string | null,
+  {
+    interestCount,
+    budgetValue,
+    peopleValue,
+    areaLabel,
+    maxDistanceKm,
+  }: PreferenceStepsSummary,
 ): string {
   if (step === "interests") {
-    return interestCount > 0 ? `${interestCount} elegidos` : "Contanos qué te gusta";
+    return interestCount > 0
+      ? `${interestCount} ${interestCount === 1 ? "elegido" : "elegidos"}`
+      : "Contanos qué te gusta";
   }
-  if (step === "budget") {
-    return budgetValue !== null ? `$ ${CURRENCY_FORMAT.format(budgetValue)}` : "Sin definir";
+  if (step === "outing") {
+    const parts: string[] = [];
+    if (budgetValue !== null)
+      parts.push(`$ ${CURRENCY_FORMAT.format(budgetValue)}`);
+    if (peopleValue !== null) {
+      parts.push(
+        `${peopleValue} ${peopleValue === 1 ? "persona" : "personas"}`,
+      );
+    }
+    return parts.length > 0 ? parts.join(" · ") : "Sin definir";
   }
-  return areaValue ?? "Sin definir";
+  const parts: string[] = [];
+  if (areaLabel) parts.push(areaLabel);
+  if (maxDistanceKm !== null) parts.push(`${maxDistanceKm} km`);
+  return parts.length > 0 ? parts.join(" · ") : "Sin definir";
 }
 
 export function PreferenceSteps({
   activeStep,
   completed,
-  interestCount,
-  budgetValue,
-  areaValue,
   onChange,
+  ...summary
 }: PreferenceStepsProps) {
   const activeIndex = STEPS.findIndex((step) => step.id === activeStep);
 
@@ -50,13 +76,16 @@ export function PreferenceSteps({
     <nav className={styles.stepRail} aria-label="Secciones de preferencias">
       <div className={styles.stepRailIntro}>
         <h2>Tu perfil para encontrar el plan ideal</h2>
-        <p>Cuanto más nos contás, mejores recomendaciones creamos para vos. Podés cambiarlo cuando quieras.</p>
+        <p>
+          Cuanto más nos contás, mejores recomendaciones creamos para vos. Podés
+          cambiarlo cuando quieras.
+        </p>
       </div>
       <ol className={styles.stepList}>
         {STEPS.map((step, index) => {
           const active = activeStep === step.id;
           const done = completed[step.id];
-          const status = stepSummary(step.id, interestCount, budgetValue, areaValue);
+          const status = stepSummary(step.id, summary);
           return (
             <li
               key={step.id}
@@ -78,7 +107,9 @@ export function PreferenceSteps({
                   <strong>{step.label}</strong>
                   <small>{status}</small>
                 </span>
-                {done ? <Icon name="pencil" size={14} className={styles.stepPencil} /> : null}
+                {done ? (
+                  <Icon name="pencil" size={14} className={styles.stepPencil} />
+                ) : null}
               </button>
             </li>
           );
@@ -86,7 +117,8 @@ export function PreferenceSteps({
       </ol>
       <p className={styles.stepRailNote}>
         <Icon name="lock" size={15} />
-        Tus preferencias son privadas y solo se usan para mejorar tus recomendaciones.
+        Tus preferencias son privadas y solo se usan para mejorar tus
+        recomendaciones.
       </p>
     </nav>
   );

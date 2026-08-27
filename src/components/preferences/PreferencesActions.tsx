@@ -7,22 +7,28 @@ import styles from "./preferences.module.css";
 interface PreferencesActionsProps {
   dirty: boolean;
   saving: boolean;
+  busy: boolean;
   error: string | null;
   progress: ReactNode;
   onDiscard: () => void;
+  onReset: () => void;
 }
 
 export function PreferencesActions({
   dirty,
   saving,
+  busy,
   error,
   progress,
   onDiscard,
+  onReset,
 }: PreferencesActionsProps) {
   return (
     <div
       className={
-        dirty ? `${styles.actionArea} ${styles.actionAreaDirty}` : styles.actionArea
+        dirty
+          ? `${styles.actionArea} ${styles.actionAreaDirty}`
+          : styles.actionArea
       }
     >
       {progress}
@@ -45,9 +51,19 @@ export function PreferencesActions({
           type="button"
           className={styles.discardButton}
           onClick={onDiscard}
-          disabled={!dirty || saving}
+          disabled={!dirty || busy}
         >
           Descartar cambios
+        </button>
+
+        <button
+          type="button"
+          className={styles.resetButton}
+          onClick={onReset}
+          disabled={busy}
+        >
+          <Icon name="trash-2" size={14} />
+          Restablecer preferencias
         </button>
       </div>
 
@@ -55,11 +71,15 @@ export function PreferencesActions({
         type="submit"
         size="lg"
         className={styles.saveButton}
-        disabled={!dirty || saving}
+        disabled={!dirty || busy}
       >
         {saving ? (
           <>
-            <Icon name="loader-circle" size={18} className={styles.saveSpinner} />
+            <Icon
+              name="loader-circle"
+              size={18}
+              className={styles.saveSpinner}
+            />
             Guardando…
           </>
         ) : (

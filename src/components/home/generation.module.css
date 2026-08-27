@@ -192,6 +192,18 @@
 /* "Elegir este plan" — the accept affordance. It is a span inside the
    card's own link, not a button: a control nested in an anchor is invalid
    HTML and gives keyboard users two targets for one destination. */
+/* The itinerary, one line, ellipsised — the card is a summary, the detail
+   view has the full list (CU19 asks each option to name its activities). */
+.resultActivities {
+  margin: var(--s-2) 0 0;
+  overflow: hidden;
+  color: var(--fg-2);
+  font-size: 13px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .resultChoose {
   display: inline-flex;
   align-items: center;

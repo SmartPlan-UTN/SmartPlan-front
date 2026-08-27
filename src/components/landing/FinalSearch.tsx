@@ -2,10 +2,9 @@
 
 import { useRef } from "react";
 
-import { PlanComposer, SurpriseAction, type PlanComposerHandle } from "@/components/home";
+import { PlanComposer, type PlanComposerHandle } from "@/components/home";
 import type { PlanRequestContext } from "@/types";
 
-import { IntentChips } from "./IntentChips";
 import { Reveal } from "./Reveal";
 import { CLOSING } from "./landingContent";
 import styles from "./closing.module.css";
@@ -13,24 +12,25 @@ import styles from "./closing.module.css";
 export interface FinalSearchProps {
   sessionLoading: boolean;
   onSubmit: (query: string, context: PlanRequestContext) => void;
-  onSurprise: (latitude: number, longitude: number) => void;
 }
 
 export const CLOSING_COMPOSER_ID = "closing-composer";
 
 /**
- * The end of the page returns to its beginning.
+ * The end of the page returns to its beginning — but not identically.
  *
- * This is a real composer, not a button dressed as one. The previous
- * Home closed with a `<button>` styled like an input that scrolled back
- * to the hero — which works, but asks someone who has just finished
- * reading the whole page to go back to the top before they can act.
+ * The hero is the simple door: write a sentence, or let "Sorpréndeme"
+ * decide. Someone who has read the whole page down to here is past that:
+ * they know what the product does and are ready to be specific. So this
+ * composer is the one that carries the optional context chips (momento,
+ * personas, presupuesto) — the precise version, for the visitor who wants
+ * to dial it in. The hero never shows them, keeping its promise to be a
+ * place to write, not a form.
  *
- * Because it submits through the same lifted polling state as the hero,
- * generating from here shows the same states in the same place. The two
- * fields are two doors into one interaction, never two competing ones.
+ * It submits through the same lifted polling state as the hero, so a
+ * generation started here shows the same states in the same place.
  */
-export function FinalSearch({ sessionLoading, onSubmit, onSurprise }: FinalSearchProps) {
+export function FinalSearch({ sessionLoading, onSubmit }: FinalSearchProps) {
   const composer = useRef<PlanComposerHandle>(null);
 
   return (
@@ -54,17 +54,7 @@ export function FinalSearch({ sessionLoading, onSubmit, onSurprise }: FinalSearc
               id={CLOSING_COMPOSER_ID}
               variant="compact"
               submitting={sessionLoading}
-              trailing={
-                <SurpriseAction submitting={sessionLoading} onSubmit={onSurprise} />
-              }
               onSubmit={onSubmit}
-            />
-          </div>
-
-          <div className={styles.intentsSlot}>
-            <IntentChips
-              disabled={sessionLoading}
-              onPick={(query) => composer.current?.fill(query)}
             />
           </div>
 

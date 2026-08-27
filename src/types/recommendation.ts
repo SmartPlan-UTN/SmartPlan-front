@@ -57,8 +57,7 @@ export interface PlanRequestAccepted {
 
 /**
  * Plan summary as embedded in a plan request's status once generated.
- * Matches `PlanSummaryDto` in `SmartPlan-back`'s recommendation module —
- * no `activityNames` field, unlike the `GET /plans` search projection.
+ * Matches `PlanSummaryDto` in `SmartPlan-back`'s recommendation module.
  */
 export interface PlanRequestPlanSummary {
   id: number;
@@ -70,6 +69,8 @@ export interface PlanRequestPlanSummary {
   averageRating: number;
   distanceKm: number | null;
   categories: ActivityCategorySummary[];
+  /** Activity names in itinerary order (CU19 shows these on each option). */
+  activityNames: string[];
   status: { key: PlanStatusKey; name: string };
 }
 

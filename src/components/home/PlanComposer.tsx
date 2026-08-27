@@ -69,6 +69,11 @@ export interface PlanComposerProps {
   suggestions?: readonly string[];
   /** Rendered in the rail under the field, after the context chips. */
   trailing?: ReactNode;
+  /**
+   * Rendered in the hint line under the field (unless a validation error or
+   * the starters are showing). Where "Sorpréndeme" lives (CU19).
+   */
+  belowField?: ReactNode;
   /** Hides the optional context chips, for placements that supply their own. */
   hideContext?: boolean;
   onTextChange?: (text: string) => void;
@@ -106,6 +111,7 @@ export function PlanComposer({
   id = "plan-composer",
   suggestions = [],
   trailing,
+  belowField,
   hideContext = false,
   onTextChange,
   onFocusChange,
@@ -285,9 +291,7 @@ export function PlanComposer({
             ))}
           </p>
         ) : (
-          <p className={styles.keyboardHint} aria-hidden="true">
-            <kbd>Enter</kbd> para planificar · <kbd>Shift</kbd> + <kbd>Enter</kbd> para otra línea
-          </p>
+          (belowField ?? null)
         )}
       </div>
     </div>
