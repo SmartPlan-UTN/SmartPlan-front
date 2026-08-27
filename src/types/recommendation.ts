@@ -1,4 +1,5 @@
 import { BaseEntity, CatalogEntity } from './common';
+import type { PaginationMetadata } from './common';
 import type { ActivityCategorySummary } from './activities';
 import type { PlanStatusKey } from './plans';
 
@@ -135,4 +136,59 @@ export type FeedbackStatusKey = 'pending' | 'processed' | 'discarded';
  */
 export interface FeedbackStatus extends CatalogEntity<FeedbackStatusKey> {
   key: FeedbackStatusKey;
+}
+
+/* ── CU20 · Show recommendations (US19, PAN 10) ──────────────────── */
+
+/**
+ * Why a plan was recommended — the dominant ranking signal (CU20).
+ * Matches `PlanRecommendationReason` in `SmartPlan-back`. Drives honest,
+ * non-AI copy on each card; never surfaced as a raw value.
+ */
+export type PlanRecommendationReason =
+  | 'history'
+  | 'preferences'
+  | 'near_you'
+  | 'popular';
+
+/**
+ * Card-friendly plan projection for the recommendations rail. Same shape as
+ * `PlanRequestPlanSummary` plus `imageUrl` — `null` until the backend has an
+ * image source; the card falls back to an editorial treatment.
+ */
+export interface RecommendedPlanSummary extends PlanRequestPlanSummary {
+  imageUrl: string | null;
+}
+
+/** One entry of `GET /plan-recommendations`. Matches `PlanRecommendationDto`. */
+export interface PlanRecommendation {
+  reason: PlanRecommendationReason;
+  /** Always `false` in CU20 (the pool is other users' plans). Not acted on. */
+  canSelect: boolean;
+  plan: RecommendedPlanSummary;
+}
+
+/**
+ * Section-level flags so the Home renders the recommendations honestly:
+ * whether history/preferences shaped the order, and whether coordinates
+ * were used.
+ */
+export interface RecommendationsMeta {
+  personalized: boolean;
+  locationUsed: boolean;
+}
+
+/** Response of `GET /plan-recommendations`. Matches the backend envelope. */
+export interface PlanRecommendationsResponse {
+  data: PlanRecommendation[];
+  pagination: PaginationMetadata;
+  meta: RecommendationsMeta;
+}
+
+/** Query params accepted by `GET /plan-recommendations`. */
+export interface RecommendationsQuery {
+  limit?: number;
+  latitude?: number;
+  longitude?: number;
+  maxDistanceKm?: number;
 }

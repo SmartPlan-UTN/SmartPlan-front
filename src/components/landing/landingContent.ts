@@ -347,6 +347,46 @@ export const SHOWCASE = {
   ] satisfies ShowcasePlan[],
 } as const;
 
+/* ── Recommended plans (CU20 · US19 · PAN 10) ─────────────────────── */
+
+/**
+ * For a signed-in visitor, this replaces the illustrative showcase above
+ * with their real recommendations. The copy stays honest about what shaped
+ * the list: `personalized` and `locationUsed` come from the API's `meta`,
+ * and the per-card `reason` is the only "why" the backend actually supports
+ * — no "IA", no "recomendaciones inteligentes", no SaaS voice.
+ */
+export const RECOMMENDATIONS = {
+  eyebrow: "Para vos",
+  eyebrowPopular: "Lo más elegido",
+  title: "Algo de esto te va a gustar.",
+  titlePopular: "Los planes que más gustan en smartplan.",
+  /** Chosen by which signals `meta` says were used. */
+  subcopy: {
+    full: "Según los planes que ya hiciste y lo que elegiste que te gusta.",
+    history: "Según los planes que ya hiciste.",
+    preferences: "Según lo que elegiste que te gusta.",
+    popular: "Elegí tus preferencias y empezamos a encontrar ideas para vos.",
+  },
+  /** Non-intrusive line when coordinates were not available. */
+  locationHint: "Activá la ubicación para ver planes cerca tuyo.",
+  /** One soft chip per card, from the plan's dominant ranking signal. */
+  reasonChip: {
+    history: "Va con lo tuyo",
+    preferences: "Como lo que te gusta",
+    near_you: "Cerca tuyo",
+    popular: "Muy elegido",
+  },
+  /** Shown to a signed-in user with nothing to recommend yet. */
+  empty: {
+    eyebrow: "Para vos",
+    title: "Todavía estamos conociendo tus gustos.",
+    body: "Armá tu primer plan o elegí lo que te gusta, y empezamos a encontrar ideas para vos.",
+    primary: "Armá un plan",
+    secondary: "Elegí tus preferencias",
+  },
+} as const;
+
 /* ── Closing ──────────────────────────────────────────────────────── */
 
 export const CLOSING = {

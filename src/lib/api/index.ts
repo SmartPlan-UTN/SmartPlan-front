@@ -36,3 +36,4 @@ export {
   createSurprisePlanRequest,
   getPlanRequestStatus,
 } from "./plan-requests";
+export { getRecommendations } from "./plan-recommendations";
