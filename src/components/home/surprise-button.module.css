@@ -1,0 +1,121 @@
+/* ================================================================
+   "Sorpréndeme" (CU19 · PAN 09).
+
+   A small pill under the composer, sized like a toolbar button. Its
+   only flourish is the ember spark: identity without volume. The pill
+   shape keeps it visibly distinct from the rectangular "Planificar"
+   without borrowing its weight.
+   ================================================================ */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 15px 7px 13px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  background: var(--surface-card);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--char) 4%, transparent);
+  color: var(--fg-1);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: var(--w-heading);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.button:hover:not(:disabled) {
+  border-color: var(--ember);
+  background: var(--ember-04);
+  box-shadow: 0 2px 10px -4px color-mix(in srgb, var(--ember) 40%, transparent);
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+  box-shadow: var(--focus-ember);
+}
+
+.button:disabled {
+  cursor: wait;
+  opacity: 0.75;
+}
+
+.icon {
+  color: var(--ember);
+  transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.button:hover:not(:disabled) .icon {
+  transform: rotate(14deg) scale(1.1);
+}
+
+.button[data-busy="true"] .icon {
+  animation: surprise-spark 1.5s ease-in-out infinite;
+}
+
+@keyframes surprise-spark {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 1; transform: scale(1.12); }
+}
+
+.hint,
+.note {
+  max-width: 340px;
+  margin: 0;
+  color: var(--fg-3);
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.note {
+  color: var(--fg-2);
+}
+
+.noteLink {
+  padding: 0;
+  margin-left: 4px;
+  border: 0;
+  background: none;
+  color: var(--ember);
+  font: inherit;
+  font-size: 12px;
+  font-weight: var(--w-label);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.noteLink:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button,
+  .icon {
+    transition: none;
+  }
+
+  .button[data-busy="true"] .icon {
+    animation: none;
+    opacity: 1;
+  }
+}

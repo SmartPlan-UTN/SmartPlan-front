@@ -14,7 +14,17 @@ export {
   type ComposerVariant,
 } from "./PlanComposer";
 export { ContextChips, type ContextChipsProps } from "./ContextChips";
-export { SurpriseAction } from "./SurpriseAction";
+export {
+  SurpriseButton,
+  type SurpriseButtonProps,
+  type SurpriseResolvedMeta,
+} from "./SurpriseButton";
+export {
+  useSurpriseLocation,
+  type SurpriseCoords,
+  type SurpriseLocationState,
+  type UseSurpriseLocationResult,
+} from "./useSurpriseLocation";
 export { GenerationState } from "./GenerationState";
 export { PlanResults } from "./PlanResults";
 export { detectMood } from "./moodDetection";

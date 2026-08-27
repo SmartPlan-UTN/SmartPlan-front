@@ -60,6 +60,13 @@ export interface UsePlanRequestPollingResult {
    * to resume. Distinct from `keepWaiting`, which never posts.
    */
   retry: () => void;
+  /**
+   * "Sorprendeme de nuevo" (CU19): creates a brand-new surprise request from
+   * the same coordinates, only from an explicit user action on a generated
+   * result. A no-op while a generation is in flight (guards double clicks)
+   * and for automatic submissions (those adjust the query instead).
+   */
+  regenerate: () => void;
   /** What was asked for last, so the UI can offer to adjust it. */
   lastSubmission: LastSubmission | null;
 }
@@ -208,6 +215,15 @@ export function usePlanRequestPolling(): UsePlanRequestPollingResult {
     void beginRequest(() => createPlanRequest(lastSubmission.payload));
   }, [beginRequest, lastSubmission]);
 
+  const regenerate = useCallback(() => {
+    if (!lastSubmission || lastSubmission.kind !== "surprise") return;
+    if (phase === "submitting" || phase === "pending" || phase === "processing") {
+      return;
+    }
+    const { payload } = lastSubmission;
+    void beginRequest(() => createSurprisePlanRequest(payload));
+  }, [beginRequest, lastSubmission, phase]);
+
   const keepWaiting = useCallback(() => {
     if (planRequestId === null) return;
     setPhase("processing");
@@ -235,6 +251,7 @@ export function usePlanRequestPolling(): UsePlanRequestPollingResult {
     keepWaiting,
     discard,
     retry,
+    regenerate,
     lastSubmission,
   };
 }

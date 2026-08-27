@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 
+import type {
+  SurpriseCoords,
+  SurpriseResolvedMeta,
+} from "@/components/home";
 import { SiteFooter } from "@/components/layout";
 import { usePlanRequestPolling } from "@/hooks";
 import { useSession } from "@/lib/auth";
@@ -41,6 +45,7 @@ export function LandingScreen() {
   const planning = usePlanRequestPolling();
   const sessionLoading = status === "loading";
   const [prefill, setPrefill] = useState<string | null>(null);
+  const [surpriseNote, setSurpriseNote] = useState<string | null>(null);
 
   /**
    * Generation needs a session. Sending someone to log in with a
@@ -78,9 +83,10 @@ export function LandingScreen() {
     scrollToHero();
   }
 
-  function handleSurprise(latitude: number, longitude: number) {
+  function handleSurprise(coords: SurpriseCoords, meta: SurpriseResolvedMeta) {
     if (!requireSession()) return;
-    planning.submitSurprise({ latitude, longitude });
+    setSurpriseNote(surpriseNoteFor(meta));
+    planning.submitSurprise(coords);
     scrollToHero();
   }
 
@@ -91,6 +97,8 @@ export function LandingScreen() {
         sessionLoading={sessionLoading}
         onSubmit={handleSubmit}
         onSurprise={handleSurprise}
+        onRegenerate={planning.regenerate}
+        surpriseNote={surpriseNote}
         onAdjust={handleAdjust}
         prefill={prefill}
         onPrefillConsumed={() => setPrefill(null)}
@@ -105,17 +113,28 @@ export function LandingScreen() {
           <ImmersiveStory />
           <HowItWorks />
           <PlanShowcase />
-          <FinalSearch
-            sessionLoading={sessionLoading}
-            onSubmit={handleSubmit}
-            onSurprise={handleSurprise}
-          />
+          <FinalSearch sessionLoading={sessionLoading} onSubmit={handleSubmit} />
         </>
       ) : null}
 
       <SiteFooter />
     </>
   );
+}
+
+/**
+ * The non-intrusive line the spec asks for under the surprise flow: how the
+ * location was resolved, or that generation is running without saved
+ * preferences.
+ */
+function surpriseNoteFor(meta: SurpriseResolvedMeta): string | null {
+  if (meta.hasCategoryPreferences === false) {
+    return "Aún no tenés preferencias guardadas, así que te sorprendemos con algo completamente nuevo.";
+  }
+  if (meta.source === "preferred-area") {
+    return "Usamos tu ubicación preferida.";
+  }
+  return null;
 }
 
 function scrollToHero() {
