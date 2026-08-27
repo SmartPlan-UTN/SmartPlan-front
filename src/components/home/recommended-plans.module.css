@@ -1,0 +1,290 @@
+/* ================================================================
+   CU20 "Planes recomendados" — occupies the same Home slot as the
+   illustrative showcase, so it keeps a similar vertical footprint to
+   avoid a big layout jump when the session resolves.
+   ================================================================ */
+
+.section {
+  position: relative;
+  overflow-x: clip;
+  padding-block: clamp(60px, 9vh, 104px);
+  background: linear-gradient(
+    180deg,
+    var(--cream) 0%,
+    color-mix(in srgb, var(--gold) 9%, var(--cream)) 100%
+  );
+}
+
+/* ── Header ────────────────────────────────────────────────────── */
+
+.header {
+  width: 100%;
+  max-width: var(--max-w);
+  padding-inline: clamp(20px, 5vw, 48px);
+  margin: 0 auto clamp(24px, 4vh, 44px);
+}
+
+.eyebrow {
+  margin: 0 0 var(--s-3);
+  color: var(--ember);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(28px, 4.2vw, 48px);
+  font-weight: var(--w-display);
+  letter-spacing: var(--track-h1);
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+.subcopy {
+  max-width: 48ch;
+  margin: var(--s-3) 0 0;
+  color: var(--fg-2);
+  font-size: 15px;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.subcopyLink {
+  color: var(--ember);
+  font-weight: var(--w-label);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.locationHint {
+  color: var(--fg-3);
+}
+
+/* ── Rail ──────────────────────────────────────────────────────── */
+
+.railViewport {
+  position: relative;
+  /* Holds the section height steady across loading → ready → session
+     resolve, so the page below does not jump. */
+  min-height: 340px;
+  display: flex;
+  align-items: center;
+}
+
+.rail {
+  --rail-pad: max(
+    clamp(20px, 5vw, 48px),
+    calc((100% - var(--max-w)) / 2 + clamp(20px, 5vw, 48px))
+  );
+
+  display: flex;
+  gap: clamp(14px, 1.6vw, 22px);
+  width: 100%;
+  padding: 6px var(--rail-pad);
+  margin: 0;
+  overflow-x: auto;
+  list-style: none;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: var(--rail-pad);
+  scrollbar-width: none;
+}
+
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+.rail:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 4px;
+  border-radius: var(--r-card);
+}
+
+@media (max-width: 760px) {
+  .rail {
+    --rail-pad: clamp(20px, 5vw, 48px);
+    scroll-snap-type: x mandatory;
+  }
+}
+
+/* ── Scroll arrows (pointer, wide viewports only) ──────────────── */
+
+.arrow {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-chip);
+  background: var(--surface-card);
+  color: var(--fg-1);
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  transform: translateY(-50%);
+  transition:
+    opacity 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.arrow[aria-hidden="true"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.arrowLeft {
+  left: clamp(6px, 2vw, 20px);
+}
+
+.arrowRight {
+  right: clamp(6px, 2vw, 20px);
+}
+
+.arrow:hover {
+  border-color: var(--ember);
+  color: var(--ember);
+}
+
+.arrow:focus-visible {
+  outline: none;
+  border-color: var(--ember);
+  box-shadow: var(--focus-ember);
+}
+
+@media (min-width: 900px) and (hover: hover) {
+  .arrow {
+    display: inline-flex;
+  }
+}
+
+/* ── Loading ───────────────────────────────────────────────────── */
+
+.loading {
+  display: flex;
+  gap: var(--s-2);
+  width: 100%;
+  justify-content: center;
+}
+
+.loadingDot {
+  width: 9px;
+  height: 9px;
+  border-radius: var(--r-chip);
+  background: var(--ember);
+  animation: pulseDot 1.3s ease-in-out infinite;
+}
+
+.loadingDot:nth-child(2) {
+  animation-delay: 0.22s;
+}
+
+.loadingDot:nth-child(3) {
+  animation-delay: 0.44s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loadingDot {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
+/* ── Empty / onboarding ────────────────────────────────────────── */
+
+.empty {
+  width: 100%;
+  max-width: 520px;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-3);
+  padding: clamp(28px, 5vw, 48px) clamp(20px, 5vw, 40px);
+  margin: 0 auto;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+  box-shadow: 0 2px 10px -6px color-mix(in srgb, var(--char) 40%, transparent);
+  text-align: center;
+}
+
+.emptyTitle {
+  margin: 0;
+  font-size: clamp(22px, 3.4vw, 30px);
+  font-weight: var(--w-display);
+  letter-spacing: var(--track-h1);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.emptyBody {
+  max-width: 40ch;
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.emptyActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  justify-content: center;
+  margin-top: var(--s-2);
+}
+
+.emptyPrimary,
+.emptySecondary {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: var(--r-btn);
+  font-size: 14px;
+  font-weight: var(--w-heading);
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease;
+}
+
+.emptyPrimary {
+  border: 1px solid transparent;
+  background: var(--ember);
+  color: var(--white);
+}
+
+.emptyPrimary:hover {
+  background: color-mix(in srgb, var(--ember) 88%, var(--char));
+}
+
+.emptySecondary {
+  border: 1px solid var(--hairline);
+  background: transparent;
+  color: var(--fg-1);
+}
+
+.emptySecondary:hover {
+  border-color: var(--ember);
+  color: var(--ember);
+}
+
+.emptyPrimary:focus-visible,
+.emptySecondary:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ember);
+}
+
+@media (max-width: 480px) {
+  .emptyActions {
+    flex-direction: column;
+    align-self: stretch;
+  }
+
+  .emptyPrimary,
+  .emptySecondary {
+    justify-content: center;
+  }
+}

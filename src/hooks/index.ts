@@ -31,3 +31,9 @@ export {
   type UsePlanRequestPollingResult,
   type LastSubmission,
 } from "./usePlanRequestPolling";
+export {
+  useRecommendations,
+  resetRecommendationsCache,
+  type RecommendationsStatus,
+  type UseRecommendationsResult,
+} from "./useRecommendations";

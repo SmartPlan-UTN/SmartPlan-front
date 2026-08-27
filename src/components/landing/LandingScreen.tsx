@@ -12,12 +12,15 @@ import { useSession } from "@/lib/auth";
 import { loginRoute } from "@/lib/routes";
 import type { PlanRequestContext } from "@/types";
 
+import { RecommendedPlans } from "@/components/home";
+
 import { FinalSearch } from "./FinalSearch";
 import { HowItWorks } from "./HowItWorks";
 import { ImmersiveStory } from "./ImmersiveStory";
 import { InspirationGallery } from "./InspirationGallery";
 import { LandingHero, HERO_COMPOSER_ID } from "./LandingHero";
 import { PlanShowcase } from "./PlanShowcase";
+import styles from "./landing.module.css";
 
 /**
  * The landing, end to end (CU17, CU19 · PAN 07).
@@ -90,6 +93,14 @@ export function LandingScreen() {
     scrollToHero();
   }
 
+  /** Empty-state CTA (CU20): back to the hero, composer focused and ready. */
+  function handleStartPlan() {
+    scrollToHero();
+    document
+      .querySelector<HTMLTextAreaElement>(`#${HERO_COMPOSER_ID} textarea`)
+      ?.focus();
+  }
+
   return (
     <>
       <LandingHero
@@ -112,7 +123,19 @@ export function LandingScreen() {
           <InspirationGallery />
           <ImmersiveStory />
           <HowItWorks />
-          <PlanShowcase />
+
+          {/* The same slot, resolved by session (CU20). An anonymous
+              visitor still needs the product explained with examples; a
+              signed-in one gets their real recommendations instead — never
+              both, and no extra scroll. */}
+          {status === "anonymous" ? (
+            <PlanShowcase />
+          ) : status === "authenticated" ? (
+            <RecommendedPlans onStartPlan={handleStartPlan} />
+          ) : (
+            <div className={styles.sessionSlot} aria-hidden="true" />
+          )}
+
           <FinalSearch sessionLoading={sessionLoading} onSubmit={handleSubmit} />
         </>
       ) : null}

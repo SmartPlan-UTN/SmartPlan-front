@@ -27,4 +27,12 @@ export {
 } from "./useSurpriseLocation";
 export { GenerationState } from "./GenerationState";
 export { PlanResults } from "./PlanResults";
+export {
+  RecommendationCard,
+  type RecommendationCardProps,
+} from "./RecommendationCard";
+export {
+  RecommendedPlans,
+  type RecommendedPlansProps,
+} from "./RecommendedPlans";
 export { detectMood } from "./moodDetection";

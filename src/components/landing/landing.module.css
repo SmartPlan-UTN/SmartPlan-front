@@ -1,0 +1,5 @@
+/* Holds the recommendations/showcase slot height while the session
+   resolves, so the Home does not jump when it flips to one or the other. */
+.sessionSlot {
+  min-height: clamp(420px, 60vh, 560px);
+}
