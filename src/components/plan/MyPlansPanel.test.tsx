@@ -99,55 +99,60 @@ describe("MyPlansPanel (CU29)", () => {
     expect(await screen.findByText("Domingo de bodegas")).toBeInTheDocument();
   });
 
-  it("cancels a plan and keeps it listed as read-only history (CU26)", async () => {
+  it("deletes a plan and removes it from the list view (CU26)", async () => {
     vi.mocked(cancelOwnPlan).mockResolvedValue(undefined);
     const user = userEvent.setup();
     render(<MyPlansPanel />);
 
     await user.click(
-      await screen.findByRole("button", { name: "Cancelar Domingo de bodegas" }),
+      await screen.findByRole("button", { name: "Eliminar Domingo de bodegas" }),
     );
-    await user.click(screen.getByRole("button", { name: "Sí, cancelar plan" }));
+    await user.click(screen.getByRole("button", { name: "Sí, eliminar plan" }));
 
     await waitFor(() => {
       expect(cancelOwnPlan).toHaveBeenCalledWith(12);
     });
-    expect(await screen.findByText("Cancelado")).toBeInTheDocument();
-    // Still on the list, but with no way to edit or cancel it again.
-    expect(screen.getByText("Domingo de bodegas")).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Cancelar Domingo de bodegas" }),
-    ).not.toBeInTheDocument();
+    // The deleted plan disappears from the list
+    expect(screen.queryByText("Domingo de bodegas")).not.toBeInTheDocument();
   });
 
-  it("keeps the dialog open and reports the message when cancelling fails", async () => {
+  it("keeps the dialog open and reports the message when deletion fails", async () => {
     vi.mocked(cancelOwnPlan).mockRejectedValue(
-      new ApiError({ message: "El plan ya fue cancelado", type: "HTTP", status: 409 }),
+      new ApiError({ message: "El plan ya fue eliminado", type: "HTTP", status: 409 }),
     );
     const user = userEvent.setup();
     render(<MyPlansPanel />);
 
     await user.click(
-      await screen.findByRole("button", { name: "Cancelar Domingo de bodegas" }),
+      await screen.findByRole("button", { name: "Eliminar Domingo de bodegas" }),
     );
-    await user.click(screen.getByRole("button", { name: "Sí, cancelar plan" }));
+    await user.click(screen.getByRole("button", { name: "Sí, eliminar plan" }));
 
-    expect(await screen.findByText("El plan ya fue cancelado")).toBeInTheDocument();
+    expect(await screen.findByText("El plan ya fue eliminado")).toBeInTheDocument();
     expect(screen.getByRole("alertdialog")).toBeInTheDocument();
   });
 
-  it("hides edit and cancel on a plan that is already cancelled", async () => {
+  it("filters out plans that are already cancelled or deleted on load", async () => {
     resolveWith([
       mockSummary({ status: { key: "cancelled", name: "Cancelado" } }),
     ]);
     render(<MyPlansPanel />);
 
-    expect(await screen.findByText("Cancelado")).toBeInTheDocument();
+    expect(screen.queryByText("Domingo de bodegas")).not.toBeInTheDocument();
+  });
+
+  it("shows under construction modal when automatic plan button card is clicked (CU31)", async () => {
+    const user = userEvent.setup();
+    render(<MyPlansPanel />);
+
+    await user.click(screen.getByRole("button", { name: /Generar plan automático/i }));
+
+    expect(screen.getByRole("alertdialog", { name: "Módulo en construcción" })).toBeInTheDocument();
     expect(
-      screen.queryByRole("link", { name: "Editar Domingo de bodegas" }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Cancelar Domingo de bodegas" }),
-    ).not.toBeInTheDocument();
+      screen.getByText(/generación automática de itinerarios/i),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Entendido, crear manualmente" }));
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
   });
 });

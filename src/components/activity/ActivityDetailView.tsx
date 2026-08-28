@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { AddToCollectionDialog } from "@/components/collection";
 import { LocationPreview } from "@/components/explore";
+import { AddToPlanDialog } from "@/components/plan";
 import {
   Badge,
   Button,
@@ -50,6 +51,7 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
   const [tab, setTab] = useState<Tab>("info");
   const [saved, setSaved] = useState(false);
   const [showCollectionDialog, setShowCollectionDialog] = useState(false);
+  const [showPlanDialog, setShowPlanDialog] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
 
   if (status === "loading") {
@@ -259,7 +261,11 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
             <Icon name="bookmark" size={16} aria-hidden="true" />
             {saved ? "Guardada" : "Guardar"}
           </Button>
-          <Button variant="primary" className={styles.actionBarPrimary} disabled title="Próximamente">
+          <Button
+            variant="primary"
+            className={styles.actionBarPrimary}
+            onClick={() => setShowPlanDialog(true)}
+          >
             <Icon name="plus" size={16} aria-hidden="true" />
             Agregar a plan
           </Button>
@@ -272,6 +278,14 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
           </Button>
         </div>
       </div>
+
+      {showPlanDialog ? (
+        <AddToPlanDialog
+          activityId={activity.id}
+          activityName={activity.name}
+          onClose={() => setShowPlanDialog(false)}
+        />
+      ) : null}
 
       {showCollectionDialog ? (
         <AddToCollectionDialog

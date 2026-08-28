@@ -146,7 +146,7 @@ describe("PlanDetailView Component (CU13, CU26)", () => {
     render(<PlanDetailView planId={1} />);
 
     expect(await screen.findByText("Editar plan")).toBeInTheDocument();
-    expect(screen.getByText("Cancelar plan")).toBeInTheDocument();
+    expect(screen.getByText("Eliminar plan")).toBeInTheDocument();
     expect(getOwnPlan).toHaveBeenCalledWith(1);
   });
 
@@ -162,7 +162,7 @@ describe("PlanDetailView Component (CU13, CU26)", () => {
       expect(getOwnPlan).toHaveBeenCalledWith(1);
     });
     expect(screen.queryByText("Editar plan")).not.toBeInTheDocument();
-    expect(screen.queryByText("Cancelar plan")).not.toBeInTheDocument();
+    expect(screen.queryByText("Eliminar plan")).not.toBeInTheDocument();
   });
 
   it("never probes ownership for an anonymous visitor", async () => {
@@ -172,20 +172,20 @@ describe("PlanDetailView Component (CU13, CU26)", () => {
 
     expect(await screen.findByText("Tour de Bodegas Luján")).toBeInTheDocument();
     expect(getOwnPlan).not.toHaveBeenCalled();
-    expect(screen.queryByText("Cancelar plan")).not.toBeInTheDocument();
+    expect(screen.queryByText("Eliminar plan")).not.toBeInTheDocument();
   });
 
-  it("opens explicit confirmation dialog on cancel click and handles modal close", async () => {
+  it("opens explicit confirmation dialog on delete click and handles modal close", async () => {
     render(<PlanDetailView planId={1} />);
 
-    fireEvent.click(await screen.findByText("Cancelar plan"));
+    fireEvent.click(await screen.findByText("Eliminar plan"));
 
     const dialog = screen.getByRole("alertdialog");
     expect(dialog).toBeInTheDocument();
-    expect(screen.getByText("¿Cancelar este plan?")).toBeInTheDocument();
+    expect(screen.getByText("¿Eliminar este plan?")).toBeInTheDocument();
     expect(
       screen.getByText(
-        /El plan pasará a estar cancelado y se conservará únicamente como historial/i,
+        /El plan se eliminará de tus planes y ya no estará disponible/i,
       ),
     ).toBeInTheDocument();
 
@@ -197,7 +197,7 @@ describe("PlanDetailView Component (CU13, CU26)", () => {
   it("closes the confirmation dialog on Escape", async () => {
     render(<PlanDetailView planId={1} />);
 
-    fireEvent.click(await screen.findByText("Cancelar plan"));
+    fireEvent.click(await screen.findByText("Eliminar plan"));
     expect(screen.getByRole("alertdialog")).toBeInTheDocument();
 
     fireEvent.keyDown(window, { key: "Escape" });
@@ -205,24 +205,24 @@ describe("PlanDetailView Component (CU13, CU26)", () => {
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
   });
 
-  it("executes cancelOwnPlan and redirects to explore on confirmation (CU26)", async () => {
+  it("executes cancelOwnPlan and redirects to plans on confirmation (CU26)", async () => {
     vi.mocked(cancelOwnPlan).mockResolvedValue(undefined);
 
     render(<PlanDetailView planId={1} />);
 
-    fireEvent.click(await screen.findByText("Cancelar plan"));
-    fireEvent.click(screen.getByText("Sí, cancelar plan"));
+    fireEvent.click(await screen.findByText("Eliminar plan"));
+    fireEvent.click(screen.getByText("Sí, eliminar plan"));
 
     await waitFor(() => {
       expect(cancelOwnPlan).toHaveBeenCalledWith(1);
-      expect(push).toHaveBeenCalledWith(ROUTES.explore);
+      expect(push).toHaveBeenCalledWith(ROUTES.plans);
     });
   });
 
-  it("keeps the dialog open and surfaces the message when cancelling fails", async () => {
+  it("keeps the dialog open and surfaces the message when deletion fails", async () => {
     vi.mocked(cancelOwnPlan).mockRejectedValue(
       new ApiError({
-        message: "El plan ya fue cancelado",
+        message: "El plan ya fue eliminado",
         type: "HTTP",
         status: 409,
       }),
@@ -230,17 +230,17 @@ describe("PlanDetailView Component (CU13, CU26)", () => {
 
     render(<PlanDetailView planId={1} />);
 
-    fireEvent.click(await screen.findByText("Cancelar plan"));
-    fireEvent.click(screen.getByText("Sí, cancelar plan"));
+    fireEvent.click(await screen.findByText("Eliminar plan"));
+    fireEvent.click(screen.getByText("Sí, eliminar plan"));
 
     expect(
-      await screen.findByText("El plan ya fue cancelado"),
+      await screen.findByText("El plan ya fue eliminado"),
     ).toBeInTheDocument();
     expect(screen.getByRole("alertdialog")).toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
   });
 
-  it("renders cancelled status banner and hides edit/cancel buttons for cancelled plans", async () => {
+  it("renders cancelled status banner and hides edit/delete buttons for cancelled plans", async () => {
     vi.mocked(getPlan).mockResolvedValue(
       mockPlan({ status: { key: "cancelled", name: "Cancelado" } }),
     );
@@ -252,6 +252,6 @@ describe("PlanDetailView Component (CU13, CU26)", () => {
       screen.getByText(/Este plan se encuentra conservado como historial de lectura/i),
     ).toBeInTheDocument();
     expect(screen.queryByText("Editar plan")).not.toBeInTheDocument();
-    expect(screen.queryByText("Cancelar plan")).not.toBeInTheDocument();
+    expect(screen.queryByText("Eliminar plan")).not.toBeInTheDocument();
   });
 });

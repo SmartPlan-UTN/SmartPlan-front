@@ -206,4 +206,19 @@ describe("CreatePlanForm (CU24)", () => {
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     expect(push).toHaveBeenCalledWith(ROUTES.explore);
   });
+
+  it("displays under-construction modal when automatic plan button is clicked (CU31)", async () => {
+    const user = userEvent.setup();
+    render(<CreatePlanForm />);
+
+    await user.click(screen.getByRole("button", { name: /Generar plan automático/i }));
+
+    expect(screen.getByRole("alertdialog", { name: "Módulo en construcción" })).toBeInTheDocument();
+    expect(
+      screen.getByText(/generación automática de itinerarios/i),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Entendido, crear manualmente" }));
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  });
 });

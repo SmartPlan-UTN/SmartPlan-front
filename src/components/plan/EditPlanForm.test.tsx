@@ -154,7 +154,7 @@ describe("EditPlanForm", () => {
     await user.type(searchInput, "Criollo");
   });
 
-  it("removes an activity stop from the plan (CU28)", async () => {
+  it("removes an activity stop from the plan asking confirmation when it leaves the plan empty (CU28)", async () => {
     vi.mocked(removePlanActivity).mockResolvedValueOnce();
 
     const user = userEvent.setup();
@@ -164,12 +164,14 @@ describe("EditPlanForm", () => {
       name: "Quitar Degustación en Bodega",
     });
 
-    // The DELETE answers 204, so the form refetches the plan to pick up the
-    // itinerary the backend renumbered.
     vi.mocked(getOwnPlan).mockResolvedValue(
       mockPlan({ details: [], activityCount: 0 }),
     );
     await user.click(removeBtn);
+
+    // Confirmation dialog opens when plan would become empty
+    expect(screen.getByRole("alertdialog", { name: "¿Quitar la última actividad?" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Sí, quitar actividad" }));
 
     expect(removePlanActivity).toHaveBeenCalledWith(12, 101);
     await waitFor(() => {

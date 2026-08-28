@@ -47,6 +47,7 @@ export function CreatePlanForm() {
 
   // Cancel Confirmation Modal State
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showAutoPlanModal, setShowAutoPlanModal] = useState(false);
 
   // Activities search effect
   useEffect(() => {
@@ -195,6 +196,21 @@ export function CreatePlanForm() {
 
   return (
     <div className={styles.container}>
+      <div className={styles.autoPlanBanner}>
+        <div className={styles.autoPlanText}>
+          <strong>¿Querés ahorrar tiempo?</strong>
+          <p>Generá un itinerario personalizado automáticamente según tus preferencias con Inteligencia Artificial.</p>
+        </div>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => setShowAutoPlanModal(true)}
+        >
+          <Icon name="sparkles" size={16} aria-hidden="true" />
+          Generar plan automático
+        </Button>
+      </div>
+
       {/* LEFT: General details form */}
       <div>
         <div className={styles.card}>
@@ -454,6 +470,27 @@ export function CreatePlanForm() {
             ¿Seguro que querés cancelar la creación del plan? Se perderán todos
             los datos ingresados en el formulario.
           </p>
+        </ConfirmationDialog>
+      )}
+
+      {/* Auto Plan Generation - Módulo en construcción Modal (CU31) */}
+      {showAutoPlanModal && (
+        <ConfirmationDialog
+          title="Módulo en construcción"
+          confirmLabel="Entendido, crear manualmente"
+          cancelLabel=""
+          onCancel={() => setShowAutoPlanModal(false)}
+          onConfirm={() => setShowAutoPlanModal(false)}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "center", textAlign: "center" }}>
+            <Icon name="sparkles" size={36} style={{ color: "var(--ember)" }} />
+            <p>
+              La <strong>generación automática de itinerarios con Inteligencia Artificial</strong> (CU31) se encuentra actualmente en desarrollo.
+            </p>
+            <p style={{ fontSize: "var(--t-small)", color: "var(--fg-3)" }}>
+              Estará disponible próximamente en SmartPlan. Por el momento podés armar tu plan de forma personalizada agregando las actividades manualmente.
+            </p>
+          </div>
         </ConfirmationDialog>
       )}
 

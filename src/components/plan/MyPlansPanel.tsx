@@ -28,11 +28,12 @@ export function MyPlansPanel() {
   const [plans, setPlans] = useState<OwnPlanSummary[]>([]);
   const [status, setStatus] = useState<LoadStatus>("loading");
   const [reloadSequence, setReloadSequence] = useState(0);
-  const [pendingCancellation, setPendingCancellation] =
+  const [pendingDeletion, setPendingDeletion] =
     useState<OwnPlanSummary | null>(null);
-  const [isCancelling, setIsCancelling] = useState(false);
-  const [cancelError, setCancelError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [showAutoPlanModal, setShowAutoPlanModal] = useState(false);
 
   useEffect(() => {
     let ignore = false;
@@ -47,7 +48,11 @@ export function MyPlansPanel() {
           direction: "desc",
         });
         if (ignore) return;
-        setPlans(result.data);
+        setPlans(
+          result.data.filter(
+            (plan) => plan.status?.key !== "cancelled" && plan.status?.key !== "deleted",
+          ),
+        );
         setStatus("idle");
       } catch (_error) {
         if (!ignore) setStatus("error");
@@ -60,38 +65,33 @@ export function MyPlansPanel() {
     };
   }, [reloadSequence]);
 
-  function requestCancellation(plan: OwnPlanSummary) {
+  function requestDeletion(plan: OwnPlanSummary) {
     setNotice(null);
-    setCancelError(null);
-    setPendingCancellation(plan);
+    setDeleteError(null);
+    setPendingDeletion(plan);
   }
 
-  async function cancelPendingPlan() {
-    if (!pendingCancellation) return;
+  async function deletePendingPlan() {
+    if (!pendingDeletion) return;
 
-    setIsCancelling(true);
-    setCancelError(null);
+    setIsDeleting(true);
+    setDeleteError(null);
     try {
-      await cancelOwnPlan(pendingCancellation.id);
-      // A cancelled plan is kept as history, so it's marked in place
-      // rather than dropped from the list.
+      await cancelOwnPlan(pendingDeletion.id);
+      // Eliminated plan is removed from the active list view
       setPlans((current) =>
-        current.map((plan) =>
-          plan.id === pendingCancellation.id
-            ? { ...plan, status: { key: "cancelled", name: "Cancelado" } }
-            : plan,
-        ),
+        current.filter((plan) => plan.id !== pendingDeletion.id),
       );
-      setPendingCancellation(null);
-      setNotice("Plan cancelado correctamente");
+      setPendingDeletion(null);
+      setNotice("Plan eliminado correctamente");
     } catch (error) {
       const message =
         error instanceof ApiError
           ? error.message
-          : "No pudimos cancelar el plan. Intentá nuevamente";
-      setCancelError(message);
+          : "No pudimos eliminar el plan. Intentá nuevamente";
+      setDeleteError(message);
     } finally {
-      setIsCancelling(false);
+      setIsDeleting(false);
     }
   }
 
@@ -114,6 +114,20 @@ export function MyPlansPanel() {
             Armá el itinerario y sumale actividades
           </span>
         </Link>
+
+        <button
+          type="button"
+          className={styles.createCard}
+          onClick={() => setShowAutoPlanModal(true)}
+        >
+          <span className={styles.createIcon} aria-hidden="true">
+            <Icon name="sparkles" size={22} />
+          </span>
+          <span>Generar plan automático</span>
+          <span className={styles.createHint}>
+            Itinerario sugerido con IA
+          </span>
+        </button>
 
         {status === "loading" ? (
           <LoadingDots
@@ -148,7 +162,7 @@ export function MyPlansPanel() {
 
         {status === "idle"
           ? plans.map((plan) => {
-              const isCancelled = plan.status.key === "cancelled";
+              const isCancelled = plan.status?.key === "cancelled" || plan.status?.key === "deleted";
 
               return (
                 <article
@@ -171,7 +185,7 @@ export function MyPlansPanel() {
                     </h2>
 
                     {isCancelled ? (
-                      <Badge variant="warn">Cancelado</Badge>
+                      <Badge variant="warn">Eliminado</Badge>
                     ) : (
                       <div className={styles.cardActions}>
                         <Link
@@ -184,8 +198,8 @@ export function MyPlansPanel() {
                         <button
                           type="button"
                           className={`${styles.iconAction} ${styles.deleteAction}`}
-                          onClick={() => requestCancellation(plan)}
-                          aria-label={`Cancelar ${plan.title}`}
+                          onClick={() => requestDeletion(plan)}
+                          aria-label={`Eliminar ${plan.title}`}
                         >
                           <Icon name="trash-2" size={16} />
                         </button>
@@ -225,24 +239,43 @@ export function MyPlansPanel() {
           : null}
       </div>
 
-      {pendingCancellation ? (
+      {pendingDeletion ? (
         <ConfirmationDialog
-          title={`¿Cancelar “${pendingCancellation.title}”?`}
-          confirmLabel="Sí, cancelar plan"
-          confirmingLabel="Cancelando..."
+          title={`¿Eliminar “${pendingDeletion.title}”?`}
+          confirmLabel="Sí, eliminar plan"
+          confirmingLabel="Eliminando..."
           cancelLabel="Volver"
-          isConfirming={isCancelling}
-          error={cancelError}
-          onCancel={() => setPendingCancellation(null)}
-          onConfirm={() => void cancelPendingPlan()}
+          isConfirming={isDeleting}
+          error={deleteError}
+          onCancel={() => setPendingDeletion(null)}
+          onConfirm={() => void deletePendingPlan()}
         >
           <p>
-            El plan pasará a estar cancelado y se conservará únicamente como
-            historial.
+            El plan se eliminará de tus planes y ya no estará disponible en tu lista.
           </p>
-          <p>No se podrá seguir editando ni modificando sus actividades.</p>
         </ConfirmationDialog>
       ) : null}
+
+      {/* Auto Plan Generation - Módulo en construcción Modal (CU31) */}
+      {showAutoPlanModal && (
+        <ConfirmationDialog
+          title="Módulo en construcción"
+          confirmLabel="Entendido, crear manualmente"
+          cancelLabel=""
+          onCancel={() => setShowAutoPlanModal(false)}
+          onConfirm={() => setShowAutoPlanModal(false)}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "center", textAlign: "center" }}>
+            <Icon name="sparkles" size={36} style={{ color: "var(--ember)" }} />
+            <p>
+              La <strong>generación automática de itinerarios con Inteligencia Artificial</strong> (CU31) se encuentra actualmente en desarrollo.
+            </p>
+            <p style={{ fontSize: "var(--t-small)", color: "var(--fg-3)" }}>
+              Estará disponible próximamente en SmartPlan. Por el momento podés armar tu plan de forma personalizada agregando las actividades manualmente.
+            </p>
+          </div>
+        </ConfirmationDialog>
+      )}
     </>
   );
 }

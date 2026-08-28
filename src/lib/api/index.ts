@@ -33,6 +33,7 @@ export {
   updateOwnPlan,
   cancelOwnPlan,
   removePlanActivity,
+  generateSuggestedPlan,
 } from './plans';
 export { listCategories } from './categories';
 export {

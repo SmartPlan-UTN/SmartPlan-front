@@ -118,6 +118,8 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
 
   // Cancel / Discard Confirmation
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [pendingRemoveDetail, setPendingRemoveDetail] = useState<OwnPlanDetailItem | null>(null);
+  const [isRemovingDetail, setIsRemovingDetail] = useState(false);
 
   // Search activities effect
   useEffect(() => {
@@ -200,7 +202,16 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
   };
 
   // Activity Management (CU28)
-  const handleRemoveActivity = async (detailId: number) => {
+  const requestRemoveActivity = (item: OwnPlanDetailItem) => {
+    if (details.length === 1) {
+      setPendingRemoveDetail(item);
+    } else {
+      void performRemoveActivity(item.id);
+    }
+  };
+
+  const performRemoveActivity = async (detailId: number) => {
+    setIsRemovingDetail(true);
     try {
       // `DELETE .../details/:detailId` answers 204, so the itinerary has to
       // be refetched rather than filtered locally: the backend renumbers
@@ -209,6 +220,7 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
       await removePlanActivity(plan.id, detailId);
       const refreshed = await getOwnPlan(plan.id);
       setDetails(refreshed.details);
+      setPendingRemoveDetail(null);
     } catch (error: unknown) {
       const message =
         error instanceof ApiError
@@ -216,6 +228,8 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
           : "No pudimos quitar la actividad. Intentá de nuevo.";
       setSubmitError(message);
       setTimeout(() => setSubmitError(null), 3500);
+    } finally {
+      setIsRemovingDetail(false);
     }
   };
 
@@ -492,10 +506,10 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
                       type="button"
                       className={styles.removeButton}
                       onClick={() => {
-                        void handleRemoveActivity(item.id);
+                        requestRemoveActivity(item);
                       }}
                       aria-label={`Quitar ${item.activity.name}`}
-                      disabled={isPending}
+                      disabled={isPending || isRemovingDetail}
                     >
                       <Icon name="trash-2" size={15} />
                     </button>
@@ -533,6 +547,23 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
           </div>
         </div>
       </div>
+
+      {/* Empty Plan Remove Confirmation Modal (CU28) */}
+      {pendingRemoveDetail && (
+        <ConfirmationDialog
+          title="¿Quitar la última actividad?"
+          confirmLabel="Sí, quitar actividad"
+          confirmingLabel="Quitando..."
+          cancelLabel="Volver"
+          isConfirming={isRemovingDetail}
+          onCancel={() => setPendingRemoveDetail(null)}
+          onConfirm={() => void performRemoveActivity(pendingRemoveDetail.id)}
+        >
+          <p>
+            El plan quedará sin actividades en su itinerario.
+          </p>
+        </ConfirmationDialog>
+      )}
 
       {/* Cancel Confirmation Modal */}
       {showCancelModal && (

@@ -17,6 +17,9 @@ describe("MyPlansPage", () => {
       screen.getByRole("heading", { name: "Mis planes", level: 1 }),
     ).toBeInTheDocument();
     expect(
+      screen.getByRole("link", { name: "Crear plan" }),
+    ).toHaveAttribute("href", ROUTES.createPlan);
+    expect(
       screen.getByRole("link", { name: "Crear un plan nuevo" }),
     ).toHaveAttribute("href", ROUTES.createPlan);
   });

@@ -225,6 +225,40 @@
   filter: brightness(1.1);
 }
 
+.createPlanNavBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-btn);
+  background: var(--ember);
+  color: var(--white);
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: filter 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.createPlanNavBtn:hover {
+  filter: brightness(1.1);
+}
+
+.createPlanNavBtn:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  .createPlanNavLabel {
+    display: none;
+  }
+
+  .createPlanNavBtn {
+    padding: var(--s-2);
+  }
+}
+
 /* Reserves the control's space while the session resolves, so the navbar
    doesn't jump when the menu or the login button appears. The width matches
    the resolved control: icon only on small viewports, with a label above

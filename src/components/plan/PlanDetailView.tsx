@@ -162,6 +162,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
+  const [ownPlan, setOwnPlan] = useState<OwnPlanDetail | null>(null);
 
   // Ownership probe (CU25, CU26): see the note above the component.
   useEffect(() => {
@@ -172,11 +173,17 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
 
     let active = true;
     getOwnPlan(planId)
-      .then(() => {
-        if (active) setIsOwner(true);
+      .then((data) => {
+        if (active) {
+          setIsOwner(true);
+          setOwnPlan(data);
+        }
       })
       .catch(() => {
-        if (active) setIsOwner(false);
+        if (active) {
+          setIsOwner(false);
+          setOwnPlan(null);
+        }
       });
 
     return () => {
@@ -208,13 +215,13 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
     try {
       await cancelOwnPlan(planId);
       setShowCancelModal(false);
-      router.push(ROUTES.explore);
+      router.push(ROUTES.plans);
     } catch (error: unknown) {
       setIsCancelling(false);
       const message =
         error instanceof ApiError
           ? error.message
-          : "No pudimos cancelar el plan. Intentá de nuevo.";
+          : "No pudimos eliminar el plan. Intentá de nuevo.";
       setCancelError(message);
     }
   }
@@ -324,6 +331,24 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
                 </span>
               </div>
             ))}
+            {ownPlan && ownPlan.peopleCount > 0 ? (
+              <div
+                className={styles.costRow}
+                style={{
+                  marginTop: "8px",
+                  paddingTop: "8px",
+                  borderTop: "1px dashed var(--hairline-dark)",
+                }}
+              >
+                <span className={styles.costRowLabel}>
+                  Costo por persona ({ownPlan.peopleCount}{" "}
+                  {ownPlan.peopleCount === 1 ? "persona" : "personas"})
+                </span>
+                <span className={styles.costRowValue}>
+                  {formatArs(ownPlan.estimatedCostPerPerson)}
+                </span>
+              </div>
+            ) : null}
           </div>
           <Divider dark />
           <div className={styles.costTotalRow}>
@@ -353,7 +378,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
                 onClick={() => setShowCancelModal(true)}
               >
                 <Icon name="trash-2" size={16} aria-hidden="true" />
-                Cancelar plan
+                Eliminar plan
               </Button>
             </>
           )}
@@ -389,12 +414,12 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
       </div>
       </div>
 
-      {/* Explicit Cancel Confirmation Dialog (CU26) */}
+      {/* Explicit Delete Confirmation Dialog (CU26) */}
       {showCancelModal && (
         <ConfirmationDialog
-          title="¿Cancelar este plan?"
-          confirmLabel="Sí, cancelar plan"
-          confirmingLabel="Cancelando..."
+          title="¿Eliminar este plan?"
+          confirmLabel="Sí, eliminar plan"
+          confirmingLabel="Eliminando..."
           cancelLabel="Volver"
           isConfirming={isCancelling}
           error={cancelError}
@@ -404,9 +429,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           }}
         >
           <p>
-            El plan pasará a estar cancelado y se conservará únicamente como
-            historial. No se podrá seguir editando ni modificando sus
-            actividades.
+            El plan se eliminará de tus planes y ya no estará disponible.
           </p>
         </ConfirmationDialog>
       )}
