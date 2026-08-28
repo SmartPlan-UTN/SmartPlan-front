@@ -52,3 +52,9 @@ export {
   removeActivityFromCollection,
   updateCollection,
 } from './collections';
+export {
+  listFavoriteActivities,
+  removeFavoriteActivity,
+  saveFavoriteActivity,
+} from './favorites';
+

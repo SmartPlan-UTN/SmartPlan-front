@@ -19,7 +19,7 @@ import { useSession } from "@/lib/auth";
 import { getPlan, getOwnPlan, cancelOwnPlan, ApiError } from "@/lib/api";
 import { activityDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
 import { formatArs, formatDuration, googleMapsUrl } from "@/lib/utils";
-import type { PlanDetailResult, PlanItineraryItem } from "@/types";
+import type { OwnPlanDetail, PlanDetailResult, PlanItineraryItem } from "@/types";
 
 import styles from "./plan.module.css";
 import activityStyles from "../activity/activity.module.css";

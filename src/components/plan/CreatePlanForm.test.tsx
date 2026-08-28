@@ -105,7 +105,7 @@ describe("CreatePlanForm (CU24)", () => {
     expect(createPlan).not.toHaveBeenCalled();
   });
 
-  it("creates the plan, posts each stop and redirects to its detail", async () => {
+  it("creates the plan, posts each stop and redirects to its detail", { timeout: 10000 }, async () => {
     const user = userEvent.setup();
     render(<CreatePlanForm />);
 

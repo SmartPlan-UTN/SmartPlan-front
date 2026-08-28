@@ -1,6 +1,10 @@
+"use client";
+
 import Link from "next/link";
+import type { MouseEvent } from "react";
 
 import { Badge, Icon, Stars } from "@/components/ui";
+import { useFavorites } from "@/context";
 import { activityDetailRoute } from "@/lib/routes";
 import { formatArs, formatDuration, gradientFor } from "@/lib/utils";
 import type { ActivitySearchResult } from "@/types";
@@ -15,7 +19,17 @@ export interface ActivityCardProps {
 }
 
 export function ActivityCard({ activity }: ActivityCardProps) {
+  const { isActivitySaved, toggleSaveActivity } = useFavorites();
+  const saved = isActivitySaved(activity.id);
   const visibleCategories = activity.categories.slice(0, 2);
+
+  const handleToggleSave = (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleSaveActivity(activity.id).catch(() => {
+      // Optimistic rollback handled in FavoritesContext
+    });
+  };
 
   return (
     // No `aria-label` override: the card's own content (name, description,
@@ -28,6 +42,19 @@ export function ActivityCard({ activity }: ActivityCardProps) {
         style={{ background: gradientFor(activity.id) }}
       >
         <Icon name="route" size={40} className={exploreStyles.imagePlaceholder} />
+        <button
+          type="button"
+          className={styles.cardBookmark}
+          aria-pressed={saved}
+          aria-label={saved ? "Quitar de guardados" : "Guardar actividad"}
+          onClick={handleToggleSave}
+        >
+          <Icon
+            name="bookmark"
+            size={16}
+            className={saved ? styles.cardBookmarkSaved : undefined}
+          />
+        </button>
       </div>
 
       <div className={exploreStyles.body}>

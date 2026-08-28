@@ -102,9 +102,7 @@ export function AddToPlanDialog({
         });
         if (ignore) return;
         setPlans(
-          result.data.filter(
-            (plan) => plan.status?.key !== "cancelled" && plan.status?.key !== "deleted",
-          ),
+          result.data.filter((plan) => plan.status?.key !== "cancelled"),
         );
         setStatus("idle");
       } catch (_error) {
@@ -155,8 +153,22 @@ export function AddToPlanDialog({
           title: trimmedTitle,
           peopleCount: Math.max(1, peopleCount),
         });
-        setPlans((current) => [created, ...current]);
-        setPendingCreatedPlan(created);
+        const newPlanSummary: OwnPlanSummary = {
+          id: created.id,
+          title: created.title,
+          description: created.description,
+          activityCount: 0,
+          peopleCount: Math.max(1, peopleCount),
+          estimatedTotalCost: created.estimatedTotalCost ?? 0,
+          estimatedCostPerPerson:
+            (created.estimatedTotalCost ?? 0) / Math.max(1, peopleCount),
+          estimatedTotalDuration: created.estimatedTotalDuration ?? 0,
+          status: created.status ?? { key: "generated", name: "Generado" },
+          createdAt: created.createdAt,
+          updatedAt: created.updatedAt,
+        };
+        setPlans((current) => [newPlanSummary, ...current]);
+        setPendingCreatedPlan(newPlanSummary);
         await addToPlan(created.id, created.title, true, false);
       } catch (_error) {
         setSubmitError("No pudimos crear el plan. Intentá nuevamente.");

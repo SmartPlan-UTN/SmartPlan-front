@@ -49,9 +49,7 @@ export function MyPlansPanel() {
         });
         if (ignore) return;
         setPlans(
-          result.data.filter(
-            (plan) => plan.status?.key !== "cancelled" && plan.status?.key !== "deleted",
-          ),
+          result.data.filter((plan) => plan.status?.key !== "cancelled"),
         );
         setStatus("idle");
       } catch (_error) {
@@ -162,7 +160,7 @@ export function MyPlansPanel() {
 
         {status === "idle"
           ? plans.map((plan) => {
-              const isCancelled = plan.status?.key === "cancelled" || plan.status?.key === "deleted";
+              const isCancelled = plan.status?.key === "cancelled";
 
               return (
                 <article
