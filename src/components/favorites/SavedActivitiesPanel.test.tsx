@@ -14,13 +14,20 @@ vi.mock("@/lib/api", async (importOriginal) => {
   };
 });
 
-// ActivityCard uses useFavorites() — return safe defaults so it renders
-// without needing a FavoritesProvider in these isolated tests.
+/**
+ * The context mock is stateful so toggling savedActivityIds causes a re-render
+ * and the panel's filter picks up the new set (CU41).
+ */
+let mockSavedIds = new Set<number>();
+const mockToggle = vi.fn();
+
 vi.mock("@/context", () => ({
   useFavorites: () => ({
-    savedActivityIds: new Set<number>(),
-    isActivitySaved: () => false,
-    toggleSaveActivity: vi.fn().mockResolvedValue(true),
+    get savedActivityIds() {
+      return mockSavedIds;
+    },
+    isActivitySaved: (id: number) => mockSavedIds.has(id),
+    toggleSaveActivity: mockToggle,
     loading: false,
   }),
 }));
@@ -54,9 +61,11 @@ function makePage(items: ReturnType<typeof makeFavorite>[]) {
   };
 }
 
-describe("SavedActivitiesPanel (CU39)", () => {
+describe("SavedActivitiesPanel (CU39 + CU41)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSavedIds = new Set<number>();
+    mockToggle.mockResolvedValue(true);
   });
 
   it("shows a loading indicator while the request is in flight", () => {
@@ -69,6 +78,7 @@ describe("SavedActivitiesPanel (CU39)", () => {
   });
 
   it("renders a card for each saved activity once the request resolves (CU39)", async () => {
+    mockSavedIds = new Set([10, 11]);
     vi.mocked(listFavoriteActivities).mockResolvedValue(
       makePage([makeFavorite(10), makeFavorite(11)]),
     );
@@ -98,6 +108,7 @@ describe("SavedActivitiesPanel (CU39)", () => {
     const retryButton = screen.getByRole("button", { name: "Reintentar" });
 
     // Retry resolves successfully.
+    mockSavedIds = new Set([20]);
     vi.mocked(listFavoriteActivities).mockResolvedValue(
       makePage([makeFavorite(20)]),
     );
@@ -109,6 +120,7 @@ describe("SavedActivitiesPanel (CU39)", () => {
   });
 
   it("renders pagination controls when there are multiple pages", async () => {
+    mockSavedIds = new Set([1]);
     vi.mocked(listFavoriteActivities).mockResolvedValue({
       data: [makeFavorite(1)],
       pagination: { page: 1, limit: 12, total: 13, totalPages: 2 },
@@ -118,5 +130,72 @@ describe("SavedActivitiesPanel (CU39)", () => {
     expect(await screen.findByText("Actividad 1")).toBeInTheDocument();
     expect(screen.getByLabelText("Página siguiente")).toBeInTheDocument();
     expect(screen.getByLabelText("Página anterior")).toBeDisabled();
+  });
+
+  it("removes a card from the list when its activity is unsaved (CU41)", async () => {
+    // Both activities start as saved.
+    mockSavedIds = new Set([10, 11]);
+    vi.mocked(listFavoriteActivities).mockResolvedValue(
+      makePage([makeFavorite(10), makeFavorite(11)]),
+    );
+
+    const { rerender } = render(<SavedActivitiesPanel />);
+
+    expect(await screen.findByText("Actividad 10")).toBeInTheDocument();
+    expect(screen.getByText("Actividad 11")).toBeInTheDocument();
+
+    // Simulate optimistic removal of activity 10 by the FavoritesContext.
+    mockSavedIds = new Set([11]);
+    rerender(<SavedActivitiesPanel />);
+
+    // Activity 10 disappears immediately; 11 remains.
+    await waitFor(() =>
+      expect(screen.queryByText("Actividad 10")).not.toBeInTheDocument(),
+    );
+    expect(screen.getByText("Actividad 11")).toBeInTheDocument();
+  });
+
+  it("shows the empty state after the last activity is unsaved (CU41)", async () => {
+    mockSavedIds = new Set([10]);
+    vi.mocked(listFavoriteActivities).mockResolvedValue(
+      makePage([makeFavorite(10)]),
+    );
+
+    const { rerender } = render(<SavedActivitiesPanel />);
+    expect(await screen.findByText("Actividad 10")).toBeInTheDocument();
+
+    // Simulate removing the last saved activity.
+    mockSavedIds = new Set();
+    rerender(<SavedActivitiesPanel />);
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("Aún no guardaste ninguna actividad"),
+      ).toBeInTheDocument(),
+    );
+  });
+
+  it("restores the card if the unsave API call fails and the context rolls back (CU41)", async () => {
+    mockSavedIds = new Set([10]);
+    vi.mocked(listFavoriteActivities).mockResolvedValue(
+      makePage([makeFavorite(10)]),
+    );
+
+    const { rerender } = render(<SavedActivitiesPanel />);
+    expect(await screen.findByText("Actividad 10")).toBeInTheDocument();
+
+    // Simulate optimistic removal.
+    mockSavedIds = new Set();
+    rerender(<SavedActivitiesPanel />);
+    await waitFor(() =>
+      expect(screen.queryByText("Actividad 10")).not.toBeInTheDocument(),
+    );
+
+    // Simulate context rollback after API failure.
+    mockSavedIds = new Set([10]);
+    rerender(<SavedActivitiesPanel />);
+    await waitFor(() =>
+      expect(screen.getByText("Actividad 10")).toBeInTheDocument(),
+    );
   });
 });

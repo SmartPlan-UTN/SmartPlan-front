@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { ActivityCard } from "@/components/activity";
 import { Button, Icon, LoadingDots } from "@/components/ui";
+import { useFavorites } from "@/context";
 import { listFavoriteActivities } from "@/lib/api";
 import type { ActivitySearchResult, FavoriteActivity, PaginationMetadata } from "@/types";
 
@@ -42,11 +43,13 @@ function toSearchResult(fa: FavoriteActivity): ActivitySearchResult | null {
 /**
  * Paginated list of the user's saved activities (CU39 — PAN 12).
  *
- * Displays loading, empty, and error states, and renders each saved
- * activity as an `ActivityCard` (which already has the CU15 bookmark
- * toggle built in).
+ * Integrates with `FavoritesContext` so that clicking the bookmark on any
+ * `ActivityCard` removes it from this list immediately without a full page
+ * reload (CU41 — optimistic update). If the API call fails the card comes
+ * back automatically (rollback handled in `FavoritesContext`).
  */
 export function SavedActivitiesPanel() {
+  const { savedActivityIds } = useFavorites();
   const [items, setItems] = useState<FavoriteActivity[]>([]);
   const [status, setStatus] = useState<LoadStatus>("loading");
   const [reloadSequence, setReloadSequence] = useState(0);
@@ -83,9 +86,24 @@ export function SavedActivitiesPanel() {
     };
   }, [page, reloadSequence]);
 
-  const cards = items
-    .map(toSearchResult)
-    .filter((r): r is ActivitySearchResult => r !== null);
+  /**
+   * Filter the fetched items through the context's live set of saved IDs.
+   *
+   * Because `FavoritesContext.toggleSaveActivity` performs an optimistic
+   * update — removing the ID from the set immediately before the API call
+   * resolves — unsaving an activity from this panel causes it to disappear
+   * from the list instantly, without a network round-trip or page reload
+   * (CU41). If the API call subsequently fails the ID is restored in the
+   * context and the card reappears.
+   */
+  const cards = useMemo(
+    () =>
+      items
+        .filter((fa) => savedActivityIds.has(fa.idActivity))
+        .map(toSearchResult)
+        .filter((r): r is ActivitySearchResult => r !== null),
+    [items, savedActivityIds],
+  );
 
   return (
     <>
