@@ -34,6 +34,7 @@
 .pendingSection {
   color: var(--fg-3);
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 .activeSection {
@@ -68,6 +69,17 @@
     padding-inline: 0;
     white-space: nowrap;
   }
+}
+
+.collectionsSection {
+  margin-top: var(--s-8);
+  padding-top: var(--s-6);
+  border-top: 1px solid var(--hairline);
+}
+
+.sectionTitle {
+  margin-bottom: 0;
+  color: var(--fg-2);
 }
 
 @media (max-width: 360px) {

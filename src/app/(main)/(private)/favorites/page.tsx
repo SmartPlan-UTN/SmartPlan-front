@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { CollectionsPanel } from "@/components/collection";
+import { SavedActivitiesPanel } from "@/components/favorites";
 import { Screen } from "@/components/layout";
 
 import styles from "./favorites.module.css";
@@ -29,12 +30,12 @@ export default function FavoritesPage() {
               </span>
             </li>
             <li>
-              <span className={styles.pendingSection} aria-disabled="true">
+              <span className={styles.activeSection} aria-current="page">
                 Actividades
               </span>
             </li>
             <li>
-              <span className={styles.activeSection} aria-current="page">
+              <span className={styles.pendingSection} aria-disabled="true">
                 Colecciones
               </span>
             </li>
@@ -42,7 +43,14 @@ export default function FavoritesPage() {
         </nav>
       </header>
 
-      <CollectionsPanel />
+      <SavedActivitiesPanel />
+
+      <section className={styles.collectionsSection} aria-labelledby="collections-title">
+        <h2 id="collections-title" className={`sp-h4 ${styles.sectionTitle}`}>
+          Tus colecciones
+        </h2>
+        <CollectionsPanel />
+      </section>
     </Screen>
   );
 }
