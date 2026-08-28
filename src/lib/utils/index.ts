@@ -8,3 +8,4 @@ export { formatDuration } from "./duration";
 export { googleMapsUrl } from "./googleMaps";
 export { gradientFor } from "./gradient";
 export { parsePositiveIntId } from "./routeParams";
+export { formatRelativeTime } from "./relative-time";

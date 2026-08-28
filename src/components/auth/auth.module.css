@@ -3,7 +3,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 40vh;
+  /* Matches `Screen`'s height, so resolving the session swaps the copy for
+     the real screen without the page jumping under the reader. */
+  min-height: calc(
+    100dvh - var(--navbar-h) - var(--section-v) - var(--section-v)
+  );
   color: var(--fg-2);
   font-size: var(--t-body);
   text-align: center;

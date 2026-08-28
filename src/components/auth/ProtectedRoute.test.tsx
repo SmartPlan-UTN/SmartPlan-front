@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { notifyUnauthorized } from "@/lib/api";
@@ -66,7 +66,9 @@ describe("ProtectedRoute", () => {
 
     await screen.findByText(/necesitás iniciar sesión/i);
     expect(screen.queryByText("Tus favoritos")).not.toBeInTheDocument();
-    expect(replace).toHaveBeenCalledWith("/login?redirect=%2Ffavorites");
+    await waitFor(() => {
+      expect(replace).toHaveBeenCalledWith("/login?redirect=%2Ffavorites");
+    });
   });
 
   it("kicks the user to login if the session drops while the screen is mounted", async () => {
