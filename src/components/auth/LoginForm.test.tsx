@@ -36,10 +36,18 @@ function authenticationResponse(roleKey = "user") {
   };
 }
 
-function renderLoginForm(destination: string | null = null, passwordChanged = false) {
+function renderLoginForm(
+  destination: string | null = null,
+  passwordChanged = false,
+  accountDeleted = false,
+) {
   return render(
     <SessionProvider>
-      <LoginForm destination={destination} passwordChanged={passwordChanged} />
+      <LoginForm
+        destination={destination}
+        passwordChanged={passwordChanged}
+        accountDeleted={accountDeleted}
+      />
     </SessionProvider>,
   );
 }
@@ -103,6 +111,12 @@ describe("LoginForm", () => {
     expect(
       screen.getByText("Tu contraseña fue actualizada. Iniciá sesión nuevamente."),
     ).toBeInTheDocument();
+  });
+
+  it("shows the account-deleted notice when CU7 redirected here", () => {
+    renderLoginForm(null, false, true);
+
+    expect(screen.getByText("Tu cuenta fue eliminada.")).toBeInTheDocument();
   });
 
   it("logs in and redirects Home when there is no saved destination", async () => {

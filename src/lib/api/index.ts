@@ -36,7 +36,7 @@ export {
   generateSuggestedPlan,
 } from './plans';
 export { listCategories } from './categories';
-export { getProfile, updateProfile, changePassword } from './users';
+export { getProfile, updateProfile, changePassword, deleteAccount } from './users';
 export type { UpdateProfileData, ChangePasswordData } from './users';
 export {
   changeAdminUserStatus,
