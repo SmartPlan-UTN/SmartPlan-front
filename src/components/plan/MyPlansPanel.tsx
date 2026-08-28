@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { Badge, Button, ConfirmationDialog, Icon, LoadingDots } from "@/components/ui";
+import { Button, ConfirmationDialog, Icon, LoadingDots } from "@/components/ui";
 import { ApiError, cancelOwnPlan, listOwnPlans } from "@/lib/api";
 import { planDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
 import { formatArs, formatDuration } from "@/lib/utils";
 import type { OwnPlanSummary } from "@/types";
+
+import { AutoPlanUnavailableDialog } from "./AutoPlanUnavailableDialog";
 
 import styles from "./MyPlansPanel.module.css";
 
@@ -18,11 +20,16 @@ type LoadStatus = "loading" | "idle" | "error";
  * first cell of the grid — same shape as `CollectionsPanel`, so both
  * private listings read alike.
  *
- * Cancelling (CU26) is offered here as well as on PAN 17: this is the
+ * Deleting (CU26) is offered here as well as on PAN 17: this is the
  * screen someone lands on to manage what they made, and bouncing through
- * the detail view just to cancel is a detour. A cancelled plan stays in
- * the list as read-only history — that's the point of the logical delete —
- * so it keeps its card and loses its actions.
+ * the detail view just to delete is a detour.
+ *
+ * `DELETE /users/me/plans/:id` is a logical delete: the plan keeps its row
+ * and moves to the `cancelled` status so ratings, favourites, and the audit
+ * trail keep their foreign keys. The back already hides it from everyone
+ * else (`GET /plans/:id` answers 404 and `GET /plans` filters it out), but
+ * `GET /users/me/plans` still returns it to its owner, so the owner's copy
+ * of "gone" is applied here.
  */
 export function MyPlansPanel() {
   const [plans, setPlans] = useState<OwnPlanSummary[]>([]);
@@ -49,9 +56,7 @@ export function MyPlansPanel() {
         });
         if (ignore) return;
         setPlans(
-          result.data.filter(
-            (plan) => plan.status?.key !== "cancelled" && plan.status?.key !== "deleted",
-          ),
+          result.data.filter((plan) => plan.status.key !== "cancelled"),
         );
         setStatus("idle");
       } catch (_error) {
@@ -162,18 +167,8 @@ export function MyPlansPanel() {
 
         {status === "idle"
           ? plans.map((plan) => {
-              const isCancelled = plan.status?.key === "cancelled" || plan.status?.key === "deleted";
-
               return (
-                <article
-                  key={plan.id}
-                  className={[
-                    styles.planCard,
-                    isCancelled ? styles.cancelledCard : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                >
+                <article key={plan.id} className={styles.planCard}>
                   <div className={styles.cardHeader}>
                     <h2 className={styles.cardTitle}>
                       <Link
@@ -184,27 +179,23 @@ export function MyPlansPanel() {
                       </Link>
                     </h2>
 
-                    {isCancelled ? (
-                      <Badge variant="warn">Eliminado</Badge>
-                    ) : (
-                      <div className={styles.cardActions}>
-                        <Link
-                          className={styles.iconAction}
-                          href={planEditRoute(plan.id)}
-                          aria-label={`Editar ${plan.title}`}
-                        >
-                          <Icon name="pencil" size={16} />
-                        </Link>
-                        <button
-                          type="button"
-                          className={`${styles.iconAction} ${styles.deleteAction}`}
-                          onClick={() => requestDeletion(plan)}
-                          aria-label={`Eliminar ${plan.title}`}
-                        >
-                          <Icon name="trash-2" size={16} />
-                        </button>
-                      </div>
-                    )}
+                    <div className={styles.cardActions}>
+                      <Link
+                        className={styles.iconAction}
+                        href={planEditRoute(plan.id)}
+                        aria-label={`Editar ${plan.title}`}
+                      >
+                        <Icon name="pencil" size={16} />
+                      </Link>
+                      <button
+                        type="button"
+                        className={`${styles.iconAction} ${styles.deleteAction}`}
+                        onClick={() => requestDeletion(plan)}
+                        aria-label={`Eliminar ${plan.title}`}
+                      >
+                        <Icon name="trash-2" size={16} />
+                      </button>
+                    </div>
                   </div>
 
                   {plan.description ? (
@@ -258,23 +249,9 @@ export function MyPlansPanel() {
 
       {/* Auto Plan Generation - Módulo en construcción Modal (CU31) */}
       {showAutoPlanModal && (
-        <ConfirmationDialog
-          title="Módulo en construcción"
-          confirmLabel="Entendido, crear manualmente"
-          cancelLabel=""
-          onCancel={() => setShowAutoPlanModal(false)}
-          onConfirm={() => setShowAutoPlanModal(false)}
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "center", textAlign: "center" }}>
-            <Icon name="sparkles" size={36} style={{ color: "var(--ember)" }} />
-            <p>
-              La <strong>generación automática de itinerarios con Inteligencia Artificial</strong> (CU31) se encuentra actualmente en desarrollo.
-            </p>
-            <p style={{ fontSize: "var(--t-small)", color: "var(--fg-3)" }}>
-              Estará disponible próximamente en SmartPlan. Por el momento podés armar tu plan de forma personalizada agregando las actividades manualmente.
-            </p>
-          </div>
-        </ConfirmationDialog>
+        <AutoPlanUnavailableDialog
+          onClose={() => setShowAutoPlanModal(false)}
+        />
       )}
     </>
   );

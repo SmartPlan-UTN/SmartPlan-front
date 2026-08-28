@@ -77,7 +77,7 @@ describe("Navbar", () => {
       within(nav).getByRole("link", { name: "Historial" }),
     ).toHaveAttribute("href", "/history");
     expect(
-      screen.getByRole("link", { name: "Crear un plan" }),
+      screen.getByRole("link", { name: "Crear plan" }),
     ).toHaveAttribute("href", "/plans/create");
   });
 

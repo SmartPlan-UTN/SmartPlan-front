@@ -38,8 +38,8 @@ export async function getPlan(id: number): Promise<PlanDetailResult> {
  * Creates a new plan for the logged-in user (CU24).
  * Backend contract: `POST /users/me/plans`.
  */
-export async function createPlan(dto: CreatePlanDto): Promise<Plan> {
-  return apiClient.post<Plan>('/users/me/plans', dto);
+export async function createPlan(dto: CreatePlanDto): Promise<OwnPlanDetail> {
+  return apiClient.post<OwnPlanDetail>('/users/me/plans', dto);
 }
 
 /**
@@ -74,7 +74,14 @@ export async function updateOwnPlan(
 }
 
 /**
- * Cancels an owned plan (CU26).
+ * Deletes an owned plan (CU26).
+ *
+ * A logical delete: the row survives with the `cancelled` status so ratings,
+ * favourites, and the audit trail keep their foreign keys. It is a delete
+ * from everyone else's point of view — `GET /plans/:id` answers 404 and
+ * `GET /plans` filters it out — but `GET /users/me/plans` still returns it,
+ * so the owner's listing is what hides it.
+ *
  * Backend contract: `DELETE /users/me/plans/:id`.
  */
 export async function cancelOwnPlan(id: number): Promise<void> {

@@ -73,11 +73,7 @@ export function Navbar() {
           ))}
         </nav>
 
-        <Link
-          href={ROUTES.createPlan}
-          className={styles.createPlanNavBtn}
-          aria-label="Crear un plan"
-        >
+        <Link href={ROUTES.createPlan} className={styles.createPlanNavBtn}>
           <Icon name="plus" size={15} aria-hidden="true" />
           <span className={styles.createPlanNavLabel}>Crear plan</span>
         </Link>

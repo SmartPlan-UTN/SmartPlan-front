@@ -19,7 +19,11 @@ import { useSession } from "@/lib/auth";
 import { getPlan, getOwnPlan, cancelOwnPlan, ApiError } from "@/lib/api";
 import { activityDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
 import { formatArs, formatDuration, googleMapsUrl } from "@/lib/utils";
-import type { PlanDetailResult, PlanItineraryItem } from "@/types";
+import type {
+  OwnPlanDetail,
+  PlanDetailResult,
+  PlanItineraryItem,
+} from "@/types";
 
 import styles from "./plan.module.css";
 import activityStyles from "../activity/activity.module.css";
@@ -331,24 +335,6 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
                 </span>
               </div>
             ))}
-            {ownPlan && ownPlan.peopleCount > 0 ? (
-              <div
-                className={styles.costRow}
-                style={{
-                  marginTop: "8px",
-                  paddingTop: "8px",
-                  borderTop: "1px dashed var(--hairline-dark)",
-                }}
-              >
-                <span className={styles.costRowLabel}>
-                  Costo por persona ({ownPlan.peopleCount}{" "}
-                  {ownPlan.peopleCount === 1 ? "persona" : "personas"})
-                </span>
-                <span className={styles.costRowValue}>
-                  {formatArs(ownPlan.estimatedCostPerPerson)}
-                </span>
-              </div>
-            ) : null}
           </div>
           <Divider dark />
           <div className={styles.costTotalRow}>
@@ -357,6 +343,17 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
               {formatArs(plan.estimatedTotalCost)}
             </span>
           </div>
+          {ownPlan && ownPlan.peopleCount > 0 ? (
+            <div className={styles.costPerPersonRow}>
+              <span className={styles.costRowLabel}>
+                Costo por persona ({ownPlan.peopleCount}{" "}
+                {ownPlan.peopleCount === 1 ? "persona" : "personas"})
+              </span>
+              <span className={styles.costRowValue}>
+                {formatArs(ownPlan.estimatedCostPerPerson)}
+              </span>
+            </div>
+          ) : null}
         </div>
 
         <div className={styles.actionBar}>

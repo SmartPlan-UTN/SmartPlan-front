@@ -249,9 +249,21 @@
   outline-offset: 2px;
 }
 
+/* Below 600px the button collapses to its icon. The label is hidden
+   visually rather than with `display: none` so it stays the link's
+   accessible name — WCAG 2.5.3 wants the spoken name to match the visible
+   one, and an icon-only link with neither would have no name at all. */
 @media (max-width: 600px) {
   .createPlanNavLabel {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   .createPlanNavBtn {
