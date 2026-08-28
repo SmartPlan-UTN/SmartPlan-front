@@ -23,12 +23,32 @@ export type { UnauthorizedListener } from './auth-events';
 export { getApiBaseUrl } from './config';
 
 export { searchActivities, getActivity, getActivityMapMarkers } from './activities';
-export { searchPlans, getPlan } from './plans';
+export {
+  searchPlans,
+  getPlan,
+  listOwnPlans,
+  createPlan,
+  addPlanActivity,
+  getOwnPlan,
+  updateOwnPlan,
+  cancelOwnPlan,
+  removePlanActivity,
+  generateSuggestedPlan,
+} from './plans';
 export { listCategories } from './categories';
 export {
+  changeAdminUserStatus,
+  getAdminUserMetrics,
+  getDashboardMetrics,
+  listAdminUsers,
+  updateAdminUser,
+} from './administration';
+export {
+  addActivityToCollection,
   createCollection,
   deleteCollection,
   getCollection,
   listCollections,
+  removeActivityFromCollection,
   updateCollection,
 } from './collections';

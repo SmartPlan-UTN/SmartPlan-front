@@ -13,7 +13,9 @@ export const ROUTES = {
   explore: "/explore",
   exploreMap: "/explore/map",
   plans: "/plans",
+  createPlan: "/plans/create",
   favorites: "/favorites",
+  collections: "/collections",
   createCollection: "/collections/new",
   history: "/history",
   profile: "/profile",
@@ -22,6 +24,10 @@ export const ROUTES = {
   signup: "/signup",
   recoverPassword: "/recover-password",
   admin: "/admin",
+  adminActivities: "/admin/activities",
+  adminPlans: "/admin/plans",
+  adminRatings: "/admin/ratings",
+  adminUsers: "/admin/users",
 } as const;
 
 export type Route = (typeof ROUTES)[keyof typeof ROUTES];
@@ -31,14 +37,24 @@ export function activityDetailRoute(id: number): string {
   return `${ROUTES.explore}/${id}`;
 }
 
-/** `/plans/:id` — plan detail (CU13). */
+/** `/plans/:id` — plan detail (CU13, CU29). */
 export function planDetailRoute(id: number): string {
   return `${ROUTES.plans}/${id}`;
+}
+
+/** `/plans/:id/edit` — edit an owned plan (CU25). */
+export function planEditRoute(id: number): string {
+  return `${ROUTES.plans}/${id}/edit`;
 }
 
 /** `/collections/:id/edit` — edit an owned collection (CU33). */
 export function collectionEditRoute(id: number): string {
   return `/collections/${id}/edit`;
+}
+
+/** `/collections/:id` — view an owned collection and its activities (CU37). */
+export function collectionDetailRoute(id: number): string {
+  return `/collections/${id}`;
 }
 
 /** Name of the query parameter that stores where to return after logging in. */

@@ -9,7 +9,7 @@ import {
   Pagination,
   type SortOption,
 } from "@/components/explore";
-import { Button, Icon } from "@/components/ui";
+import { Button, Icon, LoadingDots } from "@/components/ui";
 import { useDebouncedValue, useExplorationFilters, useExplorationSearch } from "@/hooks";
 import { searchActivities } from "@/lib/api";
 import { ROUTES } from "@/lib/routes";
@@ -213,12 +213,7 @@ export function ActivitySearch() {
 
       {status === "loading" && !hasResults ? (
         <div className={styles.stateBlock}>
-          <div className={styles.loadingDots}>
-            <span className={styles.loadingDot} />
-            <span className={styles.loadingDot} />
-            <span className={styles.loadingDot} />
-          </div>
-          <p className="sp-body">Buscando lo mejor cerca tuyo...</p>
+          <LoadingDots label="Buscando lo mejor cerca tuyo..." />
         </div>
       ) : null}
 

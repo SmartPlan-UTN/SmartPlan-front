@@ -37,6 +37,11 @@ export interface UpdateCollectionInput {
   description?: string | null;
 }
 
+/** Input accepted by POST /collections/:id/activities (CU35). */
+export interface AddCollectionActivityInput {
+  idActivity: number;
+}
+
 /** Query accepted by GET /collections. */
 export interface ListCollectionsParams {
   page?: number;

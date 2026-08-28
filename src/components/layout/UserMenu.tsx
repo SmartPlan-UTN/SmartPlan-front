@@ -85,7 +85,7 @@ function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
           <Icon name="log-out" size={24} />
         </div>
 
-        <div>
+        <div className={styles.modalTextGroup}>
           <h2 id={titleId} className={`sp-h3 ${styles.modalTitle}`}>
             Cerrar sesión
           </h2>
@@ -95,14 +95,19 @@ function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
         </div>
 
         <div className={styles.modalActions}>
-          <Button variant="ghostLight" ref={cancelRef} onClick={onCancel}>
+          <Button
+            variant="ghostLight"
+            className={styles.cancelButton}
+            ref={cancelRef}
+            onClick={onCancel}
+          >
             Cancelar
           </Button>
           {/* `primary` (ember), not `danger`: the prototype's LogoutModal
            * only tints the icon above with the danger color — its Confirmar
            * button stays on-brand ember, treating logout as a normal
            * action, not a destructive one the way deleting an account is. */}
-          <Button variant="primary" onClick={onConfirm}>
+          <Button variant="primary" className={styles.confirmButton} onClick={onConfirm}>
             Confirmar
           </Button>
         </div>

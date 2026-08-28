@@ -124,14 +124,14 @@ traceability matrix (`skills/01-domain/`).
 
 | CU | Feature | Screen | Status | Branch | PR |
 |---|---|---|---|---|---|
-| CU24 | Create plan | — | `Not started` | | |
-| CU25 | Edit plan | PAN 17 | `Not started` | | |
-| CU26 | Delete plan | PAN 17 | `Not started` | | |
-| CU27 | Add activity to plan | PAN 17, PAN 18 | `Not started` | | |
-| CU28 | Remove activity from plan | PAN 17 | `Not started` | | |
-| CU29 | View plan | PAN 17 | `Not started` | | |
+| CU24 | Create plan | — | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96, #103 |
+| CU25 | Edit plan | PAN 17 | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96, #103 |
+| CU26 | Delete plan | PAN 17 | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96, #103 |
+| CU27 | Add activity to plan | PAN 17, PAN 18 | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96, #103 |
+| CU28 | Remove activity from plan | PAN 17 | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96, #103 |
+| CU29 | View plan | PAN 17 | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96, #103 |
 | CU30 | Calculate plan cost | PAN 17 | `Not started` | | |
-| CU31 | Generate suggested plan | — | `Not started` | | |
+| CU31 | Generate suggested plan | — | `In progress` | `feature/planificacion-cu24-cu25-cu26` | #103 |
 
 ### Collections
 
@@ -140,10 +140,10 @@ traceability matrix (`skills/01-domain/`).
 | CU32 | Create collection | `/collections/new` | `In review` | `SMART-44-cu32-create-collection` | #93 |
 | CU33 | Edit collection | `/collections/:id/edit` | `In review` | `SMART-44-cu32-create-collection` | #93 |
 | CU34 | Delete collection | `/favorites` collections section | `In review` | `SMART-44-cu32-create-collection` | #93 |
-| CU35 | Add activity to collection | PAN 18 | `Not started` | | |
-| CU36 | Remove activity from collection | — | `Not started` | | |
-| CU37 | View collection details | — | `Not started` | | |
-| CU38 | View collection | — | `Not started` | | |
+| CU35 | Add activity to collection | PAN 18 | `In review` | `SMART-47-cu35-cu38-collections` | #94 |
+| CU36 | Remove activity from collection | `/collections/:id` | `In review` | `SMART-47-cu35-cu38-collections` | #94 |
+| CU37 | View collection details | `/collections/:id` | `In review` | `SMART-47-cu35-cu38-collections` | #94 |
+| CU38 | View collection | `/favorites` collections section | `In review` | `SMART-47-cu35-cu38-collections` | #94 |
 
 ### Favorites
 
@@ -185,8 +185,8 @@ traceability matrix (`skills/01-domain/`).
 | CU54 | Manage categories | — | `Not started` | | |
 | CU55 | Moderate ratings | PAN 20 | `Not started` | | |
 | CU56 | Delete content | — | `Not started` | | |
-| CU57 | Manage users | PAN 19 | `Not started` | | |
-| CU58 | View system metrics | REP-01 | `Not started` | | |
+| CU57 | Manage users | PAN 19 | `In review` | `SMART-62-cu58-panel-de-control` | #99 |
+| CU58 | View system metrics | REP-01 | `In review` | `SMART-62-cu58-panel-de-control` | #99 |
 | CU59 | Review user suggestion | — | `Not started` | | |
 | CU60 | Manage plans | PAN 22 | `Not started` | | |
 | CU61 | Manage permissions | — | `Not started` | | |
@@ -201,6 +201,11 @@ being re-discussed twice.
 
 | Date | Decision | Reason |
 |---|---|---|
+| 2026-08-25 | The wave background is drawn into a canvas from a Web Worker (`OffscreenCanvas`), not animated as SVG paths on the main thread | The swell fires the instant a route changes, which is exactly when the main thread is busiest rendering the new screen, so a `requestAnimationFrame` loop there lost its frames at the crest of the wave and the water visibly froze on every navigation. A worker owns its own clock and nothing React does can take a frame from it. Canvas rather than SVG for two reasons: rewriting four full-viewport path `d` attributes per frame re-parses and re-rasterizes them through the document, and an `OffscreenCanvas` is the only surface a worker can draw into. A main-thread canvas fallback covers browsers without one. |
+| 2026-08-25 | A navigation sends a travelling swell packet across the water; it does not scale the wave's amplitude | Multiplying the amplitude of the whole line at once is a volume knob — the wave inflates in place, which does not read as water. Each navigation now spawns a gaussian packet that enters past the right edge, rolls left with the drift and decays, with each deeper layer receiving it later. Packets sum rather than replace, which is also what makes rapid navigation smooth: the previous model restarted a timed animation, so a second navigation mid-swell snapped the amplitude from its crest back to zero in one frame and read as a hard flicker. |
+| 2026-08-25 | Wave points are displaced horizontally (Gerstner), and the displacement is negative | A sine has crests and troughs of the same shape; water has a narrow pointed crest and a broad flat trough. Sliding each sampled point toward the nearest crest packs the crest and stretches the trough — measured as trough width over crest width, a plain sine is 1.00, resting water here is 1.44, and a swell's crest reaches about 2.0. The sign is load-bearing and easy to "fix" wrongly: canvas y grows downward, so the crest a viewer sees is the minimum of the wave, at 3pi/2, not the maximum the textbook form assumes. Steepness is capped below 1, where the surface would fold; because the harmonic shares sum to 1 the horizontal derivative is exactly `1 - steepness * sum(share*sin)`, so any value under 1 is provably fold-free. |
+| 2026-08-25 | CU57's REP-02 header reports active accounts, not “active today” | `SmartPlan-back`'s merged administration contract exposes account status and registration timestamps, but no last-activity/session timestamp. Presenting `status=active` as daily activity would be false. Total and active counts come from pagination metadata; weekly registrations are counted newest-first until the seven-day cutoff. |
+| 2026-08-25 | Creating a collection from PAN 18 is a two-request flow that preserves the new collection if adding its activity fails | The backend deliberately exposes collection creation and activity membership as separate CU32/CU35 endpoints. The selector keeps the successfully created collection and retries only the membership request, avoiding duplicate collection creation after a partial failure. |
 | 2026-08-25 | Collection management uses the Colecciones section of `/favorites`, with dedicated create and edit routes | The v2 design groups access under one saved-content screen, but the domain remains separate: collections are named activity groupings, while favorites are quick saves of activities or plans. The inactive Planes and Actividades sections contain no CU39-CU43 behavior; only real collections are loaded for CU32-CU34 management. |
 | 2026-08-06 | ESLint as the static analyzer | Ecosystem standard for TS/JS, official Next.js integration, type-aware analysis, no additional infrastructure (unlike SonarQube) |
 | 2026-08-06 | Type-aware ESLint analysis (`projectService`) | Allows detecting unhandled promises, the most likely error when consuming the API with axios |
@@ -249,6 +254,20 @@ Things that have been spotted but don't have an owner yet:
   "vos" form and pesos. Define the variant with the team and fix the brief.
 - The concrete database engine isn't defined in the documentation, which
   only says "relational database."
+- **A plan has no date and no location.** CU24's form asked for both, but
+  `CreatePlanDto` is `{title, description, peopleCount}`, so neither was
+  ever persisted and both were dropped from the form (PR #96). Putting them
+  back means extending `Plan` in `SmartPlan-back` (`scheduledFor`, a place
+  reference) with its migration, and re-adding the fields here.
+- **`GET /plans/:id` can't tell you whose plan it is.** The public
+  projection has no owner field, so PAN 17 probes `GET /users/me/plans/:id`
+  to decide whether to offer "Editar plan" / "Cancelar plan" — an extra
+  request per detail view. An `isOwner` flag on the public projection would
+  remove it.
+- **`tsc --noEmit` isn't part of CI.** `pnpm build` skips test files, so
+  type errors inside `*.test.tsx` pass lint, tests, and build (PR #96
+  shipped four before review caught them). Worth adding a `typecheck`
+  script to `ci.yml`.
 - The `skills/` core (`00-project`, `01-domain`, `02-git-flow`) is
   duplicated in `SmartPlan-back`. When modifying it, replicate the change
   in the other repository.
@@ -274,6 +293,9 @@ Things that have been spotted but don't have an owner yet:
 
 | Date | What happened |
 |---|---|
+| 2026-08-28 | PR #103 on the same planning branch: CU27's `AddToPlanDialog` (PAN 18's "Agregar a plan" now opens a real plan picker that can also create the plan inline), a confirmation before CU28 removes the last stop, and CU31's entry points wired to an "under construction" notice while the backend's `POST /plan-suggestions` still answers 501. CU26 changed meaning on the frontend: the owner's listing now hides cancelled plans instead of keeping them as read-only history, so "Eliminar" reads as a delete end to end — the backend's logical delete already hides them from everyone else (`GET /plans/:id` 404s and `createSearchBuilder` filters them), and only `GET /users/me/plans` still returns them, so the filter lives in `MyPlansPanel`. Review fixes on top: `createPlan` was typed `Promise<Plan>` but the endpoint answers `OwnPlanDetailDto`; three guards compared against a `"deleted"` status key that isn't in `PlanStatusKey`; `AddToPlanDialog` sent `NaN` for `peopleCount` from an emptied number field; `EditPlanForm` rendered the remove failure behind the modal overlay; and `ConfirmationDialog` gained `hideCancel` because `cancelLabel=""` still rendered a focusable button with no accessible name. `pnpm lint`, `pnpm test` (147), and `tsc --noEmit` green. |
+| 2026-08-25 | The app-wide wave background moved to review in PR #98 on `feature/fondo-olas`. The root layout mounts one `MoodBackground` across every user route so the water keeps its phase across navigation; administration hides and pauses that canvas because it has a separate visual language. `section-mood.ts` maps each route to a palette, and every navigation breaks a wave. Rapid navigations always add an impulse and use smooth saturation below the safe strength ceiling, instead of either overshooting it or dropping later events. Rendering runs in a Web Worker drawing to an `OffscreenCanvas`, with a main-thread fallback and a static frame under reduced motion. Static presentation lives in a CSS Module and canvas palettes live with the design tokens in `src/styles/`. No CU: cross-cutting UI, no associated issue. `pnpm lint`, `pnpm test` (128), and `pnpm build` pass. |
+| 2026-08-25 | CU35-CU38 moved to review together in PR #94: PAN 18 now adds activities to existing or inline-created collections; `/collections/:id` shows the real activity list and confirms membership removal; `/favorites` links collection cards to their detail, paginates them, provides an explicit empty state, and reuses the shared animated `MoodBackground` from Explorar. Responsive behavior covers 360px through desktop, dialogs trap and restore focus, and partial collection-creation failures retry only the missing membership (except terminal missing-activity/collection errors). Integrated against the existing SmartPlan-back `develop` collections contract. `pnpm lint`, `pnpm test` (84), and `pnpm build` pass. |
 | 2026-08-25 | CU32-CU34 moved to review together in PR #93 as the collections ABM: real collection cards in the Colecciones section, protected create/edit forms, duplicate-name validation, guarded cancellation, and confirmed soft deletion that preserves activities. Integrated with backend PR SmartPlan-back#70. `pnpm lint`, `pnpm test` (66), and `pnpm build` pass. |
 | 2026-08-06 | ESLint 9 configured with the project's own rules. First run: 0 errors, 0 warnings (scaffold with no application code yet). |
 | 2026-08-06 | Created `skills/` and this tracking file. |
@@ -304,3 +326,4 @@ Things that have been spotted but don't have an owner yet:
 | 2026-08-25 | Visual audit against `SmartPlanSystemDesign-v2/v2/Navbar.jsx`'s `LogoutModal` surfaced real drift in the confirmation dialog, all fixed: the "Confirmar" button was `variant="danger"` (red) — the prototype's confirm button is ember (`--ember`, same as any primary action); only the icon above it is tinted with a distinct danger rust the prototype never treats as a form-validation red. Added `--danger #D94B2B` / `--danger-10` to `tokens.css` for that icon (same reasoning as `--rating-ink`/`--warning-ink`: a literal the base v2 tokens don't define, needed once this screen was ported, and reused again by Profile's "Eliminar cuenta" danger zone once CU7 lands). Also matched the card's literal 20px radius, 36/32/28px padding, and dramatic double box-shadow (the prototype's modal card is visibly more elevated than an inline `--shadow-card`), and the title's `--w-display` weight (800, not the shared `.sp-h3` utility's 700) |
 | 2026-08-25 | F06 (ref back#28): F20's `ci.yml` already met most of the ticket (lint + test + build on push/PR against develop/main); aligned the job id to `ci` (was `quality`) and the setup to `pnpm/action-setup@v6` + `actions/setup-node@v7` with `node-version-file: '.nvmrc'`, making explicit where Node comes from (it used to be fully delegated to the composite `pnpm/setup@v2` action) — the same pattern implemented in `SmartPlan-back`. No trigger changes and no changes to the three real checks. Documented the `CI` check as a required status check in `skills/02-git-flow/` (SKILL.md and DEFINITION-OF-DONE.md), and fixed SKILL.md's broken link to the testing skill (`skills/06-testing/` → `skills/07-testing/`). Still pending: configuring the `CI` status check as required in `develop` and `main` branch protection, using the exact name GitHub reports after the first run, and removing the old `Quality` check if it was configured. `pnpm lint`, `pnpm test`, and `pnpm build` green. |
 | 2026-08-25 | Merged the latest `develop` (CU32-CU34 collections work, F06's CI alignment) into this CU4 branch to clear the merge-conflict block GitHub reported on the PR after `develop` moved again. Only `TRACKING.md` conflicted — resolved by keeping both sides' log entries. |
+| 2026-08-25 | CU24, CU25, CU26 (+CU27, CU28) — PR #96: planning module. `/plans/create` (CU24) posts `POST /users/me/plans` and then one `POST /users/me/plans/:id/details` per stop; the two-step submit is resumable, so a failure partway through resumes on the created plan instead of duplicating it. `/plans/:id/edit` (CU25) preloads from `GET /users/me/plans/:id`, patches title/description/peopleCount, and adds (CU27) / removes (CU28) stops, refetching after a remove because the backend renumbers `order`. CU26 cancels from PAN 17 via `DELETE /users/me/plans/:id` (204) and leaves the plan read-only with a banner. `PlanDetailView`'s owner actions hang off an ownership probe against `GET /users/me/plans/:id`: the screen reads from the public `GET /plans/:id`, which returns the same projection to everyone and has no owner field. Date and location were dropped from the create form — `CreatePlanDto` is `{title, description, peopleCount}` and neither field was persisted; adding them needs a backend change (see Pending below). Added `/plans` (CU29), a "Mis planes" listing off the navbar that reads `GET /users/me/plans` and carries the create-plan entry point, built on the same grid as `CollectionsPanel` so both private listings read alike; cancelling is offered there too, leaving the plan in place as read-only history. The create and edit screens now share that page shell (eyebrow, heading, back link), so the forms no longer carry their own `h1`, and the activity panel goes search -> itinerary -> totals instead of burying the search box under the summary. `ConfirmationDialog` moved from `components/collection/` to `components/ui/` and now backs all four prompts, and the three-dot waiting animation moved out of `activity.module.css` into a `LoadingDots` primitive that six components across three folders were already reaching across for. The plan detail's 300px hero is gone: there are no photos in the catalog, so it was a flat gradient with an oversized icon taking a third of the first screenful — replaced by a header sized to its own content, which also frees `FloatingBackLink` from tracking a dark hero. `pnpm lint`, `pnpm test` (116), and `pnpm build` green, plus `tsc --noEmit` clean. |

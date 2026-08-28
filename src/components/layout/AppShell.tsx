@@ -16,6 +16,9 @@ export interface AppShellProps {
  *
  * The `<main>` does not constrain width: screens that don't go full-bleed
  * wrap themselves in `Container`.
+ * The user-facing background is mounted by the root layout so it also
+ * survives navigation to and from authentication screens. Administration
+ * hides and pauses it through `AppBackground`.
  */
 export function AppShell({ children }: AppShellProps) {
   return (
