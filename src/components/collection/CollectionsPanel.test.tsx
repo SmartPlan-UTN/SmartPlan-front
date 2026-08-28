@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -45,6 +45,9 @@ describe("CollectionsPanel", () => {
 
     expect(await screen.findByText("Bodegas para visitar")).toBeInTheDocument();
     expect(screen.getByText("3 actividades")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Ver colección Bodegas para visitar" }),
+    ).toHaveAttribute("href", "/collections/7");
     expect(
       screen.getByRole("link", { name: "Editar Bodegas para visitar" }),
     ).toHaveAttribute("href", "/collections/7/edit");
@@ -125,5 +128,60 @@ describe("CollectionsPanel", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Bodegas para visitar")).toBeInTheDocument();
+  });
+
+  it("shows an explicit empty state with its create action (CU38)", async () => {
+    vi.mocked(listCollections).mockResolvedValueOnce({
+      data: [],
+      pagination: { page: 1, limit: 11, total: 0, totalPages: 1 },
+    });
+    render(<CollectionsPanel />);
+
+    expect(
+      await screen.findByText("Aún no creaste ninguna colección"),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Crear colección" })).toHaveAttribute(
+      "href",
+      "/collections/new",
+    );
+  });
+
+  it("paginates and returns to the previous page when the last card is deleted", async () => {
+    const secondCollection = {
+      ...collection(),
+      id: 8,
+      nameCollection: "Escapadas",
+    };
+    vi.mocked(listCollections)
+      .mockResolvedValueOnce({
+        data: [collection()],
+        pagination: { page: 1, limit: 11, total: 12, totalPages: 2 },
+      })
+      .mockResolvedValueOnce({
+        data: [secondCollection],
+        pagination: { page: 2, limit: 11, total: 12, totalPages: 2 },
+      })
+      .mockResolvedValueOnce({
+        data: [collection()],
+        pagination: { page: 1, limit: 11, total: 11, totalPages: 1 },
+      });
+    vi.mocked(deleteCollection).mockResolvedValueOnce(undefined);
+    const user = userEvent.setup();
+    render(<CollectionsPanel />);
+
+    await user.click(await screen.findByRole("button", { name: "Página siguiente" }));
+    expect(await screen.findByText("Escapadas")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Eliminar Escapadas" }));
+    await user.click(screen.getByRole("button", { name: "Eliminar colección" }));
+
+    await waitFor(() => {
+      expect(listCollections).toHaveBeenLastCalledWith({
+        page: 1,
+        limit: 11,
+        sortBy: "savedAt",
+        direction: "desc",
+      });
+    });
+    expect(await screen.findByText("Bodegas para visitar")).toBeInTheDocument();
   });
 });

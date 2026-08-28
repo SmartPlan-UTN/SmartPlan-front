@@ -137,6 +137,22 @@ describe("ChangePasswordForm", () => {
     expect(replace).not.toHaveBeenCalled();
   });
 
+  it("shows the minimum-length requirement as met once it's satisfied", async () => {
+    const user = userEvent.setup();
+    renderForm();
+
+    await expand(user);
+    const requirementRow = screen.getByText("Mínimo 12 caracteres").closest("li");
+    expect(requirementRow).not.toBeNull();
+
+    const newPasswordInput = screen.getByLabelText("Contraseña nueva");
+    await user.type(newPasswordInput, "short");
+    expect(requirementRow?.querySelector("svg")).toBeFalsy();
+
+    await user.type(newPasswordInput, "-enough-now");
+    expect(requirementRow?.querySelector("svg")).toBeTruthy();
+  });
+
   it("clears the fields when Cancelar is clicked", async () => {
     const user = userEvent.setup();
     renderForm();

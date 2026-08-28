@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { CollectionsPanel } from "@/components/collection";
+import { Screen } from "@/components/layout";
 
 import styles from "./favorites.module.css";
 
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function FavoritesPage() {
   return (
-    <section className={styles.screen} aria-labelledby="saved-title">
+    <Screen labelledBy="saved-title">
       <header className={styles.header}>
         <p className={`sp-label ${styles.eyebrow}`}>Para vos</p>
         <h1 id="saved-title" className="sp-h2">
@@ -42,6 +43,6 @@ export default function FavoritesPage() {
       </header>
 
       <CollectionsPanel />
-    </section>
+    </Screen>
   );
 }

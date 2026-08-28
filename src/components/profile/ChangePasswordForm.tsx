@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
-import { Button, Field, Icon, PasswordStrength } from "@/components/ui";
+import { Button, Field, Icon } from "@/components/ui";
 import { useToggle } from "@/hooks";
 import { ApiError, changePassword } from "@/lib/api";
 import { useSession } from "@/lib/auth";
@@ -104,13 +104,14 @@ function validate(
  * logout()`, best-effort `DELETE /sessions` plus clearing local state) and
  * the app redirects to Login with an explanatory flag.
  *
- * Doesn't port the prototype's password-requirements checklist ("Mínimo 8
- * caracteres", "Al menos una mayúscula", "Incluir números y símbolos"): the
- * real rule is 12-128 characters with no complexity requirement, and
- * showing pass/fail checks for rules the backend doesn't enforce would
- * misrepresent what's actually required. `PasswordStrength` (a non-normative
- * visual nudge, not a set of requirements) plus the field's own placeholder
- * cover it instead.
+ * Ports the prototype's password-requirements checklist layout (a row per
+ * rule, with a dot that fills in once it's met) but not its content
+ * ("Mínimo 8 caracteres", "Al menos una mayúscula", "Incluir números y
+ * símbolos"): the real rule is 12-128 characters with no complexity
+ * requirement, and showing pass/fail checks for rules the backend doesn't
+ * enforce would misrepresent what's actually required. The single item
+ * rendered here (`MIN_PASSWORD_LENGTH`) is the actual rule, not a stand-in
+ * for the prototype's three.
  */
 export function ChangePasswordForm() {
   const { logout } = useSession();
@@ -256,7 +257,22 @@ export function ChangePasswordForm() {
                 onClick: toggleShowNew,
               }}
             />
-            <PasswordStrength password={newPassword} />
+            <ul className={styles.requirements} aria-hidden="true">
+              <li
+                className={
+                  newPassword.length >= MIN_PASSWORD_LENGTH
+                    ? `${styles.requirement} ${styles.requirementMet}`
+                    : styles.requirement
+                }
+              >
+                <span className={styles.requirementDot}>
+                  {newPassword.length >= MIN_PASSWORD_LENGTH ? (
+                    <Icon name="check" size={10} />
+                  ) : null}
+                </span>
+                Mínimo {MIN_PASSWORD_LENGTH} caracteres
+              </li>
+            </ul>
           </div>
 
           <Field

@@ -1,10 +1,19 @@
 /* CU5/CU6 - Edit profile (PAN 14), per the v2 "EMBER" system design's
-   `Profile.jsx`. The prototype's phone field and avatar upload were left
-   out: the backend contract (`GET/PATCH /users/me`) has no fields for
-   either. The delete-account "danger zone" on the same prototype screen is
-   CU7 — a separate ticket, not built here. */
+   `Profile.jsx`. The prototype's avatar upload was left out: there's no
+   backing field for it in the backend contract (`GET/PATCH /users/me`).
+   Phone was in the same situation until it got its own backend support
+   (see the doc comment on `ProfileForm`); it's back in the form now. The
+   delete-account "danger zone" on the same prototype screen is CU7 — a
+   separate ticket, not built here. */
+
+.backdrop {
+  position: relative;
+  min-height: calc(100dvh - var(--navbar-h));
+}
 
 .wrapper {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: var(--s-6);
@@ -217,6 +226,49 @@ p.toggleSubtitle {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+/* Requirements checklist under "Contraseña nueva" — same row layout as the
+   prototype's (dot + label per rule), reused for the app's one real rule
+   instead of the prototype's three. See the doc comment on
+   `ChangePasswordForm` for why the content differs from the mockup. */
+.requirements {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.requirement {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--fg-3);
+  font-size: 13px;
+}
+
+.requirementMet {
+  color: var(--fg-2);
+}
+
+.requirementDot {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1.5px solid var(--hairline);
+  color: var(--white);
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.requirementMet .requirementDot {
+  background: var(--success);
+  border-color: var(--success);
 }
 
 /* ── Load state ──────────────────────────────────────────── */

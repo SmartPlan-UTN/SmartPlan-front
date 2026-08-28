@@ -1,8 +1,10 @@
 .shell {
+  position: relative;
+  z-index: 1;
   min-height: 100dvh;
   display: flex;
   align-items: stretch;
-  background: var(--cream);
+  background: transparent;
 }
 
 /* ── Left panel: only from tablet up (matches the v2 prototype breakpoint) ── */
