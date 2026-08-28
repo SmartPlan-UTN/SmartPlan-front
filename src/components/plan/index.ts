@@ -4,3 +4,4 @@ export { PlanSearch } from "./PlanSearch";
 export { CreatePlanForm } from "./CreatePlanForm";
 export { EditPlanForm, type EditPlanFormProps } from "./EditPlanForm";
 export { MyPlansPanel } from "./MyPlansPanel";
+export { AddToPlanDialog, type AddToPlanDialogProps } from "./AddToPlanDialog";

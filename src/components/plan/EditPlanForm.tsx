@@ -118,6 +118,9 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
 
   // Cancel / Discard Confirmation
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [pendingRemoveDetail, setPendingRemoveDetail] = useState<OwnPlanDetailItem | null>(null);
+  const [isRemovingDetail, setIsRemovingDetail] = useState(false);
+  const [removeError, setRemoveError] = useState<string | null>(null);
 
   // Search activities effect
   useEffect(() => {
@@ -200,22 +203,52 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
   };
 
   // Activity Management (CU28)
-  const handleRemoveActivity = async (detailId: number) => {
+  const requestRemoveActivity = (item: OwnPlanDetailItem) => {
+    if (details.length === 1) {
+      setPendingRemoveDetail(item);
+    } else {
+      void performRemoveActivity(item.id);
+    }
+  };
+
+  const performRemoveActivity = async (detailId: number) => {
+    setIsRemovingDetail(true);
+    setRemoveError(null);
     try {
       // `DELETE .../details/:detailId` answers 204, so the itinerary has to
       // be refetched rather than filtered locally: the backend renumbers
       // `order` on the remaining stops, and a local filter would leave the
       // timeline showing stale positions until the next full load.
       await removePlanActivity(plan.id, detailId);
-      const refreshed = await getOwnPlan(plan.id);
-      setDetails(refreshed.details);
+      setPendingRemoveDetail(null);
+      try {
+        const refreshed = await getOwnPlan(plan.id);
+        setDetails(refreshed.details);
+      } catch {
+        // The stop is already gone server-side; only the refetch failed.
+        // Dropping it locally keeps a retry from 404-ing on a detail that
+        // no longer exists — `order` may read stale until the next load.
+        setDetails((current) => current.filter((item) => item.id !== detailId));
+        setSubmitError(
+          "Quitamos la actividad, pero no pudimos recargar el itinerario.",
+        );
+        setTimeout(() => setSubmitError(null), 3500);
+      }
     } catch (error: unknown) {
       const message =
         error instanceof ApiError
           ? error.message
           : "No pudimos quitar la actividad. Intentá de nuevo.";
-      setSubmitError(message);
-      setTimeout(() => setSubmitError(null), 3500);
+      // With the confirmation open, the inline toast renders behind the
+      // overlay, so the dialog has to carry the message itself.
+      if (pendingRemoveDetail) {
+        setRemoveError(message);
+      } else {
+        setSubmitError(message);
+        setTimeout(() => setSubmitError(null), 3500);
+      }
+    } finally {
+      setIsRemovingDetail(false);
     }
   };
 
@@ -492,10 +525,10 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
                       type="button"
                       className={styles.removeButton}
                       onClick={() => {
-                        void handleRemoveActivity(item.id);
+                        requestRemoveActivity(item);
                       }}
                       aria-label={`Quitar ${item.activity.name}`}
-                      disabled={isPending}
+                      disabled={isPending || isRemovingDetail}
                     >
                       <Icon name="trash-2" size={15} />
                     </button>
@@ -533,6 +566,27 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
           </div>
         </div>
       </div>
+
+      {/* Empty Plan Remove Confirmation Modal (CU28) */}
+      {pendingRemoveDetail && (
+        <ConfirmationDialog
+          title="¿Quitar la última actividad?"
+          confirmLabel="Sí, quitar actividad"
+          confirmingLabel="Quitando..."
+          cancelLabel="Volver"
+          isConfirming={isRemovingDetail}
+          error={removeError}
+          onCancel={() => {
+            setPendingRemoveDetail(null);
+            setRemoveError(null);
+          }}
+          onConfirm={() => void performRemoveActivity(pendingRemoveDetail.id)}
+        >
+          <p>
+            El plan quedará sin actividades en su itinerario.
+          </p>
+        </ConfirmationDialog>
+      )}
 
       {/* Cancel Confirmation Modal */}
       {showCancelModal && (

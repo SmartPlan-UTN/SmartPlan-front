@@ -15,6 +15,38 @@
   }
 }
 
+.autoPlanBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  grid-column: 1 / -1;
+  padding: var(--s-4) var(--s-5);
+  border: 1.5px dashed var(--ember);
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--ember) 6%, transparent);
+}
+
+.autoPlanText strong {
+  display: block;
+  color: var(--fg-1);
+  font-size: var(--t-body);
+}
+
+.autoPlanText p {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: var(--t-small);
+}
+
+@media (max-width: 768px) {
+  .autoPlanBanner {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+}
+
 .title {
   margin-bottom: var(--s-5);
   color: var(--fg-1);

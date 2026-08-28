@@ -124,14 +124,14 @@ traceability matrix (`skills/01-domain/`).
 
 | CU | Feature | Screen | Status | Branch | PR |
 |---|---|---|---|---|---|
-| CU24 | Create plan | — | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96 |
-| CU25 | Edit plan | PAN 17 | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96 |
-| CU26 | Delete plan | PAN 17 | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96 |
-| CU27 | Add activity to plan | PAN 17, PAN 18 | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96 |
-| CU28 | Remove activity from plan | PAN 17 | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96 |
-| CU29 | View plan | PAN 17 | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96 |
+| CU24 | Create plan | — | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96, #103 |
+| CU25 | Edit plan | PAN 17 | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96, #103 |
+| CU26 | Delete plan | PAN 17 | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96, #103 |
+| CU27 | Add activity to plan | PAN 17, PAN 18 | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96, #103 |
+| CU28 | Remove activity from plan | PAN 17 | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96, #103 |
+| CU29 | View plan | PAN 17 | `In review` | `feature/planificacion-cu24-cu25-cu26` | #96, #103 |
 | CU30 | Calculate plan cost | PAN 17 | `Not started` | | |
-| CU31 | Generate suggested plan | — | `Not started` | | |
+| CU31 | Generate suggested plan | — | `In progress` | `feature/planificacion-cu24-cu25-cu26` | #103 |
 
 ### Collections
 
@@ -289,6 +289,7 @@ Things that have been spotted but don't have an owner yet:
 
 | Date | What happened |
 |---|---|
+| 2026-08-28 | PR #103 on the same planning branch: CU27's `AddToPlanDialog` (PAN 18's "Agregar a plan" now opens a real plan picker that can also create the plan inline), a confirmation before CU28 removes the last stop, and CU31's entry points wired to an "under construction" notice while the backend's `POST /plan-suggestions` still answers 501. CU26 changed meaning on the frontend: the owner's listing now hides cancelled plans instead of keeping them as read-only history, so "Eliminar" reads as a delete end to end — the backend's logical delete already hides them from everyone else (`GET /plans/:id` 404s and `createSearchBuilder` filters them), and only `GET /users/me/plans` still returns them, so the filter lives in `MyPlansPanel`. Review fixes on top: `createPlan` was typed `Promise<Plan>` but the endpoint answers `OwnPlanDetailDto`; three guards compared against a `"deleted"` status key that isn't in `PlanStatusKey`; `AddToPlanDialog` sent `NaN` for `peopleCount` from an emptied number field; `EditPlanForm` rendered the remove failure behind the modal overlay; and `ConfirmationDialog` gained `hideCancel` because `cancelLabel=""` still rendered a focusable button with no accessible name. `pnpm lint`, `pnpm test` (147), and `tsc --noEmit` green. |
 | 2026-08-25 | The app-wide wave background moved to review in PR #98 on `feature/fondo-olas`. The root layout mounts one `MoodBackground` across every user route so the water keeps its phase across navigation; administration hides and pauses that canvas because it has a separate visual language. `section-mood.ts` maps each route to a palette, and every navigation breaks a wave. Rapid navigations always add an impulse and use smooth saturation below the safe strength ceiling, instead of either overshooting it or dropping later events. Rendering runs in a Web Worker drawing to an `OffscreenCanvas`, with a main-thread fallback and a static frame under reduced motion. Static presentation lives in a CSS Module and canvas palettes live with the design tokens in `src/styles/`. No CU: cross-cutting UI, no associated issue. `pnpm lint`, `pnpm test` (128), and `pnpm build` pass. |
 | 2026-08-25 | CU35-CU38 moved to review together in PR #94: PAN 18 now adds activities to existing or inline-created collections; `/collections/:id` shows the real activity list and confirms membership removal; `/favorites` links collection cards to their detail, paginates them, provides an explicit empty state, and reuses the shared animated `MoodBackground` from Explorar. Responsive behavior covers 360px through desktop, dialogs trap and restore focus, and partial collection-creation failures retry only the missing membership (except terminal missing-activity/collection errors). Integrated against the existing SmartPlan-back `develop` collections contract. `pnpm lint`, `pnpm test` (84), and `pnpm build` pass. |
 | 2026-08-25 | CU32-CU34 moved to review together in PR #93 as the collections ABM: real collection cards in the Colecciones section, protected create/edit forms, duplicate-name validation, guarded cancellation, and confirmed soft deletion that preserves activities. Integrated with backend PR SmartPlan-back#70. `pnpm lint`, `pnpm test` (66), and `pnpm build` pass. |

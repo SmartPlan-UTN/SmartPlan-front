@@ -1,0 +1,345 @@
+/* Mirrors the shape of the collection picker (AddToCollectionDialog):
+   both are the same modal, so they should not drift apart visually. */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: grid;
+  place-items: center;
+  padding: var(--s-4);
+  background: color-mix(in srgb, var(--char) 58%, transparent);
+  backdrop-filter: blur(4px);
+}
+
+.dialog {
+  width: min(100%, 560px);
+  max-height: min(760px, calc(100dvh - 32px));
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
+  animation: fadeUp 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.dialogHeader {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--s-3);
+  padding: var(--s-5);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.dialogIcon,
+.optionIcon,
+.successIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ember);
+  background: var(--ember-10);
+}
+
+.dialogIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-card-sm);
+}
+
+.intro {
+  margin-top: var(--s-1);
+  color: var(--fg-2);
+  font-size: var(--t-small);
+}
+
+.closeButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-btn);
+  background: transparent;
+  color: var(--fg-2);
+  cursor: pointer;
+}
+
+.closeButton:hover {
+  background: var(--ember-04);
+  color: var(--ember);
+}
+
+.form {
+  display: flex;
+  max-height: calc(100dvh - 170px);
+  flex-direction: column;
+}
+
+.content {
+  display: flex;
+  min-height: 180px;
+  flex-direction: column;
+  gap: var(--s-3);
+  overflow-y: auto;
+  padding: var(--s-5);
+}
+
+.planList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.planOption,
+.createToggle {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 54px;
+  padding: var(--s-3);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card-sm);
+  background: var(--surface-card);
+  color: var(--fg-1);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.planOption {
+  gap: var(--s-3);
+}
+
+.planOption:hover,
+.planOption.selected {
+  border-color: var(--ember);
+  background: var(--ember-04);
+}
+
+.optionIcon {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: var(--r-btn);
+}
+
+.optionCopy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.optionCopy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.optionCopy span {
+  color: var(--fg-3);
+  font-size: var(--t-small);
+}
+
+.createToggle {
+  justify-content: center;
+  gap: var(--s-2);
+  border-style: dashed;
+  color: var(--ember);
+  font-weight: var(--w-heading);
+}
+
+.createToggle:hover {
+  border-color: var(--ember);
+  background: var(--ember-04);
+}
+
+.state {
+  display: flex;
+  min-height: 150px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-3);
+  color: var(--fg-2);
+  text-align: center;
+}
+
+.creationFields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.creationHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.creationHeading button {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ember);
+  font: inherit;
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  cursor: pointer;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  color: var(--fg-2);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+}
+
+.field em {
+  color: var(--fg-3);
+  font-style: normal;
+  font-weight: var(--w-body);
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--cream) 70%, transparent);
+  color: var(--fg-1);
+  font: inherit;
+  font-weight: var(--w-body);
+}
+
+.field textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-color: var(--ember);
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+  box-shadow: var(--focus-ember);
+}
+
+.field input[aria-invalid="true"],
+.field textarea[aria-invalid="true"] {
+  border-color: var(--error);
+}
+
+.field small {
+  color: var(--error);
+}
+
+.submitError {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  margin: 0 var(--s-5) var(--s-3);
+  padding: var(--s-3);
+  border-radius: var(--r-btn);
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+  color: var(--fg-1);
+  font-size: var(--t-small);
+}
+
+.submitError svg {
+  flex-shrink: 0;
+  color: var(--error);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-5) var(--s-5);
+  border-top: 1px solid var(--hairline);
+}
+
+.success {
+  display: flex;
+  min-height: 280px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-4);
+  padding: var(--s-6);
+  color: var(--fg-2);
+  text-align: center;
+}
+
+.successIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--r-chip);
+  background: var(--success-15);
+  color: var(--success);
+}
+
+.closeButton:focus-visible,
+.planOption:focus-visible,
+.createToggle:focus-visible,
+.creationHeading button:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+@media (max-width: 560px) {
+  .overlay {
+    align-items: end;
+    padding: 0;
+  }
+
+  .dialog {
+    max-height: calc(100dvh - var(--navbar-h));
+    border-radius: var(--r-card) var(--r-card) 0 0;
+  }
+
+  .dialogHeader,
+  .content {
+    padding: var(--s-4);
+  }
+
+  .submitError {
+    margin-inline: var(--s-4);
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+    padding: var(--s-4);
+  }
+
+  .actions button,
+  .success button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .dialogHeader {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .dialogIcon {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog {
+    animation: none;
+  }
+}

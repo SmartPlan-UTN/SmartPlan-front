@@ -11,6 +11,13 @@ export interface ConfirmationDialogProps {
   title: string;
   children: ReactNode;
   cancelLabel?: string;
+  /**
+   * Drops the cancel action for a dialog that only acknowledges (an
+   * "under construction" notice, say). Passing `cancelLabel=""` instead
+   * still renders the button, so focus lands on a control with no
+   * accessible name.
+   */
+  hideCancel?: boolean;
   confirmLabel: string;
   confirmingLabel?: string;
   isConfirming?: boolean;
@@ -28,12 +35,14 @@ export interface ConfirmationDialogProps {
  * cancel button on mount, trapped between the two actions, and handed back
  * to whatever was focused before on close. `Escape` cancels, except
  * mid-confirmation, when there's a request in flight the user can no
- * longer call off.
+ * longer call off. With `hideCancel`, the confirm button is the only stop
+ * on the ring and takes the initial focus.
  */
 export function ConfirmationDialog({
   title,
   children,
   cancelLabel = "Cancelar",
+  hideCancel = false,
   confirmLabel,
   confirmingLabel = "Procesando...",
   isConfirming = false,
@@ -55,12 +64,12 @@ export function ConfirmationDialog({
       document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
-    cancelRef.current?.focus();
+    (hideCancel ? confirmRef : cancelRef).current?.focus();
 
     return () => {
       previousFocusRef.current?.focus();
     };
-  }, []);
+  }, [hideCancel]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -69,6 +78,13 @@ export function ConfirmationDialog({
         return;
       }
       if (event.key !== "Tab") return;
+
+      if (hideCancel) {
+        // A single stop on the ring: Tab has nowhere to go but back to it.
+        event.preventDefault();
+        confirmRef.current?.focus();
+        return;
+      }
 
       if (event.shiftKey && document.activeElement === cancelRef.current) {
         event.preventDefault();
@@ -81,7 +97,7 @@ export function ConfirmationDialog({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isConfirming, onCancel]);
+  }, [hideCancel, isConfirming, onCancel]);
 
   return (
     <div className={styles.overlay}>
@@ -108,14 +124,16 @@ export function ConfirmationDialog({
           </p>
         ) : null}
         <div className={styles.dialogActions}>
-          <Button
-            ref={cancelRef}
-            variant="ghostLight"
-            onClick={onCancel}
-            disabled={isConfirming}
-          >
-            {cancelLabel}
-          </Button>
+          {hideCancel ? null : (
+            <Button
+              ref={cancelRef}
+              variant="ghostLight"
+              onClick={onCancel}
+              disabled={isConfirming}
+            >
+              {cancelLabel}
+            </Button>
+          )}
           <Button
             ref={confirmRef}
             variant="danger"

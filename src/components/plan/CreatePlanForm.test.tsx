@@ -9,7 +9,7 @@ import {
   searchActivities,
 } from "@/lib/api";
 import { ROUTES } from "@/lib/routes";
-import type { ActivitySearchResult, Plan } from "@/types";
+import type { ActivitySearchResult, OwnPlanDetail } from "@/types";
 
 import { CreatePlanForm } from "./CreatePlanForm";
 
@@ -48,11 +48,19 @@ function mockActivity(
   } as ActivitySearchResult;
 }
 
-function mockCreatedPlan(): Plan {
-  return { id: 7 } as Plan;
+function mockCreatedPlan(): OwnPlanDetail {
+  return { id: 7 } as OwnPlanDetail;
 }
 
-/** Types into the activity box and waits for the debounced search. */
+/**
+ * Types into the activity box and waits for the debounced search.
+ *
+ * `useDebouncedValue(activitySearch, 400)` plus `userEvent`'s per-character
+ * delay puts this close to a second on an idle machine; 2s left no room on
+ * a loaded one and the suite flaked roughly once in fourteen runs. The
+ * timeout is a ceiling, not a wait — a passing run still resolves as soon
+ * as the button appears.
+ */
 async function searchActivity(user: ReturnType<typeof userEvent.setup>) {
   await user.type(
     screen.getByLabelText("Buscar Actividad"),
@@ -61,7 +69,7 @@ async function searchActivity(user: ReturnType<typeof userEvent.setup>) {
   return screen.findByRole(
     "button",
     { name: "+ Agregar" },
-    { timeout: 2000 },
+    { timeout: 8000 },
   );
 }
 
@@ -205,5 +213,20 @@ describe("CreatePlanForm (CU24)", () => {
 
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     expect(push).toHaveBeenCalledWith(ROUTES.explore);
+  });
+
+  it("displays under-construction modal when automatic plan button is clicked (CU31)", async () => {
+    const user = userEvent.setup();
+    render(<CreatePlanForm />);
+
+    await user.click(screen.getByRole("button", { name: /Generar plan automático/i }));
+
+    expect(screen.getByRole("alertdialog", { name: "Módulo en construcción" })).toBeInTheDocument();
+    expect(
+      screen.getByText(/generación automática de itinerarios/i),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Entendido, crear manualmente" }));
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
   });
 });

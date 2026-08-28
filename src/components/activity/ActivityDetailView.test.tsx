@@ -17,12 +17,18 @@ vi.mock("@/components/collection", () => ({
   ),
 }));
 
+vi.mock("@/components/plan", () => ({
+  AddToPlanDialog: ({ activityName }: { activityName: string }) => (
+    <div role="dialog">Selector de plan para {activityName}</div>
+  ),
+}));
+
 vi.mock("@/components/ui", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/components/ui")>();
   return { ...actual, FloatingBackLink: () => null };
 });
 
-describe("ActivityDetailView collection action", () => {
+describe("ActivityDetailView actions (CU27, CU35)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getActivity).mockResolvedValue({
@@ -48,6 +54,17 @@ describe("ActivityDetailView collection action", () => {
 
     expect(screen.getByRole("dialog")).toHaveTextContent(
       "Selector para Degustación de vinos",
+    );
+  });
+
+  it("opens the CU27 plan selector from PAN 18", async () => {
+    const user = userEvent.setup();
+    render(<ActivityDetailView activityId={42} />);
+
+    await user.click(await screen.findByRole("button", { name: "Agregar a plan" }));
+
+    expect(screen.getByRole("dialog")).toHaveTextContent(
+      "Selector de plan para Degustación de vinos",
     );
   });
 });
