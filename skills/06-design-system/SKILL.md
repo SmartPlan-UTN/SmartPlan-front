@@ -282,9 +282,11 @@ overflow, rather than a full copy's width, reads as stuck on a wide screen
 where the content barely spills past the edge). Pauses on hover/touch so a
 chip stays clickable.
 
-**MoodBackground** — animated hero background. Very subtle color blobs
-(5-10% opacity) that transition over 1.4s based on the selected mood. It's
-decorative; it must not compete with the content.
+**MoodBackground** — persistent animated user-app background. Very subtle
+color blobs (5-10% opacity) transition over 1.4s based on the current section.
+One canvas is mounted by the root layout so its phase survives navigation;
+administration hides and pauses it because that area has a separate visual
+language. It's decorative, `aria-hidden`, and must not compete with content.
 
 > **Size the SVG off the actual container, not the viewport.** The React
 > port originally set the wave `viewBox` from `window.innerWidth/Height`,
@@ -527,8 +529,10 @@ Fast and restrained. Entrances with fade + 8-12px displacement, 180-320ms,
 Keyframes already defined in `tokens.css`: `fadeUp`, `pulseDot`, `spin`,
 `glowPulse`, `shimmer`, `float`, `sp-carousel`.
 
-No bouncing or infinite decorative animations. The only live animation
-allowed is the plan-generation loader, in `--electric`.
+No bouncing or infinite decorative animations. The plan-generation loader in
+`--electric` and the app-wide `MoodBackground` are the only live-animation
+exceptions. The background remains subtle, pauses while the document or its
+user-facing area is hidden, and freezes under `prefers-reduced-motion: reduce`.
 
 ## Brand voice
 

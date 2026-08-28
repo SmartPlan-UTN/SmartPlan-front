@@ -20,6 +20,7 @@ const profile: UserProfile = {
   name: "Ana",
   lastName: "Pérez",
   email: "ana@example.com",
+  phone: "+54 11 4321 0987",
   role: { key: "user", name: "Usuario" },
   status: { key: "active", name: "Activo" },
 };
@@ -82,10 +83,49 @@ describe("ProfileForm", () => {
     expect(updateProfile).toHaveBeenCalledWith({
       name: "Ana María",
       lastName: "Pérez",
+      phone: "+54 11 4321 0987",
     });
     expect(
       await screen.findByText("Cambios guardados correctamente"),
     ).toBeInTheDocument();
+  });
+
+  it("preloads an empty phone field when the profile has none", async () => {
+    getProfile.mockResolvedValueOnce({ ...profile, phone: null });
+    render(<ProfileForm />);
+
+    expect(await screen.findByLabelText("Teléfono")).toHaveValue("");
+  });
+
+  it("sends null when the phone field is cleared", async () => {
+    getProfile.mockResolvedValueOnce(profile);
+    updateProfile.mockResolvedValueOnce({ ...profile, phone: null });
+    const user = userEvent.setup();
+    render(<ProfileForm />);
+
+    const phoneInput = await screen.findByLabelText("Teléfono");
+    await user.clear(phoneInput);
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    expect(updateProfile).toHaveBeenCalledWith({
+      name: "Ana",
+      lastName: "Pérez",
+      phone: null,
+    });
+  });
+
+  it("rejects an invalid phone without calling the API", async () => {
+    getProfile.mockResolvedValueOnce(profile);
+    const user = userEvent.setup();
+    render(<ProfileForm />);
+
+    const phoneInput = await screen.findByLabelText("Teléfono");
+    await user.clear(phoneInput);
+    await user.type(phoneInput, "abc");
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    expect(await screen.findByText("Ingresá un teléfono válido")).toBeInTheDocument();
+    expect(updateProfile).not.toHaveBeenCalled();
   });
 
   it("restores the loaded values when Cancelar is clicked", async () => {

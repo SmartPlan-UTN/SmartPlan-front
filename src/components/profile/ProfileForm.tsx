@@ -11,12 +11,17 @@ import styles from "./profile.module.css";
 interface FieldErrors {
   name?: string;
   lastName?: string;
+  phone?: string;
 }
 
 const REQUIRED_MESSAGE = "Este campo es requerido";
 /** Matches `SmartPlan-back`'s `update-profile.dto.ts`: `name`/`lastName`
  * are each 1-80 characters. */
 const MAX_NAME_LENGTH = 80;
+
+/** Same pattern as `update-profile.dto.ts`'s `PHONE_PATTERN`: digits, spaces,
+ * and the punctuation an international number uses (`+54 11 4321 0987`). */
+const PHONE_PATTERN = /^[+\d][\d\s()-]{5,29}$/;
 
 /**
  * Generic, user-facing message for each CU5 save error code. Never surfaces
@@ -69,13 +74,15 @@ function fieldErrorsFrom(error: ApiError): FieldErrors {
       fieldErrors.name = message;
     } else if (detail.field === "lastName") {
       fieldErrors.lastName = message;
+    } else if (detail.field === "phone") {
+      fieldErrors.phone = message;
     }
   }
 
   return fieldErrors;
 }
 
-function validate(name: string, lastName: string): FieldErrors {
+function validate(name: string, lastName: string, phone: string): FieldErrors {
   const errors: FieldErrors = {};
 
   if (!name.trim()) {
@@ -90,6 +97,12 @@ function validate(name: string, lastName: string): FieldErrors {
     errors.lastName = `Máximo ${MAX_NAME_LENGTH} caracteres`;
   }
 
+  // Phone is optional: an empty field is valid, only a non-empty one is
+  // checked against the format the backend accepts.
+  if (phone.trim() && !PHONE_PATTERN.test(phone.trim())) {
+    errors.phone = "Ingresá un teléfono válido";
+  }
+
   return errors;
 }
 
@@ -97,10 +110,16 @@ type LoadStatus = "loading" | "loaded" | "error";
 
 /**
  * CU5 - Edit profile (PAN 14), per the v2 system design's `Profile.jsx`.
- * Loads the signed-in user's name, last name, and email, and saves changes
- * to name/last name. Email is shown but never editable — `GET`/
- * `PATCH /users/me` don't accept changing it, and role/status aren't shown
- * at all, matching the prototype (neither appears on this screen there).
+ * Loads the signed-in user's name, last name, email, and phone, and saves
+ * changes to name/last name/phone. Email is shown but never editable —
+ * `GET`/`PATCH /users/me` don't accept changing it, and role/status aren't
+ * shown at all, matching the prototype (neither appears on this screen
+ * there).
+ *
+ * Phone is outside CU5's original scope (`GET`/`PATCH /users/me` didn't
+ * carry it), added afterward with its own backend support: nullable
+ * `user.phone`, validated the same way on both ends (`PHONE_PATTERN`).
+ * Clearing the field sends `null`, not an empty string.
  */
 export function ProfileForm() {
   const [status, setStatus] = useState<LoadStatus>("loading");
@@ -108,6 +127,7 @@ export function ProfileForm() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -127,6 +147,7 @@ export function ProfileForm() {
         setProfile(loaded);
         setName(loaded.name);
         setLastName(loaded.lastName);
+        setPhone(loaded.phone ?? "");
         setStatus("loaded");
       } catch {
         // Same reasoning as the save path: whatever failed (network, 5xx,
@@ -148,6 +169,7 @@ export function ProfileForm() {
     if (!profile) return;
     setName(profile.name);
     setLastName(profile.lastName);
+    setPhone(profile.phone ?? "");
     setFieldErrors({});
     setFormError(null);
   }
@@ -155,9 +177,9 @@ export function ProfileForm() {
   async function submit() {
     setFormError(null);
 
-    const errors = validate(name, lastName);
+    const errors = validate(name, lastName, phone);
     setFieldErrors(errors);
-    if (errors.name || errors.lastName) {
+    if (errors.name || errors.lastName || errors.phone) {
       return;
     }
 
@@ -166,10 +188,12 @@ export function ProfileForm() {
       const updated = await updateProfile({
         name: name.trim(),
         lastName: lastName.trim(),
+        phone: phone.trim() || null,
       });
       setProfile(updated);
       setName(updated.name);
       setLastName(updated.lastName);
+      setPhone(updated.phone ?? "");
       setToastState("visible");
       setTimeout(() => {
         setToastState("leaving");
@@ -285,6 +309,19 @@ export function ProfileForm() {
           </div>
 
           <Field label="Email" type="email" value={profile.email} disabled />
+
+          <Field
+            label="Teléfono"
+            type="tel"
+            autoComplete="tel"
+            value={phone}
+            onChange={(event) => {
+              setPhone(event.target.value);
+            }}
+            error={fieldErrors.phone}
+            disabled={saving}
+            placeholder="+54 11 4321 0987"
+          />
 
           <div className={styles.divider} />
 

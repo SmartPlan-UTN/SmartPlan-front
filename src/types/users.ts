@@ -80,6 +80,10 @@ export interface UserProfile {
   name: string;
   lastName: string;
   email: string;
+  /** `null` when the user hasn't set one. Outside CU5's original scope, but
+   * both `GET`/`PATCH /users/me` carry it (see `update-profile.dto.ts` in
+   * `SmartPlan-back`). */
+  phone: string | null;
   role: { key: RoleKey; name: string };
   status: { key: UserStatusKey; name: string };
 }

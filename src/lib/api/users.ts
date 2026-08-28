@@ -4,6 +4,8 @@ import { apiClient } from './client';
 export interface UpdateProfileData {
   name: string;
   lastName: string;
+  /** `undefined` leaves the stored phone untouched; `null` clears it. */
+  phone?: string | null;
 }
 
 /**
@@ -15,9 +17,9 @@ export async function getProfile(): Promise<UserProfile> {
 }
 
 /**
- * Saves the signed-in user's name and last name (CU5). Email is read-only:
- * it's the login credential and this endpoint doesn't accept changing it;
- * role and status are informational and aren't sent either.
+ * Saves the signed-in user's name, last name, and phone (CU5). Email is
+ * read-only: it's the login credential and this endpoint doesn't accept
+ * changing it; role and status are informational and aren't sent either.
  * Backend contract: `PATCH /users/me`.
  */
 export async function updateProfile(
