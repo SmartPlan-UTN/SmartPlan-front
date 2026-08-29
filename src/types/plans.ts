@@ -72,6 +72,7 @@ export interface PlanSearchResult {
   /** Activity names in itinerary order, e.g. `["Bodega", "Almuerzo"]`. */
   activityNames: string[];
   status: { key: PlanStatusKey; name: string };
+  viewerPlanState?: ViewerPlanState;
 }
 
 /** Activity as embedded in a plan's itinerary (CU13). */
@@ -98,11 +99,35 @@ export interface PlanItineraryItem {
 }
 
 /**
+ * What a plan means for the current viewer (CU22, PAN 17). Computed
+ * server-side; the frontend never infers it. Any authenticated viewer of a
+ * non-`cancelled` plan is `selectable` (or `selected` once they hold an
+ * intention) — ownership and visibility don't matter. An anonymous viewer is
+ * always `view-only`.
+ * Matches `ViewerPlanState` in `SmartPlan-back` (`src/plans/plan-selectability.ts`).
+ */
+export type ViewerPlanState = 'selectable' | 'selected' | 'view-only';
+
+/**
  * Plan detail returned by `GET /plans/:id` (CU13): the search summary plus
  * its ordered itinerary.
  */
 export interface PlanDetailResult extends PlanSearchResult {
   details: PlanItineraryItem[];
+  /** Selection affordance for the caller (CU22). */
+  viewerPlanState: ViewerPlanState;
+}
+
+/**
+ * Result of `PATCH /plans/:id/select` (CU22). The plan always belongs to a
+ * request on success, so `planRequestId` is never null.
+ * Matches `PlanSelectionResponseDto` in `SmartPlan-back`.
+ */
+export interface PlanSelectionResult {
+  id: number;
+  planRequestId: number | null;
+  status: { key: PlanStatusKey; name: string };
+  viewerPlanState?: ViewerPlanState;
 }
 
 /** Sortable fields accepted by `GET /plans`. */

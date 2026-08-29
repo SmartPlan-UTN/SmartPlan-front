@@ -73,6 +73,7 @@ export interface PlanRequestPlanSummary {
   /** Activity names in itinerary order (CU19 shows these on each option). */
   activityNames: string[];
   status: { key: PlanStatusKey; name: string };
+  viewerPlanState?: import('./plans').ViewerPlanState;
 }
 
 /**

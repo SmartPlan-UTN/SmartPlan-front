@@ -37,3 +37,9 @@ export {
   type RecommendationsStatus,
   type UseRecommendationsResult,
 } from "./useRecommendations";
+export {
+  usePlanSelection,
+  type PlanSelectionStatus,
+  type PlanSelectionOutcome,
+  type UsePlanSelectionResult,
+} from "./usePlanSelection";
