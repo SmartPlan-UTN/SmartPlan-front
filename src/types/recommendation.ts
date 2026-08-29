@@ -114,16 +114,56 @@ export interface PlanRequest extends BaseEntity {
 }
 
 /**
- * User's feedback after completing a plan (CU21, CU23).
+ * Predefined feedback reaction tags (CU23). Values match `FEEDBACK_TAGS` in
+ * `SmartPlan-back` (`src/recommendation/entities/feedback.entity.ts`); the
+ * Spanish labels shown to the user live in
+ * `src/components/feedback/feedbackContent.ts`.
  */
-export interface Feedback extends BaseEntity {
-  title: string;
-  description: string | null;
+export const FEEDBACK_TAGS = [
+  'too_expensive',
+  'great_value',
+  'far',
+  'would_recommend',
+] as const;
+
+export type FeedbackTag = (typeof FEEDBACK_TAGS)[number];
+
+/**
+ * A plan's recorded post-experience feedback (CU23), as read back from the
+ * owner plan list/detail. Matches `PlanFeedbackDto` in `SmartPlan-back`.
+ * The estimated cost is never stored here — SmartPlan already knows it from
+ * the plan; the user only reports `actualCost`.
+ */
+export interface PlanFeedback {
+  rating: number;
+  tags: FeedbackTag[];
+  comment: string | null;
   actualCost: number | null;
   actualDuration: number | null;
-  idPlanRequest: number;
-  idFeedbackStatus: number;
-  status?: FeedbackStatus;
+  createdAt: string;
+}
+
+/**
+ * Where a plan sits in the CU23 feedback lifecycle, derived server-side.
+ * There is no `expired`: US18 defines no closing window. Matches
+ * `FeedbackState` in `SmartPlan-back`.
+ *
+ *  - `not_available` → not `completed`, or completed < 24 h ago with no reminder.
+ *  - `available`     → window open (reminder sent, or 24 h elapsed) and no feedback.
+ *  - `submitted`     → feedback already recorded.
+ */
+export type FeedbackState = 'not_available' | 'available' | 'submitted';
+
+/**
+ * Body accepted by `POST /plans/:id/feedback` (CU23). Only `rating` is
+ * required. Matches `CreateFeedbackDto` in `SmartPlan-back`.
+ */
+export interface CreateFeedbackPayload {
+  rating: number;
+  tags?: FeedbackTag[];
+  comment?: string;
+  actualCost?: number;
+  actualDuration?: number;
 }
 
 /**

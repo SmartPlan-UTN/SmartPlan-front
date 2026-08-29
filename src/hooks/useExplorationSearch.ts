@@ -39,6 +39,7 @@ export function useExplorationSearch<TParams extends object, TResult>(
   ) => Promise<PaginatedResult<TResult>>,
   params: TParams,
   pageSize = 20,
+  enabled = true,
 ): UseExplorationSearchResult<TResult> {
   const [items, setItems] = useState<TResult[]>([]);
   const [pagination, setPagination] = useState<PaginationMetadata | null>(
@@ -73,6 +74,8 @@ export function useExplorationSearch<TParams extends object, TResult>(
   });
 
   useEffect(() => {
+    if (!enabled) return;
+
     const currentRequestId = ++requestId.current;
 
     async function run() {
@@ -103,7 +106,7 @@ export function useExplorationSearch<TParams extends object, TResult>(
     }
 
     void run();
-  }, [paramsKey, pageSize, retryToken, page]);
+  }, [paramsKey, pageSize, retryToken, page, enabled]);
 
   const goToPage = useCallback((nextPage: number) => {
     setPage(nextPage);

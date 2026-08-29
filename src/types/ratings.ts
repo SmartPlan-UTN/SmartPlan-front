@@ -1,6 +1,6 @@
 import { BaseEntity } from './common';
 import type { Activity } from './activities';
-import type { Feedback } from './recommendation';
+import type { PlanFeedback } from './recommendation';
 
 /**
  * Score given to an activity (CU44-CU47, CU55).
@@ -10,5 +10,5 @@ export interface Rating extends BaseEntity {
   idActivity: number;
   idFeedback: number | null;
   activity?: Activity;
-  feedback?: Feedback | null;
+  feedback?: PlanFeedback | null;
 }

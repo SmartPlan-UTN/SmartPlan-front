@@ -206,6 +206,82 @@
   fill: currentColor;
 }
 
+/* ── RatingInput (CU23) ──────────────────────────────────────────
+   Interactive sibling of `.stars`. Each star is a real button with a
+   ≥44px touch target; the icon inside carries the fill and the pick
+   micro-animation. */
+.ratingInput {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.ratingStar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 2px;
+  border: 0;
+  border-radius: var(--r-card-sm);
+  background: transparent;
+  color: var(--gold);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ratingStar:disabled {
+  cursor: not-allowed;
+}
+
+.ratingStar:focus-visible {
+  outline: 2px solid var(--rating-focus, var(--ember));
+  outline-offset: 2px;
+}
+
+.ratingStarIcon {
+  color: var(--rating-star-off, var(--gold-22));
+  fill: currentColor;
+  transition:
+    color var(--d-fast, 180ms) var(--ease-out, ease),
+    transform var(--d-fast, 180ms) var(--ease-out, ease);
+}
+
+.ratingStar:hover .ratingStarIcon {
+  transform: scale(1.08);
+}
+
+.ratingStar:active .ratingStarIcon {
+  transform: scale(0.94);
+}
+
+.ratingStarIconOn {
+  color: var(--rating-star-on, var(--gold));
+}
+
+@keyframes sp-rating-pick {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.22); }
+  100% { transform: scale(1); }
+}
+
+.ratingStarIconPicked {
+  animation: sp-rating-pick 220ms var(--ease-out, ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ratingStarIcon,
+  .ratingStar:hover .ratingStarIcon,
+  .ratingStar:active .ratingStarIcon {
+    transition: none;
+    transform: none;
+  }
+  .ratingStarIconPicked {
+    animation: none;
+  }
+}
+
 .divider {
   width: 100%;
   height: 1px;

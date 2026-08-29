@@ -1,16 +1,19 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
+import { ExperienceSummary, FeedbackInvite } from "@/components/feedback";
 import { Badge, Button, Divider, FloatingBackLink, Icon, Stars } from "@/components/ui";
 import { useDetailFetch, usePlanSelection } from "@/hooks";
-import { getPlan } from "@/lib/api";
+import { getMyPlan, getPlan } from "@/lib/api";
 import { useSession } from "@/lib/auth";
 import { activityDetailRoute, ROUTES } from "@/lib/routes";
 import { formatArs, formatDuration, googleMapsUrl } from "@/lib/utils";
 import type {
+  FeedbackState,
   PlanDetailResult,
+  PlanFeedback,
   PlanItineraryItem,
   PlanStatusKey,
   ViewerPlanState,
@@ -154,6 +157,61 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
+
+  // CU23. Feedback lives on the owner-only endpoint; the public detail never
+  // carries it. A secondary, non-blocking fetch — a viewer who isn't the
+  // owner just gets a 403/404 here and no feedback section shows. Keyed by
+  // plan id so a stale result from a previous plan never renders.
+  const [ownFeedback, setOwnFeedback] = useState<{
+    planId: number;
+    feedbackState: FeedbackState;
+    feedback: PlanFeedback | null;
+    completedAt: string | null;
+    activityCount: number;
+  } | null>(null);
+
+  const planId_ = plan?.id ?? null;
+  useEffect(() => {
+    if (sessionStatus !== "authenticated" || planId_ == null) return;
+    let active = true;
+    getMyPlan(planId_)
+      .then((own) => {
+        if (active) {
+          setOwnFeedback({
+            planId: own.id,
+            feedbackState: own.feedbackState,
+            feedback: own.feedback,
+            completedAt: own.completedAt ?? own.createdAt,
+            activityCount: own.activityCount,
+          });
+        }
+      })
+      .catch(() => {
+        // Not the owner, or offline — leave the feedback section hidden.
+      });
+    return () => {
+      active = false;
+    };
+  }, [sessionStatus, planId_]);
+
+  const feedbackInfo =
+    ownFeedback && ownFeedback.planId === planId_ ? ownFeedback : null;
+
+  async function reconcileFeedback() {
+    if (planId_ == null) return;
+    try {
+      const own = await getMyPlan(planId_);
+      setOwnFeedback({
+        planId: own.id,
+        feedbackState: own.feedbackState,
+        feedback: own.feedback,
+        completedAt: own.completedAt ?? own.createdAt,
+        activityCount: own.activityCount,
+      });
+    } catch {
+      // Keep the current owner-only projection if reconciliation is offline.
+    }
+  }
 
   // CU22. The new status is applied from the backend result, not optimistically;
   // `useDetailFetch` has no mutate, so a local override reflects it until the
@@ -335,6 +393,31 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
             </span>
           </div>
         </div>
+
+        {feedbackInfo?.feedback ? (
+          <ExperienceSummary
+            feedback={feedbackInfo.feedback}
+            estimatedTotalCost={plan.estimatedTotalCost}
+          />
+        ) : feedbackInfo?.feedbackState === "available" ? (
+          <FeedbackInvite
+            planId={plan.id}
+            planTitle={plan.title}
+            estimatedTotalCost={plan.estimatedTotalCost}
+            completedAt={feedbackInfo.completedAt}
+            activityCount={feedbackInfo.activityCount}
+            onSubmitted={(feedback) =>
+              setOwnFeedback({
+                planId: plan.id,
+                feedbackState: "submitted",
+                feedback,
+                completedAt: feedbackInfo.completedAt,
+                activityCount: feedbackInfo.activityCount,
+              })
+            }
+            onReconcile={() => void reconcileFeedback()}
+          />
+        ) : null}
 
         <div className={styles.actionBar}>
           {/* Guardar + Compartir — secondary. Each control reserves its
