@@ -1,4 +1,7 @@
 import type {
+  MyPlansParams,
+  OwnPlanDetail,
+  OwnPlanSummary,
   PaginatedResult,
   PlanDetailResult,
   PlanSearchParams,
@@ -26,6 +29,28 @@ export async function searchPlans(
  */
 export async function getPlan(id: number): Promise<PlanDetailResult> {
   return apiClient.get<PlanDetailResult>(`/plans/${id}`);
+}
+
+/**
+ * The signed-in user's own plans, newest first (CU23 · PAN 13).
+ * Backend contract: `GET /users/me/plans`, paginated. Carries the CU23
+ * feedback layer (`feedbackState`, `feedback`, `completedAt`).
+ */
+export async function getMyPlans(
+  params: MyPlansParams = {}
+): Promise<PaginatedResult<OwnPlanSummary>> {
+  return apiClient.get<PaginatedResult<OwnPlanSummary>>('/users/me/plans', {
+    params: { direction: 'desc', ...params },
+  });
+}
+
+/**
+ * One of the user's own plans with its itinerary (CU23 · PAN 17 feedback
+ * section). `GET /users/me/plans/:id`. Rejects with `ApiError` 403/404 when
+ * the caller is not the owner.
+ */
+export async function getMyPlan(id: number): Promise<OwnPlanDetail> {
+  return apiClient.get<OwnPlanDetail>(`/users/me/plans/${id}`);
 }
 
 /**

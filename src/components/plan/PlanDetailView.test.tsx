@@ -1,9 +1,15 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@/lib/api";
-import type { PlanDetailResult, PlanStatusKey, ViewerPlanState } from "@/types";
+import type {
+  OwnPlanDetail,
+  PlanDetailResult,
+  PlanFeedback,
+  PlanStatusKey,
+  ViewerPlanState,
+} from "@/types";
 
 import { PlanDetailView } from "./PlanDetailView";
 
@@ -19,15 +25,49 @@ vi.mock("@/lib/auth", async (importActual) => ({
 }));
 
 const getPlan = vi.hoisted(() => vi.fn());
+const getMyPlan = vi.hoisted(() => vi.fn());
 const selectPlan = vi.hoisted(() => vi.fn());
 const deselectPlan = vi.hoisted(() => vi.fn());
+const submitFeedback = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/api")>()),
   getPlan,
+  getMyPlan,
   selectPlan,
   deselectPlan,
+  submitFeedback,
 }));
+
+function ownPlan(overrides: Partial<OwnPlanDetail> = {}): OwnPlanDetail {
+  return {
+    id: 7,
+    title: "Tarde de vinos",
+    description: null,
+    estimatedTotalCost: 8500,
+    estimatedTotalDuration: 240,
+    peopleCount: 2,
+    estimatedCostPerPerson: 4250,
+    activityCount: 1,
+    status: { key: "completed", name: "Realizado" },
+    completedAt: "2026-08-12T00:00:00.000Z",
+    feedbackState: "not_available",
+    feedback: null,
+    createdAt: "2026-08-01T00:00:00.000Z",
+    updatedAt: "2026-08-12T00:00:00.000Z",
+    details: [],
+    ...overrides,
+  };
+}
+
+const OWN_FEEDBACK: PlanFeedback = {
+  rating: 4,
+  tags: ["would_recommend"],
+  comment: "La segunda bodega quedaba lejos.",
+  actualCost: 9200,
+  actualDuration: null,
+  createdAt: "2026-08-14T00:00:00.000Z",
+};
 
 function plan(overrides: Partial<PlanDetailResult> = {}): PlanDetailResult {
   return {
@@ -70,6 +110,11 @@ function plan(overrides: Partial<PlanDetailResult> = {}): PlanDetailResult {
 beforeEach(() => {
   vi.clearAllMocks();
   useSession.mockReturnValue({ status: "authenticated", authenticated: true });
+  // Default: caller is not the owner → no feedback section.
+  getMyPlan.mockRejectedValue(
+    new ApiError({ message: "x", type: "HTTP", status: 403 }),
+  );
+  submitFeedback.mockResolvedValue(OWN_FEEDBACK);
   selectPlan.mockResolvedValue({
     id: 7,
     planRequestId: 3,
@@ -217,5 +262,107 @@ describe("PlanDetailView — plan intent (CU22, PAN 17)", () => {
     );
     expect(screen.getByRole("button", intendButton)).toBeInTheDocument();
     expect(getPlan).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("PlanDetailView — feedback (CU23, PAN 17)", () => {
+  it("shows the feedback invite when the owner can rate a finished plan", async () => {
+    getPlan.mockResolvedValue(
+      plan({ status: { key: "completed", name: "Realizado" } }),
+    );
+    getMyPlan.mockResolvedValue(ownPlan({ feedbackState: "available" }));
+    render(<PlanDetailView planId={7} />);
+
+    expect(
+      await screen.findByText(/contanos tu experiencia/i),
+    ).toBeInTheDocument();
+  });
+
+  it("renders the read-only experience once feedback exists", async () => {
+    getPlan.mockResolvedValue(
+      plan({ status: { key: "completed", name: "Realizado" } }),
+    );
+    getMyPlan.mockResolvedValue(
+      ownPlan({ feedbackState: "submitted", feedback: OWN_FEEDBACK }),
+    );
+    render(<PlanDetailView planId={7} />);
+
+    expect(await screen.findByText(/tu experiencia/i)).toBeInTheDocument();
+    expect(screen.getByText(/muy bueno/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/la segunda bodega quedaba lejos/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/contanos tu experiencia/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows nothing feedback-related when the plan is not yet available", async () => {
+    getPlan.mockResolvedValue(
+      plan({ status: { key: "completed", name: "Realizado" } }),
+    );
+    getMyPlan.mockResolvedValue(ownPlan({ feedbackState: "not_available" }));
+    render(<PlanDetailView planId={7} />);
+
+    await screen.findByRole("heading", { name: "Tarde de vinos", level: 1 });
+    expect(
+      screen.queryByText(/contanos tu experiencia/i),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/tu experiencia/i)).not.toBeInTheDocument();
+  });
+
+  it("flips to the read-only experience after submitting", async () => {
+    getPlan.mockResolvedValue(
+      plan({ status: { key: "completed", name: "Realizado" } }),
+    );
+    getMyPlan.mockResolvedValue(ownPlan({ feedbackState: "available" }));
+    const user = userEvent.setup();
+    render(<PlanDetailView planId={7} />);
+
+    const stars = await screen.findAllByRole("radio");
+    await user.click(stars[3]);
+    const dialog = await screen.findByRole("dialog");
+    await user.click(
+      within(dialog).getByRole("button", { name: /enviar opinión/i }),
+    );
+
+    await waitFor(
+      () => expect(screen.getByText(/tu experiencia/i)).toBeInTheDocument(),
+      { timeout: 2500 },
+    );
+    expect(submitFeedback).toHaveBeenCalledWith(7, { rating: 4 });
+  });
+
+  it("reconciles the owner surface when feedback already exists", async () => {
+    getPlan.mockResolvedValue(
+      plan({ status: { key: "completed", name: "Realizado" } }),
+    );
+    getMyPlan
+      .mockResolvedValueOnce(ownPlan({ feedbackState: "available" }))
+      .mockResolvedValueOnce(
+        ownPlan({ feedbackState: "submitted", feedback: OWN_FEEDBACK }),
+      );
+    submitFeedback.mockRejectedValue(
+      new ApiError({
+        message: "already submitted",
+        type: "HTTP",
+        status: 409,
+        code: "FEEDBACK_ALREADY_SUBMITTED",
+      }),
+    );
+    const user = userEvent.setup();
+    render(<PlanDetailView planId={7} />);
+
+    const stars = await screen.findAllByRole("radio");
+    await user.click(stars[3]);
+    await user.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: /enviar opini/i,
+      }),
+    );
+
+    await waitFor(() => expect(getMyPlan).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText(/tu experiencia/i)).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

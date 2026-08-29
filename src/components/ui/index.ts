@@ -14,3 +14,4 @@ export { Logo, type LogoKind, type LogoProps, type LogoVariant } from "./Logo";
 export { MoodBackground, type Mood, type MoodBackgroundProps } from "./MoodBackground";
 export { Select, type SelectOption, type SelectProps } from "./Select";
 export { Stars, type StarsProps } from "./Stars";
+export { RatingInput, type RatingInputProps } from "./RatingInput";

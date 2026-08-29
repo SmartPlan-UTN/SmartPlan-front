@@ -27,7 +27,15 @@ export {
   getActivity,
   getActivityMapMarkers,
 } from "./activities";
-export { searchPlans, getPlan, selectPlan, deselectPlan } from "./plans";
+export {
+  searchPlans,
+  getPlan,
+  getMyPlans,
+  getMyPlan,
+  selectPlan,
+  deselectPlan,
+} from "./plans";
+export { submitFeedback } from "./feedback";
 export { listCategories } from "./categories";
 export { getPreferences, updatePreferences } from "./users";
 export { searchPlace } from "./places";
