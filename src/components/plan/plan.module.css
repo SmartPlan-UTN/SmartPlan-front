@@ -58,11 +58,27 @@
 
 .heroMetaRow {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--s-2);
   margin-bottom: var(--s-2);
   color: var(--fg-on-dark-2);
   font-size: var(--t-small);
+}
+
+/* Plan status pill (CU22) — only for `confirmed` / `completed` (states that
+   matter to any viewer). `generated`/`selected` render no pill. */
+.heroStatus {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  background: rgba(245, 240, 232, 0.22);
+  color: var(--fg-on-dark);
+  font-size: var(--t-label);
+  font-weight: var(--w-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
 }
 
 .heroMetaDot {
@@ -331,30 +347,263 @@
   letter-spacing: -0.02em;
 }
 
-/* ── Action row (not sticky — normal document flow) ───────────── */
+/* ── Action row (not sticky — normal document flow) ───────────────
+   Three peer controls at one fixed height. Every control reserves the
+   width of its widest label and centres its content, so a state swap
+   (icon, text, colour, border, fill) only repaints inside the box —
+   nothing here ever changes width, height or position. */
 .actionBar {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+/* Guardar + Compartir — grouped, secondary weight. The tighter inner
+   gap sets them apart from the intent toggle without a divider. */
+.actionSecondary {
+  display: flex;
+  flex: 0 1 auto;
   gap: var(--s-2);
 }
 
-.actionFlex1 {
-  display: flex;
-  flex: 1;
-  align-items: center;
+.saveButton,
+.shareButton {
   justify-content: center;
+  min-height: 44px;
+  border-radius: var(--r-btn);
+  white-space: nowrap;
 }
 
-.actionFlex2 {
-  display: flex;
-  flex: 2;
-  align-items: center;
-  justify-content: center;
+.saveButton {
+  min-width: 9rem;
 }
 
-/* `Button variant="ghost"` already sets the border and text color this
-   needs (`--white-15` / `--fg-on-dark`) — only the opaque background is a
-   real override, so this doesn't fight the variant's own cascade. */
-.actionShare {
-  background: var(--char);
+.shareButton {
+  min-width: 7.25rem;
+}
+
+.saveButton:hover:not(:disabled),
+.shareButton:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--char) 4%, transparent);
+  border-color: var(--ember-20);
+  filter: none;
+}
+
+/* The bookmark fills the instant it is saved — a short settle, no
+   overshoot, no effect on the button's metrics. */
+.saveIconOn {
+  fill: currentColor;
+  animation: sp-icon-settle var(--d-fast) var(--ease-out) both;
+}
+
+@keyframes sp-icon-settle {
+  from {
+    transform: scale(0.8);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* ── Intent toggle (CU22) ────────────────────────────────────────
+   The prominent control in the row. Same box in both states — same
+   size, same label ("Lo voy a hacer") — so a state change only
+   repaints: warm ember-tint fill when open (the design system's
+   `ghostEmber`), solid ember fill + check when marked (`primary`). */
+.statePanel {
+  display: flex;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.stateToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-width: 10.5rem;
+  min-height: 44px;
+  padding: var(--s-2) var(--s-4);
+  border: 1px solid transparent;
+  border-radius: var(--r-btn);
+  background: var(--ember-15);
+  color: var(--ember);
+  font-size: var(--t-body);
+  font-weight: var(--w-label);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--d-fast) var(--ease-inout),
+    color var(--d-fast) var(--ease-inout),
+    transform var(--d-fast) var(--ease-inout);
+}
+
+.stateToggle:hover:not(:disabled) {
+  background: var(--ember-20);
+}
+
+.stateToggle:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.stateToggle[aria-pressed="true"] {
+  background: var(--ember);
+  color: var(--white);
+}
+
+.stateToggle[aria-pressed="true"]:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ember) 90%, var(--char));
+}
+
+.stateToggle:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.stateToggle:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+/* Icon crossfade — the check is the hero of the state change. Both
+   glyphs share one 18px box (absolutely stacked), so nothing around
+   them moves as they swap. */
+.toggleIcon {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  transition: transform var(--d-fast) var(--ease-out);
+}
+
+.stateToggle:hover:not(:disabled) .toggleIcon {
+  transform: scale(1.06);
+}
+
+.toggleIconOff,
+.toggleIconOn {
+  position: absolute;
+  inset: 0;
+  transition:
+    opacity var(--d-fast) var(--ease-inout),
+    transform var(--d-fast) var(--ease-inout);
+}
+
+.toggleIconOn {
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+.stateToggle[aria-pressed="true"] .toggleIconOff {
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+.stateToggle[aria-pressed="true"] .toggleIconOn {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.stateChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0;
+  color: var(--ember);
+  font-size: var(--t-body);
+  font-weight: var(--w-label);
+}
+
+.stateIcon {
+  display: inline-flex;
+}
+
+.stateIconMuted {
+  color: var(--fg-2);
+}
+
+/* State C (completed) — a quiet record, matching the toggle's box. */
+.stateRecord {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  align-content: center;
+  gap: var(--s-1) var(--s-3);
+  min-width: 10.5rem;
+  min-height: 44px;
+  padding: var(--s-2) var(--s-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-btn);
+  background: var(--ember-04);
+}
+
+.stateMeta {
+  color: var(--fg-3);
+  font-size: var(--t-small);
+}
+
+.stateActions {
+  display: flex;
+  gap: var(--s-2);
+  width: 100%;
+}
+
+/* Mobile — intent toggle on top, Guardar/Compartir a full-width pair
+   below. State changes still never move anything. */
+@media (max-width: 640px) {
+  .actionBar {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .actionSecondary {
+    width: 100%;
+  }
+
+  .actionSecondary > * {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .statePanel {
+    width: 100%;
+  }
+
+  .stateToggle,
+  .stateRecord {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stateToggle,
+  .toggleIcon,
+  .saveIconOn {
+    animation: none;
+    transition: none;
+    transform: none;
+  }
+
+  /* Keep the crossfade instant but still correct: the marked state
+     shows the check, the open state shows the circle — no motion. */
+  .toggleIconOff,
+  .toggleIconOn {
+    transition: none;
+    transform: none;
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

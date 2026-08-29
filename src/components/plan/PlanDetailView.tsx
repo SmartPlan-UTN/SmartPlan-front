@@ -4,12 +4,21 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 
 import { Badge, Button, Divider, FloatingBackLink, Icon, Stars } from "@/components/ui";
-import { useDetailFetch } from "@/hooks";
+import { useDetailFetch, usePlanSelection } from "@/hooks";
 import { getPlan } from "@/lib/api";
+import { useSession } from "@/lib/auth";
 import { activityDetailRoute, ROUTES } from "@/lib/routes";
 import { formatArs, formatDuration, googleMapsUrl } from "@/lib/utils";
-import type { PlanDetailResult, PlanItineraryItem } from "@/types";
+import type {
+  PlanDetailResult,
+  PlanItineraryItem,
+  PlanStatusKey,
+  ViewerPlanState,
+} from "@/types";
 
+import { PlanIntentionPanel } from "./PlanIntentionPanel";
+import { PLAN_SELECTION } from "./planSelectionContent";
+import { planStatusPresentation } from "./statusPresentation";
 import styles from "./plan.module.css";
 import activityStyles from "../activity/activity.module.css";
 
@@ -125,18 +134,72 @@ function ItineraryStep({
  * lo recomiendan") and per-person cost split are fabricated demo numbers
  * with no backend behind them — there's no "people who did this plan"
  * tracking or party-size field in the contract, so both are left out
- * rather than inventing data. "Lo quiero hacer" needs CU22 (out of scope
- * here), so it's disabled; "Compartir" is real — it copies the page URL.
+ * rather than inventing data. "Lo voy a hacer" is CU22 — a reversible intent
+ * toggle (`PATCH`/`DELETE /plans/:id/select`), shown only when the caller can
+ * act on it. "Compartir" is real — it copies the page URL.
  */
 export function PlanDetailView({ planId }: PlanDetailViewProps) {
-  const { data: plan, status, errorMessage } = useDetailFetch<PlanDetailResult>(
+  const { status: sessionStatus } = useSession();
+  const {
+    data: plan,
+    status,
+    errorMessage,
+    refetch,
+  } = useDetailFetch<PlanDetailResult>(
     getPlan,
     planId,
     GENERIC_ERROR,
+    sessionStatus !== "loading",
   );
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
+
+  // CU22. The new status is applied from the backend result, not optimistically;
+  // `useDetailFetch` has no mutate, so a local override reflects it until the
+  // next real load (a navigation back here re-reads the authoritative state).
+  const selection = usePlanSelection();
+  const [override, setOverride] = useState<{
+    statusKey: PlanStatusKey;
+    viewerPlanState: ViewerPlanState;
+  } | null>(null);
+  const [liveMessage, setLiveMessage] = useState("");
+
+  async function toggleIntent(direction: "on" | "off") {
+    if (!plan || selection.status === "working") return;
+    setLiveMessage("");
+
+    const outcome = await (direction === "on"
+      ? selection.select(plan.id)
+      : selection.deselect(plan.id));
+    if (!outcome) return;
+
+    if (outcome.ok) {
+      setOverride({
+        statusKey: outcome.result.status.key,
+        viewerPlanState: direction === "on" ? "selected" : "selectable",
+      });
+      setLiveMessage(
+        direction === "on"
+          ? PLAN_SELECTION.detail.announceOn
+          : PLAN_SELECTION.detail.announceOff,
+      );
+      selection.reset();
+      return;
+    }
+
+    if (outcome.error.reconcile) {
+      // The plan moved on — reconcile from the server, drop the local override.
+      setOverride(null);
+      setLiveMessage(PLAN_SELECTION.error.reconciled);
+      selection.reset();
+      refetch();
+    } else {
+      // Network / unknown: nothing changed.
+      setLiveMessage(PLAN_SELECTION.error.retry);
+      selection.reset();
+    }
+  }
 
   async function handleShare() {
     try {
@@ -192,9 +255,17 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
     .map((detail) => detail.activity.name)
     .join(" → ");
 
+  const statusKey = override?.statusKey ?? plan.status.key;
+  const viewerPlanState = override?.viewerPlanState ?? plan.viewerPlanState;
+  const statusInfo = planStatusPresentation(statusKey);
+
   return (
     <div>
       <FloatingBackLink href={ROUTES.explore} label="Volver" heroRef={heroRef} />
+
+      <p className={styles.srOnly} role="status" aria-live="polite">
+        {liveMessage}
+      </p>
 
       <div className={styles.hero} ref={heroRef}>
         <Icon name="route" size={110} className={styles.heroIcon} />
@@ -204,6 +275,12 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
 
         <div className={styles.heroTitleBlock}>
           <div className={styles.heroMetaRow}>
+            {statusInfo ? (
+              <>
+                <span className={styles.heroStatus}>{statusInfo.label}</span>
+                <span className={styles.heroMetaDot}>·</span>
+              </>
+            ) : null}
             <Stars rating={plan.averageRating} size={14} />
             <span>{plan.averageRating.toFixed(1)}</span>
             <span className={styles.heroMetaDot}>·</span>
@@ -260,34 +337,47 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
         </div>
 
         <div className={styles.actionBar}>
-          <Button
-            variant={saved ? "secondary" : "ghostLight"}
-            className={styles.actionFlex1}
-            onClick={() => {
-              setSaved((current) => !current);
-            }}
-          >
-            <Icon name="bookmark" size={16} aria-hidden="true" />
-            {saved ? "¡Guardado!" : "Guardar plan"}
-          </Button>
-          <Button
-            variant="ghost"
-            className={styles.actionShare}
-            onClick={() => {
-              void handleShare();
-            }}
-          >
-            <Icon name="share-2" size={16} aria-hidden="true" />
-            {copied ? "¡Copiado!" : "Compartir"}
-          </Button>
-          <Button
-            variant="primary"
-            className={styles.actionFlex2}
-            disabled
-            title="Próximamente"
-          >
-            Lo quiero hacer →
-          </Button>
+          {/* Guardar + Compartir — secondary. Each control reserves its
+              widest label so a state swap never changes its box. */}
+          <div className={styles.actionSecondary}>
+            <Button
+              variant="ghostLight"
+              size="sm"
+              className={styles.saveButton}
+              aria-pressed={saved}
+              onClick={() => {
+                setSaved((current) => !current);
+              }}
+            >
+              <Icon
+                name="bookmark"
+                size={16}
+                aria-hidden="true"
+                className={saved ? styles.saveIconOn : undefined}
+              />
+              {saved ? "Guardado" : "Guardar plan"}
+            </Button>
+            <Button
+              variant="ghostLight"
+              size="sm"
+              className={styles.shareButton}
+              onClick={() => {
+                void handleShare();
+              }}
+            >
+              <Icon name="share-2" size={16} aria-hidden="true" />
+              {copied ? "¡Copiado!" : "Compartir"}
+            </Button>
+          </div>
+
+          {/* Personal state on the plan (CU22) — carries the visual weight. */}
+          <PlanIntentionPanel
+            viewerPlanState={viewerPlanState}
+            statusKey={statusKey}
+            busy={selection.status === "working"}
+            onIntend={() => void toggleIntent("on")}
+            onWithdraw={() => void toggleIntent("off")}
+          />
         </div>
       </div>
     </div>
