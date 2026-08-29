@@ -18,3 +18,23 @@ afterEach(() => {
  * the same information. This stub is what exercises that path.
  */
 HTMLCanvasElement.prototype.getContext = () => null;
+
+/**
+ * jsdom has no `IntersectionObserver`. Components that reveal on scroll
+ * (`Reveal`, `ImmersiveStory`) already guard with `typeof … === "undefined"`
+ * and degrade to visible; `FloatingBackLink` does not, so a stub keeps detail
+ * screens renderable in tests. It observes nothing — the observed state is
+ * never asserted.
+ */
+if (typeof globalThis.IntersectionObserver === "undefined") {
+  class IntersectionObserverStub {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+    takeRecords(): [] {
+      return [];
+    }
+  }
+  globalThis.IntersectionObserver =
+    IntersectionObserverStub as unknown as typeof IntersectionObserver;
+}
