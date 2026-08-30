@@ -370,12 +370,39 @@ export const RECOMMENDATIONS = {
   },
   /** Non-intrusive line when coordinates were not available. */
   locationHint: "Activá la ubicación para ver planes cerca tuyo.",
+  /**
+   * One honest line, only when the API's `meta.adjustedFromFeedback` is true —
+   * i.e. the user's own experiences actually moved the order (CU21).
+   */
+  adjustedFromFeedback: "Ajustado según tus últimas experiencias.",
   /** One soft chip per card, from the plan's dominant ranking signal. */
   reasonChip: {
     history: "Va con lo tuyo",
     preferences: "Como lo que te gusta",
     near_you: "Cerca tuyo",
     popular: "Muy elegido",
+    within_budget: "Dentro de tu presupuesto",
+    well_rated_by_you: "Como lo que disfrutaste",
+  },
+  /** Discreet "no me interesa" action on a card, and its undo affordance (CU21). */
+  dismiss: {
+    action: "No me interesa",
+    live: (title: string) => `Quitamos «${title}» de tus recomendaciones.`,
+    done: "No lo mostramos más",
+    undo: "Deshacer",
+  },
+  /** While the rail is fetching. */
+  loading: "Buscando planes para vos…",
+  /** Fetch failed — a quiet inline retry, never a vanished section. */
+  error: {
+    title: "No pudimos cargar tus recomendaciones.",
+    retry: "Reintentar",
+  },
+  /** Signed-in, has history, but nothing left to show right now. */
+  caughtUp: {
+    title: "Por ahora, esto es todo.",
+    body: "Ya viste lo que teníamos para vos. Armá un plan nuevo y seguimos aprendiendo.",
+    action: "Armá un plan",
   },
   /** Shown to a signed-in user with nothing to recommend yet. */
   empty: {

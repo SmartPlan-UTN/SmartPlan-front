@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import type { PlanRecommendation } from "@/types";
@@ -64,5 +65,33 @@ describe("RecommendationCard (CU20)", () => {
   it("omits the rating when there are no ratings yet", () => {
     render(<RecommendationCard recommendation={make({ averageRating: 0 })} />);
     expect(screen.queryByText("0.0")).toBeNull();
+  });
+
+  it("shows no dismiss button unless a handler is given", () => {
+    render(<RecommendationCard recommendation={make()} />);
+    expect(screen.queryByRole("button", { name: /no me interesa/i })).toBeNull();
+  });
+
+  it("calls onDismiss with the plan id and title, and does not navigate", async () => {
+    const onDismiss = vi.fn();
+    render(<RecommendationCard recommendation={make()} onDismiss={onDismiss} />);
+
+    const button = screen.getByRole("button", {
+      name: /no me interesa: tarde de vinos/i,
+    });
+    await userEvent.click(button);
+
+    expect(onDismiss).toHaveBeenCalledWith(7, "Tarde de vinos");
+    // The click never bubbled to the card's link.
+    expect(screen.getByRole("link")).toHaveAttribute("href", "/plans/7");
+  });
+
+  it("surfaces the CU21 reason chips", () => {
+    render(
+      <RecommendationCard
+        recommendation={{ ...make(), reason: "well_rated_by_you" }}
+      />,
+    );
+    expect(screen.getByText("Como lo que disfrutaste")).toBeInTheDocument();
   });
 });

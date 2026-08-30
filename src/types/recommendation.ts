@@ -182,15 +182,20 @@ export interface FeedbackStatus extends CatalogEntity<FeedbackStatusKey> {
 /* ── CU20 · Show recommendations (US19, PAN 10) ──────────────────── */
 
 /**
- * Why a plan was recommended — the dominant ranking signal (CU20).
+ * Why a plan was recommended — the dominant ranking signal (CU20 · CU21).
  * Matches `PlanRecommendationReason` in `SmartPlan-back`. Drives honest,
  * non-AI copy on each card; never surfaced as a raw value.
+ *
+ * `within_budget` and `well_rated_by_you` come from the user's own
+ * post-experience feedback (CU23) and only appear once that feedback exists.
  */
 export type PlanRecommendationReason =
   | 'history'
   | 'preferences'
   | 'near_you'
-  | 'popular';
+  | 'popular'
+  | 'within_budget'
+  | 'well_rated_by_you';
 
 /**
  * Card-friendly plan projection for the recommendations rail. Same shape as
@@ -217,6 +222,12 @@ export interface PlanRecommendation {
 export interface RecommendationsMeta {
   personalized: boolean;
   locationUsed: boolean;
+  /**
+   * `true` when the user's post-experience feedback (CU23) actually moved the
+   * ranking (CU21). Drives one honest section line and nothing otherwise;
+   * never `true` without feedback.
+   */
+  adjustedFromFeedback: boolean;
 }
 
 /** Response of `GET /plan-recommendations`. Matches the backend envelope. */

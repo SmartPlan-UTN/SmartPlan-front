@@ -19,14 +19,19 @@
    same light behind it as the hero did. */
 .glowTop {
   position: absolute;
-  top: -180px;
+  top: -240px;
   left: 50%;
-  width: min(900px, 96vw);
-  height: 420px;
+  width: min(1040px, 98vw);
+  height: 520px;
   border-radius: 50%;
-  background: radial-gradient(ellipse at center, var(--ember-15), transparent 70%);
+  background: radial-gradient(ellipse at center, var(--ember-15), transparent 68%);
   transform: translateX(-50%);
   pointer-events: none;
+  /* The section clips its overflow, which would slice this glow with a hard
+     edge right at the seam with the section above. Feather it so the cut
+     lands where the glow has already faded to nothing. */
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 70%);
+  mask-image: radial-gradient(ellipse at center, #000 30%, transparent 70%);
 }
 
 .shell {

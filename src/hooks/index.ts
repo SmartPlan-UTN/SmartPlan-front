@@ -35,6 +35,7 @@ export {
   useRecommendations,
   resetRecommendationsCache,
   type RecommendationsStatus,
+  type RecommendationSlot,
   type UseRecommendationsResult,
 } from "./useRecommendations";
 export {
