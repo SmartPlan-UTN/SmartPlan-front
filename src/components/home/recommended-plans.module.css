@@ -1,23 +1,66 @@
 /* ================================================================
-   CU20 "Planes recomendados" — occupies the same Home slot as the
-   illustrative showcase, so it keeps a similar vertical footprint to
-   avoid a big layout jump when the session resolves.
+   CU20/CU21 "Planes recomendados" — occupies the same Home slot as
+   the illustrative showcase, so it keeps a similar vertical footprint
+   to avoid a big layout jump when the session resolves.
+
+   Motion follows the landing vocabulary: transform + opacity only,
+   --ease-out for entrances, --ease-inout for reversible state, nothing
+   overshoots.
    ================================================================ */
 
 .section {
   position: relative;
+  isolation: isolate;
   overflow-x: clip;
-  padding-block: clamp(60px, 9vh, 104px);
+  padding-block: clamp(64px, 9.5vh, 112px);
   background: linear-gradient(
     180deg,
     var(--cream) 0%,
+    color-mix(in srgb, var(--gold) 6%, var(--cream)) 55%,
     color-mix(in srgb, var(--gold) 9%, var(--cream)) 100%
   );
+}
+
+/* ── Ambient warmth behind the rail ────────────────────────────────
+   A single soft light source, kept well inside the section's edges
+   (inset top/bottom) and feathered by a mask, so it can never create
+   a hard seam with the sections above or below. It is the section's
+   whole "look at me" — no border, no badge, no stock imagery. */
+.ambient {
+  position: absolute;
+  z-index: 0;
+  inset: 14% 0 24% 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      58% 68% at 20% 44%,
+      color-mix(in srgb, var(--ember) 13%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      50% 62% at 84% 58%,
+      color-mix(in srgb, var(--gold) 22%, transparent),
+      transparent 74%
+    );
+  -webkit-mask-image: radial-gradient(90% 78% at 50% 46%, #000 34%, transparent 82%);
+  mask-image: radial-gradient(90% 78% at 50% 46%, #000 34%, transparent 82%);
+  animation: ambientDrift 28s var(--ease-inout, ease-in-out) infinite alternate;
+}
+
+@keyframes ambientDrift {
+  from {
+    transform: translate3d(-1.2%, -0.6%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(1.6%, 0.8%, 0) scale(1.03);
+  }
 }
 
 /* ── Header ────────────────────────────────────────────────────── */
 
 .header {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: var(--max-w);
   padding-inline: clamp(20px, 5vw, 48px);
@@ -39,7 +82,7 @@
 }
 
 .subcopy {
-  max-width: 48ch;
+  max-width: 52ch;
   margin: var(--s-3) 0 0;
   color: var(--fg-2);
   font-size: 15px;
@@ -58,13 +101,39 @@
   color: var(--fg-3);
 }
 
+/* The "learned from your experiences" line — earns a warm accent
+   because it is the one honest, specific thing CU21 can say. */
+.feedbackNote {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ember);
+  font-weight: var(--w-label);
+}
+
+.feedbackNote svg {
+  flex: none;
+  animation: notePulse 3.4s var(--ease-inout, ease-in-out) infinite;
+}
+
+@keyframes notePulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+}
+
 /* ── Rail ──────────────────────────────────────────────────────── */
 
 .railViewport {
   position: relative;
-  /* Holds the section height steady across loading → ready → session
-     resolve, so the page below does not jump. */
-  min-height: 340px;
+  z-index: 1;
+  min-height: 360px;
   display: flex;
   align-items: center;
 }
@@ -74,11 +143,12 @@
     clamp(20px, 5vw, 48px),
     calc((100% - var(--max-w)) / 2 + clamp(20px, 5vw, 48px))
   );
+  --rail-gap: clamp(14px, 1.6vw, 22px);
 
   display: flex;
-  gap: clamp(14px, 1.6vw, 22px);
+  gap: var(--rail-gap);
   width: 100%;
-  padding: 6px var(--rail-pad);
+  padding: 10px var(--rail-pad);
   margin: 0;
   overflow-x: auto;
   list-style: none;
@@ -104,6 +174,295 @@
   }
 }
 
+/* ── Skeleton (loading) ────────────────────────────────────────────
+   Real-shaped cards with a travelling sheen — the space reads as
+   "arriving", never as empty or broken. Sheen is transform-only. */
+.skeletonCard {
+  flex: 0 0 clamp(260px, 78vw, 320px);
+  scroll-snap-align: start;
+  list-style: none;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+  box-shadow: 0 2px 10px -6px color-mix(in srgb, var(--char) 40%, transparent);
+  opacity: 0;
+  animation: skeletonIn var(--d-base, 420ms) var(--ease-out, ease) forwards;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+
+@media (min-width: 760px) {
+  .skeletonCard {
+    flex-basis: 300px;
+  }
+}
+
+@keyframes skeletonIn {
+  to {
+    opacity: 1;
+  }
+}
+
+.skeletonMedia,
+.skeletonLine {
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--hairline) 55%, var(--surface-card));
+}
+
+.skeletonMedia::after,
+.skeletonLine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    color-mix(in srgb, var(--white) 55%, transparent) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  animation: skeletonSheen 1.5s var(--ease-inout, ease-in-out) infinite;
+}
+
+.skeletonLine:nth-child(2)::after {
+  animation-delay: 0.15s;
+}
+.skeletonLine:nth-child(3)::after {
+  animation-delay: 0.3s;
+}
+
+@keyframes skeletonSheen {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.skeletonMedia {
+  aspect-ratio: 16 / 10;
+}
+
+.skeletonBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-4);
+}
+
+.skeletonLine {
+  height: 12px;
+  border-radius: var(--r-chip);
+}
+
+.skeletonLine[data-w="80"] {
+  width: 80%;
+}
+.skeletonLine[data-w="55"] {
+  width: 55%;
+}
+.skeletonLine[data-w="40"] {
+  width: 40%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeletonCard {
+    animation: none;
+    opacity: 1;
+  }
+  .skeletonMedia::after,
+  .skeletonLine::after {
+    animation: none;
+    opacity: 0.5;
+    transform: none;
+  }
+}
+
+/* ── Inline states (error · caught up) ─────────────────────────────
+   Never `return null`: a vanished section is more confusing than a
+   quiet line that owns the space. */
+.inlineState {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: var(--max-w);
+  padding-inline: clamp(20px, 5vw, 48px);
+  margin: 0 auto;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--s-3);
+}
+
+.inlineTitle {
+  margin: 0;
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: var(--w-display);
+  letter-spacing: var(--track-h1);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.inlineBody {
+  max-width: 46ch;
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.inlineRetry {
+  align-self: flex-start;
+  padding: 9px 18px;
+  border: 1px solid color-mix(in srgb, var(--ember) 32%, var(--hairline));
+  border-radius: var(--r-btn);
+  background: var(--surface-card);
+  color: var(--ember);
+  font-size: 14px;
+  font-weight: var(--w-heading);
+  cursor: pointer;
+  transition:
+    border-color var(--d-fast, 180ms) var(--ease-out, ease),
+    background var(--d-fast, 180ms) var(--ease-out, ease),
+    transform var(--d-fast, 180ms) var(--ease-out, ease);
+}
+
+.inlineRetry:hover {
+  border-color: var(--ember);
+  background: color-mix(in srgb, var(--ember) 10%, var(--surface-card));
+  transform: translateY(-1px);
+}
+
+.inlineRetry:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ember);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inlineRetry:hover {
+    transform: none;
+  }
+}
+
+/* ── Dismissed slot ("Deshacer" window, CU21) ─────────────────────
+   Holds the card's width while "Deshacer" is offered, then collapses
+   once (the hook unmounts it right after). This is the section's one
+   deliberate layout transition — a single element, a single time. */
+.dismissedSlot {
+  --collapse-d: 460ms;
+  flex: 0 0 clamp(260px, 78vw, 320px);
+  scroll-snap-align: start;
+  list-style: none;
+  animation: dismissedIn var(--d-base, 420ms) var(--ease-out, ease) both;
+  transition:
+    flex-basis var(--collapse-d) var(--ease-inout, ease),
+    margin-inline var(--collapse-d) var(--ease-inout, ease),
+    opacity var(--collapse-d) var(--ease-inout, ease);
+}
+
+@media (min-width: 760px) {
+  .dismissedSlot {
+    flex-basis: 300px;
+  }
+}
+
+.dismissedSlot[data-phase="collapsing"] {
+  flex-basis: 0;
+  margin-inline: calc(-0.5 * var(--rail-gap, 18px));
+  opacity: 0;
+}
+
+@keyframes dismissedIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.dismissedInner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-3);
+  height: 100%;
+  min-height: 320px;
+  min-width: 0;
+  padding: var(--s-4);
+  overflow: hidden;
+  border: 1px dashed color-mix(in srgb, var(--ember) 26%, var(--hairline));
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--gold) 8%, var(--surface-card));
+}
+
+.dismissedText {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg-2);
+  font-size: 14px;
+  font-weight: var(--w-label);
+  white-space: nowrap;
+}
+
+.dismissedUndo {
+  padding: 9px 18px;
+  border: 1px solid color-mix(in srgb, var(--ember) 30%, var(--hairline));
+  border-radius: var(--r-btn);
+  background: var(--surface-card);
+  color: var(--ember);
+  font-size: 13px;
+  font-weight: var(--w-heading);
+  cursor: pointer;
+  transition:
+    border-color var(--d-fast, 180ms) var(--ease-out, ease),
+    background var(--d-fast, 180ms) var(--ease-out, ease),
+    transform var(--d-fast, 180ms) var(--ease-out, ease);
+}
+
+.dismissedUndo:hover {
+  border-color: var(--ember);
+  background: color-mix(in srgb, var(--ember) 10%, var(--surface-card));
+  transform: translateY(-1px);
+}
+
+.dismissedUndo:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ember);
+}
+
+/* Thin bar draining left-to-right — the undo window, made visible.
+   transform only. */
+.dismissedProgress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: color-mix(in srgb, var(--ember) 55%, transparent);
+  transform-origin: left center;
+  animation: dismissedDrain 4600ms linear forwards;
+}
+
+@keyframes dismissedDrain {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.dismissedSlot[data-phase="collapsing"] .dismissedProgress {
+  display: none;
+}
+
 /* ── Scroll arrows (pointer, wide viewports only) ──────────────── */
 
 .arrow {
@@ -113,8 +472,8 @@
   display: none;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border: 1px solid var(--hairline);
   border-radius: var(--r-chip);
   background: var(--surface-card);
@@ -125,7 +484,8 @@
   transition:
     opacity 150ms ease,
     border-color 150ms ease,
-    color 150ms ease;
+    color 150ms ease,
+    transform 150ms var(--ease-out, ease);
 }
 
 .arrow[aria-hidden="true"] {
@@ -144,6 +504,7 @@
 .arrow:hover {
   border-color: var(--ember);
   color: var(--ember);
+  transform: translateY(-50%) scale(1.06);
 }
 
 .arrow:focus-visible {
@@ -183,16 +544,13 @@
   animation-delay: 0.44s;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .loadingDot {
-    animation: none;
-    opacity: 0.5;
-  }
-}
+/* `pulseDot` is the shared dot animation from `tokens.css`. */
 
 /* ── Empty / onboarding ────────────────────────────────────────── */
 
 .empty {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 520px;
   min-height: 240px;
@@ -247,7 +605,8 @@
   text-decoration: none;
   transition:
     background 150ms ease,
-    border-color 150ms ease;
+    border-color 150ms ease,
+    transform 150ms var(--ease-out, ease);
 }
 
 .emptyPrimary {
@@ -258,6 +617,7 @@
 
 .emptyPrimary:hover {
   background: color-mix(in srgb, var(--ember) 88%, var(--char));
+  transform: translateY(-1px);
 }
 
 .emptySecondary {
@@ -286,5 +646,27 @@
   .emptyPrimary,
   .emptySecondary {
     justify-content: center;
+  }
+}
+
+/* ── Reduced motion ────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient,
+  .feedbackNote svg,
+  .loadingDot {
+    animation: none;
+  }
+  .dismissedSlot {
+    animation: none;
+    transition: none;
+  }
+  .dismissedProgress {
+    display: none;
+  }
+  .arrow:hover,
+  .emptyPrimary:hover,
+  .dismissedUndo:hover {
+    transform: none;
   }
 }

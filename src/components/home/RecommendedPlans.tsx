@@ -1,14 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import Link from "next/link";
 
 import { Icon } from "@/components/ui";
+import { Reveal } from "@/components/landing/Reveal";
 import { RECOMMENDATIONS } from "@/components/landing/landingContent";
-import { useRecommendations } from "@/hooks";
+import { useRecommendations, type RecommendationSlot } from "@/hooks";
 import { ROUTES } from "@/lib/routes";
-import type { PlanRecommendation, RecommendationsMeta } from "@/types";
+import type { RecommendationsMeta } from "@/types";
 
+import { DismissedSlot } from "./DismissedSlot";
 import { RecommendationCard } from "./RecommendationCard";
 import styles from "./recommended-plans.module.css";
 
@@ -18,33 +26,54 @@ export interface RecommendedPlansProps {
 }
 
 /**
- * The Home's "Planes recomendados" section (CU20 · US19 · PAN 10).
+ * The Home's "Planes recomendados" section (CU20 · US19 · PAN 10 · CU21).
  *
  * Rendered in place of the illustrative `PlanShowcase` for a signed-in
- * visitor. It never blocks the hero:
+ * visitor. It never blocks the hero and it is never silently blank — every
+ * state says something:
  *
- * - `loading` — the header stays, the rail area holds its height with a
- *   discreet three-dot pulse. No skeleton, no layout jump.
- * - `error`   — the whole section disappears (`return null`); the rest of
- *   the Home is untouched.
- * - `empty`   — a warm onboarding card, not a grey "no results".
- * - `ready`   — a horizontal rail of real, navigable plans.
+ * - `loading` — skeleton cards fill the rail with a shimmer + a caption, so
+ *   the space reads as "coming", not "broken".
+ * - `error`   — a quiet inline line with "Reintentar". The section stays.
+ * - `empty`   — a warm onboarding card (no history yet).
+ * - caught up — signed-in, has history, nothing left right now: a short note.
+ * - `ready`   — a rail of real plans that settle in with a staggered reveal,
+ *   each with a discreet "no me interesa" (CU21).
  */
 export function RecommendedPlans({ onStartPlan }: RecommendedPlansProps) {
-  const { status, items, meta } = useRecommendations();
+  const { status, slots, meta, dismiss, undo, retry } = useRecommendations();
 
-  if (status === "error") return null;
+  const body = (() => {
+    if (status === "error") return <InlineError onRetry={retry} />;
+    if (status === "empty") return <EmptyState onStartPlan={onStartPlan} />;
+    if (status === "loading") {
+      return (
+        <>
+          <Reveal className={styles.header}>
+            <Header meta={null} loading />
+          </Reveal>
+          <SkeletonRail />
+        </>
+      );
+    }
+    return (
+      <>
+        <Reveal className={styles.header}>
+          <Header meta={meta} loading={false} />
+        </Reveal>
+        {slots.length === 0 ? (
+          <CaughtUp onStartPlan={onStartPlan} />
+        ) : (
+          <Rail slots={slots} onDismiss={dismiss} onUndo={undo} />
+        )}
+      </>
+    );
+  })();
 
   return (
     <section className={styles.section} aria-labelledby="recommended-title">
-      {status === "empty" ? (
-        <EmptyState onStartPlan={onStartPlan} />
-      ) : (
-        <>
-          <Header meta={meta} loading={status === "loading"} />
-          {status === "loading" ? <LoadingRail /> : <Rail items={items} />}
-        </>
-      )}
+      <div className={styles.ambient} aria-hidden="true" />
+      {body}
     </section>
   );
 }
@@ -59,7 +88,7 @@ function Header({
   const personalized = meta?.personalized ?? true;
 
   return (
-    <div className={styles.header}>
+    <>
       <p className={`sp-label ${styles.eyebrow}`}>
         {personalized
           ? RECOMMENDATIONS.eyebrow
@@ -70,8 +99,12 @@ function Header({
           ? RECOMMENDATIONS.title
           : RECOMMENDATIONS.titlePopular}
       </h2>
-      {!loading && meta ? <Subcopy meta={meta} /> : null}
-    </div>
+      {loading ? (
+        <p className={styles.subcopy}>{RECOMMENDATIONS.loading}</p>
+      ) : meta ? (
+        <Subcopy meta={meta} />
+      ) : null}
+    </>
   );
 }
 
@@ -90,7 +123,14 @@ function Subcopy({ meta }: { meta: RecommendationsMeta }) {
 
   return (
     <p className={styles.subcopy}>
-      {RECOMMENDATIONS.subcopy.full}
+      {meta.adjustedFromFeedback ? (
+        <span className={styles.feedbackNote}>
+          <Icon name="sparkles" size={14} aria-hidden="true" />
+          {RECOMMENDATIONS.adjustedFromFeedback}
+        </span>
+      ) : (
+        RECOMMENDATIONS.subcopy.full
+      )}
       {!meta.locationUsed ? (
         <>
           {" "}
@@ -103,21 +143,45 @@ function Subcopy({ meta }: { meta: RecommendationsMeta }) {
   );
 }
 
-function LoadingRail() {
+const SKELETON_KEYS = ["a", "b", "c", "d"] as const;
+
+function SkeletonRail() {
   return (
     <div className={styles.railViewport} aria-busy="true">
-      <div className={styles.loading} aria-hidden="true">
-        <span className={styles.loadingDot} />
-        <span className={styles.loadingDot} />
-        <span className={styles.loadingDot} />
-      </div>
-      <span className="sp-sr-only">Buscando planes para vos</span>
+      <ul className={styles.rail} aria-hidden="true">
+        {SKELETON_KEYS.map((key, index) => (
+          <li
+            key={key}
+            className={styles.skeletonCard}
+            style={{ "--i": index } as CSSProperties}
+          >
+            <div className={styles.skeletonMedia} />
+            <div className={styles.skeletonBody}>
+              <span className={styles.skeletonLine} data-w="80" />
+              <span className={styles.skeletonLine} data-w="55" />
+              <span className={styles.skeletonLine} data-w="40" />
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
 
-function Rail({ items }: { items: PlanRecommendation[] }) {
+/** Milliseconds between each card's entrance. */
+const STAGGER_MS = 85;
+
+function Rail({
+  slots,
+  onDismiss,
+  onUndo,
+}: {
+  slots: RecommendationSlot[];
+  onDismiss: (planId: number, title: string) => void;
+  onUndo: (planId: number) => void;
+}) {
   const railRef = useRef<HTMLUListElement>(null);
+  const revealedRef = useRef(false);
   const [overflow, setOverflow] = useState({ left: false, right: false });
 
   const measure = useCallback(() => {
@@ -139,7 +203,48 @@ function Rail({ items }: { items: PlanRecommendation[] }) {
       el.removeEventListener("scroll", measure);
       window.removeEventListener("resize", measure);
     };
-  }, [measure, items.length]);
+  }, [measure, slots.length]);
+
+  // Staggered entrance — armed by JS, never CSS (a page with no observer
+  // just shows the cards). Runs once; dismiss/undo never re-arms.
+  useEffect(() => {
+    const el = railRef.current;
+    if (!el || revealedRef.current) return;
+
+    const cards = Array.from(
+      el.querySelectorAll<HTMLElement>("[data-card]"),
+    );
+    if (cards.length === 0) return;
+
+    const reduced = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    if (reduced || typeof IntersectionObserver === "undefined") {
+      revealedRef.current = true;
+      return;
+    }
+
+    cards.forEach((card, index) => {
+      card.classList.add("sp-reveal-armed");
+      card.style.setProperty("--reveal-delay", `${index * STAGGER_MS}ms`);
+    });
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        revealedRef.current = true;
+        cards.forEach((card) => {
+          card.classList.remove("sp-reveal-armed");
+          card.classList.add("sp-reveal-in");
+        });
+        observer.disconnect();
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -6% 0px" },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [slots.length]);
 
   const scrollBy = (direction: 1 | -1) => {
     const el = railRef.current;
@@ -172,12 +277,23 @@ function Rail({ items }: { items: PlanRecommendation[] }) {
         tabIndex={0}
         aria-label="Planes recomendados"
       >
-        {items.map((recommendation) => (
-          <RecommendationCard
-            key={recommendation.plan.id}
-            recommendation={recommendation}
-          />
-        ))}
+        {slots.map((slot) =>
+          slot.type === "card" ? (
+            <RecommendationCard
+              key={slot.recommendation.plan.id}
+              recommendation={slot.recommendation}
+              onDismiss={onDismiss}
+            />
+          ) : (
+            <DismissedSlot
+              key={slot.planId}
+              planId={slot.planId}
+              title={slot.title}
+              phase={slot.phase}
+              onUndo={onUndo}
+            />
+          ),
+        )}
       </ul>
 
       <button
@@ -194,9 +310,46 @@ function Rail({ items }: { items: PlanRecommendation[] }) {
   );
 }
 
+function InlineError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <Reveal className={styles.inlineState}>
+      <p className={`sp-label ${styles.eyebrow}`}>{RECOMMENDATIONS.eyebrow}</p>
+      <h2 id="recommended-title" className={styles.inlineTitle}>
+        {RECOMMENDATIONS.error.title}
+      </h2>
+      <button
+        type="button"
+        className={styles.inlineRetry}
+        onClick={onRetry}
+      >
+        {RECOMMENDATIONS.error.retry}
+      </button>
+    </Reveal>
+  );
+}
+
+function CaughtUp({ onStartPlan }: { onStartPlan: () => void }) {
+  return (
+    <Reveal className={styles.inlineState}>
+      <p className={`sp-label ${styles.eyebrow}`}>{RECOMMENDATIONS.eyebrow}</p>
+      <h2 id="recommended-title" className={styles.inlineTitle}>
+        {RECOMMENDATIONS.caughtUp.title}
+      </h2>
+      <p className={styles.inlineBody}>{RECOMMENDATIONS.caughtUp.body}</p>
+      <button
+        type="button"
+        className={styles.emptyPrimary}
+        onClick={onStartPlan}
+      >
+        {RECOMMENDATIONS.caughtUp.action}
+      </button>
+    </Reveal>
+  );
+}
+
 function EmptyState({ onStartPlan }: { onStartPlan: () => void }) {
   return (
-    <div className={styles.empty}>
+    <Reveal className={styles.empty}>
       <p className={`sp-label ${styles.eyebrow}`}>
         {RECOMMENDATIONS.empty.eyebrow}
       </p>
@@ -216,6 +369,6 @@ function EmptyState({ onStartPlan }: { onStartPlan: () => void }) {
           {RECOMMENDATIONS.empty.secondary}
         </Link>
       </div>
-    </div>
+    </Reveal>
   );
 }

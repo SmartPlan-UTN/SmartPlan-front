@@ -1,3 +1,4 @@
+import type { MouseEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -11,6 +12,11 @@ import styles from "./recommendation-card.module.css";
 
 export interface RecommendationCardProps {
   recommendation: PlanRecommendation;
+  /**
+   * Discreet "no me interesa" (CU21). When given, a small button sits over the
+   * media; activating it never navigates. Omitted → no button.
+   */
+  onDismiss?: (planId: number, title: string) => void;
 }
 
 /**
@@ -26,12 +32,21 @@ export interface RecommendationCardProps {
  * plus the activity sequence as the graphic). No stock photos, nothing that
  * pretends to be the real place.
  */
-export function RecommendationCard({ recommendation }: RecommendationCardProps) {
+export function RecommendationCard({
+  recommendation,
+  onDismiss,
+}: RecommendationCardProps) {
   const { plan, reason } = recommendation;
   const sequence = plan.activityNames.join(" → ");
 
+  const handleDismiss = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onDismiss?.(plan.id, plan.title);
+  };
+
   return (
-    <li className={styles.card}>
+    <li className={styles.card} data-card>
       <Link href={planDetailRoute(plan.id)} className={styles.link}>
         <CardMedia
           imageUrl={plan.imageUrl}
@@ -76,6 +91,22 @@ export function RecommendationCard({ recommendation }: RecommendationCardProps) 
           </div>
         </div>
       </Link>
+
+      {onDismiss ? (
+        <div className={styles.dismissWrap}>
+          <button
+            type="button"
+            className={styles.dismiss}
+            onClick={handleDismiss}
+            aria-label={`${RECOMMENDATIONS.dismiss.action}: ${plan.title}`}
+          >
+            <Icon name="x" size={15} aria-hidden="true" />
+          </button>
+          <span className={styles.dismissLabel} aria-hidden="true">
+            {RECOMMENDATIONS.dismiss.action}
+          </span>
+        </div>
+      ) : null}
     </li>
   );
 }
@@ -100,6 +131,7 @@ function CardMedia({
           className={styles.mediaPhoto}
           loading="lazy"
         />
+        <span className={styles.sheen} aria-hidden="true" />
       </div>
     );
   }
@@ -109,13 +141,13 @@ function CardMedia({
       className={styles.media}
       style={{ background: gradientFor(planId) }}
     >
-      <Icon
-        name="route"
-        size={28}
-        className={styles.mediaGlyph}
-        aria-hidden="true"
-      />
-      {sequence ? <p className={styles.mediaSequence}>{sequence}</p> : null}
+      {sequence ? (
+        <p className={styles.mediaSequence}>
+          <Icon name="route" size={14} aria-hidden="true" />
+          <span className={styles.mediaSequenceText}>{sequence}</span>
+        </p>
+      ) : null}
+      <span className={styles.sheen} aria-hidden="true" />
     </div>
   );
 }

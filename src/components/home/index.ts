@@ -31,6 +31,7 @@ export {
   RecommendationCard,
   type RecommendationCardProps,
 } from "./RecommendationCard";
+export { DismissedSlot, type DismissedSlotProps } from "./DismissedSlot";
 export {
   RecommendedPlans,
   type RecommendedPlansProps,
