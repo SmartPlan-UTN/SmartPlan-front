@@ -70,11 +70,21 @@
   transform-origin: left;
 }
 
+.closingCta {
+  transition: transform var(--d-micro) var(--ease-out);
+}
+
+.closingCta:active {
+  transform: scale(0.98);
+}
+
 .closingCta:focus-visible {
   outline: 2px solid var(--ember);
   outline-offset: 4px;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .closingCta,
   .closingCta::after { transition: none; }
+  .closingCta:active { transform: none; }
 }
