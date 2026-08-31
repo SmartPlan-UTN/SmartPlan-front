@@ -28,46 +28,53 @@ import styles from "./gallery.module.css";
  * rule is that composition outranks the catalogue of effects.
  */
 
+/**
+ * Each tile arrives differently — one from the side, one uncovered by a
+ * mask, one growing in from small — and the shared transition (below,
+ * on the element) carries a per-tile delay so the section deals itself
+ * out rather than popping in as one block.
+ */
 const RECIPES: Record<string, Variants> = {
   cordillera: {
     hidden: { opacity: 0, x: 44 },
-    shown: { opacity: 1, x: 0, transition: { duration: 0.6, ease: EASE_OUT } },
+    shown: { opacity: 1, x: 0 },
   },
   noche: {
     hidden: { opacity: 0, clipPath: "inset(0 0 100% 0)" },
-    shown: {
-      opacity: 1,
-      clipPath: "inset(0 0 0% 0)",
-      transition: { duration: 0.7, ease: EASE_OUT },
-    },
+    shown: { opacity: 1, clipPath: "inset(0 0 0% 0)" },
   },
   cafe: {
     hidden: { opacity: 0, scale: 0.96 },
-    shown: { opacity: 1, scale: 1, transition: { duration: 0.55, ease: EASE_OUT } },
+    shown: { opacity: 1, scale: 1 },
   },
   informal: {
     hidden: { opacity: 0, y: 34 },
-    shown: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE_OUT } },
+    shown: { opacity: 1, y: 0 },
   },
   vinos: {
     hidden: { opacity: 0, y: 40, rotate: 1.5 },
-    shown: {
-      opacity: 1,
-      y: 0,
-      rotate: 0,
-      transition: { duration: 0.65, ease: EASE_OUT },
-    },
+    shown: { opacity: 1, y: 0, rotate: 0 },
   },
 };
 
 const DEFAULT_RECIPE: Variants = {
   hidden: { opacity: 0, y: 28, scale: 0.97 },
-  shown: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.6, ease: EASE_OUT } },
+  shown: { opacity: 1, y: 0, scale: 1 },
 };
 
 const BODY_VARIANTS: Variants = {
   hidden: { opacity: 0, y: 12 },
-  shown: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE_OUT, delay: 0.12 } },
+  shown: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE_OUT, delay: 0.16 } },
+};
+
+/** Reading order of the grid, so the deal runs top-left to bottom-right. */
+const TILE_ORDER: Record<string, number> = {
+  mesa: 0,
+  cordillera: 1,
+  noche: 2,
+  cafe: 3,
+  informal: 4,
+  vinos: 5,
 };
 
 export function InspirationGallery() {
@@ -104,6 +111,7 @@ function Tile({ tile, active }: { tile: InspirationTile; active: boolean }) {
 
   const image = MEDIA[tile.media];
   const variants = active ? RECIPES[tile.id] ?? DEFAULT_RECIPE : undefined;
+  const order = TILE_ORDER[tile.id] ?? 0;
 
   return (
     <motion.li
@@ -113,6 +121,7 @@ function Tile({ tile, active }: { tile: InspirationTile; active: boolean }) {
       initial={variants ? "hidden" : false}
       whileInView={variants ? "shown" : undefined}
       viewport={viewportOnce}
+      transition={{ duration: 0.62, ease: EASE_OUT, delay: order * 0.07 }}
     >
       <div className={styles.tileMedia}>
         <Image
@@ -152,12 +161,16 @@ function FeatureTile({ tile }: { tile: InspirationTile }) {
 
   const { scrollYProgress } = useScroll({
     target: ref,
-    offset: ["start end", "start center"],
+    offset: ["start end", "center 62%"],
   });
 
-  const scale = useTransform(scrollYProgress, [0, 1], [0.86, 1]);
-  const y = useTransform(scrollYProgress, [0, 1], [64, 0]);
-  const inset = useTransform(scrollYProgress, [0, 1], [38, 0]);
+  // Born from below: it starts well down the viewport, small and masked
+  // almost shut, and reaches full size and a clean frame only once it is
+  // near centred — the hand-off from the emptied hero.
+  const scale = useTransform(scrollYProgress, [0, 1], [0.8, 1]);
+  const y = useTransform(scrollYProgress, [0, 1], [128, 0]);
+  const opacity = useTransform(scrollYProgress, [0, 0.15, 1], [0, 1, 1]);
+  const inset = useTransform(scrollYProgress, [0, 1], [52, 0]);
   const clipPath = useTransform(inset, (v) => `inset(${v}% round 14px)`);
 
   return (
@@ -165,7 +178,7 @@ function FeatureTile({ tile }: { tile: InspirationTile }) {
       ref={ref}
       className={styles.tile}
       data-id={tile.id}
-      style={{ scale, y, clipPath }}
+      style={{ scale, y, opacity, clipPath }}
     >
       <div className={styles.tileMedia}>
         <Image

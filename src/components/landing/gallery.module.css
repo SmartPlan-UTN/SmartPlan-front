@@ -1,7 +1,8 @@
-/* Pulled up over the end of the hero so the first photograph rises into
-   the space the objects vacate — the two scenes overlap for a moment
-   rather than butting against each other. */
-.section { position: relative; z-index: 4; margin-top: clamp(-150px, -13vh, -84px); overflow-x: clip; padding-block: clamp(96px, 13vh, 150px) clamp(72px, 10vh, 126px); background: linear-gradient(180deg, transparent 0%, var(--cream) clamp(60px, 9vh, 120px)); }
+/* The first photograph rises into the space the hero's objects vacated —
+   the `.handoff` spacer above provides the empty beat, so the gallery
+   starts from its own top edge and the feature tile is scrubbed up from
+   below (see `FeatureTile`). */
+.section { position: relative; z-index: 4; overflow-x: clip; padding-block: clamp(40px, 6vh, 72px) clamp(72px, 10vh, 126px); background: var(--cream); }
 .shell, .gridWrap { width: 100%; max-width: 1320px; padding-inline: clamp(20px, 5vw, 56px); margin-inline: auto; }
 .header { max-width: 720px; margin-bottom: clamp(40px, 6vh, 72px); }
 .title { max-width: 15ch; margin: 0; font-size: clamp(34px, 5vw, 64px); font-weight: var(--w-display); letter-spacing: -.035em; line-height: .96; text-wrap: balance; }

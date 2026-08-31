@@ -4,6 +4,22 @@
   min-height: clamp(420px, 60vh, 560px);
 }
 
+/* The hero → gallery hand-off. The hero's own copy and objects have
+   cleared by the time this scrolls through; the gallery's first
+   photograph has not yet risen. The gradient carries the hero's warm
+   bottom edge down into the gallery's cream so the seam is a colour
+   move, not a line. */
+.handoff {
+  height: clamp(220px, 34vh, 360px);
+  background: linear-gradient(180deg, #efe0cf 0%, var(--cream) 100%);
+}
+
+@media (max-width: 620px) {
+  .handoff {
+    height: clamp(120px, 20vh, 200px);
+  }
+}
+
 /* The page's quiet exit: one line and a text button back to the hero.
    Deliberately not a second search field. */
 .closing {

@@ -136,6 +136,10 @@ export function LandingScreen() {
           running result would bury it. */}
       {planning.phase === "idle" ? (
         <>
+          {/* The beat of near-empty space between the hero clearing and
+              the first photograph rising — the pause that makes the
+              gallery read as *arriving* rather than as the next section. */}
+          <div className={styles.handoff} aria-hidden="true" />
           <InspirationGallery />
           <ImmersiveStory />
           <HowItWorks />
