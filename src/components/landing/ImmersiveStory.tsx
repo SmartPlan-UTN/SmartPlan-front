@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import Image from "next/image";
 import {
   motion,
   useScroll,
@@ -13,6 +14,7 @@ import { usePrefersReducedMotion, useIsClient } from "@/lib/motion";
 import { STORY } from "./landingContent";
 import {
   CLUSTER_CENTER,
+  DEPTH_Z,
   ROUTE_NODES,
   STORY_TOKENS,
   type StoryToken,
@@ -60,8 +62,8 @@ export function ImmersiveStory() {
 
 /* ── Scroll-scrubbed scene (desktop, motion allowed) ─────────────────── */
 
-/** Scene box in px, measured once (and on resize) so token choreography
- * can run on `transform` alone instead of animating `left`/`top`. */
+/** Scene box in px, measured once (and on resize) so paper choreography
+ * runs on `transform` alone instead of animating `left`/`top`. */
 function useSceneBox(ref: React.RefObject<HTMLDivElement | null>) {
   const [box, setBox] = useState({ w: 0, h: 0 });
   useEffect(() => {
@@ -82,17 +84,58 @@ function useSceneBox(ref: React.RefObject<HTMLDivElement | null>) {
   return box;
 }
 
+/** For each kept scrap, its slot within the cluster's stack. */
+function useStackSlots() {
+  return useMemo(() => {
+    const counters: Record<string, number> = {};
+    const totals: Record<string, number> = {};
+    for (const t of STORY_TOKENS) {
+      if (t.cluster === "discarded") continue;
+      totals[t.cluster] = (totals[t.cluster] ?? 0) + 1;
+    }
+    const slot: Record<string, { i: number; n: number }> = {};
+    for (const t of STORY_TOKENS) {
+      if (t.cluster === "discarded") continue;
+      const i = counters[t.cluster] ?? 0;
+      counters[t.cluster] = i + 1;
+      slot[t.label] = { i, n: totals[t.cluster] };
+    }
+    return slot;
+  }, []);
+}
+
 function ScrubStory() {
   const wrap = useRef<HTMLDivElement>(null);
   const scene = useRef<HTMLDivElement>(null);
   const box = useSceneBox(scene);
+  const stack = useStackSlots();
   const { scrollYProgress } = useScroll({
     target: wrap,
     offset: ["start start", "end end"],
   });
 
-  const pathLength = useTransform(scrollYProgress, [0.52, 0.84], [0, 1]);
-  const copyOpacity = useTransform(scrollYProgress, [0, 0.12, 0.5, 0.62], [1, 1, 1, 0.35]);
+  // The camera tilts from a raked table view almost flat as the piles
+  // resolve into a route.
+  const camRotate = useTransform(scrollYProgress, [0.52, 0.74], [25, 6]);
+  const camTransform = useTransform(camRotate, (deg) => `rotateX(${deg}deg)`);
+  // A single pass of light across the table while smartplan "reads" it.
+  const sweepX = useTransform(scrollYProgress, [0.14, 0.3], ["-30%", "130%"]);
+  const sweepOpacity = useTransform(
+    scrollYProgress,
+    [0.13, 0.16, 0.28, 0.31],
+    [0, 1, 1, 0],
+  );
+
+  const pathLength = useTransform(scrollYProgress, [0.72, 0.9], [0, 1]);
+  const copyOpacity = useTransform(
+    scrollYProgress,
+    [0, 0.12, 0.42, 0.56],
+    [1, 1, 1, 0.32],
+  );
+  const stampStyle = {
+    opacity: useTransform(scrollYProgress, [0.86, 0.93], [0, 1]),
+    scale: useTransform(scrollYProgress, [0.86, 0.93], [0.9, 1]),
+  };
 
   return (
     <div ref={wrap} className={styles.wrap}>
@@ -106,44 +149,65 @@ function ScrubStory() {
             <p className={styles.lead}>{STORY.lead}</p>
           </motion.div>
 
-          <div
-            ref={scene}
-            className={styles.scene}
-            aria-label="De intenciones dispersas a un recorrido ordenado"
-          >
-            <svg
-              className={styles.route}
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
-              aria-hidden="true"
+          <div className={styles.stage}>
+            <motion.div
+              ref={scene}
+              className={styles.table}
+              style={{ transform: camTransform }}
+              aria-label="De intenciones dispersas a un recorrido ordenado"
             >
-              <motion.path
-                d={`M ${ROUTE_NODES[0].x} 50 L ${ROUTE_NODES[2].x} 50`}
-                fill="none"
-                stroke="var(--ember)"
-                strokeWidth="0.5"
-                strokeLinecap="round"
-                style={{ pathLength }}
+              <div className={styles.tableSurface} aria-hidden="true" />
+              <motion.div
+                className={styles.sweep}
+                aria-hidden="true"
+                style={{ x: sweepX, opacity: sweepOpacity }}
               />
-            </svg>
 
-            {STORY_TOKENS.map((token) => (
-              <Token
-                key={token.label}
-                token={token}
-                progress={scrollYProgress}
-                box={box}
-              />
-            ))}
+              <svg
+                className={styles.route}
+                viewBox="0 0 100 100"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+              >
+                <motion.path
+                  d={`M ${ROUTE_NODES[0].x} 52 L ${ROUTE_NODES[2].x} 52`}
+                  fill="none"
+                  stroke="var(--ember)"
+                  strokeWidth="0.5"
+                  strokeLinecap="round"
+                  style={{ pathLength }}
+                />
+              </svg>
 
-            {STORY.stops.map((stop, i) => (
-              <Node
-                key={stop.time}
-                stop={stop}
-                index={i}
-                progress={scrollYProgress}
-              />
-            ))}
+              {STORY_TOKENS.map((token) => (
+                <Scrap
+                  key={token.label}
+                  token={token}
+                  progress={scrollYProgress}
+                  box={box}
+                  slot={stack[token.label]}
+                />
+              ))}
+
+              {STORY.stops.map((stop, i) => (
+                <Node
+                  key={stop.time}
+                  stop={stop}
+                  index={i}
+                  progress={scrollYProgress}
+                />
+              ))}
+
+              <motion.div className={styles.stamp} aria-hidden="true" style={stampStyle}>
+                <Image
+                  src="/brand/logo-mark-white.png"
+                  alt=""
+                  width={44}
+                  height={42}
+                  sizes="44px"
+                />
+              </motion.div>
+            </motion.div>
           </div>
 
           <ol className={styles.phases} aria-hidden="true">
@@ -160,60 +224,73 @@ function ScrubStory() {
   );
 }
 
-function Token({
+function Scrap({
   token,
   progress,
   box,
+  slot,
 }: {
   token: StoryToken;
   progress: MotionValue<number>;
   box: { w: number; h: number };
+  slot?: { i: number; n: number };
 }) {
   const discarded = token.cluster === "discarded";
+
+  // Where the scrap ends up: its cluster's stack point, then the route
+  // node. Kept scraps fan out a few px inside the stack so it reads as a
+  // pile, not one card.
+  const fan = slot ? slot.i - (slot.n - 1) / 2 : 0;
   const center =
     token.cluster === "discarded"
-      ? { x: token.home.x < 50 ? -30 : 130, y: token.home.y + 12 }
-      : CLUSTER_CENTER[token.cluster];
+      ? { x: token.home.x < 50 ? -28 : 128, y: token.home.y + 10 }
+      : {
+          x: CLUSTER_CENTER[token.cluster].x + fan * 2.4,
+          y: CLUSTER_CENTER[token.cluster].y + fan * 1.6,
+        };
   const node =
     token.cluster === "discarded"
-      ? { x: token.home.x < 50 ? -30 : 130, y: token.home.y + 12 }
+      ? center
       : ROUTE_NODES[NODE_INDEX[token.cluster]];
 
-  // The anchor is placed statically at `home` (% of the scene box). The
-  // scroll choreography then rides on `transform` only: `x`/`y` are the
-  // pixel delta from home → cluster centre → route node, so no frame ever
-  // touches layout.
   const dx = (a: number) => ((a - token.home.x) / 100) * box.w;
   const dy = (a: number) => ((a - token.home.y) / 100) * box.h;
 
   const x = useTransform(
     progress,
-    [0, 0.25, 0.55, 0.8],
-    [0, 0, dx(center.x), dx(node.x)],
+    [0, 0.26, 0.42, 0.6, 0.72],
+    [0, 0, discarded ? dx(center.x) : 0, dx(center.x), dx(node.x)],
   );
   const y = useTransform(
     progress,
-    [0, 0.25, 0.55, 0.8],
-    [0, 0, dy(center.y), dy(node.y)],
+    [0, 0.26, 0.42, 0.6, 0.72],
+    [0, 0, discarded ? dy(center.y) : 0, dy(center.y), dy(node.y)],
   );
-  const rotate = useTransform(progress, [0, 0.55], [token.home.rot, 0]);
-  const scale = useTransform(progress, [0.55, 0.82], [1, 0.82]);
+  // Depth off the table plane — pulled back to flat as the camera drops.
+  const z = useTransform(
+    progress,
+    discarded ? [0.28, 0.42] : [0.52, 0.7],
+    discarded ? [DEPTH_Z[token.depth], 220] : [DEPTH_Z[token.depth], 0],
+  );
+  const rotate = useTransform(progress, [0, 0.58], [token.home.rot, 0]);
+  const scale = useTransform(progress, [0.58, 0.74], [1, 0.86]);
   const opacity = useTransform(
     progress,
-    discarded ? [0.28, 0.5] : [0, 0.04, 0.78, 0.94],
-    discarded ? [1, 0.12] : [0, 1, 1, 0],
+    discarded ? [0.28, 0.42] : [0, 0.03, 0.7, 0.84],
+    discarded ? [1, 0] : [0, 1, 1, 0],
   );
-  const saturate = useTransform(progress, [0.28, 0.5], [1, 0]);
+  const saturate = useTransform(progress, [0.28, 0.42], [1, 0]);
   const filter = useTransform(saturate, (v) => `saturate(${discarded ? v : 1})`);
 
   return (
     <motion.div
-      className={styles.tokenAnchor}
-      style={{ left: `${token.home.x}%`, top: `${token.home.y}%`, x, y }}
+      className={styles.scrapAnchor}
+      style={{ left: `${token.home.x}%`, top: `${token.home.y}%`, x, y, z }}
     >
       <motion.span
-        className={styles.token}
+        className={styles.scrap}
         data-discarded={discarded ? "true" : undefined}
+        data-drift={!discarded ? "true" : undefined}
         style={{ rotate, scale, opacity, filter }}
       >
         {token.label}
@@ -231,7 +308,7 @@ function Node({
   index: number;
   progress: MotionValue<number>;
 }) {
-  const appear = 0.8 + index * 0.04;
+  const appear = 0.7 + index * 0.05;
   const opacity = useTransform(progress, [appear, appear + 0.08], [0, 1]);
   const scale = useTransform(progress, [appear, appear + 0.08], [0.82, 1]);
 
@@ -263,19 +340,22 @@ function StaticStory() {
         </div>
 
         <div className={styles.staticScene}>
-          <ul className={styles.staticTokens} aria-hidden="true">
-            {STORY_TOKENS.filter((t) => t.cluster !== "discarded").map((t) => (
+          {(["atardecer", "mesa", "cafe"] as const).map((cluster, i) => (
+            <div key={cluster} className={styles.staticPile}>
+              <span className={styles.staticPileTime}>{STORY.stops[i].time}</span>
+              <ul className={styles.staticTokens} aria-hidden="true">
+                {STORY_TOKENS.filter((t) => t.cluster === cluster).map((t) => (
+                  <li key={t.label}>{t.label}</li>
+                ))}
+              </ul>
+              <span className={styles.staticPileLabel}>{STORY.stops[i].label}</span>
+            </div>
+          ))}
+          <ul className={styles.staticDiscarded} aria-hidden="true">
+            {STORY_TOKENS.filter((t) => t.cluster === "discarded").map((t) => (
               <li key={t.label}>{t.label}</li>
             ))}
           </ul>
-          <ol className={styles.staticRoute}>
-            {STORY.stops.map((stop) => (
-              <li key={stop.time}>
-                <time>{stop.time}</time>
-                <span>{stop.label}</span>
-              </li>
-            ))}
-          </ol>
         </div>
 
         <ol className={styles.phases}>
