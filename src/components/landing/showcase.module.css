@@ -68,40 +68,8 @@
   width: 100%;
 }
 
-.rail {
-  --rail-pad: max(clamp(20px, 5vw, 48px), calc((100% - var(--max-w)) / 2 + clamp(20px, 5vw, 48px)));
-
-  display: flex;
-  gap: clamp(14px, 1.6vw, 22px);
-  /* Padded rather than centred so the first card aligns with the header
-     above it and the last one can still scroll clear of the edge.
-     `100%` rather than `100vw`: the viewport unit includes the classic
-     scrollbar's width, so it overshoots by ~15px on desktop Windows. */
-  padding: 6px var(--rail-pad);
-  margin: 0;
-  overflow-x: auto;
-  list-style: none;
-  scroll-snap-type: x proximity;
-  /* Without this the browser snaps the first card flush to the
-     scrollport edge on load — scrolling the rail 168px by itself and
-     throwing the first card out of line with the header above it. Snap
-     positions have to be told about the padding. */
-  scroll-padding-inline: var(--rail-pad);
-  scrollbar-width: none;
-}
-
-.rail::-webkit-scrollbar {
-  display: none;
-}
-
-/* The rail is focusable so it can be scrolled with the arrow keys;
-   without a visible ring that focus would be invisible. */
-.rail:focus-visible {
-  outline: 2px solid var(--ember);
-  outline-offset: 4px;
-  border-radius: var(--r-card);
-}
-
+/* The rail scaffolding (overflow, snap, padding, arrows, edge fade) lives
+   in the shared `Rail` component; these are just the card metrics. */
 .card {
   flex: 0 0 clamp(268px, 30vw, 332px);
   scroll-snap-align: start;
@@ -410,11 +378,6 @@
   .header {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .rail {
-    --rail-pad: clamp(20px, 5vw, 48px);
-    scroll-snap-type: x mandatory;
   }
 
   .card {

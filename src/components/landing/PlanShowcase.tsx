@@ -4,6 +4,7 @@ import Image from "next/image";
 
 import { Icon } from "@/components/ui";
 
+import { Rail } from "./Rail";
 import { Reveal } from "./Reveal";
 import { SHOWCASE, type ShowcasePlan } from "./landingContent";
 import { MEDIA } from "./landingMedia";
@@ -44,11 +45,11 @@ export function PlanShowcase() {
       </div>
 
       <Reveal className={styles.railWrap}>
-        <ul className={styles.rail} tabIndex={0} aria-label="Ejemplos de recorridos">
+        <Rail ariaLabel="Ejemplos de recorridos">
           {SHOWCASE.plans.map((plan) => (
             <PlanCard key={plan.id} plan={plan} />
           ))}
-        </ul>
+        </Rail>
       </Reveal>
     </section>
   );

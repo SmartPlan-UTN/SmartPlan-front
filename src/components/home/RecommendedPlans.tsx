@@ -183,6 +183,7 @@ function Rail({
   const railRef = useRef<HTMLUListElement>(null);
   const revealedRef = useRef(false);
   const [overflow, setOverflow] = useState({ left: false, right: false });
+  const [snap, setSnap] = useState(false);
 
   const measure = useCallback(() => {
     const el = railRef.current;
@@ -199,12 +200,16 @@ function Rail({
   }, []);
 
   useEffect(() => {
-    measure();
     const el = railRef.current;
     if (!el) return;
+    // Pin to start, snap on next frame — see Rail.tsx.
+    el.scrollLeft = 0;
+    const id = requestAnimationFrame(() => setSnap(true));
+    measure();
     el.addEventListener("scroll", measure, { passive: true });
     window.addEventListener("resize", measure);
     return () => {
+      cancelAnimationFrame(id);
       el.removeEventListener("scroll", measure);
       window.removeEventListener("resize", measure);
     };
@@ -264,7 +269,11 @@ function Rail({
   };
 
   return (
-    <div className={styles.railViewport}>
+    <div
+      className={styles.railViewport}
+      data-overflow-left={overflow.left ? "true" : undefined}
+      data-overflow-right={overflow.right ? "true" : undefined}
+    >
       <button
         type="button"
         className={`${styles.arrow} ${styles.arrowLeft}`}
@@ -279,6 +288,7 @@ function Rail({
       <ul
         ref={railRef}
         className={styles.rail}
+        data-snap={snap ? "true" : undefined}
         tabIndex={0}
         aria-label="Planes recomendados"
       >
