@@ -54,10 +54,12 @@ beforeEach(() => {
 });
 
 describe("LandingScreen recommendations slot (CU20)", () => {
-  it("shows the illustrative showcase to an anonymous visitor", () => {
+  it("shows the illustrative showcase to an anonymous visitor", async () => {
     session("anonymous");
     render(<LandingScreen />);
-    expect(screen.getByTestId("showcase")).toBeInTheDocument();
+    // The below-the-fold sections are `next/dynamic`, so the slot resolves
+    // on a microtask rather than synchronously.
+    expect(await screen.findByTestId("showcase")).toBeInTheDocument();
     expect(screen.queryByTestId("recommended")).toBeNull();
   });
 

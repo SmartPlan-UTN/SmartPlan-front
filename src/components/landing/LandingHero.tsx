@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 
 import {
   GenerationState,
@@ -14,11 +15,20 @@ import {
 import type { UsePlanRequestPollingResult } from "@/hooks";
 import type { PlanRequestContext } from "@/types";
 
-import { HeroAtmosphere } from "./HeroAtmosphere";
 import { HeroObjects } from "./HeroObjects";
 import { IntentChips } from "./IntentChips";
 import { HERO } from "./landingContent";
 import styles from "./hero.module.css";
+
+/**
+ * Purely decorative and canvas-heavy — never wanted server-side, and it
+ * carries its own `requestAnimationFrame` loop, so it splits out of the
+ * initial bundle and loads only once the hero is on screen.
+ */
+const HeroAtmosphere = dynamic(
+  () => import("./HeroAtmosphere").then((m) => m.HeroAtmosphere),
+  { ssr: false },
+);
 
 export interface LandingHeroProps {
   /** Lifted into the page so the closing field drives the same state. */

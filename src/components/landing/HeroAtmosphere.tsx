@@ -79,6 +79,7 @@ export function HeroAtmosphere({ calm = false }: HeroAtmosphereProps) {
     let width = 0;
     let height = 0;
     let frame: number | null = null;
+    let visible = true;
     let last = performance.now();
     // Eased toward `calmRef`, so focusing the field slows the air over
     // about a second instead of freezing it on the spot.
@@ -172,7 +173,7 @@ export function HeroAtmosphere({ calm = false }: HeroAtmosphereProps) {
         context.fill();
       }
 
-      frame = requestAnimationFrame(draw);
+      frame = visible ? requestAnimationFrame(draw) : null;
     }
 
     function onPointerMove(event: PointerEvent) {
@@ -181,6 +182,30 @@ export function HeroAtmosphere({ calm = false }: HeroAtmosphereProps) {
     }
 
     seed();
+
+    // Once the hero has scrolled away there is nothing to animate for —
+    // stop the loop entirely rather than drawing motes nobody can see, and
+    // pick it up again if the visitor scrolls back up.
+    const visObserver =
+      typeof IntersectionObserver === "undefined"
+        ? null
+        : new IntersectionObserver(
+            ([entry]) => {
+              const next = entry.isIntersecting;
+              if (next === visible) return;
+              visible = next;
+              if (reduced) return;
+              if (visible && frame == null) {
+                last = performance.now();
+                frame = requestAnimationFrame(draw);
+              } else if (!visible && frame != null) {
+                cancelAnimationFrame(frame);
+                frame = null;
+              }
+            },
+            { rootMargin: "120px" },
+          );
+    visObserver?.observe(canvas);
 
     if (reduced) {
       // Still draw one frame: the motes are part of the composition, and
@@ -200,6 +225,7 @@ export function HeroAtmosphere({ calm = false }: HeroAtmosphereProps) {
     return () => {
       if (frame != null) cancelAnimationFrame(frame);
       observer?.disconnect();
+      visObserver?.disconnect();
       window.removeEventListener("pointermove", onPointerMove);
     };
   }, [reduced]);

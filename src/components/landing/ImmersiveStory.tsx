@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   motion,
   useScroll,
@@ -60,8 +60,32 @@ export function ImmersiveStory() {
 
 /* ── Scroll-scrubbed scene (desktop, motion allowed) ─────────────────── */
 
+/** Scene box in px, measured once (and on resize) so token choreography
+ * can run on `transform` alone instead of animating `left`/`top`. */
+function useSceneBox(ref: React.RefObject<HTMLDivElement | null>) {
+  const [box, setBox] = useState({ w: 0, h: 0 });
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const measure = () => {
+      const r = node.getBoundingClientRect();
+      setBox((prev) =>
+        prev.w === r.width && prev.h === r.height ? prev : { w: r.width, h: r.height },
+      );
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const obs = new ResizeObserver(measure);
+    obs.observe(node);
+    return () => obs.disconnect();
+  }, [ref]);
+  return box;
+}
+
 function ScrubStory() {
   const wrap = useRef<HTMLDivElement>(null);
+  const scene = useRef<HTMLDivElement>(null);
+  const box = useSceneBox(scene);
   const { scrollYProgress } = useScroll({
     target: wrap,
     offset: ["start start", "end end"],
@@ -83,6 +107,7 @@ function ScrubStory() {
           </motion.div>
 
           <div
+            ref={scene}
             className={styles.scene}
             aria-label="De intenciones dispersas a un recorrido ordenado"
           >
@@ -103,7 +128,12 @@ function ScrubStory() {
             </svg>
 
             {STORY_TOKENS.map((token) => (
-              <Token key={token.label} token={token} progress={scrollYProgress} />
+              <Token
+                key={token.label}
+                token={token}
+                progress={scrollYProgress}
+                box={box}
+              />
             ))}
 
             {STORY.stops.map((stop, i) => (
@@ -133,9 +163,11 @@ function ScrubStory() {
 function Token({
   token,
   progress,
+  box,
 }: {
   token: StoryToken;
   progress: MotionValue<number>;
+  box: { w: number; h: number };
 }) {
   const discarded = token.cluster === "discarded";
   const center =
@@ -147,15 +179,22 @@ function Token({
       ? { x: token.home.x < 50 ? -30 : 130, y: token.home.y + 12 }
       : ROUTE_NODES[NODE_INDEX[token.cluster]];
 
+  // The anchor is placed statically at `home` (% of the scene box). The
+  // scroll choreography then rides on `transform` only: `x`/`y` are the
+  // pixel delta from home → cluster centre → route node, so no frame ever
+  // touches layout.
+  const dx = (a: number) => ((a - token.home.x) / 100) * box.w;
+  const dy = (a: number) => ((a - token.home.y) / 100) * box.h;
+
   const x = useTransform(
     progress,
     [0, 0.25, 0.55, 0.8],
-    [token.home.x, token.home.x, center.x, node.x],
+    [0, 0, dx(center.x), dx(node.x)],
   );
   const y = useTransform(
     progress,
     [0, 0.25, 0.55, 0.8],
-    [token.home.y, token.home.y, center.y, node.y],
+    [0, 0, dy(center.y), dy(node.y)],
   );
   const rotate = useTransform(progress, [0, 0.55], [token.home.rot, 0]);
   const scale = useTransform(progress, [0.55, 0.82], [1, 0.82]);
@@ -167,11 +206,11 @@ function Token({
   const saturate = useTransform(progress, [0.28, 0.5], [1, 0]);
   const filter = useTransform(saturate, (v) => `saturate(${discarded ? v : 1})`);
 
-  const left = useTransform(x, (v) => `${v}%`);
-  const top = useTransform(y, (v) => `${v}%`);
-
   return (
-    <motion.div className={styles.tokenAnchor} style={{ left, top }}>
+    <motion.div
+      className={styles.tokenAnchor}
+      style={{ left: `${token.home.x}%`, top: `${token.home.y}%`, x, y }}
+    >
       <motion.span
         className={styles.token}
         data-discarded={discarded ? "true" : undefined}

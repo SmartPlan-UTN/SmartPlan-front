@@ -187,10 +187,15 @@ function Rail({
   const measure = useCallback(() => {
     const el = railRef.current;
     if (!el) return;
-    setOverflow({
+    const next = {
       left: el.scrollLeft > 4,
       right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4,
-    });
+    };
+    // Bail when nothing changed — this fires on every scroll event and
+    // must not re-render the rail while the visitor is dragging it.
+    setOverflow((prev) =>
+      prev.left === next.left && prev.right === next.right ? prev : next,
+    );
   }, []);
 
   useEffect(() => {

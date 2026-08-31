@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 
 import { MotionConfig } from "motion/react";
 
@@ -16,13 +17,28 @@ import type { PlanRequestContext } from "@/types";
 
 import { RecommendedPlans } from "@/components/home";
 
-import { HowItWorks } from "./HowItWorks";
-import { ImmersiveStory } from "./ImmersiveStory";
 import { InspirationGallery } from "./InspirationGallery";
 import { LandingHero, HERO_COMPOSER_ID } from "./LandingHero";
-import { ManualExplore } from "./ManualExplore";
-import { PlanShowcase } from "./PlanShowcase";
 import styles from "./landing.module.css";
+
+/**
+ * Everything below the gallery is off the first screen and behind
+ * `phase === "idle"`. Splitting each into its own chunk keeps the initial
+ * landing payload to the hero + gallery; SSR stays on so the copy is in
+ * the HTML for crawlers.
+ */
+const ImmersiveStory = dynamic(() =>
+  import("./ImmersiveStory").then((m) => m.ImmersiveStory),
+);
+const HowItWorks = dynamic(() =>
+  import("./HowItWorks").then((m) => m.HowItWorks),
+);
+const PlanShowcase = dynamic(() =>
+  import("./PlanShowcase").then((m) => m.PlanShowcase),
+);
+const ManualExplore = dynamic(() =>
+  import("./ManualExplore").then((m) => m.ManualExplore),
+);
 
 /**
  * The landing, end to end (CU17, CU19 · PAN 07).

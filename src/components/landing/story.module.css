@@ -94,7 +94,7 @@
 .tokenAnchor {
   position: absolute;
   z-index: 1;
-  will-change: left, top;
+  will-change: transform;
 }
 
 .token {
