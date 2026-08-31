@@ -1,16 +1,18 @@
-import type { Metadata } from "next";
+"use client";
+
+import { useState } from "react";
 
 import { CollectionsPanel } from "@/components/collection";
-import { SavedActivitiesPanel } from "@/components/favorites";
+import { SavedActivitiesPanel, SavedPlansPanel } from "@/components/favorites";
 import { Screen } from "@/components/layout";
 
 import styles from "./favorites.module.css";
 
-export const metadata: Metadata = {
-  title: "Favoritos",
-};
+type Tab = "activities" | "plans";
 
 export default function FavoritesPage() {
+  const [activeTab, setActiveTab] = useState<Tab>("activities");
+
   return (
     <Screen labelledBy="saved-title">
       <header className={styles.header}>
@@ -25,14 +27,24 @@ export default function FavoritesPage() {
         >
           <ul className={styles.sectionList}>
             <li>
-              <span className={styles.pendingSection} aria-disabled="true">
+              <button
+                type="button"
+                className={`${styles.tabButton} ${activeTab === "plans" ? styles.activeTab : ""}`}
+                onClick={() => setActiveTab("plans")}
+                aria-current={activeTab === "plans" ? "page" : undefined}
+              >
                 Planes
-              </span>
+              </button>
             </li>
             <li>
-              <span className={styles.activeSection} aria-current="page">
+              <button
+                type="button"
+                className={`${styles.tabButton} ${activeTab === "activities" ? styles.activeTab : ""}`}
+                onClick={() => setActiveTab("activities")}
+                aria-current={activeTab === "activities" ? "page" : undefined}
+              >
                 Actividades
-              </span>
+              </button>
             </li>
             <li>
               <span className={styles.pendingSection} aria-disabled="true">
@@ -43,7 +55,7 @@ export default function FavoritesPage() {
         </nav>
       </header>
 
-      <SavedActivitiesPanel />
+      {activeTab === "activities" ? <SavedActivitiesPanel /> : <SavedPlansPanel />}
 
       <section className={styles.collectionsSection} aria-labelledby="collections-title">
         <h2 id="collections-title" className={`sp-h4 ${styles.sectionTitle}`}>

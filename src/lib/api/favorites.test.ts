@@ -3,8 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiClient } from "./client";
 import {
   listFavoriteActivities,
+  listFavoritePlans,
   removeFavoriteActivity,
+  removeFavoritePlan,
   saveFavoriteActivity,
+  saveFavoritePlan,
 } from "./favorites";
 
 vi.mock("./client", () => ({
@@ -49,9 +52,7 @@ describe("favorites API", () => {
   it("lists saved favorite activities (CU39)", async () => {
     vi.mocked(apiClient.get).mockResolvedValueOnce({
       data: [{ id: 1, idFavoriteList: 10, idActivity: 42 }],
-      total: 1,
-      page: 1,
-      limit: 10,
+      pagination: { total: 1, page: 1, limit: 10, totalPages: 1 },
     });
 
     const result = await listFavoriteActivities({ page: 1, limit: 10 });
@@ -59,6 +60,45 @@ describe("favorites API", () => {
     expect(apiClient.get).toHaveBeenCalledWith("/favorite-activities", {
       params: { page: 1, limit: 10 },
     });
-    expect(result.total).toBe(1);
+    expect(result.pagination.total).toBe(1);
+  });
+
+  it("posts the plan id to favorite plans (CU43)", async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({
+      id: 2,
+      idFavoriteList: 10,
+      idPlan: 7,
+      createdAt: "2026-08-28T00:00:00Z",
+      updatedAt: "2026-08-28T00:00:00Z",
+    });
+
+    const result = await saveFavoritePlan(7);
+
+    expect(apiClient.post).toHaveBeenCalledWith("/favorite-plans", {
+      idPlan: 7,
+    });
+    expect(result.idPlan).toBe(7);
+  });
+
+  it("deletes favorite plan by plan id (CU42)", async () => {
+    vi.mocked(apiClient.delete).mockResolvedValueOnce(undefined);
+
+    await removeFavoritePlan(7);
+
+    expect(apiClient.delete).toHaveBeenCalledWith("/favorite-plans/7");
+  });
+
+  it("lists saved favorite plans (CU40)", async () => {
+    vi.mocked(apiClient.get).mockResolvedValueOnce({
+      data: [{ id: 2, idFavoriteList: 10, idPlan: 7 }],
+      pagination: { total: 1, page: 1, limit: 10, totalPages: 1 },
+    });
+
+    const result = await listFavoritePlans({ page: 1, limit: 10 });
+
+    expect(apiClient.get).toHaveBeenCalledWith("/favorite-plans", {
+      params: { page: 1, limit: 10 },
+    });
+    expect(result.pagination.total).toBe(1);
   });
 });

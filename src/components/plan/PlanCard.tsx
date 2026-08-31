@@ -1,6 +1,10 @@
+"use client";
+
 import Link from "next/link";
+import type { MouseEvent } from "react";
 
 import { Badge, Icon, Stars } from "@/components/ui";
+import { useFavorites } from "@/context";
 import { planDetailRoute } from "@/lib/routes";
 import { formatArs, formatDuration, gradientFor } from "@/lib/utils";
 import type { PlanSearchResult } from "@/types";
@@ -15,8 +19,18 @@ export interface PlanCardProps {
 }
 
 export function PlanCard({ plan }: PlanCardProps) {
+  const { isPlanSaved, toggleSavePlan } = useFavorites();
+  const saved = isPlanSaved(plan.id);
   const visibleCategories = plan.categories.slice(0, 2);
   const routeSummary = plan.activityNames.join(" → ");
+
+  const handleToggleSave = (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleSavePlan(plan.id).catch(() => {
+      // Optimistic rollback handled in FavoritesContext
+    });
+  };
 
   return (
     // No `aria-label` override: the card's own content already gives a
@@ -27,6 +41,19 @@ export function PlanCard({ plan }: PlanCardProps) {
         style={{ background: gradientFor(plan.id) }}
       >
         <Icon name="route" size={40} className={exploreStyles.imagePlaceholder} />
+        <button
+          type="button"
+          className={styles.cardBookmark}
+          aria-pressed={saved}
+          aria-label={saved ? "Quitar de guardados" : "Guardar plan"}
+          onClick={handleToggleSave}
+        >
+          <Icon
+            name="bookmark"
+            size={16}
+            className={saved ? styles.cardBookmarkSaved : undefined}
+          />
+        </button>
       </div>
 
       <div className={exploreStyles.body}>

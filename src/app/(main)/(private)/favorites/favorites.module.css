@@ -21,27 +21,34 @@
 }
 
 .pendingSection,
-.activeSection {
+.tabButton {
   position: relative;
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  padding-inline: var(--s-1);
+  padding: 0 var(--s-1);
+  border: 0;
+  background: none;
+  font-family: inherit;
   font-size: var(--t-small);
   font-weight: var(--w-heading);
 }
 
-.pendingSection {
-  color: var(--fg-3);
-  cursor: not-allowed;
-  pointer-events: none;
+.tabButton {
+  color: var(--fg-2);
+  cursor: pointer;
+  transition: color 150ms ease;
 }
 
-.activeSection {
+.tabButton:hover {
   color: var(--fg-1);
 }
 
-.activeSection::after {
+.tabButton.activeTab {
+  color: var(--fg-1);
+}
+
+.tabButton.activeTab::after {
   content: "";
   position: absolute;
   right: 0;
@@ -50,6 +57,12 @@
   height: 3px;
   border-radius: var(--r-chip) var(--r-chip) 0 0;
   background: var(--ember);
+}
+
+.pendingSection {
+  color: var(--fg-3);
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 @media (max-width: 560px) {

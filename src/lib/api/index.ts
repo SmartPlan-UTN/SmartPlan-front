@@ -56,5 +56,8 @@ export {
   listFavoriteActivities,
   removeFavoriteActivity,
   saveFavoriteActivity,
+  listFavoritePlans,
+  removeFavoritePlan,
+  saveFavoritePlan,
 } from './favorites';
 

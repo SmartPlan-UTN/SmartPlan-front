@@ -1,6 +1,7 @@
 import type {
   ExplorationQueryParams,
   FavoriteActivity,
+  FavoritePlan,
   PaginatedResult,
 } from '@/types';
 import { apiClient } from './client';
@@ -36,6 +37,41 @@ export async function listFavoriteActivities(
 ): Promise<PaginatedResult<FavoriteActivity>> {
   return apiClient.get<PaginatedResult<FavoriteActivity>>(
     '/favorite-activities',
+    { params },
+  );
+}
+
+/**
+ * Saves a plan to the user's favorites list (CU43).
+ * Backend contract: `POST /favorite-plans`.
+ */
+export async function saveFavoritePlan(
+  idPlan: number,
+): Promise<FavoritePlan> {
+  return apiClient.post<FavoritePlan>('/favorite-plans', {
+    idPlan,
+  });
+}
+
+/**
+ * Removes a plan from the user's favorites list (CU42).
+ * Backend contract: `DELETE /favorite-plans/:idPlan`.
+ */
+export async function removeFavoritePlan(
+  idPlan: number,
+): Promise<void> {
+  return apiClient.delete<void>(`/favorite-plans/${idPlan}`);
+}
+
+/**
+ * Lists the user's saved favorite plans (CU40).
+ * Backend contract: `GET /favorite-plans`.
+ */
+export async function listFavoritePlans(
+  params?: ExplorationQueryParams,
+): Promise<PaginatedResult<FavoritePlan>> {
+  return apiClient.get<PaginatedResult<FavoritePlan>>(
+    '/favorite-plans',
     { params },
   );
 }

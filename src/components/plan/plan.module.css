@@ -20,6 +20,34 @@
   text-overflow: ellipsis;
 }
 
+.cardBookmark {
+  position: absolute;
+  top: var(--s-3);
+  right: var(--s-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: var(--r-chip);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--white);
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, transform 150ms ease;
+  z-index: 2;
+}
+
+.cardBookmark:hover {
+  background: rgba(0, 0, 0, 0.6);
+  transform: scale(1.05);
+}
+
+.cardBookmarkSaved {
+  color: var(--gold);
+}
+
 /* ── Plan detail (CU13), after
    SmartPlanSystemDesign/v2/PlanDetail.jsx ─────────────────────── */
 

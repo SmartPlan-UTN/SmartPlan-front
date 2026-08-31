@@ -18,6 +18,7 @@ export interface FavoriteList extends BaseEntity {
 export interface FavoriteActivity extends BaseEntity {
   idFavoriteList: number;
   idActivity: number;
+  savedAt?: string;
   list?: FavoriteList;
   activity?: Activity;
 }
@@ -28,6 +29,7 @@ export interface FavoriteActivity extends BaseEntity {
 export interface FavoritePlan extends BaseEntity {
   idFavoriteList: number;
   idPlan: number;
+  savedAt?: string;
   list?: FavoriteList;
   plan?: Plan;
 }
