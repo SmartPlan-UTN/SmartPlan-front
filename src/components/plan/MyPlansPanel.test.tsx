@@ -132,12 +132,17 @@ describe("MyPlansPanel (CU29)", () => {
     expect(screen.getByRole("alertdialog")).toBeInTheDocument();
   });
 
-  it("filters out plans that are already cancelled or deleted on load", async () => {
+  it("filters out plans that are already cancelled on load", async () => {
     resolveWith([
+      mockSummary({ id: 13, title: "Sigue vivo" }),
       mockSummary({ status: { key: "cancelled", name: "Cancelado" } }),
     ]);
     render(<MyPlansPanel />);
 
+    // Waiting on a plan that *does* survive the filter proves the listing
+    // settled: asserting the absence while the panel is still loading
+    // passes even with no filter at all.
+    expect(await screen.findByText("Sigue vivo")).toBeInTheDocument();
     expect(screen.queryByText("Domingo de bodegas")).not.toBeInTheDocument();
   });
 

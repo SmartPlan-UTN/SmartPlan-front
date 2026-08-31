@@ -113,14 +113,6 @@
   transform: translateY(-2px);
 }
 
-.cancelledCard {
-  background: color-mix(in srgb, var(--surface-card) 70%, transparent);
-}
-
-.cancelledCard .cardTitleLink {
-  color: var(--fg-2);
-}
-
 .cardHeader {
   display: flex;
   align-items: flex-start;

@@ -78,7 +78,10 @@ describe("AddToPlanDialog (CU27)", () => {
   });
 
   it("allows creating a new plan and adding the activity to it", async () => {
-    const createdPlan = mockPlanSummary({ id: 20, title: "Nuevo Plan" });
+    const createdPlan = {
+      ...mockPlanSummary({ id: 20, title: "Nuevo Plan" }),
+      details: [],
+    };
     vi.mocked(createPlan).mockResolvedValue(createdPlan);
     vi.mocked(addPlanActivity).mockResolvedValue({} as never);
     const user = userEvent.setup();

@@ -11,7 +11,7 @@ import {
 } from "@/lib/api";
 import type { OwnPlanSummary } from "@/types";
 
-import styles from "../collection/AddToCollectionDialog.module.css";
+import styles from "./AddToPlanDialog.module.css";
 
 type LoadStatus = "loading" | "idle" | "error";
 type Completion = { planTitle: string; alreadyIncluded: boolean };
@@ -33,8 +33,13 @@ export function AddToPlanDialog({
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
   const [title, setTitle] = useState("");
-  const [peopleCount, setPeopleCount] = useState<number>(2);
+  // Kept as the raw input value: an emptied number field reads as "",
+  // and coercing on every keystroke turns that into NaN.
+  const [peopleCount, setPeopleCount] = useState("2");
   const [titleError, setTitleError] = useState<string | null>(null);
+  const [peopleCountError, setPeopleCountError] = useState<string | null>(
+    null,
+  );
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [pendingCreatedPlan, setPendingCreatedPlan] =
     useState<OwnPlanSummary | null>(null);
@@ -94,6 +99,9 @@ export function AddToPlanDialog({
     async function load() {
       setStatus("loading");
       try {
+        // One page deliberately: the picker is a short list to scan, not a
+        // browsable listing. Someone past 100 plans won't see the oldest
+        // ones here and has to add the activity from `/plans` instead.
         const result = await listOwnPlans({
           page: 1,
           limit: 100,
@@ -101,6 +109,8 @@ export function AddToPlanDialog({
           direction: "desc",
         });
         if (ignore) return;
+        // A cancelled plan is immutable back-side (`PLAN_CANCELLED`), so
+        // offering it here would only produce a failed add.
         setPlans(
           result.data.filter((plan) => plan.status?.key !== "cancelled"),
         );
@@ -119,6 +129,7 @@ export function AddToPlanDialog({
   function selectPlan(id: number) {
     setCreating(false);
     setSelectedId(id);
+    setPeopleCountError(null);
     setSubmitError(null);
     setPendingCreatedPlan(null);
   }
@@ -146,30 +157,29 @@ export function AddToPlanDialog({
         return;
       }
 
+      // The back accepts `@IsInt() @Min(1) @Max(1000)`; the 100 here is
+      // the input's own ceiling, enforced on submit too so an emptied or
+      // out-of-range field fails with a message instead of a 400.
+      const parsedPeopleCount = Number(peopleCount);
+      if (
+        !Number.isInteger(parsedPeopleCount) ||
+        parsedPeopleCount < 1 ||
+        parsedPeopleCount > 100
+      ) {
+        setPeopleCountError("Indicá un número de personas entre 1 y 100");
+        return;
+      }
+
       setIsSubmitting(true);
       setSubmitError(null);
       try {
         const created = await createPlan({
           title: trimmedTitle,
-          peopleCount: Math.max(1, peopleCount),
+          peopleCount: parsedPeopleCount,
         });
-        const newPlanSummary: OwnPlanSummary = {
-          id: created.id,
-          title: created.title,
-          description: created.description,
-          activityCount: 0,
-          peopleCount: Math.max(1, peopleCount),
-          estimatedTotalCost: created.estimatedTotalCost ?? 0,
-          estimatedCostPerPerson:
-            (created.estimatedTotalCost ?? 0) / Math.max(1, peopleCount),
-          estimatedTotalDuration: created.estimatedTotalDuration ?? 0,
-          status: created.status ?? { key: "generated", name: "Generado" },
-          createdAt: created.createdAt,
-          updatedAt: created.updatedAt,
-        };
-        setPlans((current) => [newPlanSummary, ...current]);
-        setPendingCreatedPlan(newPlanSummary);
-        await addToPlan(created.id, created.title, true, false);
+        setPlans((current) => [created, ...current]);
+        setPendingCreatedPlan(created);
+        await addToPlan(created.id, created.title, true);
       } catch (_error) {
         setSubmitError("No pudimos crear el plan. Intentá nuevamente.");
         setIsSubmitting(false);
@@ -185,9 +195,8 @@ export function AddToPlanDialog({
     targetPlanId: number,
     planTitle: string,
     wasJustCreated: boolean,
-    manageSubmitting = true,
   ) {
-    if (manageSubmitting) setIsSubmitting(true);
+    setIsSubmitting(true);
     setSubmitError(null);
     try {
       await addPlanActivity(targetPlanId, activityId);
@@ -215,6 +224,14 @@ export function AddToPlanDialog({
         setPendingCreatedPlan(null);
         setCreating(false);
         setSubmitError("El plan ya no se encuentra disponible.");
+      } else if (
+        error instanceof ApiError &&
+        error.code === "ACTIVITY_NOT_FOUND"
+      ) {
+        setPendingCreatedPlan(null);
+        setSelectedId(null);
+        setCreating(false);
+        setSubmitError("La actividad ya no se encuentra disponible.");
       } else if (wasJustCreated) {
         setSubmitError(
           `Creamos “${planTitle}”, pero no pudimos agregar la actividad. Reintentá para completar la acción.`,
@@ -307,11 +324,11 @@ export function AddToPlanDialog({
               ) : null}
 
               {status === "idle" && plans.length > 0 ? (
-                <div className={styles.collectionList}>
+                <div className={styles.planList}>
                   {plans.map((plan) => (
                     <button
                       type="button"
-                      className={`${styles.collectionOption} ${
+                      className={`${styles.planOption} ${
                         selectedId === plan.id ? styles.selected : ""
                       }`}
                       key={plan.id}
@@ -392,10 +409,15 @@ export function AddToPlanDialog({
                       max={100}
                       value={peopleCount}
                       onChange={(event) => {
-                        setPeopleCount(Number(event.target.value));
+                        setPeopleCount(event.target.value);
+                        setPeopleCountError(null);
                       }}
                       disabled={isSubmitting || pendingCreatedPlan != null}
+                      aria-invalid={Boolean(peopleCountError)}
                     />
+                    {peopleCountError ? (
+                      <small role="alert">{peopleCountError}</small>
+                    ) : null}
                   </label>
                 </div>
               ) : null}

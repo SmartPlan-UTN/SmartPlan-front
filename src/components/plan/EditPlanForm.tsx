@@ -120,6 +120,7 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [pendingRemoveDetail, setPendingRemoveDetail] = useState<OwnPlanDetailItem | null>(null);
   const [isRemovingDetail, setIsRemovingDetail] = useState(false);
+  const [removeError, setRemoveError] = useState<string | null>(null);
 
   // Search activities effect
   useEffect(() => {
@@ -212,22 +213,40 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
 
   const performRemoveActivity = async (detailId: number) => {
     setIsRemovingDetail(true);
+    setRemoveError(null);
     try {
       // `DELETE .../details/:detailId` answers 204, so the itinerary has to
       // be refetched rather than filtered locally: the backend renumbers
       // `order` on the remaining stops, and a local filter would leave the
       // timeline showing stale positions until the next full load.
       await removePlanActivity(plan.id, detailId);
-      const refreshed = await getOwnPlan(plan.id);
-      setDetails(refreshed.details);
       setPendingRemoveDetail(null);
+      try {
+        const refreshed = await getOwnPlan(plan.id);
+        setDetails(refreshed.details);
+      } catch {
+        // The stop is already gone server-side; only the refetch failed.
+        // Dropping it locally keeps a retry from 404-ing on a detail that
+        // no longer exists — `order` may read stale until the next load.
+        setDetails((current) => current.filter((item) => item.id !== detailId));
+        setSubmitError(
+          "Quitamos la actividad, pero no pudimos recargar el itinerario.",
+        );
+        setTimeout(() => setSubmitError(null), 3500);
+      }
     } catch (error: unknown) {
       const message =
         error instanceof ApiError
           ? error.message
           : "No pudimos quitar la actividad. Intentá de nuevo.";
-      setSubmitError(message);
-      setTimeout(() => setSubmitError(null), 3500);
+      // With the confirmation open, the inline toast renders behind the
+      // overlay, so the dialog has to carry the message itself.
+      if (pendingRemoveDetail) {
+        setRemoveError(message);
+      } else {
+        setSubmitError(message);
+        setTimeout(() => setSubmitError(null), 3500);
+      }
     } finally {
       setIsRemovingDetail(false);
     }
@@ -556,7 +575,11 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
           confirmingLabel="Quitando..."
           cancelLabel="Volver"
           isConfirming={isRemovingDetail}
-          onCancel={() => setPendingRemoveDetail(null)}
+          error={removeError}
+          onCancel={() => {
+            setPendingRemoveDetail(null);
+            setRemoveError(null);
+          }}
           onConfirm={() => void performRemoveActivity(pendingRemoveDetail.id)}
         >
           <p>

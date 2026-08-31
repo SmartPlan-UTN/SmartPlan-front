@@ -10,6 +10,8 @@ import { ROUTES } from "@/lib/routes";
 import { formatArs, formatDuration } from "@/lib/utils";
 import type { ActivitySearchResult } from "@/types";
 
+import { AutoPlanUnavailableDialog } from "./AutoPlanUnavailableDialog";
+
 import styles from "./plan-create.module.css";
 
 export function CreatePlanForm() {
@@ -475,23 +477,9 @@ export function CreatePlanForm() {
 
       {/* Auto Plan Generation - Módulo en construcción Modal (CU31) */}
       {showAutoPlanModal && (
-        <ConfirmationDialog
-          title="Módulo en construcción"
-          confirmLabel="Entendido, crear manualmente"
-          cancelLabel=""
-          onCancel={() => setShowAutoPlanModal(false)}
-          onConfirm={() => setShowAutoPlanModal(false)}
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "center", textAlign: "center" }}>
-            <Icon name="sparkles" size={36} style={{ color: "var(--ember)" }} />
-            <p>
-              La <strong>generación automática de itinerarios con Inteligencia Artificial</strong> (CU31) se encuentra actualmente en desarrollo.
-            </p>
-            <p style={{ fontSize: "var(--t-small)", color: "var(--fg-3)" }}>
-              Estará disponible próximamente en SmartPlan. Por el momento podés armar tu plan de forma personalizada agregando las actividades manualmente.
-            </p>
-          </div>
-        </ConfirmationDialog>
+        <AutoPlanUnavailableDialog
+          onClose={() => setShowAutoPlanModal(false)}
+        />
       )}
 
     </div>
