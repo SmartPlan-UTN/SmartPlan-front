@@ -22,12 +22,15 @@
   transition: translate 220ms var(--ease-out);
 }
 
-/* ── Layer 2: the scroll-linked departure ───────────────────────────
+/* ── Layer 2: the scroll-linked departure + pointer tilt ────────────
    Rests at the object's rotation; as `--hero-progress` climbs it slides
-   along its own exit vector and scales, each object at its own rate. */
+   along its own exit vector and scales, each object at its own rate.
+   `--tf` adds a fraction of a degree of tilt against the pointer on the
+   two nearest pieces, so the parallax reads as depth rather than a flat
+   slide. */
 .objectExit {
   transform:
-    rotate(var(--rot, 0deg))
+    rotate(calc(var(--rot, 0deg) + var(--px, 0) * var(--tf, 0) * 1deg))
     translate3d(
       calc(var(--hero-progress, 0) * var(--exit-x, 0px)),
       calc(var(--hero-progress, 0) * var(--exit-y, 0px)),
@@ -54,21 +57,33 @@
    on the outer `.object` — free now that parallax uses `translate`. */
 @media (prefers-reduced-motion: no-preference) {
   .object[data-drift="true"] {
-    animation: hero-drift 8s ease-in-out infinite alternate;
+    animation: hero-drift 8.6s ease-in-out infinite alternate;
   }
-  .object[data-object="wine"] { animation-duration: 9.4s; animation-delay: -3s; }
-  .object[data-object="compass"] { animation-duration: 7.2s; animation-delay: -1.5s; }
+  /* Deliberately coprime-ish periods and offset phases so the three
+     never fall into step with each other. */
+  .object[data-object="polaroid"] { animation-duration: 7.3s; animation-delay: -2.1s; }
+  .object[data-object="wine"] { animation-duration: 9.4s; animation-delay: -3.7s; }
+  .object[data-object="compass"] { animation-duration: 6.7s; animation-delay: -1.4s; }
 
   @keyframes hero-drift {
-    from { transform: translate3d(0, 0, 0); }
-    to   { transform: translate3d(0, -6px, 0) rotate(0.6deg); }
+    from { transform: translate3d(0, 0, 0) rotate(0deg); }
+    to   { transform: translate3d(0, -9px, 0) rotate(0.8deg); }
   }
 }
 
 /* When the composer has focus the air goes still: the hero is no longer
-   idle, so it has no reason to move. */
+   idle, so it has no reason to move. The scene also gives up a hair of
+   scale — the objects lean back to make room for the field. */
 :global([data-writing="true"]) .object[data-drift="true"] {
   animation-play-state: paused;
+}
+
+.scene {
+  transition: transform 260ms var(--ease-out);
+}
+
+:global([data-writing="true"]) .scene {
+  transform: scale(0.985);
 }
 
 .object[data-object="map"] {
@@ -78,6 +93,7 @@
   opacity: 0.83;
   --rot: -11deg;
   --pf: 10;
+  --tf: 1.1;
 }
 
 .object[data-object="camera"] {
@@ -111,6 +127,7 @@
   width: clamp(210px, 23vw, 360px);
   --rot: 9deg;
   --pf: 8;
+  --tf: -0.9;
 }
 
 .object[data-object="wine"] {
@@ -214,7 +231,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .scene { opacity: 1; }
+  .scene { opacity: 1; transition: none; }
+  :global([data-writing="true"]) .scene { transform: none; }
   .objectExit { transform: rotate(var(--rot, 0deg)); }
   .object { translate: none; }
 }

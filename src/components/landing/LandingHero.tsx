@@ -238,7 +238,7 @@ export function LandingHero({
 
             <div
               className={`${styles.composerSlot} sp-anim-settle`}
-              style={{ animationDelay: "300ms" }}
+              style={{ animationDelay: "420ms" }}
             >
               <PlanComposer
                 ref={composer}
@@ -258,7 +258,7 @@ export function LandingHero({
 
             <div
               className={`${styles.intentsSlot} sp-anim-rise`}
-              style={{ animationDelay: "440ms" }}
+              style={{ animationDelay: "560ms" }}
             >
               <IntentChips
                 disabled={sessionLoading}

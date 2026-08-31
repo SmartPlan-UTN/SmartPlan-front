@@ -19,9 +19,10 @@ import styles from "./hero-objects.module.css";
  *   motion.div    the one-time entrance (Motion, on mount)
  *
  * Each object carries its own entrance vector, rest rotation, departure
- * vector and stagger band, so nothing moves at a uniform rate. `band`
- * groups objects into arrival waves: the map anchors first, then the
- * mid-ground, then the small foreground pieces.
+ * vector and its own entrance timing (`enterDelay` / `enterDur`), so
+ * nothing moves at a uniform rate: the map anchors first, slow and
+ * heavy; the mid-ground follows; the small far pieces snap in last and
+ * quick. Depth drives speed.
  */
 
 interface HeroObject {
@@ -35,16 +36,23 @@ interface HeroObject {
   rot: number;
   /** Where it enters from, relative to its resting place (px / deg). */
   enter: { x: number; y: number; rot: number; scale: number };
+  /**
+   * Entrance timing, per piece. Depth drives speed: pieces that read as
+   * near (large, sharp) travel further and take longer to settle; small
+   * far pieces snap in late and quick. Nothing shares a rate.
+   */
+  enterDelay: number;
+  enterDur: number;
   /** Where it travels as the hero scrolls away (multiplied by progress). */
   exit: { x: number; y: number; scale: number };
-  /** Arrival wave: 0 first, 3 last. */
-  band: 0 | 1 | 2 | 3;
   /** A couple of pieces breathe while the hero sits idle. */
   drift?: boolean;
 }
 
 const OBJECTS: readonly HeroObject[] = [
   {
+    // The background mass. Rises from below the fold, slow and heavy, and
+    // is the last thing still settling when the composer lands.
     id: "map",
     src: "/landing/hero/map.png",
     width: 1254,
@@ -52,11 +60,13 @@ const OBJECTS: readonly HeroObject[] = [
     sizes: "(max-width: 760px) 72vw, 42vw",
     priority: true,
     rot: -11,
-    enter: { x: -70, y: 60, rot: -5, scale: 0.94 },
+    enter: { x: -54, y: 128, rot: -4, scale: 0.9 },
+    enterDelay: 0,
+    enterDur: 0.92,
     exit: { x: -120, y: 40, scale: 1.08 },
-    band: 0,
   },
   {
+    // Drops in from over the top edge and settles onto the table.
     id: "polaroid",
     src: "/landing/hero/polaroid.png",
     width: 1254,
@@ -64,32 +74,37 @@ const OBJECTS: readonly HeroObject[] = [
     sizes: "(max-width: 760px) 42vw, 23vw",
     priority: true,
     rot: 9,
-    enter: { x: 54, y: -46, rot: 6, scale: 0.94 },
+    enter: { x: 40, y: -104, rot: 5, scale: 0.93 },
+    enterDelay: 0.14,
+    enterDur: 0.74,
     exit: { x: 90, y: 120, scale: 1.04 },
-    band: 1,
     drift: true,
   },
   {
+    // Slides up from below the frame.
     id: "ticket",
     src: "/landing/hero/ticket.png",
     width: 1536,
     height: 1024,
     sizes: "(max-width: 760px) 48vw, 25vw",
     rot: -9,
-    enter: { x: 60, y: 40, rot: -6, scale: 0.93 },
+    enter: { x: 34, y: 104, rot: -5, scale: 0.94 },
+    enterDelay: 0.22,
+    enterDur: 0.58,
     exit: { x: 150, y: 30, scale: 1 },
-    band: 1,
   },
   {
+    // Comes in from off the left edge.
     id: "camera",
     src: "/landing/hero/camera.png",
     width: 1536,
     height: 1024,
     sizes: "25vw",
     rot: -13,
-    enter: { x: -58, y: -30, rot: -8, scale: 0.92 },
+    enter: { x: -128, y: -18, rot: -9, scale: 0.92 },
+    enterDelay: 0.26,
+    enterDur: 0.62,
     exit: { x: -110, y: -20, scale: 1 },
-    band: 2,
   },
   {
     id: "wine",
@@ -98,9 +113,10 @@ const OBJECTS: readonly HeroObject[] = [
     height: 1536,
     sizes: "14vw",
     rot: 10,
-    enter: { x: 44, y: -26, rot: 7, scale: 0.93 },
+    enter: { x: 52, y: -22, rot: 6, scale: 0.93 },
+    enterDelay: 0.42,
+    enterDur: 0.46,
     exit: { x: 96, y: 90, scale: 1.02 },
-    band: 2,
     drift: true,
   },
   {
@@ -110,9 +126,10 @@ const OBJECTS: readonly HeroObject[] = [
     height: 1254,
     sizes: "(max-width: 760px) 32vw, 15vw",
     rot: 8,
-    enter: { x: 34, y: 30, rot: 5, scale: 0.94 },
+    enter: { x: 38, y: 34, rot: 5, scale: 0.94 },
+    enterDelay: 0.46,
+    enterDur: 0.44,
     exit: { x: 130, y: 24, scale: 1 },
-    band: 3,
   },
   {
     id: "headphones",
@@ -121,30 +138,26 @@ const OBJECTS: readonly HeroObject[] = [
     height: 1254,
     sizes: "19vw",
     rot: 14,
-    enter: { x: -30, y: 34, rot: 9, scale: 0.94 },
+    enter: { x: -38, y: 36, rot: 9, scale: 0.94 },
+    enterDelay: 0.5,
+    enterDur: 0.44,
     exit: { x: -90, y: 40, scale: 1 },
-    band: 3,
   },
   {
+    // Smallest, furthest, last — snaps into the gap.
     id: "compass",
     src: "/landing/hero/compass.png",
     width: 1254,
     height: 1254,
     sizes: "12vw",
     rot: 22,
-    enter: { x: -18, y: -24, rot: 14, scale: 0.9 },
+    enter: { x: -22, y: -26, rot: 15, scale: 0.88 },
+    enterDelay: 0.56,
+    enterDur: 0.4,
     exit: { x: -60, y: -30, scale: 1 },
-    band: 3,
     drift: true,
   },
 ];
-
-const BAND_DELAY: Record<HeroObject["band"], number> = {
-  0: 0.05,
-  1: 0.16,
-  2: 0.28,
-  3: 0.4,
-};
 
 export function HeroObjects() {
   const reduced = useReducedMotion();
@@ -182,9 +195,9 @@ export function HeroObjects() {
               }
               animate={{ x: 0, y: 0, rotate: 0, scale: 1, opacity: 1 }}
               transition={{
-                duration: 0.62,
+                duration: object.enterDur,
                 ease: EASE_PHYSICAL,
-                delay: BAND_DELAY[object.band],
+                delay: object.enterDelay,
               }}
             >
               <Image
