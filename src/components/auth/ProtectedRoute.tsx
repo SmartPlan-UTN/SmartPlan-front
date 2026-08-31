@@ -4,12 +4,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 
 import { useSession } from "@/lib/auth";
-import { loginRoute } from "@/lib/routes";
+import { ROUTES, loginRoute } from "@/lib/routes";
 
 import styles from "./auth.module.css";
 
 export interface ProtectedRouteProps {
   children: ReactNode;
+  requiredRole?: string;
 }
 
 /**
@@ -20,15 +21,13 @@ export interface ProtectedRouteProps {
  * the "back" button doesn't return to the screen the user was just kicked
  * out of.
  *
- * **Why the protection is client-side:** the JWT lives in `localStorage`,
+ * **Why the protection is client-side:** the access token lives in memory,
  * which the server can't see, so neither `proxy.ts` nor a Server Component
  * can decide whether there is a session. It's a navigation barrier, not a
  * security one: the backend is what actually authorizes on every request.
- * Once the token moves to an `httpOnly` cookie (CU1 decision), this check
- * can move to the server without touching the screens.
  */
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { status } = useSession();
+export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
+  const { status, user } = useSession();
   const router = useRouter();
   const currentRoute = usePathname();
 
@@ -39,16 +38,29 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
       // build doesn't fail while prerendering them. If a screen ever needs
       // its own params, that's handled there.
       router.replace(loginRoute(currentRoute));
+    } else if (
+      status === "authenticated" &&
+      requiredRole &&
+      user?.role.key !== requiredRole
+    ) {
+      router.replace(ROUTES.home);
     }
-  }, [status, router, currentRoute]);
+  }, [status, user, requiredRole, router, currentRoute]);
 
-  if (status === "authenticated") {
+  if (
+    status === "authenticated" &&
+    (!requiredRole || user?.role.key === requiredRole)
+  ) {
     return <>{children}</>;
   }
 
+  const forbidden = status === "authenticated" && requiredRole;
+
   return (
     <p className={styles.waiting} role="status">
-      {status === "loading"
+      {forbidden
+        ? "No tenés permisos para ingresar al panel. Te llevamos al inicio…"
+        : status === "loading"
         ? "Verificando tu sesión…"
         : "Necesitás iniciar sesión para ver esta pantalla. Te llevamos al login…"}
     </p>

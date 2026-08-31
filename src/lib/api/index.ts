@@ -36,12 +36,20 @@ export {
   generateSuggestedPlan,
 } from './plans';
 export { listCategories } from './categories';
+export { listPlaces } from './places';
 export {
   changeAdminUserStatus,
   getAdminUserMetrics,
   getDashboardMetrics,
   listAdminUsers,
   updateAdminUser,
+  createAdminActivity,
+  deleteAdminActivity,
+  deleteAdminPlan,
+  listAdminActivities,
+  listAdminPlans,
+  updateAdminActivity,
+  updateAdminPlan,
 } from './administration';
 export {
   addActivityToCollection,

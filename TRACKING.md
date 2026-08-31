@@ -181,14 +181,14 @@ traceability matrix (`skills/01-domain/`).
 
 | CU | Feature | Screen | Status | Branch | PR |
 |---|---|---|---|---|---|
-| CU53 | Manage activities | PAN 21 | `Not started` | | |
+| CU53 | Manage activities | PAN 21 | `In progress` | `SMART-59-63-cu53-cu60-admin-management` | |
 | CU54 | Manage categories | — | `Not started` | | |
 | CU55 | Moderate ratings | PAN 20 | `Not started` | | |
 | CU56 | Delete content | — | `Not started` | | |
 | CU57 | Manage users | PAN 19 | `In review` | `SMART-62-cu58-panel-de-control` | #99 |
 | CU58 | View system metrics | REP-01 | `In review` | `SMART-62-cu58-panel-de-control` | #99 |
 | CU59 | Review user suggestion | — | `Not started` | | |
-| CU60 | Manage plans | PAN 22 | `Not started` | | |
+| CU60 | Manage plans | PAN 22 | `In progress` | `SMART-59-63-cu53-cu60-admin-management` | |
 | CU61 | Manage permissions | — | `Not started` | | |
 | CU62 | Manage roles | — | `Not started` | | |
 
@@ -201,6 +201,7 @@ being re-discussed twice.
 
 | Date | Decision | Reason |
 |---|---|---|
+| 2026-08-31 | PAN 21 associates zero or more registered places through `placeIds`; administrators never edit Maps coordinates or provider metadata | Activities such as board games at home legitimately have no fixed location. Places and activities initially arrive through the bulk catalog load; CU49/CU50 enrich `activity_place` with Google Maps data. Keeping retained associations preserves that synchronized data while PAN 21 remains a catalog-management screen. |
 | 2026-08-25 | The wave background is drawn into a canvas from a Web Worker (`OffscreenCanvas`), not animated as SVG paths on the main thread | The swell fires the instant a route changes, which is exactly when the main thread is busiest rendering the new screen, so a `requestAnimationFrame` loop there lost its frames at the crest of the wave and the water visibly froze on every navigation. A worker owns its own clock and nothing React does can take a frame from it. Canvas rather than SVG for two reasons: rewriting four full-viewport path `d` attributes per frame re-parses and re-rasterizes them through the document, and an `OffscreenCanvas` is the only surface a worker can draw into. A main-thread canvas fallback covers browsers without one. |
 | 2026-08-25 | A navigation sends a travelling swell packet across the water; it does not scale the wave's amplitude | Multiplying the amplitude of the whole line at once is a volume knob — the wave inflates in place, which does not read as water. Each navigation now spawns a gaussian packet that enters past the right edge, rolls left with the drift and decays, with each deeper layer receiving it later. Packets sum rather than replace, which is also what makes rapid navigation smooth: the previous model restarted a timed animation, so a second navigation mid-swell snapped the amplitude from its crest back to zero in one frame and read as a hard flicker. |
 | 2026-08-25 | Wave points are displaced horizontally (Gerstner), and the displacement is negative | A sine has crests and troughs of the same shape; water has a narrow pointed crest and a broad flat trough. Sliding each sampled point toward the nearest crest packs the crest and stretches the trough — measured as trough width over crest width, a plain sine is 1.00, resting water here is 1.44, and a swell's crest reaches about 2.0. The sign is load-bearing and easy to "fix" wrongly: canvas y grows downward, so the crest a viewer sees is the minimum of the wave, at 3pi/2, not the maximum the textbook form assumes. Steepness is capped below 1, where the surface would fold; because the harmonic shares sum to 1 the horizontal derivative is exactly `1 - steepness * sum(share*sin)`, so any value under 1 is provably fold-free. |
