@@ -206,9 +206,9 @@ export const STORY = {
     { at: "Se ordena", copy: "Queda un recorrido con tiempos que se pueden cumplir." },
   ],
   stops: [
-    { time: "17:30", label: "Atardecer" },
-    { time: "20:00", label: "Mesa" },
-    { time: "22:30", label: "Café" },
+    { time: "19:00", label: "Atardecer" },
+    { time: "20:30", label: "Mesa" },
+    { time: "22:00", label: "Café" },
   ],
 } as const;
 
@@ -412,13 +412,4 @@ export const RECOMMENDATIONS = {
     primary: "Armá un plan",
     secondary: "Elegí tus preferencias",
   },
-} as const;
-
-/* ── Closing ──────────────────────────────────────────────────────── */
-
-export const CLOSING = {
-  kicker: "Tu turno",
-  title: ["¿Ya sabés", "qué te gustaría hacer?"],
-  lead: "No hace falta tenerlo resuelto. Alcanza con la idea.",
-  hint: "Sumá contexto sólo si querés. Nada de esto es obligatorio.",
 } as const;

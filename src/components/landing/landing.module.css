@@ -3,3 +3,62 @@
 .sessionSlot {
   min-height: clamp(420px, 60vh, 560px);
 }
+
+/* The page's quiet exit: one line and a text button back to the hero.
+   Deliberately not a second search field. */
+.closing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-4);
+  padding: clamp(64px, 12vh, 120px) clamp(20px, 5vw, 48px);
+  text-align: center;
+  background: linear-gradient(180deg, #efe2d3 0%, var(--cream) 100%);
+}
+
+.closingLead {
+  max-width: 34ch;
+  margin: 0;
+  color: var(--fg-2);
+  font-size: clamp(15px, 1.5vw, 18px);
+  line-height: 1.55;
+}
+
+.closingCta {
+  position: relative;
+  padding: 4px 2px;
+  border: 0;
+  background: transparent;
+  color: var(--ember);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.closingCta::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--ember);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform var(--d-fast) var(--ease-out);
+  content: "";
+}
+
+.closingCta:hover::after,
+.closingCta:focus-visible::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.closingCta:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .closingCta::after { transition: none; }
+}

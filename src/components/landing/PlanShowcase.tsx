@@ -34,7 +34,6 @@ export function PlanShowcase() {
       <div className={styles.shell}>
         <Reveal className={styles.header}>
           <div>
-            <p className={`sp-label ${styles.kicker}`}>{SHOWCASE.kicker}</p>
             <h2 id="showcase-title" className={styles.title}>
               {SHOWCASE.title[0]}
               <span className={styles.titleSoft}> {SHOWCASE.title[1]}</span>

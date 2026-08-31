@@ -28,10 +28,10 @@ vi.mock("./LandingHero", () => ({
   HERO_COMPOSER_ID: "plan-composer",
   LandingHero: () => <div data-testid="hero" />,
 }));
-vi.mock("./FinalSearch", () => ({ FinalSearch: () => null }));
 vi.mock("./InspirationGallery", () => ({ InspirationGallery: () => null }));
 vi.mock("./ImmersiveStory", () => ({ ImmersiveStory: () => null }));
 vi.mock("./HowItWorks", () => ({ HowItWorks: () => null }));
+vi.mock("./ManualExplore", () => ({ ManualExplore: () => null }));
 vi.mock("./PlanShowcase", () => ({
   PlanShowcase: () => <div data-testid="showcase" />,
 }));

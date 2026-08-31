@@ -1,0 +1,220 @@
+.scene {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  /* The per-object departure carries most of the exit; this is only a
+     soft global fade so nothing is still faintly visible once the
+     gallery has taken over. */
+  opacity: clamp(0, calc(1.05 - var(--hero-progress, 0) * 1.15), 1);
+}
+
+/* ── Layer 1: placement + pointer parallax ──────────────────────────
+   Position and size only. `translate` (not `transform`) carries the
+   parallax so the drift keyframe below can own `transform` without a
+   collision. */
+.object {
+  position: absolute;
+  translate:
+    calc(var(--px, 0) * var(--pf, 0) * 1px)
+    calc(var(--py, 0) * var(--pf, 0) * 1px);
+  transition: translate 220ms var(--ease-out);
+}
+
+/* ── Layer 2: the scroll-linked departure ───────────────────────────
+   Rests at the object's rotation; as `--hero-progress` climbs it slides
+   along its own exit vector and scales, each object at its own rate. */
+.objectExit {
+  transform:
+    rotate(var(--rot, 0deg))
+    translate3d(
+      calc(var(--hero-progress, 0) * var(--exit-x, 0px)),
+      calc(var(--hero-progress, 0) * var(--exit-y, 0px)),
+      0
+    )
+    scale(calc(1 + (var(--exit-scale, 1) - 1) * var(--hero-progress, 0)));
+  transform-origin: center;
+}
+
+/* ── Layer 3: the one-time entrance (Motion writes transform here) ── */
+.objectInner {
+  filter: drop-shadow(0 18px 22px rgba(55, 31, 13, 0.16));
+}
+
+.objectInner img {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+}
+
+/* ── Idle drift ────────────────────────────────────────────────────
+   A few pieces breathe a little while the hero sits still. `transform`
+   on the outer `.object` — free now that parallax uses `translate`. */
+@media (prefers-reduced-motion: no-preference) {
+  .object[data-drift="true"] {
+    animation: hero-drift 8s ease-in-out infinite alternate;
+  }
+  .object[data-object="wine"] { animation-duration: 9.4s; animation-delay: -3s; }
+  .object[data-object="compass"] { animation-duration: 7.2s; animation-delay: -1.5s; }
+
+  @keyframes hero-drift {
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(0, -6px, 0) rotate(0.6deg); }
+  }
+}
+
+/* When the composer has focus the air goes still: the hero is no longer
+   idle, so it has no reason to move. */
+:global([data-writing="true"]) .object[data-drift="true"] {
+  animation-play-state: paused;
+}
+
+.object[data-object="map"] {
+  left: -15vw;
+  bottom: -28vw;
+  width: clamp(440px, 47vw, 760px);
+  opacity: 0.83;
+  --rot: -11deg;
+  --pf: 10;
+}
+
+.object[data-object="camera"] {
+  top: 7%;
+  left: -7vw;
+  width: clamp(210px, 22vw, 350px);
+  --rot: -13deg;
+  --pf: 7;
+}
+
+.object[data-object="headphones"] {
+  left: 3vw;
+  bottom: 5%;
+  width: clamp(160px, 18vw, 280px);
+  opacity: 0.92;
+  --rot: 14deg;
+  --pf: 5;
+}
+
+.object[data-object="compass"] {
+  top: 34%;
+  left: 12vw;
+  width: clamp(90px, 10vw, 150px);
+  --rot: 22deg;
+  --pf: 3;
+}
+
+.object[data-object="polaroid"] {
+  top: 4%;
+  right: -4vw;
+  width: clamp(210px, 23vw, 360px);
+  --rot: 9deg;
+  --pf: 8;
+}
+
+.object[data-object="wine"] {
+  top: 23%;
+  right: -4vw;
+  width: clamp(120px, 13vw, 200px);
+  --rot: 10deg;
+  --pf: 4;
+}
+
+.object[data-object="ticket"] {
+  right: 7vw;
+  bottom: 1%;
+  width: clamp(220px, 25vw, 390px);
+  --rot: -9deg;
+  --pf: 6;
+}
+
+.object[data-object="coffee"] {
+  right: 15vw;
+  bottom: 22%;
+  width: clamp(110px, 13vw, 190px);
+  --rot: 8deg;
+  --pf: 4;
+}
+
+@media (max-width: 1180px) {
+  .object[data-object="camera"] { left: -11vw; }
+  .object[data-object="compass"] { display: none; }
+  .object[data-object="coffee"] { right: 8vw; }
+}
+
+@media (max-width: 900px) {
+  .object[data-object="camera"],
+  .object[data-object="wine"],
+  .object[data-object="headphones"] { display: none; }
+
+  .object[data-object="map"] {
+    left: -32vw;
+    bottom: -26vw;
+    width: 72vw;
+    min-width: 460px;
+  }
+
+  .object[data-object="polaroid"] {
+    top: 2%;
+    right: -13vw;
+    width: clamp(170px, 34vw, 260px);
+  }
+
+  .object[data-object="ticket"] {
+    right: -10vw;
+    bottom: 5%;
+    width: clamp(190px, 38vw, 280px);
+  }
+
+  .object[data-object="coffee"] {
+    right: auto;
+    bottom: 16%;
+    left: -6vw;
+    width: clamp(100px, 22vw, 150px);
+  }
+}
+
+@media (max-width: 620px) {
+  /* Parallax off on touch; the pointer vars never update here anyway,
+     but the smaller pieces should sit dead still. */
+  .object { --pf: 0; }
+
+  .object[data-object="map"] {
+    left: -54vw;
+    bottom: -30vw;
+    width: 106vw;
+    min-width: 390px;
+    opacity: 0.5;
+  }
+
+  .object[data-object="polaroid"] {
+    top: -3%;
+    right: -24vw;
+    width: 54vw;
+    min-width: 185px;
+    opacity: 0.82;
+  }
+
+  .object[data-object="ticket"] {
+    right: -25vw;
+    bottom: 1%;
+    width: 60vw;
+    min-width: 210px;
+    opacity: 0.72;
+  }
+
+  .object[data-object="coffee"] {
+    bottom: 9%;
+    left: -17vw;
+    width: 36vw;
+    min-width: 125px;
+    opacity: 0.74;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene { opacity: 1; }
+  .objectExit { transform: rotate(var(--rot, 0deg)); }
+  .object { translate: none; }
+}

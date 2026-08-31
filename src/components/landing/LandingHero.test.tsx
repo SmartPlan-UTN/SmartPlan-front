@@ -25,6 +25,8 @@ function polling(
     retry: vi.fn(),
     regenerate: vi.fn(),
     lastSubmission: null,
+    applySelectionChange: vi.fn(),
+    refresh: vi.fn(),
     ...overrides,
   } as UsePlanRequestPollingResult;
 }
@@ -56,6 +58,14 @@ describe("LandingHero", () => {
     }
   });
 
+  it("keeps hero objects decorative and outside the accessibility tree", () => {
+    renderHero();
+    const scene = screen.getByTestId("hero-objects");
+    expect(scene).toHaveAttribute("aria-hidden", "true");
+    expect(scene.querySelectorAll("img")).toHaveLength(8);
+    for (const image of scene.querySelectorAll("img")) expect(image).toHaveAttribute("alt", "");
+  });
+
   it("writes a quick intent into the composer and focuses it, without submitting", async () => {
     const user = userEvent.setup();
     const { onSubmit } = renderHero();
@@ -85,5 +95,6 @@ describe("LandingHero", () => {
     // nothing else on the hero survives alongside it.
     expect(screen.queryByLabelText(FIELD)).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Generación de planes" })).not.toHaveAttribute("aria-labelledby");
   });
 });

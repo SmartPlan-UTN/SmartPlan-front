@@ -1,44 +1,82 @@
 "use client";
 
+import { useRef } from "react";
 import Image from "next/image";
-import { useRef, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  type Variants,
+} from "motion/react";
 
 import { Icon } from "@/components/ui";
-import { useReducedMotion } from "@/hooks";
+import { useEntrance, EASE_OUT, viewportOnce } from "@/lib/motion";
 
 import { Reveal } from "./Reveal";
 import { INSPIRATION, type InspirationTile } from "./landingContent";
 import { MEDIA } from "./landingMedia";
 import styles from "./gallery.module.css";
 
-/** Maximum tilt, in degrees. Past ~3° this stops reading as depth. */
-const TILT = 2.6;
-
 /**
- * What a salida can be, shown rather than described.
+ * The gallery no longer reveals as one block. Each tile carries its own
+ * entrance so the section has rhythm rather than a single fade-up: one
+ * grows in from small, one arrives from the side, one is uncovered by a
+ * mask. The feature tile is scroll-linked — it is the photograph that
+ * "is born inside the hero" as the objects clear away.
  *
- * An asymmetric grid, not a row of equal cards: six tiles at four
- * different sizes, so the eye moves through the section instead of
- * scanning a shelf. The composition is the argument — "there is more here
- * than you were thinking of" is not a sentence the page has to write if
- * the layout already says it.
- *
- * Every tile is a photograph now, bled to the edge of its frame. The
- * colour field underneath is what the tile holds while the image loads,
- * so a slow connection sees a composed page in the brand's palette
- * rather than six grey rectangles.
- *
- * Sizes are chosen against the shapes: the two `wide` tiles take
- * landscape photographs, the `tall` one takes a picture whose subject
- * sits in the middle of the frame and survives a vertical crop, and the
- * `feature` takes the one with the most going on.
+ * Recipes are keyed by tile id and kept deliberately few; the brief's
+ * rule is that composition outranks the catalogue of effects.
  */
+
+const RECIPES: Record<string, Variants> = {
+  cordillera: {
+    hidden: { opacity: 0, x: 44 },
+    shown: { opacity: 1, x: 0, transition: { duration: 0.6, ease: EASE_OUT } },
+  },
+  noche: {
+    hidden: { opacity: 0, clipPath: "inset(0 0 100% 0)" },
+    shown: {
+      opacity: 1,
+      clipPath: "inset(0 0 0% 0)",
+      transition: { duration: 0.7, ease: EASE_OUT },
+    },
+  },
+  cafe: {
+    hidden: { opacity: 0, scale: 0.96 },
+    shown: { opacity: 1, scale: 1, transition: { duration: 0.55, ease: EASE_OUT } },
+  },
+  informal: {
+    hidden: { opacity: 0, y: 34 },
+    shown: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE_OUT } },
+  },
+  vinos: {
+    hidden: { opacity: 0, y: 40, rotate: 1.5 },
+    shown: {
+      opacity: 1,
+      y: 0,
+      rotate: 0,
+      transition: { duration: 0.65, ease: EASE_OUT },
+    },
+  },
+};
+
+const DEFAULT_RECIPE: Variants = {
+  hidden: { opacity: 0, y: 28, scale: 0.97 },
+  shown: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.6, ease: EASE_OUT } },
+};
+
+const BODY_VARIANTS: Variants = {
+  hidden: { opacity: 0, y: 12 },
+  shown: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE_OUT, delay: 0.12 } },
+};
+
 export function InspirationGallery() {
+  const { active } = useEntrance();
+
   return (
     <section className={styles.section} aria-labelledby="inspiration-title">
       <div className={styles.shell}>
         <Reveal className={styles.header}>
-          <p className={`sp-label ${styles.kicker}`}>{INSPIRATION.kicker}</p>
           <h2 id="inspiration-title" className={styles.title}>
             {INSPIRATION.title[0]}
             <span className={styles.titleSoft}> {INSPIRATION.title[1]}</span>
@@ -46,93 +84,110 @@ export function InspirationGallery() {
           <p className={styles.lead}>{INSPIRATION.lead}</p>
         </Reveal>
       </div>
-
-      <Reveal className={styles.gridWrap}>
+      <div className={styles.gridWrap}>
         <ul className={styles.grid}>
           {INSPIRATION.tiles.map((tile) => (
-            <Tile key={tile.id} tile={tile} />
+            <Tile key={tile.id} tile={tile} active={active} />
           ))}
         </ul>
-      </Reveal>
+      </div>
     </section>
   );
 }
 
-function Tile({ tile }: { tile: InspirationTile }) {
-  const ref = useRef<HTMLLIElement>(null);
-  const reduced = useReducedMotion();
+function Tile({ tile, active }: { tile: InspirationTile; active: boolean }) {
+  const isFeature = tile.scale === "feature";
+
+  if (isFeature && active) {
+    return <FeatureTile tile={tile} />;
+  }
 
   const image = MEDIA[tile.media];
-
-  /**
-   * Pointer-relative tilt, written straight to custom properties.
-   *
-   * State would re-render the tile on every pointer move; custom
-   * properties are read by the compositor and skip React entirely.
-   */
-  function onPointerMove(event: ReactPointerEvent<HTMLLIElement>) {
-    if (reduced) return;
-    const node = ref.current;
-    if (!node) return;
-
-    const rect = node.getBoundingClientRect();
-    const x = (event.clientX - rect.left) / rect.width - 0.5;
-    const y = (event.clientY - rect.top) / rect.height - 0.5;
-
-    node.style.setProperty("--tilt-x", `${(-y * TILT).toFixed(2)}deg`);
-    node.style.setProperty("--tilt-y", `${(x * TILT).toFixed(2)}deg`);
-  }
-
-  function resetTilt() {
-    const node = ref.current;
-    if (!node) return;
-    node.style.setProperty("--tilt-x", "0deg");
-    node.style.setProperty("--tilt-y", "0deg");
-  }
+  const variants = active ? RECIPES[tile.id] ?? DEFAULT_RECIPE : undefined;
 
   return (
-    <li
+    <motion.li
+      className={styles.tile}
+      data-id={tile.id}
+      variants={variants}
+      initial={variants ? "hidden" : false}
+      whileInView={variants ? "shown" : undefined}
+      viewport={viewportOnce}
+    >
+      <div className={styles.tileMedia}>
+        <Image
+          src={image.src}
+          alt={image.alt}
+          fill
+          sizes="(max-width: 620px) 88vw, (max-width: 900px) 52vw, 44vw"
+          className={styles.tilePhoto}
+          style={image.focus ? { objectPosition: image.focus } : undefined}
+        />
+      </div>
+      <div className={styles.tileScrim} aria-hidden="true" />
+      <motion.div
+        className={styles.tileBody}
+        variants={active ? BODY_VARIANTS : undefined}
+      >
+        <p className={styles.tileMeta}>
+          <Icon name={tile.icon} size={14} stroke={2} aria-hidden="true" />
+          {tile.kicker}
+        </p>
+        <h3 className={styles.tileTitle}>{tile.title}</h3>
+        <p className={styles.tileCaption}>{tile.caption}</p>
+      </motion.div>
+    </motion.li>
+  );
+}
+
+/**
+ * The feature tile is scrubbed by scroll as it rises into view: it starts
+ * small and masked at the bottom of the viewport and reaches full size
+ * and a clean frame by the time it is centred — the hand-off from the
+ * emptying hero.
+ */
+function FeatureTile({ tile }: { tile: InspirationTile }) {
+  const ref = useRef<HTMLLIElement>(null);
+  const image = MEDIA[tile.media];
+
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "start center"],
+  });
+
+  const scale = useTransform(scrollYProgress, [0, 1], [0.86, 1]);
+  const y = useTransform(scrollYProgress, [0, 1], [64, 0]);
+  const inset = useTransform(scrollYProgress, [0, 1], [38, 0]);
+  const clipPath = useTransform(inset, (v) => `inset(${v}% round 14px)`);
+
+  return (
+    <motion.li
       ref={ref}
       className={styles.tile}
       data-id={tile.id}
-      data-tone={tile.tone}
-      data-scale={tile.scale}
-      onPointerMove={onPointerMove}
-      onPointerLeave={resetTilt}
+      style={{ scale, y, clipPath }}
     >
-      <div className={styles.tileInner}>
-        <div className={styles.tileField} aria-hidden="true" />
-
-        <div className={styles.tileMedia}>
-          <Image
-            src={image.src}
-            alt={image.alt}
-            fill
-            sizes="(max-width: 620px) 80vw, (max-width: 900px) 50vw, 42vw"
-            className={styles.tilePhoto}
-            style={image.focus ? { objectPosition: image.focus } : undefined}
-            // The gallery sits immediately under the hero, so its first
-            // tile is a plausible LCP element on a short viewport.
-            // `fetchPriority` rather than `preload`: several tiles could
-            // be the LCP depending on the width, and preloading all of
-            // them would be worse than preloading none.
-            {...(tile.scale === "feature"
-              ? { loading: "eager" as const, fetchPriority: "high" as const }
-              : {})}
-          />
-        </div>
-
-        <div className={styles.tileScrim} aria-hidden="true" />
-
-        <div className={styles.tileBody}>
-          <p className={styles.tileKicker}>
-            <Icon name={tile.icon} size={13} stroke={2} aria-hidden="true" />
-            {tile.kicker}
-          </p>
-          <h3 className={styles.tileTitle}>{tile.title}</h3>
-          <p className={styles.tileCaption}>{tile.caption}</p>
-        </div>
+      <div className={styles.tileMedia}>
+        <Image
+          src={image.src}
+          alt={image.alt}
+          fill
+          sizes="(max-width: 620px) 88vw, (max-width: 900px) 52vw, 44vw"
+          className={styles.tilePhoto}
+          style={image.focus ? { objectPosition: image.focus } : undefined}
+          loading="eager"
+          fetchPriority="high"
+        />
       </div>
-    </li>
+      <div className={styles.tileScrim} aria-hidden="true" />
+      <div className={styles.tileBody}>
+        <p className={styles.tileMeta}>
+          <Icon name={tile.icon} size={14} stroke={2} aria-hidden="true" />
+          {tile.kicker}
+        </p>
+        <h3 className={styles.tileTitle}>{tile.title}</h3>
+        <p className={styles.tileCaption}>{tile.caption}</p>
+      </div>
+    </motion.li>
   );
 }

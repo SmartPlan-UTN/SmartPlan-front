@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { MotionConfig } from "motion/react";
+
 import type {
   SurpriseCoords,
   SurpriseResolvedMeta,
@@ -14,11 +16,11 @@ import type { PlanRequestContext } from "@/types";
 
 import { RecommendedPlans } from "@/components/home";
 
-import { FinalSearch } from "./FinalSearch";
 import { HowItWorks } from "./HowItWorks";
 import { ImmersiveStory } from "./ImmersiveStory";
 import { InspirationGallery } from "./InspirationGallery";
 import { LandingHero, HERO_COMPOSER_ID } from "./LandingHero";
+import { ManualExplore } from "./ManualExplore";
 import { PlanShowcase } from "./PlanShowcase";
 import styles from "./landing.module.css";
 
@@ -33,15 +35,14 @@ import styles from "./landing.module.css";
  *   story       what smartplan actually does to an idea
  *   how         the same claim in four lines, now that it means something
  *   showcase    the shape of an answer
- *   closing     write an idea, again, without scrolling back up
+ *   closing     one line back to the hero — no second composer
  *
  * ── Why the generation state lives here ─────────────────────────────
  *
- * Both composers submit into one `usePlanRequestPolling`. Giving each its
- * own would let the page hold two generations at once and show two
- * different answers in two places — so the state is lifted to the only
- * component that contains both fields, and the hero renders whatever
- * comes back regardless of which field started it.
+ * The hero composer and the surprise flow both submit into one
+ * `usePlanRequestPolling`. The state is lifted here so that whatever
+ * starts a generation — the field, "Sorpréndeme", or "ajustar" — the
+ * hero renders the result in one place.
  */
 export function LandingScreen() {
   const { authenticated, status } = useSession();
@@ -69,8 +70,7 @@ export function LandingScreen() {
       context: Object.keys(context).length > 0 ? context : undefined,
     });
 
-    // Submitting from the closing field would otherwise leave the visitor
-    // at the bottom of the page while the answer renders at the top.
+    // The answer renders in the hero; make sure it is in view.
     scrollToHero();
   }
 
@@ -102,7 +102,7 @@ export function LandingScreen() {
   }
 
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       <LandingHero
         planning={planning}
         sessionLoading={sessionLoading}
@@ -136,12 +136,18 @@ export function LandingScreen() {
             <div className={styles.sessionSlot} aria-hidden="true" />
           )}
 
-          <FinalSearch sessionLoading={sessionLoading} onSubmit={handleSubmit} />
+          <ManualExplore />
+          <section className={styles.closing}>
+            <p className={styles.closingLead}>Cuando tengas una idea, el buscador te espera arriba.</p>
+            <button type="button" className={styles.closingCta} onClick={handleStartPlan}>
+              Escribir una idea
+            </button>
+          </section>
         </>
       ) : null}
 
       <SiteFooter />
-    </>
+    </MotionConfig>
   );
 }
 

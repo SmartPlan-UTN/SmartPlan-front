@@ -1,76 +1,80 @@
 "use client";
 
+import { useRef, useState } from "react";
+import { motion, useMotionValueEvent, useScroll } from "motion/react";
+
 import { Icon } from "@/components/ui";
-import { useReducedMotion, useScrollProgress } from "@/hooks";
+import { usePrefersReducedMotion } from "@/lib/motion";
 
 import { Reveal } from "./Reveal";
 import { HOW } from "./landingContent";
 import styles from "./how.module.css";
 
 /**
- * Progress is measured across the whole section's travel, but the steps
- * should be lit by the time the section is comfortably on screen rather
- * than only at the very bottom of the page. This compresses the useful
- * range into the first two-thirds of that travel.
- */
-const RANGE = 0.62;
-
-/**
- * How smartplan works, placed deliberately late.
+ * The four steps are not a finished timeline. As the section scrolls the
+ * line draws itself from the first node to the last, the ember colour
+ * travelling along it, and each node lifts from "future" (faint, neutral)
+ * to "active" to "done" as the progress reaches it.
  *
- * By this point a visitor has already used the field and seen what the
- * product produces, so this section is confirmation rather than
- * instruction — which is why it is four short lines and a diagram, not
- * documentation.
- *
- * The four steps are connected by a line that fills as the section
- * scrolls, and each step lights when the line reaches it. That is the
- * one thing the section adds over four static cards: the steps are a
- * sequence, and a sequence should be shown happening in order.
+ * Progress drives a single CSS custom property; the integer step only
+ * changes state four times, so there is no per-frame React work.
  */
 export function HowItWorks() {
-  const { ref, progress } = useScrollProgress<HTMLElement>();
-  const reduced = useReducedMotion();
+  const reduced = usePrefersReducedMotion();
+  const section = useRef<HTMLDivElement>(null);
+  const [scrolled, setScrolled] = useState(0);
+  // Reduced motion shows the whole sequence complete; otherwise the
+  // active step follows scroll. Derived, so no effect and no mismatch.
+  const active = reduced ? HOW.steps.length - 1 : scrolled;
 
-  // Reduced motion gets the finished diagram: every step lit, line full.
-  // The information is the point; the filling is the flourish.
-  const fill = reduced ? 1 : Math.min(progress / RANGE, 1);
-  const reached = Math.round(fill * HOW.steps.length);
+  const { scrollYProgress } = useScroll({
+    target: section,
+    offset: ["start 78%", "end 65%"],
+  });
+
+  useMotionValueEvent(scrollYProgress, "change", (v) => {
+    if (reduced) return;
+    const next = Math.max(0, Math.min(HOW.steps.length - 1, Math.floor(v * HOW.steps.length)));
+    setScrolled((current) => (current === next ? current : next));
+  });
 
   return (
-    <section ref={ref} className={styles.section} aria-labelledby="how-title">
+    <section className={styles.section} aria-labelledby="how-title">
       <div className={styles.shell}>
         <Reveal className={styles.header}>
-          <p className={`sp-label ${styles.kicker}`}>{HOW.kicker}</p>
           <h2 id="how-title" className={styles.title}>
             {HOW.title[0]}
-            <span className={styles.titleSoft}> {HOW.title[1]}</span>
+            <span> {HOW.title[1]}</span>
           </h2>
         </Reveal>
 
-        <ol
-          className={styles.steps}
-          style={{ "--fill": fill } as React.CSSProperties}
+        <motion.div
+          ref={section}
+          className={styles.sequence}
+          data-active={active}
+          style={
+            { "--how-progress": scrollYProgress } as unknown as React.CSSProperties
+          }
         >
-          <span className={styles.track} aria-hidden="true">
-            <span className={styles.trackFill} />
-          </span>
-
-          {HOW.steps.map((step, index) => (
-            <li
-              key={step.n}
-              className={styles.step}
-              data-lit={index < reached ? "true" : undefined}
-            >
-              <span className={styles.stepMarker} aria-hidden="true">
-                <Icon name={step.icon} size={18} stroke={1.9} />
-              </span>
-              <p className={styles.stepNumber}>{step.n}</p>
-              <h3 className={styles.stepTitle}>{step.title}</h3>
-              <p className={styles.stepCopy}>{step.copy}</p>
-            </li>
-          ))}
-        </ol>
+          <span className={styles.track} aria-hidden="true" />
+          <ol className={styles.steps}>
+            {HOW.steps.map((step, index) => (
+              <li
+                key={step.n}
+                className={styles.step}
+                data-state={
+                  index < active ? "done" : index === active ? "active" : "future"
+                }
+              >
+                <span className={styles.stepMarker} aria-hidden="true">
+                  <Icon name={step.icon} size={19} stroke={1.9} />
+                </span>
+                <h3 className={styles.stepTitle}>{step.title}</h3>
+                <p className={styles.stepCopy}>{step.copy}</p>
+              </li>
+            ))}
+          </ol>
+        </motion.div>
       </div>
     </section>
   );

@@ -1,228 +1,66 @@
-/* ================================================================
-   "Cómo funciona" — four steps on a line that fills as you scroll.
-   ================================================================ */
+.section { position: relative; padding-block: clamp(78px, 11vh, 132px); background: var(--cream); }
+.shell { width: 100%; max-width: var(--max-w); padding-inline: clamp(20px, 5vw, 48px); margin-inline: auto; }
+.header { max-width: 720px; margin-bottom: clamp(48px, 7vh, 80px); }
+.title { margin: 0; font-size: clamp(34px, 4.8vw, 58px); font-weight: var(--w-display); letter-spacing: -.035em; line-height: .98; text-wrap: balance; }
+.title span { color: var(--fg-3); }
 
-.section {
-  position: relative;
-  padding-block: clamp(64px, 10vh, 116px);
-  background: var(--cream);
-}
+.sequence { --how-progress: 0; position: relative; }
+.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(20px, 3vw, 42px); padding: 0; margin: 0; list-style: none; }
 
-.shell {
-  width: 100%;
-  max-width: var(--max-w);
-  padding-inline: clamp(20px, 5vw, 48px);
-  margin-inline: auto;
-}
-
-.header {
-  max-width: 640px;
-  margin-bottom: clamp(40px, 6vh, 72px);
-}
-
-.kicker {
-  margin: 0 0 var(--s-3);
-  color: var(--ember);
-}
-
-.title {
-  margin: 0;
-  font-size: clamp(28px, 4.2vw, 48px);
-  font-weight: var(--w-display);
-  letter-spacing: var(--track-h1);
-  line-height: 1.05;
-  text-wrap: balance;
-}
-
-.titleSoft {
-  color: var(--fg-3);
-}
-
-/* ── The sequence ──────────────────────────────────────────────── */
-
-.steps {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(16px, 2.4vw, 34px);
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-/* The line runs behind the markers, from the centre of the first to the
-   centre of the last — which is why it is inset by half a column rather
-   than spanning the full width. */
-.track {
-  position: absolute;
-  top: 21px;
-  right: calc(100% / 8);
-  left: calc(100% / 8);
-  height: 2px;
-  border-radius: 2px;
-  background: var(--hairline);
-}
-
-.trackFill {
-  position: relative;
+/* The rail, and the ember that travels along it as `--how-progress`
+   climbs. `scaleX` is bound straight to the progress value — the line
+   draws with the scroll, it is never "already finished". */
+.track { position: absolute; top: 24px; right: 10%; left: 10%; height: 1px; background: var(--hairline); overflow: hidden; }
+.track::after {
   display: block;
   width: 100%;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, var(--ember), color-mix(in srgb, var(--ember) 70%, var(--gold)));
-  /* `scaleX` rather than `width`: a width animation on every scroll frame
-     forces layout, a transform does not. */
-  transform: scaleX(var(--fill, 0));
-  transform-origin: left center;
-}
-
-/* The head of the line glows, so the progress has a leading edge instead
-   of just an end. Sits at the right edge of the filled portion and is
-   counter-scaled, because the parent is being stretched by `scaleX` and
-   would otherwise smear this into a streak. */
-.trackFill::after {
-  position: absolute;
-  top: 50%;
-  right: 0;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--gold);
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--gold) 26%, transparent),
-    0 0 14px 3px color-mix(in srgb, var(--ember) 60%, transparent);
-  transform: translate(50%, -50%) scaleX(calc(1 / max(var(--fill, 1), 0.02)));
-  opacity: var(--fill, 0);
+  height: 2px;
+  background: var(--ember);
+  transform: scaleX(var(--how-progress, 0));
+  transform-origin: left;
   content: "";
 }
 
-.step {
-  position: relative;
-  padding-top: 0;
-}
+.step { position: relative; transition: opacity var(--d-base) var(--ease-out); }
+.step[data-state="future"] { opacity: .42; }
+.step[data-state="active"] { opacity: 1; }
+.step[data-state="done"] { opacity: .72; }
 
 .stepMarker {
   position: relative;
   z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid var(--hairline);
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: var(--surface-card);
-  color: var(--fg-3);
-  transition:
-    border-color var(--d-base) var(--ease-out),
-    background var(--d-base) var(--ease-out),
-    color var(--d-base) var(--ease-out),
-    box-shadow var(--d-base) var(--ease-out),
-    transform var(--d-base) var(--ease-out);
-}
-
-.step[data-lit="true"] .stepMarker {
-  border-color: transparent;
-  background: var(--ember);
+  background: var(--fg-3);
   color: var(--white);
-  box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--ember) 75%, transparent);
-  transform: translateY(-2px);
+  transition: background var(--d-base) var(--ease-out), transform var(--d-base) var(--ease-out), box-shadow var(--d-base) var(--ease-out);
 }
-
-.stepNumber {
-  margin: var(--s-4) 0 var(--s-2);
-  color: var(--fg-3);
-  font-size: var(--t-label);
-  font-weight: var(--w-label);
-  letter-spacing: var(--track-label);
-  transition: color var(--d-base) var(--ease-out);
+.step[data-state="active"] .stepMarker {
+  background: var(--ember);
+  transform: scale(1.08);
+  box-shadow: 0 14px 26px -16px rgb(232 93 32 / 80%);
 }
+.step[data-state="done"] .stepMarker { background: var(--ember); }
 
-.step[data-lit="true"] .stepNumber {
-  color: var(--ember);
-}
-
-.stepTitle {
-  margin: 0 0 var(--s-2);
-  font-size: clamp(15px, 1.5vw, 17.5px);
-  font-weight: var(--w-heading);
-  letter-spacing: -0.01em;
-  line-height: 1.25;
-  text-wrap: balance;
-}
-
-.stepCopy {
-  margin: 0;
-  color: var(--fg-2);
-  font-size: 14px;
-  line-height: 1.55;
-  text-wrap: pretty;
-}
-
-/* ── Responsive ────────────────────────────────────────────────── */
+.stepTitle { max-width: 18ch; margin: 22px 0 10px; font-size: clamp(17px, 1.6vw, 20px); line-height: 1.2; text-wrap: balance; transition: transform var(--d-base) var(--ease-out); }
+.step[data-state="active"] .stepTitle { transform: translateY(-2px); }
+.stepCopy { max-width: 28ch; margin: 0; color: var(--fg-2); font-size: 14px; line-height: 1.55; }
 
 @media (max-width: 860px) {
-  /* Vertical, with the same line running down the left gutter: the
-     sequence survives, the four-across layout does not. */
-  .steps {
-    grid-template-columns: 1fr;
-    gap: clamp(22px, 4vw, 32px);
-  }
-
-  .track {
-    top: 8px;
-    right: auto;
-    bottom: 22px;
-    left: 21px;
-    width: 2px;
-    height: auto;
-  }
-
-  .trackFill {
-    transform: scaleY(var(--fill, 0));
-    transform-origin: center top;
-  }
-
-  /* The line runs downward here, so the leading edge is at the bottom
-     and the counter-scale has to be on the other axis. */
-  .trackFill::after {
-    top: auto;
-    right: 50%;
-    bottom: 0;
-    transform: translate(50%, 50%) scaleY(calc(1 / max(var(--fill, 1), 0.02)));
-  }
-
-  .step {
-    display: grid;
-    grid-template-columns: 44px minmax(0, 1fr);
-    grid-template-areas:
-      "marker number"
-      "marker title"
-      "marker copy";
-    column-gap: var(--s-4);
-    align-items: start;
-  }
-
-  .stepMarker { grid-area: marker; }
-
-  .stepNumber {
-    grid-area: number;
-    margin: 0 0 var(--s-1);
-  }
-
-  .stepTitle { grid-area: title; }
-  .stepCopy  { grid-area: copy; }
+  .steps { grid-template-columns: 1fr; gap: 30px; }
+  .track { top: 16px; bottom: 16px; left: 23px; width: 1px; height: auto; }
+  .track::after { width: 2px; height: 100%; transform: scaleY(var(--how-progress, 0)); transform-origin: top; }
+  .step { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 0 18px; }
+  .stepMarker { grid-row: 1 / span 2; }
+  .stepTitle { margin: 1px 0 8px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .sequence { --how-progress: 1; }
+  .step,
   .stepMarker,
-  .stepNumber {
-    transition: none;
-  }
-
-  /* The line still fills — it carries the reading order — but the glowing
-     head is decoration and goes. */
-  .trackFill::after {
-    display: none;
-  }
+  .stepTitle { transition: none; }
 }
