@@ -7,6 +7,7 @@ import { Icon, type IconName } from "@/components/ui";
 import { ROUTES } from "@/lib/routes";
 import { useEntrance, EASE_OUT, viewportOnce } from "@/lib/motion";
 
+import { Reveal } from "./Reveal";
 import styles from "./manual-explore.module.css";
 
 const CAPABILITIES: readonly { icon: IconName; label: string }[] = [
@@ -34,14 +35,14 @@ export function ManualExplore() {
   return (
     <section className={styles.section} aria-labelledby="manual-explore-title">
       <div className={styles.shell}>
-        <div className={styles.copy}>
+        <Reveal className={styles.copy}>
           <h2 id="manual-explore-title">¿Preferís buscar vos?</h2>
           <p>Explorá lugares con los criterios que ya conocés y armá tu propia salida.</p>
           <Link href={ROUTES.explore} className={styles.link}>
             Explorar lugares
             <Icon name="arrow-right" size={18} aria-hidden="true" />
           </Link>
-        </div>
+        </Reveal>
         <motion.ul
           className={styles.capabilities}
           variants={active ? LIST : undefined}
