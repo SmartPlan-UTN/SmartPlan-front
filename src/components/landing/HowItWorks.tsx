@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { motion, useMotionValueEvent, useScroll } from "motion/react";
 
 import { Icon } from "@/components/ui";
-import { usePrefersReducedMotion } from "@/lib/motion";
+import { EASE_OUT, usePrefersReducedMotion } from "@/lib/motion";
 
 import { Reveal } from "./Reveal";
 import { HOW } from "./landingContent";
@@ -52,11 +52,16 @@ export function HowItWorks() {
           ref={section}
           className={styles.sequence}
           data-active={active}
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.5, ease: EASE_OUT }}
           style={
             { "--how-progress": scrollYProgress } as unknown as React.CSSProperties
           }
         >
           <span className={styles.track} aria-hidden="true" />
+          <span className={styles.trackDot} aria-hidden="true" />
           <ol className={styles.steps}>
             {HOW.steps.map((step, index) => (
               <li

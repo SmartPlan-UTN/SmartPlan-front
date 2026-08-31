@@ -1,4 +1,19 @@
 .section { position: relative; padding-block: clamp(78px, 11vh, 132px); background: var(--cream); }
+
+/* Daybreak after the story's night: the dark scene above resolves into
+   this section's cream over a short band rather than cutting. */
+.section::before {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 16vh;
+  background: linear-gradient(180deg, var(--char) 0%, var(--cream) 90%);
+  pointer-events: none;
+  content: "";
+}
+.shell { position: relative; z-index: 1; }
 .shell { width: 100%; max-width: var(--max-w); padding-inline: clamp(20px, 5vw, 48px); margin-inline: auto; }
 .header { max-width: 720px; margin-bottom: clamp(48px, 7vh, 80px); }
 .title { margin: 0; font-size: clamp(34px, 4.8vw, 58px); font-weight: var(--w-display); letter-spacing: -.035em; line-height: .98; text-wrap: balance; }
@@ -19,6 +34,20 @@
   transform: scaleX(var(--how-progress, 0));
   transform-origin: left;
   content: "";
+}
+
+/* A point of light riding the head of the line as it draws. */
+.trackDot {
+  position: absolute;
+  top: 24px;
+  left: calc(10% + var(--how-progress, 0) * 80%);
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ember);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--ember) 22%, transparent);
+  transform: translate(-50%, -50%);
+  opacity: clamp(0, calc(var(--how-progress, 0) * 12), 1);
 }
 
 .step { position: relative; transition: opacity var(--d-base) var(--ease-out); }
@@ -45,6 +74,16 @@
 }
 .step[data-state="done"] .stepMarker { background: var(--ember); }
 
+/* The icon arrives with the step becoming active — a small settle in,
+   not a spin. */
+.step[data-state="active"] .stepMarker svg {
+  animation: how-icon-in 420ms var(--ease-out) both;
+}
+@keyframes how-icon-in {
+  from { transform: translateY(3px) scale(0.82); opacity: 0.5; }
+  to { transform: none; opacity: 1; }
+}
+
 .stepTitle { max-width: 18ch; margin: 22px 0 10px; font-size: clamp(17px, 1.6vw, 20px); line-height: 1.2; text-wrap: balance; transition: transform var(--d-base) var(--ease-out); }
 .step[data-state="active"] .stepTitle { transform: translateY(-2px); }
 .stepCopy { max-width: 28ch; margin: 0; color: var(--fg-2); font-size: 14px; line-height: 1.55; }
@@ -52,6 +91,7 @@
 @media (max-width: 860px) {
   .steps { grid-template-columns: 1fr; gap: 30px; }
   .track { top: 16px; bottom: 16px; left: 23px; width: 1px; height: auto; }
+  .trackDot { display: none; }
   .track::after { width: 2px; height: 100%; transform: scaleY(var(--how-progress, 0)); transform-origin: top; }
   .step { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 0 18px; }
   .stepMarker { grid-row: 1 / span 2; }
@@ -63,4 +103,6 @@
   .step,
   .stepMarker,
   .stepTitle { transition: none; }
+  .step[data-state="active"] .stepMarker svg { animation: none; }
+  .trackDot { opacity: 1; }
 }
