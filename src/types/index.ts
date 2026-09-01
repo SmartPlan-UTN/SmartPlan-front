@@ -8,7 +8,6 @@ export * from './users';
 export * from './activities';
 export * from './categories';
 export * from './plans';
-export * from './preferences';
 export * from './recommendation';
 export * from './places';
 export * from './external-integration';

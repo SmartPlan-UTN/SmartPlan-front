@@ -36,7 +36,6 @@ export {
   generateSuggestedPlan,
 } from './plans';
 export { listCategories } from './categories';
-export { getPreferences, updatePreferences } from './preferences';
 export {
   changeAdminUserStatus,
   getAdminUserMetrics,

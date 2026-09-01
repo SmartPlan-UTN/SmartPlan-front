@@ -80,11 +80,7 @@ export function loadGoogleMaps(): Promise<void> {
     // cost is a "suboptimal performance" console notice from Google.
     const script = document.createElement("script");
     script.id = SCRIPT_ID;
-    // `libraries=places` pulls in `AutocompleteService`/`PlacesService`
-    // (CU8's location search) alongside the `Map`/`Marker` globals CU16
-    // already relies on — one script tag, so there's still only ever one
-    // `<script>` to await/cache above, whichever caller asks first.
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`;
     script.async = true;
     script.onload = () => settle(resolve);
     script.onerror = () =>
