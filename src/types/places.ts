@@ -40,3 +40,13 @@ export interface Place extends BaseEntity {
   idDepartment: number;
   department?: Department;
 }
+
+/**
+ * A "Provincia" (`GET /places/cities`) or "Localidad" (`GET /places/departments`)
+ * filter option: just enough to fill a `Select`, not the full `City`/`Department`
+ * catalog entity.
+ */
+export interface LocationOption {
+  id: number;
+  name: string;
+}
