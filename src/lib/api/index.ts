@@ -52,4 +52,4 @@ export {
   removeActivityFromCollection,
   updateCollection,
 } from './collections';
-export { createRating, getOwnRating } from './ratings';
+export { createRating, getOwnRating, listRatings } from './ratings';

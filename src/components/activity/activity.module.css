@@ -374,6 +374,72 @@
   color: var(--fg-2);
 }
 
+/* ── CU45: review list ───────────────────────────────────────
+   Matches `ActivityDetail.jsx`'s `ReviewCard` — literal 10/14/16px, not the
+   spacing scale, same one-off rhythm reasoning as the rest of this file's
+   prototype-matched cards. */
+.reviewCard {
+  background: var(--surface-card);
+  border: 1.5px solid var(--hairline);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: var(--s-2);
+}
+
+.reviewHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-2);
+}
+
+/* Same ember gradient as `profile.module.css`'s `.avatar`, not a color per
+   reviewer: the mockup's `review.color` is demo flourish with nothing
+   behind it in the real contract — see the doc comment on `RatingsList`. */
+.reviewAvatar {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    var(--ember) 0%,
+    color-mix(in srgb, var(--ember) 65%, black) 100%
+  );
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 700;
+  user-select: none;
+}
+
+.reviewIdentity {
+  flex: 1;
+  min-width: 0;
+}
+
+.reviewAuthor {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg-1);
+}
+
+.reviewDate {
+  margin: 0;
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+.reviewText {
+  margin: 0;
+  font-size: 13px;
+  color: var(--fg-2);
+  line-height: 1.6;
+}
+
 /* ── CU44: rate this activity ────────────────────────────────
    No mockup shows a write-a-rating control at all — see the doc comment on
    `RatingForm` — so this card borrows `.ratingSummaryCard`'s own

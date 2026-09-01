@@ -21,6 +21,7 @@ import { formatArs, formatDuration } from "@/lib/utils";
 import type { ActivityDetailResult } from "@/types";
 
 import { ActivityRatingSection } from "./ActivityRatingSection";
+import { RatingsList } from "./RatingsList";
 import styles from "./activity.module.css";
 
 export interface ActivityDetailViewProps {
@@ -43,9 +44,10 @@ const GENERIC_ERROR = "No pudimos cargar la actividad. Intentá de nuevo.";
  * (real favorites) isn't part of this delivery, so "Agregar a plan" remains
  * disabled. "Colección" opens the real CU35 selector.
  *
- * The Valoraciones tab's `ActivityRatingSection` (CU44) sits above the
- * still-placeholder review list (CU45, not built yet) — see its own doc
- * comment for why writing a rating has no mockup to follow.
+ * The Valoraciones tab's `ActivityRatingSection` (CU44, writing a rating —
+ * see its own doc comment for why it has no mockup to follow) sits above
+ * `RatingsList` (CU45, reading them — real pagination, since the mockup's
+ * own "ver todas" just reveals three hardcoded objects already in memory).
  */
 export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
   const { data: activity, status, errorMessage } = useDetailFetch<ActivityDetailResult>(
@@ -250,10 +252,7 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
 
           <ActivityRatingSection activityId={activity.id} />
 
-          <div className={styles.reviewsEmptyState}>
-            <Icon name="message-circle" size={32} className={styles.stateIcon} />
-            <p className="sp-body">Todavía no hay reseñas para mostrar en detalle.</p>
-          </div>
+          <RatingsList activityId={activity.id} />
         </div>
       )}
 

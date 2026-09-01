@@ -1,3 +1,5 @@
+import type { SortDirection } from './common';
+
 /**
  * Moderation outcome for a rating's comment (CU44, CU55). Resolved
  * synchronously on submit — `SmartPlan-back`'s `RatingModerationService`
@@ -38,4 +40,39 @@ export interface CreateRatingInput {
   planId: number;
   score: number;
   comment?: string;
+}
+
+/**
+ * A rating as anyone browsing the activity sees it (CU45) — no author
+ * identity beyond the alias, no moderation state (the list endpoint only
+ * ever returns approved ratings). Matches `PublicRatingDto`.
+ */
+export interface PublicRating {
+  id: number;
+  score: number;
+  comment: string | null;
+  authorAlias: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Aggregate shown above the review list (CU45's "Promedio y cantidad
+ * total"). Matches `RatingSummaryDto` — counts only approved ratings, same
+ * scope as the list itself.
+ */
+export interface RatingSummary {
+  averageRating: number;
+  ratingCount: number;
+}
+
+/** Sortable fields accepted by `GET /activities/:activityId/ratings`. */
+export type RatingSortField = 'createdAt' | 'score';
+
+/** Query params for CU45's paginated review list. */
+export interface ListRatingsParams {
+  page?: number;
+  limit?: number;
+  sortBy?: RatingSortField;
+  direction?: SortDirection;
 }

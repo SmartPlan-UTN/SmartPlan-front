@@ -1,4 +1,11 @@
-import type { CreateRatingInput, OwnRating } from '@/types';
+import type {
+  CreateRatingInput,
+  ListRatingsParams,
+  OwnRating,
+  PaginatedResult,
+  PublicRating,
+  RatingSummary,
+} from '@/types';
 import { apiClient } from './client';
 
 /**
@@ -25,4 +32,21 @@ export async function createRating(
   data: CreateRatingInput
 ): Promise<OwnRating> {
   return apiClient.post<OwnRating>(`/activities/${activityId}/ratings`, data);
+}
+
+/**
+ * Lists an activity's approved ratings, paginated, alongside the aggregate
+ * shown above them (CU45). `summary` sits next to `data`/`pagination` in
+ * the same response instead of a separate request — `RatingsService.
+ * listPublic` computes both together server-side.
+ * Backend contract: `GET /activities/:activityId/ratings`.
+ */
+export async function listRatings(
+  activityId: number,
+  params: ListRatingsParams = {}
+): Promise<PaginatedResult<PublicRating> & { summary: RatingSummary }> {
+  return apiClient.get<PaginatedResult<PublicRating> & { summary: RatingSummary }>(
+    `/activities/${activityId}/ratings`,
+    { params }
+  );
 }
