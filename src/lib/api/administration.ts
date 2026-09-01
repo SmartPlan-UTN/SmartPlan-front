@@ -42,6 +42,11 @@ export async function updateAdminUser(
   return apiClient.patch<AdminUser>(`/admin/users/${id}`, input);
 }
 
+/** Deletes (soft) a user account and revokes its active sessions (CU57). */
+export async function deleteAdminUser(id: number): Promise<void> {
+  await apiClient.delete<void>(`/admin/users/${id}`);
+}
+
 /**
  * Builds REP-02's available header metrics from the listing contract.
  *

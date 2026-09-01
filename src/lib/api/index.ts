@@ -38,6 +38,7 @@ export {
 export { listCategories } from './categories';
 export {
   changeAdminUserStatus,
+  deleteAdminUser,
   getAdminUserMetrics,
   getDashboardMetrics,
   listAdminUsers,
