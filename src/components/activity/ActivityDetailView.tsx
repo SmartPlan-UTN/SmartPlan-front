@@ -20,6 +20,7 @@ import { ROUTES } from "@/lib/routes";
 import { formatArs, formatDuration } from "@/lib/utils";
 import type { ActivityDetailResult } from "@/types";
 
+import { ActivityRatingSection } from "./ActivityRatingSection";
 import styles from "./activity.module.css";
 
 export interface ActivityDetailViewProps {
@@ -41,6 +42,10 @@ const GENERIC_ERROR = "No pudimos cargar la actividad. Intentá de nuevo.";
  * "Guardar" mirrors the mockup exactly: a local, unpersisted toggle. CU15
  * (real favorites) isn't part of this delivery, so "Agregar a plan" remains
  * disabled. "Colección" opens the real CU35 selector.
+ *
+ * The Valoraciones tab's `ActivityRatingSection` (CU44) sits above the
+ * still-placeholder review list (CU45, not built yet) — see its own doc
+ * comment for why writing a rating has no mockup to follow.
  */
 export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
   const { data: activity, status, errorMessage } = useDetailFetch<ActivityDetailResult>(
@@ -242,6 +247,8 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
               </p>
             </div>
           </div>
+
+          <ActivityRatingSection activityId={activity.id} />
 
           <div className={styles.reviewsEmptyState}>
             <Icon name="message-circle" size={32} className={styles.stateIcon} />

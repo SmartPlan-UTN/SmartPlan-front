@@ -374,6 +374,132 @@
   color: var(--fg-2);
 }
 
+/* ── CU44: rate this activity ────────────────────────────────
+   No mockup shows a write-a-rating control at all — see the doc comment on
+   `RatingForm` — so this card borrows `.ratingSummaryCard`'s own
+   surface/border/radius rhythm instead of a prototype's, and the
+   label/input pattern is the same hand-rolled one `CreatePlanForm`
+   established for a non-auth form, not `AuthField`. */
+.ratingFormCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-5);
+  margin-bottom: var(--s-5);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+}
+
+.ratingFormTitle {
+  margin: 0;
+  color: var(--fg-1);
+  font-weight: 700;
+}
+
+.ratingForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.label {
+  color: var(--fg-2);
+  font-weight: 600;
+}
+
+.required {
+  color: var(--ember);
+  font-weight: 700;
+}
+
+.textarea {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card-sm);
+  background: color-mix(in srgb, var(--cream) 70%, transparent);
+  color: var(--fg-1);
+  font-size: var(--t-body);
+  font-family: inherit;
+  resize: vertical;
+  min-height: 90px;
+  box-sizing: border-box;
+  transition: border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--ember);
+  background: var(--surface-card);
+}
+
+.textarea:disabled {
+  opacity: 0.6;
+}
+
+.inputInvalid {
+  border-color: var(--error);
+  background: color-mix(in srgb, var(--error) 4%, var(--surface-card));
+}
+
+.fieldError {
+  margin: 0;
+  color: var(--error);
+  font-size: var(--t-small);
+}
+
+.ratingSubmit {
+  align-self: flex-start;
+}
+
+.ownRatingComment {
+  margin: 0;
+  color: var(--fg-2);
+}
+
+.ratingModerationNote {
+  margin: 0;
+  color: var(--fg-3);
+  font-size: var(--t-small);
+  font-style: italic;
+}
+
+.ratingGate {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-4);
+  margin-bottom: var(--s-5);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card-sm);
+  background: var(--surface-card);
+  color: var(--fg-2);
+}
+
+.ratingGateIcon {
+  flex-shrink: 0;
+  color: var(--fg-3);
+}
+
+.ratingGateLink {
+  color: var(--ember);
+  font-weight: 600;
+}
+
 /* Not sticky/fixed: the running SmartPlanSystemDesign build scrolls this
    away with the rest of the content, same as PlanDetail.jsx's action row —
    only the source ActivityDetail.jsx pinned it. */
