@@ -119,6 +119,13 @@ body {
   color: var(--fg-1);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* A full-bleed element sized with `100vw` (profile/security's `.backdrop`)
+     can overshoot the visible viewport by the vertical scrollbar's own
+     width on a platform where it takes up layout space, adding a sliver of
+     horizontal scroll for something purely decorative. Clipping it here
+     costs nothing: nothing in this app relies on horizontal overflow being
+     reachable. */
+  overflow-x: hidden;
 }
 #root { min-height: 100vh; }
 input, button, textarea, select { font-family: inherit; }
