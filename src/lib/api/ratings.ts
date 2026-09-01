@@ -5,6 +5,7 @@ import type {
   PaginatedResult,
   PublicRating,
   RatingSummary,
+  UpdateRatingInput,
 } from '@/types';
 import { apiClient } from './client';
 
@@ -49,4 +50,28 @@ export async function listRatings(
     `/activities/${activityId}/ratings`,
     { params }
   );
+}
+
+/**
+ * Edits the caller's own rating (CU46). `SmartPlan-back` re-runs moderation
+ * on the new comment when one is sent, so `updatedAt` and, potentially,
+ * `moderationStatus`/`moderationReason` on the response can differ from the
+ * pre-edit rating even when the score didn't change.
+ * Backend contract: `PATCH /ratings/:id`.
+ */
+export async function updateRating(
+  ratingId: number,
+  data: UpdateRatingInput
+): Promise<OwnRating> {
+  return apiClient.patch<OwnRating>(`/ratings/${ratingId}`, data);
+}
+
+/**
+ * Deletes the caller's own rating (CU47). Soft-deleted server-side; the
+ * caller is expected to re-fetch the activity's rating list/summary
+ * afterward so the average shown reflects the removal.
+ * Backend contract: `DELETE /ratings/:id` (204, no body).
+ */
+export async function deleteRating(ratingId: number): Promise<void> {
+  await apiClient.delete<void>(`/ratings/${ratingId}`);
 }

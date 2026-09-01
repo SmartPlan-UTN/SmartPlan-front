@@ -43,6 +43,17 @@ export interface CreateRatingInput {
 }
 
 /**
+ * Payload for `PATCH /ratings/:id` (CU46). Both fields are optional, but
+ * `SmartPlan-back`'s `update` rejects a request with neither set
+ * (`RATING_UPDATE_EMPTY`) — `EditRatingForm` always sends both anyway,
+ * since it edits the whole rating at once, not one field at a time.
+ */
+export interface UpdateRatingInput {
+  score?: number;
+  comment?: string | null;
+}
+
+/**
  * A rating as anyone browsing the activity sees it (CU45) — no author
  * identity beyond the alias, no moderation state (the list endpoint only
  * ever returns approved ratings). Matches `PublicRatingDto`.

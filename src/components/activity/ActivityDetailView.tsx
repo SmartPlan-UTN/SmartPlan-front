@@ -18,7 +18,7 @@ import { useDetailFetch } from "@/hooks";
 import { getActivity } from "@/lib/api";
 import { ROUTES } from "@/lib/routes";
 import { formatArs, formatDuration } from "@/lib/utils";
-import type { ActivityDetailResult } from "@/types";
+import type { ActivityDetailResult, RatingSummary } from "@/types";
 
 import { ActivityRatingSection } from "./ActivityRatingSection";
 import { RatingsList } from "./RatingsList";
@@ -44,10 +44,20 @@ const GENERIC_ERROR = "No pudimos cargar la actividad. Intentá de nuevo.";
  * (real favorites) isn't part of this delivery, so "Agregar a plan" remains
  * disabled. "Colección" opens the real CU35 selector.
  *
- * The Valoraciones tab's `ActivityRatingSection` (CU44, writing a rating —
- * see its own doc comment for why it has no mockup to follow) sits above
- * `RatingsList` (CU45, reading them — real pagination, since the mockup's
- * own "ver todas" just reveals three hardcoded objects already in memory).
+ * The Valoraciones tab's `ActivityRatingSection` (CU44 writing a rating,
+ * CU46 editing it, CU47 deleting it — see its own doc comment for why none
+ * of the three has a mockup to follow) sits above `RatingsList` (CU45,
+ * reading them — real pagination, since the mockup's own "ver todas" just
+ * reveals three hardcoded objects already in memory).
+ *
+ * `ratingSummary`/`ratingsRefreshToken` exist purely for CU47's "Recalculo
+ * del promedio": the average/count shown here (both in this tab and in the
+ * title block's badge, above the tabs) starts from `activity.averageRating`/
+ * `ratingCount` — the snapshot `getActivity` returned on load — and is
+ * replaced by `RatingsList`'s own fetch the moment it resolves, which
+ * `ActivityRatingSection` forces a fresh one of after any create/edit/
+ * delete. `SmartPlan-back` stays the only source of truth for the number;
+ * nothing here computes it client-side.
  */
 export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
   const { data: activity, status, errorMessage } = useDetailFetch<ActivityDetailResult>(
@@ -60,6 +70,11 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
   const [showCollectionDialog, setShowCollectionDialog] = useState(false);
   const [showPlanDialog, setShowPlanDialog] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
+  // `null` until `RatingsList` fetches its own copy — see the rendering
+  // below for the `activity.averageRating`/`ratingCount` fallback used
+  // until then (CU47's "Recalculo del promedio").
+  const [ratingSummary, setRatingSummary] = useState<RatingSummary | null>(null);
+  const [ratingsRefreshToken, setRatingsRefreshToken] = useState(0);
 
   if (status === "loading") {
     return (
@@ -98,6 +113,11 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
       ? activity.categories.map((category) => category.name).join(" · ")
       : null;
   const firstLocation = activity.locations[0] ?? null;
+  const displayRatingSummary: RatingSummary =
+    ratingSummary ?? {
+      averageRating: activity.averageRating,
+      ratingCount: activity.ratingCount,
+    };
   const address = firstLocation?.place.address ?? null;
 
   return (
@@ -130,11 +150,11 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
             </Badge>
           )}
           <span className={styles.ratingSummary}>
-            <Stars rating={activity.averageRating} size={12} />
+            <Stars rating={displayRatingSummary.averageRating} size={12} />
             <span className="sp-small">
-              {activity.averageRating.toFixed(1)}
-              {activity.ratingCount > 0
-                ? ` · ${activity.ratingCount.toLocaleString("es-AR")} valoraciones`
+              {displayRatingSummary.averageRating.toFixed(1)}
+              {displayRatingSummary.ratingCount > 0
+                ? ` · ${displayRatingSummary.ratingCount.toLocaleString("es-AR")} valoraciones`
                 : ""}
             </span>
           </span>
@@ -240,19 +260,26 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
         <div className={styles.tabContent}>
           <div className={styles.ratingSummaryCard}>
             <div className={styles.ratingBigBlock}>
-              <p className={styles.ratingBig}>{activity.averageRating.toFixed(1)}</p>
-              <Stars rating={activity.averageRating} size={14} />
+              <p className={styles.ratingBig}>{displayRatingSummary.averageRating.toFixed(1)}</p>
+              <Stars rating={displayRatingSummary.averageRating} size={14} />
               <p className={styles.ratingCountNote}>
-                {activity.ratingCount > 0
-                  ? `${activity.ratingCount.toLocaleString("es-AR")} valoraciones`
+                {displayRatingSummary.ratingCount > 0
+                  ? `${displayRatingSummary.ratingCount.toLocaleString("es-AR")} valoraciones`
                   : "Sin valoraciones aún"}
               </p>
             </div>
           </div>
 
-          <ActivityRatingSection activityId={activity.id} />
+          <ActivityRatingSection
+            activityId={activity.id}
+            onChange={() => setRatingsRefreshToken((token) => token + 1)}
+          />
 
-          <RatingsList activityId={activity.id} />
+          <RatingsList
+            activityId={activity.id}
+            refreshToken={ratingsRefreshToken}
+            onSummaryChange={setRatingSummary}
+          />
         </div>
       )}
 

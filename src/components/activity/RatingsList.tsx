@@ -1,17 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Pagination } from "@/components/explore";
 import { Icon, LoadingDots, Stars } from "@/components/ui";
 import { listRatings } from "@/lib/api";
 import { formatRelativeTime } from "@/lib/utils";
-import type { PublicRating } from "@/types";
+import type { PublicRating, RatingSummary } from "@/types";
 
 import styles from "./activity.module.css";
 
 export interface RatingsListProps {
   activityId: number;
+  /**
+   * Bumping this forces a refetch of the current query and resets to page
+   * 1 — CU47's "Recalculo del promedio" (and the same after CU44/CU46):
+   * `ActivityRatingSection` bumps it after a create/edit/delete so this
+   * list and its `summary` never go stale.
+   */
+  refreshToken?: number;
+  /** Hands the freshly-fetched summary back up so `ActivityDetailView` can
+   * show it instead of the initial, potentially stale `activity.averageRating`/
+   * `ratingCount` from the page's first load. */
+  onSummaryChange?: (summary: RatingSummary) => void;
 }
 
 type LoadStatus = "loading" | "loaded" | "error";
@@ -39,15 +50,34 @@ type LoadStatus = "loading" | "loaded" | "error";
  * the summary card above this list, already built for CU44), and neither
  * has backing data — `RatingSummaryDto` has no per-star breakdown, and
  * there's no external-ratings integration.
+ *
+ * `refreshToken`/`onSummaryChange` exist for CU47's "Recalculo del
+ * promedio": `SmartPlan-back` is the only source of truth for the
+ * average, so a refresh here just re-fetches rather than adjusting the
+ * count/average client-side.
  */
-export function RatingsList({ activityId }: RatingsListProps) {
+export function RatingsList({ activityId, refreshToken, onSummaryChange }: RatingsListProps) {
   const [status, setStatus] = useState<LoadStatus>("loading");
   const [ratings, setRatings] = useState<PublicRating[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const lastRefreshToken = useRef(refreshToken);
 
   useEffect(() => {
     let ignore = false;
+
+    // A `refreshToken` that changed since the last run always means
+    // "something changed elsewhere" — jump back to page 1 rather than risk
+    // re-requesting a page that no longer exists (e.g. the last item on
+    // the last page just got deleted). Bailing out here instead of fetching
+    // with the stale `page` avoids firing two requests in a row: this
+    // effect re-runs on its own once `setPage(1)` lands.
+    if (refreshToken !== lastRefreshToken.current && page !== 1) {
+      lastRefreshToken.current = refreshToken;
+      setPage(1);
+      return;
+    }
+    lastRefreshToken.current = refreshToken;
 
     async function load() {
       setStatus("loading");
@@ -57,6 +87,7 @@ export function RatingsList({ activityId }: RatingsListProps) {
         setRatings(result.data);
         setTotalPages(result.pagination.totalPages);
         setStatus("loaded");
+        onSummaryChange?.(result.summary);
       } catch {
         if (!ignore) {
           setStatus("error");
@@ -68,7 +99,8 @@ export function RatingsList({ activityId }: RatingsListProps) {
     return () => {
       ignore = true;
     };
-  }, [activityId, page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `onSummaryChange` excluded: `ActivityDetailView` passes a fresh closure each render, and it isn't part of "what to fetch".
+  }, [activityId, page, refreshToken]);
 
   if (status === "loading" && ratings.length === 0) {
     return (

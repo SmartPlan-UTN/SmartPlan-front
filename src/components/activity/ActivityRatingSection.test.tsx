@@ -1,7 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getOwnPlan, getOwnRating, listOwnPlans } from "@/lib/api";
+import { deleteRating, getOwnPlan, getOwnRating, listOwnPlans, updateRating } from "@/lib/api";
 import { SessionProvider } from "@/lib/auth";
 import { refreshSession } from "@/lib/auth/api";
 import type { OwnPlanDetail, OwnPlanSummary, OwnRating } from "@/types";
@@ -16,6 +17,8 @@ vi.mock("@/lib/api", async (importOriginal) => {
     listOwnPlans: vi.fn(),
     getOwnPlan: vi.fn(),
     createRating: vi.fn(),
+    updateRating: vi.fn(),
+    deleteRating: vi.fn(),
   };
 });
 
@@ -84,12 +87,28 @@ function ownRating(overrides: Partial<OwnRating> = {}): OwnRating {
   };
 }
 
-function renderSection() {
+function renderSection(onChange?: () => void) {
   return render(
     <SessionProvider>
-      <ActivityRatingSection activityId={42} />
+      <ActivityRatingSection activityId={42} onChange={onChange} />
     </SessionProvider>,
   );
+}
+
+function mockAuthenticatedSession() {
+  vi.mocked(refreshSession).mockResolvedValue({
+    accessToken: "t",
+    tokenType: "Bearer",
+    expiresIn: 900,
+    user: {
+      id: 1,
+      name: "Ana",
+      lastName: "Pérez",
+      email: "ana@example.com",
+      role: { key: "user", name: "User" },
+      permissions: [],
+    },
+  });
 }
 
 describe("ActivityRatingSection", () => {
@@ -98,6 +117,8 @@ describe("ActivityRatingSection", () => {
     vi.mocked(listOwnPlans).mockReset();
     vi.mocked(getOwnPlan).mockReset();
     vi.mocked(refreshSession).mockReset();
+    vi.mocked(updateRating).mockReset();
+    vi.mocked(deleteRating).mockReset();
   });
 
   it("prompts anonymous visitors to log in instead of showing the form", async () => {
@@ -212,5 +233,91 @@ describe("ActivityRatingSection", () => {
     await waitFor(() => {
       expect(getOwnPlan).toHaveBeenCalledWith(10);
     });
+  });
+
+  it("switches to the edit form, saves, and reports the change (CU46)", async () => {
+    mockAuthenticatedSession();
+    vi.mocked(getOwnRating).mockResolvedValueOnce(ownRating());
+    vi.mocked(updateRating).mockResolvedValueOnce(
+      ownRating({ score: 4, comment: "Bastante bien" }),
+    );
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    renderSection(onChange);
+
+    await user.click(await screen.findByRole("button", { name: "Editar tu valoración" }));
+    expect(screen.getByText("Editar tu valoración")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "4 estrellas" }));
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    expect(updateRating).toHaveBeenCalledWith(1, { score: 4, comment: "Excelente" });
+    expect(await screen.findByText("Bastante bien")).toBeInTheDocument();
+    expect(screen.queryByText("Editar tu valoración")).not.toBeInTheDocument();
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it("cancels out of the edit form without saving", async () => {
+    mockAuthenticatedSession();
+    vi.mocked(getOwnRating).mockResolvedValueOnce(ownRating());
+    const user = userEvent.setup();
+    renderSection();
+
+    await user.click(await screen.findByRole("button", { name: "Editar tu valoración" }));
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(screen.queryByText("Editar tu valoración")).not.toBeInTheDocument();
+    expect(screen.getByText("Tu valoración")).toBeInTheDocument();
+    expect(updateRating).not.toHaveBeenCalled();
+  });
+
+  it("deletes the own rating after confirmation and reports the change (CU47)", async () => {
+    mockAuthenticatedSession();
+    vi.mocked(getOwnRating).mockResolvedValueOnce(ownRating());
+    vi.mocked(deleteRating).mockResolvedValueOnce(undefined);
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    renderSection(onChange);
+
+    await user.click(await screen.findByRole("button", { name: "Eliminar tu valoración" }));
+    expect(screen.getByText("¿Eliminar tu valoración?")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Eliminar valoración" }));
+
+    expect(deleteRating).toHaveBeenCalledWith(1);
+    await waitFor(() => {
+      expect(screen.queryByText("¿Eliminar tu valoración?")).not.toBeInTheDocument();
+    });
+    expect(screen.queryByText("Tu valoración")).not.toBeInTheDocument();
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it("cancels the delete confirmation without calling the API", async () => {
+    mockAuthenticatedSession();
+    vi.mocked(getOwnRating).mockResolvedValueOnce(ownRating());
+    const user = userEvent.setup();
+    renderSection();
+
+    await user.click(await screen.findByRole("button", { name: "Eliminar tu valoración" }));
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(screen.queryByText("¿Eliminar tu valoración?")).not.toBeInTheDocument();
+    expect(deleteRating).not.toHaveBeenCalled();
+  });
+
+  it("shows an error and keeps the dialog open when deletion fails", async () => {
+    mockAuthenticatedSession();
+    vi.mocked(getOwnRating).mockResolvedValueOnce(ownRating());
+    vi.mocked(deleteRating).mockRejectedValueOnce(new Error("network down"));
+    const user = userEvent.setup();
+    renderSection();
+
+    await user.click(await screen.findByRole("button", { name: "Eliminar tu valoración" }));
+    await user.click(screen.getByRole("button", { name: "Eliminar valoración" }));
+
+    expect(
+      await screen.findByText("No pudimos eliminar tu valoración. Intentá de nuevo."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("¿Eliminar tu valoración?")).toBeInTheDocument();
   });
 });

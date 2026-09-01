@@ -532,6 +532,63 @@
   align-self: flex-start;
 }
 
+/* ── CU46/CU47: edit/delete own rating ───────────────────────
+   No mockup shows these actions either — see `ActivityRatingSection`'s
+   doc comment — so the icon-button treatment matches `CollectionDetailView`
+   `.removeButton`'s neutral/hover-danger pattern instead of inventing a
+   new one. */
+.ownRatingHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+
+.ownRatingActions {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-btn);
+  background: var(--surface-card);
+  color: var(--fg-2);
+  cursor: pointer;
+  transition: border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    color 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.iconButton:hover {
+  border-color: var(--ember);
+  background: color-mix(in srgb, var(--ember) 8%, transparent);
+  color: var(--ember);
+}
+
+.iconButtonDanger:hover {
+  border-color: var(--error);
+  background: color-mix(in srgb, var(--error) 8%, transparent);
+  color: var(--error);
+}
+
+.iconButton:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.editRatingActions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
 .ownRatingComment {
   margin: 0;
   color: var(--fg-2);

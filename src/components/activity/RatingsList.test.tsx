@@ -89,4 +89,51 @@ describe("RatingsList", () => {
     });
     expect(await screen.findByText("Diego R.")).toBeInTheDocument();
   });
+
+  it("hands the freshly fetched summary back up via onSummaryChange", async () => {
+    vi.mocked(listRatings).mockResolvedValueOnce({
+      data: [mockRating()],
+      pagination: { page: 1, limit: 20, total: 1, totalPages: 1 },
+      summary: { averageRating: 4.2, ratingCount: 5 },
+    });
+    const onSummaryChange = vi.fn();
+    render(<RatingsList activityId={42} onSummaryChange={onSummaryChange} />);
+
+    await waitFor(() => {
+      expect(onSummaryChange).toHaveBeenCalledWith({ averageRating: 4.2, ratingCount: 5 });
+    });
+  });
+
+  it("resets to page 1 and refetches when refreshToken changes (CU47)", async () => {
+    vi.mocked(listRatings).mockResolvedValueOnce({
+      data: [mockRating({ id: 1, authorAlias: "Ana P." })],
+      pagination: { page: 2, limit: 20, total: 21, totalPages: 2 },
+      summary: { averageRating: 5, ratingCount: 21 },
+    });
+    const { rerender } = render(<RatingsList activityId={42} refreshToken={0} />);
+    await screen.findByText("Ana P.");
+
+    // Land on page 2 first, as if the user had paginated there.
+    vi.mocked(listRatings).mockResolvedValueOnce({
+      data: [mockRating({ id: 2, authorAlias: "Diego R." })],
+      pagination: { page: 2, limit: 20, total: 21, totalPages: 2 },
+      summary: { averageRating: 5, ratingCount: 21 },
+    });
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Página siguiente" }));
+    await screen.findByText("Diego R.");
+    vi.mocked(listRatings).mockClear();
+
+    vi.mocked(listRatings).mockResolvedValueOnce({
+      data: [mockRating({ id: 1, authorAlias: "Ana P." })],
+      pagination: { page: 1, limit: 20, total: 20, totalPages: 1 },
+      summary: { averageRating: 4, ratingCount: 20 },
+    });
+    rerender(<RatingsList activityId={42} refreshToken={1} />);
+
+    await waitFor(() => {
+      expect(listRatings).toHaveBeenCalledWith(42, { page: 1 });
+    });
+    expect(await screen.findByText("Ana P.")).toBeInTheDocument();
+  });
 });
