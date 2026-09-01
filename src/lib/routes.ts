@@ -75,6 +75,19 @@ export function passwordChangedLoginRoute(): string {
 }
 
 /**
+ * Query parameter that tells the login screen someone landed there because
+ * CU7 (delete account) just closed their session after the account itself
+ * was removed, so it can show a goodbye notice instead of a silent,
+ * unexplained login form for an account that no longer exists.
+ */
+export const ACCOUNT_DELETED_PARAM = "accountDeleted";
+
+/** `/login`, flagged so the screen explains the account was deleted. */
+export function accountDeletedLoginRoute(): string {
+  return `${ROUTES.login}?${ACCOUNT_DELETED_PARAM}=1`;
+}
+
+/**
  * Validates a redirect destination before navigating to it.
  *
  * Only internal routes are accepted: a value like `https://other-site.com` or

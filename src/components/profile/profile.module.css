@@ -1,10 +1,8 @@
-/* CU5/CU6 - Edit profile (PAN 14), per the v2 "EMBER" system design's
+/* CU5/CU6/CU7 - Edit profile (PAN 14), per the v2 "EMBER" system design's
    `Profile.jsx`. The prototype's avatar upload was left out: there's no
    backing field for it in the backend contract (`GET/PATCH /users/me`).
    Phone was in the same situation until it got its own backend support
-   (see the doc comment on `ProfileForm`); it's back in the form now. The
-   delete-account "danger zone" on the same prototype screen is CU7 — a
-   separate ticket, not built here. */
+   (see the doc comment on `ProfileForm`); it's back in the form now. */
 
 /* Breaks out of the `(private)` layout's `Container`, which pads this
    screen `--section-v` top and bottom *outside* `.backdrop` — so
@@ -221,4 +219,57 @@
 
 .toast svg {
   color: var(--success);
+}
+
+/* ── Danger zone (CU7) ───────────────────────────────────── */
+/* Literal reds below, not `--error`/`--danger`: the prototype's own
+   one-off tints for this card (`rgba(240,64,64,…)` for the card,
+   `#D94B2B`/`rgba(217,75,43,…)` for the text/button — the same rust as the
+   logout icon, distinct from the form-validation red). */
+.dangerZone {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding: 20px var(--s-5);
+  background: rgba(240, 64, 64, 0.04);
+  border: 1px solid rgba(240, 64, 64, 0.14);
+  border-radius: var(--r-card);
+}
+
+.dangerTitle {
+  margin: 0 0 3px;
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  color: #d94b2b;
+}
+
+.dangerText {
+  margin: 0;
+  font-size: var(--t-label);
+  color: var(--fg-3);
+}
+
+.dangerButton {
+  padding: 9px 18px;
+  background: transparent;
+  border: 1.5px solid rgba(217, 75, 43, 0.45);
+  border-radius: var(--r-btn);
+  font-size: var(--t-label);
+  font-weight: var(--w-heading);
+  font-family: var(--font);
+  color: #d94b2b;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.dangerButton:hover {
+  background: rgba(217, 75, 43, 0.07);
+}
+
+.dangerButton:focus-visible {
+  outline: 2px solid #d94b2b;
+  outline-offset: 2px;
 }

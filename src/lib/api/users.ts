@@ -42,3 +42,20 @@ export interface ChangePasswordData {
 export async function changePassword(data: ChangePasswordData): Promise<void> {
   await apiClient.patch<void>('/users/me/password', data);
 }
+
+export interface DeleteAccountData {
+  currentPassword: string;
+}
+
+/**
+ * Permanently deletes the signed-in user's account (CU7): soft-removes the
+ * row, revokes every session and pending recovery token, and clears the
+ * refresh cookie server-side. 204 with no body on success. The caller is
+ * responsible for closing the local session afterward (see
+ * `DeleteAccountDialog`, which calls `useSession().logout()`), the same way
+ * CU6's `changePassword` does.
+ * Backend contract: `DELETE /users/me`.
+ */
+export async function deleteAccount(data: DeleteAccountData): Promise<void> {
+  await apiClient.delete<void>('/users/me', { data });
+}

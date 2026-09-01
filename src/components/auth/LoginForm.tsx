@@ -21,6 +21,10 @@ export interface LoginFormProps {
    * session server-side: shows an explanatory notice instead of a silent,
    * unexplained login form. */
   passwordChanged?: boolean;
+  /** Set when CU7 (delete account) redirected here after removing the
+   * account and closing its session: shows a goodbye notice instead of a
+   * silent, unexplained login form for an account that no longer exists. */
+  accountDeleted?: boolean;
 }
 
 interface FieldErrors {
@@ -115,7 +119,7 @@ function validate(email: string, password: string): FieldErrors {
 
 /** CU1 - Login form (PAN 04). Rendered inside the white card that
  * `app/login/layout.tsx` provides. */
-export function LoginForm({ destination, passwordChanged }: LoginFormProps) {
+export function LoginForm({ destination, passwordChanged, accountDeleted }: LoginFormProps) {
   const { login } = useSession();
   const router = useRouter();
 
@@ -183,6 +187,13 @@ export function LoginForm({ destination, passwordChanged }: LoginFormProps) {
           <p className={styles.formNotice} role="status">
             <Icon name="circle-check" size={18} />
             Tu contraseña fue actualizada. Iniciá sesión nuevamente.
+          </p>
+        ) : null}
+
+        {accountDeleted && !formError ? (
+          <p className={styles.formNotice} role="status">
+            <Icon name="circle-check" size={18} />
+            Tu cuenta fue eliminada.
           </p>
         ) : null}
 
