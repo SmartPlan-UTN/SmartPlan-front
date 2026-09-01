@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Icon, MoodBackground } from "@/components/ui";
 import { ROUTES } from "@/lib/routes";
 
+import { ActiveSessionCard } from "./ActiveSessionCard";
 import { ChangePasswordForm } from "./ChangePasswordForm";
 import styles from "./security.module.css";
 
@@ -19,13 +20,10 @@ import styles from "./security.module.css";
  * screen, with a "Volver" link back to `/profile` instead of a collapse
  * toggle.
  *
- * The prototype's "Sesiones activas" footer card (device, location,
- * "Cerrar todas") is deliberately left out: `SmartPlan-back` has no
- * endpoint to list a user's active sessions or revoke a subset of them
- * (`sessions.controller.ts` only has login, refresh, and logging out
- * *this* session) — showing hardcoded device data would misrepresent a
- * capability that doesn't exist, the same reasoning that already dropped
- * the prototype's password-complexity checklist from blocking submission.
+ * `ActiveSessionCard` is the prototype's "Sesiones activas" footer card,
+ * scoped to what `SmartPlan-back` actually knows about the session making
+ * the request (`GET /sessions/me`) — see its own doc comment for why it
+ * doesn't show the prototype's fake multi-device list.
  *
  * `MoodBackground` sits behind `.backdrop`, full-bleed, same split as
  * `ProfileScreen`'s `.backdrop`/`.wrapper`.
@@ -52,6 +50,7 @@ export function SecurityScreen() {
         </div>
 
         <ChangePasswordForm />
+        <ActiveSessionCard />
       </div>
     </div>
   );

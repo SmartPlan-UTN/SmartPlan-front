@@ -94,3 +94,22 @@ export async function register(
 export async function logout(): Promise<void> {
   await apiClient.delete<void>("/sessions");
 }
+
+/** The calling session's own metadata (CU6's "Seguridad" screen). */
+export interface CurrentSession {
+  ip: string | null;
+  startedAt: string;
+}
+
+/**
+ * CU6: the calling session's own `ip`/`startedAt`, for the "Sesiones
+ * activas" card on `/security`.
+ *
+ * `GET /sessions/me`. There's no endpoint to list *other* sessions or
+ * devices for the account — `SmartPlan-back` tracks no user-agent/device
+ * at all on `user_session` — so this only ever reports the session making
+ * the request, unlike the v2 system design's mocked multi-device card.
+ */
+export async function getCurrentSession(): Promise<CurrentSession> {
+  return apiClient.get<CurrentSession>("/sessions/me");
+}
