@@ -13,6 +13,7 @@ import { ROUTES } from "@/lib/routes";
 import { AuthField } from "./AuthField";
 import styles from "./AuthForm.module.css";
 import { PasswordStrength } from "./PasswordStrength";
+import { TermsDialog } from "./TermsDialog";
 import { EMAIL_PATTERN, MIN_PASSWORD_LENGTH, REQUIRED_MESSAGE } from "./validation";
 
 interface FieldErrors {
@@ -21,6 +22,7 @@ interface FieldErrors {
   email?: string;
   password?: string;
   confirmPassword?: string;
+  accepted?: string;
 }
 
 /** Generic, user-facing message for each CU2 error code. Shares
@@ -86,6 +88,7 @@ function validate(
   email: string,
   password: string,
   confirmPassword: string,
+  accepted: boolean,
 ): FieldErrors {
   const errors: FieldErrors = {};
 
@@ -115,6 +118,10 @@ function validate(
     errors.confirmPassword = "Las contraseñas no coinciden";
   }
 
+  if (!accepted) {
+    errors.accepted = "Tenés que aceptar los términos y condiciones";
+  }
+
   return errors;
 }
 
@@ -133,6 +140,7 @@ export function RegisterForm() {
   const [showPassword, toggleShowPassword] = useToggle(false);
   const [showConfirmPassword, toggleShowConfirmPassword] = useToggle(false);
   const [accepted, setAccepted] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -140,7 +148,14 @@ export function RegisterForm() {
   async function submit() {
     setFormError(null);
 
-    const errors = validate(name, lastName, email, password, confirmPassword);
+    const errors = validate(
+      name,
+      lastName,
+      email,
+      password,
+      confirmPassword,
+      accepted,
+    );
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
       return;
@@ -283,32 +298,66 @@ export function RegisterForm() {
           }}
         />
 
-        <label className={styles.terms}>
-          <input
-            type="checkbox"
-            className={styles.checkboxInput}
-            checked={accepted}
-            onChange={(event) => {
-              setAccepted(event.target.checked);
-            }}
-          />
-          <span
+        <div>
+          <label className={styles.terms}>
+            <input
+              type="checkbox"
+              className={styles.checkboxInput}
+              checked={accepted}
+              onChange={(event) => {
+                setAccepted(event.target.checked);
+                if (event.target.checked) {
+                  setFieldErrors((current) => ({ ...current, accepted: undefined }));
+                }
+              }}
+              required
+            />
+            <span
+              className={
+                accepted
+                  ? `${styles.checkboxBox} ${styles.checkboxBoxChecked}`
+                  : styles.checkboxBox
+              }
+              aria-hidden="true"
+            >
+              {accepted ? <Icon name="check" size={12} color="var(--white)" stroke={3} /> : null}
+            </span>
+            <p className={styles.termsText}>
+              Acepto los{" "}
+              <button
+                type="button"
+                className={styles.termsLink}
+                onClick={(event) => {
+                  // Prevents the label's default behavior (toggling the
+                  // checkbox) so opening the popup doesn't also accept the
+                  // terms on the user's behalf.
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setShowTerms(true);
+                }}
+              >
+                términos y condiciones
+              </button>
+            </p>
+          </label>
+          <p
             className={
-              accepted
-                ? `${styles.checkboxBox} ${styles.checkboxBoxChecked}`
-                : styles.checkboxBox
+              fieldErrors.accepted
+                ? styles.fieldError
+                : `${styles.fieldError} ${styles.fieldErrorHidden}`
             }
-            aria-hidden="true"
+            role={fieldErrors.accepted ? "alert" : undefined}
           >
-            {accepted ? <Icon name="check" size={12} color="var(--white)" stroke={3} /> : null}
-          </span>
-          <p className={styles.termsText}>Acepto los términos y condiciones</p>
-        </label>
+            {fieldErrors.accepted || " "}
+          </p>
+        </div>
 
         <Button type="submit" className={styles.submit} disabled={submitting}>
           {submitting ? "Creando cuenta…" : "Crear cuenta"}
         </Button>
       </form>
+
+      {showTerms ? <TermsDialog onClose={() => setShowTerms(false)} /> : null}
 
       <p className={`${styles.footer} ${styles.footerRegister}`}>
         ¿Ya tenés cuenta?{" "}

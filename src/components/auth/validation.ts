@@ -5,7 +5,7 @@
 export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** Matches `SmartPlan-back`'s password length rule (`register-user.dto.ts`,
- * `login` DTO): 12-128 characters. */
-export const MIN_PASSWORD_LENGTH = 12;
+ * `login` DTO): 8-128 characters. */
+export const MIN_PASSWORD_LENGTH = 8;
 
 export const REQUIRED_MESSAGE = "Este campo es requerido";

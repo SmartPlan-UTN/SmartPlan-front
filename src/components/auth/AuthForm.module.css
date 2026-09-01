@@ -149,6 +149,13 @@
   font-weight: 600;
 }
 
+/* `visibility: hidden`, not a conditional render: the paragraph's box still
+   takes up space this way, so a field showing its error and one that isn't
+   occupy the same height — see `AuthField`. */
+.fieldErrorHidden {
+  visibility: hidden;
+}
+
 .formError {
   display: flex;
   align-items: flex-start;
@@ -290,9 +297,9 @@
 
 /* ── RegisterForm-only: terms checkbox ───────────────────────────────
    Purely a client-side UX gate: the backend's CU2 contract has no terms
-   field, and there's no terms-of-service page to link to yet — same as
-   the v2 prototype, whose "términos y condiciones" link doesn't go
-   anywhere either. */
+   field, so acceptance is enforced only here, before `submit()` ever calls
+   `register()`. The "términos y condiciones" text opens `TermsDialog`
+   instead of linking to a dedicated page, which doesn't exist yet. */
 .terms {
   display: flex;
   align-items: flex-start;
@@ -343,4 +350,21 @@
   font-size: var(--t-small);
   color: var(--fg-2);
   line-height: 1.5;
+}
+
+.termsLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ember);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.termsLink:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
