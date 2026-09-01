@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { Button, Icon } from "@/components/ui";
 import { useSession } from "@/lib/auth";
@@ -68,7 +69,15 @@ function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
     };
   }, [onCancel]);
 
-  return (
+  // Portaled to `document.body`, not rendered in place: this dialog's
+  // trigger lives inside `Navbar`'s `<header>`, which sets `backdrop-filter`
+  // for its own sticky-blur effect. `backdrop-filter` (like `transform` and
+  // `filter`) establishes a containing block for `position: fixed`
+  // descendants, so without the portal `.modalOverlay` would be confined to
+  // the header's box instead of covering the viewport — a small, cut-off
+  // card pinned near the top instead of the centered, fully-dimmed overlay
+  // the prototype shows.
+  return createPortal(
     <div className={styles.modalOverlay} onClick={onCancel}>
       <div
         ref={cardRef}
@@ -103,7 +112,8 @@ function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

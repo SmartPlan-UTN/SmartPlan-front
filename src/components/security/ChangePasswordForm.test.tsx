@@ -35,12 +35,7 @@ function renderForm() {
   );
 }
 
-async function expand(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
-}
-
-async function expandAndFill(user: ReturnType<typeof userEvent.setup>) {
-  await expand(user);
+async function fillFields(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText("Contraseña actual"), "a-current-password");
   await user.type(screen.getByLabelText("Contraseña nueva"), "a-new-password-123");
   await user.type(
@@ -57,26 +52,19 @@ describe("ChangePasswordForm", () => {
     replace.mockClear();
   });
 
-  it("is collapsed by default", () => {
+  it("renders the form directly, with no toggle to open it", () => {
     renderForm();
-    expect(screen.queryByLabelText("Contraseña actual")).not.toBeInTheDocument();
-  });
-
-  it("expands to show the form", async () => {
-    const user = userEvent.setup();
-    renderForm();
-
-    await expand(user);
-
     expect(screen.getByLabelText("Contraseña actual")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /cambiar contraseña/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows required-field errors without calling the API", async () => {
     const user = userEvent.setup();
     renderForm();
 
-    await expand(user);
-    await user.click(screen.getByRole("button", { name: "Actualizar contraseña" }));
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
     expect(await screen.findAllByText("Este campo es requerido")).toHaveLength(3);
     expect(changePassword).not.toHaveBeenCalled();
@@ -86,11 +74,10 @@ describe("ChangePasswordForm", () => {
     const user = userEvent.setup();
     renderForm();
 
-    await expand(user);
     await user.type(screen.getByLabelText("Contraseña actual"), "a-current-password");
     await user.type(screen.getByLabelText("Contraseña nueva"), "a-new-password-123");
     await user.type(screen.getByLabelText("Confirmar contraseña nueva"), "another-one");
-    await user.click(screen.getByRole("button", { name: "Actualizar contraseña" }));
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
     expect(
       await screen.findByText("Las contraseñas no coinciden"),
@@ -104,8 +91,8 @@ describe("ChangePasswordForm", () => {
     const user = userEvent.setup();
     renderForm();
 
-    await expandAndFill(user);
-    await user.click(screen.getByRole("button", { name: "Actualizar contraseña" }));
+    await fillFields(user);
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
     expect(changePassword).toHaveBeenCalledWith({
       currentPassword: "a-current-password",
@@ -127,8 +114,8 @@ describe("ChangePasswordForm", () => {
     const user = userEvent.setup();
     renderForm();
 
-    await expandAndFill(user);
-    await user.click(screen.getByRole("button", { name: "Actualizar contraseña" }));
+    await fillFields(user);
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
     expect(
       await screen.findByText("La contraseña actual es incorrecta."),
@@ -141,7 +128,6 @@ describe("ChangePasswordForm", () => {
     const user = userEvent.setup();
     renderForm();
 
-    await expand(user);
     const requirementRow = screen.getByText("Mínimo 12 caracteres").closest("li");
     expect(requirementRow).not.toBeNull();
 
@@ -153,17 +139,42 @@ describe("ChangePasswordForm", () => {
     expect(requirementRow?.querySelector("svg")).toBeTruthy();
   });
 
+  it("shows the informational uppercase/digit+symbol rows without blocking submission", async () => {
+    changePassword.mockResolvedValueOnce(undefined);
+    vi.mocked(logout).mockResolvedValueOnce(undefined);
+    const user = userEvent.setup();
+    renderForm();
+
+    const uppercaseRow = screen.getByText("Al menos una mayúscula").closest("li");
+    const symbolRow = screen.getByText("Incluir números y símbolos").closest("li");
+
+    // A valid password by the real rule (12+ characters) with no uppercase
+    // and no digit/symbol: both informational rows stay unmet...
+    await user.type(screen.getByLabelText("Contraseña nueva"), "lowercase-only-password");
+    expect(uppercaseRow?.querySelector("svg")).toBeFalsy();
+    expect(symbolRow?.querySelector("svg")).toBeFalsy();
+
+    // ...but submitting still succeeds: the backend doesn't enforce them.
+    await user.type(screen.getByLabelText("Contraseña actual"), "a-current-password");
+    await user.type(
+      screen.getByLabelText("Confirmar contraseña nueva"),
+      "lowercase-only-password",
+    );
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    expect(changePassword).toHaveBeenCalledWith({
+      currentPassword: "a-current-password",
+      newPassword: "lowercase-only-password",
+    });
+  });
+
   it("clears the fields when Cancelar is clicked", async () => {
     const user = userEvent.setup();
     renderForm();
 
-    await expand(user);
     await user.type(screen.getByLabelText("Contraseña actual"), "something");
     await user.click(screen.getByRole("button", { name: "Cancelar" }));
 
-    expect(screen.queryByLabelText("Contraseña actual")).not.toBeInTheDocument();
-
-    await expand(user);
     expect(screen.getByLabelText("Contraseña actual")).toHaveValue("");
   });
 });
