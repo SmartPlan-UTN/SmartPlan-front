@@ -1,33 +1,39 @@
 import { useId, type ChangeEvent } from "react";
 
-import { Icon, type IconName } from "@/components/ui";
+import { Icon, type IconName } from "./Icon";
+import styles from "./Field.module.css";
 
-import styles from "./AuthForm.module.css";
-
-export interface AuthFieldRightSlot {
+export interface FieldRightSlot {
   icon: IconName;
   label: string;
   pressed?: boolean;
   onClick: () => void;
 }
 
-export interface AuthFieldProps {
+export interface FieldProps {
   label: string;
   type: string;
   value: string;
-  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  /** Optional: omit for a read-only field (e.g. an email shown but not
+   * editable) instead of passing a no-op handler. */
+  onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
   error?: string | null;
   required?: boolean;
   disabled?: boolean;
   autoComplete?: string;
-  rightSlot?: AuthFieldRightSlot;
+  rightSlot?: FieldRightSlot;
 }
 
-/** Label + input + inline error, shared by every field in the CU1/CU2 auth
- * forms (`LoginForm`, `RegisterForm`). Mirrors `AuthField` from the v2
- * system design's `Login.jsx`. */
-export function AuthField({
+/**
+ * Label + input + inline error. Ported from the v2 system design's
+ * `AuthField` (`Login.jsx`) / `ProfileField` (`Profile.jsx`) — the same
+ * component under two names in the prototype. Originally lived in
+ * `components/auth/` for CU1/CU2's forms; promoted here once CU5's profile
+ * form needed the same field, so both domains share one implementation
+ * instead of two copies drifting apart.
+ */
+export function Field({
   label,
   type,
   value,
@@ -38,7 +44,7 @@ export function AuthField({
   disabled,
   autoComplete,
   rightSlot,
-}: AuthFieldProps) {
+}: FieldProps) {
   const inputId = useId();
   const errorId = useId();
 
@@ -68,6 +74,7 @@ export function AuthField({
             .join(" ")}
           value={value}
           onChange={onChange}
+          readOnly={!onChange}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
           disabled={disabled}

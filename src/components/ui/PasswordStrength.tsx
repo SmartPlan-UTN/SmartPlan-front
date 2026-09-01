@@ -1,5 +1,6 @@
-import styles from "./AuthForm.module.css";
-import { MIN_PASSWORD_LENGTH } from "./validation";
+import { MIN_PASSWORD_LENGTH } from "@/lib/utils";
+
+import styles from "./PasswordStrength.module.css";
 
 export interface PasswordStrengthProps {
   password: string;
@@ -20,7 +21,7 @@ const VARIETY_PATTERNS = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/];
  * the backend's actual password policy.
  *
  * Scored mostly by length past `MIN_PASSWORD_LENGTH`, with a mix of
- * character types (lower/upper/digit/symbol) as a shortcut: the previous
+ * character types (lower/upper/digit/symbol) as a shortcut: an earlier
  * version required uppercase *and* a digit together for the top score, so a
  * long password made of a single character class (all lowercase, say)
  * could never turn green no matter how long it got. */
@@ -41,6 +42,12 @@ function computeStrength(password: string): Strength {
   return Math.min(score, 3) as Strength;
 }
 
+/**
+ * Purely visual password-strength meter. Ported from the v2 system design's
+ * `PasswordStrength` (`Login.jsx`) / `ProfStrengthBar` (`Profile.jsx`).
+ * Originally lived in `components/auth/` for CU2's signup form; promoted
+ * here once CU6's password-change form needed the same meter.
+ */
 export function PasswordStrength({ password }: PasswordStrengthProps) {
   const strength = computeStrength(password);
 

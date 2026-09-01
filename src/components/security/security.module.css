@@ -1,0 +1,263 @@
+/* CU6 - Change password (PAN 14), per the v2 system design's dedicated
+   `Security.jsx` screen. Its own module now that "Seguridad" is a full
+   destination in the user menu instead of a collapsed card sharing
+   `profile.module.css` with `ProfileForm` — see the doc comment on
+   `SecurityScreen` for why. */
+
+/* Breaks out of the `(private)` layout's `Container`, which pads this
+   screen `--section-v` top and bottom *outside* `.backdrop` — so
+   `MoodBackground`, which only paints its own nearest positioned ancestor,
+   would otherwise stop short of the container's real edges and leave plain
+   cream gaps above the header and below the last card. The negative margin
+   cancels that padding and `padding-block` re-adds the same visual spacing
+   from inside `.backdrop` instead, so the waves render underneath it too.
+   `min-height` grows by the same two `--section-v` to keep covering a full
+   screen on a short page. */
+.backdrop {
+  position: relative;
+  min-height: calc(100dvh - var(--navbar-h) + var(--section-v) * 2);
+  margin-block: calc(var(--section-v) * -1);
+  padding-block: var(--section-v);
+}
+
+.wrapper {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  max-width: 640px;
+  margin-inline: auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: var(--r-btn);
+  color: var(--fg-2);
+  transition: color 150ms ease;
+}
+
+.backLink:hover {
+  color: var(--ember);
+}
+
+.title {
+  color: var(--fg-1);
+}
+
+.subtitle {
+  margin: 3px 0 0;
+  color: var(--fg-3);
+}
+
+/* Same radius/shadow as `profile.module.css`'s `.card`: both are the v2
+   design's floating, border-less prototype cards. */
+.card {
+  background: var(--surface-card);
+  border-radius: 24px;
+  box-shadow: 0 8px 40px color-mix(in srgb, var(--char) 7%, transparent),
+    0 2px 8px color-mix(in srgb, var(--char) 4%, transparent);
+  overflow: hidden;
+}
+
+/* The prototype's decorative top strip — a thin gradient bar, not the wide
+   photo-style band `profile.module.css`'s `.cardHeader` uses for the
+   avatar to float over. This card has no avatar, so it gets the strip
+   instead, exactly as `Security.jsx` draws it. */
+.cardStrip {
+  height: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--ember) 0%,
+    color-mix(in srgb, var(--gold) 70%, transparent) 100%
+  );
+}
+
+.form {
+  padding: 32px 32px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Literal 38px/11px, not --s-6/--r-card-sm: matches the prototype's own
+   one-off sizing for this icon chip. */
+.sectionIcon {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  background: var(--ember-10);
+  color: var(--ember);
+}
+
+.sectionTitle {
+  margin: 0;
+  color: var(--fg-1);
+  font-weight: 700;
+}
+
+/* `p.sectionSubtitle`, not just `.sectionSubtitle`: same specificity
+   reasoning as `profile.module.css`'s `p.toggleSubtitle` — the JSX also
+   applies `sp-small` (14px) alongside this class, and the prototype's
+   subtitle here is 12px, a size smaller. */
+p.sectionSubtitle {
+  margin: 0;
+  color: var(--fg-3);
+  font-size: 12px;
+}
+
+.divider {
+  height: 1px;
+  margin-inline: calc(var(--s-6) * -1);
+  background: var(--hairline);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-3);
+}
+
+.formError {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border-radius: var(--r-btn);
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+  color: var(--fg-1);
+  font-size: var(--t-small);
+}
+
+.formError svg {
+  flex-shrink: 0;
+  color: var(--error);
+  margin-top: 2px;
+}
+
+/* Requirements checklist under "Contraseña nueva" — same row layout as the
+   prototype's (dot + label per rule). See the doc comment on
+   `ChangePasswordForm` for why the length label uses the real
+   `MIN_PASSWORD_LENGTH` and the other two rows are informational only. */
+.requirements {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.requirement {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--fg-3);
+  font-size: 13px;
+}
+
+.requirementMet {
+  color: var(--fg-2);
+}
+
+.requirementDot {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1.5px solid var(--hairline);
+  color: var(--white);
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.requirementMet .requirementDot {
+  background: var(--success);
+  border-color: var(--success);
+}
+
+/* ── "Sesiones activas" card ─────────────────────────────────
+   Same footer card as `Security.jsx`'s, scoped to real data: see the doc
+   comment on `ActiveSessionCard` for why it shows one real session instead
+   of the mockup's fake multi-device list. */
+.sessionCard {
+  background: var(--surface-card);
+  border-radius: 20px;
+  padding: 22px 28px;
+  box-shadow: 0 4px 24px color-mix(in srgb, var(--char) 6%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+}
+
+.sessionInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.sessionIcon {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--char) 5%, transparent);
+  color: var(--fg-2);
+}
+
+.sessionTitle {
+  margin: 0;
+  color: var(--fg-1);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+p.sessionSubtitle {
+  margin: 2px 0 0;
+  color: var(--fg-3);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Outline danger, not the `Button` primitive's filled `.buttonDanger`: the
+   prototype's "Cerrar todas" is transparent with a tinted border/text, not
+   a solid red button. Nested under `.sessionCard`, not a bare class: this
+   (0,2,0) rule needs to reliably beat the primitive's own (0,1,0)
+   `.buttonGhostLight`, regardless of which CSS Modules file the bundler
+   happens to emit later. */
+.sessionCard .closeSessionButton {
+  flex-shrink: 0;
+  border-color: color-mix(in srgb, var(--error) 35%, transparent);
+  color: var(--error);
+}
+
+.sessionCard .closeSessionButton:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--error) 7%, transparent);
+}

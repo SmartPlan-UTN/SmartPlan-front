@@ -81,3 +81,35 @@ export async function register(
 ): Promise<AuthenticationResponse> {
   return apiClient.post<AuthenticationResponse>("/users", data);
 }
+
+/**
+ * CU4: closes the session.
+ *
+ * `DELETE /sessions`. No body, no response body (204). Idempotent on the
+ * backend: it still succeeds with no refresh cookie, or one that's already
+ * expired or revoked. `@Public()` on the backend — it reads the session to
+ * close from the cookie, not the `Authorization` header — so this still
+ * works if the in-memory access token is already gone.
+ */
+export async function logout(): Promise<void> {
+  await apiClient.delete<void>("/sessions");
+}
+
+/** The calling session's own metadata (CU6's "Seguridad" screen). */
+export interface CurrentSession {
+  ip: string | null;
+  startedAt: string;
+}
+
+/**
+ * CU6: the calling session's own `ip`/`startedAt`, for the "Sesiones
+ * activas" card on `/security`.
+ *
+ * `GET /sessions/me`. There's no endpoint to list *other* sessions or
+ * devices for the account — `SmartPlan-back` tracks no user-agent/device
+ * at all on `user_session` — so this only ever reports the session making
+ * the request, unlike the v2 system design's mocked multi-device card.
+ */
+export async function getCurrentSession(): Promise<CurrentSession> {
+  return apiClient.get<CurrentSession>("/sessions/me");
+}
