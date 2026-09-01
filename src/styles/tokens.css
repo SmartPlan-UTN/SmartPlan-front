@@ -172,6 +172,16 @@ input::placeholder { color: var(--fg-3); }
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+/* Opacity only, no `transform` — for elements that wrap `position: fixed`
+   descendants (`.screen`). `animation-fill-mode: both` keeps whichever
+   properties a keyframe animates pinned to their end value forever, and any
+   non-`none` `transform` — even a no-op `translateY(0)` — turns the element
+   into the containing block for its `position: fixed` children, which then
+   size and center themselves against it instead of the viewport. */
+@keyframes fadeUpNoTransform {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
 @keyframes pulseDot {
   0%, 100% { opacity: 0.3; transform: scale(0.8); }
   50%       { opacity: 1;   transform: scale(1.2); }
