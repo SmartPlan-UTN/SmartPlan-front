@@ -36,10 +36,10 @@ function authenticationResponse(roleKey = "user") {
   };
 }
 
-function renderLoginForm(destination: string | null = null) {
+function renderLoginForm(destination: string | null = null, passwordChanged = false) {
   return render(
     <SessionProvider>
-      <LoginForm destination={destination} />
+      <LoginForm destination={destination} passwordChanged={passwordChanged} />
     </SessionProvider>,
   );
 }
@@ -94,6 +94,14 @@ describe("LoginForm", () => {
     expect(passwordInput).toHaveAttribute("type", "text");
     expect(
       screen.getByRole("button", { name: "Ocultar contraseña" }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the password-changed notice when CU6 redirected here", () => {
+    renderLoginForm(null, true);
+
+    expect(
+      screen.getByText("Tu contraseña fue actualizada. Iniciá sesión nuevamente."),
     ).toBeInTheDocument();
   });
 

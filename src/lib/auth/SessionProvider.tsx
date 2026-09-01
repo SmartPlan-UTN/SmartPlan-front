@@ -15,6 +15,7 @@ import { onUnauthorized, setTokenGetter } from "@/lib/api";
 
 import {
   login as requestLogin,
+  logout as requestLogout,
   refreshSession,
   register as requestRegister,
   type AuthenticatedUser,
@@ -57,8 +58,13 @@ export interface Session {
    * request so the form can map it to a message.
    */
   register: (data: RegistrationData) => Promise<AuthenticatedUser>;
-  /** Clears the local session. Backend-side invalidation is part of CU4. */
-  logout: () => void;
+  /**
+   * Closes the session (CU4): calls `DELETE /sessions`, best-effort, then
+   * always clears local state — a network error or an already-invalid
+   * cookie shouldn't trap someone in a session they can't leave from the
+   * UI. Never rejects.
+   */
+  logout: () => Promise<void>;
 }
 
 const SessionContext = createContext<Session | null>(null);
@@ -149,8 +155,15 @@ export function SessionProvider({ children }: SessionProviderProps) {
     [applyAuthenticated],
   );
 
-  const logout = useCallback(() => {
-    applyAnonymous();
+  const logout = useCallback(async () => {
+    try {
+      await requestLogout();
+    } catch {
+      // Best-effort: an expired/already-cleared cookie or a network error
+      // shouldn't stop the local session from closing.
+    } finally {
+      applyAnonymous();
+    }
   }, [applyAnonymous]);
 
   const value = useMemo<Session>(
