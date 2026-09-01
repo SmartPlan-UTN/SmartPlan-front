@@ -1,7 +1,10 @@
 /* CU1/CU2 - Login and signup (PAN 04), per the v2 "EMBER" system design.
-   Shared by `AuthField`, `PasswordStrength`, `LoginForm`, and `RegisterForm`.
-   Rendered inside the white card that `app/login/layout.tsx` (and its
-   signup counterpart) provides. */
+   Shared by `LoginForm` and `RegisterForm`. Rendered inside the white card
+   that `app/login/layout.tsx` (and its signup counterpart) provides.
+   Field-level styles (label, input, error) live in
+   `components/ui/Field.module.css`, and the password-strength meter's in
+   `components/ui/PasswordStrength.module.css` — both promoted there once a
+   second domain (CU5/CU6's profile forms) needed them too. */
 
 /* Literal px below, not the --s-* scale: the v2 prototype gives login and
    register slightly different vertical rhythm (28/20px vs 24/16px) that the
@@ -38,117 +41,6 @@
   gap: 16px;
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.labelRow {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.label {
-  color: var(--fg-2);
-}
-
-.required {
-  color: var(--ember);
-  font-weight: 700;
-}
-
-.inputWrapper {
-  position: relative;
-  display: flex;
-}
-
-.input {
-  width: 100%;
-  /* Literal px, not --s-3 (12px): the v2 prototype pads inputs 14px, not
-     12 — a small but consistent enough gap to throw off the whole field's
-     proportions next to the design. */
-  padding: 13px 14px;
-  border: 1.5px solid var(--hairline);
-  border-radius: var(--r-card-sm);
-  background: color-mix(in srgb, var(--cream) 70%, transparent);
-  color: var(--fg-1);
-  font-size: var(--t-body);
-  font-family: inherit;
-  transition: border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    background 180ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-/* Room for the show/hide toggle so typed text never slides under it. */
-/* Literal 46px, matching the prototype's padding for a field with a
-   trailing icon, not a derived calc() off the 14px base. */
-.inputWithToggle {
-  padding-right: 46px;
-}
-
-.input::placeholder {
-  color: var(--fg-3);
-}
-
-/* Border-width, not `outline`: an outline is a straight-edged rectangle
-   that ignores `border-radius`, so it visibly mismatches this rounded
-   input's corners. A solid, high-contrast border does the same job as a
-   focus indicator (WCAG 2.4.11) — `--focus-ember` alone is a low-contrast
-   glow, per `skills/06-design-system/SKILL.md` — while still tracking the
-   input's own shape. */
-/* `:focus`, not `:focus-visible`: a click is exactly when someone is about
-   to type into a text field, so skipping the ring on pointer focus (which
-   `:focus-visible` does on some browsers/inputs) would hide our custom
-   ember ring right when it matters, leaving only the browser's native
-   default outline — which is what looked black/dark instead of ember. */
-.input:focus {
-  border-width: 2px;
-  border-color: var(--ember);
-  background: var(--white);
-  box-shadow: var(--focus-ember);
-  outline: none;
-}
-
-.inputInvalid {
-  border-color: color-mix(in srgb, var(--error) 55%, transparent);
-  background: color-mix(in srgb, var(--error) 3%, transparent);
-}
-
-.toggleVisibility {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  border: 0;
-  background: transparent;
-  color: var(--fg-3);
-  cursor: pointer;
-}
-
-.toggleVisibility:hover {
-  color: var(--fg-1);
-}
-
-.toggleVisibility:focus-visible {
-  outline: 2px solid var(--ember);
-  outline-offset: -2px;
-  border-radius: var(--r-btn);
-}
-
-.fieldError {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--error);
-  font-size: var(--t-small);
-  font-weight: 600;
-}
-
 .formError {
   display: flex;
   align-items: flex-start;
@@ -166,7 +58,27 @@
   margin-top: 2px;
 }
 
-/* Groups the password AuthField with the "forgot password" link right
+/* Login-only: the explanatory notice after CU6 closes the session
+   server-side ("Tu contraseña fue actualizada..."). Same shape as
+   `.formError`, success palette instead — it's good news, not a warning. */
+.formNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border-radius: var(--r-btn);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  color: var(--fg-1);
+  font-size: var(--t-small);
+}
+
+.formNotice svg {
+  flex-shrink: 0;
+  color: var(--success);
+  margin-top: 2px;
+}
+
+/* Groups the password Field with the "forgot password" link right
    below it (login only) — a tighter gap than `.formLogin`'s 20px, matching
    the wrapping div around both in the v2 prototype. */
 .passwordGroup {
@@ -232,60 +144,6 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--s-3);
-}
-
-/* ── RegisterForm-only: password strength meter ──────────────────────
-   Reuses the semantic status tokens (not the prototype's literal hex)
-   so weak/medium/strong stay tied to --error/--warning/--success. */
-.strength {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-1);
-  margin-top: 8px;
-}
-
-.strengthBar {
-  display: flex;
-  gap: 6px;
-}
-
-/* 4px tall and a 6px gap, not the prototype's literal 3px/4px: at that size
-   the 3 segments read as one solid bar instead of 3 distinct ones. */
-.strengthSeg {
-  flex: 1;
-  height: 4px;
-  border-radius: var(--r-chip);
-  background: var(--hairline);
-}
-
-.strengthLabel {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.strengthFill1 {
-  background: var(--error);
-}
-
-.strengthFill2 {
-  background: var(--warning);
-}
-
-.strengthFill3 {
-  background: var(--success);
-}
-
-.strengthText1 {
-  color: var(--error);
-}
-
-.strengthText2 {
-  color: var(--warning);
-}
-
-.strengthText3 {
-  color: var(--success);
 }
 
 /* ── RegisterForm-only: terms checkbox ───────────────────────────────

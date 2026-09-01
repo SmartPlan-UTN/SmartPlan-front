@@ -37,6 +37,8 @@ export {
 } from './plans';
 export { listCategories } from './categories';
 export { listPlaces } from './places';
+export { getProfile, updateProfile, changePassword, deleteAccount } from './users';
+export type { UpdateProfileData, ChangePasswordData } from './users';
 export {
   changeAdminUserStatus,
   getAdminUserMetrics,
