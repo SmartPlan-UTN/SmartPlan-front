@@ -20,6 +20,7 @@ export const ROUTES = {
   history: "/history",
   profile: "/profile",
   preferences: "/preferences",
+  security: "/security",
   login: "/login",
   signup: "/signup",
   recoverPassword: "/recover-password",

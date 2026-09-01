@@ -6,9 +6,21 @@
    delete-account "danger zone" on the same prototype screen is CU7 — a
    separate ticket, not built here. */
 
+/* Breaks out of the `(private)` layout's `Container`, which pads this
+   screen `--section-v` top and bottom *outside* `.backdrop` — so
+   `MoodBackground`, which only paints its own nearest positioned ancestor,
+   would otherwise stop short of the container's real edges and leave plain
+   cream gaps above the heading and below the card. The negative margin
+   cancels that padding and `padding-block` re-adds the same visual
+   spacing from inside `.backdrop` instead, so the waves now render
+   underneath it too. `min-height` grows by the same two `--section-v` to
+   keep covering a full screen on a short page. Same fix as
+   `security.module.css`'s `.backdrop` — both screens share this layout. */
 .backdrop {
   position: relative;
-  min-height: calc(100dvh - var(--navbar-h));
+  min-height: calc(100dvh - var(--navbar-h) + var(--section-v) * 2);
+  margin-block: calc(var(--section-v) * -1);
+  padding-block: var(--section-v);
 }
 
 .wrapper {
@@ -145,130 +157,6 @@
   flex-shrink: 0;
   color: var(--error);
   margin-top: 2px;
-}
-
-/* ── CU6: expandable "Cambiar contraseña" card ──────────────
-   A second `.card`, toggled open/closed — matches `Profile.jsx`'s
-   collapsible password section. */
-/* Literal gap/padding, not --s-4/--s-6: the prototype's toggle row rhythm
-   (14px gap, 18px/24px padding) doesn't land on the spacing scale. */
-.toggleRow {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 18px 24px;
-  border: 0;
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  transition: background 150ms ease;
-}
-
-.toggleRow:hover {
-  background: var(--ember-04);
-}
-
-.toggleRowOpen {
-  border-bottom: 1px solid var(--hairline);
-}
-
-.toggleIcon {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--r-btn);
-  background: var(--ember-10);
-  color: var(--ember);
-}
-
-.toggleText {
-  flex: 1;
-}
-
-.toggleTitle {
-  margin: 0;
-  color: var(--fg-1);
-  font-weight: 700;
-}
-
-/* `p.toggleSubtitle`, not just `.toggleSubtitle`: the JSX applies `sp-small`
-   (14px, from the globally loaded tokens.css) alongside this class for the
-   line-height/weight it wants, but the prototype's subtitle is 12px, a
-   size smaller than its 14px title. The element qualifier raises
-   specificity so this 12px override doesn't depend on which stylesheet the
-   bundler happens to place later. */
-p.toggleSubtitle {
-  margin: 2px 0 0;
-  color: var(--fg-3);
-  font-size: 12px;
-}
-
-.chevron {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  color: var(--fg-3);
-  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.chevronOpen {
-  transform: rotate(180deg);
-}
-
-/* Literal 24/28/20px, not --s-5/--s-6: the prototype's expanded password
-   form has its own rhythm, close to but not exactly the spacing scale. */
-.passwordForm {
-  padding: 24px 28px 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-/* Requirements checklist under "Contraseña nueva" — same row layout as the
-   prototype's (dot + label per rule), reused for the app's one real rule
-   instead of the prototype's three. See the doc comment on
-   `ChangePasswordForm` for why the content differs from the mockup. */
-.requirements {
-  list-style: none;
-  margin: 10px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.requirement {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--fg-3);
-  font-size: 13px;
-}
-
-.requirementMet {
-  color: var(--fg-2);
-}
-
-.requirementDot {
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  border: 1.5px solid var(--hairline);
-  color: var(--white);
-  transition: background 150ms ease, border-color 150ms ease;
-}
-
-.requirementMet .requirementDot {
-  background: var(--success);
-  border-color: var(--success);
 }
 
 /* ── Load state ──────────────────────────────────────────── */
