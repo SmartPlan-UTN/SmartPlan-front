@@ -183,23 +183,33 @@ function Rail({
   const railRef = useRef<HTMLUListElement>(null);
   const revealedRef = useRef(false);
   const [overflow, setOverflow] = useState({ left: false, right: false });
+  const [snap, setSnap] = useState(false);
 
   const measure = useCallback(() => {
     const el = railRef.current;
     if (!el) return;
-    setOverflow({
+    const next = {
       left: el.scrollLeft > 4,
       right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4,
-    });
+    };
+    // Bail when nothing changed — this fires on every scroll event and
+    // must not re-render the rail while the visitor is dragging it.
+    setOverflow((prev) =>
+      prev.left === next.left && prev.right === next.right ? prev : next,
+    );
   }, []);
 
   useEffect(() => {
-    measure();
     const el = railRef.current;
     if (!el) return;
+    // Pin to start, snap on next frame — see Rail.tsx.
+    el.scrollLeft = 0;
+    const id = requestAnimationFrame(() => setSnap(true));
+    measure();
     el.addEventListener("scroll", measure, { passive: true });
     window.addEventListener("resize", measure);
     return () => {
+      cancelAnimationFrame(id);
       el.removeEventListener("scroll", measure);
       window.removeEventListener("resize", measure);
     };
@@ -259,7 +269,11 @@ function Rail({
   };
 
   return (
-    <div className={styles.railViewport}>
+    <div
+      className={styles.railViewport}
+      data-overflow-left={overflow.left ? "true" : undefined}
+      data-overflow-right={overflow.right ? "true" : undefined}
+    >
       <button
         type="button"
         className={`${styles.arrow} ${styles.arrowLeft}`}
@@ -274,6 +288,7 @@ function Rail({
       <ul
         ref={railRef}
         className={styles.rail}
+        data-snap={snap ? "true" : undefined}
         tabIndex={0}
         aria-label="Planes recomendados"
       >

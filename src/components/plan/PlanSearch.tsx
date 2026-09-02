@@ -11,6 +11,7 @@ import {
 import { Button, Icon, LoadingDots } from "@/components/ui";
 import { useDebouncedValue, useExplorationFilters, useExplorationSearch } from "@/hooks";
 import { searchPlans } from "@/lib/api";
+import { useSession } from "@/lib/auth";
 import type { PlanSearchParams, PlanSortField } from "@/types";
 
 import { PlanCard } from "./PlanCard";
@@ -46,6 +47,7 @@ function toNumber(value: string): number | undefined {
  * the shared fetch/pagination/error orchestration.
  */
 export function PlanSearch() {
+  const { status: sessionStatus } = useSession();
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, DEBOUNCE_MS);
   const [manualQuery, setManualQuery] = useState<string | null>(null);
@@ -105,7 +107,12 @@ export function PlanSearch() {
   );
 
   const { items, pagination, status, errorMessage, hasResults, page, goToPage, retry } =
-    useExplorationSearch(searchPlans, params, PAGE_SIZE);
+    useExplorationSearch(
+      searchPlans,
+      params,
+      PAGE_SIZE,
+      sessionStatus !== "loading",
+    );
 
   const resultsCountLabel =
     pagination != null

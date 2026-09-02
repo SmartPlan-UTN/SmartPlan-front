@@ -4,6 +4,8 @@
 
 .section {
   position: relative;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 720px;
   /* The clip belongs here, on the section, not on the rail's wrapper.
      A horizontal scroll container leaks its content into the *document's*
      scroll width, and clipping the immediate wrapper turned out not to
@@ -62,46 +64,76 @@
   text-wrap: pretty;
 }
 
+/* ── Featured card — the plan the "how it works" scene hands over ─── */
+
+.featuredWrap {
+  margin-top: clamp(28px, 4.5vh, 48px);
+}
+
+.featured {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ember) 30%, var(--hairline));
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+  box-shadow: 0 24px 54px -30px color-mix(in srgb, var(--char) 55%, transparent);
+}
+
+.featuredMedia {
+  position: relative;
+  min-height: 260px;
+  overflow: hidden;
+}
+
+.featuredBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: clamp(20px, 2.6vw, 34px);
+}
+
+.featuredTitle {
+  margin: 0;
+  font-size: clamp(19px, 2vw, 25px);
+  font-weight: var(--w-display);
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+@media (max-width: 760px) {
+  .featured {
+    grid-template-columns: 1fr;
+  }
+
+  .featuredMedia {
+    min-height: 0;
+    aspect-ratio: 16 / 10;
+  }
+}
+
 /* ── Rail ──────────────────────────────────────────────────────── */
 
 .railWrap {
   width: 100%;
+  margin-top: clamp(36px, 6vh, 64px);
 }
 
-.rail {
-  --rail-pad: max(clamp(20px, 5vw, 48px), calc((100% - var(--max-w)) / 2 + clamp(20px, 5vw, 48px)));
-
-  display: flex;
-  gap: clamp(14px, 1.6vw, 22px);
-  /* Padded rather than centred so the first card aligns with the header
-     above it and the last one can still scroll clear of the edge.
-     `100%` rather than `100vw`: the viewport unit includes the classic
-     scrollbar's width, so it overshoots by ~15px on desktop Windows. */
-  padding: 6px var(--rail-pad);
-  margin: 0;
-  overflow-x: auto;
-  list-style: none;
-  scroll-snap-type: x proximity;
-  /* Without this the browser snaps the first card flush to the
-     scrollport edge on load — scrolling the rail 168px by itself and
-     throwing the first card out of line with the header above it. Snap
-     positions have to be told about the padding. */
-  scroll-padding-inline: var(--rail-pad);
-  scrollbar-width: none;
+.railLabel {
+  width: 100%;
+  max-width: var(--max-w);
+  padding-inline: clamp(20px, 5vw, 48px);
+  margin: 0 auto clamp(14px, 2vh, 20px);
+  color: var(--fg-3);
+  font-size: 12px;
+  font-weight: var(--w-label);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-.rail::-webkit-scrollbar {
-  display: none;
-}
-
-/* The rail is focusable so it can be scrolled with the arrow keys;
-   without a visible ring that focus would be invisible. */
-.rail:focus-visible {
-  outline: 2px solid var(--ember);
-  outline-offset: 4px;
-  border-radius: var(--r-card);
-}
-
+/* The rail scaffolding (overflow, snap, padding, arrows, edge fade) lives
+   in the shared `Rail` component; these are just the card metrics. */
 .card {
   flex: 0 0 clamp(268px, 30vw, 332px);
   scroll-snap-align: start;
@@ -146,45 +178,6 @@
     border-color var(--d-base) var(--ease-out);
 }
 
-/* A sheen crossing the media panel on hover, matching the gallery so the
-   two sections feel like one product. */
-.media::after {
-  position: absolute;
-  z-index: 2;
-  top: -60%;
-  left: -70%;
-  width: 50%;
-  height: 220%;
-  background: linear-gradient(
-    100deg,
-    transparent 0%,
-    color-mix(in srgb, var(--white) 30%, transparent) 48%,
-    color-mix(in srgb, var(--white) 44%, transparent) 52%,
-    transparent 100%
-  );
-  transform: translate3d(0, 0, 0) rotate(8deg);
-  opacity: 0;
-  content: "";
-  pointer-events: none;
-}
-
-.card:hover .media::after {
-  animation: sp-card-sheen 850ms var(--ease-out) both;
-}
-
-@keyframes sp-card-sheen {
-  from { opacity: 0; transform: translate3d(0, 0, 0) rotate(8deg); }
-  18%  { opacity: 1; }
-  to   { opacity: 0; transform: translate3d(340%, 0, 0) rotate(8deg); }
-}
-
-.card:hover .cardInner,
-.card:focus-within .cardInner {
-  transform: translateY(-4px);
-  border-color: color-mix(in srgb, var(--ember) 35%, var(--hairline));
-  box-shadow: 0 22px 42px -24px color-mix(in srgb, var(--char) 60%, transparent);
-}
-
 /* ── Media panel ───────────────────────────────────────────────── */
 
 .media {
@@ -202,14 +195,16 @@
     var(--base);
 }
 
-.card[data-tone="char"] {
+.card[data-tone="char"],
+.featured[data-tone="char"] {
   --base: var(--char);
   --wash-1: color-mix(in srgb, var(--ember) 36%, transparent);
   --wash-2: color-mix(in srgb, var(--electric) 20%, transparent);
   --glyph: var(--fg-on-dark);
 }
 
-.card[data-tone="ember"] {
+.card[data-tone="ember"],
+.featured[data-tone="ember"] {
   --base: color-mix(in srgb, var(--ember) 86%, var(--char));
   --wash-1: color-mix(in srgb, var(--gold) 42%, transparent);
   --wash-2: color-mix(in srgb, var(--char) 34%, transparent);
@@ -217,21 +212,24 @@
 }
 
 /* Matched to the gallery's dusk tile, for the same reason. */
-.card[data-tone="electric"] {
+.card[data-tone="electric"],
+.featured[data-tone="electric"] {
   --base: color-mix(in srgb, var(--electric) 44%, var(--char));
   --wash-1: color-mix(in srgb, var(--gold) 32%, transparent);
   --wash-2: color-mix(in srgb, var(--ember) 24%, transparent);
   --glyph: var(--white);
 }
 
-.card[data-tone="gold"] {
+.card[data-tone="gold"],
+.featured[data-tone="gold"] {
   --base: color-mix(in srgb, var(--gold) 72%, var(--cream));
   --wash-1: color-mix(in srgb, var(--white) 58%, transparent);
   --wash-2: color-mix(in srgb, var(--ember) 28%, transparent);
   --glyph: var(--char);
 }
 
-.card[data-tone="cream"] {
+.card[data-tone="cream"],
+.featured[data-tone="cream"] {
   --base: color-mix(in srgb, var(--cream) 92%, var(--white));
   --wash-1: color-mix(in srgb, var(--gold) 26%, transparent);
   --wash-2: color-mix(in srgb, var(--ember) 12%, transparent);
@@ -240,11 +238,31 @@
 
 .mediaPhoto {
   object-fit: cover;
-  transition: transform 640ms var(--ease-out);
+  transition: transform 260ms var(--ease-out);
 }
 
-.card:hover .mediaPhoto {
-  transform: scale(1.06);
+.card:focus-within .cardInner {
+  border-color: color-mix(in srgb, var(--ember) 35%, var(--hairline));
+  outline: 2px solid transparent;
+}
+
+.cardInner:focus-visible {
+  outline-color: var(--ember);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:hover .cardInner,
+  .card:focus-within .cardInner {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--ember) 35%, var(--hairline));
+    box-shadow: 0 22px 42px -24px color-mix(in srgb, var(--char) 60%, transparent);
+  }
+
+  .card:hover .mediaPhoto,
+  .card:focus-within .mediaPhoto {
+    transform: scale(1.025);
+  }
 }
 
 /* Always visible, never a hover reveal: this badge is the page's promise
@@ -412,11 +430,6 @@
     align-items: flex-start;
   }
 
-  .rail {
-    --rail-pad: clamp(20px, 5vw, 48px);
-    scroll-snap-type: x mandatory;
-  }
-
   .card {
     flex-basis: 82%;
   }
@@ -428,14 +441,14 @@
     transition: none;
   }
 
-  :global(.sp-reveal-in) .card,
-  .card:hover .media::after {
+  :global(.sp-reveal-in) .card {
     animation: none;
     opacity: 1;
     transform: none;
   }
 
-  .card:hover .mediaPhoto {
+  .card:hover .mediaPhoto,
+  .card:focus-within .mediaPhoto {
     transform: none;
   }
 }

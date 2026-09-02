@@ -1,228 +1,726 @@
-/* ================================================================
-   "Cómo funciona" — four steps on a line that fills as you scroll.
-   ================================================================ */
+/**
+ * The "how it works" scene — the page's product piece.
+ *
+ * Four rules, the same family as the story and the gallery next door:
+ *
+ *  1. Nothing animates layout. The composer replica is centred by CSS and
+ *     only transformed; the option cards are placed once at their final
+ *     frame in percent of the stage, and only `transform` / `opacity` move.
+ *  2. The page never leaves cream. There is no change of ground at all here
+ *     — the story already settled back to cream, and this section starts on
+ *     the same colour with no rule between them.
+ *  3. No new visual language. The field is the real composer's own classes;
+ *     the option cards are the same card pattern as the rest of the landing.
+ *     No pills, no dashboards, no floating browser chrome.
+ *  4. Every move states a fact. The composer shrinks because the options
+ *     need the room; an option grows because it was chosen. Nothing rotates
+ *     or drifts for texture.
+ */
 
+/* The story above is opaque cream and ends on cream; this starts on cream
+   with only a -1px bridge, so there is no edge where one scene becomes the
+   next. `z-index: 6` keeps it painting over the story's `z-index: 5` across
+   that bridge. No `content-visibility` — it breaks the sticky child. */
 .section {
   position: relative;
-  padding-block: clamp(64px, 10vh, 116px);
+  z-index: 6;
+  margin-top: -1px;
   background: var(--cream);
+  color: var(--char);
 }
 
-.shell {
-  width: 100%;
-  max-width: var(--max-w);
-  padding-inline: clamp(20px, 5vw, 48px);
-  margin-inline: auto;
+.track {
+  --headline: 0;
+  --emphasis: 0;
+  --type: 0;
+  --signals: 0;
+  --shrink: 0;
+  --options: 0;
+  --choose: 0;
+  --expand: 0;
+  position: relative;
+  /* Shorter than the story's 240svh — this section has to feel quicker. */
+  height: 200svh;
 }
 
-.header {
-  max-width: 640px;
-  margin-bottom: clamp(40px, 6vh, 72px);
+.viewport {
+  position: sticky;
+  top: var(--navbar-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(100svh - var(--navbar-h));
+  overflow: clip;
+  padding: clamp(18px, 3vh, 40px) clamp(20px, 4vw, 52px);
 }
 
-.kicker {
-  margin: 0 0 var(--s-3);
-  color: var(--ember);
+/* A size container, so option cards can travel by a fraction of the *stage*
+   rather than of themselves — the same reason `story.module.css` uses it. */
+.stage {
+  position: relative;
+  container-type: size;
+  width: min(100%, var(--max-w));
+  height: 100%;
+}
+
+/* ── Headline ───────────────────────────────────────────────────────── */
+
+/* The left column, exactly where the story's "El plan sí." just landed. */
+.headline {
+  position: absolute;
+  left: 4%;
+  top: 17%;
+  width: min(44%, 460px);
+  opacity: var(--headline, 0);
+  transform: translate3d(0, calc(-50% + (1 - var(--headline, 0)) * 16px), 0);
+  will-change: transform, opacity;
 }
 
 .title {
   margin: 0;
-  font-size: clamp(28px, 4.2vw, 48px);
+  color: var(--char);
+  font-size: clamp(34px, 4.8vw, 62px);
   font-weight: var(--w-display);
-  letter-spacing: var(--track-h1);
-  line-height: 1.05;
+  letter-spacing: -0.035em;
+  line-height: 0.96;
   text-wrap: balance;
 }
 
+/* Starts quiet and gains ink as the track advances — the claim getting more
+   certain as the scene proves it. Colour is the cue; weight cannot tween. */
 .titleSoft {
-  color: var(--fg-3);
-}
-
-/* ── The sequence ──────────────────────────────────────────────── */
-
-.steps {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(16px, 2.4vw, 34px);
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-/* The line runs behind the markers, from the centre of the first to the
-   centre of the last — which is why it is inset by half a column rather
-   than spanning the full width. */
-.track {
-  position: absolute;
-  top: 21px;
-  right: calc(100% / 8);
-  left: calc(100% / 8);
-  height: 2px;
-  border-radius: 2px;
-  background: var(--hairline);
-}
-
-.trackFill {
-  position: relative;
   display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, var(--ember), color-mix(in srgb, var(--ember) 70%, var(--gold)));
-  /* `scaleX` rather than `width`: a width animation on every scroll frame
-     forces layout, a transform does not. */
-  transform: scaleX(var(--fill, 0));
-  transform-origin: left center;
+  margin-top: 0.08em;
+  color: color-mix(
+    in srgb,
+    var(--fg-3),
+    var(--char) calc(var(--emphasis, 0) * 100%)
+  );
 }
 
-/* The head of the line glows, so the progress has a leading edge instead
-   of just an end. Sits at the right edge of the filled portion and is
-   counter-scaled, because the parent is being stretched by `scaleX` and
-   would otherwise smear this into a streak. */
-.trackFill::after {
-  position: absolute;
-  top: 50%;
-  right: 0;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--gold);
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--gold) 26%, transparent),
-    0 0 14px 3px color-mix(in srgb, var(--ember) 60%, transparent);
-  transform: translate(50%, -50%) scaleX(calc(1 / max(var(--fill, 1), 0.02)));
-  opacity: var(--fill, 0);
+/* A short ember rule that draws itself as the headline settles — a quiet
+   echo of the story's thread, so the two sections rhyme. */
+.title::after {
+  display: block;
+  width: 44px;
+  height: 2px;
+  margin-top: clamp(16px, 2vw, 24px);
+  background: var(--ember);
+  opacity: 0.55;
+  transform: scaleX(var(--emphasis, 0));
+  transform-origin: left;
   content: "";
 }
 
-.step {
-  position: relative;
-  padding-top: 0;
+/* ── Composer replica ───────────────────────────────────────────────── */
+
+/* Structure comes from `composer.module.css` (`field`, `fieldIcon`,
+   `inputArea`, `submit`, `glow`); this only places and transforms it.
+   It shrinks up and to the left to make room, then fades as the choice is
+   made — it is an anchor, not a thing that gets discarded. */
+.composer {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: min(560px, 82%);
+  opacity: clamp(0, calc(1 - var(--choose, 0) * 1.6), 1);
+  transform:
+    translate(-50%, -50%)
+    translate3d(
+      calc(var(--shrink, 0) * -16cqw),
+      calc(var(--shrink, 0) * -15cqh),
+      0
+    )
+    scale(calc(1 - var(--shrink, 0) * 0.22));
+  transform-origin: center;
+  will-change: transform, opacity;
 }
 
-.stepMarker {
-  position: relative;
-  z-index: 1;
+/* Scoped under `.composer` so they beat `composer.module.css`'s own
+   single-class rules regardless of stylesheet order — the replica is inert,
+   so no pointer affordance. */
+.composer .field,
+.composer .submit {
+  cursor: default;
+}
+
+/* The phrase, revealed left to right by a width clip driven by `--type`.
+   Not a real per-character loop: "typing" is a texture here, not the point,
+   and this keeps it on the compositor. */
+.phrase {
+  display: flex;
+  align-items: baseline;
+  margin: 0;
+  overflow: hidden;
+  color: var(--fg-1);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 26px;
+  white-space: nowrap;
+}
+
+.phraseText {
+  /* `min-width: 0` so the flex item can actually clip below its content
+     width — without it the auto minimum keeps the phrase full-width and the
+     reveal never happens. */
+  min-width: 0;
+  overflow: hidden;
+  max-width: calc(var(--type, 1) * 40ch);
+  white-space: nowrap;
+}
+
+/* `opacity` is the gate — the caret is only there while the phrase is still
+   being typed. The blink rides on `background-color` so it never fights the
+   gate. */
+.caret {
+  flex: none;
+  width: 2px;
+  height: 17px;
+  margin-left: 2px;
+  background: var(--ember);
+  opacity: clamp(0, calc((1 - var(--type, 1)) * 6), 1);
+  animation: how-caret 1.06s step-end infinite;
+}
+
+@keyframes how-caret {
+  0%,
+  100% {
+    background: var(--ember);
+  }
+  50% {
+    background: transparent;
+  }
+}
+
+/* ── Signals ────────────────────────────────────────────────────────── */
+
+/* Centred on the composer, height 0 so its children hang off the field's
+   edges. The whole group fades in and back out with `--signals`. */
+.signals {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: min(560px, 82%);
+  height: 0;
+  transform: translate(-50%, -50%);
+  opacity: var(--signals, 0);
+  pointer-events: none;
+}
+
+.signal {
+  position: absolute;
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid var(--hairline);
-  border-radius: 50%;
-  background: var(--surface-card);
-  color: var(--fg-3);
-  transition:
-    border-color var(--d-base) var(--ease-out),
-    background var(--d-base) var(--ease-out),
-    color var(--d-base) var(--ease-out),
-    box-shadow var(--d-base) var(--ease-out),
-    transform var(--d-base) var(--ease-out);
-}
-
-.step[data-lit="true"] .stepMarker {
-  border-color: transparent;
-  background: var(--ember);
-  color: var(--white);
-  box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--ember) 75%, transparent);
-  transform: translateY(-2px);
-}
-
-.stepNumber {
-  margin: var(--s-4) 0 var(--s-2);
-  color: var(--fg-3);
-  font-size: var(--t-label);
-  font-weight: var(--w-label);
-  letter-spacing: var(--track-label);
-  transition: color var(--d-base) var(--ease-out);
-}
-
-.step[data-lit="true"] .stepNumber {
+  gap: 6px;
   color: var(--ember);
+  font-size: 12px;
+  font-weight: var(--w-label);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  transform: translate3d(0, calc((1 - var(--signals, 0)) * 6px), 0);
 }
 
-.stepTitle {
-  margin: 0 0 var(--s-2);
-  font-size: clamp(15px, 1.5vw, 17.5px);
+.signal::before {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ember);
+  content: "";
+}
+
+.signal::after {
+  width: 34px;
+  height: 1px;
+  background: color-mix(in srgb, var(--ember) 58%, transparent);
+  content: "";
+}
+
+.signal[data-slot="0"] {
+  left: 1%;
+  top: -38px;
+  flex-direction: row-reverse;
+}
+
+.signal[data-slot="1"] {
+  left: 42%;
+  top: -38px;
+}
+
+.signal[data-slot="2"] {
+  right: 1%;
+  top: 34px;
+  flex-direction: row-reverse;
+}
+
+/* ── Option cards ───────────────────────────────────────────────────── */
+
+/* Placed once at its slot's frame; only transform moves it. `--p` is its
+   own arrival progress. */
+.option {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  display: flex;
+  flex-direction: column;
+  width: var(--w);
+  height: var(--h);
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+  box-shadow: 0 2px 12px -6px color-mix(in srgb, var(--char) 40%, transparent);
+  opacity: clamp(0, calc(var(--p, 0) * 2), 1);
+  transform:
+    translate3d(
+      calc(var(--from-x) * (1 - var(--p, 0)) * 1cqw),
+      calc(var(--from-y) * (1 - var(--p, 0)) * 1cqh),
+      0
+    )
+    scale(calc(0.94 + var(--p, 0) * 0.06));
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+/* The two that lose slide further out along the axis they came in on, and
+   fade — they are not struck out or greyed, just gone. */
+.option:not([data-chosen="true"]) {
+  opacity: clamp(0, calc(var(--p, 0) * 2 - var(--choose, 0) * 1.5), 1);
+  transform:
+    translate3d(
+      calc(
+        (var(--from-x) * (1 - var(--p, 0)) + var(--from-x) * var(--choose, 0) * 2.6)
+          * 1cqw
+      ),
+      calc(var(--from-y) * (1 - var(--p, 0)) * 1cqh),
+      0
+    )
+    scale(calc(0.94 + var(--p, 0) * 0.06 - var(--choose, 0) * 0.14));
+}
+
+/* The one that wins comes forward a touch on `choose`, then grows toward the
+   featured card that "Así se ve una respuesta" opens with. Its slot is
+   already centred on the stage, so `expand` only scales and lifts. */
+.option[data-chosen="true"] {
+  z-index: 2;
+  transform:
+    translate3d(
+      calc(var(--from-x) * (1 - var(--p, 0)) * 1cqw),
+      calc(
+        (var(--from-y) * (1 - var(--p, 0)) - var(--expand, 0) * 3) * 1cqh
+      ),
+      0
+    )
+    scale(
+      calc(
+        0.94 + var(--p, 0) * 0.06 + var(--choose, 0) * 0.03 +
+          var(--expand, 0) * 0.12
+      )
+    );
+}
+
+.optionMedia {
+  position: relative;
+  overflow: hidden;
+  background: #efe6da;
+}
+
+.option .optionMedia {
+  flex: 0 0 61%;
+}
+
+.staticOption .optionMedia {
+  aspect-ratio: 16 / 10;
+}
+
+.optionField {
+  position: absolute;
+  inset: 0;
+  background: var(--base, #efe6da);
+}
+
+.option[data-tone="char"],
+.staticOption[data-tone="char"] {
+  --base: color-mix(in srgb, var(--char) 86%, var(--ember));
+}
+
+.option[data-tone="electric"],
+.staticOption[data-tone="electric"] {
+  --base: color-mix(in srgb, var(--electric) 40%, var(--char));
+}
+
+.option[data-tone="gold"],
+.staticOption[data-tone="gold"] {
+  --base: color-mix(in srgb, var(--gold) 62%, var(--cream));
+}
+
+.option[data-tone="ember"],
+.staticOption[data-tone="ember"] {
+  --base: color-mix(in srgb, var(--ember) 78%, var(--char));
+}
+
+.option[data-tone="cream"],
+.staticOption[data-tone="cream"] {
+  --base: color-mix(in srgb, var(--cream) 92%, var(--white));
+}
+
+.optionPhoto {
+  object-fit: cover;
+}
+
+.optionBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+  padding: clamp(10px, 1.2vw, 14px);
+}
+
+.optionTitle {
+  margin: 0;
+  color: var(--char);
+  font-size: clamp(14px, 1.35vw, 17px);
   font-weight: var(--w-heading);
   letter-spacing: -0.01em;
   line-height: 1.25;
   text-wrap: balance;
 }
 
-.stepCopy {
+.optionMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0;
   color: var(--fg-2);
-  font-size: 14px;
-  line-height: 1.55;
-  text-wrap: pretty;
+  font-size: 12.5px;
 }
 
-/* ── Responsive ────────────────────────────────────────────────── */
+.optionMetaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
 
-@media (max-width: 860px) {
-  /* Vertical, with the same line running down the left gutter: the
-     sequence survives, the four-across layout does not. */
-  .steps {
-    grid-template-columns: 1fr;
-    gap: clamp(22px, 4vw, 32px);
+.optionDot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--fg-3);
+}
+
+.budget {
+  display: inline-flex;
+  gap: 1px;
+  font-weight: var(--w-heading);
+}
+
+.budgetMark {
+  color: var(--fg-3);
+  opacity: 0.4;
+}
+
+.budgetMark[data-on="true"] {
+  color: var(--ember);
+  opacity: 1;
+}
+
+/* ── Step marker ────────────────────────────────────────────────────── */
+
+.marker {
+  position: absolute;
+  bottom: 7%;
+  left: 4%;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+  opacity: calc(1 - var(--expand, 0));
+}
+
+.markerNum {
+  color: var(--ember);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.1em;
+}
+
+.markerLabel {
+  color: var(--fg-2);
+  font-size: clamp(13px, 1.3vw, 15px);
+  font-weight: var(--w-label);
+  animation: how-marker-in 320ms var(--ease-out) both;
+}
+
+@keyframes how-marker-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Static composition (mobile / reduced motion) ───────────────────── */
+
+.staticScene {
+  width: 100%;
+  max-width: var(--max-w);
+  padding: clamp(56px, 8vh, 96px) clamp(20px, 5vw, 48px) clamp(60px, 9vh, 100px);
+  margin-inline: auto;
+}
+
+.staticHead {
+  max-width: 620px;
+  margin-bottom: clamp(30px, 5vh, 48px);
+}
+
+.staticHead .headline {
+  position: static;
+  width: 100%;
+  opacity: 1;
+  transform: none;
+}
+
+.staticHead .title {
+  font-size: clamp(30px, 7vw, 48px);
+}
+
+.staticHead .title::after {
+  transform: scaleX(1);
+}
+
+.staticHead .titleSoft {
+  color: var(--char);
+}
+
+/* The four steps, stated plainly — the microcopy that the scrubbed scene
+   swaps one at a time, all four at once here. */
+.staticSteps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  padding: 0;
+  margin: clamp(20px, 3vh, 30px) 0 0;
+  list-style: none;
+}
+
+.staticSteps li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--fg-2);
+  font-size: 13px;
+  font-weight: var(--w-label);
+}
+
+.staticComposer {
+  max-width: 620px;
+  margin: clamp(28px, 5vh, 44px) 0 clamp(30px, 5vh, 48px);
+}
+
+.staticComposer .composer {
+  position: static;
+  width: 100%;
+  max-width: 560px;
+  opacity: 1;
+  transform: none;
+}
+
+.staticComposer .caret {
+  display: none;
+}
+
+.staticSignals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  padding: 0;
+  margin: 18px 0 0;
+  list-style: none;
+}
+
+.staticSignals li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ember);
+  font-size: 12.5px;
+  font-weight: var(--w-label);
+}
+
+.staticSignals li::after {
+  width: 30px;
+  height: 1px;
+  background: color-mix(in srgb, var(--ember) 58%, transparent);
+  content: "";
+}
+
+.staticSignals li::before {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ember);
+  content: "";
+}
+
+.staticOptions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(16px, 2.4vw, 24px);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.optionItem {
+  min-width: 0;
+}
+
+.staticOptions li {
+  display: flex;
+}
+
+.staticOption {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+  box-shadow: 0 2px 12px -6px color-mix(in srgb, var(--char) 40%, transparent);
+}
+
+.staticOption[data-chosen="true"] {
+  border-color: color-mix(in srgb, var(--ember) 42%, var(--hairline));
+  box-shadow: 0 20px 42px -24px color-mix(in srgb, var(--ember) 55%, transparent);
+}
+
+@media (max-width: 900px) {
+  .staticScene {
+    padding-top: clamp(42px, 7vw, 64px);
   }
 
+  .staticHead {
+    margin-bottom: 0;
+  }
+
+  .staticSteps {
+    gap: 8px 16px;
+    margin-top: 18px;
+  }
+
+  .staticComposer {
+    max-width: none;
+    margin-top: 30px;
+  }
+
+  .staticComposer .composer {
+    max-width: none;
+  }
+
+  .staticOptions {
+    display: flex;
+    gap: 12px;
+    margin-inline: -20px;
+    padding-inline: 20px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .staticOptions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .staticOptions li {
+    flex: 0 0 min(78vw, 330px);
+    scroll-snap-align: start;
+  }
+
+  .staticOptions .chosenItem {
+    flex-basis: min(84vw, 360px);
+  }
+
+  .staticOption .optionMedia {
+    flex-basis: auto;
+  }
+
+  .staticOption .optionBody {
+    min-height: 82px;
+  }
+}
+
+/* ── Short viewports ────────────────────────────────────────────────── */
+
+@media (max-height: 820px) and (min-width: 901px) {
   .track {
-    top: 8px;
-    right: auto;
-    bottom: 22px;
-    left: 21px;
-    width: 2px;
+    height: 180svh;
+  }
+}
+
+/* ── Reduced motion ────────────────────────────────────────────────── */
+
+/* The static composition is what renders here; this is the safety net for
+   the instant before `staticMode` resolves. */
+@media (prefers-reduced-motion: reduce) {
+  .track {
     height: auto;
   }
 
-  .trackFill {
-    transform: scaleY(var(--fill, 0));
-    transform-origin: center top;
+  .viewport {
+    position: static;
+    height: auto;
+    overflow: visible;
   }
 
-  /* The line runs downward here, so the leading edge is at the bottom
-     and the counter-scale has to be on the other axis. */
-  .trackFill::after {
-    top: auto;
-    right: 50%;
-    bottom: 0;
-    transform: translate(50%, 50%) scaleY(calc(1 / max(var(--fill, 1), 0.02)));
+  .headline,
+  .composer,
+  .signals,
+  .signal,
+  .option,
+  .marker {
+    opacity: 1;
+    transform: none;
+    will-change: auto;
   }
 
-  .step {
-    display: grid;
-    grid-template-columns: 44px minmax(0, 1fr);
-    grid-template-areas:
-      "marker number"
-      "marker title"
-      "marker copy";
-    column-gap: var(--s-4);
-    align-items: start;
+  .phraseText {
+    max-width: none;
   }
 
-  .stepMarker { grid-area: marker; }
-
-  .stepNumber {
-    grid-area: number;
-    margin: 0 0 var(--s-1);
+  .caret {
+    display: none;
   }
 
-  .stepTitle { grid-area: title; }
-  .stepCopy  { grid-area: copy; }
+  .markerLabel {
+    animation: none;
+  }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .stepMarker,
-  .stepNumber {
-    transition: none;
+@media (max-width: 560px) {
+  .staticScene {
+    padding-inline: 20px;
   }
 
-  /* The line still fills — it carries the reading order — but the glowing
-     head is decoration and goes. */
-  .trackFill::after {
-    display: none;
+  .staticHead .title {
+    max-width: 12ch;
+  }
+
+  .staticSignals {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px;
+  }
+
+  .staticSignals li:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .staticSignals li::after {
+    flex: 1;
   }
 }

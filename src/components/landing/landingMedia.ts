@@ -131,6 +131,22 @@ export const MEDIA = {
     height: 559,
     focus: "50% 42%",
   },
+  /** A long table at night, mid-meal — the middle of the evening. */
+  mesaNoche: {
+    src: "/landing/mesa-noche.jpg",
+    alt: "Mesa larga de noche con amigos comiendo y brindando bajo luces cálidas",
+    width: 2400,
+    height: 1309,
+    focus: "50% 46%",
+  },
+  /** A courtyard at the top of the evening: string lights, brick, beers. */
+  patioCerveza: {
+    src: "/landing/patio-cerveza.jpg",
+    alt: "Amigos riendo con cervezas en el patio de un bar con guirnaldas de luces",
+    width: 1024,
+    height: 559,
+    focus: "50% 46%",
+  },
 } as const satisfies Record<string, LandingImage>;
 
 export type MediaKey = keyof typeof MEDIA;

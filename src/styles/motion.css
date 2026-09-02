@@ -11,6 +11,10 @@
       forces layout on every frame and drops the page off 60fps.
    2. Nothing overshoots. There is no bounce and no spring in this
       product's vocabulary; `--ease-out` decelerates hard and stops.
+   3. Depth drives speed. Elements that read as *near* (large, sharp,
+      high-contrast) travel further and arrive faster; elements that
+      read as *far* (small, faint) move less. Nothing on a scene ever
+      moves at one uniform rate — that is the tell of a canned reveal.
    ================================================================ */
 
 :root {
@@ -21,10 +25,18 @@
      look reversible (open/close, on/off). */
   --ease-out:   cubic-bezier(0.16, 1, 0.3, 1);
   --ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
+  /* `--ease-physical` is for the hero objects settling into place: a
+     longer, softer deceleration that reads as weight coming to rest.
+     `--ease-scene` is for scroll-scrubbed scene changes — nearly linear,
+     because the scroll gesture already supplies the curve and an eased
+     scrub feels like it is lagging the finger. */
+  --ease-physical: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-scene:    cubic-bezier(0.4, 0, 0.2, 1);
 
   /* ── Durations ───────────────────────────────────────────────
      Hover has to feel instant, reveals have to feel composed, and
      the hero gets the only budget long enough to be choreography. */
+  --d-micro: 120ms;
   --d-fast: 180ms;
   --d-base: 420ms;
   --d-slow: 900ms;

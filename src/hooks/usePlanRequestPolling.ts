@@ -5,6 +5,7 @@ import type {
   CreatePlanRequestPayload,
   CreateSurprisePlanRequestPayload,
   PlanRequestPlanSummary,
+  PlanSelectionResult,
   RequestStatusKey,
 } from "@/types";
 
@@ -69,6 +70,20 @@ export interface UsePlanRequestPollingResult {
   regenerate: () => void;
   /** What was asked for last, so the UI can offer to adjust it. */
   lastSubmission: LastSubmission | null;
+  /**
+   * Reflects a plan-intent change (CU22) in the in-memory alternatives from the
+   * backend result: the target plan takes the returned status, and — only when
+   * the result is `selected` — any sibling that was `selected` returns to
+   * `generated` (the 0-or-1 rule the backend enforces). A `generated` result
+   * (a withdrawn intent) just updates the target. No refetch.
+   */
+  applySelectionChange: (result: PlanSelectionResult) => void;
+  /**
+   * Re-reads the plan request from the backend and replaces the alternatives
+   * with the authoritative state. Used to reconcile after a selection was
+   * rejected because the request had advanced (409).
+   */
+  refresh: () => void;
 }
 
 function toFailure(error: unknown): PlanRequestFailure {
@@ -241,6 +256,33 @@ export function usePlanRequestPolling(): UsePlanRequestPollingResult {
     // is exactly when the previous idea is worth having around.
   }, [clearTimers]);
 
+  const applySelectionChange = useCallback((result: PlanSelectionResult) => {
+    setPlans((current) => {
+      if (!current) return current;
+      return current.map((plan) => {
+        if (plan.id === result.id)
+          return {
+            ...plan,
+            status: result.status,
+            viewerPlanState: result.viewerPlanState,
+          };
+        return plan;
+      });
+    });
+  }, []);
+
+  const refresh = useCallback(() => {
+    if (planRequestId === null) return;
+    void getPlanRequestStatus(planRequestId)
+      .then((status) => {
+        if (status.statusKey === "generated") setPlans(status.plans ?? []);
+      })
+      .catch(() => {
+        // A failed reconcile leaves the current view untouched; the user can
+        // retry the selection, which will surface the error again.
+      });
+  }, [planRequestId]);
+
   return {
     phase,
     planRequestId,
@@ -253,5 +295,7 @@ export function usePlanRequestPolling(): UsePlanRequestPollingResult {
     retry,
     regenerate,
     lastSubmission,
+    applySelectionChange,
+    refresh,
   };
 }

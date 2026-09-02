@@ -13,5 +13,4 @@ export { InspirationGallery } from "./InspirationGallery";
 export { ImmersiveStory } from "./ImmersiveStory";
 export { HowItWorks } from "./HowItWorks";
 export { PlanShowcase } from "./PlanShowcase";
-export { FinalSearch, CLOSING_COMPOSER_ID, type FinalSearchProps } from "./FinalSearch";
 export { Reveal, type RevealProps } from "./Reveal";

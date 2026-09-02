@@ -13,6 +13,21 @@ const bricolageGrotesque = localFont({
   display: "swap",
 });
 
+/**
+ * A high-contrast display serif, used only for the hero's second headline
+ * line ("Recibí un plan.") so it reads as a different voice from the
+ * grotesque above it. Two subsets: `latin` covers Spanish on its own,
+ * `latin-ext` is a small insurance for stray glyphs.
+ */
+const fraunces = localFont({
+  src: [
+    { path: "./fonts/Fraunces-SemiBold-latin.woff2", weight: "600", style: "normal" },
+    { path: "./fonts/Fraunces-SemiBold-latin-ext.woff2", weight: "600", style: "normal" },
+  ],
+  variable: "--font-fraunces",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   // The `template` builds each screen's title: "Favoritos · smartplan".
   title: {
@@ -31,7 +46,7 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${bricolageGrotesque.variable} h-full antialiased`}
+      className={`${bricolageGrotesque.variable} ${fraunces.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <AppBackground />

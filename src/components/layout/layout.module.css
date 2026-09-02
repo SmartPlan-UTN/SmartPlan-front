@@ -79,6 +79,7 @@
   gap: var(--s-3);
   height: var(--navbar-h);
   width: 100%;
+  min-width: 0;
   padding-inline: var(--s-4);
 }
 
@@ -145,6 +146,25 @@
   color: var(--fg-1);
 }
 
+/* A hairline that grows from the centre on hover — only on links that
+   aren't the current page (the active one already carries its dot). */
+.link:not(.activeLink)::after {
+  content: "";
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  width: calc(100% - var(--s-3) * 2);
+  height: 1px;
+  background: var(--ember);
+  transform: translateX(-50%) scaleX(0);
+  transition: transform var(--d-fast, 180ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.link:not(.activeLink):hover::after,
+.link:not(.activeLink):focus-visible::after {
+  transform: translateX(-50%) scaleX(1);
+}
+
 /* A dot below the label, not a filled pill: matches
    SmartPlanSystemDesign/v2/Navbar.jsx's active-link treatment. Still backed
    by `aria-current="page"` on the link itself, not just this dot. */
@@ -163,6 +183,17 @@
   border-radius: var(--r-chip);
   background: var(--ember);
   transform: translateX(-50%);
+  animation: nav-dot-in var(--d-fast, 180ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+
+@keyframes nav-dot-in {
+  from { transform: translateX(-50%) scale(0); opacity: 0; }
+  to   { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link:not(.activeLink)::after { transition: none; }
+  .activeLink::after { animation: none; }
 }
 
 /* ── User menu ──────────────────────────────────────────────── */
@@ -386,6 +417,8 @@
   z-index: 1;
   flex: 1;
   width: 100%;
+  min-width: 0;
+  overflow-x: clip;
 }
 
 .container {

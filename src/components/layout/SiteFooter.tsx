@@ -84,7 +84,6 @@ export function SiteFooter() {
 
         <div className={styles.bottom}>
           <span>© 2026 smartplan</span>
-          <span>Proyecto Final · UTN Facultad Regional Mendoza</span>
         </div>
       </div>
 
