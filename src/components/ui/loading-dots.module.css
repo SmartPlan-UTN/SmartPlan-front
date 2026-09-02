@@ -32,6 +32,11 @@
   animation-delay: 0.44s;
 }
 
+.title {
+  margin: 0;
+  color: var(--fg-1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dot {
     animation: none;

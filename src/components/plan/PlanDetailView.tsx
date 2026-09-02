@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -131,15 +131,18 @@ function ItineraryStep({
 
 /**
  * Plan detail (CU13, CU26, CU29 · PAN 17), after
- * SmartPlanSystemDesign/v2/PlanDetail.jsx: a timeline itinerary, a dark
- * cost breakdown card, and a non-sticky action row (the mockup keeps it in
- * normal flow, unlike ActivityDetail.jsx's fixed one).
+ * SmartPlanSystemDesign/v2/PlanDetail.jsx: a dark hero with the title
+ * overlaid on it, a timeline itinerary, a dark cost breakdown card, and a
+ * non-sticky action row (the mockup keeps it in normal flow, unlike
+ * ActivityDetail.jsx's fixed one).
  *
- * The mockup opens on a 300px photo of the place. There are no photos in
- * the catalog, and standing in a flat gradient with an oversized icon in
- * the middle spent a third of the first screenful saying nothing, so the
- * header is sized to its own content and sits on the app's wave background
- * instead. That also frees the back pill from tracking a dark hero.
+ * The hero's 300px band matches the mockup exactly. There are no photos in
+ * the catalog, so — same substitution `ActivityCard`/`ActivityDetailView`
+ * already made for the same reason — a muted icon watermark stands in for
+ * the mockup's huge faded emoji: no emoji anywhere in the product
+ * interface (`skills/06-design-system/SKILL.md`). `FloatingBackLink` gets
+ * `heroRef` here too, so it tracks this hero the same way
+ * `ActivityDetailView`'s does.
  *
  * The mockup's social-proof strip ("312 personas hicieron este plan · 97%
  * lo recomiendan") is fabricated demo data with no backend behind it —
@@ -167,6 +170,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
   const [copied, setCopied] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [ownPlan, setOwnPlan] = useState<OwnPlanDetail | null>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
 
   // Ownership probe (CU25, CU26): see the note above the component.
   useEffect(() => {
@@ -270,28 +274,33 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
 
   return (
     <div>
-      <FloatingBackLink href={ROUTES.explore} label="Volver" />
+      <FloatingBackLink href={ROUTES.explore} label="Volver" heroRef={heroRef} />
 
-      <header className={styles.planHeader}>
-        <div className={styles.planHeaderMeta}>
-          <Stars rating={plan.averageRating} size={14} />
-          <span>{plan.averageRating.toFixed(1)}</span>
-          <span className={styles.planMetaDot}>·</span>
-          <span>{formatDuration(plan.estimatedTotalDuration)}</span>
-          <Badge variant="cost" className={styles.planCostBadge}>
-            {formatArs(plan.estimatedTotalCost)}
-          </Badge>
+      <div className={styles.hero} ref={heroRef}>
+        <Icon name="route" size={90} className={styles.heroIcon} aria-hidden="true" />
+        <div className={styles.heroOverlay} aria-hidden="true" />
+        <Badge variant="cost" className={styles.heroCostBadge}>
+          {formatArs(plan.estimatedTotalCost)}
+        </Badge>
+
+        <div className={styles.heroContent}>
+          <div className={styles.heroMeta}>
+            <Stars rating={plan.averageRating} size={14} />
+            <span>{plan.averageRating.toFixed(1)}</span>
+            <span className={styles.heroMetaDot}>·</span>
+            <span>{formatDuration(plan.estimatedTotalDuration)}</span>
+          </div>
+
+          <h1 className={`sp-h1 ${styles.heroTitle}`}>{plan.title}</h1>
+
+          {routeSummary ? (
+            <p className={styles.heroRoute}>
+              <Icon name="map-pin" size={14} aria-hidden="true" />
+              {routeSummary}
+            </p>
+          ) : null}
         </div>
-
-        <h1 className={styles.planTitle}>{plan.title}</h1>
-
-        {routeSummary ? (
-          <p className={styles.planRoute}>
-            <Icon name="map-pin" size={14} aria-hidden="true" />
-            {routeSummary}
-          </p>
-        ) : null}
-      </header>
+      </div>
 
       <div className={styles.content}>
         {isCancelled && (

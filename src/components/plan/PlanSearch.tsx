@@ -193,8 +193,11 @@ export function PlanSearch() {
       ) : null}
 
       {status === "loading" && !hasResults ? (
-        <div className={activityStyles.stateBlock}>
-          <LoadingDots label="Armando los mejores planes..." />
+        <div className={exploreStyles.transitionState}>
+          <LoadingDots
+            title="Armando tu plan perfecto..."
+            label={effectiveQuery.trim() ? `"${effectiveQuery.trim()}"` : "Buscando lo mejor cerca tuyo"}
+          />
         </div>
       ) : null}
 

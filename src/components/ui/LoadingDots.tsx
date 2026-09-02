@@ -4,6 +4,14 @@ export interface LoadingDotsProps {
   /** Announced to screen readers and shown under the dots. */
   label: string;
   /**
+   * A bigger heading shown between the dots and `label` (CU12's "Armando
+   * tu plan perfecto..." transition) — `ResultsLoading` in `Results.jsx`
+   * pairs a fixed `sp-h3` title with a variable subtitle underneath it,
+   * which a single `label` string can't express. Every other caller keeps
+   * passing just `label`, so this stays optional and additive.
+   */
+  title?: string;
+  /**
    * Reserve the height of the content that is coming, so the page doesn't
    * jump when it arrives. Any CSS length.
    */
@@ -19,7 +27,7 @@ export interface LoadingDotsProps {
  * were reaching into it for the same four lines of markup. Holds still
  * under `prefers-reduced-motion`.
  */
-export function LoadingDots({ label, minHeight, className }: LoadingDotsProps) {
+export function LoadingDots({ label, title, minHeight, className }: LoadingDotsProps) {
   return (
     <div
       className={[styles.wrapper, className].filter(Boolean).join(" ")}
@@ -31,6 +39,7 @@ export function LoadingDots({ label, minHeight, className }: LoadingDotsProps) {
         <span className={styles.dot} />
         <span className={styles.dot} />
       </div>
+      {title ? <p className={`sp-h3 ${styles.title}`}>{title}</p> : null}
       <p className="sp-body">{label}</p>
     </div>
   );

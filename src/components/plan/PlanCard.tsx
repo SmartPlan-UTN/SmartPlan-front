@@ -67,6 +67,12 @@ export function PlanCard({ plan }: PlanCardProps) {
             </Badge>
           ))}
         </div>
+
+        {/* Decorative — the click affordance is the card-wide `Link` this
+            sits inside, not this span (a real `<button>` can't nest inside
+            an `<a>`), same reasoning as `PlanDetailView`'s `.stepDetailHint`.
+            Matches `Results.jsx`'s `ResultCard` "Ver plan completo" CTA. */}
+        <span className={styles.viewPlanButton}>Ver plan completo</span>
       </div>
     </Link>
   );

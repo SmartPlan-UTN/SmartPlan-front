@@ -355,6 +355,23 @@
   pointer-events: none;
 }
 
+/* ── First-load transition (CU12) ─────────────────────────────────
+   Matches `ResultsLoading` in `Results.jsx`: a big, centered "Armando tu
+   plan perfecto..." moment instead of the small inline `LoadingDots` every
+   other search/list state uses — only for the very first load (no results
+   held yet), the same condition that already gated the old inline state,
+   so a refetch (chip, filter, page) still just dims the grid in place via
+   `.resultsFade`. The page itself already floors at one screen's height
+   (`explore/explore.module.css`'s `.backdrop`), so this doesn't need its
+   own `100dvh` — a generous `min-height` gives it the same visual weight
+   without pushing the search bar/chips above it out of view. */
+.transitionState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+}
+
 /* ── Result card + grid (CU9, CU12) ───────────────────────────────
    Shared by ActivityCard and PlanCard: same shell, image tile, body
    layout, and tag-row-pinned-to-bottom pattern for both entity types, so

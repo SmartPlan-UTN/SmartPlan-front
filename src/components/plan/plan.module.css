@@ -20,58 +20,119 @@
   text-overflow: ellipsis;
 }
 
+/* Matches `Results.jsx`'s "Ver plan completo" CTA — a light neutral pill
+   that turns ember under the pointer, same as the source's own button
+   `:hover`. It isn't its own interactive element (see the doc comment on
+   its usage in `PlanCard`), but a plain element still gets its own
+   `:hover` for whatever area it covers, so this needs no help from the
+   card's hover state. */
+.viewPlanButton {
+  display: block;
+  margin-top: var(--s-2);
+  padding: 10px;
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-btn);
+  background: color-mix(in srgb, var(--char) 4%, transparent);
+  color: var(--fg-2);
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  text-align: center;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.viewPlanButton:hover {
+  border-color: var(--ember-20);
+  background: var(--ember-04);
+  color: var(--ember);
+}
+
 /* ── Plan detail (CU13), after
    SmartPlanSystemDesign/v2/PlanDetail.jsx ─────────────────────── */
 
-/* Sized by its content instead of the mockup's fixed 300px photo band:
-   there are no photos yet, and the app's wave background shows through. */
-.planHeader {
-  max-width: 760px;
-  margin-inline: auto;
-  padding: var(--s-6) var(--s-4) var(--s-5);
-}
-
-.planHeaderMeta {
+/* Dark hero, matching the mockup's 300px band exactly (unlike the earlier
+   pass on this screen, which sized the header to its own content and sat
+   it on the cream background instead — see PR review for why: the flat
+   gradient-plus-icon read as a third of the first screenful saying
+   nothing. Requested back explicitly, so this now follows
+   `ActivityDetailView`'s own hero/watermark-icon substitution for "no
+   photos in the catalog" — same reasoning, applied here too — but keeps
+   the mockup's own overlay-title-on-hero layout, which
+   `ActivityDetailView` doesn't use. */
+.hero {
+  position: relative;
   display: flex;
-  flex-wrap: wrap;
+  align-items: flex-end;
+  height: 300px;
+  overflow: hidden;
+  background: linear-gradient(155deg, var(--char) 0%, #2d1506 100%);
+}
+
+/* Centered watermark icon standing in for the mockup's huge faded emoji
+   (`opacity: 0.18`) — no emoji anywhere in the product interface
+   (`skills/06-design-system/SKILL.md`), same substitution `ActivityCard`/
+   `ActivityDetailView` already made for the same reason. */
+.heroIcon {
+  position: absolute;
+  inset: 0;
+  display: flex;
   align-items: center;
-  gap: var(--s-2);
-  color: var(--fg-2);
-  font-size: var(--t-small);
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.18);
 }
 
-.planMetaDot {
-  color: var(--fg-3);
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(26, 17, 9, 0.92) 0%, transparent 55%);
 }
 
-.planCostBadge {
-  margin-left: auto;
+.heroCostBadge {
+  position: absolute;
+  top: var(--s-4);
+  right: var(--s-5);
+  z-index: 1;
   padding: 6px 14px;
   font-size: var(--t-small);
 }
 
-.planTitle {
-  margin: var(--s-3) 0 0;
-  color: var(--fg-1);
-  font-size: var(--t-h2);
-  font-weight: var(--w-display);
-  letter-spacing: -0.02em;
-  line-height: 1.05;
+.heroContent {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 var(--s-6) var(--s-5);
 }
 
-.planRoute {
-  display: inline-flex;
+.heroMeta {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--s-2);
-  margin: var(--s-3) 0 0;
-  color: var(--fg-2);
+  margin-bottom: var(--s-2);
+  color: var(--fg-on-dark-2);
   font-size: var(--t-small);
 }
 
-@media (max-width: 560px) {
-  .planCostBadge {
-    margin-left: 0;
-  }
+.heroMetaDot {
+  color: var(--fg-on-dark-3);
+}
+
+.heroTitle {
+  margin: 0;
+  color: var(--fg-on-dark);
+}
+
+.heroRoute {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+  color: var(--fg-on-dark-2);
+  font-size: var(--t-small);
 }
 
 .content {
