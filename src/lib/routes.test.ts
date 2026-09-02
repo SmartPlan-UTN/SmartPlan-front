@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { REDIRECT_PARAM, ROUTES, safeDestination, isActiveRoute, loginRoute } from "./routes";
+import {
+  PASSWORD_CHANGED_PARAM,
+  REDIRECT_PARAM,
+  ROUTES,
+  safeDestination,
+  isActiveRoute,
+  loginRoute,
+  passwordChangedLoginRoute,
+} from "./routes";
 
 describe("safeDestination", () => {
   it("accepts internal routes", () => {
@@ -27,6 +35,14 @@ describe("loginRoute", () => {
     expect(loginRoute(ROUTES.login)).toBe(ROUTES.login);
     expect(loginRoute(ROUTES.home)).toBe(ROUTES.login);
     expect(loginRoute()).toBe(ROUTES.login);
+  });
+});
+
+describe("passwordChangedLoginRoute", () => {
+  it("points to login flagged with the password-changed param", () => {
+    expect(passwordChangedLoginRoute()).toBe(
+      `${ROUTES.login}?${PASSWORD_CHANGED_PARAM}=1`,
+    );
   });
 });
 

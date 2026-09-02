@@ -4,20 +4,27 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
-import { Button, Icon } from "@/components/ui";
+import { Button, Field, Icon } from "@/components/ui";
 import { useToggle } from "@/hooks";
 import { ApiError } from "@/lib/api";
 import { useSession } from "@/lib/auth";
 import { ROUTES } from "@/lib/routes";
+import { EMAIL_PATTERN, MIN_PASSWORD_LENGTH, REQUIRED_MESSAGE } from "@/lib/utils";
 
-import { AuthField } from "./AuthField";
 import styles from "./AuthForm.module.css";
-import { EMAIL_PATTERN, MIN_PASSWORD_LENGTH, REQUIRED_MESSAGE } from "./validation";
 
 export interface LoginFormProps {
   /** Where to return to after logging in. `null` falls back to Home, or to
    * Admin when the account's role is `admin`. */
   destination: string | null;
+  /** Set when CU6 (change password) redirected here after closing the
+   * session server-side: shows an explanatory notice instead of a silent,
+   * unexplained login form. */
+  passwordChanged?: boolean;
+  /** Set when CU7 (delete account) redirected here after removing the
+   * account and closing its session: shows a goodbye notice instead of a
+   * silent, unexplained login form for an account that no longer exists. */
+  accountDeleted?: boolean;
 }
 
 interface FieldErrors {
@@ -112,7 +119,7 @@ function validate(email: string, password: string): FieldErrors {
 
 /** CU1 - Login form (PAN 04). Rendered inside the white card that
  * `app/login/layout.tsx` provides. */
-export function LoginForm({ destination }: LoginFormProps) {
+export function LoginForm({ destination, passwordChanged, accountDeleted }: LoginFormProps) {
   const { login } = useSession();
   const router = useRouter();
 
@@ -176,7 +183,21 @@ export function LoginForm({ destination }: LoginFormProps) {
           </p>
         ) : null}
 
-        <AuthField
+        {passwordChanged && !formError ? (
+          <p className={styles.formNotice} role="status">
+            <Icon name="circle-check" size={18} />
+            Tu contraseña fue actualizada. Iniciá sesión nuevamente.
+          </p>
+        ) : null}
+
+        {accountDeleted && !formError ? (
+          <p className={styles.formNotice} role="status">
+            <Icon name="circle-check" size={18} />
+            Tu cuenta fue eliminada.
+          </p>
+        ) : null}
+
+        <Field
           label="Email"
           type="email"
           autoComplete="email"
@@ -191,7 +212,7 @@ export function LoginForm({ destination }: LoginFormProps) {
         />
 
         <div className={styles.passwordGroup}>
-          <AuthField
+          <Field
             label="Contraseña"
             type={showPassword ? "text" : "password"}
             autoComplete="current-password"

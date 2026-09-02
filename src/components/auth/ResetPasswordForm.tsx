@@ -3,16 +3,19 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
-import { Button, Icon } from "@/components/ui";
+import {
+  Button,
+  Field as AuthField,
+  Icon,
+  PasswordStrength,
+} from "@/components/ui";
 import { useToggle } from "@/hooks";
 import { ApiError } from "@/lib/api";
 import { resetPassword } from "@/lib/auth/api";
 import { ROUTES } from "@/lib/routes";
+import { REQUIRED_MESSAGE } from "@/lib/utils";
 
-import { AuthField } from "./AuthField";
 import styles from "./AuthForm.module.css";
-import { PasswordStrength } from "./PasswordStrength";
-import { MIN_PASSWORD_LENGTH, REQUIRED_MESSAGE } from "./validation";
 
 export interface ResetPasswordFormProps {
   /** Read from `?token=` by `app/reset-password/page.tsx`. `null` when the
@@ -25,6 +28,10 @@ interface FieldErrors {
   newPassword?: string;
   confirmPassword?: string;
 }
+
+/** The reset endpoint accepts 8-128 characters, independently of the
+ * stricter minimum used by the already-established login/profile forms. */
+const MIN_RESET_PASSWORD_LENGTH = 8;
 
 /** The three ways a recovery token stops being usable (CU3). Each gets its
  * own copy, but the same recourse: request a new link. */
@@ -82,8 +89,8 @@ function validate(newPassword: string, confirmPassword: string): FieldErrors {
 
   if (!newPassword) {
     errors.newPassword = REQUIRED_MESSAGE;
-  } else if (newPassword.length < MIN_PASSWORD_LENGTH) {
-    errors.newPassword = `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres`;
+  } else if (newPassword.length < MIN_RESET_PASSWORD_LENGTH) {
+    errors.newPassword = `La contraseña debe tener al menos ${MIN_RESET_PASSWORD_LENGTH} caracteres`;
   }
 
   if (!confirmPassword) {
@@ -225,7 +232,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
             }}
             error={fieldErrors.newPassword}
             disabled={submitting}
-            placeholder={`Mínimo ${MIN_PASSWORD_LENGTH} caracteres`}
+            placeholder={`Mínimo ${MIN_RESET_PASSWORD_LENGTH} caracteres`}
             required
             rightSlot={{
               icon: showPassword ? "eye-off" : "eye",

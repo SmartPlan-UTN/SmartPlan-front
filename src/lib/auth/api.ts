@@ -44,15 +44,6 @@ export interface RegistrationData {
   password: string;
 }
 
-export interface PasswordRecoveryRequest {
-  email: string;
-}
-
-export interface PasswordReset {
-  token: string;
-  newPassword: string;
-}
-
 /**
  * CU1: opens a session.
  *
@@ -91,28 +82,55 @@ export async function register(
   return apiClient.post<AuthenticationResponse>("/users", data);
 }
 
-/**
- * CU3, step 1: requests a recovery email.
- *
- * `POST /password-recoveries` — 202 with no body, whether or not the email
- * matches an account is decided by the backend (`404 EMAIL_NOT_REGISTERED`
- * otherwise). Not tied to session state: doesn't go through `SessionProvider`.
- */
+export interface PasswordRecoveryRequest {
+  email: string;
+}
+
+export interface PasswordReset {
+  token: string;
+  newPassword: string;
+}
+
+/** CU3: requests a password-recovery email without opening a session. */
 export async function requestPasswordRecovery(
   data: PasswordRecoveryRequest,
 ): Promise<void> {
   await apiClient.post<void>("/password-recoveries", data);
 }
 
-/**
- * CU3, step 2: sets a new password using the token from the recovery email
- * link (`${FRONTEND_URL}/reset-password?token=...`).
- *
- * `PATCH /password-recoveries` — 204 with no body. Success revokes every
- * active session for that account server-side; the frontend doesn't need to
- * clear anything locally, since this screen is never reached with a session
- * of its own (it's public, opened from an email link).
- */
+/** CU3: sets a new password with the opaque token from the recovery email. */
 export async function resetPassword(data: PasswordReset): Promise<void> {
   await apiClient.patch<void>("/password-recoveries", data);
+}
+
+/**
+ * CU4: closes the session.
+ *
+ * `DELETE /sessions`. No body, no response body (204). Idempotent on the
+ * backend: it still succeeds with no refresh cookie, or one that's already
+ * expired or revoked. `@Public()` on the backend — it reads the session to
+ * close from the cookie, not the `Authorization` header — so this still
+ * works if the in-memory access token is already gone.
+ */
+export async function logout(): Promise<void> {
+  await apiClient.delete<void>("/sessions");
+}
+
+/** The calling session's own metadata (CU6's "Seguridad" screen). */
+export interface CurrentSession {
+  ip: string | null;
+  startedAt: string;
+}
+
+/**
+ * CU6: the calling session's own `ip`/`startedAt`, for the "Sesiones
+ * activas" card on `/security`.
+ *
+ * `GET /sessions/me`. There's no endpoint to list *other* sessions or
+ * devices for the account — `SmartPlan-back` tracks no user-agent/device
+ * at all on `user_session` — so this only ever reports the session making
+ * the request, unlike the v2 system design's mocked multi-device card.
+ */
+export async function getCurrentSession(): Promise<CurrentSession> {
+  return apiClient.get<CurrentSession>("/sessions/me");
 }

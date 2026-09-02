@@ -36,12 +36,22 @@ export {
   generateSuggestedPlan,
 } from './plans';
 export { listCategories } from './categories';
+export { listPlaces } from './places';
+export { getProfile, updateProfile, changePassword, deleteAccount } from './users';
+export type { UpdateProfileData, ChangePasswordData } from './users';
 export {
   changeAdminUserStatus,
   getAdminUserMetrics,
   getDashboardMetrics,
   listAdminUsers,
   updateAdminUser,
+  createAdminActivity,
+  deleteAdminActivity,
+  deleteAdminPlan,
+  listAdminActivities,
+  listAdminPlans,
+  updateAdminActivity,
+  updateAdminPlan,
 } from './administration';
 export {
   addActivityToCollection,

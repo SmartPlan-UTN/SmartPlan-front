@@ -3,14 +3,13 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
-import { Button, Icon } from "@/components/ui";
+import { Button, Field as AuthField, Icon } from "@/components/ui";
 import { ApiError } from "@/lib/api";
 import { requestPasswordRecovery } from "@/lib/auth/api";
 import { ROUTES } from "@/lib/routes";
+import { EMAIL_PATTERN, REQUIRED_MESSAGE } from "@/lib/utils";
 
-import { AuthField } from "./AuthField";
 import styles from "./AuthForm.module.css";
-import { EMAIL_PATTERN, REQUIRED_MESSAGE } from "./validation";
 
 interface FieldErrors {
   email?: string;
