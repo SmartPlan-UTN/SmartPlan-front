@@ -2,47 +2,81 @@
   position: absolute;
   inset: 0;
   z-index: 1;
-  overflow: hidden;
+  overflow: visible;
   pointer-events: none;
-  /* The per-object departure carries most of the exit; this is only a
-     soft global fade so nothing is still faintly visible once the
-     gallery has taken over. */
-  opacity: clamp(0, calc(1.05 - var(--hero-progress, 0) * 1.15), 1);
+  transition: transform 260ms var(--ease-out), opacity 220ms var(--ease-out);
 }
 
 /* ── Layer 1: placement + pointer parallax ──────────────────────────
-   Position and size only. `translate` (not `transform`) carries the
-   parallax so the drift keyframe below can own `transform` without a
-   collision. */
+   Position, size and resting opacity only. `translate` (not `transform`)
+   carries the parallax so the drift keyframe below can own `transform`
+   without a collision. `--pf` (parallax) and drift amplitude default off
+   the depth plane; a few pieces override. */
 .object {
   position: absolute;
+  opacity: var(--rest-opacity, 1);
   translate:
     calc(var(--px, 0) * var(--pf, 0) * 1px)
     calc(var(--py, 0) * var(--pf, 0) * 1px);
-  transition: translate 220ms var(--ease-out);
+  transition: translate 220ms var(--ease-out), transform 200ms var(--ease-out);
 }
 
+.object[data-plane="fore"] { --pf: 18; --drift-y: -5px; --drift-rot: 0.4deg; }
+.object[data-plane="mid"]  { --pf: 10; --drift-y: -3px; --drift-rot: 0.25deg; }
+.object[data-plane="back"] { --pf: 4;  --drift-y: 0px;  --drift-rot: 0deg; }
+
 /* ── Layer 2: the scroll-linked departure + pointer tilt ────────────
-   Rests at the object's rotation; as `--hero-progress` climbs it slides
-   along its own exit vector and scales, each object at its own rate.
-   `--tf` adds a fraction of a degree of tilt against the pointer on the
-   two nearest pieces, so the parallax reads as depth rather than a flat
-   slide. */
+   Rests at the object's rotation; as `--object-exit-progress` climbs it
+   slides along its own exit vector and scales, each object at its own
+   rate. `--tf` adds a fraction of a degree of tilt against the pointer on
+   the three foreground pieces, so the parallax reads as depth. */
 .objectExit {
+  /* The per-object rate is damped hard here: the pieces should read as
+     drifting off over most of a screen of scroll, not clearing the frame
+     in the first 300px. Raw rates still order the departure by depth. */
+  --object-progress: clamp(
+    0,
+    calc(
+      (var(--object-exit-progress, 0) - var(--exit-start, 0.12)) *
+      (var(--exit-rate, 1.5) * 0.5 + 0.4)
+    ),
+    1
+  );
   transform:
-    rotate(calc(var(--rot, 0deg) + var(--px, 0) * var(--tf, 0) * 1deg))
+    rotate(
+      calc(
+        var(--rot, 0deg) +
+        var(--px, 0) * var(--tf, 0) * 1deg +
+        var(--object-progress) * var(--exit-spin, 0deg)
+      )
+    )
     translate3d(
-      calc(var(--hero-progress, 0) * var(--exit-x, 0px)),
-      calc(var(--hero-progress, 0) * var(--exit-y, 0px)),
+      calc(var(--object-progress) * var(--exit-x, 0px)),
+      calc(var(--object-progress) * var(--exit-y, 0px)),
       0
     )
-    scale(calc(1 + (var(--exit-scale, 1) - 1) * var(--hero-progress, 0)));
+    scale(calc(1 + (var(--exit-scale, 1) - 1) * var(--object-progress)));
   transform-origin: center;
+  /* Fade tracks the departure gradually rather than snapping off at the
+     end — the pieces should ease away, not blink out. */
+  opacity: clamp(0, calc((1 - var(--object-progress)) * 1.6), 1);
 }
+
+/* A touch of extra rotation as a piece leaves, signed with its rest tilt. */
+.object[data-object="map"] .objectExit,
+.object[data-object="camera"] .objectExit,
+.object[data-object="ticket"] .objectExit { --exit-spin: -5deg; }
+.object[data-object="polaroid"] .objectExit,
+.object[data-object="coffee"] .objectExit,
+.object[data-object="popcorn"] .objectExit { --exit-spin: 5deg; }
 
 /* ── Layer 3: the one-time entrance (Motion writes transform here) ── */
 .objectInner {
   filter: drop-shadow(0 18px 22px rgba(55, 31, 13, 0.16));
+}
+
+.object[data-plane="back"] .objectInner {
+  filter: drop-shadow(0 10px 14px rgba(55, 31, 13, 0.1));
 }
 
 .objectInner img {
@@ -54,185 +88,244 @@
 
 /* ── Idle drift ────────────────────────────────────────────────────
    A few pieces breathe a little while the hero sits still. `transform`
-   on the outer `.object` — free now that parallax uses `translate`. */
+   on the outer `.object` — free now that parallax uses `translate`.
+   Amplitude comes from the plane; periods are deliberately coprime-ish
+   and phases offset so the pieces never fall into step. */
 @media (prefers-reduced-motion: no-preference) {
   .object[data-drift="true"] {
     animation: hero-drift 8.6s ease-in-out infinite alternate;
   }
-  /* Deliberately coprime-ish periods and offset phases so the three
-     never fall into step with each other. */
   .object[data-object="polaroid"] { animation-duration: 7.3s; animation-delay: -2.1s; }
-  .object[data-object="wine"] { animation-duration: 9.4s; animation-delay: -3.7s; }
-  .object[data-object="compass"] { animation-duration: 6.7s; animation-delay: -1.4s; }
+  .object[data-object="ticket"]   { animation-duration: 8.1s; animation-delay: -4.4s; }
+  .object[data-object="notebook"] { animation-duration: 9.7s; animation-delay: -1.2s; }
+  .object[data-object="wine"]     { animation-duration: 9.4s; animation-delay: -3.7s; }
+  .object[data-object="compass"]  { animation-duration: 6.7s; animation-delay: -1.4s; }
 
   @keyframes hero-drift {
     from { transform: translate3d(0, 0, 0) rotate(0deg); }
-    to   { transform: translate3d(0, -9px, 0) rotate(0.8deg); }
+    to   { transform: translate3d(0, var(--drift-y, -3px), 0) rotate(var(--drift-rot, 0.2deg)); }
   }
 }
 
-/* When the composer has focus the air goes still: the hero is no longer
-   idle, so it has no reason to move. The scene also gives up a hair of
-   scale — the objects lean back to make room for the field. */
+/* When the composer has focus the air goes still and the foreground
+   pieces lean back a hair to make room for the field. */
 :global([data-writing="true"]) .object[data-drift="true"] {
   animation-play-state: paused;
 }
 
-.scene {
-  transition: transform 260ms var(--ease-out);
-}
-
 :global([data-writing="true"]) .scene {
   transform: scale(0.985);
+  opacity: 0.9;
 }
 
-.object[data-object="map"] {
-  left: -15vw;
-  bottom: -28vw;
-  width: clamp(440px, 47vw, 760px);
-  opacity: 0.83;
-  --rot: -11deg;
-  --pf: 10;
-  --tf: 1.1;
-}
+/* ── Placement (desktop) ───────────────────────────────────────────
+   Foreground pieces are clipped by the viewport edges on purpose. The
+   centre band (~27%–73% wide, ~18%–78% tall) stays clear for the
+   headline and composer. */
 
+/* Left column, top → bottom */
 .object[data-object="camera"] {
-  top: 7%;
-  left: -7vw;
-  width: clamp(210px, 22vw, 350px);
+  top: 9%;
+  left: -3%;
+  width: clamp(180px, 17vw, 260px);
   --rot: -13deg;
-  --pf: 7;
-}
-
-.object[data-object="headphones"] {
-  left: 3vw;
-  bottom: 5%;
-  width: clamp(160px, 18vw, 280px);
-  opacity: 0.92;
-  --rot: 14deg;
-  --pf: 5;
 }
 
 .object[data-object="compass"] {
-  top: 34%;
-  left: 12vw;
-  width: clamp(90px, 10vw, 150px);
+  top: 6%;
+  left: 15%;
+  width: clamp(70px, 7vw, 104px);
   --rot: 22deg;
-  --pf: 3;
 }
 
+.object[data-object="gorrito"] {
+  top: 40%;
+  left: 1%;
+  width: clamp(110px, 11vw, 158px);
+  --rot: -8deg;
+}
+
+.object[data-object="lentes"] {
+  bottom: 40%;
+  left: 3%;
+  width: clamp(100px, 10vw, 140px);
+  --rot: -16deg;
+}
+
+.object[data-object="map"] {
+  bottom: -9%;
+  left: -5%;
+  width: clamp(280px, 26vw, 420px);
+  --rot: -11deg;
+  --tf: 1.4;
+}
+
+.object[data-object="notebook"] {
+  bottom: 3%;
+  left: 12%;
+  width: clamp(120px, 12vw, 172px);
+  --rot: 8deg;
+}
+
+.object[data-object="headphones"] {
+  bottom: -5%;
+  left: 31%;
+  width: clamp(120px, 12vw, 172px);
+  --rot: 14deg;
+}
+
+/* Right column, top → bottom */
 .object[data-object="polaroid"] {
-  top: 4%;
-  right: -4vw;
-  width: clamp(210px, 23vw, 360px);
+  top: 2%;
+  right: 2%;
+  width: clamp(190px, 18vw, 290px);
   --rot: 9deg;
-  --pf: 8;
-  --tf: -0.9;
+  --tf: -1.2;
 }
 
 .object[data-object="wine"] {
-  top: 23%;
-  right: -4vw;
-  width: clamp(120px, 13vw, 200px);
+  top: 36%;
+  right: 6%;
+  width: clamp(96px, 9.5vw, 142px);
   --rot: 10deg;
-  --pf: 4;
 }
 
-.object[data-object="ticket"] {
-  right: 7vw;
-  bottom: 1%;
-  width: clamp(220px, 25vw, 390px);
-  --rot: -9deg;
-  --pf: 6;
+.object[data-object="copa"] {
+  top: 30%;
+  right: 21%;
+  width: clamp(78px, 8vw, 116px);
+  --rot: 6deg;
+}
+
+.object[data-object="popcorn"] {
+  bottom: 34%;
+  right: 3%;
+  width: clamp(108px, 11vw, 158px);
+  --rot: -6deg;
 }
 
 .object[data-object="coffee"] {
-  right: 15vw;
-  bottom: 22%;
-  width: clamp(110px, 13vw, 190px);
+  right: 19%;
+  bottom: 1%;
+  width: clamp(112px, 12vw, 170px);
   --rot: 8deg;
-  --pf: 4;
 }
 
+.object[data-object="ticket"] {
+  right: -5%;
+  bottom: 6%;
+  width: clamp(190px, 20vw, 300px);
+  --rot: -9deg;
+  --tf: 1;
+}
+
+/* ── Responsive: thin the scene, keep the composition ──────────────── */
+
 @media (max-width: 1180px) {
-  .object[data-object="camera"] { left: -11vw; }
-  .object[data-object="compass"] { display: none; }
-  .object[data-object="coffee"] { right: 8vw; }
+  .object[data-object="compass"],
+  .object[data-object="lentes"],
+  .object[data-object="copa"] { display: none; }
+
+  .object[data-object="camera"] { left: -6%; }
+  .object[data-object="coffee"] { right: 13%; }
+  .object[data-object="headphones"] { left: 33%; }
 }
 
 @media (max-width: 900px) {
   .object[data-object="camera"],
-  .object[data-object="wine"],
-  .object[data-object="headphones"] { display: none; }
+  .object[data-object="headphones"],
+  .object[data-object="lentes"] { display: none; }
 
   .object[data-object="map"] {
-    left: -32vw;
-    bottom: -26vw;
-    width: 72vw;
-    min-width: 460px;
+    bottom: -5%;
+    left: -9%;
+    width: clamp(280px, 40vw, 360px);
   }
 
   .object[data-object="polaroid"] {
     top: 2%;
-    right: -13vw;
-    width: clamp(170px, 34vw, 260px);
+    right: -3%;
+    width: clamp(170px, 26vw, 240px);
   }
 
   .object[data-object="ticket"] {
-    right: -10vw;
-    bottom: 5%;
-    width: clamp(190px, 38vw, 280px);
+    right: -8%;
+    bottom: 8%;
+    width: clamp(180px, 28vw, 250px);
+  }
+
+  .object[data-object="notebook"] {
+    left: 4%;
+    bottom: 3%;
+    width: clamp(120px, 18vw, 165px);
   }
 
   .object[data-object="coffee"] {
-    right: auto;
-    bottom: 16%;
-    left: -6vw;
-    width: clamp(100px, 22vw, 150px);
+    right: -4%;
+    bottom: 32%;
+    width: clamp(100px, 16vw, 150px);
+  }
+
+  .object[data-object="gorrito"] {
+    top: 8%;
+    left: -4%;
+    width: clamp(110px, 16vw, 155px);
+  }
+
+  .object[data-object="wine"] {
+    top: 30%;
+    right: 2%;
+    width: clamp(90px, 12vw, 130px);
+  }
+
+  .object[data-object="popcorn"] {
+    bottom: 40%;
+    right: -3%;
+    width: clamp(96px, 14vw, 140px);
   }
 }
 
 @media (max-width: 620px) {
-  /* Parallax off on touch; the pointer vars never update here anyway,
-     but the smaller pieces should sit dead still. */
+  /* Parallax off on touch; the smaller pieces sit dead still. */
   .object { --pf: 0; }
 
-  .object[data-object="map"] {
-    left: -54vw;
-    bottom: -30vw;
-    width: 106vw;
-    min-width: 390px;
-    opacity: 0.5;
-  }
+  .object[data-object="map"],
+  .object[data-object="gorrito"],
+  .object[data-object="wine"],
+  .object[data-object="popcorn"] { display: none; }
 
   .object[data-object="polaroid"] {
-    top: -3%;
-    right: -24vw;
-    width: 54vw;
-    min-width: 185px;
-    opacity: 0.82;
+    top: 2%;
+    right: -4%;
+    width: 160px;
+    --rest-opacity: 0.82;
   }
 
   .object[data-object="ticket"] {
-    right: -25vw;
-    bottom: 1%;
-    width: 60vw;
-    min-width: 210px;
-    opacity: 0.72;
+    right: -10%;
+    bottom: 16%;
+    width: 150px;
+    --rest-opacity: 0.7;
   }
 
   .object[data-object="coffee"] {
-    bottom: 9%;
-    left: -17vw;
-    width: 36vw;
-    min-width: 125px;
-    opacity: 0.74;
+    right: -6%;
+    bottom: 30%;
+    width: 116px;
+    --rest-opacity: 0.72;
+  }
+
+  .object[data-object="notebook"] {
+    left: -4%;
+    bottom: 10%;
+    width: 128px;
+    --rest-opacity: 0.8;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .scene { opacity: 1; transition: none; }
   :global([data-writing="true"]) .scene { transform: none; }
-  .objectExit { transform: rotate(var(--rot, 0deg)); }
+  .objectExit { transform: rotate(var(--rot, 0deg)); opacity: 1; }
   .object { translate: none; }
 }

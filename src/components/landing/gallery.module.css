@@ -1,31 +1,389 @@
-/* The first photograph rises into the space the hero's objects vacated —
-   the `.handoff` spacer above provides the empty beat, so the gallery
-   starts from its own top edge and the feature tile is scrubbed up from
-   below (see `FeatureTile`). */
-.section { position: relative; z-index: 4; overflow-x: clip; padding-block: clamp(40px, 6vh, 72px) clamp(72px, 10vh, 126px); background: var(--cream); }
-.shell, .gridWrap { width: 100%; max-width: 1320px; padding-inline: clamp(20px, 5vw, 56px); margin-inline: auto; }
-.header { max-width: 720px; margin-bottom: clamp(40px, 6vh, 72px); }
-.title { max-width: 15ch; margin: 0; font-size: clamp(34px, 5vw, 64px); font-weight: var(--w-display); letter-spacing: -.035em; line-height: .96; text-wrap: balance; }
-.titleSoft { color: var(--ember); }
-.lead { max-width: 60ch; margin: 22px 0 0; color: var(--fg-2); font-size: clamp(15px, 1.4vw, 18px); line-height: 1.6; }
-.grid { display: grid; grid-template-columns: 1.15fr .8fr 1fr; grid-template-rows: 230px 130px 260px; grid-template-areas: "mesa mesa cordillera" "mesa mesa noche" "cafe informal vinos"; gap: clamp(12px, 1.4vw, 20px); padding: 0; margin: 0; list-style: none; }
-.tile { position: relative; min-width: 0; overflow: hidden; border-radius: 14px; background: var(--char); }
-.tile[data-id="mesa"] { grid-area: mesa; } .tile[data-id="cordillera"] { grid-area: cordillera; } .tile[data-id="noche"] { grid-area: noche; } .tile[data-id="cafe"] { grid-area: cafe; } .tile[data-id="informal"] { grid-area: informal; } .tile[data-id="vinos"] { grid-area: vinos; }
-.tileMedia, .tileScrim { position: absolute; inset: 0; }
-.tilePhoto { object-fit: cover; transform: scale(1.02); transition: transform 420ms var(--ease-out); }
-.tileScrim { background: linear-gradient(180deg, transparent 28%, rgb(25 20 17 / 86%) 100%); transition: background 420ms var(--ease-out); }
-.tileBody { position: absolute; z-index: 1; right: 0; bottom: 0; left: 0; padding: clamp(16px, 2vw, 26px); color: var(--white); }
-.tileMeta { display: flex; align-items: center; gap: 7px; margin: 0 0 8px; color: rgb(255 255 255 / 72%); font-size: 12px; font-weight: 700; transition: color 420ms var(--ease-out); }
-.tileTitle { max-width: 22ch; margin: 0; font-size: clamp(18px, 2vw, 27px); line-height: 1.08; text-wrap: balance; }
-.tileCaption { max-width: 40ch; margin: 9px 0 0; color: rgb(255 255 255 / 72%); font-size: 13.5px; line-height: 1.45; transition: transform 420ms var(--ease-out), color 420ms var(--ease-out); }
+/**
+ * The inspiration scene.
+ *
+ * Two rules hold this file together:
+ *
+ *  1. Nothing animates layout. Every tile is placed once at its final
+ *     frame with left/top/width/height in percent of the stage, and only
+ *     `transform` and `opacity` are driven by the scroll clock.
+ *  2. No text is ever the thing being read while it is partly
+ *     transparent, and no text is ever over a photograph. `--copy`
+ *     completes during the section's approach and never comes back down,
+ *     and the lead photograph's left edge dissolves into the page's cream
+ *     across the beat where it reaches under the copy — so the type is
+ *     `--char` on clean cream at every scroll position, never white,
+ *     never halfway, never blurred.
+ */
 
-@media (hover: hover) {
-  .tile:hover .tilePhoto { transform: scale(1.06); }
-  .tile:hover .tileScrim { background: linear-gradient(180deg, transparent 16%, rgb(25 20 17 / 90%) 100%); }
-  .tile:hover .tileMeta { color: rgb(255 255 255 / 92%); }
-  .tile:hover .tileCaption { transform: translateY(-2px); color: rgb(255 255 255 / 92%); }
+/* ── Where this section sits in the stack, and why it matters ───────
+ *
+ * Behind the hero, and with no ground of its own.
+ *
+ * It used to be an opaque cream rectangle at `z-index: 4`, which cost two
+ * things at once. It painted a flat plane over the hero's last 45px, and
+ * the hero's gradient is still a hair off cream there — so its top edge
+ * read as a horizontal seam you could point at. And, being opaque and
+ * above the hero, that same edge sliced the hero's floating objects in
+ * half: the notebook, the headphones and the cup all died on a straight
+ * line instead of finishing their departure.
+ *
+ * Both go away by removing the plane rather than by feathering it. The
+ * page's own `body` is already `--cream`, and the hero's gradient ends on
+ * `--cream` too, so the two surfaces were always the same colour — the
+ * only thing that ever made a boundary visible was this layer. At
+ * `z-index: -1` (contained by the sequence wrapper's `isolation`) the
+ * hero paints over the short overlap instead, so the objects keep every
+ * pixel of their trajectory and the lead photograph slides out from under
+ * the hero rather than being stamped on top of it. No timing changed.
+ */
+.section {
+  position: relative;
+  z-index: -1;
+  isolation: isolate;
+  /* A short overlap so no sub-pixel gap can open between the two; the
+     continuity itself comes from the `--enter` clock, which starts the
+     photograph while the hero is still on screen. */
+  margin-top: calc(-1 * clamp(40px, 5svh, 72px));
 }
-@supports (animation-timeline: view()) { @media (prefers-reduced-motion: no-preference) { .tilePhoto { animation: gallery-drift linear both; animation-timeline: view(); animation-range: cover 0% cover 100%; } @keyframes gallery-drift { from { transform: scale(1.08) translateY(-2%); } to { transform: scale(1.08) translateY(2%); } } } }
-@media (max-width: 900px) { .grid { grid-template-columns: 1fr 1fr; grid-template-rows: 300px 220px 220px 260px; grid-template-areas: "mesa mesa" "cordillera noche" "cafe vinos" "informal informal"; } }
-@media (max-width: 620px) { .gridWrap { padding-inline: 0; } .grid { display: flex; gap: 12px; overflow-x: auto; padding: 0 20px 10px; scroll-snap-type: x mandatory; scrollbar-width: none; } .grid::-webkit-scrollbar { display: none; } .tile { flex: 0 0 min(86vw, 360px); height: 420px; scroll-snap-align: center; } .tileCaption { display: none; } }
-@media (prefers-reduced-motion: reduce) { .tilePhoto, .tileScrim, .tileMeta, .tileCaption { animation: none; transition: none; } }
+
+/* ── Scrubbed scene ─────────────────────────────────────────────────── */
+
+.track {
+  --enter: 0;
+  --copy: 0;
+  --shift: 0;
+  --open: 0;
+  position: relative;
+  height: 200svh;
+}
+
+.viewport {
+  position: sticky;
+  top: var(--navbar-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(100svh - var(--navbar-h));
+  /* `clip` keeps the lead photograph's near-bleed entrance from spilling
+     into the page without creating a scroll container. */
+  overflow: clip;
+  padding: clamp(18px, 3vh, 38px) clamp(20px, 4vw, 52px);
+}
+
+.stage {
+  position: relative;
+  width: min(100%, 1280px);
+  height: 100%;
+}
+
+/* ── Tiles ──────────────────────────────────────────────────────────── */
+
+.tile {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--w);
+  height: var(--h);
+  margin: 0;
+  will-change: transform, opacity;
+}
+
+.frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 14px;
+  /* Held while the photograph decodes, so nothing flashes white. */
+  background: #efe6da;
+}
+
+.photo {
+  object-fit: cover;
+}
+
+/* The lead arrives near-bleed and full-height — scaled up about a point
+   to its right, so it runs off the right edge and past the top and
+   bottom of the viewport — then retreats into a portrait as the scene
+   pins, and takes one more small step back as the rest deploys. */
+.tile[data-role="lead"] {
+  z-index: 1;
+  opacity: clamp(0, calc(var(--enter, 0) * 2.6), 1);
+  transform:
+    translate3d(0, calc((1 - var(--enter, 0)) * 7%), 0)
+    scale(calc(1 + (1 - var(--shift, 0)) * 0.46 - var(--open, 0) * 0.045));
+  transform-origin: 72% 50%;
+}
+
+/* The photograph's left edge, dissolved into the page.
+ *
+ * Scaling about a point inside the frame means the entrance grows the
+ * picture leftwards, under the copy column — which is what has to be
+ * handled, because dark type on a photograph is the illegibility this
+ * section replaces. Two earlier attempts got it wrong in opposite
+ * directions: a radial ellipse anchored to the *copy* washed a smudge
+ * across the middle of the picture, and pinning the scale origin to the
+ * frame's left edge fixed the overlap but made the photograph enormous
+ * and gave it a hard vertical edge.
+ *
+ * What works is a fade that belongs to the photograph rather than to the
+ * text: a linear ramp along its own left edge, solid cream where the copy
+ * sits and transparent by the time it is over the picture, so the image
+ * emerges out of the page instead of being stamped on it. It animates on
+ * `opacity` alone, and it is fully gone by the time the frame has
+ * retreated clear of the copy — the final portrait keeps four clean
+ * edges. The 3.4 is not decorative: the photograph stops overlapping the
+ * copy column at `--shift ~= 0.70`, and that multiplier is what holds the
+ * fade at full strength until exactly there, before easing it away to
+ * nothing by the final frame. */
+.tile[data-role="lead"]::before {
+  position: absolute;
+  z-index: 1;
+  inset: 0 auto 0 0;
+  width: 44%;
+  background: linear-gradient(
+    90deg,
+    var(--cream) 0%,
+    var(--cream) 42%,
+    rgb(245 240 232 / 0%) 100%
+  );
+  opacity: clamp(0, calc((1 - var(--shift, 0)) * 3.4), 1);
+  content: "";
+  pointer-events: none;
+}
+
+.tile[data-role="lead"] .frame {
+  border-radius: clamp(14px, 1.4vw, 20px);
+}
+
+/* Everything else travels in from the edge it will settle against, each
+   on its own slice of the deploy beat. */
+.tile[data-role="second"],
+.tile[data-role="satellite"] {
+  z-index: 2;
+  opacity: var(--p, 0);
+  transform:
+    translate3d(
+      calc(var(--from-x) * (1 - var(--p, 0))),
+      calc(var(--from-y) * (1 - var(--p, 0))),
+      0
+    )
+    scale(calc(0.93 + var(--p, 0) * 0.07));
+}
+
+.tile[data-role="satellite"] .frame {
+  border-radius: 11px;
+}
+
+/* ── Labels ─────────────────────────────────────────────────────────── */
+
+/* One type treatment, five placements. Four identical badges over four
+   rectangles is what turns a composition back into a row of cards. */
+.label {
+  position: absolute;
+  color: var(--fg-2);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  line-height: 1.3;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tile[data-label="below-left"] .label {
+  top: calc(100% + 10px);
+  left: 2px;
+}
+
+.tile[data-label="below-right"] .label {
+  top: calc(100% + 10px);
+  right: 2px;
+}
+
+.tile[data-label="above"] .label {
+  bottom: calc(100% + 10px);
+  left: 2px;
+}
+
+/* The only one that sits on a photograph, so the only one that needs a
+   scrim of its own. */
+.tile[data-label="inside"] .label {
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 20px 9px 7px;
+  border-radius: 0 0 11px 11px;
+  font-size: 11px;
+  background: linear-gradient(180deg, transparent, rgb(25 20 17 / 78%));
+  color: var(--white);
+  white-space: normal;
+}
+
+/* ── Copy ───────────────────────────────────────────────────────────── */
+
+.copy {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  left: 1%;
+  width: min(35%, 470px);
+  opacity: var(--copy, 0);
+  transform: translate3d(0, calc(-50% + (1 - var(--copy, 0)) * 16px), 0);
+  will-change: transform, opacity;
+}
+
+.kicker {
+  margin: 0 0 clamp(12px, 1.6vw, 18px);
+  color: var(--ember);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.title {
+  max-width: 13ch;
+  margin: 0;
+  color: var(--char);
+  font-size: clamp(36px, 4.6vw, 68px);
+  font-weight: var(--w-display);
+  letter-spacing: -0.035em;
+  line-height: 0.94;
+  text-wrap: balance;
+}
+
+/* Second line in the display serif and in ember — the same pairing the
+   hero uses for "Recibí un plan.", so the two sections read as one voice. */
+.titleSoft {
+  display: block;
+  color: var(--ember);
+  font-family: var(--font-display-serif);
+  font-weight: 600;
+  font-optical-sizing: auto;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  max-width: 34ch;
+  margin: clamp(18px, 2vw, 26px) 0 0;
+  color: var(--fg-2);
+  font-size: clamp(15px, 1.25vw, 17px);
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+/* ── Static composition (mobile, reduced motion) ────────────────────── */
+
+.staticScene {
+  width: 100%;
+  max-width: 1280px;
+  padding: 0 clamp(20px, 5vw, 52px) clamp(56px, 7vh, 88px);
+  margin-inline: auto;
+}
+
+.staticTile {
+  position: relative;
+  margin: 0;
+}
+
+.staticTile .frame {
+  height: clamp(320px, 46svh, 460px);
+  border-radius: 16px;
+}
+
+.staticTile[data-role="lead"] .frame {
+  height: clamp(400px, 58svh, 560px);
+}
+
+.staticTile .label {
+  position: static;
+  display: block;
+  margin-top: 10px;
+  white-space: normal;
+}
+
+.staticCopy {
+  padding: clamp(28px, 5vw, 44px) 0 clamp(30px, 5vw, 48px);
+}
+
+.staticCopy .copy {
+  position: static;
+  width: 100%;
+  max-width: 560px;
+  opacity: 1;
+  transform: none;
+}
+
+.staticCopy .title {
+  max-width: 15ch;
+  font-size: clamp(34px, 8.6vw, 52px);
+}
+
+.staticCopy .lead {
+  max-width: 40ch;
+}
+
+/* Asymmetric on purpose: the tall second photograph spans both columns'
+   worth of attention, the three fragments do not line up into a grid. */
+.staticGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(14px, 3vw, 22px) clamp(12px, 2.6vw, 18px);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.staticGrid li[data-role="second"] {
+  grid-column: 1 / -1;
+}
+
+.staticGrid li[data-role="second"] .frame {
+  height: clamp(280px, 40svh, 380px);
+}
+
+.staticGrid li:last-child .frame {
+  height: clamp(200px, 26svh, 260px);
+}
+
+@media (max-width: 620px) {
+  .staticTile[data-role="lead"] .frame {
+    height: clamp(360px, 54svh, 460px);
+  }
+
+  .staticGrid {
+    gap: 18px 12px;
+  }
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .section {
+    margin-top: 0;
+  }
+
+  /* The static composition is what renders here, but if the scrubbed one
+     is ever reached — the instant before `staticMode` resolves — it must
+     not be invisible. */
+  .track {
+    height: auto;
+  }
+
+  .viewport {
+    position: static;
+    height: auto;
+    overflow: visible;
+  }
+
+  .tile,
+  .copy {
+    opacity: 1;
+    transform: none;
+    will-change: auto;
+  }
+
+  .tile[data-role="lead"]::before {
+    opacity: 0;
+  }
+}

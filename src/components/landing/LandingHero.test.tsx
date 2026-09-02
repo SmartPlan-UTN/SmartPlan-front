@@ -58,12 +58,17 @@ describe("LandingHero", () => {
     }
   });
 
-  it("keeps hero objects decorative and outside the accessibility tree", () => {
+  it("keeps the hero scene decorative and outside the accessibility tree", () => {
     renderHero();
+
     const scene = screen.getByTestId("hero-objects");
     expect(scene).toHaveAttribute("aria-hidden", "true");
-    expect(scene.querySelectorAll("img")).toHaveLength(8);
-    for (const image of scene.querySelectorAll("img")) expect(image).toHaveAttribute("alt", "");
+    const images = scene.querySelectorAll("img");
+    expect(images.length).toBeGreaterThanOrEqual(6);
+    for (const image of images) expect(image).toHaveAttribute("alt", "");
+
+    // The ambient (vector) plane is decorative too.
+    expect(screen.getByTestId("hero-ambient")).toHaveAttribute("aria-hidden", "true");
   });
 
   it("writes a quick intent into the composer and focuses it, without submitting", async () => {
@@ -75,6 +80,7 @@ describe("LandingHero", () => {
     const field = screen.getByLabelText(FIELD);
     expect(field).toHaveValue("Un plan al aire libre, con caminata y buen clima");
     expect(field).toHaveFocus();
+    expect(field.closest("section")).toHaveAttribute("data-writing", "true");
     expect(onSubmit).not.toHaveBeenCalled();
   });
 

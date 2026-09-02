@@ -15,6 +15,7 @@ import {
 import type { UsePlanRequestPollingResult } from "@/hooks";
 import type { PlanRequestContext } from "@/types";
 
+import { HeroAmbient } from "./HeroAmbient";
 import { HeroObjects } from "./HeroObjects";
 import { IntentChips } from "./IntentChips";
 import { HERO } from "./landingContent";
@@ -116,42 +117,6 @@ export function LandingHero({
     onPrefillConsumed?.();
   }, [prefill, composing, onPrefillConsumed]);
 
-  useEffect(() => {
-    const node = hero.current;
-    if (!node || !composing) return;
-    const heroNode: HTMLElement = node;
-    if (typeof window.matchMedia !== "function") return;
-
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let frame = 0;
-
-    function update() {
-      frame = 0;
-      if (reduced.matches) {
-        heroNode.style.setProperty("--hero-progress", "0");
-        return;
-      }
-      const rect = heroNode.getBoundingClientRect();
-      const progress = Math.min(1, Math.max(0, -rect.top / Math.max(rect.height * 0.92, 1)));
-      heroNode.style.setProperty("--hero-progress", progress.toFixed(3));
-    }
-
-    function schedule() {
-      if (!frame) frame = requestAnimationFrame(update);
-    }
-
-    update();
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
-    reduced.addEventListener("change", schedule);
-    return () => {
-      if (frame) cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
-      reduced.removeEventListener("change", schedule);
-    };
-  }, [composing]);
-
   // A few pixels of pointer parallax across the whole object field, on
   // fine pointers only. Writes `--px`/`--py` (−0.5..0.5) on the hero
   // root; `hero-objects.module.css` scales each object against its own
@@ -161,7 +126,7 @@ export function LandingHero({
     if (!node || !composing) return;
     const heroNode: HTMLElement = node;
     if (typeof window.matchMedia !== "function") return;
-    if (!window.matchMedia("(pointer: fine)").matches) return;
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     let frame = 0;
@@ -200,10 +165,12 @@ export function LandingHero({
     <section
       ref={hero}
       className={styles.hero}
+      data-intro-hero
       data-writing={writing ? "true" : undefined}
       aria-labelledby={composing ? "landing-headline" : undefined}
       aria-label={composing ? undefined : phase === "generated" ? "Planes generados" : "Generación de planes"}
     >
+      {composing ? <HeroAmbient /> : null}
       {composing ? <HeroObjects /> : null}
       {composing ? (
         <div className={styles.atmosphere} aria-hidden="true">
@@ -219,8 +186,10 @@ export function LandingHero({
               {HERO.headline.map((line, index) => (
                 <span
                   key={line}
-                  className={`${styles.headlineLine} sp-anim-uncover`}
-                  style={{ animationDelay: `${index * 90}ms` }}
+                  className={`${styles.headlineLine} ${
+                    index === 0 ? styles.headlineWrite : styles.headlinePlan
+                  } sp-anim-uncover`}
+                  style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <span className={styles.headlineInk}>
                     {line}
@@ -231,14 +200,14 @@ export function LandingHero({
 
             <p
               className={`${styles.subheadline} sp-anim-rise`}
-              style={{ animationDelay: "220ms" }}
+              style={{ animationDelay: "160ms" }}
             >
               {HERO.subheadline}
             </p>
 
             <div
               className={`${styles.composerSlot} sp-anim-settle`}
-              style={{ animationDelay: "420ms" }}
+              style={{ animationDelay: "120ms" }}
             >
               <PlanComposer
                 ref={composer}
@@ -258,7 +227,7 @@ export function LandingHero({
 
             <div
               className={`${styles.intentsSlot} sp-anim-rise`}
-              style={{ animationDelay: "560ms" }}
+              style={{ animationDelay: "320ms" }}
             >
               <IntentChips
                 disabled={sessionLoading}

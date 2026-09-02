@@ -33,9 +33,10 @@ const EMBER = [232, 93, 32] as const;
 const GOLD = [255, 209, 102] as const;
 
 /** Density is a rate, not a count: the same air at any window size. */
-const MOTES_PER_MEGAPIXEL = 34;
-const MAX_MOTES = 46;
-const MIN_MOTES = 14;
+const MOTES_PER_MEGAPIXEL = 18;
+const MAX_MOTES = 24;
+const MOBILE_MAX_MOTES = 12;
+const MIN_MOTES = 8;
 
 function mix(a: number, b: number, t: number): number {
   return Math.round(a + (b - a) * t);
@@ -57,6 +58,7 @@ function mix(a: number, b: number, t: number): number {
 export function HeroAtmosphere({ calm = false }: HeroAtmosphereProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const reduced = useReducedMotion();
+  const resumeRef = useRef<(() => void) | null>(null);
 
   // Read by the animation loop without re-subscribing it. Putting `calm`
   // in the effect's dependencies would tear down and rebuild the whole
@@ -66,6 +68,7 @@ export function HeroAtmosphere({ calm = false }: HeroAtmosphereProps) {
   const calmRef = useRef(calm);
   useEffect(() => {
     calmRef.current = calm;
+    if (!calm) resumeRef.current?.();
   }, [calm]);
 
   useEffect(() => {
@@ -102,19 +105,40 @@ export function HeroAtmosphere({ calm = false }: HeroAtmosphereProps) {
       context?.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       const megapixels = (width * height) / 1_000_000;
+      const compact = width <= 620;
+      const maximum = compact ? MOBILE_MAX_MOTES : MAX_MOTES;
       const count = Math.round(
-        Math.min(MAX_MOTES, Math.max(MIN_MOTES, megapixels * MOTES_PER_MEGAPIXEL)),
+        Math.min(maximum, Math.max(MIN_MOTES, megapixels * MOTES_PER_MEGAPIXEL)),
       );
 
       motes = Array.from({ length: count }, () => {
         const depth = 0.35 + Math.random() * 0.65;
+        let x = Math.random() * width;
+        let y = Math.random() * height;
+        let attempts = 0;
+
+        // Keep the title and composer optically clean. The exclusion is
+        // deliberately larger on mobile where the central stack occupies
+        // almost the entire width.
+        while (
+          attempts < 12 &&
+          x > width * (compact ? 0.12 : 0.27) &&
+          x < width * (compact ? 0.88 : 0.73) &&
+          y > height * 0.2 &&
+          y < height * 0.76
+        ) {
+          x = Math.random() * width;
+          y = Math.random() * height;
+          attempts += 1;
+        }
+
         return {
-          x: Math.random() * width,
-          y: Math.random() * height,
-          r: 0.9 + depth * 2.4,
+          x,
+          y,
+          r: 0.8 + depth * 1.5,
           vx: (Math.random() - 0.5) * 7,
           vy: -3 - Math.random() * 7,
-          alpha: 0.14 + Math.random() * 0.3,
+          alpha: 0.08 + Math.random() * 0.1,
           warmth: Math.random(),
           depth,
         };
@@ -138,8 +162,8 @@ export function HeroAtmosphere({ calm = false }: HeroAtmosphereProps) {
 
       context.clearRect(0, 0, width, height);
 
-      const shiftX = (pointer.currentX - 0.5) * 26;
-      const shiftY = (pointer.currentY - 0.5) * 18;
+      const shiftX = (pointer.currentX - 0.5) * 9;
+      const shiftY = (pointer.currentY - 0.5) * 6;
 
       for (const mote of motes) {
         mote.x += mote.vx * delta * speed;
@@ -173,7 +197,9 @@ export function HeroAtmosphere({ calm = false }: HeroAtmosphereProps) {
         context.fill();
       }
 
-      frame = visible ? requestAnimationFrame(draw) : null;
+      frame = visible && !(calmRef.current && stillness > 0.98)
+        ? requestAnimationFrame(draw)
+        : null;
     }
 
     function onPointerMove(event: PointerEvent) {
@@ -182,6 +208,13 @@ export function HeroAtmosphere({ calm = false }: HeroAtmosphereProps) {
     }
 
     seed();
+
+    resumeRef.current = () => {
+      if (!reduced && visible && frame == null) {
+        last = performance.now();
+        frame = requestAnimationFrame(draw);
+      }
+    };
 
     // Once the hero has scrolled away there is nothing to animate for —
     // stop the loop entirely rather than drawing motes nobody can see, and
@@ -215,7 +248,9 @@ export function HeroAtmosphere({ calm = false }: HeroAtmosphereProps) {
       frame = null;
     } else {
       frame = requestAnimationFrame(draw);
-      window.addEventListener("pointermove", onPointerMove, { passive: true });
+      if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+        window.addEventListener("pointermove", onPointerMove, { passive: true });
+      }
     }
 
     const observer =
@@ -226,6 +261,7 @@ export function HeroAtmosphere({ calm = false }: HeroAtmosphereProps) {
       if (frame != null) cancelAnimationFrame(frame);
       observer?.disconnect();
       visObserver?.disconnect();
+      resumeRef.current = null;
       window.removeEventListener("pointermove", onPointerMove);
     };
   }, [reduced]);

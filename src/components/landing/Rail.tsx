@@ -18,6 +18,26 @@ export interface RailProps {
   /** Names the scrollable region for assistive tech. */
   ariaLabel: string;
   className?: string;
+  /** Opt-in autoplay for anonymous, illustrative content only. */
+  autoAdvance?: boolean;
+  autoAdvanceIntervalMs?: number;
+}
+
+export function getAutoAdvanceTarget(
+  scrollLeft: number,
+  clientWidth: number,
+  scrollWidth: number,
+  direction: 1 | -1,
+) {
+  const maximum = Math.max(0, scrollWidth - clientWidth);
+  let nextDirection = direction;
+  if (scrollLeft >= maximum - 4) nextDirection = -1;
+  if (scrollLeft <= 4) nextDirection = 1;
+  const step = clientWidth * 0.625;
+  return {
+    left: Math.min(maximum, Math.max(0, scrollLeft + step * nextDirection)),
+    direction: nextDirection,
+  };
 }
 
 /**
@@ -31,8 +51,20 @@ export interface RailProps {
  * document lives on the *section* around this component (see the callers'
  * CSS) — a rule learned the hard way and kept.
  */
-export function Rail({ children, ariaLabel, className }: RailProps) {
+export function Rail({
+  children,
+  ariaLabel,
+  className,
+  autoAdvance = false,
+  autoAdvanceIntervalMs = 5000,
+}: RailProps) {
+  const viewportRef = useRef<HTMLDivElement>(null);
   const railRef = useRef<HTMLUListElement>(null);
+  const directionRef = useRef<1 | -1>(1);
+  const pauseUntilRef = useRef(0);
+  const hoveredRef = useRef(false);
+  const focusedRef = useRef(false);
+  const visibleRef = useRef(false);
   const [overflow, setOverflow] = useState({ left: false, right: false });
   const [snap, setSnap] = useState(false);
 
@@ -65,9 +97,58 @@ export function Rail({ children, ariaLabel, className }: RailProps) {
     };
   }, [measure]);
 
+  const pauseAutoAdvance = useCallback(() => {
+    pauseUntilRef.current = Date.now() + 8000;
+  }, []);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    const rail = railRef.current;
+    if (!autoAdvance || !viewport || !rail) return;
+    if (
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ||
+      window.matchMedia?.("(max-width: 899px)").matches
+    ) return;
+
+    visibleRef.current = typeof IntersectionObserver === "undefined";
+    const observer = typeof IntersectionObserver === "undefined"
+      ? null
+      : new IntersectionObserver(
+          ([entry]) => {
+            visibleRef.current = entry.isIntersecting;
+          },
+          { threshold: 0.2 },
+        );
+    observer?.observe(viewport);
+
+    const interval = window.setInterval(() => {
+      if (
+        !visibleRef.current ||
+        hoveredRef.current ||
+        focusedRef.current ||
+        Date.now() < pauseUntilRef.current
+      ) return;
+
+      const target = getAutoAdvanceTarget(
+        rail.scrollLeft,
+        rail.clientWidth,
+        rail.scrollWidth,
+        directionRef.current,
+      );
+      directionRef.current = target.direction;
+      rail.scrollTo({ left: target.left, behavior: "smooth" });
+    }, autoAdvanceIntervalMs);
+
+    return () => {
+      observer?.disconnect();
+      window.clearInterval(interval);
+    };
+  }, [autoAdvance, autoAdvanceIntervalMs]);
+
   const scrollByDir = (direction: 1 | -1) => {
     const el = railRef.current;
     if (!el) return;
+    pauseAutoAdvance();
     const reduced = window.matchMedia?.(
       "(prefers-reduced-motion: reduce)",
     ).matches;
@@ -79,9 +160,31 @@ export function Rail({ children, ariaLabel, className }: RailProps) {
 
   return (
     <div
+      ref={viewportRef}
       className={`${styles.viewport}${className ? ` ${className}` : ""}`}
       data-overflow-left={overflow.left ? "true" : undefined}
       data-overflow-right={overflow.right ? "true" : undefined}
+      onPointerEnter={() => {
+        hoveredRef.current = true;
+      }}
+      onPointerLeave={() => {
+        hoveredRef.current = false;
+        pauseAutoAdvance();
+      }}
+      onFocusCapture={() => {
+        focusedRef.current = true;
+        pauseAutoAdvance();
+      }}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          focusedRef.current = false;
+          pauseAutoAdvance();
+        }
+      }}
+      onWheel={pauseAutoAdvance}
+      onTouchStart={pauseAutoAdvance}
+      onPointerDown={pauseAutoAdvance}
+      onKeyDown={pauseAutoAdvance}
     >
       <button
         type="button"

@@ -1,206 +1,300 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useSyncExternalStore, type CSSProperties } from "react";
 import Image from "next/image";
+
+import { usePrefersReducedMotion, useIsClient } from "@/lib/motion";
+
 import {
-  motion,
-  useScroll,
-  useTransform,
-  type Variants,
-} from "motion/react";
-
-import { Icon } from "@/components/ui";
-import { useEntrance, EASE_OUT, viewportOnce } from "@/lib/motion";
-
-import { Reveal } from "./Reveal";
+  GALLERY_TILES,
+  getGalleryBeats,
+  tileProgress,
+  type GalleryTile,
+} from "./galleryScene";
 import { INSPIRATION, type InspirationTile } from "./landingContent";
 import { MEDIA } from "./landingMedia";
+import { Reveal } from "./Reveal";
 import styles from "./gallery.module.css";
 
+const COMPACT_QUERY = "(max-width: 900px)";
+
+const BY_ID = new Map<string, InspirationTile>(
+  INSPIRATION.tiles.map((tile) => [tile.id, tile]),
+);
+
 /**
- * The gallery no longer reveals as one block. Each tile carries its own
- * entrance so the section has rhythm rather than a single fade-up: one
- * grows in from small, one arrives from the side, one is uncovered by a
- * mask. The feature tile is scroll-linked — it is the photograph that
- * "is born inside the hero" as the objects clear away.
+ * matchMedia through `useSyncExternalStore`: the real value is read during
+ * render, with a `false` server snapshot, so there is no setState in an
+ * effect and no hydration mismatch. Same shape as `ImmersiveStory`'s.
+ */
+function useCompact(): boolean {
+  return useSyncExternalStore(
+    (onChange) => {
+      const mql = window.matchMedia?.(COMPACT_QUERY);
+      if (!mql) return () => {};
+      mql.addEventListener("change", onChange);
+      return () => mql.removeEventListener("change", onChange);
+    },
+    () => window.matchMedia?.(COMPACT_QUERY).matches === true,
+    () => false,
+  );
+}
+
+/**
+ * The section that answers the hero (CU17 · PAN 07).
  *
- * Recipes are keyed by tile id and kept deliberately few; the brief's
- * rule is that composition outranks the catalogue of effects.
+ * ── The problem this replaces ───────────────────────────────────────
+ *
+ * The previous version bound its photograph and its headline to the
+ * hero's intro clock, on windows opening at 0.34 and 0.52 of a track
+ * measured over 1.75 hero-heights. The hero's own copy was gone by 0.30.
+ * So for roughly half a screen you scrolled past an emptied hero and a
+ * photograph that had not arrived — and when the headline finally did, it
+ * was still at a fraction of its opacity while sitting in the middle of
+ * the viewport, which is what read as blurry. Underneath it, a 540px card
+ * beside a rigid five-cell grid: nothing in the frame was the subject.
+ *
+ * ── What it does instead ────────────────────────────────────────────
+ *
+ * One pinned scene, one measurement per frame, three beats:
+ *
+ *   1. approach   the lead photograph is already climbing, near-bleed,
+ *                 while the hero is still leaving — driven by the
+ *                 section's approach to the viewport rather than by its
+ *                 pin, which is the only way there is no gap
+ *   2. reframe    it retreats into a portrait; the headline settles
+ *   3. deploy     four more photographs arrive, staggered, at sizes that
+ *                 are deliberately not comparable to each other
+ *
+ * Under reduced motion or below 900px the same composition renders
+ * without the pin — see `StaticScene`.
  */
-
-/**
- * Each tile arrives differently — one from the side, one uncovered by a
- * mask, one growing in from small — and the shared transition (below,
- * on the element) carries a per-tile delay so the section deals itself
- * out rather than popping in as one block.
- */
-const RECIPES: Record<string, Variants> = {
-  cordillera: {
-    hidden: { opacity: 0, x: 44 },
-    shown: { opacity: 1, x: 0 },
-  },
-  noche: {
-    hidden: { opacity: 0, clipPath: "inset(0 0 100% 0)" },
-    shown: { opacity: 1, clipPath: "inset(0 0 0% 0)" },
-  },
-  cafe: {
-    hidden: { opacity: 0, scale: 0.96 },
-    shown: { opacity: 1, scale: 1 },
-  },
-  informal: {
-    hidden: { opacity: 0, y: 34 },
-    shown: { opacity: 1, y: 0 },
-  },
-  vinos: {
-    hidden: { opacity: 0, y: 40, rotate: 1.5 },
-    shown: { opacity: 1, y: 0, rotate: 0 },
-  },
-};
-
-const DEFAULT_RECIPE: Variants = {
-  hidden: { opacity: 0, y: 28, scale: 0.97 },
-  shown: { opacity: 1, y: 0, scale: 1 },
-};
-
-const BODY_VARIANTS: Variants = {
-  hidden: { opacity: 0, y: 12 },
-  shown: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE_OUT, delay: 0.16 } },
-};
-
-/** Reading order of the grid, so the deal runs top-left to bottom-right. */
-const TILE_ORDER: Record<string, number> = {
-  mesa: 0,
-  cordillera: 1,
-  noche: 2,
-  cafe: 3,
-  informal: 4,
-  vinos: 5,
-};
-
 export function InspirationGallery() {
-  const { active } = useEntrance();
+  const reduced = usePrefersReducedMotion();
+  const compact = useCompact();
+  const client = useIsClient();
+  // Until the client is running, render the scrubbed scene so the server
+  // and the first client render agree; then swap if either applies.
+  const staticMode = client && (reduced || compact);
 
   return (
     <section className={styles.section} aria-labelledby="inspiration-title">
-      <div className={styles.shell}>
-        <Reveal className={styles.header}>
-          <h2 id="inspiration-title" className={styles.title}>
-            {INSPIRATION.title[0]}
-            <span className={styles.titleSoft}> {INSPIRATION.title[1]}</span>
-          </h2>
-          <p className={styles.lead}>{INSPIRATION.lead}</p>
-        </Reveal>
-      </div>
-      <div className={styles.gridWrap}>
-        <ul className={styles.grid}>
-          {INSPIRATION.tiles.map((tile) => (
-            <Tile key={tile.id} tile={tile} active={active} />
-          ))}
-        </ul>
-      </div>
+      {staticMode ? <StaticScene /> : <ScrubScene />}
     </section>
   );
 }
 
-function Tile({ tile, active }: { tile: InspirationTile; active: boolean }) {
-  const isFeature = tile.scale === "feature";
+/* ── Scrubbed scene (desktop, motion allowed) ────────────────────────── */
 
-  if (isFeature && active) {
-    return <FeatureTile tile={tile} />;
-  }
+const clamp01 = (value: number) => (value < 0 ? 0 : value > 1 ? 1 : value);
 
-  const image = MEDIA[tile.media];
-  const variants = active ? RECIPES[tile.id] ?? DEFAULT_RECIPE : undefined;
-  const order = TILE_ORDER[tile.id] ?? 0;
+/**
+ * The scene's clock.
+ *
+ * A frame does exactly three things, in this order: one
+ * `getBoundingClientRect` — the only layout read, since `innerHeight` is
+ * cached by the resize listener — then the arithmetic, then every custom
+ * property written at once onto a single node. Reading after writing
+ * within a frame is what forces synchronous layout, so it never happens.
+ */
+function useSceneClock(track: React.RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    const node = track.current;
+    if (!node) return;
+
+    let frame = 0;
+    let viewportHeight = window.innerHeight;
+
+    function write() {
+      frame = 0;
+      if (!node) return;
+
+      const rect = node.getBoundingClientRect();
+
+      // Approach: 0 with the section's top edge at the bottom of the
+      // viewport, 1 when it reaches the top. Alive long before the pin.
+      const enter = clamp01(1 - rect.top / Math.max(viewportHeight, 1));
+      // Pinned travel: the track's height beyond one viewport.
+      const travel = Math.max(rect.height - viewportHeight, 1);
+      const t = clamp01(-rect.top / travel);
+
+      const beats = getGalleryBeats(enter, t);
+
+      node.style.setProperty("--enter", beats.enter.toFixed(3));
+      node.style.setProperty("--copy", beats.copy.toFixed(3));
+      node.style.setProperty("--shift", beats.shift.toFixed(3));
+      node.style.setProperty("--open", beats.open.toFixed(3));
+      for (const tile of GALLERY_TILES) {
+        if (tile.role === "lead") continue;
+        node.style.setProperty(
+          `--open-${tile.id}`,
+          tileProgress(beats.open, tile.delay).toFixed(3),
+        );
+      }
+    }
+
+    function schedule() {
+      if (!frame) frame = requestAnimationFrame(write);
+    }
+
+    function onResize() {
+      viewportHeight = window.innerHeight;
+      schedule();
+    }
+
+    write();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", onResize);
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [track]);
+}
+
+function ScrubScene() {
+  const track = useRef<HTMLDivElement>(null);
+  useSceneClock(track);
 
   return (
-    <motion.li
-      className={styles.tile}
-      data-id={tile.id}
-      variants={variants}
-      initial={variants ? "hidden" : false}
-      whileInView={variants ? "shown" : undefined}
-      viewport={viewportOnce}
-      transition={{ duration: 0.62, ease: EASE_OUT, delay: order * 0.07 }}
-    >
-      <div className={styles.tileMedia}>
-        <Image
-          src={image.src}
-          alt={image.alt}
-          fill
-          sizes="(max-width: 620px) 88vw, (max-width: 900px) 52vw, 44vw"
-          className={styles.tilePhoto}
-          style={image.focus ? { objectPosition: image.focus } : undefined}
-        />
+    <div ref={track} className={styles.track}>
+      <div className={styles.viewport}>
+        <div className={styles.stage}>
+          {GALLERY_TILES.map((tile) => (
+            <SceneTile key={tile.id} tile={tile} />
+          ))}
+          <Copy />
+        </div>
       </div>
-      <div className={styles.tileScrim} aria-hidden="true" />
-      <motion.div
-        className={styles.tileBody}
-        variants={active ? BODY_VARIANTS : undefined}
-      >
-        <p className={styles.tileMeta}>
-          <Icon name={tile.icon} size={14} stroke={2} aria-hidden="true" />
-          {tile.kicker}
-        </p>
-        <h3 className={styles.tileTitle}>{tile.title}</h3>
-        <p className={styles.tileCaption}>{tile.caption}</p>
-      </motion.div>
-    </motion.li>
+    </div>
+  );
+}
+
+function Copy() {
+  return (
+    <div className={styles.copy}>
+      <p className={styles.kicker}>{INSPIRATION.kicker}</p>
+      <h2 id="inspiration-title" className={styles.title}>
+        {INSPIRATION.title[0]}{" "}
+        <span className={styles.titleSoft}>{INSPIRATION.title[1]}</span>
+      </h2>
+      <p className={styles.lead}>{INSPIRATION.lead}</p>
+    </div>
   );
 }
 
 /**
- * The feature tile is scrubbed by scroll as it rises into view: it starts
- * small and masked at the bottom of the viewport and reaches full size
- * and a clean frame by the time it is centred — the hand-off from the
- * emptying hero.
+ * Laid out once at its final frame; only `transform` and `opacity` move.
+ * The frame percentages ride in as inline custom properties because they
+ * are data, not style — the same reason `storyScene.ts` exists.
  */
-function FeatureTile({ tile }: { tile: InspirationTile }) {
-  const ref = useRef<HTMLLIElement>(null);
-  const image = MEDIA[tile.media];
+function SceneTile({ tile }: { tile: GalleryTile }) {
+  const content = BY_ID.get(tile.id);
+  if (!content) return null;
+  const image = MEDIA[content.media];
 
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "center 62%"],
-  });
+  const vars = {
+    "--x": `${tile.frame.x}%`,
+    "--y": `${tile.frame.y}%`,
+    "--w": `${tile.frame.w}%`,
+    "--h": `${tile.frame.h}%`,
+    "--from-x": `${tile.from.x}%`,
+    "--from-y": `${tile.from.y}%`,
+  } as CSSProperties;
 
-  // Born from below: it starts well down the viewport, small and masked
-  // almost shut, and reaches full size and a clean frame only once it is
-  // near centred — the hand-off from the emptied hero.
-  const scale = useTransform(scrollYProgress, [0, 1], [0.8, 1]);
-  const y = useTransform(scrollYProgress, [0, 1], [128, 0]);
-  const opacity = useTransform(scrollYProgress, [0, 0.15, 1], [0, 1, 1]);
-  const inset = useTransform(scrollYProgress, [0, 1], [52, 0]);
-  const clipPath = useTransform(inset, (v) => `inset(${v}% round 14px)`);
+  if (tile.role !== "lead") {
+    (vars as Record<string, string>)["--p"] = `var(--open-${tile.id}, 0)`;
+  }
 
   return (
-    <motion.li
-      ref={ref}
+    <figure
       className={styles.tile}
-      data-id={tile.id}
-      style={{ scale, y, opacity, clipPath }}
+      data-role={tile.role}
+      data-label={tile.label}
+      style={vars}
     >
-      <div className={styles.tileMedia}>
+      <div className={styles.frame}>
         <Image
           src={image.src}
           alt={image.alt}
           fill
-          sizes="(max-width: 620px) 88vw, (max-width: 900px) 52vw, 44vw"
-          className={styles.tilePhoto}
-          style={image.focus ? { objectPosition: image.focus } : undefined}
+          sizes={tile.sizes}
+          className={styles.photo}
+          // Eager, but at the lowest priority the browser offers.
+          // Lazy loading is unreliable here: these sit inside a sticky,
+          // `overflow: clip` viewport and carry a transform, and one tile
+          // was reproducibly painting as an empty placeholder while its
+          // neighbours loaded. The whole scene is five small photographs
+          // that the section exists to show, so fetching them is not
+          // speculative — and `low` keeps them behind the hero, which
+          // owns the LCP.
           loading="eager"
-          fetchPriority="high"
+          fetchPriority="low"
+          style={image.focus ? { objectPosition: image.focus } : undefined}
         />
       </div>
-      <div className={styles.tileScrim} aria-hidden="true" />
-      <div className={styles.tileBody}>
-        <p className={styles.tileMeta}>
-          <Icon name={tile.icon} size={14} stroke={2} aria-hidden="true" />
-          {tile.kicker}
-        </p>
-        <h3 className={styles.tileTitle}>{tile.title}</h3>
-        <p className={styles.tileCaption}>{tile.caption}</p>
+      {tile.label === "none" ? null : (
+        <figcaption className={styles.label}>{content.label}</figcaption>
+      )}
+    </figure>
+  );
+}
+
+/* ── Static composition (mobile / reduced motion) ────────────────────── */
+
+/**
+ * The same argument without the pin. The lead photograph is in normal
+ * flow, so it is on screen as the hero leaves for the plainest possible
+ * reason — real content in the viewport — and the rest reveals as it is
+ * reached. No scroll hijacking on a phone, and every word at full
+ * opacity from the moment it exists.
+ */
+function StaticScene() {
+  const [lead, ...rest] = GALLERY_TILES;
+
+  return (
+    <div className={styles.staticScene}>
+      <StaticTile tile={lead} eager />
+      <div className={styles.staticCopy}>
+        <Copy />
       </div>
-    </motion.li>
+      <ul className={styles.staticGrid}>
+        {rest.map((tile, index) => (
+          <li key={tile.id} data-role={tile.role}>
+            <Reveal delay={index * 70}>
+              <StaticTile tile={tile} />
+            </Reveal>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function StaticTile({ tile, eager }: { tile: GalleryTile; eager?: boolean }) {
+  const content = BY_ID.get(tile.id);
+  if (!content) return null;
+  const image = MEDIA[content.media];
+
+  return (
+    <figure className={styles.staticTile} data-role={tile.role}>
+      <div className={styles.frame}>
+        <Image
+          src={image.src}
+          alt={image.alt}
+          fill
+          sizes={tile.sizes}
+          className={styles.photo}
+          // Never `priority`: the hero owns the LCP and this must not
+          // compete with it for bandwidth. The lead is only un-lazied
+          // because on a phone it is the first thing under the fold.
+          loading={eager ? "eager" : "lazy"}
+          fetchPriority="low"
+          style={image.focus ? { objectPosition: image.focus } : undefined}
+        />
+      </div>
+      <figcaption className={styles.label}>{content.label}</figcaption>
+    </figure>
   );
 }

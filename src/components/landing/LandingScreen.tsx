@@ -18,6 +18,7 @@ import type { PlanRequestContext } from "@/types";
 import { RecommendedPlans } from "@/components/home";
 
 import { InspirationGallery } from "./InspirationGallery";
+import { IntroSequence } from "./IntroSequence";
 import { LandingHero, HERO_COMPOSER_ID } from "./LandingHero";
 import styles from "./landing.module.css";
 
@@ -51,7 +52,7 @@ const ManualExplore = dynamic(() =>
  *   story       what smartplan actually does to an idea
  *   how         the same claim in four lines, now that it means something
  *   showcase    the shape of an answer
- *   closing     one line back to the hero — no second composer
+ *   explore     a quiet manual path before the footer
  *
  * ── Why the generation state lives here ─────────────────────────────
  *
@@ -119,28 +120,26 @@ export function LandingScreen() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <LandingHero
-        planning={planning}
-        sessionLoading={sessionLoading}
-        onSubmit={handleSubmit}
-        onSurprise={handleSurprise}
-        onRegenerate={planning.regenerate}
-        surpriseNote={surpriseNote}
-        onAdjust={handleAdjust}
-        prefill={prefill}
-        onPrefillConsumed={() => setPrefill(null)}
-      />
+      <IntroSequence active={planning.phase === "idle"}>
+        <LandingHero
+          planning={planning}
+          sessionLoading={sessionLoading}
+          onSubmit={handleSubmit}
+          onSurprise={handleSurprise}
+          onRegenerate={planning.regenerate}
+          surpriseNote={surpriseNote}
+          onAdjust={handleAdjust}
+          prefill={prefill}
+          onPrefillConsumed={() => setPrefill(null)}
+        />
+        {planning.phase === "idle" ? <InspirationGallery /> : null}
+      </IntroSequence>
 
       {/* Once a generation is under way the rest of the page is no longer
           the point: the answer is. Keeping six marketing sections under a
           running result would bury it. */}
       {planning.phase === "idle" ? (
         <>
-          {/* The beat of near-empty space between the hero clearing and
-              the first photograph rising — the pause that makes the
-              gallery read as *arriving* rather than as the next section. */}
-          <div className={styles.handoff} aria-hidden="true" />
-          <InspirationGallery />
           <ImmersiveStory />
           <HowItWorks />
 
@@ -157,12 +156,6 @@ export function LandingScreen() {
           )}
 
           <ManualExplore />
-          <section className={styles.closing}>
-            <p className={styles.closingLead}>Cuando tengas una idea, el buscador te espera arriba.</p>
-            <button type="button" className={styles.closingCta} onClick={handleStartPlan}>
-              Escribir una idea
-            </button>
-          </section>
         </>
       ) : null}
 

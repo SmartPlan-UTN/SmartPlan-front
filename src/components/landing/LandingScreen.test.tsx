@@ -31,7 +31,9 @@ vi.mock("./LandingHero", () => ({
 vi.mock("./InspirationGallery", () => ({ InspirationGallery: () => null }));
 vi.mock("./ImmersiveStory", () => ({ ImmersiveStory: () => null }));
 vi.mock("./HowItWorks", () => ({ HowItWorks: () => null }));
-vi.mock("./ManualExplore", () => ({ ManualExplore: () => null }));
+vi.mock("./ManualExplore", () => ({
+  ManualExplore: () => <div data-testid="manual-explore" />,
+}));
 vi.mock("./PlanShowcase", () => ({
   PlanShowcase: () => <div data-testid="showcase" />,
 }));
@@ -39,7 +41,9 @@ vi.mock("@/components/home", async (importActual) => ({
   ...(await importActual<typeof import("@/components/home")>()),
   RecommendedPlans: () => <div data-testid="recommended" />,
 }));
-vi.mock("@/components/layout", () => ({ SiteFooter: () => null }));
+vi.mock("@/components/layout", () => ({
+  SiteFooter: () => <footer data-testid="site-footer" />,
+}));
 
 function session(status: SessionStatus) {
   useSession.mockReturnValue({
@@ -84,5 +88,17 @@ describe("LandingScreen recommendations slot (CU20)", () => {
       expect(screen.getByTestId("hero")).toBeInTheDocument();
       unmount();
     }
+  });
+
+  it("ends with Manual Explore followed directly by the footer", async () => {
+    render(<LandingScreen />);
+
+    const manual = await screen.findByTestId("manual-explore");
+    const footer = screen.getByTestId("site-footer");
+    expect(manual.compareDocumentPosition(footer)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(screen.queryByText("Cuando tengas una idea…")).toBeNull();
+    expect(screen.queryByText("Escribir una idea")).toBeNull();
   });
 });

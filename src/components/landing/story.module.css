@@ -1,313 +1,452 @@
-/* ================================================================
-   "De muchas ganas sueltas, un recorrido que se puede hacer."
-   — la mesa de trabajo.
+/**
+ * The recorrido scene.
+ *
+ * Four rules hold this file together:
+ *
+ *  1. Nothing animates layout. Words and frames are placed once, in percent
+ *     of the stage, and only `transform`, `opacity` and one
+ *     `stroke-dashoffset` are driven by the scroll clock.
+ *  2. The page never leaves cream. The only change of ground is `.warm`,
+ *     an overlay of a sand the hero already paints, which rises a few
+ *     degrees and settles back. The evening is told inside the photographs.
+ *  3. No boxes. The intentions are type on a page — no pill, no border, no
+ *     shadow, no card. A chip with a background is a design-system
+ *     component; this section needs writing.
+ *  4. A surviving word is never replaced, only resolved: `.intention` and
+ *     `.resolved` share one grid cell and one type treatment, so the change
+ *     reads as a word settling rather than as a swap.
+ */
 
-   Desktop: a tall scroll track with a sticky viewport. The dark scene
-   is a table in perspective; paper scraps scattered on it gather into
-   three piles, the incompatible ones are peeled off, and the camera
-   tilts almost flat as each pile collapses onto a route node while the
-   line draws itself. All `transform` / `opacity` on absolutely-placed
-   elements — no layout per frame.
-
-   Mobile / reduced motion: no track, no sticky. The scraps and the
-   route are shown as three static piles.
-   ================================================================ */
-
+/* ── Where this section sits in the stack ───────────────────────────
+ *
+ * The inspiration scene above is pinned at `z-index: -1`, so this one must
+ * be opaque or the gallery's sticky viewport shows through it. It also has
+ * to start on the *same* colour that section ends on: an earlier version of
+ * this file opened on `--char`, which put a hard horizontal edge across the
+ * page at the exact moment the story was supposed to continue. Cream on
+ * cream means there is no boundary to see at all.
+ */
 .section {
   position: relative;
-  background: var(--char);
-  color: var(--fg-on-dark);
+  z-index: 5;
+  margin-top: -1px;
+  background: var(--cream);
+  color: var(--char);
 }
 
-/* An intentional seam: the cream above pours into the dark, full
-   strength, over a short band — the scene darkens into place rather than
-   meeting a hard black edge. */
-.section::before {
-  position: absolute;
-  z-index: 0;
-  top: 0;
-  right: 0;
-  left: 0;
-  height: 20vh;
-  background: linear-gradient(180deg, var(--cream) 0%, var(--char) 88%);
-  pointer-events: none;
-  content: "";
+.track {
+  --copy: 0;
+  --sort: 0;
+  --fade: 0;
+  --warm: 0;
+  --route: 0;
+  --payoff: 0;
+  position: relative;
+  height: 240svh;
 }
-
-.section[data-static="true"]::before {
-  height: 12vh;
-}
-
-.wrap { position: relative; height: 200vh; }
 
 .viewport {
   position: sticky;
-  top: 0;
-  display: grid;
+  top: var(--navbar-h);
+  display: flex;
   align-items: center;
-  min-height: 100vh;
-  overflow: hidden;
+  justify-content: center;
+  height: calc(100svh - var(--navbar-h));
+  /* `clip`, not `hidden`: it keeps a word's drift from spilling onto the
+     page without creating a scroll container. */
+  overflow: clip;
+  padding: clamp(18px, 3vh, 38px) clamp(20px, 4vw, 52px);
 }
 
-.section[data-static="true"] .viewport {
-  position: relative;
-  min-height: 0;
-}
-
-.shell {
-  width: 100%;
-  max-width: 1320px;
-  padding: clamp(72px, 8vh, 100px) clamp(20px, 5vw, 56px);
-  margin-inline: auto;
-}
-
-.copy { position: relative; z-index: 2; max-width: 820px; }
-
-.title {
-  max-width: 18ch;
-  margin: 0;
-  font-size: clamp(36px, 5vw, 64px);
-  letter-spacing: -0.035em;
-  line-height: 0.96;
-  text-wrap: balance;
-}
-.title span { color: var(--ember); }
-
-.lead {
-  max-width: 65ch;
-  margin: 22px 0 0;
-  color: var(--fg-on-dark-2);
-  font-size: clamp(15px, 1.4vw, 18px);
-  line-height: 1.6;
-}
-
-/* ── The table ──────────────────────────────────────────────────── */
-
-.stage {
-  position: relative;
-  height: clamp(340px, 48vh, 500px);
-  margin-top: clamp(28px, 4vh, 52px);
-  perspective: 1500px;
-  perspective-origin: 50% 40%;
-}
-
-.table {
+/* The ground warming, and the whole of the section's colour story.
+ *
+ * `#efe3d6` is not a new colour: it is the tone the hero's own gradient
+ * passes through, so this reads as the same page a little later in the day
+ * rather than as a theme. The overlay peaks around the middle of the track
+ * and eases back to about a third, which leaves the ground it hands to
+ * `HowItWorks` within a hair of that section's cream. If the change ever
+ * becomes noticeable while scrolling, move this colour closer to `--cream`
+ * before touching the curve in `getStoryBeats`. */
+.warm {
   position: absolute;
+  z-index: 1;
   inset: 0;
-  transform-style: preserve-3d;
-  transform-origin: center 72%;
-  will-change: transform;
-}
-
-/* The table top itself — a faint warm plane so the perspective reads. */
-.tableSurface {
-  position: absolute;
-  inset: -6% -4%;
-  border-radius: 18px;
-  background:
-    radial-gradient(120% 90% at 50% 30%, rgb(255 255 255 / 4%), transparent 70%),
-    linear-gradient(180deg, rgb(255 255 255 / 3%), rgb(0 0 0 / 12%));
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 6%);
-}
-
-/* One pass of light while smartplan reads the table. */
-.sweep {
-  position: absolute;
-  top: -20%;
-  left: 0;
-  width: 22%;
-  height: 140%;
-  background: linear-gradient(
-    100deg,
-    transparent,
-    rgb(255 209 102 / 22%) 45%,
-    rgb(255 209 102 / 30%) 52%,
-    transparent
-  );
-  filter: blur(6px);
+  background: #f1e9dc;
+  opacity: var(--warm, 0);
   pointer-events: none;
 }
 
+/* A size container, so a word can be moved by a fraction of the *stage*
+   rather than of itself.
+   `translate3d(40%, 0, 0)` resolves against the element being translated —
+   which for a word is its own text width, not the composition. Every travel
+   and drift vector below is therefore a plain number, multiplied by `1cqw`
+   or `1cqh` at the point of use, so the scene keeps one coordinate system:
+   the same 0..100 stage that `storyScene.ts` authors against. */
+.stage {
+  position: relative;
+  z-index: 2;
+  container-type: size;
+  width: min(100%, 1280px);
+  height: 100%;
+}
+
+/* ── The intentions that do not survive ─────────────────────────────── */
+
+/* Type on the page. They are never struck through: they simply lose ink and
+   drift, which is what "no cierra" actually looks like. */
+.word {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  margin: 0;
+  color: var(--fg-3);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  white-space: nowrap;
+  opacity: calc((1 - var(--sort, 0) * 0.82) * (1 - var(--fade, 0)));
+  transform:
+    translate3d(
+      calc(-50% + var(--drift-x) * var(--sort, 0) * 1cqw),
+      calc(-50% + var(--drift-y) * var(--sort, 0) * 1cqh),
+      0
+    )
+    rotate(calc(var(--rot) * 1deg))
+    scale(calc(1 - var(--sort, 0) * 0.12));
+  will-change: transform, opacity;
+}
+
+.word[data-size="0"] { font-size: clamp(13px, 1.15vw, 15px); }
+.word[data-size="1"] { font-size: clamp(15px, 1.6vw, 20px); }
+.word[data-size="2"] { font-size: clamp(18px, 2.3vw, 29px); }
+
+/* ── The thread ─────────────────────────────────────────────────────── */
+
 .route {
   position: absolute;
+  z-index: 1;
   inset: 0;
   width: 100%;
   height: 100%;
   overflow: visible;
+  pointer-events: none;
 }
 
-/* ── Paper scraps ───────────────────────────────────────────────── */
-
-.scrapAnchor {
-  position: absolute;
-  transform-style: preserve-3d;
+/* One dash exactly as long as the path, offset back to nothing. It cannot
+   repeat and it cannot fragment — see `useRouteLength`, which measures the
+   real length and publishes it here. Until that runs, the fallback keeps the
+   line hidden rather than showing it whole. */
+.route path {
+  fill: none;
+  stroke: var(--ember);
+  stroke-dasharray: var(--route-len, 1);
+  stroke-dashoffset: calc((1 - var(--route, 0)) * var(--route-len, 1));
+  stroke-linecap: round;
+  stroke-width: 1.9;
+  opacity: 0.62;
 }
 
-.scrap {
-  display: inline-block;
-  padding: 8px 13px;
-  border-radius: 3px;
-  background: #f3ece0;
-  color: #2a2118;
-  font-size: clamp(12.5px, 1.25vw, 14.5px);
-  font-weight: 550;
-  white-space: nowrap;
-  translate: -50% -50%;
-  box-shadow:
-    0 1px 1px rgb(0 0 0 / 20%),
-    0 10px 20px -10px rgb(0 0 0 / 45%);
+/* ── The three moments ──────────────────────────────────────────────── */
+
+.moment {
+  margin: 0;
 }
 
-.scrap[data-discarded="true"] {
-  background: #d8cebf;
-  color: #6a6156;
-  text-decoration: line-through;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .scrap[data-drift="true"] {
-    animation: scrap-breathe 7s ease-in-out infinite alternate;
-  }
-  @keyframes scrap-breathe {
-    from { translate: -50% -50%; }
-    to { translate: -50% calc(-50% - 3px); }
-  }
-}
-
-/* ── Route nodes ────────────────────────────────────────────────── */
-
-.nodeAnchor {
+.frame {
   position: absolute;
   z-index: 2;
+  left: var(--x);
+  top: var(--y);
+  width: var(--w);
+  height: var(--h);
+  overflow: hidden;
+  border-radius: clamp(11px, 1.1vw, 16px);
+  /* Held while the photograph decodes, so nothing flashes against the
+     cream. The same value the gallery uses. */
+  background: #efe6da;
+  opacity: clamp(0, calc(var(--p, 0) * 2), 1);
+  transform:
+    translate3d(0, calc((1 - var(--p, 0)) * 16px), 0)
+    scale(calc(0.96 + var(--p, 0) * 0.04));
+  will-change: transform, opacity;
 }
 
-.node {
-  display: grid;
-  gap: 6px;
-  min-width: 140px;
-  padding: 14px 16px;
-  background: var(--char);
-  text-align: center;
-  translate: -50% -50%;
+.photo {
+  object-fit: cover;
 }
 
-.node::before {
-  width: 12px;
-  height: 12px;
-  margin: 0 auto;
-  border: 3px solid var(--char);
-  border-radius: 50%;
-  background: var(--gold);
-  box-shadow: 0 0 0 1px var(--gold);
-  content: "";
-}
-
-.node time {
-  color: var(--gold);
-  font-variant-numeric: tabular-nums;
-  font-weight: 800;
-}
-.node span { font-size: 15px; }
-
-/* ── The signature ─────────────────────────────────────────────── */
-
-.stamp {
+/* The caption *is* the surviving word.
+ *
+ * It is positioned at that word's home and translated to the moment's
+ * anchor as the sort resolves, so there is one continuous object to follow
+ * from the scattered state to the finished plan. The scale lives here rather
+ * than on the text, so `.intention` and `.resolved` are always rendered at
+ * the same size. */
+.caption {
   position: absolute;
-  right: 2%;
-  bottom: 4%;
-  display: grid;
-  place-items: center;
-  opacity: 0.9;
+  z-index: 3;
+  left: var(--x);
+  top: var(--y);
+  transform:
+    translate3d(
+      calc(var(--travel-x) * var(--sort, 0) * 1cqw),
+      calc(var(--travel-y) * var(--sort, 0) * 1cqh),
+      0
+    )
+    rotate(calc(var(--rot) * (1 - var(--sort, 0)) * 1deg))
+    scale(calc(1 + var(--sort, 0) * 0.18));
+  transform-origin: 0 50%;
+  will-change: transform;
 }
 
-/* ── Phases (accessible text equivalent, also shown as a caption) ── */
-
-.phases {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 28px;
-  padding: 0;
-  margin: clamp(32px, 5vh, 56px) 0 0;
-  list-style: none;
-}
-.phases li {
-  display: grid;
-  gap: 6px;
-  padding-top: 14px;
-  border-top: 1px solid rgb(245 240 232 / 18%);
-}
-.phases strong { font-size: 14px; }
-.phases span { color: var(--fg-on-dark-2); font-size: 13px; line-height: 1.45; }
-
-/* ── Static fallback ────────────────────────────────────────────── */
-
-.staticScene {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: clamp(14px, 3vw, 28px);
-  margin-top: clamp(28px, 5vh, 44px);
-}
-
-.staticPile {
-  display: grid;
-  gap: 10px;
-  padding: 16px;
-  border: 1px solid rgb(245 240 232 / 16%);
-  border-radius: 10px;
-  background: rgb(245 240 232 / 4%);
-}
-
-.staticPileTime {
-  color: var(--gold);
+/* The time only exists once the thread has arrived. */
+.time {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--ember);
+  font-size: 11.5px;
   font-variant-numeric: tabular-nums;
-  font-weight: 800;
-  font-size: 14px;
-}
-
-.staticPileLabel {
-  color: var(--fg-on-dark);
-  font-size: 15px;
   font-weight: 700;
+  letter-spacing: 0.1em;
+  opacity: var(--p, 0);
+  transform: translate3d(0, calc((1 - var(--p, 0)) * 5px), 0);
 }
 
-.staticTokens {
+/* Both texts occupy one cell, so they share a left edge and a baseline and
+   the box never resizes as they cross-fade. */
+.name {
+  display: grid;
+  color: var(--char);
+  font-size: clamp(18px, 2.3vw, 29px);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.name > * {
+  grid-area: 1 / 1;
+}
+
+/* Weight and ink are what the sort gives the word; the resolution into the
+   stop's name is what the thread gives it. Two different beats, one object. */
+.intention {
+  color: color-mix(in srgb, var(--fg-3), var(--char) calc(var(--sort, 0) * 100%));
+  font-weight: calc(500 + var(--sort, 0) * 200);
+  opacity: calc(1 - clamp(0, (var(--p, 0) - 0.28) / 0.14, 1));
+}
+
+.resolved {
+  font-weight: 700;
+  opacity: clamp(0, calc((var(--p, 0) - 0.42) / 0.16), 1);
+}
+
+/* ── Copy ───────────────────────────────────────────────────────────── */
+
+/* The same column, at the same place, as the inspiration scene's copy —
+   which is most of why the two sections read as one page. */
+.copy {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  left: 1%;
+  width: min(38%, 460px);
+  opacity: var(--copy, 0);
+  transform: translate3d(0, calc(-50% + (1 - var(--copy, 0)) * 16px), 0);
+  will-change: transform, opacity;
+}
+
+.kicker {
+  margin: 0 0 clamp(12px, 1.6vw, 18px);
+  color: var(--ember);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.title {
+  max-width: 14ch;
+  margin: 0;
+  color: var(--char);
+  font-size: clamp(34px, 4.4vw, 64px);
+  font-weight: var(--w-display);
+  letter-spacing: -0.035em;
+  line-height: 0.94;
+  text-wrap: balance;
+}
+
+.lead {
+  max-width: 34ch;
+  margin: clamp(18px, 2vw, 26px) 0 0;
+  color: var(--fg-2);
+  font-size: clamp(15px, 1.25vw, 17px);
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+/* The second half of the headline, landing in the column the first half
+   just left. The sentence finishes exactly where it started, which is where
+   the reader's eye already is — and it is the largest type in the section,
+   because it is the point of it. Serif and ember: the pairing the hero uses
+   for "Recibí un plan." and the gallery for its second line, so the three
+   sections speak in one voice. */
+.payoff {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  left: 1%;
+  width: min(38%, 460px);
+  margin: 0;
+  color: var(--ember);
+  font-family: var(--font-display-serif);
+  font-size: clamp(44px, 6vw, 92px);
+  font-optical-sizing: auto;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 0.92;
+  opacity: var(--payoff, 0);
+  transform: translate3d(0, calc(-50% + (1 - var(--payoff, 0)) * 14px), 0);
+  will-change: transform, opacity;
+}
+
+/* ── Static composition (mobile, reduced motion) ────────────────────── */
+
+/* All cream, nothing pinned, nothing scrubbed — and no gradient anywhere.
+   The section simply ends on the page's own ground. */
+.staticScene {
+  width: 100%;
+  max-width: 1280px;
+  padding: clamp(56px, 8vh, 96px) clamp(20px, 5vw, 52px) clamp(64px, 9vh, 104px);
+  margin-inline: auto;
+}
+
+.staticCopy .copy {
+  position: static;
+  width: 100%;
+  max-width: 560px;
+  opacity: 1;
+  transform: none;
+}
+
+.staticCopy .title {
+  max-width: 16ch;
+  font-size: clamp(32px, 8.4vw, 50px);
+}
+
+/* The sort, stated rather than performed: the three that matter are already
+   large and dark, the rest already small and quiet. The hierarchy is the
+   whole message, and it survives having no animation at all. */
+.staticWords {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  align-items: baseline;
+  gap: clamp(14px, 4vw, 26px);
+  padding: 0;
+  margin: clamp(34px, 6vh, 54px) 0 clamp(44px, 7vh, 68px);
+  list-style: none;
+}
+
+.staticWords li {
+  color: var(--fg-3);
+  font-size: clamp(15px, 4.2vw, 19px);
+  font-weight: 500;
+  line-height: 1;
+}
+
+.staticWords li[data-keeps="true"] {
+  color: var(--char);
+  font-size: clamp(22px, 6.4vw, 30px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.staticMoments {
+  display: grid;
+  gap: clamp(30px, 5vh, 48px);
+  max-width: 760px;
   padding: 0;
   margin: 0;
   list-style: none;
 }
-.staticTokens li {
-  padding: 6px 10px;
-  border-radius: 3px;
-  background: #f3ece0;
-  color: #2a2118;
-  font-size: 12.5px;
-  font-weight: 550;
+
+.staticMoment {
+  margin: 0;
 }
 
-.staticDiscarded {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 0;
-  margin: 4px 0 0;
-  list-style: none;
-}
-.staticDiscarded li {
-  padding: 6px 10px;
-  border: 1px solid rgb(245 240 232 / 14%);
-  border-radius: 3px;
-  color: var(--fg-on-dark-3);
-  font-size: 12.5px;
-  text-decoration: line-through;
+.staticMoment .caption {
+  position: static;
+  transform: none;
 }
 
-@media (max-width: 900px) {
-  .phases { grid-template-columns: 1fr; gap: 12px; }
-  .staticScene { grid-template-columns: 1fr; }
+.staticMoment .name {
+  font-size: clamp(22px, 6vw, 30px);
+  white-space: normal;
+}
+
+.staticMoment .time {
+  opacity: 1;
+  transform: none;
+}
+
+.staticMoment .resolved {
+  opacity: 1;
+}
+
+.staticMoment .frame {
+  position: relative;
+  left: auto;
+  top: auto;
+  width: 100%;
+  height: clamp(220px, 34svh, 320px);
+  margin-top: 14px;
+  opacity: 1;
+  transform: none;
+}
+
+.staticScene .payoff {
+  position: static;
+  width: auto;
+  max-width: none;
+  margin-top: clamp(46px, 7vh, 74px);
+  font-size: clamp(40px, 12vw, 68px);
+  opacity: 1;
+  transform: none;
+}
+
+/* ── Short viewports ────────────────────────────────────────────────── */
+
+@media (max-height: 760px) and (min-width: 901px) {
+  .track { height: 220svh; }
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  /* The static composition is what renders here, but if the scrubbed one is
+     ever reached — the instant before `staticMode` resolves — it must not be
+     invisible or pinned. */
+  .track { height: auto; }
+
+  .viewport {
+    position: static;
+    height: auto;
+    overflow: visible;
+  }
+
+  .word,
+  .frame,
+  .caption,
+  .time,
+  .copy,
+  .payoff,
+  .resolved {
+    opacity: 1;
+    transform: none;
+    will-change: auto;
+  }
+
+  .intention { opacity: 0; }
+
+  .route path { stroke-dashoffset: 0; }
 }

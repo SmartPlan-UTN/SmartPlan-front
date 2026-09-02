@@ -1,13 +1,31 @@
 .hero {
-  --hero-progress: 0;
   position: relative;
   isolation: isolate;
   display: grid;
-  place-items: center;
+  /* `minmax(0, 1fr)` — the 0 min keeps the track from being pulled wider
+     than the viewport by a nowrap headline (grid + percentage-width child
+     circularity). Without it the whole column overflows on mobile. */
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  justify-items: center;
   min-height: calc(100svh - var(--navbar-h));
-  overflow: hidden;
+  /* `clip` (not `hidden`) still stops horizontal scroll leak but does not
+     create a scroll container, and the clip-margin lets the objects near
+     the bottom edge bleed past it and drift away on scroll instead of
+     being sliced off at a hard line. */
+  overflow: clip;
+  overflow-clip-margin: 180px;
   padding: clamp(76px, 10vh, 112px) clamp(20px, 5vw, 64px) clamp(94px, 13vh, 150px);
-  background: linear-gradient(180deg, #fbf7f0 0%, var(--cream) 58%, #efe0cf 100%);
+  /* Warm at the top, a soft dip mid for table depth, then back to plain
+     cream at the bottom edge so the hero flows into the next section
+     without a colour step. */
+  background: linear-gradient(
+    180deg,
+    #fbf7f0 0%,
+    var(--cream) 40%,
+    #efe3d6 66%,
+    var(--cream) 97%
+  );
 }
 
 .hero::after {
@@ -21,8 +39,11 @@
 
 .atmosphere {
   position: absolute;
-  z-index: 1;
+  z-index: 0;
   inset: 0;
+  /* Fades out with the headline during beat A, so the empty beat B is
+     genuinely empty rather than still faintly drifting. */
+  opacity: calc(1 - var(--hero-stage-progress, 0));
   pointer-events: none;
 }
 
@@ -53,34 +74,56 @@
   min-width: 0;
   margin-inline: auto;
   text-align: center;
-  opacity: calc(1 - var(--hero-progress) * .82);
+  opacity: calc(1 - var(--hero-stage-progress, 0));
   transform:
-    translateY(calc(var(--hero-progress) * -44px))
-    scale(calc(1 - var(--hero-progress) * .04));
-  filter: blur(calc(var(--hero-progress) * 2px));
-  will-change: transform, opacity;
+    translateY(calc(var(--hero-stage-progress, 0) * -24px))
+    scale(calc(1 - var(--hero-stage-progress, 0) * .015));
 }
 
+/* The headline carries only layout; each line owns its own type, because
+   the two lines are deliberately set in different faces — "Escribí una
+   idea." in the grotesque, a size down and a little lighter, and "Recibí
+   un plan." in a display serif, larger and heavier, so the second line
+   reads as the product answering rather than as more of the same voice. */
 .headline {
-  max-width: 12ch;
   margin: 0;
-  color: var(--char);
-  font-size: clamp(48px, 6.5vw, 88px);
-  font-weight: 800;
-  letter-spacing: -0.035em;
-  line-height: 0.9;
-  text-wrap: balance;
+  line-height: 0.95;
 }
 
 .headlineLine,
 .headlineInk { display: block; }
-.headlineLine:last-child { color: var(--ember); }
+
+/* Each line stays on one line and is sized (vw-scaled clamp) to fit the
+   narrowest phone without wrapping. */
+.headlineWrite {
+  color: var(--char);
+  font-family: var(--font);
+  font-size: clamp(28px, 4.6vw, 58px);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+/* --ember on the hero's cream clears ~3:1 — fine for text this large and
+   heavy (WCAG 1.4.3 large-text), which is the whole reason the colour
+   lives on the big line and not the body copy. */
+.headlinePlan {
+  margin-top: -0.04em;
+  color: var(--ember);
+  font-family: var(--font-display-serif);
+  font-size: clamp(34px, 6vw, 82px);
+  font-weight: 600;
+  font-optical-sizing: auto;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+}
 
 .subheadline {
-  max-width: 54ch;
+  max-width: 46ch;
   margin: clamp(22px, 3vh, 30px) 0 0;
   color: var(--fg-2);
   font-size: clamp(15px, 1.4vw, 18px);
+  font-weight: 400;
   line-height: 1.55;
   text-wrap: pretty;
 }
@@ -182,7 +225,6 @@
 
 @media (max-width: 1180px) {
   .stage { width: min(100%, 700px); }
-  .headline { font-size: clamp(50px, 7vw, 78px); }
 }
 
 @media (max-width: 900px) {
@@ -197,16 +239,29 @@
   }
 
   .hero::after { background: radial-gradient(ellipse 76% 50% at 50% 46%, rgba(251, 247, 240, 0.99) 0%, rgba(251, 247, 240, 0.97) 68%, rgba(245, 240, 232, 0.54) 86%, transparent 100%); }
-  .headline { max-width: 10ch; font-size: clamp(42px, 13vw, 58px); line-height: 0.92; }
+  .headline { line-height: 0.96; }
+  .headlineWrite { font-size: clamp(26px, 7vw, 34px); }
+  .headlinePlan { font-size: clamp(34px, 9.4vw, 46px); }
   .subheadline { max-width: 34ch; margin-top: 20px; font-size: 15px; line-height: 1.5; }
   .composerSlot { width: 100%; margin-top: 26px; }
   .intentList { gap: 5px 14px; }
   .intentItem:nth-child(n + 4) { display: none; }
+
+  .headlineLine,
+  .subheadline,
+  .composerSlot,
+  .intentsSlot {
+    animation: none;
+    opacity: 1;
+    clip-path: none;
+    transform: none;
+  }
 }
 
 @media (max-width: 380px) {
   .hero { padding-inline: 16px; }
-  .headline { font-size: 41px; }
+  .headlineWrite { font-size: 25px; }
+  .headlinePlan { font-size: 33px; }
   .subheadline { font-size: 14.5px; }
   .intent { font-size: 12.5px; }
 }

@@ -50,8 +50,11 @@ export function ManualExplore() {
           whileInView={active ? "shown" : undefined}
           viewport={viewportOnce}
         >
-          {CAPABILITIES.map((item) => (
+          {CAPABILITIES.map((item, index) => (
             <motion.li key={item.label} variants={active ? ROW : undefined}>
+              <span className={styles.capabilityNumber} aria-hidden="true">
+                {String(index + 1).padStart(2, "0")}
+              </span>
               <Icon name={item.icon} size={18} aria-hidden="true" />
               <span>{item.label}</span>
             </motion.li>

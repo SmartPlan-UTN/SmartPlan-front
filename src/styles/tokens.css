@@ -65,6 +65,9 @@
 
   /* ── Typography ──────────────────────────────────── */
   --font: var(--font-bricolage-grotesque), "Arial Narrow", sans-serif;
+  /* Display serif — hero headline second line only (see hero.module.css).
+     Loaded by next/font/local in layout.tsx. */
+  --font-display-serif: var(--font-fraunces), Georgia, "Times New Roman", serif;
 
   /* ── Type scale ──────────────────────────────────── */
   --t-display: 78px;
