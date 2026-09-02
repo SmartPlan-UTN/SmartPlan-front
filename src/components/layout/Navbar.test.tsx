@@ -1,6 +1,6 @@
-import { render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SessionProvider } from "@/lib/auth";
 import { logout, refreshSession } from "@/lib/auth/api";
@@ -15,10 +15,11 @@ vi.mock("@/lib/auth/api", () => ({
 
 const route = vi.hoisted(() => ({ actual: "/" }));
 const replace = vi.hoisted(() => vi.fn());
+const push = vi.hoisted(() => vi.fn());
 
 vi.mock("next/navigation", () => ({
   usePathname: () => route.actual,
-  useRouter: () => ({ replace, push: vi.fn(), refresh: vi.fn() }),
+  useRouter: () => ({ replace, push, refresh: vi.fn() }),
 }));
 
 /** What `POST /sessions` and `POST /sessions/refresh` return on success. */
@@ -57,6 +58,11 @@ describe("Navbar", () => {
   beforeEach(() => {
     route.actual = "/";
     replace.mockClear();
+    push.mockClear();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("offers the four main navigation destinations", async () => {
@@ -212,6 +218,62 @@ describe("Navbar", () => {
       screen.queryByRole("alertdialog", { name: "Cerrar sesión" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Iniciar sesión" })).toBeNull();
+  });
+
+  it("shows the Explorar transition when navigating there from elsewhere, then reveals it", async () => {
+    mockAnonymousStartup();
+    renderNavbar();
+
+    const nav = await screen.findByRole("navigation", {
+      name: "Navegación principal",
+    });
+
+    // Fake timers only from here on: `findByRole` above polls with a real
+    // timer under the hood, and switching earlier just hangs it.
+    vi.useFakeTimers();
+    fireEvent.click(within(nav).getByRole("link", { name: "Explorar" }));
+
+    expect(screen.getByText("Armando tu plan perfecto...")).toBeInTheDocument();
+    expect(push).toHaveBeenCalledWith("/explore");
+
+    await act(async () => {
+      vi.advanceTimersByTime(2999);
+    });
+    expect(screen.getByText("Armando tu plan perfecto...")).toBeInTheDocument();
+
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(screen.queryByText("Armando tu plan perfecto...")).not.toBeInTheDocument();
+  });
+
+  it("doesn't show the transition for a modified click (opening Explorar in a new tab)", async () => {
+    mockAnonymousStartup();
+    renderNavbar();
+
+    const nav = await screen.findByRole("navigation", {
+      name: "Navegación principal",
+    });
+    fireEvent.click(within(nav).getByRole("link", { name: "Explorar" }), {
+      metaKey: true,
+    });
+
+    expect(screen.queryByText("Armando tu plan perfecto...")).not.toBeInTheDocument();
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it("doesn't show the transition when already on Explorar", async () => {
+    route.actual = "/explore";
+    mockAnonymousStartup();
+    renderNavbar();
+
+    const nav = await screen.findByRole("navigation", {
+      name: "Navegación principal",
+    });
+    fireEvent.click(within(nav).getByRole("link", { name: "Explorar" }));
+
+    expect(screen.queryByText("Armando tu plan perfecto...")).not.toBeInTheDocument();
+    expect(push).not.toHaveBeenCalled();
   });
 
   it("expands the collapsible navigation on small viewports", async () => {

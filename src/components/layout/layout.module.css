@@ -66,6 +66,25 @@
   }
 }
 
+/* Explorar navigation transition ("Armando tu plan perfecto..."), matching
+   `ResultsLoading` in `Results.jsx`. Sits under `.navbar` (z-index 50) —
+   the bar itself stays up and usable through the transition, only the
+   content below it is covered, same as the mockup's own
+   `paddingTop: 'var(--navbar-h)'` treatment. Opaque instead of translucent:
+   the destination route is already navigating underneath it, and a
+   see-through overlay would let that render peek through before the
+   illusion finishes. */
+.exploreTransition {
+  position: fixed;
+  inset: var(--navbar-h) 0 0 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cream);
+  animation: fadeUp 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
 /* Inner navbar row: logo, links, and user menu. Unlike `.container`, this
    is NOT capped at `--max-w` — SmartPlanSystemDesign/v2/Navbar.jsx spans
    the full window edge to edge with 48px of padding, not a centered,

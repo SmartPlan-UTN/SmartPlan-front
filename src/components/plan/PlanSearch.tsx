@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import {
   CategoryChips,
@@ -25,10 +25,6 @@ import activityStyles from "../activity/activity.module.css";
 const PAGE_SIZE = 12;
 const DEBOUNCE_MS = 400;
 
-// How long the "Armando tu plan perfecto..." transition stays up, at
-// minimum, once it starts — see the doc comment on `showTransition` below.
-const TRANSITION_MIN_MS = 3000;
-
 // "Distancia" isn't offered: sorting/filtering by distance needs the user's
 // coordinates, and nothing in this screen captures geolocation yet — the
 // backend rejects a distance sort with no lat/lng (400 INCOMPLETE_LOCATION_FILTER).
@@ -48,6 +44,12 @@ function toNumber(value: string): number | undefined {
  * Plan search box, filters, sort, and results grid (CU12 · PAN 10/11).
  * Mirrors `ActivitySearch` field for field — see `useExplorationSearch` for
  * the shared fetch/pagination/error orchestration.
+ *
+ * The big "Armando tu plan perfecto..." transition lives in `Navbar`, not
+ * here: it's a navigation transition (clicking Explorar from elsewhere in
+ * the app), not a per-fetch one, so switching between this screen's own
+ * Actividades/Planes tabs never triggers it. This screen's own first-load
+ * state stays the same small `LoadingDots` every other list uses.
  */
 export function PlanSearch() {
   const [query, setQuery] = useState("");
@@ -122,52 +124,6 @@ export function PlanSearch() {
   // is what caused the flash on every click.
   const isRefetching = status === "loading" && hasResults;
 
-  // A real fetch can resolve in well under a second — too fast for
-  // "Armando tu plan perfecto..." to read as anything happening at all.
-  // `holdingTransition` keeps the transition up for `TRANSITION_MIN_MS`
-  // once it starts, regardless of how quickly the real request finishes,
-  // so it reads as the plan actually being put together rather than a
-  // flash. It never *extends* a slow request — a fetch that takes longer
-  // than the minimum just keeps the transition up on its own, the same
-  // way `status === "loading"` already would.
-  const firstLoadInFlight = status === "loading" && !hasResults;
-  // Seeded from `firstLoadInFlight`: `useExplorationSearch` starts
-  // `status` at `"loading"`, so the very first render already needs the
-  // hold armed — the render-time edge detection below only ever fires on
-  // a *change*, which the initial mount isn't.
-  const [holdingTransition, setHoldingTransition] = useState(firstLoadInFlight);
-
-  // Adjusting state during render (not inside an effect, and via `useState`
-  // rather than a ref — this codebase's lint config disallows reading a
-  // ref during render) so the hold starts the instant `firstLoadInFlight`
-  // turns true, not one render later. This is React's own documented
-  // pattern for reacting to a value's edge without an extra
-  // effect-triggered render pass; the guard means it only ever fires once
-  // per actual transition. `react-hooks/set-state-in-effect` disallows the
-  // analogous synchronous `setState` inside `useEffect`, which is exactly
-  // why this isn't in one.
-  const [prevFirstLoadInFlight, setPrevFirstLoadInFlight] = useState(firstLoadInFlight);
-  if (firstLoadInFlight !== prevFirstLoadInFlight) {
-    setPrevFirstLoadInFlight(firstLoadInFlight);
-    if (firstLoadInFlight) {
-      setHoldingTransition(true);
-    }
-  }
-
-  // The timer itself is a real external-system side effect, so it belongs
-  // in an effect — the eventual `setHoldingTransition(false)` still only
-  // ever runs inside the timeout callback, not synchronously in the
-  // effect body (same shape as `useDebouncedValue`).
-  useEffect(() => {
-    if (!holdingTransition) return;
-    const timer = setTimeout(() => {
-      setHoldingTransition(false);
-    }, TRANSITION_MIN_MS);
-    return () => clearTimeout(timer);
-  }, [holdingTransition]);
-
-  const showTransition = firstLoadInFlight || holdingTransition;
-
   return (
     <div className={exploreStyles.searchScreen}>
       <div className={activityStyles.searchField}>
@@ -199,7 +155,7 @@ export function PlanSearch() {
 
       <CategoryChips selectedIds={categoryIds} onToggle={toggleCategory} />
 
-      {pagination != null && !showTransition ? (
+      {pagination != null ? (
         <div className={exploreStyles.toolbar}>
           {hasResults ? (
             <p className={`sp-body ${activityStyles.resultsLabel}`}>
@@ -242,16 +198,13 @@ export function PlanSearch() {
         />
       ) : null}
 
-      {showTransition ? (
-        <div className={exploreStyles.transitionState}>
-          <LoadingDots
-            title="Armando tu plan perfecto..."
-            label={effectiveQuery.trim() ? `"${effectiveQuery.trim()}"` : "Buscando lo mejor cerca tuyo"}
-          />
+      {status === "loading" && !hasResults ? (
+        <div className={activityStyles.stateBlock}>
+          <LoadingDots label="Armando los mejores planes..." />
         </div>
       ) : null}
 
-      {status === "error" && !hasResults && !showTransition ? (
+      {status === "error" && !hasResults ? (
         <div className={activityStyles.stateBlock} role="alert">
           <Icon
             name="triangle-alert"
@@ -266,7 +219,7 @@ export function PlanSearch() {
         </div>
       ) : null}
 
-      {status === "idle" && !hasResults && !showTransition ? (
+      {status === "idle" && !hasResults ? (
         <div className={activityStyles.stateBlock}>
           <Icon name="inbox" size={32} className={activityStyles.stateIcon} />
           <h2 className="sp-h3">Sin resultados</h2>
@@ -277,7 +230,7 @@ export function PlanSearch() {
         </div>
       ) : null}
 
-      {hasResults && !showTransition ? (
+      {hasResults ? (
         <div
           className={`${exploreStyles.resultsFade} ${isRefetching ? exploreStyles.resultsFadeLoading : ""}`}
         >

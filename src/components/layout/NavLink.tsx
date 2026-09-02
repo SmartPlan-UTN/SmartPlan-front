@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { MouseEvent } from "react";
 
 import { Icon, type IconName } from "@/components/ui";
 import { isActiveRoute } from "@/lib/routes";
@@ -19,6 +20,14 @@ export interface NavLinkProps {
   variant?: LinkVariant;
   /** Runs on navigate; used to close the menu that contains the link. */
   onNavigate?: () => void;
+  /**
+   * Intercepts the click before `Link`'s own navigation — the Explorar
+   * entry uses this to show the transition and drive `router.push` itself
+   * instead. Calling `event.preventDefault()` inside stops the default
+   * navigation; every other `NavLink` leaves this unset and behaves like a
+   * plain link.
+   */
+  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 }
 
 const BASE_CLASS: Record<LinkVariant, string> = {
@@ -49,6 +58,7 @@ export function NavLink({
   icon,
   variant = "navbar",
   onNavigate,
+  onClick,
 }: NavLinkProps) {
   const currentRoute = usePathname();
   const active = isActiveRoute(currentRoute, href);
@@ -58,7 +68,13 @@ export function NavLink({
       href={href}
       className={cn(BASE_CLASS[variant], active && ACTIVE_CLASS[variant])}
       aria-current={active ? "page" : undefined}
-      onClick={onNavigate}
+      onClick={(event) => {
+        onClick?.(event);
+        // `onNavigate` (close the menu) still runs even if `onClick`
+        // prevented the default navigation — the transition itself
+        // navigates via `router.push`, so the menu still needs to close.
+        onNavigate?.();
+      }}
     >
       {icon && variant === "option" ? <Icon name={icon} size={16} /> : null}
       {label}
