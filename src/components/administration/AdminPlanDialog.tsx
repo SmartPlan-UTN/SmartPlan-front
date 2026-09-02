@@ -25,7 +25,10 @@ interface AdminPlanDialogProps {
 
 export function AdminPlanDialog({ plan, saving, error, onClose, onSave }: AdminPlanDialogProps) {
   const titleId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
+  const onCloseRef = useRef(onClose);
+  const savingRef = useRef(saving);
   const [title, setTitle] = useState(plan.title);
   const [description, setDescription] = useState(plan.description ?? "");
   const [peopleCount, setPeopleCount] = useState(String(plan.peopleCount));
@@ -33,17 +36,41 @@ export function AdminPlanDialog({ plan, saving, error, onClose, onSave }: AdminP
   const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
+    onCloseRef.current = onClose;
+    savingRef.current = saving;
+  }, [onClose, saving]);
+
+  useEffect(() => {
     const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     titleRef.current?.focus();
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && !saving) onClose();
+      if (event.key === "Escape" && !savingRef.current) {
+        onCloseRef.current();
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const focusable = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled])',
+        ),
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       previousFocus?.focus();
     };
-  }, [onClose, saving]);
+  }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -67,7 +94,7 @@ export function AdminPlanDialog({ plan, saving, error, onClose, onSave }: AdminP
 
   return (
     <div className={styles.dialogOverlay}>
-      <div className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby={titleId}>
+      <div ref={dialogRef} className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <header className={styles.dialogHeader}>
           <div>
             <h2 id={titleId} className="sp-h4">Editar plan</h2>

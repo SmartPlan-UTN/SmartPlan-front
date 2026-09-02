@@ -34,6 +34,8 @@ export function AdminActivityDialog({
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
+  const onCloseRef = useRef(onClose);
+  const savingRef = useRef(saving);
   const [name, setName] = useState(activity?.name ?? "");
   const [description, setDescription] = useState(activity?.description ?? "");
   const [estimatedCost, setEstimatedCost] = useState(
@@ -52,14 +54,19 @@ export function AdminActivityDialog({
   const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
+    onCloseRef.current = onClose;
+    savingRef.current = saving;
+  }, [onClose, saving]);
+
+  useEffect(() => {
     const previousFocus = document.activeElement instanceof HTMLElement
       ? document.activeElement
       : null;
     nameRef.current?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && !saving) {
-        onClose();
+      if (event.key === "Escape" && !savingRef.current) {
+        onCloseRef.current();
         return;
       }
       if (event.key !== "Tab" || !dialogRef.current) return;
@@ -85,7 +92,7 @@ export function AdminActivityDialog({
       window.removeEventListener("keydown", handleKeyDown);
       previousFocus?.focus();
     };
-  }, [onClose, saving]);
+  }, []);
 
   function toggle(
     id: number,
