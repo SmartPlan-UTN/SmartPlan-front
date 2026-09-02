@@ -2,6 +2,7 @@ import { BaseEntity } from './common';
 import type { PaginatedResult, SortDirection } from './common';
 import type { User } from './users';
 import type { RoleKey, UserStatusKey } from './users';
+import type { PlanStatusKey } from './plans';
 
 /**
  * Possible actions recorded in the audit log.
@@ -144,3 +145,73 @@ export interface UpdateAdminUserInput {
 }
 
 export type AdminUsersResult = PaginatedResult<AdminUser>;
+
+/** Activity projection used by PAN 21 (CU53). */
+export interface AdminActivity {
+  id: number;
+  name: string;
+  description: string;
+  estimatedCost: number;
+  estimatedDuration: number;
+  type: string | null;
+  categories: Array<{ id: number; name: string }>;
+  places: Array<{ id: number; name: string; address: string }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminActivitiesQuery {
+  search?: string;
+  type?: string;
+  categoryId?: number;
+  page?: number;
+  limit?: number;
+  sortBy?: 'createdAt' | 'name' | 'price';
+  direction?: SortDirection;
+}
+
+export interface AdminActivityInput {
+  name: string;
+  description: string;
+  estimatedCost: number;
+  estimatedDuration: number;
+  type?: string | null;
+  categoryIds: number[];
+  placeIds?: number[];
+}
+
+export type UpdateAdminActivityInput = Partial<AdminActivityInput>;
+export type AdminActivitiesResult = PaginatedResult<AdminActivity>;
+
+/** Plan projection used by PAN 22 (CU60). */
+export interface AdminPlan {
+  id: number;
+  title: string;
+  description: string | null;
+  estimatedTotalCost: number;
+  estimatedTotalDuration: number;
+  peopleCount: number;
+  activityCount: number;
+  owner: { id: number; name: string; lastName: string; email: string };
+  status: { key: PlanStatusKey; name: string };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminPlansQuery {
+  search?: string;
+  status?: PlanStatusKey;
+  page?: number;
+  limit?: number;
+  sortBy?: 'createdAt' | 'title' | 'status' | 'cost';
+  direction?: SortDirection;
+}
+
+export interface UpdateAdminPlanInput {
+  title?: string;
+  description?: string | null;
+  peopleCount?: number;
+  status?: PlanStatusKey;
+}
+
+export type AdminPlansResult = PaginatedResult<AdminPlan>;

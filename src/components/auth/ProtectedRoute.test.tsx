@@ -34,10 +34,10 @@ const authenticatedResponse = {
   },
 };
 
-function renderProtected() {
+function renderProtected(requiredRole?: string) {
   return render(
     <SessionProvider>
-      <ProtectedRoute>
+      <ProtectedRoute requiredRole={requiredRole}>
         <p>Tus favoritos</p>
       </ProtectedRoute>
     </SessionProvider>,
@@ -86,5 +86,30 @@ describe("ProtectedRoute", () => {
       await screen.findByText(/necesitás iniciar sesión/i),
     ).toBeInTheDocument();
     expect(replace).toHaveBeenCalledWith("/login?redirect=%2Ffavorites");
+  });
+
+  it("redirects an authenticated non-admin away from administration", async () => {
+    vi.mocked(refreshSession).mockResolvedValueOnce(authenticatedResponse);
+
+    renderProtected("admin");
+
+    expect(await screen.findByText(/no tenés permisos/i)).toBeInTheDocument();
+    expect(screen.queryByText("Tus favoritos")).not.toBeInTheDocument();
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/"));
+  });
+
+  it("renders administration for an authenticated administrator", async () => {
+    vi.mocked(refreshSession).mockResolvedValueOnce({
+      ...authenticatedResponse,
+      user: {
+        ...authenticatedResponse.user,
+        role: { key: "admin", name: "Administrator" },
+      },
+    });
+
+    renderProtected("admin");
+
+    expect(await screen.findByText("Tus favoritos")).toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
   });
 });
