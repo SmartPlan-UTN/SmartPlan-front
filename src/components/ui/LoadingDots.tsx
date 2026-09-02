@@ -35,9 +35,14 @@ export function LoadingDots({ label, title, minHeight, className }: LoadingDotsP
       role="status"
     >
       <div className={styles.dots} aria-hidden="true">
-        <span className={styles.dot} />
-        <span className={styles.dot} />
-        <span className={styles.dot} />
+        {/* `<div>`, not `<span>` (an inline element): `transform` — the
+            `scale()` half of `pulseDot` — doesn't apply to non-replaced
+            inline elements at all, so a `<span>` here only ever showed the
+            animation's `opacity` half, faint enough to read as static.
+            Matches `Results.jsx`'s own `<div>`-per-dot markup. */}
+        <div className={styles.dot} />
+        <div className={styles.dot} />
+        <div className={styles.dot} />
       </div>
       {title ? <p className={`sp-h3 ${styles.title}`}>{title}</p> : null}
       <p className="sp-body">{label}</p>
