@@ -87,6 +87,8 @@ export function surpriseGenerationErrorCopy(input: {
         body: "Esperá a que termine alguno antes de pedir otro.",
         actions: ["go-back"],
       };
+    case "GENERATION_PROVIDER_UNAVAILABLE":
+      return GENERATION_ERROR;
     default:
       break;
   }

@@ -95,9 +95,11 @@ export async function cancelOwnPlan(id: number): Promise<void> {
 
 export async function addPlanActivity(
   planId: number,
-  dto: AddPlanDetailDto,
+  activityId: number,
 ): Promise<OwnPlanDetail> {
-  return apiClient.post<OwnPlanDetail>(`/users/me/plans/${planId}/details`, dto);
+  return apiClient.post<OwnPlanDetail>(`/users/me/plans/${planId}/details`, {
+    activityId,
+  } satisfies AddPlanDetailDto);
 }
 
 export async function removePlanActivity(

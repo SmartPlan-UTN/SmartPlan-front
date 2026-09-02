@@ -31,6 +31,14 @@ vi.mock("@/components/ui", () => ({
 import { AppBackground } from "./AppBackground";
 
 describe("AppBackground", () => {
+  it("does not mount the shared wave tree on the landing", () => {
+    pathname = "/";
+
+    render(<AppBackground />);
+
+    expect(screen.queryByTestId("mood-background")).not.toBeInTheDocument();
+  });
+
   it("keeps one user canvas configured across route changes", () => {
     pathname = "/plans";
     const { rerender } = render(<AppBackground />);

@@ -22,7 +22,14 @@ import styles from "./layout.module.css";
  */
 export function AppBackground() {
   const pathname = usePathname();
+  const isLanding = pathname === ROUTES.home;
   const isAdmin = isActiveRoute(pathname, ROUTES.admin);
+
+  // The landing has its own editorial composition and must stay on a clean
+  // cream canvas. Do not mount the shared wave tree here: hiding it with CSS
+  // would still leave the global decoration as part of the landing surface.
+  if (isLanding) return null;
+
   const hasNavbar =
     !isAdmin &&
     pathname !== ROUTES.login &&

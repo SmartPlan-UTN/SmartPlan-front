@@ -58,6 +58,22 @@ export type {
 } from "./users";
 export { searchPlace } from "./places";
 export {
+  changeAdminUserStatus,
+  getAdminUserMetrics,
+  getDashboardMetrics,
+  listAdminUsers,
+  updateAdminUser,
+} from "./administration";
+export {
+  addActivityToCollection,
+  createCollection,
+  deleteCollection,
+  getCollection,
+  listCollections,
+  removeActivityFromCollection,
+  updateCollection,
+} from "./collections";
+export {
   createPlanRequest,
   createSurprisePlanRequest,
   getPlanRequestStatus,
