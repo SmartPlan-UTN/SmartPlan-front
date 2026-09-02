@@ -59,6 +59,25 @@ describe("Navbar", () => {
     route.actual = "/";
     replace.mockClear();
     push.mockClear();
+
+    // The Explorar transition mounts its own `MoodBackground` — jsdom has
+    // neither of these APIs, and it degrades gracefully without them (no
+    // canvas context either, same as any environment with no 2D canvas
+    // support), so a bare stub is enough; nothing here asserts on the
+    // waves actually drawing.
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })) as unknown as typeof window.matchMedia;
+
+    class MockResizeObserver {
+      observe = vi.fn();
+      unobserve = vi.fn();
+      disconnect = vi.fn();
+    }
+    window.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
   });
 
   afterEach(() => {

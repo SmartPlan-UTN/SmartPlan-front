@@ -78,11 +78,22 @@
   position: fixed;
   inset: var(--navbar-h) 0 0 0;
   z-index: 40;
+  overflow: hidden;
+  background: var(--cream);
+  animation: fadeUp 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Above `MoodBackground`'s own `.root` (`position: absolute; z-index: 0`,
+   fills `.exploreTransition`) the same way `ProfileScreen`'s `.wrapper`
+   sits above its own — a plain in-flow sibling would otherwise paint
+   *under* an absolutely-positioned one, even at z-index 0. */
+.exploreTransitionContent {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--cream);
-  animation: fadeUp 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  height: 100%;
 }
 
 /* Inner navbar row: logo, links, and user menu. Unlike `.container`, this

@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
 
-import { Icon, LoadingDots, Logo } from "@/components/ui";
+import { Icon, LoadingDots, Logo, MoodBackground } from "@/components/ui";
 import { isActiveRoute, ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
@@ -191,10 +191,25 @@ export function Navbar() {
       {transitioning
         ? createPortal(
             <div className={styles.exploreTransition} role="status" aria-live="polite">
-              <LoadingDots
-                title="Armando tu plan perfecto..."
-                label="Buscando lo mejor cerca tuyo"
-              />
+              {/* A second `MoodBackground` instance, not the app-wide one
+                  `AppBackground` already mounts: this overlay sits *above*
+                  that ambient canvas and everything else in `<main>`, opaque
+                  on purpose (the destination is already navigating
+                  underneath — a see-through overlay would let it peek
+                  through before the illusion finishes), so nothing behind
+                  it would otherwise be visible here. Same reasoning
+                  `ResultsLoading` in `Results.jsx` has its own
+                  `<MoodBackground mood="idle" />` rather than assuming one
+                  from a parent. Temporary (unmounts with the overlay in
+                  `EXPLORE_TRANSITION_MS`), so it doesn't compete with the
+                  ambient canvas' own tide continuity. */}
+              <MoodBackground mood="idle" />
+              <div className={styles.exploreTransitionContent}>
+                <LoadingDots
+                  title="Armando tu plan perfecto..."
+                  label="Buscando lo mejor cerca tuyo"
+                />
+              </div>
             </div>,
             document.body,
           )
