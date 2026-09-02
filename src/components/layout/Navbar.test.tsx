@@ -3,20 +3,22 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SessionProvider } from "@/lib/auth";
-import { refreshSession } from "@/lib/auth/api";
+import { logout, refreshSession } from "@/lib/auth/api";
 
 import { Navbar } from "./Navbar";
 
 vi.mock("@/lib/auth/api", () => ({
   refreshSession: vi.fn(),
   login: vi.fn(),
+  logout: vi.fn(),
 }));
 
 const route = vi.hoisted(() => ({ actual: "/" }));
+const replace = vi.hoisted(() => vi.fn());
 
 vi.mock("next/navigation", () => ({
   usePathname: () => route.actual,
-  useRouter: () => ({ replace: vi.fn(), push: vi.fn(), refresh: vi.fn() }),
+  useRouter: () => ({ replace, push: vi.fn(), refresh: vi.fn() }),
 }));
 
 /** What `POST /sessions` and `POST /sessions/refresh` return on success. */
@@ -54,6 +56,7 @@ function renderNavbar() {
 describe("Navbar", () => {
   beforeEach(() => {
     route.actual = "/";
+    replace.mockClear();
   });
 
   it("offers the four main navigation destinations", async () => {
@@ -76,6 +79,9 @@ describe("Navbar", () => {
     expect(
       within(nav).getByRole("link", { name: "Historial" }),
     ).toHaveAttribute("href", "/history");
+    expect(
+      screen.getByRole("link", { name: "Crear plan" }),
+    ).toHaveAttribute("href", "/plans/create");
   });
 
   it("marks the current route's destination with aria-current", async () => {
@@ -152,8 +158,9 @@ describe("Navbar", () => {
     expect(screen.queryByRole("link", { name: "Mi perfil" })).toBeNull();
   });
 
-  it("asks for confirmation before logging out, and logs out on confirm", async () => {
+  it("asks for confirmation before logging out, calls DELETE /sessions, and redirects to login on confirm", async () => {
     mockAuthenticatedStartup();
+    vi.mocked(logout).mockResolvedValueOnce(undefined);
     const user = userEvent.setup();
     renderNavbar();
 
@@ -165,12 +172,31 @@ describe("Navbar", () => {
       screen.getByRole("alertdialog", { name: "Cerrar sesión" }),
     ).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Iniciar sesión" })).toBeNull();
+    expect(logout).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole("button", { name: "Confirmar" }));
 
     expect(
       await screen.findByRole("link", { name: "Iniciar sesión" }),
     ).toBeInTheDocument();
+    expect(logout).toHaveBeenCalledOnce();
+    expect(replace).toHaveBeenCalledWith("/login");
+  });
+
+  it("still clears the local session and redirects when DELETE /sessions fails", async () => {
+    mockAuthenticatedStartup();
+    vi.mocked(logout).mockRejectedValueOnce(new Error("network error"));
+    const user = userEvent.setup();
+    renderNavbar();
+
+    await user.click(await screen.findByRole("button", { name: /mi cuenta/i }));
+    await user.click(screen.getByRole("button", { name: "Cerrar sesión" }));
+    await user.click(screen.getByRole("button", { name: "Confirmar" }));
+
+    expect(
+      await screen.findByRole("link", { name: "Iniciar sesión" }),
+    ).toBeInTheDocument();
+    expect(replace).toHaveBeenCalledWith("/login");
   });
 
   it("keeps the session open when the logout confirmation is cancelled", async () => {

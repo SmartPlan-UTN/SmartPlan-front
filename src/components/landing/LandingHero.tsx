@@ -104,7 +104,7 @@ export function LandingHero({
       aria-labelledby="landing-headline"
     >
       <div className={styles.waves} aria-hidden="true">
-        <MoodBackground mood={composing ? mood : "idle"} />
+        <MoodBackground active={false} mood={composing ? mood : "idle"} />
       </div>
       <div className={styles.motes} aria-hidden="true">
         <HeroAtmosphere calm={writing || !composing} />

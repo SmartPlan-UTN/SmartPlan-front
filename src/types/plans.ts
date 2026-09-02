@@ -193,3 +193,63 @@ export interface PlanSearchParams extends ExplorationQueryParams {
   outingType?: string;
   sortBy?: PlanSortField;
 }
+
+/** Query params accepted by `GET /users/me/plans` (CU29). */
+export interface ListOwnPlansParams {
+  page?: number;
+  limit?: number;
+  sortBy?: 'createdAt';
+  direction?: SortDirection;
+}
+
+export interface CreatePlanDto {
+  title: string;
+  description?: string | null;
+  peopleCount: number;
+}
+
+export interface UpdatePlanDto {
+  title?: string;
+  description?: string | null;
+  peopleCount?: number;
+}
+
+export interface AddPlanDetailDto {
+  activityId: number;
+}
+
+export interface OwnPlanCostSummary {
+  estimatedTotalCost: number;
+  peopleCount: number;
+  estimatedCostPerPerson: number;
+  estimatedTotalDuration: number;
+}
+
+export interface OwnPlanDetailItem {
+  id: number;
+  order: number;
+  estimatedCost: number;
+  estimatedDuration: number;
+  activity: {
+    id: number;
+    name: string;
+    description: string;
+    estimatedCost: number;
+    estimatedDuration: number;
+    type: string | null;
+  };
+}
+
+/**
+ * Payload for requesting a suggested plan (CU31).
+ * Backend contract: `POST /api/plan-suggestions`.
+ */
+export interface PlanSuggestionDto {
+  budget: number;
+  latitude: number;
+  longitude: number;
+  peopleCount: number;
+  availableDurationMinutes: number;
+  preferences?: string[];
+  notes?: string;
+}

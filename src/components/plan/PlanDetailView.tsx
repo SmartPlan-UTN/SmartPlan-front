@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { ExperienceSummary, FeedbackInvite } from "@/components/feedback";
-import { Badge, Button, Divider, FloatingBackLink, Icon, Stars } from "@/components/ui";
+import { Badge, Button, ConfirmationDialog, Divider, FloatingBackLink, Icon, Stars } from "@/components/ui";
 import { useDetailFetch, usePlanSelection } from "@/hooks";
-import { getMyPlan, getPlan } from "@/lib/api";
+import { ApiError, cancelOwnPlan, getOwnPlan, getPlan } from "@/lib/api";
 import { useSession } from "@/lib/auth";
-import { activityDetailRoute, ROUTES } from "@/lib/routes";
+import { activityDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
 import { formatArs, formatDuration, googleMapsUrl } from "@/lib/utils";
 import type {
   FeedbackState,
@@ -142,6 +143,7 @@ function ItineraryStep({
  * act on it. "Compartir" is real — it copies the page URL.
  */
 export function PlanDetailView({ planId }: PlanDetailViewProps) {
+  const router = useRouter();
   const { status: sessionStatus } = useSession();
   const {
     data: plan,
@@ -156,12 +158,12 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
   );
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
+  const [ownPlan, setOwnPlan] = useState<import("@/types").OwnPlanDetail | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
   const heroRef = useRef<HTMLDivElement>(null);
-
-  // CU23. Feedback lives on the owner-only endpoint; the public detail never
-  // carries it. A secondary, non-blocking fetch — a viewer who isn't the
-  // owner just gets a 403/404 here and no feedback section shows. Keyed by
-  // plan id so a stale result from a previous plan never renders.
   const [ownFeedback, setOwnFeedback] = useState<{
     planId: number;
     feedbackState: FeedbackState;
@@ -170,11 +172,43 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
     activityCount: number;
   } | null>(null);
 
+  useEffect(() => {
+    if (sessionStatus !== "authenticated") return;
+    let active = true;
+    getOwnPlan(planId)
+      .then((data) => {
+        if (active) {
+          setIsOwner(true);
+          setOwnPlan(data);
+          setOwnFeedback({
+            planId: data.id,
+            feedbackState: data.feedbackState,
+            feedback: data.feedback,
+            completedAt: data.completedAt ?? data.createdAt,
+            activityCount: data.activityCount,
+          });
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setIsOwner(false);
+          setOwnPlan(null);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [sessionStatus, planId]);
+
+  // CU23. Feedback lives on the owner-only endpoint; the public detail never
+  // carries it. A secondary, non-blocking fetch — a viewer who isn't the
+  // owner just gets a 403/404 here and no feedback section shows. Keyed by
+  // plan id so a stale result from a previous plan never renders.
   const planId_ = plan?.id ?? null;
   useEffect(() => {
     if (sessionStatus !== "authenticated" || planId_ == null) return;
     let active = true;
-    getMyPlan(planId_)
+    getOwnPlan(planId_)
       .then((own) => {
         if (active) {
           setOwnFeedback({
@@ -200,7 +234,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
   async function reconcileFeedback() {
     if (planId_ == null) return;
     try {
-      const own = await getMyPlan(planId_);
+      const own = await getOwnPlan(planId_);
       setOwnFeedback({
         planId: own.id,
         feedbackState: own.feedbackState,
@@ -269,6 +303,23 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
     } catch {
       // Clipboard access can be denied by the browser; the button just
       // stays as "Compartir" instead of throwing at the user.
+    }
+  }
+
+  async function handleConfirmCancel() {
+    setIsCancelling(true);
+    setCancelError(null);
+    try {
+      await cancelOwnPlan(planId);
+      setShowCancelModal(false);
+      router.push(ROUTES.plans);
+    } catch (error: unknown) {
+      setIsCancelling(false);
+      setCancelError(
+        error instanceof ApiError
+          ? error.message
+          : "No pudimos eliminar el plan. Intentá de nuevo.",
+      );
     }
   }
 
@@ -355,6 +406,15 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
       </div>
 
       <div className={styles.content}>
+        {plan.status.key === "cancelled" ? (
+          <div className={styles.cancelledBanner} role="status">
+            <Icon name="triangle-alert" size={20} aria-hidden="true" />
+            <div>
+              <strong>Plan cancelado:</strong> Este plan se conserva como
+              historial de lectura y no acepta modificaciones.
+            </div>
+          </div>
+        ) : null}
         {plan.description ? (
           <p className={`sp-body-lg ${activityStyles.detailDescription}`}>
             {plan.description}
@@ -392,6 +452,17 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
               {formatArs(plan.estimatedTotalCost)}
             </span>
           </div>
+          {ownPlan && ownPlan.peopleCount > 0 ? (
+            <div className={styles.costPerPersonRow}>
+              <span className={styles.costRowLabel}>
+                Costo por persona ({ownPlan.peopleCount}{" "}
+                {ownPlan.peopleCount === 1 ? "persona" : "personas"})
+              </span>
+              <span className={styles.costRowValue}>
+                {formatArs(ownPlan.estimatedCostPerPerson)}
+              </span>
+            </div>
+          ) : null}
         </div>
 
         {feedbackInfo?.feedback ? (
@@ -420,6 +491,24 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
         ) : null}
 
         <div className={styles.actionBar}>
+          {sessionStatus === "authenticated" && isOwner && plan.status.key !== "cancelled" ? (
+            <>
+              <Link href={planEditRoute(planId)} className={styles.ownerActionLink}>
+                <Button variant="ghostLight" className={styles.ownerActionButton}>
+                  <Icon name="pencil" size={16} aria-hidden="true" />
+                  Editar plan
+                </Button>
+              </Link>
+              <Button
+                variant="ghostLight"
+                className={styles.ownerActionButton}
+                onClick={() => setShowCancelModal(true)}
+              >
+                <Icon name="trash-2" size={16} aria-hidden="true" />
+                Eliminar plan
+              </Button>
+            </>
+          ) : null}
           {/* Guardar + Compartir — secondary. Each control reserves its
               widest label so a state swap never changes its box. */}
           <div className={styles.actionSecondary}>
@@ -463,6 +552,21 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           />
         </div>
       </div>
+
+      {showCancelModal ? (
+        <ConfirmationDialog
+          title="¿Eliminar este plan?"
+          confirmLabel="Sí, eliminar plan"
+          confirmingLabel="Eliminando..."
+          cancelLabel="Volver"
+          isConfirming={isCancelling}
+          error={cancelError}
+          onCancel={() => setShowCancelModal(false)}
+          onConfirm={() => void handleConfirmCancel()}
+        >
+          <p>El plan se eliminará de tus planes y ya no estará disponible.</p>
+        </ConfirmationDialog>
+      ) : null}
     </div>
   );
 }

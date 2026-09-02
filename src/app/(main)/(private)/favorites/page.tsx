@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 
-import { PendingScreen } from "@/components/layout";
+import { CollectionsPanel } from "@/components/collection";
+import { Screen } from "@/components/layout";
+
+import styles from "./favorites.module.css";
 
 export const metadata: Metadata = {
   title: "Favoritos",
@@ -8,10 +11,38 @@ export const metadata: Metadata = {
 
 export default function FavoritesPage() {
   return (
-    <PendingScreen
-      title="Favoritos"
-      description="Las solapas de actividades, planes y colecciones guardadas, cada una con su estado vacío."
-      references="CU39–CU43 · PAN 12"
-    />
+    <Screen labelledBy="saved-title">
+      <header className={styles.header}>
+        <p className={`sp-label ${styles.eyebrow}`}>Para vos</p>
+        <h1 id="saved-title" className="sp-h2">
+          Tus favoritos
+        </h1>
+
+        <nav
+          className={styles.sectionNav}
+          aria-label="Favoritos y colecciones"
+        >
+          <ul className={styles.sectionList}>
+            <li>
+              <span className={styles.pendingSection} aria-disabled="true">
+                Planes
+              </span>
+            </li>
+            <li>
+              <span className={styles.pendingSection} aria-disabled="true">
+                Actividades
+              </span>
+            </li>
+            <li>
+              <span className={styles.activeSection} aria-current="page">
+                Colecciones
+              </span>
+            </li>
+          </ul>
+        </nav>
+      </header>
+
+      <CollectionsPanel />
+    </Screen>
   );
 }

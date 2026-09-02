@@ -4,48 +4,63 @@
  * Import only from `@/lib/api`.
  */
 
-export { apiClient } from "./client";
-export type { RequestConfig } from "./client";
+export { apiClient } from './client';
+export type { RequestConfig } from './client';
 
-export { ApiError, normalizeError } from "./errors";
+export { ApiError, normalizeError } from './errors';
 export type {
   ApiErrorType,
   ErrorResponseData,
   ApiErrorOptions,
-} from "./errors";
+} from './errors';
 
-export { getToken, setTokenGetter } from "./token-provider";
-export type { TokenGetter } from "./token-provider";
+export { getToken, setTokenGetter } from './token-provider';
+export type { TokenGetter } from './token-provider';
 
-export { onUnauthorized, notifyUnauthorized } from "./auth-events";
-export type { UnauthorizedListener } from "./auth-events";
+export { onUnauthorized, notifyUnauthorized } from './auth-events';
+export type { UnauthorizedListener } from './auth-events';
 
-export { getApiBaseUrl } from "./config";
+export { getApiBaseUrl } from './config';
 
-export {
-  searchActivities,
-  getActivity,
-  getActivityMapMarkers,
-} from "./activities";
+export { searchActivities, getActivity, getActivityMapMarkers } from './activities';
 export {
   searchPlans,
   getPlan,
-  getMyPlans,
-  getMyPlan,
+  listOwnPlans,
+  createPlan,
+  addPlanActivity,
+  getOwnPlan,
   selectPlan,
   deselectPlan,
-} from "./plans";
-export { submitFeedback } from "./feedback";
-export { listCategories } from "./categories";
-export { getPreferences, updatePreferences } from "./users";
-export { searchPlace } from "./places";
+  updateOwnPlan,
+  cancelOwnPlan,
+  removePlanActivity,
+  generateSuggestedPlan,
+} from './plans';
+export { listCategories } from './categories';
+export { getProfile, updateProfile, changePassword, deleteAccount } from './users';
+export type { UpdateProfileData, ChangePasswordData, DeleteAccountData } from './users';
 export {
-  createPlanRequest,
-  createSurprisePlanRequest,
-  getPlanRequestStatus,
-} from "./plan-requests";
+  changeAdminUserStatus,
+  getAdminUserMetrics,
+  getDashboardMetrics,
+  listAdminUsers,
+  updateAdminUser,
+} from './administration';
 export {
-  getRecommendations,
-  dismissRecommendation,
-  undoDismissRecommendation,
-} from "./plan-recommendations";
+  addActivityToCollection,
+  createCollection,
+  deleteCollection,
+  getCollection,
+  listCollections,
+  removeActivityFromCollection,
+  updateCollection,
+} from './collections';
+
+export {
+  submitFeedback,
+} from './feedback';
+export { getPreferences, updatePreferences } from './users';
+export { searchPlace } from './places';
+export { createPlanRequest, createSurprisePlanRequest, getPlanRequestStatus } from './plan-requests';
+export { getRecommendations, dismissRecommendation, undoDismissRecommendation } from './plan-recommendations';
