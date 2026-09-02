@@ -1,4 +1,4 @@
-import styles from "./AuthForm.module.css";
+import styles from "./PasswordStrength.module.css";
 
 export interface PasswordStrengthProps {
   password: string;
@@ -14,8 +14,9 @@ const LABELS: Record<Strength, string> = {
 };
 
 /** 0 = none, 1 = weak, 2 = medium, 3 = strong. Same heuristic as the v2
- * system design's `PasswordStrength` (length + mixed case/digits) — purely
- * a visual nudge, not the backend's actual password policy. */
+ * system design's `PasswordStrength`/`ProfStrengthBar` (length + mixed
+ * case/digits) — purely a visual nudge, not the backend's actual password
+ * policy (12-128 characters, checked separately). */
 function computeStrength(password: string): Strength {
   if (!password) return 0;
 
@@ -27,6 +28,12 @@ function computeStrength(password: string): Strength {
   return score as Strength;
 }
 
+/**
+ * Purely visual password-strength meter. Ported from the v2 system design's
+ * `PasswordStrength` (`Login.jsx`) / `ProfStrengthBar` (`Profile.jsx`).
+ * Originally lived in `components/auth/` for CU2's signup form; promoted
+ * here once CU6's password-change form needed the same meter.
+ */
 export function PasswordStrength({ password }: PasswordStrengthProps) {
   const strength = computeStrength(password);
 

@@ -1,230 +1,453 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import Image from "next/image";
 
-import { useReducedMotion, useScrollProgress } from "@/hooks";
+import { usePrefersReducedMotion, useIsClient } from "@/lib/motion";
 
-import { INTENT_NODES, STORY } from "./landingContent";
-import { createScene, drawScene, type Scene } from "./storyScene";
+import { STORY } from "./landingContent";
+import { MEDIA } from "./landingMedia";
+import { Reveal } from "./Reveal";
+import {
+  STORY_MOMENTS,
+  STORY_WORDS,
+  getStoryBeats,
+  momentProgress,
+  routePath,
+  type StoryMoment,
+  type StoryStop,
+  type StoryWord,
+} from "./storyScene";
 import styles from "./story.module.css";
 
-/** Colour channels, not finished colours: alpha is applied per draw. */
-const THEME = {
-  ember: "232, 93, 32",
-  gold: "255, 209, 102",
-  electric: "43, 91, 255",
-  ink: "245, 240, 232",
-} as const;
+const COMPACT_QUERY = "(max-width: 900px)";
 
-const DESKTOP_NODES = 24;
-const MOBILE_NODES = 13;
-/** How long the unpinned version takes to play itself, in seconds. */
-const AUTOPLAY_SECONDS = 3.2;
+const STOP_BY_ID: Record<StoryStop, (typeof STORY.stops)[number]> =
+  Object.fromEntries(STORY.stops.map((stop) => [stop.id, stop])) as Record<
+    StoryStop,
+    (typeof STORY.stops)[number]
+  >;
+
+/** The intention each moment grows out of. The join is by `keeps`, so the
+ * word and the moment can never drift apart in the data. */
+const WORD_BY_STOP: Record<StoryStop, StoryWord> = Object.fromEntries(
+  STORY_WORDS.filter((word) => word.keeps).map((word) => [word.keeps, word]),
+) as Record<StoryStop, StoryWord>;
+
+const LOOSE_WORDS = STORY_WORDS.filter((word) => word.keeps === undefined);
+
+/** matchMedia via `useSyncExternalStore` — reads the real value during
+ * render, no setState in an effect. Server snapshot is `false`. */
+function useCompact(): boolean {
+  return useSyncExternalStore(
+    (onChange) => {
+      const mql = window.matchMedia?.(COMPACT_QUERY);
+      if (!mql) return () => {};
+      mql.addEventListener("change", onChange);
+      return () => mql.removeEventListener("change", onChange);
+    },
+    () => window.matchMedia?.(COMPACT_QUERY).matches === true,
+    () => false,
+  );
+}
 
 /**
- * The page's one big visual moment.
+ * The recorrido scene (CU17 · PAN 07).
  *
- * On a wide screen the section is three viewports tall with its contents
- * pinned, so scrolling scrubs the animation rather than moving past it —
- * the visitor is doing the crossing, at their own speed, in both
- * directions.
+ * The third chapter of the landing's argument: the hero promises, the
+ * gallery inspires, and this one demonstrates — eight loose intentions, of
+ * which three turn into an evening that closes.
  *
- * That is the wrong interaction on a phone, where hijacking three
- * viewports of scroll to hold one image still is the most annoying thing
- * a landing page does. So the small-screen build is not a cut-down pin:
- * it is a normal-height section that plays itself once when it arrives.
- * Same scene, same argument, different delivery.
+ * ── Why there is no animation library here ──────────────────────────
  *
- * Under `prefers-reduced-motion` the canvas paints the resolved final
- * frame and never animates. The section still says what it says: the
- * three phases and the three stops are real text underneath it, not
- * captions on a picture.
+ * An earlier version drove a 3D table through a few dozen chained
+ * `useTransform`s from `motion/react`, and was the only section on the page
+ * that did. The hero and the inspiration gallery — the two that work — run
+ * on one rAF-throttled clock that writes CSS custom properties, with every
+ * beat expressed in CSS. This does the same, which removes a rendering
+ * model from the page rather than adding one, and lets the whole scene
+ * run without React re-rendering once.
  */
 export function ImmersiveStory() {
-  const { ref: sectionRef, progress } = useScrollProgress<HTMLElement>();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const reduced = useReducedMotion();
-  const [pinned, setPinned] = useState(true);
-
-  // The loop reads scroll progress from a ref so it never re-subscribes:
-  // rebuilding the scene on every scroll frame would restart the drift.
-  const progressRef = useRef(0);
-  useEffect(() => {
-    progressRef.current = progress;
-  }, [progress]);
-
-  useEffect(() => {
-    const media = window.matchMedia("(min-width: 900px)");
-    setPinned(media.matches);
-
-    function onChange(event: MediaQueryListEvent) {
-      setPinned(event.matches);
-    }
-
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
-  }, []);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const context = canvas.getContext("2d");
-    if (!context) return;
-
-    let scene: Scene | null = null;
-    let width = 0;
-    let height = 0;
-    let frame: number | null = null;
-    let visible = true;
-    let started: number | null = null;
-
-    // Inherits Bricolage from the page rather than hard-coding a stack:
-    // canvas text in a different typeface than the copy beside it is
-    // immediately obvious.
-    const font =
-      getComputedStyle(canvas).fontFamily || "system-ui, sans-serif";
-    const theme = { ...THEME, font };
-
-    function measure() {
-      if (!canvas || !context) return;
-      const rect = canvas.getBoundingClientRect();
-      width = rect.width;
-      height = rect.height;
-      if (width === 0 || height === 0) return;
-
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.round(width * dpr);
-      canvas.height = Math.round(height * dpr);
-      context.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-      const compact = width < 700;
-      scene ??= createScene(INTENT_NODES, {
-        count: compact ? MOBILE_NODES : DESKTOP_NODES,
-        compact,
-      });
-    }
-
-    function paint(now: number) {
-      if (!context || !scene || width === 0) return;
-
-      started ??= now;
-      const elapsed = (now - started) / 1000;
-
-      // Two ways to be at a point in the story: scrubbed by scroll when
-      // pinned, or played once on arrival when not.
-      const value = reduced
-        ? 1
-        : pinned
-          ? progressRef.current
-          : Math.min(elapsed / AUTOPLAY_SECONDS, 1);
-
-      drawScene(context, scene, {
-        progress: value,
-        time: elapsed,
-        width,
-        height,
-        theme,
-        stopLabels: STORY.stops,
-      });
-    }
-
-    function loop(now: number) {
-      paint(now);
-      frame = requestAnimationFrame(loop);
-    }
-
-    measure();
-
-    if (reduced) {
-      // One frame, at the end of the story. No loop at all.
-      paint(performance.now());
-    } else {
-      frame = requestAnimationFrame(loop);
-    }
-
-    // Off-screen frames are wasted frames, and this is the most
-    // expensive thing on the page.
-    const section = sectionRef.current;
-    const gate =
-      section && typeof IntersectionObserver !== "undefined"
-        ? new IntersectionObserver(
-            ([entry]) => {
-              const next = entry?.isIntersecting ?? true;
-              if (next === visible) return;
-              visible = next;
-
-              if (!visible && frame != null) {
-                cancelAnimationFrame(frame);
-                frame = null;
-                return;
-              }
-              if (visible && frame == null && !reduced) {
-                frame = requestAnimationFrame(loop);
-              }
-            },
-            { rootMargin: "120px" },
-          )
-        : null;
-
-    if (section) gate?.observe(section);
-
-    const resize =
-      typeof ResizeObserver === "undefined"
-        ? null
-        : new ResizeObserver(() => {
-            measure();
-            if (reduced) paint(performance.now());
-          });
-    resize?.observe(canvas);
-
-    return () => {
-      if (frame != null) cancelAnimationFrame(frame);
-      gate?.disconnect();
-      resize?.disconnect();
-    };
-  }, [reduced, pinned, sectionRef]);
+  const reduced = usePrefersReducedMotion();
+  const compact = useCompact();
+  const client = useIsClient();
+  // Until the client is running, render the scrubbed scene so the server and
+  // first client render agree; then swap to the static layout for reduced
+  // motion or narrow viewports.
+  const staticMode = client && (reduced || compact);
 
   return (
     <section
-      ref={sectionRef}
       className={styles.section}
-      data-pinned={pinned && !reduced ? "true" : undefined}
+      data-static={staticMode ? "true" : undefined}
       aria-labelledby="story-title"
     >
+      <p className="sp-sr-only">{STORY.summary}</p>
+      {staticMode ? <StaticStory /> : <ScrubStory />}
+    </section>
+  );
+}
+
+/* ── Scroll-scrubbed scene (desktop, motion allowed) ─────────────────── */
+
+/**
+ * The scene's clock.
+ *
+ * Two progress values feed `getStoryBeats`: `enter`, the section's approach,
+ * and `t`, its pinned track. Both come from a single
+ * `getBoundingClientRect` — and the order inside the frame is deliberate and
+ * load-bearing: **read once, compute, then write**. `innerHeight` is cached
+ * and refreshed only on resize, and nothing reads the DOM again after the
+ * first `setProperty`, so a frame costs one style recalculation rather than
+ * one per property. This is the same discipline as
+ * `InspirationGallery.tsx:useSceneClock`; it has to survive every value
+ * added here.
+ */
+function useSceneClock(track: React.RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    const node = track.current;
+    if (!node) return;
+
+    let frame = 0;
+    let viewportHeight = window.innerHeight;
+
+    function write() {
+      frame = 0;
+      if (!node) return;
+
+      // ── read (once) ──
+      const rect = node.getBoundingClientRect();
+
+      // ── compute ──
+      const enter = clamp01(1 - rect.top / Math.max(viewportHeight, 1));
+      const travel = Math.max(rect.height - viewportHeight, 1);
+      const t = clamp01(-rect.top / travel);
+      const beats = getStoryBeats(enter, t);
+
+      // ── write ──
+      node.style.setProperty("--copy", beats.copy.toFixed(3));
+      node.style.setProperty("--sort", beats.sort.toFixed(3));
+      node.style.setProperty("--fade", beats.fade.toFixed(3));
+      node.style.setProperty("--warm", beats.warm.toFixed(3));
+      node.style.setProperty("--route", beats.route.toFixed(3));
+      node.style.setProperty("--payoff", beats.payoff.toFixed(3));
+      for (const moment of STORY_MOMENTS) {
+        node.style.setProperty(
+          `--plan-${moment.id}`,
+          momentProgress(beats.route, moment.at).toFixed(3),
+        );
+      }
+    }
+
+    function schedule() {
+      if (!frame) frame = requestAnimationFrame(write);
+    }
+    function onResize() {
+      viewportHeight = window.innerHeight;
+      schedule();
+    }
+
+    write();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", onResize);
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [track]);
+}
+
+/**
+ * The stage's size in pixels, measured once and on resize.
+ *
+ * The thread needs it because its path is built in real pixels rather than in
+ * a stretched 0..100 viewBox — see `routePath`. This is a layout read, so it
+ * lives in a ResizeObserver and never inside the rAF.
+ */
+function useStageBox(stage: React.RefObject<HTMLDivElement | null>) {
+  const [box, setBox] = useState({ w: 0, h: 0 });
+
+  useEffect(() => {
+    const node = stage.current;
+    if (!node) return;
+
+    const measure = () => {
+      const rect = node.getBoundingClientRect();
+      const next = { w: Math.round(rect.width), h: Math.round(rect.height) };
+      setBox((prev) => (prev.w === next.w && prev.h === next.h ? prev : next));
+    };
+
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [stage]);
+
+  return box;
+}
+
+/**
+ * The thread's own length, published as `--route-len` so CSS can offset a
+ * single dash of exactly that length — one unbroken segment, never a dash
+ * pattern that can tile into fragments.
+ *
+ * Now that the path is authored in the stage's pixels, this length and the
+ * dash array are in the same coordinate system, which is what the previous
+ * version got wrong.
+ */
+function useRouteLength(path: React.RefObject<SVGPathElement | null>, d: string) {
+  useEffect(() => {
+    const node = path.current;
+    if (!node || !d) return;
+    // Absent in jsdom, and historically patchy on very old engines. Without
+    // it the CSS fallback keeps the thread hidden rather than drawing it
+    // whole, which is the safe way to be wrong here.
+    if (typeof node.getTotalLength !== "function") return;
+
+    const length = node.getTotalLength();
+    if (length > 0) node.style.setProperty("--route-len", String(length));
+  }, [path, d]);
+}
+
+const clamp01 = (value: number) => (value < 0 ? 0 : value > 1 ? 1 : value);
+
+function ScrubStory() {
+  const track = useRef<HTMLDivElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
+  const path = useRef<SVGPathElement>(null);
+  useSceneClock(track);
+  const box = useStageBox(stage);
+  const d = box.w > 0 && box.h > 0 ? routePath(box.w, box.h) : "";
+  useRouteLength(path, d);
+
+  return (
+    <div ref={track} className={styles.track}>
       <div className={styles.viewport}>
-        <div className={styles.overlay}>
-          {/* The scene's own box. On a wide screen it is the whole
-              viewport and the copy sits over it; on a phone it is a band
-              between the copy and the phases, so the route can never
-              collide with either. */}
-          <div className={styles.stage}>
-            <canvas ref={canvasRef} className={styles.canvas} aria-hidden="true" />
-          </div>
+        <div className={styles.warm} aria-hidden="true" />
 
-          <div className={styles.copy}>
-            <p className={`sp-label ${styles.kicker}`}>{STORY.kicker}</p>
-            <h2 id="story-title" className={styles.title}>
-              {STORY.title[0]}
-              <span className={styles.titleAccent}> {STORY.title[1]}</span>
-            </h2>
-            <p className={styles.lead}>{STORY.lead}</p>
-          </div>
+        <div ref={stage} className={styles.stage}>
+          {LOOSE_WORDS.map((word) => (
+            <Word key={word.label} word={word} />
+          ))}
 
-          {/* The canvas is decorative, so what it depicts is stated here
-              in text — legible to a screen reader, to a printed page, and
-              to anyone who simply scrolled past it too fast. */}
-          <ol className={styles.phases}>
-            {STORY.phases.map((phase, index) => (
-              <li key={phase.at} className={styles.phase} data-index={index}>
-                <span className={styles.phaseDot} aria-hidden="true" />
-                <span className={styles.phaseAt}>{phase.at}</span>
-                <span className={styles.phaseCopy}>{phase.copy}</span>
-              </li>
-            ))}
-          </ol>
+          {/* The viewBox is the stage's real pixel box, so the drawing
+              surface is 1:1 with the page: no stretch, a uniform stroke
+              without `non-scaling-stroke`, and a dash length that means the
+              same thing as the measured path length. */}
+          <svg
+            className={styles.route}
+            viewBox={`0 0 ${box.w || 100} ${box.h || 100}`}
+            aria-hidden="true"
+          >
+            {d ? <path ref={path} d={d} /> : null}
+          </svg>
+
+          {STORY_MOMENTS.map((moment) => (
+            <Moment key={moment.id} moment={moment} />
+          ))}
+
+          <Copy />
+
+          <p className={styles.payoff} aria-hidden="true">
+            {STORY.title[1]}
+          </p>
         </div>
       </div>
-    </section>
+    </div>
+  );
+}
+
+function Copy() {
+  return (
+    <div className={styles.copy}>
+      <p className={styles.kicker}>{STORY.kicker}</p>
+      <h2 id="story-title" className={styles.title}>
+        {STORY.title[0]}
+      </h2>
+      <p className={styles.lead}>{STORY.lead}</p>
+    </div>
+  );
+}
+
+/**
+ * One intention that does not survive.
+ *
+ * Never struck through and never labelled "descartado" — a judgement drawn
+ * on top of a word is a diagram's way of saying this. It simply loses ink
+ * and drifts by its own vector, which is what "no cierra" actually looks
+ * like.
+ */
+function Word({ word }: { word: StoryWord }) {
+  return (
+    <p
+      className={styles.word}
+      data-size={word.size}
+      style={
+        {
+          "--x": `${word.home.x}%`,
+          "--y": `${word.home.y}%`,
+          "--rot": word.home.rot,
+          // Unitless, in stage units: the CSS multiplies these by `1cqw` /
+          // `1cqh`, because a percentage inside `translate3d` would resolve
+          // against the word's own width instead of the composition.
+          "--drift-x": word.drift?.x ?? 0,
+          "--drift-y": word.drift?.y ?? 0,
+        } as React.CSSProperties
+      }
+    >
+      {word.label}
+    </p>
+  );
+}
+
+/**
+ * One intention that survives, and the moment it turns into.
+ *
+ * These are the same object on purpose. The caption starts at the word's own
+ * home, travels to its anchor as the sort resolves, and then grows a time
+ * above it and a photograph below it — while its text settles from the
+ * intention ("buena comida") into the stop's name ("Cena compartida").
+ * Rendering the word and the moment as two separate elements is what made an
+ * earlier version read as "here are the three resulting activities": the
+ * words vanished and unrelated pictures appeared. Nothing vanishes here.
+ *
+ * The two texts share a single grid cell, and the scale lives on the caption
+ * rather than on the word, so they share type, size, weight and left edge —
+ * the change reads as one word resolving, not as a swap.
+ *
+ * ── Loading ─────────────────────────────────────────────────────────
+ *
+ * `lazy`, never `eager`. These are three large photographs two screens below
+ * the hero, and the hero owns the LCP — `eager` would pull them into the
+ * initial load even at `fetchPriority="low"`. Because the sticky viewport
+ * enters at the section's first beat, the browser starts them roughly two
+ * screens of scroll before the payoff needs them, which is ample. (The
+ * gallery next door uses `eager` for the opposite reason: its photographs
+ * are the first thing that beat shows.)
+ */
+function Moment({ moment }: { moment: StoryMoment }) {
+  const stop = STOP_BY_ID[moment.id];
+  const word = WORD_BY_STOP[moment.id];
+  const image = MEDIA[stop.media];
+
+  return (
+    <figure
+      className={styles.moment}
+      style={{ "--p": `var(--plan-${moment.id}, 0)` } as React.CSSProperties}
+    >
+      <div
+        className={styles.frame}
+        style={
+          {
+            "--x": `${moment.frame.x}%`,
+            "--y": `${moment.frame.y}%`,
+            "--w": `${moment.frame.w}%`,
+            "--h": `${moment.frame.h}%`,
+          } as React.CSSProperties
+        }
+      >
+        <Image
+          className={styles.photo}
+          src={image.src}
+          alt={image.alt}
+          fill
+          sizes={moment.sizes}
+          loading="lazy"
+          decoding="async"
+          style={image.focus ? { objectPosition: image.focus } : undefined}
+        />
+      </div>
+
+      <figcaption
+        className={styles.caption}
+        style={
+          {
+            "--x": `${word.home.x}%`,
+            "--y": `${word.home.y}%`,
+            "--rot": word.home.rot,
+            "--travel-x": moment.anchor.x - word.home.x,
+            "--travel-y": moment.anchor.y - word.home.y,
+          } as React.CSSProperties
+        }
+      >
+        <time className={styles.time} dateTime={stop.time}>
+          {stop.time}
+        </time>
+        <span className={styles.name}>
+          <span className={styles.intention} aria-hidden="true">
+            {word.label}
+          </span>
+          <span className={styles.resolved}>{stop.label}</span>
+        </span>
+      </figcaption>
+    </figure>
+  );
+}
+
+/* ── Static composition (mobile / reduced motion) ────────────────────── */
+
+/**
+ * The same argument without a scroll clock, and on the same cream.
+ *
+ * The sort is stated rather than performed — the three that matter are
+ * already large and dark, the rest already small and quiet — and each moment
+ * is simply its time, its name and its photograph in normal flow. Nothing is
+ * pinned and nothing changes colour.
+ */
+function StaticStory() {
+  return (
+    <div className={styles.staticScene}>
+      <div className={styles.staticCopy}>
+        <Copy />
+      </div>
+
+      <ul className={styles.staticWords} aria-hidden="true">
+        {STORY_WORDS.map((word) => (
+          <li key={word.label} data-keeps={word.keeps ? "true" : "false"}>
+            {word.label}
+          </li>
+        ))}
+      </ul>
+
+      <ol className={styles.staticMoments}>
+        {STORY_MOMENTS.map((moment, index) => {
+          const stop = STOP_BY_ID[moment.id];
+          const image = MEDIA[stop.media];
+          return (
+            <li key={moment.id}>
+              <Reveal delay={index * 70}>
+                <figure className={styles.staticMoment}>
+                  <figcaption className={styles.caption}>
+                    <time className={styles.time} dateTime={stop.time}>
+                      {stop.time}
+                    </time>
+                    <span className={styles.name}>
+                      <span className={styles.resolved}>{stop.label}</span>
+                    </span>
+                  </figcaption>
+                  <div className={styles.frame}>
+                    <Image
+                      className={styles.photo}
+                      src={image.src}
+                      alt={image.alt}
+                      fill
+                      sizes="(max-width: 900px) 92vw, 40vw"
+                      loading="lazy"
+                      decoding="async"
+                      style={image.focus ? { objectPosition: image.focus } : undefined}
+                    />
+                  </div>
+                </figure>
+              </Reveal>
+            </li>
+          );
+        })}
+      </ol>
+
+      <p className={styles.payoff}>{STORY.title[1]}</p>
+    </div>
   );
 }

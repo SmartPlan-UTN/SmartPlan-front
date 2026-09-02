@@ -45,4 +45,12 @@ describe("surpriseGenerationErrorCopy", () => {
     expect(copy.title).toBe("Ocurrió un error al generar el plan sorpresa.");
     expect(copy.body).not.toMatch(/gemini|maps/i);
   });
+
+  it("keeps provider access failures safe and actionable", () => {
+    const copy = surpriseGenerationErrorCopy({
+      code: "GENERATION_PROVIDER_UNAVAILABLE",
+    });
+    expect(copy.title).toMatch(/error al generar el plan sorpresa/i);
+    expect(copy.body).not.toMatch(/gemini|maps|permission_denied/i);
+  });
 });

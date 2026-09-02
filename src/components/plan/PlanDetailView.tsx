@@ -2,13 +2,27 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { ExperienceSummary, FeedbackInvite } from "@/components/feedback";
-import { Badge, Button, Divider, FloatingBackLink, Icon, Stars } from "@/components/ui";
+import {
+  Badge,
+  Button,
+  ConfirmationDialog,
+  Divider,
+  FloatingBackLink,
+  Icon,
+  Stars,
+} from "@/components/ui";
 import { useDetailFetch, usePlanSelection } from "@/hooks";
-import { getMyPlan, getPlan } from "@/lib/api";
+import {
+  ApiError,
+  cancelOwnPlan,
+  getOwnPlan,
+  getPlan,
+} from "@/lib/api";
 import { useSession } from "@/lib/auth";
-import { activityDetailRoute, ROUTES } from "@/lib/routes";
+import { activityDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
 import { formatArs, formatDuration, googleMapsUrl } from "@/lib/utils";
 import type {
   FeedbackState,
@@ -142,7 +156,8 @@ function ItineraryStep({
  * act on it. "Compartir" is real — it copies the page URL.
  */
 export function PlanDetailView({ planId }: PlanDetailViewProps) {
-  const { status: sessionStatus } = useSession();
+  const router = useRouter();
+  const { status: sessionStatus, authenticated } = useSession();
   const {
     data: plan,
     status,
@@ -157,6 +172,11 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
+  const [isOwner, setIsOwner] = useState(false);
+  const [ownPlan, setOwnPlan] = useState<import("@/types").OwnPlanDetail | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   // CU23. Feedback lives on the owner-only endpoint; the public detail never
   // carries it. A secondary, non-blocking fetch — a viewer who isn't the
@@ -174,9 +194,11 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
   useEffect(() => {
     if (sessionStatus !== "authenticated" || planId_ == null) return;
     let active = true;
-    getMyPlan(planId_)
+    getOwnPlan(planId_)
       .then((own) => {
         if (active) {
+          setIsOwner(true);
+          setOwnPlan(own);
           setOwnFeedback({
             planId: own.id,
             feedbackState: own.feedbackState,
@@ -194,13 +216,30 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
     };
   }, [sessionStatus, planId_]);
 
+  async function handleConfirmCancel() {
+    setIsCancelling(true);
+    setCancelError(null);
+    try {
+      await cancelOwnPlan(planId);
+      setShowCancelModal(false);
+      router.push(ROUTES.plans);
+    } catch (error: unknown) {
+      setIsCancelling(false);
+      setCancelError(
+        error instanceof ApiError
+          ? error.message
+          : "No pudimos eliminar el plan. Intentá de nuevo.",
+      );
+    }
+  }
+
   const feedbackInfo =
     ownFeedback && ownFeedback.planId === planId_ ? ownFeedback : null;
 
   async function reconcileFeedback() {
     if (planId_ == null) return;
     try {
-      const own = await getMyPlan(planId_);
+      const own = await getOwnPlan(planId_);
       setOwnFeedback({
         planId: own.id,
         feedbackState: own.feedbackState,
@@ -316,6 +355,8 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
   const statusKey = override?.statusKey ?? plan.status.key;
   const viewerPlanState = override?.viewerPlanState ?? plan.viewerPlanState;
   const statusInfo = planStatusPresentation(statusKey);
+  const isCancelled = statusKey === "cancelled";
+  const isPlanOwner = authenticated && isOwner;
 
   return (
     <div>
@@ -355,6 +396,15 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
       </div>
 
       <div className={styles.content}>
+        {isCancelled ? (
+          <div className={styles.cancelledBanner} role="status">
+            <Icon name="triangle-alert" size={20} aria-hidden="true" />
+            <div>
+              <strong>Plan cancelado:</strong> Este plan se conserva como
+              historial de lectura y no acepta modificaciones.
+            </div>
+          </div>
+        ) : null}
         {plan.description ? (
           <p className={`sp-body-lg ${activityStyles.detailDescription}`}>
             {plan.description}
@@ -392,6 +442,16 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
               {formatArs(plan.estimatedTotalCost)}
             </span>
           </div>
+          {ownPlan && ownPlan.peopleCount > 0 ? (
+            <div className={styles.costRow}>
+              <span className={styles.costRowLabel}>
+                Costo por persona ({ownPlan.peopleCount})
+              </span>
+              <span className={styles.costRowValue}>
+                {formatArs(ownPlan.estimatedCostPerPerson)}
+              </span>
+            </div>
+          ) : null}
         </div>
 
         {feedbackInfo?.feedback ? (
@@ -420,6 +480,26 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
         ) : null}
 
         <div className={styles.actionBar}>
+          {isPlanOwner && !isCancelled ? (
+            <div className={styles.actionSecondary}>
+              <Link href={planEditRoute(planId)} className={styles.editLink}>
+                <Button variant="ghostLight">
+                  <Icon name="pencil" size={16} aria-hidden="true" />
+                  Editar plan
+                </Button>
+              </Link>
+              <Button
+                variant="ghostLight"
+                onClick={() => {
+                  setCancelError(null);
+                  setShowCancelModal(true);
+                }}
+              >
+                <Icon name="trash-2" size={16} aria-hidden="true" />
+                Eliminar plan
+              </Button>
+            </div>
+          ) : null}
           {/* Guardar + Compartir — secondary. Each control reserves its
               widest label so a state swap never changes its box. */}
           <div className={styles.actionSecondary}>
@@ -463,6 +543,20 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           />
         </div>
       </div>
+      {showCancelModal ? (
+        <ConfirmationDialog
+          title="¿Eliminar este plan?"
+          confirmLabel="Sí, eliminar plan"
+          confirmingLabel="Eliminando..."
+          cancelLabel="Volver"
+          isConfirming={isCancelling}
+          error={cancelError}
+          onCancel={() => setShowCancelModal(false)}
+          onConfirm={() => void handleConfirmCancel()}
+        >
+          <p>El plan se eliminará de tus planes y ya no estará disponible.</p>
+        </ConfirmationDialog>
+      ) : null}
     </div>
   );
 }

@@ -1,449 +1,389 @@
-/* ================================================================
-   Inspiration gallery — the first thing the hero scrolls into.
+/**
+ * The inspiration scene.
+ *
+ * Two rules hold this file together:
+ *
+ *  1. Nothing animates layout. Every tile is placed once at its final
+ *     frame with left/top/width/height in percent of the stage, and only
+ *     `transform` and `opacity` are driven by the scroll clock.
+ *  2. No text is ever the thing being read while it is partly
+ *     transparent, and no text is ever over a photograph. `--copy`
+ *     completes during the section's approach and never comes back down,
+ *     and the lead photograph's left edge dissolves into the page's cream
+ *     across the beat where it reaches under the copy — so the type is
+ *     `--char` on clean cream at every scroll position, never white,
+ *     never halfway, never blurred.
+ */
 
-   Six tiles at four sizes. The asymmetry is the content: a grid of
-   equal cards says "here is a list of categories", and this section
-   has to say "there is more here than you were thinking of".
-   ================================================================ */
-
+/* ── Where this section sits in the stack, and why it matters ───────
+ *
+ * Behind the hero, and with no ground of its own.
+ *
+ * It used to be an opaque cream rectangle at `z-index: 4`, which cost two
+ * things at once. It painted a flat plane over the hero's last 45px, and
+ * the hero's gradient is still a hair off cream there — so its top edge
+ * read as a horizontal seam you could point at. And, being opaque and
+ * above the hero, that same edge sliced the hero's floating objects in
+ * half: the notebook, the headphones and the cup all died on a straight
+ * line instead of finishing their departure.
+ *
+ * Both go away by removing the plane rather than by feathering it. The
+ * page's own `body` is already `--cream`, and the hero's gradient ends on
+ * `--cream` too, so the two surfaces were always the same colour — the
+ * only thing that ever made a boundary visible was this layer. At
+ * `z-index: -1` (contained by the sequence wrapper's `isolation`) the
+ * hero paints over the short overlap instead, so the objects keep every
+ * pixel of their trajectory and the lead photograph slides out from under
+ * the hero rather than being stamped on top of it. No timing changed.
+ */
 .section {
   position: relative;
-  /* Same reason as the showcase: below 620px the grid becomes a
-     horizontal snap rail, and a scroll container otherwise contributes
-     its full content width to the document's own horizontal scroll. */
-  overflow-x: clip;
-  padding-block: clamp(56px, 9vh, 104px) clamp(64px, 10vh, 120px);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--ember) 5%, var(--cream)) 0%,
-      var(--cream) 26%,
-      var(--cream) 100%
-    );
+  z-index: -1;
+  isolation: isolate;
+  /* A short overlap so no sub-pixel gap can open between the two; the
+     continuity itself comes from the `--enter` clock, which starts the
+     photograph while the hero is still on screen. */
+  margin-top: calc(-1 * clamp(40px, 5svh, 72px));
 }
 
-.shell {
+/* ── Scrubbed scene ─────────────────────────────────────────────────── */
+
+.track {
+  --enter: 0;
+  --copy: 0;
+  --shift: 0;
+  --open: 0;
+  position: relative;
+  height: 200svh;
+}
+
+.viewport {
+  position: sticky;
+  top: var(--navbar-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(100svh - var(--navbar-h));
+  /* `clip` keeps the lead photograph's near-bleed entrance from spilling
+     into the page without creating a scroll container. */
+  overflow: clip;
+  padding: clamp(18px, 3vh, 38px) clamp(20px, 4vw, 52px);
+}
+
+.stage {
+  position: relative;
+  width: min(100%, 1280px);
+  height: 100%;
+}
+
+/* ── Tiles ──────────────────────────────────────────────────────────── */
+
+.tile {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--w);
+  height: var(--h);
+  margin: 0;
+  will-change: transform, opacity;
+}
+
+.frame {
+  position: relative;
   width: 100%;
-  max-width: var(--max-w);
-  padding-inline: clamp(20px, 5vw, 48px);
-  margin-inline: auto;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 14px;
+  /* Held while the photograph decodes, so nothing flashes white. */
+  background: #efe6da;
 }
 
-/* ── Header ────────────────────────────────────────────────────── */
+.photo {
+  object-fit: cover;
+}
 
-.header {
-  max-width: 700px;
-  margin-bottom: clamp(32px, 5vh, 56px);
+/* The lead arrives near-bleed and full-height — scaled up about a point
+   to its right, so it runs off the right edge and past the top and
+   bottom of the viewport — then retreats into a portrait as the scene
+   pins, and takes one more small step back as the rest deploys. */
+.tile[data-role="lead"] {
+  z-index: 1;
+  opacity: clamp(0, calc(var(--enter, 0) * 2.6), 1);
+  transform:
+    translate3d(0, calc((1 - var(--enter, 0)) * 7%), 0)
+    scale(calc(1 + (1 - var(--shift, 0)) * 0.46 - var(--open, 0) * 0.045));
+  transform-origin: 72% 50%;
+}
+
+/* The photograph's left edge, dissolved into the page.
+ *
+ * Scaling about a point inside the frame means the entrance grows the
+ * picture leftwards, under the copy column — which is what has to be
+ * handled, because dark type on a photograph is the illegibility this
+ * section replaces. Two earlier attempts got it wrong in opposite
+ * directions: a radial ellipse anchored to the *copy* washed a smudge
+ * across the middle of the picture, and pinning the scale origin to the
+ * frame's left edge fixed the overlap but made the photograph enormous
+ * and gave it a hard vertical edge.
+ *
+ * What works is a fade that belongs to the photograph rather than to the
+ * text: a linear ramp along its own left edge, solid cream where the copy
+ * sits and transparent by the time it is over the picture, so the image
+ * emerges out of the page instead of being stamped on it. It animates on
+ * `opacity` alone, and it is fully gone by the time the frame has
+ * retreated clear of the copy — the final portrait keeps four clean
+ * edges. The 3.4 is not decorative: the photograph stops overlapping the
+ * copy column at `--shift ~= 0.70`, and that multiplier is what holds the
+ * fade at full strength until exactly there, before easing it away to
+ * nothing by the final frame. */
+.tile[data-role="lead"]::before {
+  position: absolute;
+  z-index: 1;
+  inset: 0 auto 0 0;
+  width: 44%;
+  background: linear-gradient(
+    90deg,
+    var(--cream) 0%,
+    var(--cream) 42%,
+    rgb(245 240 232 / 0%) 100%
+  );
+  opacity: clamp(0, calc((1 - var(--shift, 0)) * 3.4), 1);
+  content: "";
+  pointer-events: none;
+}
+
+.tile[data-role="lead"] .frame {
+  border-radius: clamp(14px, 1.4vw, 20px);
+}
+
+/* Everything else travels in from the edge it will settle against, each
+   on its own slice of the deploy beat. */
+.tile[data-role="second"],
+.tile[data-role="satellite"] {
+  z-index: 2;
+  opacity: var(--p, 0);
+  transform:
+    translate3d(
+      calc(var(--from-x) * (1 - var(--p, 0))),
+      calc(var(--from-y) * (1 - var(--p, 0))),
+      0
+    )
+    scale(calc(0.93 + var(--p, 0) * 0.07));
+}
+
+.tile[data-role="satellite"] .frame {
+  border-radius: 11px;
+}
+
+/* ── Labels ─────────────────────────────────────────────────────────── */
+
+/* One type treatment, five placements. Four identical badges over four
+   rectangles is what turns a composition back into a row of cards. */
+.label {
+  position: absolute;
+  color: var(--fg-2);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  line-height: 1.3;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tile[data-label="below-left"] .label {
+  top: calc(100% + 10px);
+  left: 2px;
+}
+
+.tile[data-label="below-right"] .label {
+  top: calc(100% + 10px);
+  right: 2px;
+}
+
+.tile[data-label="above"] .label {
+  bottom: calc(100% + 10px);
+  left: 2px;
+}
+
+/* The only one that sits on a photograph, so the only one that needs a
+   scrim of its own. */
+.tile[data-label="inside"] .label {
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 20px 9px 7px;
+  border-radius: 0 0 11px 11px;
+  font-size: 11px;
+  background: linear-gradient(180deg, transparent, rgb(25 20 17 / 78%));
+  color: var(--white);
+  white-space: normal;
+}
+
+/* ── Copy ───────────────────────────────────────────────────────────── */
+
+.copy {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  left: 1%;
+  width: min(35%, 470px);
+  opacity: var(--copy, 0);
+  transform: translate3d(0, calc(-50% + (1 - var(--copy, 0)) * 16px), 0);
+  will-change: transform, opacity;
 }
 
 .kicker {
-  margin: 0 0 var(--s-3);
+  margin: 0 0 clamp(12px, 1.6vw, 18px);
   color: var(--ember);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .title {
+  max-width: 13ch;
   margin: 0;
-  font-size: clamp(28px, 4.4vw, 50px);
+  color: var(--char);
+  font-size: clamp(36px, 4.6vw, 68px);
   font-weight: var(--w-display);
-  letter-spacing: var(--track-h1);
-  line-height: 1.05;
+  letter-spacing: -0.035em;
+  line-height: 0.94;
   text-wrap: balance;
 }
 
+/* Second line in the display serif and in ember — the same pairing the
+   hero uses for "Recibí un plan.", so the two sections read as one voice. */
 .titleSoft {
-  color: var(--fg-3);
+  display: block;
+  color: var(--ember);
+  font-family: var(--font-display-serif);
+  font-weight: 600;
+  font-optical-sizing: auto;
+  letter-spacing: -0.02em;
 }
 
 .lead {
-  max-width: 56ch;
-  margin: var(--s-4) 0 0;
+  max-width: 34ch;
+  margin: clamp(18px, 2vw, 26px) 0 0;
   color: var(--fg-2);
-  font-size: clamp(15px, 1.5vw, 17px);
+  font-size: clamp(15px, 1.25vw, 17px);
   line-height: 1.6;
   text-wrap: pretty;
 }
 
-/* ── Grid ──────────────────────────────────────────────────────── */
+/* ── Static composition (mobile, reduced motion) ────────────────────── */
 
-.gridWrap {
+.staticScene {
   width: 100%;
-  max-width: 1320px;
-  padding-inline: clamp(20px, 5vw, 48px);
+  max-width: 1280px;
+  padding: 0 clamp(20px, 5vw, 52px) clamp(56px, 7vh, 88px);
   margin-inline: auto;
 }
 
-.grid {
+.staticTile {
+  position: relative;
+  margin: 0;
+}
+
+.staticTile .frame {
+  height: clamp(320px, 46svh, 460px);
+  border-radius: 16px;
+}
+
+.staticTile[data-role="lead"] .frame {
+  height: clamp(400px, 58svh, 560px);
+}
+
+.staticTile .label {
+  position: static;
+  display: block;
+  margin-top: 10px;
+  white-space: normal;
+}
+
+.staticCopy {
+  padding: clamp(28px, 5vw, 44px) 0 clamp(30px, 5vw, 48px);
+}
+
+.staticCopy .copy {
+  position: static;
+  width: 100%;
+  max-width: 560px;
+  opacity: 1;
+  transform: none;
+}
+
+.staticCopy .title {
+  max-width: 15ch;
+  font-size: clamp(34px, 8.6vw, 52px);
+}
+
+.staticCopy .lead {
+  max-width: 40ch;
+}
+
+/* Asymmetric on purpose: the tall second photograph spans both columns'
+   worth of attention, the three fragments do not line up into a grid. */
+.staticGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-template-rows: clamp(180px, 22vw, 240px) clamp(180px, 22vw, 240px) clamp(200px, 24vw, 260px);
-  grid-template-areas:
-    "mesa mesa cordillera noche"
-    "mesa mesa cordillera cafe"
-    "informal informal vinos vinos";
-  gap: clamp(10px, 1.2vw, 18px);
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(14px, 3vw, 22px) clamp(12px, 2.6vw, 18px);
   padding: 0;
   margin: 0;
   list-style: none;
 }
 
-.tile { grid-area: var(--area); }
-.tile[data-id="mesa"]       { --area: mesa; }
-.tile[data-id="cordillera"] { --area: cordillera; }
-.tile[data-id="noche"]      { --area: noche; }
-.tile[data-id="cafe"]       { --area: cafe; }
-.tile[data-id="informal"]   { --area: informal; }
-.tile[data-id="vinos"]      { --area: vinos; }
-
-/* ── Tile ──────────────────────────────────────────────────────── */
-
-.tile {
-  position: relative;
-  min-width: 0;
-  perspective: 900px;
+.staticGrid li[data-role="second"] {
+  grid-column: 1 / -1;
 }
 
-/* ── Staggered entrance ────────────────────────────────────────── */
-/* The grid wrapper is what the observer watches; the tiles key off the
-   class it gains, each a beat behind the last. Doing it in CSS keeps it
-   to one observer for six tiles instead of six.
-
-   The resting state is visible: only a browser that has actually applied
-   `sp-reveal-in` ever hides them, so a tile can never get stuck at
-   opacity 0. */
-:global(.sp-reveal-in) .tile {
-  animation: sp-tile-in 620ms var(--ease-out) both;
+.staticGrid li[data-role="second"] .frame {
+  height: clamp(280px, 40svh, 380px);
 }
 
-@keyframes sp-tile-in {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 26px, 0) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-.tile:nth-child(1) { animation-delay: 0ms; }
-.tile:nth-child(2) { animation-delay: 70ms; }
-.tile:nth-child(3) { animation-delay: 140ms; }
-.tile:nth-child(4) { animation-delay: 210ms; }
-.tile:nth-child(5) { animation-delay: 280ms; }
-.tile:nth-child(6) { animation-delay: 350ms; }
-
-.tileInner {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  border-radius: var(--r-card);
-  transform:
-    rotateX(var(--tilt-x, 0deg))
-    rotateY(var(--tilt-y, 0deg));
-  transform-style: preserve-3d;
-  transition:
-    transform var(--d-base) var(--ease-out),
-    box-shadow var(--d-base) var(--ease-out);
-}
-
-.tile:hover .tileInner {
-  box-shadow: 0 26px 50px -28px color-mix(in srgb, var(--char) 62%, transparent);
-}
-
-/* ── Sheen ─────────────────────────────────────────────────────── */
-/* A band of light crossing the tile once on hover. It reads as glass
-   catching a reflection rather than as a highlight being switched on,
-   which is the difference between this and a plain brightness change.
-   `translate` only — a moving gradient position would repaint the whole
-   tile every frame. */
-.tileInner::after {
-  position: absolute;
-  z-index: 2;
-  top: -60%;
-  left: -70%;
-  width: 45%;
-  height: 220%;
-  background: linear-gradient(
-    100deg,
-    transparent 0%,
-    color-mix(in srgb, var(--white) 26%, transparent) 46%,
-    color-mix(in srgb, var(--white) 40%, transparent) 50%,
-    color-mix(in srgb, var(--white) 26%, transparent) 54%,
-    transparent 100%
-  );
-  transform: translate3d(0, 0, 0) rotate(8deg);
-  opacity: 0;
-  content: "";
-  pointer-events: none;
-}
-
-.tile:hover .tileInner::after {
-  animation: sp-sheen 900ms var(--ease-out) both;
-}
-
-@keyframes sp-sheen {
-  from { opacity: 0; transform: translate3d(0, 0, 0) rotate(8deg); }
-  18%  { opacity: 1; }
-  to   { opacity: 0; transform: translate3d(360%, 0, 0) rotate(8deg); }
-}
-
-/* ── The colour the tile holds while its photograph loads ──────── */
-/* Two offset radial washes over a base, so the placeholder has a light
-   source and a direction rather than reading as a flat swatch — and so
-   a slow connection shows a composed page in the brand's palette
-   instead of six grey rectangles. */
-
-.tileField {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 90% 70% at 18% 12%, var(--wash-1), transparent 62%),
-    radial-gradient(ellipse 80% 90% at 88% 92%, var(--wash-2), transparent 66%),
-    var(--base);
-}
-
-.tile[data-tone="char"] {
-  --base: var(--char);
-  --wash-1: color-mix(in srgb, var(--ember) 34%, transparent);
-  --wash-2: color-mix(in srgb, var(--electric) 22%, transparent);
-  --ink: var(--fg-on-dark);
-  --ink-2: var(--fg-on-dark-2);
-}
-
-.tile[data-tone="ember"] {
-  --base: color-mix(in srgb, var(--ember) 88%, var(--char));
-  --wash-1: color-mix(in srgb, var(--gold) 40%, transparent);
-  --wash-2: color-mix(in srgb, var(--char) 40%, transparent);
-  --ink: var(--white);
-  --ink-2: color-mix(in srgb, var(--white) 72%, transparent);
-}
-
-/* Dusk over the cordillera, not a product-page blue. At full strength
-   `--electric` is the one colour in the palette that can make this page
-   look like generic SaaS, so it is taken well down into char and lit
-   from the top-left with gold — the way that sky actually goes at the
-   end of an afternoon here. */
-.tile[data-tone="electric"] {
-  --base: color-mix(in srgb, var(--electric) 46%, var(--char));
-  --wash-1: color-mix(in srgb, var(--gold) 34%, transparent);
-  --wash-2: color-mix(in srgb, var(--ember) 26%, transparent);
-  --ink: var(--white);
-  --ink-2: color-mix(in srgb, var(--white) 74%, transparent);
-}
-
-.tile[data-tone="gold"] {
-  --base: color-mix(in srgb, var(--gold) 74%, var(--cream));
-  --wash-1: color-mix(in srgb, var(--white) 60%, transparent);
-  --wash-2: color-mix(in srgb, var(--ember) 30%, transparent);
-  --ink: var(--char);
-  --ink-2: color-mix(in srgb, var(--char) 68%, transparent);
-}
-
-.tile[data-tone="cream"] {
-  --base: var(--surface-card);
-  --wash-1: color-mix(in srgb, var(--gold) 24%, transparent);
-  --wash-2: color-mix(in srgb, var(--ember) 14%, transparent);
-  --ink: var(--char);
-  --ink-2: var(--fg-2);
-}
-
-/* ── Media ─────────────────────────────────────────────────────── */
-
-.tileMedia {
-  position: absolute;
-  inset: 0;
-}
-
-.tilePhoto {
-  object-fit: cover;
-  transform: scale(1.01);
-  transition: transform 720ms var(--ease-out);
-}
-
-/* ── Scroll parallax, where the browser can do it for free ─────── */
-/* A scroll-driven animation: the image drifts inside its frame as the
-   tile crosses the viewport, with no scroll listener and no JavaScript
-   at all. Behind `@supports` because it is Chromium-only for now — where
-   it is missing, the tile is simply a still photograph, which is not a
-   degraded experience, just a quieter one. */
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .tilePhoto {
-      animation: sp-tile-parallax linear both;
-      animation-timeline: view();
-      animation-range: cover 0% cover 100%;
-    }
-
-    @keyframes sp-tile-parallax {
-      from { transform: scale(1.12) translate3d(0, -2.2%, 0); }
-      to   { transform: scale(1.12) translate3d(0, 2.2%, 0); }
-    }
-
-    /* Hover still wins: the parallax keeps the frame alive, the hover
-       zoom is the response to being pointed at. */
-    .tile:hover .tilePhoto {
-      animation-play-state: paused;
-    }
-  }
-}
-
-.tile:hover .tilePhoto {
-  transform: scale(1.07);
-}
-
-/* Every tile carries type over a photograph, so every tile needs the
-   scrim — always, not on hover. */
-.tileScrim {
-  position: absolute;
-  inset: 0;
-  /* Heavier than it looks like it needs to be. These photographs are
-     warm and bright right where the type sits, and a polite scrim left
-     titles fighting a laughing face for the same pixels. The top stays
-     almost clear so the picture is still the point. */
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--char) 16%, transparent) 0%,
-    color-mix(in srgb, var(--char) 4%, transparent) 24%,
-    color-mix(in srgb, var(--char) 34%, transparent) 46%,
-    color-mix(in srgb, var(--char) 72%, transparent) 66%,
-    color-mix(in srgb, var(--char) 92%, transparent) 84%,
-    var(--char) 100%
-  );
-}
-
-
-/* ── Body ──────────────────────────────────────────────────────── */
-
-/* Type always sits on the scrim, never on the raw photograph, so the
-   ink is the same on every tile regardless of the picture underneath. */
-.tileBody {
-  position: relative;
-  padding: clamp(14px, 1.8vw, 24px);
-  color: var(--fg-on-dark);
-  --ink-2: color-mix(in srgb, var(--white) 80%, transparent);
-}
-
-.tileKicker {
-  display: inline-flex;
-  text-shadow: 0 1px 8px color-mix(in srgb, var(--char) 55%, transparent);
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 var(--s-2);
-  color: var(--ink-2);
-  font-size: var(--t-label);
-  font-weight: var(--w-label);
-  letter-spacing: var(--track-label);
-  text-transform: uppercase;
-}
-
-.tileTitle {
-  margin: 0;
-  text-shadow: 0 1px 12px color-mix(in srgb, var(--char) 62%, transparent);
-  font-size: clamp(17px, 1.9vw, 23px);
-  font-weight: var(--w-heading);
-  letter-spacing: -0.01em;
-  line-height: 1.15;
-  text-wrap: balance;
-}
-
-/* The caption is the reward for looking: it stays out of the way until
-   the tile is engaged, so the grid at rest reads as titles, not copy. */
-.tileCaption {
-  overflow: hidden;
-  max-height: 0;
-  margin: 0;
-  color: var(--ink-2);
-  font-size: 13.5px;
-  line-height: 1.5;
-  opacity: 0;
-  transform: translateY(6px);
-  transition:
-    max-height var(--d-base) var(--ease-out),
-    opacity var(--d-base) var(--ease-out),
-    transform var(--d-base) var(--ease-out),
-    margin var(--d-base) var(--ease-out);
-}
-
-.tile:hover .tileCaption,
-.tile:focus-within .tileCaption {
-  max-height: 4.5em;
-  margin-top: var(--s-2);
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* ── Responsive ────────────────────────────────────────────────── */
-
-@media (max-width: 900px) {
-  .grid {
-    grid-template-rows: clamp(170px, 26vw, 210px) clamp(170px, 26vw, 210px) clamp(170px, 26vw, 210px) clamp(190px, 28vw, 230px);
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-areas:
-      "mesa mesa"
-      "cordillera noche"
-      "cafe vinos"
-      "informal informal";
-  }
+.staticGrid li:last-child .frame {
+  height: clamp(200px, 26svh, 260px);
 }
 
 @media (max-width: 620px) {
-  .gridWrap {
-    padding-inline: 0;
+  .staticTile[data-role="lead"] .frame {
+    height: clamp(360px, 54svh, 460px);
   }
 
-  /* A two-up grid at phone width makes every tile too small to carry a
-     title and a photograph at once. A snap rail keeps them at a size
-     where they still read, and browsing sideways is the right gesture
-     for a section that exists to be browsed. */
-  .grid {
-    display: flex;
-    grid-template-areas: none;
-    gap: var(--s-3);
-    padding-inline: clamp(20px, 5vw, 48px);
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-  }
-
-  .grid::-webkit-scrollbar {
-    display: none;
-  }
-
-  .tile {
-    flex: 0 0 78%;
-    height: 340px;
-    scroll-snap-align: center;
-  }
-
-  /* Nothing hovers on a touch screen, so the reward has to be on by
-     default or it never arrives. */
-  .tileCaption {
-    max-height: 4.5em;
-    margin-top: var(--s-2);
-    opacity: 1;
-    transform: none;
+  .staticGrid {
+    gap: 18px 12px;
   }
 }
 
+/* ── Reduced motion ─────────────────────────────────────────────────── */
+
 @media (prefers-reduced-motion: reduce) {
-  .tileInner,
-  .tilePhoto,
-  .tileCaption {
-    transition: none;
+  .section {
+    margin-top: 0;
   }
 
-  :global(.sp-reveal-in) .tile,
-  .tile:hover .tileInner::after {
-    animation: none;
+  /* The static composition is what renders here, but if the scrubbed one
+     is ever reached — the instant before `staticMode` resolves — it must
+     not be invisible. */
+  .track {
+    height: auto;
+  }
+
+  .viewport {
+    position: static;
+    height: auto;
+    overflow: visible;
+  }
+
+  .tile,
+  .copy {
     opacity: 1;
     transform: none;
+    will-change: auto;
   }
 
-  .tile:hover .tilePhoto {
-    transform: scale(1.01);
+  .tile[data-role="lead"]::before {
+    opacity: 0;
   }
 }

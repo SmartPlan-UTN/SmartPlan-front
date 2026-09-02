@@ -11,12 +11,12 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
 }));
 
-const getMyPlans = vi.hoisted(() => vi.fn());
+const listOwnPlans = vi.hoisted(() => vi.fn());
 const submitFeedback = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/api")>()),
-  getMyPlans,
+  listOwnPlans,
   submitFeedback,
 }));
 
@@ -62,7 +62,7 @@ beforeEach(() => {
 
 describe("HistoryView (CU23 · PAN 13)", () => {
   it("shows the empty state when there are no plans", async () => {
-    getMyPlans.mockResolvedValue(page([]));
+    listOwnPlans.mockResolvedValue(page([]));
     render(<HistoryView />);
     expect(
       await screen.findByText(/tus planes guardados aparecerán acá/i)
@@ -70,10 +70,10 @@ describe("HistoryView (CU23 · PAN 13)", () => {
   });
 
   it("recovers from a load error with retry", async () => {
-    getMyPlans.mockRejectedValueOnce(
+    listOwnPlans.mockRejectedValueOnce(
       new ApiError({ message: "boom", type: "NETWORK" })
     );
-    getMyPlans.mockResolvedValueOnce(page([plan()]));
+    listOwnPlans.mockResolvedValueOnce(page([plan()]));
     render(<HistoryView />);
 
     await userEvent.click(await screen.findByRole("button", { name: /reintentar/i }));
@@ -83,7 +83,7 @@ describe("HistoryView (CU23 · PAN 13)", () => {
   });
 
   it("offers the feedback invite only when feedback is available", async () => {
-    getMyPlans.mockResolvedValue(
+    listOwnPlans.mockResolvedValue(
       page([
         plan({ id: 1, feedbackState: "available" }),
         plan({ id: 2, title: "Museo", feedbackState: "not_available" }),
@@ -109,7 +109,7 @@ describe("HistoryView (CU23 · PAN 13)", () => {
   });
 
   it("shows the rated line for a submitted plan", async () => {
-    getMyPlans.mockResolvedValue(
+    listOwnPlans.mockResolvedValue(
       page([plan({ feedbackState: "submitted", feedback: FEEDBACK })])
     );
     render(<HistoryView />);
@@ -122,7 +122,7 @@ describe("HistoryView (CU23 · PAN 13)", () => {
   });
 
   it("hides the invite after 'Ahora no' and flips to rated after submitting", async () => {
-    getMyPlans.mockResolvedValue(
+    listOwnPlans.mockResolvedValue(
       page([plan({ id: 9, feedbackState: "available" })])
     );
     submitFeedback.mockResolvedValue(FEEDBACK);
@@ -148,7 +148,7 @@ describe("HistoryView (CU23 · PAN 13)", () => {
   });
 
   it("reconciles the card when the feedback was already submitted", async () => {
-    getMyPlans
+    listOwnPlans
       .mockResolvedValueOnce(page([plan({ feedbackState: "available" })]))
       .mockResolvedValueOnce(
         page([plan({ feedbackState: "submitted", feedback: FEEDBACK })])
@@ -172,7 +172,7 @@ describe("HistoryView (CU23 · PAN 13)", () => {
       })
     );
 
-    await waitFor(() => expect(getMyPlans).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(listOwnPlans).toHaveBeenCalledTimes(2));
     expect(await screen.findByText(/muy bueno/i)).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });

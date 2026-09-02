@@ -22,5 +22,9 @@ export default defineConfig({
     // Devuelve los espías a su implementación original después de cada test.
     // Sin esto, un vi.spyOn() sin restaurar se filtra a las suites siguientes.
     restoreMocks: true,
+    // Los formularios de plan esperan un debounce real de 400ms. Con los 5s
+    // por defecto, un `findBy` que espera ese debounce se queda sin margen
+    // en una máquina cargada y la suite falla de forma intermitente.
+    testTimeout: 15000,
   },
 });

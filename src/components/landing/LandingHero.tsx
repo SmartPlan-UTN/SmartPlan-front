@@ -1,25 +1,35 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 
 import {
   GenerationState,
   PlanComposer,
   PlanResults,
   SurpriseButton,
-  detectMood,
   type PlanComposerHandle,
   type SurpriseCoords,
   type SurpriseResolvedMeta,
 } from "@/components/home";
-import { MoodBackground, type Mood } from "@/components/ui";
 import type { UsePlanRequestPollingResult } from "@/hooks";
 import type { PlanRequestContext } from "@/types";
 
-import { HeroAtmosphere } from "./HeroAtmosphere";
+import { HeroAmbient } from "./HeroAmbient";
+import { HeroObjects } from "./HeroObjects";
 import { IntentChips } from "./IntentChips";
 import { HERO } from "./landingContent";
 import styles from "./hero.module.css";
+
+/**
+ * Purely decorative and canvas-heavy — never wanted server-side, and it
+ * carries its own `requestAnimationFrame` loop, so it splits out of the
+ * initial bundle and loads only once the hero is on screen.
+ */
+const HeroAtmosphere = dynamic(
+  () => import("./HeroAtmosphere").then((m) => m.HeroAtmosphere),
+  { ssr: false },
+);
 
 export interface LandingHeroProps {
   /** Lifted into the page so the closing field drives the same state. */
@@ -72,11 +82,21 @@ export function LandingHero({
   prefill,
   onPrefillConsumed,
 }: LandingHeroProps) {
-  const [mood, setMood] = useState<Mood>("idle");
   const [writing, setWriting] = useState(false);
   const composer = useRef<PlanComposerHandle>(null);
+  const hero = useRef<HTMLElement>(null);
 
-  const { phase, plans, failure, keepWaiting, discard, retry, lastSubmission } = planning;
+  const {
+    phase,
+    plans,
+    failure,
+    keepWaiting,
+    discard,
+    retry,
+    lastSubmission,
+    applySelectionChange,
+    refresh,
+  } = planning;
   const canRepeat = lastSubmission?.kind === "auto";
   const generationMode = lastSubmission?.kind === "surprise" ? "surprise" : "auto";
   const composing = phase === "idle";
@@ -97,35 +117,81 @@ export function LandingHero({
     onPrefillConsumed?.();
   }, [prefill, composing, onPrefillConsumed]);
 
+  // A few pixels of pointer parallax across the whole object field, on
+  // fine pointers only. Writes `--px`/`--py` (−0.5..0.5) on the hero
+  // root; `hero-objects.module.css` scales each object against its own
+  // depth factor. rAF-throttled, same shape as the scroll effect above.
+  useEffect(() => {
+    const node = hero.current;
+    if (!node || !composing) return;
+    const heroNode: HTMLElement = node;
+    if (typeof window.matchMedia !== "function") return;
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    let frame = 0;
+    let px = 0;
+    let py = 0;
+
+    function apply() {
+      frame = 0;
+      heroNode.style.setProperty("--px", px.toFixed(3));
+      heroNode.style.setProperty("--py", py.toFixed(3));
+    }
+
+    function onMove(event: PointerEvent) {
+      const rect = heroNode.getBoundingClientRect();
+      px = (event.clientX - rect.left) / rect.width - 0.5;
+      py = (event.clientY - rect.top) / rect.height - 0.5;
+      if (!frame) frame = requestAnimationFrame(apply);
+    }
+
+    function onLeave() {
+      px = 0;
+      py = 0;
+      if (!frame) frame = requestAnimationFrame(apply);
+    }
+
+    window.addEventListener("pointermove", onMove, { passive: true });
+    heroNode.addEventListener("pointerleave", onLeave);
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("pointermove", onMove);
+      heroNode.removeEventListener("pointerleave", onLeave);
+    };
+  }, [composing]);
+
   return (
     <section
+      ref={hero}
       className={styles.hero}
+      data-intro-hero
       data-writing={writing ? "true" : undefined}
-      aria-labelledby="landing-headline"
+      aria-labelledby={composing ? "landing-headline" : undefined}
+      aria-label={composing ? undefined : phase === "generated" ? "Planes generados" : "Generación de planes"}
     >
-      <div className={styles.waves} aria-hidden="true">
-        <MoodBackground mood={composing ? mood : "idle"} />
-      </div>
-      <div className={styles.motes} aria-hidden="true">
-        <HeroAtmosphere calm={writing || !composing} />
-      </div>
-      <div className={styles.veil} aria-hidden="true" />
+      {composing ? <HeroAmbient /> : null}
+      {composing ? <HeroObjects /> : null}
+      {composing ? (
+        <div className={styles.atmosphere} aria-hidden="true">
+          <HeroAtmosphere calm={writing} />
+        </div>
+      ) : null}
+      <div className={styles.paperLight} aria-hidden="true" />
 
       <div className={styles.inner}>
         {composing ? (
           <div className={styles.stage}>
-            <p className={`${styles.eyebrow} sp-anim-rise`}>
-              <span className={styles.eyebrowDot} aria-hidden="true" />
-              {HERO.eyebrow}
-            </p>
-
             <h1 id="landing-headline" className={styles.headline}>
               {HERO.headline.map((line, index) => (
-                <span key={line} className={styles.headlineLine}>
-                  <span
-                    className={`${styles.headlineInk} sp-anim-uncover`}
-                    style={{ animationDelay: `${120 + index * 110}ms` }}
-                  >
+                <span
+                  key={line}
+                  className={`${styles.headlineLine} ${
+                    index === 0 ? styles.headlineWrite : styles.headlinePlan
+                  } sp-anim-uncover`}
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <span className={styles.headlineInk}>
                     {line}
                   </span>
                 </span>
@@ -134,14 +200,14 @@ export function LandingHero({
 
             <p
               className={`${styles.subheadline} sp-anim-rise`}
-              style={{ animationDelay: "380ms" }}
+              style={{ animationDelay: "160ms" }}
             >
               {HERO.subheadline}
             </p>
 
             <div
               className={`${styles.composerSlot} sp-anim-settle`}
-              style={{ animationDelay: "440ms" }}
+              style={{ animationDelay: "120ms" }}
             >
               <PlanComposer
                 ref={composer}
@@ -154,7 +220,6 @@ export function LandingHero({
                     onResolved={onSurprise}
                   />
                 }
-                onTextChange={(text) => setMood(detectMood(text))}
                 onFocusChange={setWriting}
                 onSubmit={onSubmit}
               />
@@ -162,7 +227,7 @@ export function LandingHero({
 
             <div
               className={`${styles.intentsSlot} sp-anim-rise`}
-              style={{ animationDelay: "620ms" }}
+              style={{ animationDelay: "320ms" }}
             >
               <IntentChips
                 disabled={sessionLoading}
@@ -194,6 +259,8 @@ export function LandingHero({
             mode={generationMode}
             note={generationMode === "surprise" ? surpriseNote : null}
             onRegenerate={onRegenerate}
+            onPlanSelected={applySelectionChange}
+            onSelectionReconcile={refresh}
           />
         ) : null}
       </div>

@@ -13,8 +13,10 @@ import type {
 
 import { PlanDetailView } from "./PlanDetailView";
 
+const push = vi.hoisted(() => vi.fn());
+
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
+  useRouter: () => ({ push, replace: vi.fn(), refresh: vi.fn() }),
 }));
 
 const useSession = vi.hoisted(() => vi.fn());
@@ -25,18 +27,20 @@ vi.mock("@/lib/auth", async (importActual) => ({
 }));
 
 const getPlan = vi.hoisted(() => vi.fn());
-const getMyPlan = vi.hoisted(() => vi.fn());
+const getOwnPlan = vi.hoisted(() => vi.fn());
 const selectPlan = vi.hoisted(() => vi.fn());
 const deselectPlan = vi.hoisted(() => vi.fn());
 const submitFeedback = vi.hoisted(() => vi.fn());
+const cancelOwnPlan = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/api")>()),
   getPlan,
-  getMyPlan,
+  getOwnPlan,
   selectPlan,
   deselectPlan,
   submitFeedback,
+  cancelOwnPlan,
 }));
 
 function ownPlan(overrides: Partial<OwnPlanDetail> = {}): OwnPlanDetail {
@@ -111,7 +115,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   useSession.mockReturnValue({ status: "authenticated", authenticated: true });
   // Default: caller is not the owner → no feedback section.
-  getMyPlan.mockRejectedValue(
+  getOwnPlan.mockRejectedValue(
     new ApiError({ message: "x", type: "HTTP", status: 403 }),
   );
   submitFeedback.mockResolvedValue(OWN_FEEDBACK);
@@ -125,6 +129,7 @@ beforeEach(() => {
     planRequestId: 3,
     status: { key: "generated", name: "Generado" },
   });
+  cancelOwnPlan.mockResolvedValue(undefined);
 });
 
 async function renderDetail(
@@ -137,6 +142,44 @@ async function renderDetail(
   render(<PlanDetailView planId={7} />);
   await screen.findByRole("heading", { name: "Tarde de vinos", level: 1 });
 }
+
+describe("PlanDetailView — CU25/CU26 integration", () => {
+  it("shows owner edit and cancel actions without hiding viewer intent", async () => {
+    getOwnPlan.mockResolvedValue(ownPlan({ feedbackState: "not_available" }));
+
+    await renderDetail("selectable", "generated");
+
+    expect(await screen.findByRole("link", { name: /editar plan/i })).toHaveAttribute(
+      "href",
+      "/plans/7/edit",
+    );
+    expect(screen.getByRole("button", { name: /eliminar plan/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /lo voy a hacer/i })).toBeInTheDocument();
+  });
+
+  it("cancels an owned plan only after confirmation and redirects to the plans list", async () => {
+    getOwnPlan.mockResolvedValue(ownPlan({ feedbackState: "not_available" }));
+
+    await renderDetail("view-only", "confirmed");
+    await userEvent.click(await screen.findByRole("button", { name: /eliminar plan/i }));
+    await userEvent.click(screen.getByRole("button", { name: /sí, eliminar plan/i }));
+
+    await waitFor(() => {
+      expect(cancelOwnPlan).toHaveBeenCalledWith(7);
+      expect(push).toHaveBeenCalledWith("/plans");
+    });
+  });
+
+  it("keeps a cancelled plan read-only even for its owner", async () => {
+    getOwnPlan.mockResolvedValue(ownPlan({ status: { key: "cancelled", name: "Cancelado" } }));
+
+    await renderDetail("view-only", "cancelled");
+
+    expect(await screen.findByText(/plan cancelado/i)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /editar plan/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /eliminar plan/i })).not.toBeInTheDocument();
+  });
+});
 
 // One toggle, one label in both states — `aria-pressed` tells them apart.
 const intendButton = { name: /^lo voy a hacer$/i } as const;
@@ -270,7 +313,7 @@ describe("PlanDetailView — feedback (CU23, PAN 17)", () => {
     getPlan.mockResolvedValue(
       plan({ status: { key: "completed", name: "Realizado" } }),
     );
-    getMyPlan.mockResolvedValue(ownPlan({ feedbackState: "available" }));
+    getOwnPlan.mockResolvedValue(ownPlan({ feedbackState: "available" }));
     render(<PlanDetailView planId={7} />);
 
     expect(
@@ -282,7 +325,7 @@ describe("PlanDetailView — feedback (CU23, PAN 17)", () => {
     getPlan.mockResolvedValue(
       plan({ status: { key: "completed", name: "Realizado" } }),
     );
-    getMyPlan.mockResolvedValue(
+    getOwnPlan.mockResolvedValue(
       ownPlan({ feedbackState: "submitted", feedback: OWN_FEEDBACK }),
     );
     render(<PlanDetailView planId={7} />);
@@ -301,7 +344,7 @@ describe("PlanDetailView — feedback (CU23, PAN 17)", () => {
     getPlan.mockResolvedValue(
       plan({ status: { key: "completed", name: "Realizado" } }),
     );
-    getMyPlan.mockResolvedValue(ownPlan({ feedbackState: "not_available" }));
+    getOwnPlan.mockResolvedValue(ownPlan({ feedbackState: "not_available" }));
     render(<PlanDetailView planId={7} />);
 
     await screen.findByRole("heading", { name: "Tarde de vinos", level: 1 });
@@ -315,7 +358,7 @@ describe("PlanDetailView — feedback (CU23, PAN 17)", () => {
     getPlan.mockResolvedValue(
       plan({ status: { key: "completed", name: "Realizado" } }),
     );
-    getMyPlan.mockResolvedValue(ownPlan({ feedbackState: "available" }));
+    getOwnPlan.mockResolvedValue(ownPlan({ feedbackState: "available" }));
     const user = userEvent.setup();
     render(<PlanDetailView planId={7} />);
 
@@ -337,7 +380,7 @@ describe("PlanDetailView — feedback (CU23, PAN 17)", () => {
     getPlan.mockResolvedValue(
       plan({ status: { key: "completed", name: "Realizado" } }),
     );
-    getMyPlan
+    getOwnPlan
       .mockResolvedValueOnce(ownPlan({ feedbackState: "available" }))
       .mockResolvedValueOnce(
         ownPlan({ feedbackState: "submitted", feedback: OWN_FEEDBACK }),
@@ -361,7 +404,7 @@ describe("PlanDetailView — feedback (CU23, PAN 17)", () => {
       }),
     );
 
-    await waitFor(() => expect(getMyPlan).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(getOwnPlan).toHaveBeenCalledTimes(2));
     expect(await screen.findByText(/tu experiencia/i)).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });

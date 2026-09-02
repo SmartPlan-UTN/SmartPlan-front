@@ -3,3 +3,14 @@
 .sessionSlot {
   min-height: clamp(420px, 60vh, 560px);
 }
+
+.introSequence {
+  --intro-progress: 0;
+  --hero-stage-progress: 0;
+  --object-exit-progress: 0;
+  position: relative;
+  isolation: isolate;
+}
+
+/* The page's quiet exit: one line and a text button back to the hero.
+   Deliberately not a second search field. */

@@ -152,13 +152,50 @@
   margin: 0;
   overflow-x: auto;
   list-style: none;
-  scroll-snap-type: x proximity;
   scroll-padding-inline: var(--rail-pad);
   scrollbar-width: none;
 }
 
+/* Snapping is turned on a frame after mount so the browser's load-time
+   snap can't nudge the first card out of line with the header. */
+.rail[data-snap="true"] {
+  scroll-snap-type: x proximity;
+}
+
 .rail::-webkit-scrollbar {
   display: none;
+}
+
+/* Edge fade — "there is more this way", toggled by the overflow flags. */
+.railViewport::before,
+.railViewport::after {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  bottom: 0;
+  width: clamp(28px, 5vw, 56px);
+  content: "";
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms var(--ease-out, ease);
+}
+
+.railViewport::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--cream), transparent);
+}
+
+.railViewport::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--cream), transparent);
+}
+
+.railViewport[data-overflow-left="true"]::before {
+  opacity: 1;
+}
+
+.railViewport[data-overflow-right="true"]::after {
+  opacity: 1;
 }
 
 .rail:focus-visible {
@@ -656,6 +693,10 @@
   .feedbackNote svg,
   .loadingDot {
     animation: none;
+  }
+  .railViewport::before,
+  .railViewport::after {
+    transition: none;
   }
   .dismissedSlot {
     animation: none;

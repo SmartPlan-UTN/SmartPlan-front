@@ -173,13 +173,7 @@ export interface OwnPlanDetail extends OwnPlanSummary {
     };
   }[];
 }
-
-/** Query params accepted by `GET /users/me/plans` (CU23). */
-export interface MyPlansParams {
-  page?: number;
-  limit?: number;
-  direction?: SortDirection;
-}
+export type OwnPlanDetailItem = OwnPlanDetail['details'][number];
 
 /** Sortable fields accepted by `GET /plans`. */
 export type PlanSortField = 'relevance' | 'price' | 'rating' | 'distance';
@@ -193,3 +187,49 @@ export interface PlanSearchParams extends ExplorationQueryParams {
   outingType?: string;
   sortBy?: PlanSortField;
 }
+
+/** Query params accepted by `GET /users/me/plans` (CU23/CU29). */
+export interface ListOwnPlansParams {
+  page?: number;
+  limit?: number;
+  sortBy?: 'createdAt';
+  direction?: SortDirection;
+}
+
+export interface CreatePlanDto {
+  title: string;
+  description?: string | null;
+  peopleCount: number;
+}
+
+export interface UpdatePlanDto {
+  title?: string;
+  description?: string | null;
+  peopleCount?: number;
+}
+
+export interface AddPlanDetailDto {
+  activityId: number;
+}
+
+export interface OwnPlanCostSummary {
+  estimatedTotalCost: number;
+  peopleCount: number;
+  estimatedCostPerPerson: number;
+  estimatedTotalDuration: number;
+}
+
+/**
+ * Payload for requesting a suggested plan (CU31).
+ * Backend contract: `POST /api/plan-suggestions`.
+ */
+export interface PlanSuggestionDto {
+  budget: number;
+  latitude: number;
+  longitude: number;
+  peopleCount: number;
+  availableDurationMinutes: number;
+  preferences?: string[];
+  notes?: string;
+}
+

@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
+
+import { MotionConfig } from "motion/react";
 
 import type {
   SurpriseCoords,
@@ -14,13 +17,29 @@ import type { PlanRequestContext } from "@/types";
 
 import { RecommendedPlans } from "@/components/home";
 
-import { FinalSearch } from "./FinalSearch";
-import { HowItWorks } from "./HowItWorks";
-import { ImmersiveStory } from "./ImmersiveStory";
 import { InspirationGallery } from "./InspirationGallery";
+import { IntroSequence } from "./IntroSequence";
 import { LandingHero, HERO_COMPOSER_ID } from "./LandingHero";
-import { PlanShowcase } from "./PlanShowcase";
 import styles from "./landing.module.css";
+
+/**
+ * Everything below the gallery is off the first screen and behind
+ * `phase === "idle"`. Splitting each into its own chunk keeps the initial
+ * landing payload to the hero + gallery; SSR stays on so the copy is in
+ * the HTML for crawlers.
+ */
+const ImmersiveStory = dynamic(() =>
+  import("./ImmersiveStory").then((m) => m.ImmersiveStory),
+);
+const HowItWorks = dynamic(() =>
+  import("./HowItWorks").then((m) => m.HowItWorks),
+);
+const PlanShowcase = dynamic(() =>
+  import("./PlanShowcase").then((m) => m.PlanShowcase),
+);
+const ManualExplore = dynamic(() =>
+  import("./ManualExplore").then((m) => m.ManualExplore),
+);
 
 /**
  * The landing, end to end (CU17, CU19 · PAN 07).
@@ -33,15 +52,14 @@ import styles from "./landing.module.css";
  *   story       what smartplan actually does to an idea
  *   how         the same claim in four lines, now that it means something
  *   showcase    the shape of an answer
- *   closing     write an idea, again, without scrolling back up
+ *   explore     a quiet manual path before the footer
  *
  * ── Why the generation state lives here ─────────────────────────────
  *
- * Both composers submit into one `usePlanRequestPolling`. Giving each its
- * own would let the page hold two generations at once and show two
- * different answers in two places — so the state is lifted to the only
- * component that contains both fields, and the hero renders whatever
- * comes back regardless of which field started it.
+ * The hero composer and the surprise flow both submit into one
+ * `usePlanRequestPolling`. The state is lifted here so that whatever
+ * starts a generation — the field, "Sorpréndeme", or "ajustar" — the
+ * hero renders the result in one place.
  */
 export function LandingScreen() {
   const { authenticated, status } = useSession();
@@ -69,8 +87,7 @@ export function LandingScreen() {
       context: Object.keys(context).length > 0 ? context : undefined,
     });
 
-    // Submitting from the closing field would otherwise leave the visitor
-    // at the bottom of the page while the answer renders at the top.
+    // The answer renders in the hero; make sure it is in view.
     scrollToHero();
   }
 
@@ -102,25 +119,27 @@ export function LandingScreen() {
   }
 
   return (
-    <>
-      <LandingHero
-        planning={planning}
-        sessionLoading={sessionLoading}
-        onSubmit={handleSubmit}
-        onSurprise={handleSurprise}
-        onRegenerate={planning.regenerate}
-        surpriseNote={surpriseNote}
-        onAdjust={handleAdjust}
-        prefill={prefill}
-        onPrefillConsumed={() => setPrefill(null)}
-      />
+    <MotionConfig reducedMotion="user">
+      <IntroSequence active={planning.phase === "idle"}>
+        <LandingHero
+          planning={planning}
+          sessionLoading={sessionLoading}
+          onSubmit={handleSubmit}
+          onSurprise={handleSurprise}
+          onRegenerate={planning.regenerate}
+          surpriseNote={surpriseNote}
+          onAdjust={handleAdjust}
+          prefill={prefill}
+          onPrefillConsumed={() => setPrefill(null)}
+        />
+        {planning.phase === "idle" ? <InspirationGallery /> : null}
+      </IntroSequence>
 
       {/* Once a generation is under way the rest of the page is no longer
           the point: the answer is. Keeping six marketing sections under a
           running result would bury it. */}
       {planning.phase === "idle" ? (
         <>
-          <InspirationGallery />
           <ImmersiveStory />
           <HowItWorks />
 
@@ -136,12 +155,12 @@ export function LandingScreen() {
             <div className={styles.sessionSlot} aria-hidden="true" />
           )}
 
-          <FinalSearch sessionLoading={sessionLoading} onSubmit={handleSubmit} />
+          <ManualExplore />
         </>
       ) : null}
 
       <SiteFooter />
-    </>
+    </MotionConfig>
   );
 }
 

@@ -35,6 +35,10 @@
   --white-15:      rgba(255,255,255,0.15);
   --white-18:      rgba(255,255,255,0.18);
 
+  /* Fixed glow under the animated wave canvas. Mood palettes live in
+     styles/wave-palettes.ts because the Web Worker cannot read the DOM. */
+  --wave-bottom-glow: rgba(232,93,32,0.06);
+
   /* ── Dark surfaces ───────────────────────────────── */
   --char-surface:  #1E1812;   /* card on dark bg        */
   --char-surface2: #241D14;   /* elevated/hover on dark */
@@ -53,6 +57,7 @@
   /* ── Surfaces ────────────────────────────────────── */
   --surface:      var(--cream);
   --surface-card: #FFFCF8;    /* card on cream    */
+  --admin-surface: #FDFBF7;   /* admin canvas from v2 AdminActivities.jsx */
 
   /* ── Borders ─────────────────────────────────────── */
   --hairline:      #E2DDD5;
@@ -60,6 +65,9 @@
 
   /* ── Typography ──────────────────────────────────── */
   --font: var(--font-bricolage-grotesque), "Arial Narrow", sans-serif;
+  /* Display serif — hero headline second line only (see hero.module.css).
+     Loaded by next/font/local in layout.tsx. */
+  --font-display-serif: var(--font-fraunces), Georgia, "Times New Roman", serif;
 
   /* ── Type scale ──────────────────────────────────── */
   --t-display: 78px;

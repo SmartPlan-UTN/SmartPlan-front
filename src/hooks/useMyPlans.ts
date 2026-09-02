@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 
-import { getMyPlans } from "@/lib/api";
+import { listOwnPlans } from "@/lib/api";
 import type { OwnPlanSummary } from "@/types";
 
 import { useExplorationSearch } from "./useExplorationSearch";
@@ -35,7 +35,7 @@ const PAGE_SIZE = 12;
 export function useMyPlans(enabled = true): UseMyPlansResult {
   const { items, pagination, status, errorMessage, page, goToPage, retry } =
     useExplorationSearch<Record<string, never>, OwnPlanSummary>(
-      getMyPlans,
+      listOwnPlans,
       {},
       PAGE_SIZE,
       enabled

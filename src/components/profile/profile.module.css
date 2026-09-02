@@ -1,0 +1,275 @@
+/* CU5/CU6/CU7 - Edit profile (PAN 14), per the v2 "EMBER" system design's
+   `Profile.jsx`. The prototype's avatar upload was left out: there's no
+   backing field for it in the backend contract (`GET/PATCH /users/me`).
+   Phone was in the same situation until it got its own backend support
+   (see the doc comment on `ProfileForm`); it's back in the form now. */
+
+/* Breaks out of the `(private)` layout's `Container`, which pads this
+   screen `--section-v` top and bottom *outside* `.backdrop` — so
+   `MoodBackground`, which only paints its own nearest positioned ancestor,
+   would otherwise stop short of the container's real edges and leave plain
+   cream gaps above the heading and below the card. The negative margin
+   cancels that padding and `padding-block` re-adds the same visual
+   spacing from inside `.backdrop` instead, so the waves now render
+   underneath it too. `min-height` grows by the same two `--section-v` to
+   keep covering a full screen on a short page. Same fix as
+   `security.module.css`'s `.backdrop` — both screens share this layout. */
+.backdrop {
+  position: relative;
+  min-height: calc(100dvh - var(--navbar-h) + var(--section-v) * 2);
+  margin-block: calc(var(--section-v) * -1);
+  padding-block: var(--section-v);
+}
+
+.wrapper {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  max-width: 680px;
+  margin-inline: auto;
+}
+
+.heading {
+  color: var(--fg-1);
+}
+
+/* Literal radius/shadow, not --r-card/--shadow-card: the prototype's
+   profile cards are more rounded (24px vs. --r-card's 16) and float on a
+   softer, wider shadow alone — no border at all, unlike most cards
+   elsewhere in the app. */
+.card {
+  background: var(--surface-card);
+  border-radius: 24px;
+  box-shadow: 0 8px 40px color-mix(in srgb, var(--char) 7%, transparent),
+    0 2px 8px color-mix(in srgb, var(--char) 4%, transparent);
+  overflow: hidden;
+}
+
+.cardHeader {
+  height: 80px;
+  background: linear-gradient(
+    120deg,
+    var(--ember-15) 0%,
+    var(--gold-15) 100%
+  );
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* Bottom padding is literal 28px, not --s-5's 24. */
+.identity {
+  padding: 0 var(--s-6) 28px;
+  position: relative;
+}
+
+/* Literal sizing below, not the --t-h4/--ember-20 tokens: the prototype's
+   avatar circle is bigger (72px, not 64) with a stronger shadow (32%, not
+   --ember-20's 20%) and larger initials (26px, not --t-h4's 20). */
+.avatar {
+  position: absolute;
+  top: -36px;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--surface-card);
+  border-radius: var(--r-chip);
+  background: linear-gradient(
+    135deg,
+    var(--ember) 0%,
+    color-mix(in srgb, var(--ember) 65%, black) 100%
+  );
+  color: var(--white);
+  font-size: 26px;
+  font-weight: var(--w-display);
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--ember) 32%, transparent);
+  user-select: none;
+}
+
+.identityText {
+  padding-top: 44px;
+}
+
+.name {
+  margin: 0 0 2px;
+  color: var(--fg-1);
+}
+
+.email {
+  margin: 0;
+  color: var(--fg-3);
+}
+
+/* Bottom padding is literal 36px, not --s-6's 32: matches the prototype's
+   own one-off rhythm for this form. */
+.form {
+  padding: 0 var(--s-6) 36px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.divider {
+  height: 1px;
+  margin-inline: calc(var(--s-6) * -1);
+  background: var(--hairline);
+}
+
+.sectionLabel {
+  margin: 0;
+  color: var(--fg-3);
+}
+
+.row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-4);
+}
+
+@media (max-width: 480px) {
+  .row2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-3);
+}
+
+.formError {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border-radius: var(--r-btn);
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+  color: var(--fg-1);
+  font-size: var(--t-small);
+}
+
+.formError svg {
+  flex-shrink: 0;
+  color: var(--error);
+  margin-top: 2px;
+}
+
+/* ── Load state ──────────────────────────────────────────── */
+.loading,
+.loadError {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-8) var(--s-4);
+  text-align: center;
+  color: var(--fg-2);
+}
+
+/* ── Save confirmation toast ─────────────────────────────── */
+@keyframes profileToastIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes profileToastOut {
+  from {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+}
+
+/* Literal shadow, not --shadow-card-dark: the prototype's toast floats
+   more, with a wider and less opaque shadow than the standard dark card. */
+.toast {
+  position: fixed;
+  bottom: var(--s-6);
+  left: 50%;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-5);
+  border-radius: var(--r-card-sm);
+  background: var(--char);
+  color: var(--fg-on-dark);
+  font-size: var(--t-small);
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
+  animation: profileToastIn 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.toastOut {
+  animation: profileToastOut 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.toast svg {
+  color: var(--success);
+}
+
+/* ── Danger zone (CU7) ───────────────────────────────────── */
+/* Literal reds below, not `--error`/`--danger`: the prototype's own
+   one-off tints for this card (`rgba(240,64,64,…)` for the card,
+   `#D94B2B`/`rgba(217,75,43,…)` for the text/button — the same rust as the
+   logout icon, distinct from the form-validation red). */
+.dangerZone {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding: 20px var(--s-5);
+  background: rgba(240, 64, 64, 0.04);
+  border: 1px solid rgba(240, 64, 64, 0.14);
+  border-radius: var(--r-card);
+}
+
+.dangerTitle {
+  margin: 0 0 3px;
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  color: #d94b2b;
+}
+
+.dangerText {
+  margin: 0;
+  font-size: var(--t-label);
+  color: var(--fg-3);
+}
+
+.dangerButton {
+  padding: 9px 18px;
+  background: transparent;
+  border: 1.5px solid rgba(217, 75, 43, 0.45);
+  border-radius: var(--r-btn);
+  font-size: var(--t-label);
+  font-weight: var(--w-heading);
+  font-family: var(--font);
+  color: #d94b2b;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.dangerButton:hover {
+  background: rgba(217, 75, 43, 0.07);
+}
+
+.dangerButton:focus-visible {
+  outline: 2px solid #d94b2b;
+  outline-offset: 2px;
+}

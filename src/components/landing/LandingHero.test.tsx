@@ -25,6 +25,8 @@ function polling(
     retry: vi.fn(),
     regenerate: vi.fn(),
     lastSubmission: null,
+    applySelectionChange: vi.fn(),
+    refresh: vi.fn(),
     ...overrides,
   } as UsePlanRequestPollingResult;
 }
@@ -56,6 +58,19 @@ describe("LandingHero", () => {
     }
   });
 
+  it("keeps the hero scene decorative and outside the accessibility tree", () => {
+    renderHero();
+
+    const scene = screen.getByTestId("hero-objects");
+    expect(scene).toHaveAttribute("aria-hidden", "true");
+    const images = scene.querySelectorAll("img");
+    expect(images.length).toBeGreaterThanOrEqual(6);
+    for (const image of images) expect(image).toHaveAttribute("alt", "");
+
+    // The ambient (vector) plane is decorative too.
+    expect(screen.getByTestId("hero-ambient")).toHaveAttribute("aria-hidden", "true");
+  });
+
   it("writes a quick intent into the composer and focuses it, without submitting", async () => {
     const user = userEvent.setup();
     const { onSubmit } = renderHero();
@@ -65,6 +80,7 @@ describe("LandingHero", () => {
     const field = screen.getByLabelText(FIELD);
     expect(field).toHaveValue("Un plan al aire libre, con caminata y buen clima");
     expect(field).toHaveFocus();
+    expect(field.closest("section")).toHaveAttribute("data-writing", "true");
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
@@ -85,5 +101,6 @@ describe("LandingHero", () => {
     // nothing else on the hero survives alongside it.
     expect(screen.queryByLabelText(FIELD)).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Generación de planes" })).not.toHaveAttribute("aria-labelledby");
   });
 });

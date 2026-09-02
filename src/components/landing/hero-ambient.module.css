@@ -1,0 +1,72 @@
+/* The background plane. Sits under the photographic objects (.scene is
+   z-index 1) and above the atmosphere canvas. Everything here is faint
+   and slow — it fills space, it does not perform. */
+.layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.mark {
+  position: absolute;
+  display: block;
+  color: var(--char);
+  opacity: 0;
+  translate:
+    calc(var(--px, 0) * var(--pf, 3) * 1px)
+    calc(var(--py, 0) * var(--pf, 3) * 1px);
+  animation: hero-mark-in 640ms var(--ease-out) var(--mark-in-delay, 0ms) forwards;
+  transition: translate 260ms var(--ease-out);
+}
+
+.mark svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@keyframes hero-mark-in {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to   { opacity: var(--rest-opacity, 0.2); transform: translate3d(0, 0, 0); }
+}
+
+/* ── Placement ─────────────────────────────────────────────────────
+   The route arc crosses low-behind-everything; the rest tuck into the
+   gaps the photographic objects leave, off the protected centre band. */
+
+.arc {
+  top: 40%;
+  left: 6%;
+  width: 88%;
+  color: var(--ember);
+  --rest-opacity: 0.09;
+  --pf: 2;
+}
+
+.pin {
+  top: 46%;
+  right: 11%;
+  width: clamp(22px, 2.4vw, 32px);
+  color: var(--fg-3);
+  --rest-opacity: 0.5;
+  --pf: 6;
+}
+
+@media (max-width: 900px) {
+  .arc { display: none; }
+}
+
+@media (max-width: 620px) {
+  .layer { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mark {
+    animation: none;
+    opacity: var(--rest-opacity, 0.2);
+    translate: none;
+    transition: none;
+  }
+}

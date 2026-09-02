@@ -69,180 +69,145 @@ export const INTENTS: readonly { label: string; icon: IconName; query: string }[
   { label: "Cerca mío", icon: "map-pin", query: "Algo cerca de donde estoy, que no me lleve todo el día" },
 ] as const;
 
-/* ── Inspiration gallery ──────────────────────────────────────────── */
+/* ── Inspiration scene ────────────────────────────────────────────── */
 
 export interface InspirationTile {
   id: string;
-  kicker: string;
-  title: string;
-  caption: string;
-  icon: IconName;
+  /** Short enough to sit beside a photograph without becoming a caption. */
+  label: string;
   media: MediaKey;
-  /** The colour the tile holds while its photograph loads. */
-  tone: "ember" | "char" | "gold" | "electric" | "cream";
-  /** Grid emphasis. `feature` is the big one. */
-  scale: "feature" | "tall" | "wide" | "regular";
 }
 
 /**
- * Six tiles, and the copy on each one describes what is actually in its
- * photograph. That sounds obvious, but it is the thing that makes a
- * gallery read as real rather than as stock: a caption about a sunset
- * over a picture of a table is the tell.
+ * The section that answers the hero.
+ *
+ * The hero asks for an idea; this says that not having one is fine —
+ * that a loose sentence about how you want the afternoon to feel is
+ * enough, and that what comes back can take very different shapes. The
+ * five photographs are the argument, so the words stay out of their way:
+ * one headline, one line under it, and a two-to-four word label per
+ * image. The long captions this section used to carry were unreadable at
+ * the size they were painted and were already hidden on mobile.
  */
 export const INSPIRATION = {
-  kicker: "Todo esto es una salida",
-  title: ["Hay más para hacer", "de lo que uno se acuerda."],
-  lead:
-    "Una salida no siempre es una cena. A veces es una caminata corta, un café largo, o una tarde que no tenías planeada.",
+  kicker: "Empezá por una idea",
+  title: ["No hace falta saber", "qué hacer."],
+  lead: "Contanos cómo querés que se sienta el plan. smartplan arma el resto.",
   tiles: [
-    {
-      id: "mesa",
-      kicker: "Gastronomía",
-      title: "Mesas para compartir",
-      caption: "Cocina que se disfruta con tiempo, y una sobremesa que se estira.",
-      icon: "utensils",
-      media: "mesaCompartida",
-      tone: "char",
-      scale: "feature",
-    },
-    {
-      id: "cordillera",
-      kicker: "Atardeceres",
-      title: "El valle a esta hora",
-      caption: "A una hora del centro, el cielo hace esto todos los días.",
-      icon: "sunset",
-      media: "atardecerPareja",
-      tone: "ember",
-      scale: "tall",
-    },
-    {
-      id: "noche",
-      kicker: "Noche",
-      title: "Salir sin plan fijo",
-      caption: "Una feria, música en vivo, y la noche que se acomoda sola.",
-      icon: "music-2",
-      media: "feriaNocturna",
-      tone: "char",
-      scale: "regular",
-    },
-    {
-      id: "cafe",
-      kicker: "Cafés",
-      title: "Una tarde para quedarse",
-      caption: "Mesa junto a la ventana, y nadie apurándote.",
-      icon: "coffee",
-      media: "cafeLectura",
-      tone: "cream",
-      scale: "regular",
-    },
-    {
-      id: "informal",
-      kicker: "Informal",
-      title: "Comer con las manos",
-      caption: "Lo que se pide para el medio de la mesa y desaparece primero.",
-      icon: "pizza",
-      media: "pizzaPatio",
-      tone: "ember",
-      scale: "wide",
-    },
-    {
-      id: "vinos",
-      kicker: "Bodegas",
-      title: "Tarde de viñedos",
-      caption: "Una copa con vista, y alguien más manejando de vuelta.",
-      icon: "wine",
-      media: "bodegaParral",
-      tone: "gold",
-      scale: "wide",
-    },
+    { id: "mesa", label: "Mesas para compartir", media: "mesaCompartida" },
+    { id: "cordillera", label: "El valle a esta hora", media: "atardecerPareja" },
+    { id: "noche", label: "Salir sin plan fijo", media: "feriaNocturna" },
+    { id: "cafe", label: "Una tarde para quedarse", media: "cafeLectura" },
+    { id: "vinos", label: "Tarde de viñedos", media: "bodegaParral" },
   ] satisfies InspirationTile[],
 } as const;
 
-/* ── The immersive section ────────────────────────────────────────── */
+/* ── The evening scene ────────────────────────────────────────────── */
 
 /**
- * Labels for the constellation. These are fragments of intention, the
- * kind of thing a person actually writes, deliberately unordered — the
- * animation's whole argument is that smartplan is what turns this cloud
- * into a sequence.
+ * The section that demonstrates.
+ *
+ * The hero promises and the gallery inspires; this one has to *show* the
+ * product's actual claim — that a handful of loose wants becomes an evening
+ * that closes. So the copy stays out of the way and lets the scene make the
+ * argument: eight intentions, three that survive, one recorrido.
+ *
+ * The title is deliberately split across the section. "Las ganas no vienen
+ * ordenadas." opens it over the scattered words on cream; "El plan sí."
+ * lands at the end, over the resolved evening. The sentence finishes at the
+ * moment the scene has finished proving it.
+ *
+ * Per the honesty constraint at the top of this file, the three stops name
+ * *kinds* of moment and no venue, no price and no rating appears anywhere.
  */
-export const INTENT_NODES = [
-  "vinos",
-  "atardecer",
-  "con amigos",
-  "sin manejar",
-  "barato",
-  "al aire libre",
-  "cerca",
-  "tranquilo",
-  "buena comida",
-  "vista",
-  "caminar",
-  "música",
-  "sábado",
-  "café",
-  "sobremesa",
-  "en pareja",
-  "temprano",
-  "sin reserva",
-  "montaña",
-  "de noche",
-  "algo rico",
-  "en el centro",
-  "poco tiempo",
-  "que rinda",
-] as const;
-
 export const STORY = {
-  kicker: "Qué hace smartplan",
-  title: ["De muchas ganas sueltas,", "un recorrido que se puede hacer."],
-  lead:
-    "Lo que escribís no es una lista de filtros: son varias intenciones a la vez. smartplan las cruza, descarta lo que no encaja y ordena el resto en una secuencia con horarios que cierran.",
-  /** Rendered as the accessible text equivalent of the canvas. */
-  phases: [
-    { at: "Escribís", copy: "Todo junto y desordenado, como se piensa." },
-    { at: "smartplan cruza", copy: "Descarta lo incompatible y agrupa lo que sí encaja." },
-    { at: "Se ordena", copy: "Queda un recorrido con tiempos que se pueden cumplir." },
-  ],
+  kicker: "smartplan ordena la salida",
+  title: ["Las ganas no vienen ordenadas.", "El plan sí."],
+  lead: "Decís lo que te pinta. smartplan encuentra la forma de hacerlo cerrar.",
+  /**
+   * The scene's accessible equivalent, rendered visually hidden. A scrubbed
+   * composition of words and photographs says nothing to a screen reader, so
+   * this carries the same argument in one sentence.
+   */
+  summary:
+    "Ocho ganas sueltas: atardecer, buena comida, sobremesa, tranquilo, con amigos, cerca, poco tiempo, sin reserva. smartplan se queda con las tres que combinan y las convierte en un recorrido: 19:00 Atardecer, 20:30 Cena compartida, 22:30 Sobremesa.",
   stops: [
-    { time: "17:30", label: "Atardecer" },
-    { time: "20:00", label: "Mesa" },
-    { time: "22:30", label: "Café" },
+    { id: "atardecer", time: "19:00", label: "Atardecer", media: "atardecerDeck" },
+    { id: "cena", time: "20:30", label: "Cena compartida", media: "mesaNoche" },
+    { id: "sobremesa", time: "22:30", label: "Sobremesa", media: "patioCerveza" },
   ],
 } as const;
 
 /* ── How it works ─────────────────────────────────────────────────── */
 
+/**
+ * A plan alternative that only exists inside the "how it works" scene — one
+ * of the two that the visitor does *not* pick. Lighter than `ShowcasePlan`:
+ * no tags, no moment list, no icon. The one that *is* picked is a real
+ * `ShowcasePlan` (`SHOWCASE.plans` keyed by `HOW.chosenId`), because it goes
+ * on to become the featured card in "Así se ve una respuesta".
+ */
+export interface HowOption {
+  id: string;
+  title: string;
+  duration: string;
+  budget: 1 | 2 | 3;
+  tone: ShowcasePlan["tone"];
+  media: MediaKey;
+}
+
+/**
+ * The section that shows how little the visitor has to do.
+ *
+ * The story next door demonstrated smartplan's *intelligence*; this one has
+ * a single job — its *ease*. One scene that transforms four times: a phrase
+ * is written, it is understood, options come back, one is chosen. The
+ * headline is kept from the previous version ("Cuatro pasos. / Sólo el
+ * primero es tuyo.") because the copy already worked; only its shape
+ * changed.
+ *
+ * `phrase` is the sentence that types itself into the composer replica.
+ * `signals` are pulled from words inside it, so they must stay a substring
+ * match. The chosen option is `SHOWCASE.plans` → `chosenId`; the two that
+ * lose are `options`, and the scene renders them around the winner.
+ */
 export const HOW = {
   kicker: "Cómo funciona",
   title: ["Cuatro pasos.", "Sólo el primero es tuyo."],
+  phrase: "algo tranqui hoy a la noche con amigos",
+  /** Each one is a literal fragment of `phrase`. */
+  signals: ["algo tranqui", "hoy a la noche", "con amigos"],
+  /** The scene's accessible equivalent, rendered visually hidden — a
+   * scrubbed composition says nothing to a screen reader. */
+  summary:
+    "Escribís una frase suelta, por ejemplo «algo tranqui hoy a la noche con amigos», y smartplan la entiende, te devuelve recorridos completos y te quedás con el que más te cierra. El único paso tuyo es el primero.",
   steps: [
-    {
-      n: "01",
-      icon: "message-circle" as IconName,
-      title: "Contás qué tenés ganas de hacer",
-      copy: "Una frase alcanza. No hay filtros que completar antes de empezar.",
-    },
-    {
-      n: "02",
-      icon: "sparkles" as IconName,
-      title: "smartplan entiende tu idea y tu contexto",
-      copy: "Cruza lo que escribiste con lo que quieras sumar y con tus preferencias.",
-    },
-    {
-      n: "03",
-      icon: "route" as IconName,
-      title: "Te devuelve recorridos posibles",
-      copy: "Lugares, tiempos y costos ordenados en una secuencia que se puede hacer.",
-    },
-    {
-      n: "04",
-      icon: "check" as IconName,
-      title: "Elegís, ajustás y salís",
-      copy: "Te quedás con el que más te cierra, y lo cambiás si hace falta.",
-    },
+    { n: "01", label: "Contás qué te pinta" },
+    { n: "02", label: "smartplan entiende" },
+    { n: "03", label: "Recibís opciones" },
+    { n: "04", label: "Elegís y salís" },
   ],
+  /** The alternative the scene ends on — a real `SHOWCASE.plans` entry. */
+  chosenId: "noche-amigos",
+  /** The two the visitor does not choose. Scene-only. */
+  options: [
+    {
+      id: "feria-noche",
+      title: "Feria de noche y algo rápido para comer",
+      duration: "3 h",
+      budget: 1,
+      tone: "electric",
+      media: "feriaNocturna",
+    },
+    {
+      id: "patio-birra",
+      title: "Birra en un patio y sobremesa larga",
+      duration: "5 h",
+      budget: 2,
+      tone: "gold",
+      media: "patioCerveza",
+    },
+  ] satisfies HowOption[],
 } as const;
 
 /* ── Illustrative showcase ────────────────────────────────────────── */
@@ -269,6 +234,26 @@ export const SHOWCASE = {
   /** Shown on every card. The page must never imply these are real plans. */
   badge: "Ejemplo ilustrativo",
   plans: [
+    {
+      /**
+       * The plan the "how it works" scene ends on (`HOW.chosenId`). It leads
+       * this section as the featured card, so the alternative the visitor
+       * just watched win is the same object they now read in full.
+       */
+      id: "noche-amigos",
+      title: "Noche tranqui con amigos, sin gastar de más",
+      duration: "4 h",
+      budget: 1,
+      tags: ["Noche", "Con amigos", "Barato"],
+      moments: [
+        { time: "21:00", label: "Algo para picar en el medio de la mesa" },
+        { time: "23:00", label: "Barra con música baja, para charlar" },
+        { time: "00:30", label: "Vuelta a pie, todo cerca" },
+      ],
+      icon: "pizza",
+      tone: "char",
+      media: "amigosCerveza",
+    },
     {
       id: "cafe-tarde",
       title: "Café largo y una vuelta por el centro",
@@ -328,21 +313,6 @@ export const SHOWCASE = {
       icon: "heart",
       tone: "ember",
       media: "atardecerDeck",
-    },
-    {
-      id: "noche",
-      title: "Noche con amigos gastando poco",
-      duration: "4 h",
-      budget: 1,
-      tags: ["Noche", "Con amigos", "Barato"],
-      moments: [
-        { time: "21:00", label: "Algo para compartir en el medio de la mesa" },
-        { time: "23:00", label: "Barra con música baja" },
-        { time: "01:00", label: "Cierre a pie, todo cerca" },
-      ],
-      icon: "pizza",
-      tone: "char",
-      media: "amigosCerveza",
     },
   ] satisfies ShowcasePlan[],
 } as const;
@@ -412,13 +382,4 @@ export const RECOMMENDATIONS = {
     primary: "Armá un plan",
     secondary: "Elegí tus preferencias",
   },
-} as const;
-
-/* ── Closing ──────────────────────────────────────────────────────── */
-
-export const CLOSING = {
-  kicker: "Tu turno",
-  title: ["¿Ya sabés", "qué te gustaría hacer?"],
-  lead: "No hace falta tenerlo resuelto. Alcanza con la idea.",
-  hint: "Sumá contexto sólo si querés. Nada de esto es obligatorio.",
 } as const;

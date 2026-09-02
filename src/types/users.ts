@@ -127,3 +127,13 @@ export interface UpdateUserPreferencesInput {
   useDeviceLocation: boolean;
   maxDistanceKm: number | null;
 }
+
+/** Editable profile view returned by the user profile endpoints (CU5). */
+export interface UserProfile {
+  id: number;
+  name: string;
+  lastName: string;
+  email: string;
+  role: { key: RoleKey; name: string };
+  status: { key: UserStatusKey; name: string };
+}

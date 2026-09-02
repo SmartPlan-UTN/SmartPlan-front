@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { Button, Icon } from "@/components/ui";
 import { useSession } from "@/lib/auth";
-import { loginRoute } from "@/lib/routes";
+import { loginRoute, ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 import { NavLink } from "./NavLink";
@@ -68,7 +69,15 @@ function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
     };
   }, [onCancel]);
 
-  return (
+  // Portaled to `document.body`, not rendered in place: this dialog's
+  // trigger lives inside `Navbar`'s `<header>`, which sets `backdrop-filter`
+  // for its own sticky-blur effect. `backdrop-filter` (like `transform` and
+  // `filter`) establishes a containing block for `position: fixed`
+  // descendants, so without the portal `.modalOverlay` would be confined to
+  // the header's box instead of covering the viewport — a small, cut-off
+  // card pinned near the top instead of the centered, fully-dimmed overlay
+  // the prototype shows.
+  return createPortal(
     <div className={styles.modalOverlay} onClick={onCancel}>
       <div
         ref={cardRef}
@@ -103,7 +112,8 @@ function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -125,10 +135,13 @@ function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
  *
  * "Cerrar sesión" doesn't log out on the first click: it opens a
  * confirmation dialog first, same as the SmartPlanSystemDesign prototype.
+ * Confirming closes the session (CU4: `DELETE /sessions`, best-effort — see
+ * `SessionProvider.logout`) and replaces the current entry with `/login`.
  */
 export function UserMenu() {
   const { status, logout } = useSession();
   const currentRoute = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -138,6 +151,15 @@ export function UserMenu() {
   const close = useCallback(() => {
     setOpen(false);
   }, []);
+
+  const confirmLogout = useCallback(async () => {
+    setConfirmingLogout(false);
+    await logout();
+    // `replace`, not `push`: same reasoning as `ProtectedRoute`'s redirect
+    // and the post-login navigation in `LoginForm`/`RegisterForm` — "back"
+    // shouldn't return to a page that required the session just closed.
+    router.replace(ROUTES.login);
+  }, [logout, router]);
 
   useEffect(() => {
     if (!open) {
@@ -254,9 +276,7 @@ export function UserMenu() {
             triggerRef.current?.focus();
           }}
           onConfirm={() => {
-            setConfirmingLogout(false);
-            logout();
-            triggerRef.current?.focus();
+            void confirmLogout();
           }}
         />
       ) : null}

@@ -1,391 +1,254 @@
 /**
- * The constellation → recorrido scene.
+ * Choreography data for the third section: "de ganas sueltas a un recorrido".
  *
- * Pure geometry and drawing, kept out of the component so the React side
- * is only "how big is the canvas and how far has the visitor scrolled".
+ * The section's argument is that loose intentions become a plan. It runs on
+ * the same machine as the inspiration scene next door — a fixed composition
+ * inside a 100 x 100 stage, plus one pure function mapping two scroll clocks
+ * onto beats — so the two sections share a rhythm rather than merely a
+ * palette. Both live away from the component so the timing can be reasoned
+ * about, and tested, without a DOM.
  *
- * ── The idea being animated ─────────────────────────────────────────
+ * ── The four rules this file exists to hold ─────────────────────────
  *
- * Someone writing to smartplan is not filling in filters — they say
- * several things at once ("vinos", "con amigos", "sin manejar", "no muy
- * caro"), unordered and partly incompatible. The product's actual work is
- * to cross those against each other, drop what cannot hold together, and
- * put what survives in an order with times attached.
+ *  1. **Nothing animates layout.** Words and frames are placed once at
+ *     their final position with `left`/`top` (and `width`/`height`) in
+ *     percent of the stage. Only `transform`, `opacity` and one
+ *     `stroke-dashoffset` are scrubbed.
  *
- * So the animation is that sentence: a drifting cloud of fragments, then
- * connections finding each other, then the survivors settling onto a
- * route with three stops. It is not decoration that happens to sit near
- * the copy — every stage of it is a claim the copy is also making.
+ *  2. **The page never leaves cream.** An earlier version darkened the
+ *     whole scene to `--char` as it advanced. It read well on paper and
+ *     badly on screen: the page went from a delicate editorial cream
+ *     composition to a brown ground with photographic cards and white
+ *     text, which is a different, more generic landing. The passage of
+ *     time is now told *inside the photographs* — sunset, candlelit
+ *     dinner, lit courtyard — while the ground only warms by a few
+ *     degrees. See `warm` in `getStoryBeats`.
  *
- * ── Why everything is normalised ────────────────────────────────────
+ *  3. **No line exists before it means something.** The thread does not
+ *     start until the sort has been read. Orange strokes drawn across an
+ *     empty stage look like leftover SVG, not like a route.
  *
- * Positions are stored 0..1 and multiplied by the pixel size at draw
- * time. A resize is then free and, more importantly, does not reshuffle
- * the composition: the same seeded layout maps onto the new box.
+ *  4. **A surviving word is never replaced, only resolved.** The three
+ *     that survive travel to their anchor and *become* their moment in
+ *     place — they gain a time above and a photograph below, and their
+ *     text settles into the stop's name. Nothing disappears and
+ *     reappears somewhere else, because that reads as "here are the three
+ *     resulting activities" rather than as "what you just watched turned
+ *     into this".
  */
 
-export interface SceneNode {
+/** Which stop a word turns into, when it survives. */
+export type StoryStop = "atardecer" | "cena" | "sobremesa";
+
+export interface StoryWord {
   label: string;
-  /** Survives the crossing and lands on the route. */
-  keep: boolean;
-  /** Which stop it belongs to. Meaningless when `keep` is false. */
-  stop: number;
-  /** Scattered start, normalised. */
-  sx: number;
-  sy: number;
+  /** Home position, % of the stage. `rot` in degrees — barely off level. */
+  home: { x: number; y: number; rot: number };
+  /** Type size step. 2 is the largest. */
+  size: 0 | 1 | 2;
   /**
-   * Unit vector from the node's stop toward where it rests.
-   *
-   * A direction rather than a normalised point, because the fan has to be
-   * sized in *pixels* at draw time: an offset stored as a fraction of the
-   * box stretches with the aspect ratio, so a spacing that separated
-   * labels on a wide screen collapsed them on a narrow one.
+   * Set when the word survives the sort. It then travels to that stop's
+   * anchor and turns into the moment there — see rule 4 above.
    */
-  fanX: number;
-  fanY: number;
-  /** Idle drift, so the cloud breathes before anything happens. */
-  driftX: number;
-  driftY: number;
-  driftPhase: number;
-  /** Where a discarded node drifts off to. */
-  exitX: number;
-  exitY: number;
-  radius: number;
+  keeps?: StoryStop;
+  /** Where a word that did not survive drifts to as it loses presence. */
+  drift?: { x: number; y: number };
 }
 
-export interface Scene {
-  nodes: SceneNode[];
-  stops: { x: number; y: number }[];
+export interface StoryMoment {
+  id: StoryStop;
+  /** The photograph's frame, % of the stage. */
+  frame: { x: number; y: number; w: number; h: number };
+  /**
+   * The caption's **top-left corner**, and the point the surviving word
+   * travels to. Two sit above their frame and one below — three captions in
+   * the same relative place turns the composition back into a row of cards,
+   * which is what the gallery next door learned the hard way.
+   */
+  anchor: { x: number; y: number };
+  /**
+   * Where this moment sits along the thread, 0..1. Its whole appearance is
+   * derived from the route's own progress rather than from a window of its
+   * own, so the photograph arrives exactly where and when the line reaches
+   * it. That is what makes three appearances read as one recorrido.
+   */
+  at: number;
+  /** `sizes` for `next/image`, matched to the frame's real painted width. */
+  sizes: string;
 }
 
-export interface SceneTheme {
-  ember: string;
-  gold: string;
-  electric: string;
-  ink: string;
-  font: string;
+/** Roughly how tall a caption is, in stage units. Used by the tests that
+ * keep captions off their own and each other's photographs. */
+export const CAPTION_H = 11;
+
+/**
+ * The eight intentions, and where they start.
+ *
+ * The left column (x < 40, y 24..76) is the copy column and is kept clear,
+ * exactly as in the inspiration scene — which is why the words gather in the
+ * right two-thirds and in the strips above and below the headline. The three
+ * that survive are spread across the composition rather than clustered, so
+ * the sort reads as a judgement about *which* rather than about *where*.
+ */
+export const STORY_WORDS: StoryWord[] = [
+  { label: "atardecer", home: { x: 60, y: 20, rot: -3 }, size: 2, keeps: "atardecer" },
+  { label: "buena comida", home: { x: 58, y: 44, rot: 2 }, size: 2, keeps: "cena" },
+  { label: "sobremesa", home: { x: 76, y: 70, rot: -4 }, size: 2, keeps: "sobremesa" },
+  { label: "tranquilo", home: { x: 28, y: 8, rot: -2 }, size: 1, drift: { x: -9, y: -5 } },
+  { label: "con amigos", home: { x: 86, y: 12, rot: 4 }, size: 1, drift: { x: 6, y: -6 } },
+  { label: "cerca", home: { x: 93, y: 40, rot: -3 }, size: 0, drift: { x: 2, y: 6 } },
+  { label: "poco tiempo", home: { x: 46, y: 92, rot: 3 }, size: 1, drift: { x: -7, y: 5 } },
+  { label: "sin reserva", home: { x: 13, y: 84, rot: 5 }, size: 0, drift: { x: -6, y: 7 } },
+];
+
+/**
+ * The payoff composition.
+ *
+ * Not a row of three. The frames differ in size and zigzag down the right
+ * two-thirds — the same lopsided hierarchy that makes the inspiration scene
+ * read as a picture with a subject instead of a grid with the gutters
+ * removed. The dominant frame is the middle of the evening, not the first
+ * moment, so the eye lands on the meal rather than on a timeline's origin.
+ *
+ * The left column stays empty throughout: it holds the headline first, and
+ * then "El plan sí." lands in exactly that place.
+ */
+export const STORY_MOMENTS: StoryMoment[] = [
+  {
+    id: "atardecer",
+    frame: { x: 40, y: 16, w: 26, h: 30 },
+    anchor: { x: 40, y: 3 },
+    at: 0.05,
+    sizes: "(max-width: 900px) 92vw, 28vw",
+  },
+  {
+    id: "cena",
+    frame: { x: 73, y: 30, w: 25, h: 40 },
+    anchor: { x: 73, y: 17 },
+    at: 0.4,
+    sizes: "(max-width: 900px) 92vw, 27vw",
+  },
+  {
+    id: "sobremesa",
+    frame: { x: 42, y: 58, w: 23, h: 28 },
+    anchor: { x: 42, y: 88 },
+    at: 0.7,
+    sizes: "(max-width: 900px) 92vw, 25vw",
+  },
+];
+
+/**
+ * The thread, as points in stage units (0..100), and the function that turns
+ * them into a path in real pixels.
+ *
+ * ── Why this is not a static `d` string in a stretched viewBox ──────
+ *
+ * It used to be, with `preserveAspectRatio="none"` so the 0..100 coordinates
+ * lined up with the percentage-positioned frames, plus
+ * `vector-effect: non-scaling-stroke` so the anisotropic stretch would not
+ * make the stroke fat horizontally and thin vertically. That combination is
+ * what drew the line as a row of disconnected orange fragments: with a
+ * non-scaling stroke the browser computes the **dash pattern in device
+ * space**, where the painted path is an order of magnitude longer than the
+ * 81 user units `getTotalLength()` reports — so a dash array meant to be one
+ * unbroken segment tiled into a dozen of them. No amount of tuning the dash
+ * fixes that, because the two numbers are in different coordinate systems.
+ *
+ * Building the path in the stage's own pixels removes the mismatch at the
+ * source: the viewBox equals the element's real size, so there is no stretch,
+ * no need for a non-scaling stroke, and the measured length and the dash
+ * array are finally in the same unit.
+ */
+const ROUTE_POINTS = {
+  from: { x: 53, y: 31 },
+  curves: [
+    { c1: { x: 68, y: 34 }, c2: { x: 83, y: 40 }, to: { x: 85.5, y: 50 } },
+    { c1: { x: 88, y: 61 }, c2: { x: 70, y: 69 }, to: { x: 53.5, y: 72 } },
+  ],
+};
+
+/** The thread as an SVG `d`, in pixels, for a stage of `w` by `h`. */
+export function routePath(w: number, h: number): string {
+  const px = (p: { x: number; y: number }) =>
+    `${((p.x / 100) * w).toFixed(2)} ${((p.y / 100) * h).toFixed(2)}`;
+  const curves = ROUTE_POINTS.curves
+    .map((c) => `C ${px(c.c1)}, ${px(c.c2)}, ${px(c.to)}`)
+    .join(" ");
+  return `M ${px(ROUTE_POINTS.from)} ${curves}`;
 }
 
-/** Deterministic PRNG. A fixed layout survives resizes and remounts. */
-function mulberry32(seed: number): () => number {
-  let a = seed;
-  return function next() {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+export interface StoryBeats {
+  /** Kicker, first title line and lead. Rises on approach, leaves on the track. */
+  copy: number;
+  /** The sort: three words gain presence, five lose it. */
+  sort: number;
+  /** The five loose words leaving. The survivors are never faded. */
+  fade: number;
+  /** The ground warming a few degrees, and settling back. Not monotonic. */
+  warm: number;
+  /** The thread drawing itself. Everything downstream derives from this. */
+  route: number;
+  /** The closing line, "El plan sí." */
+  payoff: number;
+}
+
+const clamp01 = (value: number) => (value < 0 ? 0 : value > 1 ? 1 : value);
+
+const span = (value: number, start: number, end: number) =>
+  clamp01((value - start) / (end - start));
+
+/** Smoothstep. Linear scrubbing reads mechanical; this reads directed. */
+const ease = (value: number) => value * value * (3 - 2 * value);
+
+/**
+ * The two clocks, resolved into six beats.
+ *
+ * `enter` is the section's approach, 0 when its top edge is at the bottom of
+ * the viewport and 1 when it reaches the top; `t` is the pinned track. Only
+ * the copy's arrival hangs off the approach — everything else needs the room
+ * the track buys.
+ *
+ * ── `warm`, and why it goes back down ───────────────────────────────
+ *
+ * The only change of ground in the section, and it is deliberately almost
+ * invisible: an overlay of a warm sand the hero already paints in its own
+ * gradient, so it is not a new colour on the page. It rises to full between
+ * 0.30 and 0.66 and then **recedes to about a third**, which is the
+ * cream -> warm sand -> lightly toasted cream the section wants, and which
+ * also means the ground it hands to `HowItWorks` is within a hair of that
+ * section's own cream. If the change is ever noticeable while scrolling,
+ * lower the overlay's colour distance before touching this curve.
+ *
+ * ── `route`, and why nothing precedes it ────────────────────────────
+ *
+ * The thread is exactly zero until `t = 0.42`. Before the sort has been
+ * read, a line joining the words means nothing to someone seeing the page
+ * for the first time — it reads as stray strokes rather than as a route.
+ * Every moment's arrival derives from this beat via `momentProgress`, so a
+ * photograph can never precede the line that explains it.
+ *
+ * ── The one place two things share a spot ───────────────────────────
+ *
+ * `copy` and `payoff` both live in the left column. `copy` is at zero by
+ * `t = 0.46` and `payoff` does not begin until 0.76, so the headline is long
+ * gone before "El plan sí." lands in its place — which is the point: the
+ * sentence finishes exactly where it started.
+ */
+export function getStoryBeats(enter: number, t: number): StoryBeats {
+  return {
+    copy: ease(span(enter, 0.38, 0.7)) * (1 - ease(span(t, 0.26, 0.46))),
+    sort: ease(span(t, 0.06, 0.38)),
+    fade: ease(span(t, 0.4, 0.56)),
+    warm: ease(span(t, 0.3, 0.66)) - ease(span(t, 0.78, 1)) * 0.65,
+    route: ease(span(t, 0.42, 0.86)),
+    payoff: ease(span(t, 0.76, 0.9)),
   };
 }
 
-function clamp01(v: number): number {
-  return v < 0 ? 0 : v > 1 ? 1 : v;
-}
-
-/** Maps `value` from the range [a, b] onto 0..1, clamped. */
-function remap(value: number, a: number, b: number): number {
-  return clamp01((value - a) / (b - a));
-}
-
-function easeInOut(t: number): number {
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-}
-
-/** Stops sit slightly off a straight line, so the route reads as a path. */
-const STOP_POSITIONS = [
-  { x: 0.21, y: 0.585 },
-  { x: 0.5, y: 0.475 },
-  { x: 0.79, y: 0.6 },
-];
-
 /**
- * What survives the crossing, and where it lands.
- *
- * Explicit per stop rather than "the first nine that match": the whole
- * point of the resolved frame is that the three groups read as a coherent
- * evening, and grouping by array order put "café" at the dinner stop and
- * "algo rico" at the café. A viewer who reads the labels has to find them
- * sensible, or the animation quietly contradicts the copy beside it.
- *
- * Index matches `STORY.stops`: atardecer, mesa, café.
+ * A moment's own progress, derived from how far the thread has travelled.
+ * Zero while there is no line, so the photographs can only ever follow it.
  */
-const KEPT_BY_STOP: readonly (readonly string[])[] = [
-  ["atardecer", "vista", "tranquilo"],
-  ["buena comida", "algo rico", "en pareja"],
-  ["café", "sobremesa", "cerca"],
-];
-
-export interface CreateSceneOptions {
-  /** Total nodes to place, kept ones included. */
-  count: number;
-  /**
-   * Narrow screens. One fragment per stop instead of three: at 390px a
-   * fan of three labels around a stop is three labels on top of each
-   * other, and the scene's job is to be read, not to be dense.
-   */
-  compact?: boolean;
-}
-
-export function createScene(
-  labels: readonly string[],
-  { count, compact = false }: CreateSceneOptions,
-): Scene {
-  const random = mulberry32(0x5107);
-
-  // One label per stop when compact, three otherwise.
-  const groups = KEPT_BY_STOP.map((group) => (compact ? group.slice(0, 1) : group));
-
-  const stopFor = new Map<string, number>();
-  const fanIndex = new Map<string, number>();
-  groups.forEach((group, stopIndex) => {
-    group.forEach((label, index) => {
-      stopFor.set(label, stopIndex);
-      fanIndex.set(label, index);
-    });
-  });
-
-  // Kept labels are always placed, whatever `count` is. Slicing the
-  // source array first silently dropped the ones that happen to sit late
-  // in it, which left the route with stops that had nothing on them.
-  const kept = groups.flat();
-  const rest = labels.filter((label) => !stopFor.has(label));
-  const chosen = [...kept, ...rest.slice(0, Math.max(0, count - kept.length))];
-
-  const nodes: SceneNode[] = chosen.map((label) => {
-    const stop = stopFor.get(label) ?? -1;
-    const keep = stop >= 0;
-    const anchor = keep ? STOP_POSITIONS[stop] : null;
-
-    // Deterministic placement, not a random angle: random put two labels
-    // on top of each other often enough to be a real defect, and a wider
-    // radius only blurs the three groups into one another.
-    //
-    // A trio fans across an arc *above* its stop, at -150° / -90° / -30°;
-    // a lone compact label sits straight above it. Above matters — the
-    // stop's time and name are drawn underneath the marker.
-    const index = fanIndex.get(label) ?? 0;
-    const angle = compact
-      ? -Math.PI / 2
-      : ((-150 + index * 60) * Math.PI) / 180;
-
-    return {
-      label,
-      keep,
-      stop,
-      sx: 0.07 + random() * 0.86,
-      sy: 0.14 + random() * 0.72,
-      fanX: anchor ? Math.cos(angle) : 0,
-      fanY: anchor ? Math.sin(angle) : 0,
-      driftX: (random() - 0.5) * 0.016,
-      driftY: (random() - 0.5) * 0.014,
-      driftPhase: random() * Math.PI * 2,
-      exitX: random() < 0.5 ? -0.12 : 1.12,
-      exitY: 0.1 + random() * 0.8,
-      radius: keep ? 3.4 : 2.2,
-    };
-  });
-
-  return { nodes, stops: STOP_POSITIONS };
-}
-
-export interface DrawOptions {
-  /** 0 → scattered cloud, 1 → settled recorrido. */
-  progress: number;
-  /** Seconds since the scene started, for the idle drift. */
-  time: number;
-  width: number;
-  height: number;
-  theme: SceneTheme;
-  /** Stop labels drawn once the route has formed. */
-  stopLabels: readonly { time: string; label: string }[];
-}
-
-/**
- * Draws one frame.
- *
- * The four stages overlap on purpose — a scene that switched cleanly
- * between them would read as four animations played in sequence rather
- * than as one process happening.
- */
-export function drawScene(
-  context: CanvasRenderingContext2D,
-  scene: Scene,
-  { progress, time, width, height, theme, stopLabels }: DrawOptions,
-): void {
-  context.clearRect(0, 0, width, height);
-
-  const crossing = remap(progress, 0.24, 0.58);
-  const settling = easeInOut(remap(progress, 0.5, 0.88));
-  const routeDraw = easeInOut(remap(progress, 0.58, 0.94));
-  const resolved = remap(progress, 0.86, 1);
-
-  // Idle drift fades out as things start settling: the cloud breathes
-  // while it is a cloud, and holds still once it is a route.
-  const breathing = 1 - settling;
-
-  // The fan is sized in pixels, and clamped so a label never lands off
-  // the canvas on a narrow screen.
-  const fanX = Math.min(width * 0.1, 132);
-  const fanY = Math.min(height * 0.09, 74);
-
-  const placed = scene.nodes.map((node) => {
-    const wobbleX = Math.sin(time * 0.42 + node.driftPhase) * node.driftX * breathing;
-    const wobbleY = Math.cos(time * 0.36 + node.driftPhase * 1.4) * node.driftY * breathing;
-
-    if (node.keep) {
-      const anchor = scene.stops[node.stop];
-      const targetX = anchor.x * width + node.fanX * fanX;
-      const targetY = anchor.y * height + node.fanY * fanY;
-      const startX = (node.sx + wobbleX) * width;
-      const startY = (node.sy + wobbleY) * height;
-      return {
-        node,
-        x: startX + (targetX - startX) * settling,
-        y: startY + (targetY - startY) * settling,
-        alpha: 1,
-      };
-    }
-
-    // Discarded fragments drift out and fade rather than blinking off.
-    const exit = easeInOut(crossing);
-    const x = node.sx + (node.exitX - node.sx) * exit + wobbleX;
-    const y = node.sy + (node.exitY - node.sy) * exit + wobbleY;
-    return { node, x: x * width, y: y * height, alpha: 1 - crossing };
-  });
-
-  /* ── Connections between what survives ───────────────────────── */
-  // Peaks mid-crossing and recedes as the route takes over: the mesh is
-  // the working-out, and it should not still be on screen once the
-  // answer is.
-  const meshAlpha = Math.sin(remap(progress, 0.2, 0.72) * Math.PI) * 0.5;
-
-  if (meshAlpha > 0.01) {
-    context.lineWidth = 1;
-    for (let i = 0; i < placed.length; i += 1) {
-      const a = placed[i];
-      if (!a.node.keep) continue;
-
-      for (let j = i + 1; j < placed.length; j += 1) {
-        const b = placed[j];
-        if (!b.node.keep) continue;
-
-        const dx = a.x - b.x;
-        const dy = a.y - b.y;
-        const distance = Math.hypot(dx, dy);
-        const reach = Math.min(width, height) * 0.42;
-        if (distance > reach) continue;
-
-        // Nearer pairs draw stronger, which is what makes the mesh look
-        // like it is finding relationships rather than drawing a graph.
-        const strength = (1 - distance / reach) * meshAlpha;
-        context.strokeStyle = withAlpha(theme.ember, strength * 0.55);
-        context.beginPath();
-        context.moveTo(a.x, a.y);
-        context.lineTo(b.x, b.y);
-        context.stroke();
-      }
-    }
-  }
-
-  /* ── The route ───────────────────────────────────────────────── */
-
-  if (routeDraw > 0) {
-    const points = scene.stops.map((stop) => ({ x: stop.x * width, y: stop.y * height }));
-
-    context.save();
-    context.lineWidth = 2;
-    context.lineCap = "round";
-    context.strokeStyle = withAlpha(theme.ember, 0.9);
-    context.shadowColor = withAlpha(theme.ember, 0.5);
-    context.shadowBlur = 18;
-
-    // A dash offset is what "draws" the line: one dash as long as the
-    // whole path, slid into view.
-    const length = pathLength(points);
-    context.setLineDash([length, length]);
-    context.lineDashOffset = length * (1 - routeDraw);
-
-    context.beginPath();
-    context.moveTo(points[0].x, points[0].y);
-    for (let i = 1; i < points.length; i += 1) {
-      const previous = points[i - 1];
-      const current = points[i];
-      const midX = (previous.x + current.x) / 2;
-      context.bezierCurveTo(midX, previous.y, midX, current.y, current.x, current.y);
-    }
-    context.stroke();
-    context.restore();
-  }
-
-  /* ── Nodes ───────────────────────────────────────────────────── */
-
-  context.font = `500 12px ${theme.font}`;
-  context.textAlign = "center";
-  context.textBaseline = "middle";
-
-  for (const { node, x, y, alpha } of placed) {
-    if (alpha <= 0.01) continue;
-
-    const colour = node.keep ? theme.ember : theme.electric;
-
-    context.beginPath();
-    context.arc(x, y, node.radius, 0, Math.PI * 2);
-    context.fillStyle = withAlpha(colour, alpha * (node.keep ? 0.95 : 0.5));
-    context.fill();
-
-    if (node.keep) {
-      context.beginPath();
-      context.arc(x, y, node.radius + 4 + settling * 2, 0, Math.PI * 2);
-      context.strokeStyle = withAlpha(theme.ember, 0.18 + settling * 0.22);
-      context.lineWidth = 1;
-      context.stroke();
-    }
-
-    context.fillStyle = withAlpha(theme.ink, alpha * (node.keep ? 0.9 : 0.42));
-    context.fillText(node.label, x, y - node.radius - 11);
-  }
-
-  /* ── Stop markers, once there is a route to mark ─────────────── */
-
-  if (resolved > 0) {
-    scene.stops.forEach((stop, index) => {
-      const x = stop.x * width;
-      const y = stop.y * height;
-      const label = stopLabels[index];
-      if (!label) return;
-
-      context.beginPath();
-      context.arc(x, y, 7 + resolved * 2, 0, Math.PI * 2);
-      context.fillStyle = withAlpha(theme.gold, resolved);
-      context.fill();
-
-      context.font = `700 15px ${theme.font}`;
-      context.fillStyle = withAlpha(theme.ink, resolved);
-      context.fillText(label.time, x, y + 30);
-
-      context.font = `500 12px ${theme.font}`;
-      context.fillStyle = withAlpha(theme.ink, resolved * 0.6);
-      context.fillText(label.label, x, y + 48);
-    });
-  }
-}
-
-function pathLength(points: { x: number; y: number }[]): number {
-  let total = 0;
-  for (let i = 1; i < points.length; i += 1) {
-    total += Math.hypot(points[i].x - points[i - 1].x, points[i].y - points[i - 1].y);
-  }
-  // Bezier control points push the drawn curve past the straight-line
-  // distance; the dash has to be at least as long as what is drawn.
-  return total * 1.35;
-}
-
-/**
- * `rgb(r g b / a)` from an `r, g, b` triple string.
- *
- * The theme carries channels rather than finished colours precisely so
- * alpha can be applied per-draw without parsing hex on every frame.
- */
-function withAlpha(channels: string, alpha: number): string {
-  return `rgba(${channels}, ${clamp01(alpha).toFixed(3)})`;
+export function momentProgress(route: number, at: number): number {
+  return ease(span(route, at, at + 0.3));
 }
