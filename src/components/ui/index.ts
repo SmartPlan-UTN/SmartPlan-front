@@ -21,3 +21,4 @@ export { MoodBackground, type Mood, type MoodBackgroundProps } from "./MoodBackg
 export { PasswordStrength, type PasswordStrengthProps } from "./PasswordStrength";
 export { Select, type SelectOption, type SelectProps } from "./Select";
 export { Stars, type StarsProps } from "./Stars";
+export { StarRatingInput, type StarRatingInputProps } from "./StarRatingInput";

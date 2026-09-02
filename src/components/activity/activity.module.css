@@ -374,6 +374,255 @@
   color: var(--fg-2);
 }
 
+/* ── CU45: review list ───────────────────────────────────────
+   Matches `ActivityDetail.jsx`'s `ReviewCard` — literal 10/14/16px, not the
+   spacing scale, same one-off rhythm reasoning as the rest of this file's
+   prototype-matched cards. */
+.reviewCard {
+  background: var(--surface-card);
+  border: 1.5px solid var(--hairline);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: var(--s-2);
+}
+
+.reviewHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-2);
+}
+
+/* Same ember gradient as `profile.module.css`'s `.avatar`, not a color per
+   reviewer: the mockup's `review.color` is demo flourish with nothing
+   behind it in the real contract — see the doc comment on `RatingsList`. */
+.reviewAvatar {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    var(--ember) 0%,
+    color-mix(in srgb, var(--ember) 65%, black) 100%
+  );
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 700;
+  user-select: none;
+}
+
+.reviewIdentity {
+  flex: 1;
+  min-width: 0;
+}
+
+.reviewAuthor {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg-1);
+}
+
+.reviewDate {
+  margin: 0;
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+.reviewText {
+  margin: 0;
+  font-size: 13px;
+  color: var(--fg-2);
+  line-height: 1.6;
+}
+
+/* ── CU44: rate this activity ────────────────────────────────
+   No mockup shows a write-a-rating control at all — see the doc comment on
+   `RatingForm` — so this card borrows `.ratingSummaryCard`'s own
+   surface/border/radius rhythm instead of a prototype's, and the
+   label/input pattern is the same hand-rolled one `CreatePlanForm`
+   established for a non-auth form, not `AuthField`. */
+.ratingFormCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-5);
+  margin-bottom: var(--s-5);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+}
+
+.ratingFormTitle {
+  margin: 0;
+  color: var(--fg-1);
+  font-weight: 700;
+}
+
+.ratingForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.label {
+  color: var(--fg-2);
+  font-weight: 600;
+}
+
+.required {
+  color: var(--ember);
+  font-weight: 700;
+}
+
+.textarea {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card-sm);
+  background: color-mix(in srgb, var(--cream) 70%, transparent);
+  color: var(--fg-1);
+  font-size: var(--t-body);
+  font-family: inherit;
+  resize: vertical;
+  min-height: 90px;
+  box-sizing: border-box;
+  transition: border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--ember);
+  background: var(--surface-card);
+}
+
+.textarea:disabled {
+  opacity: 0.6;
+}
+
+.inputInvalid {
+  border-color: var(--error);
+  background: color-mix(in srgb, var(--error) 4%, var(--surface-card));
+}
+
+.fieldError {
+  margin: 0;
+  color: var(--error);
+  font-size: var(--t-small);
+}
+
+.ratingSubmit {
+  align-self: flex-start;
+}
+
+/* ── CU46/CU47: edit/delete own rating ───────────────────────
+   No mockup shows these actions either — see `ActivityRatingSection`'s
+   doc comment — so the icon-button treatment matches `CollectionDetailView`
+   `.removeButton`'s neutral/hover-danger pattern instead of inventing a
+   new one. */
+.ownRatingHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+
+.ownRatingActions {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-btn);
+  background: var(--surface-card);
+  color: var(--fg-2);
+  cursor: pointer;
+  transition: border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    color 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.iconButton:hover {
+  border-color: var(--ember);
+  background: color-mix(in srgb, var(--ember) 8%, transparent);
+  color: var(--ember);
+}
+
+.iconButtonDanger:hover {
+  border-color: var(--error);
+  background: color-mix(in srgb, var(--error) 8%, transparent);
+  color: var(--error);
+}
+
+.iconButton:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.editRatingActions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.ownRatingComment {
+  margin: 0;
+  color: var(--fg-2);
+}
+
+.ratingModerationNote {
+  margin: 0;
+  color: var(--fg-3);
+  font-size: var(--t-small);
+  font-style: italic;
+}
+
+.ratingGate {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-4);
+  margin-bottom: var(--s-5);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card-sm);
+  background: var(--surface-card);
+  color: var(--fg-2);
+}
+
+.ratingGateIcon {
+  flex-shrink: 0;
+  color: var(--fg-3);
+}
+
+.ratingGateLink {
+  color: var(--ember);
+  font-weight: 600;
+}
+
 /* Not sticky/fixed: the running SmartPlanSystemDesign build scrolls this
    away with the rest of the content, same as PlanDetail.jsx's action row —
    only the source ActivityDetail.jsx pinned it. */

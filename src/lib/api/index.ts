@@ -62,3 +62,10 @@ export {
   removeActivityFromCollection,
   updateCollection,
 } from './collections';
+export {
+  createRating,
+  deleteRating,
+  getOwnRating,
+  listRatings,
+  updateRating,
+} from './ratings';
