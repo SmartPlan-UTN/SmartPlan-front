@@ -8,7 +8,7 @@ import {
   Pagination,
   type SortOption,
 } from "@/components/explore";
-import { Button, Icon } from "@/components/ui";
+import { Button, Icon, LoadingDots } from "@/components/ui";
 import { useDebouncedValue, useExplorationFilters, useExplorationSearch } from "@/hooks";
 import { searchPlans } from "@/lib/api";
 import { useSession } from "@/lib/auth";
@@ -201,12 +201,7 @@ export function PlanSearch() {
 
       {status === "loading" && !hasResults ? (
         <div className={activityStyles.stateBlock}>
-          <div className={activityStyles.loadingDots}>
-            <span className={activityStyles.loadingDot} />
-            <span className={activityStyles.loadingDot} />
-            <span className={activityStyles.loadingDot} />
-          </div>
-          <p className="sp-body">Armando los mejores planes...</p>
+          <LoadingDots label="Armando los mejores planes..." />
         </div>
       ) : null}
 

@@ -29,15 +29,33 @@ export {
 } from "./activities";
 export {
   searchPlans,
+  createPlan,
+  listOwnPlans,
+  getOwnPlan,
+  updateOwnPlan,
+  cancelOwnPlan,
+  addPlanActivity,
+  removePlanActivity,
+  generateSuggestedPlan,
   getPlan,
-  getMyPlans,
-  getMyPlan,
   selectPlan,
   deselectPlan,
 } from "./plans";
 export { submitFeedback } from "./feedback";
 export { listCategories } from "./categories";
-export { getPreferences, updatePreferences } from "./users";
+export {
+  getPreferences,
+  updatePreferences,
+  getProfile,
+  updateProfile,
+  changePassword,
+  deleteAccount,
+} from "./users";
+export type {
+  UpdateProfileData,
+  ChangePasswordData,
+  DeleteAccountData,
+} from "./users";
 export { searchPlace } from "./places";
 export {
   createPlanRequest,

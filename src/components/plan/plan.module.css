@@ -367,6 +367,23 @@
   gap: var(--s-2);
 }
 
+.editLink {
+  display: flex;
+  text-decoration: none;
+}
+
+.cancelledBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  margin-bottom: var(--s-5);
+  padding: var(--s-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: var(--ember-04);
+  color: var(--fg-1);
+}
+
 .saveButton,
 .shareButton {
   justify-content: center;

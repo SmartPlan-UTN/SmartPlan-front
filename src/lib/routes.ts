@@ -13,14 +13,22 @@ export const ROUTES = {
   explore: "/explore",
   exploreMap: "/explore/map",
   plans: "/plans",
+  createPlan: "/plans/create",
   favorites: "/favorites",
+  collections: "/collections",
+  createCollection: "/collections/new",
   history: "/history",
   profile: "/profile",
   preferences: "/preferences",
+  security: "/security",
   login: "/login",
   signup: "/signup",
   recoverPassword: "/recover-password",
   admin: "/admin",
+  adminActivities: "/admin/activities",
+  adminPlans: "/admin/plans",
+  adminRatings: "/admin/ratings",
+  adminUsers: "/admin/users",
 } as const;
 
 export type Route = (typeof ROUTES)[keyof typeof ROUTES];
@@ -30,13 +38,54 @@ export function activityDetailRoute(id: number): string {
   return `${ROUTES.explore}/${id}`;
 }
 
-/** `/plans/:id` — plan detail (CU13). */
+/** `/plans/:id` — plan detail (CU13, CU29). */
 export function planDetailRoute(id: number): string {
   return `${ROUTES.plans}/${id}`;
 }
 
+/** `/plans/:id/edit` — edit an owned plan (CU25). */
+export function planEditRoute(id: number): string {
+  return `${ROUTES.plans}/${id}/edit`;
+}
+
+/** `/collections/:id/edit` — edit an owned collection (CU33). */
+export function collectionEditRoute(id: number): string {
+  return `/collections/${id}/edit`;
+}
+
+/** `/collections/:id` — view an owned collection and its activities (CU37). */
+export function collectionDetailRoute(id: number): string {
+  return `/collections/${id}`;
+}
+
 /** Name of the query parameter that stores where to return after logging in. */
 export const REDIRECT_PARAM = "redirect";
+
+/**
+ * Query parameter that tells the login screen someone landed there because
+ * CU6 (change password) closed their session server-side, so it can show
+ * "Tu contraseña fue actualizada. Iniciá sesión nuevamente." instead of a
+ * silent, unexplained login form.
+ */
+export const PASSWORD_CHANGED_PARAM = "passwordChanged";
+
+/** `/login`, flagged so the screen explains why the session just closed. */
+export function passwordChangedLoginRoute(): string {
+  return `${ROUTES.login}?${PASSWORD_CHANGED_PARAM}=1`;
+}
+
+/**
+ * Query parameter that tells the login screen someone landed there because
+ * CU7 (delete account) just closed their session after the account itself
+ * was removed, so it can show a goodbye notice instead of a silent,
+ * unexplained login form for an account that no longer exists.
+ */
+export const ACCOUNT_DELETED_PARAM = "accountDeleted";
+
+/** `/login`, flagged so the screen explains the account was deleted. */
+export function accountDeletedLoginRoute(): string {
+  return `${ROUTES.login}?${ACCOUNT_DELETED_PARAM}=1`;
+}
 
 /**
  * Validates a redirect destination before navigating to it.

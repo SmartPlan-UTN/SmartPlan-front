@@ -1,5 +1,10 @@
 import type {
-  MyPlansParams,
+  AddPlanDetailDto,
+  CreatePlanDto,
+  Plan,
+  PlanSuggestionDto,
+  UpdatePlanDto,
+  ListOwnPlansParams,
   OwnPlanDetail,
   OwnPlanSummary,
   PaginatedResult,
@@ -36,8 +41,8 @@ export async function getPlan(id: number): Promise<PlanDetailResult> {
  * Backend contract: `GET /users/me/plans`, paginated. Carries the CU23
  * feedback layer (`feedbackState`, `feedback`, `completedAt`).
  */
-export async function getMyPlans(
-  params: MyPlansParams = {}
+export async function listOwnPlans(
+  params: ListOwnPlansParams = {},
 ): Promise<PaginatedResult<OwnPlanSummary>> {
   return apiClient.get<PaginatedResult<OwnPlanSummary>>('/users/me/plans', {
     params: { direction: 'desc', ...params },
@@ -49,7 +54,7 @@ export async function getMyPlans(
  * section). `GET /users/me/plans/:id`. Rejects with `ApiError` 403/404 when
  * the caller is not the owner.
  */
-export async function getMyPlan(id: number): Promise<OwnPlanDetail> {
+export async function getOwnPlan(id: number): Promise<OwnPlanDetail> {
   return apiClient.get<OwnPlanDetail>(`/users/me/plans/${id}`);
 }
 
@@ -71,4 +76,39 @@ export async function selectPlan(id: number): Promise<PlanSelectionResult> {
  */
 export async function deselectPlan(id: number): Promise<PlanSelectionResult> {
   return apiClient.delete<PlanSelectionResult>(`/plans/${id}/select`);
+}
+
+export async function createPlan(dto: CreatePlanDto): Promise<OwnPlanDetail> {
+  return apiClient.post<OwnPlanDetail>('/users/me/plans', dto);
+}
+
+export async function updateOwnPlan(
+  id: number,
+  dto: UpdatePlanDto,
+): Promise<OwnPlanDetail> {
+  return apiClient.patch<OwnPlanDetail>(`/users/me/plans/${id}`, dto);
+}
+
+export async function cancelOwnPlan(id: number): Promise<void> {
+  return apiClient.delete<void>(`/users/me/plans/${id}`);
+}
+
+export async function addPlanActivity(
+  planId: number,
+  dto: AddPlanDetailDto,
+): Promise<OwnPlanDetail> {
+  return apiClient.post<OwnPlanDetail>(`/users/me/plans/${planId}/details`, dto);
+}
+
+export async function removePlanActivity(
+  planId: number,
+  detailId: number,
+): Promise<void> {
+  return apiClient.delete<void>(`/users/me/plans/${planId}/details/${detailId}`);
+}
+
+export async function generateSuggestedPlan(
+  dto: PlanSuggestionDto,
+): Promise<Plan> {
+  return apiClient.post<Plan>('/plan-suggestions', dto);
 }
