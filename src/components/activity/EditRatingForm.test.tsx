@@ -89,7 +89,33 @@ describe("EditRatingForm", () => {
     await user.clear(screen.getByLabelText("Comentario"));
     await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
-    expect(updateRating).toHaveBeenCalledWith(7, { score: 3, comment: null });
+    expect(updateRating).toHaveBeenCalledWith(7, { comment: null });
+  });
+
+  it("does not resend an unchanged comment when only the score changes", async () => {
+    vi.mocked(updateRating).mockResolvedValueOnce(mockRating({ score: 4 }));
+    const user = userEvent.setup();
+    render(
+      <EditRatingForm rating={mockRating()} onSaved={vi.fn()} onCancel={vi.fn()} />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "4 estrellas" }));
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    expect(updateRating).toHaveBeenCalledWith(7, { score: 4 });
+  });
+
+  it("closes without submitting when nothing changed", async () => {
+    const onCancel = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <EditRatingForm rating={mockRating()} onSaved={vi.fn()} onCancel={onCancel} />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    expect(updateRating).not.toHaveBeenCalled();
+    expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
   it("calls onCancel without saving", async () => {
@@ -119,6 +145,7 @@ describe("EditRatingForm", () => {
       <EditRatingForm rating={mockRating()} onSaved={vi.fn()} onCancel={vi.fn()} />,
     );
 
+    await user.click(screen.getByRole("button", { name: "4 estrellas" }));
     await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
     expect(

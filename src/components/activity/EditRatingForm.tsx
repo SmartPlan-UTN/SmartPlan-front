@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 
 import { Button, StarRatingInput } from "@/components/ui";
 import { ApiError, updateRating } from "@/lib/api";
-import type { OwnRating } from "@/types";
+import type { OwnRating, UpdateRatingInput } from "@/types";
 
 import styles from "./activity.module.css";
 
@@ -116,12 +116,25 @@ export function EditRatingForm({ rating, onSaved, onCancel }: EditRatingFormProp
       return;
     }
 
+    const normalizedComment = comment.trim() || null;
+    const originalComment = rating.comment?.trim() || null;
+    const changes: UpdateRatingInput = {};
+
+    if (score !== rating.score) {
+      changes.score = score;
+    }
+    if (normalizedComment !== originalComment) {
+      changes.comment = normalizedComment;
+    }
+
+    if (changes.score === undefined && changes.comment === undefined) {
+      onCancel();
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const updated = await updateRating(rating.id, {
-        score,
-        comment: comment.trim() || null,
-      });
+      const updated = await updateRating(rating.id, changes);
       onSaved(updated);
     } catch (error) {
       if (error instanceof ApiError) {

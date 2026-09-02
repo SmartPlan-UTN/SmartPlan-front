@@ -37,30 +37,37 @@ type LoadStatus = "loading" | "loaded" | "error";
 /**
  * Finds a completed plan of the signed-in user's that included this
  * activity — `SmartPlan-back`'s `CreateRatingDto.planId` requirement
- * (`ratings.service.ts`'s `requireEligiblePlan`). Only the most recent 20
- * own plans are checked: today no plan can ever reach `completed` through
- * any code path in either repo yet (that transition isn't built), so this
- * is future-proofing rather than something exercisable right now, and a
- * user with more than 20 plans by the time it is can be revisited then.
+ * (`ratings.service.ts`'s `requireEligiblePlan`). All pages are checked so
+ * an older eligible experience isn't hidden by the own-plans endpoint's
+ * pagination.
  * Returns the first (most recent) match, not a list — CU44's form takes no
  * plan picker, matching the issue's own scope ("puntaje y comentario").
  */
 async function findEligiblePlanId(activityId: number): Promise<number | null> {
-  const { data: plans } = await listOwnPlans({
-    sortBy: "createdAt",
-    direction: "desc",
-    limit: 20,
-  });
+  let page = 1;
 
-  for (const plan of plans) {
-    if (plan.status.key !== "completed") continue;
-    const detail = await getOwnPlan(plan.id);
-    if (detail.details.some((item) => item.activity.id === activityId)) {
-      return plan.id;
+  while (true) {
+    const result = await listOwnPlans({
+      page,
+      sortBy: "createdAt",
+      direction: "desc",
+      limit: 100,
+    });
+
+    for (const plan of result.data) {
+      if (plan.status.key !== "completed") continue;
+      const detail = await getOwnPlan(plan.id);
+      if (detail.details.some((item) => item.activity.id === activityId)) {
+        return plan.id;
+      }
     }
-  }
 
-  return null;
+    if (page >= result.pagination.totalPages) {
+      return null;
+    }
+
+    page += 1;
+  }
 }
 
 function moderationNote(rating: OwnRating): string | null {
@@ -115,13 +122,14 @@ export function ActivityRatingSection({ activityId, onChange }: ActivityRatingSe
     try {
       await deleteRating(ownRating.id);
       setOwnRating(null);
-      setEligiblePlanId(null);
+      setEligiblePlanId(ownRating.planId);
       setConfirmingDelete(false);
       onChange?.();
     } catch (error) {
       if (error instanceof ApiError && error.code === "RATING_NOT_FOUND") {
         // Already gone (another tab, say) — nothing left to confirm.
         setOwnRating(null);
+        setEligiblePlanId(ownRating.planId);
         setConfirmingDelete(false);
         onChange?.();
         return;

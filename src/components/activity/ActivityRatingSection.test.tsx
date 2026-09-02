@@ -235,6 +235,41 @@ describe("ActivityRatingSection", () => {
     });
   });
 
+  it("checks later own-plan pages for an eligible completed plan", async () => {
+    mockAuthenticatedSession();
+    vi.mocked(getOwnRating).mockResolvedValueOnce(null);
+    vi.mocked(listOwnPlans)
+      .mockResolvedValueOnce({
+        data: [planSummary({ status: { key: "confirmed", name: "Confirmado" } })],
+        pagination: { page: 1, limit: 100, total: 2, totalPages: 2 },
+      })
+      .mockResolvedValueOnce({
+        data: [planSummary({ id: 11 })],
+        pagination: { page: 2, limit: 100, total: 2, totalPages: 2 },
+      });
+    vi.mocked(getOwnPlan).mockResolvedValueOnce({
+      ...planDetail(42),
+      id: 11,
+    });
+
+    renderSection();
+
+    expect(await screen.findByText("Dejá tu valoración")).toBeInTheDocument();
+    expect(listOwnPlans).toHaveBeenNthCalledWith(1, {
+      page: 1,
+      sortBy: "createdAt",
+      direction: "desc",
+      limit: 100,
+    });
+    expect(listOwnPlans).toHaveBeenNthCalledWith(2, {
+      page: 2,
+      sortBy: "createdAt",
+      direction: "desc",
+      limit: 100,
+    });
+    expect(getOwnPlan).toHaveBeenCalledWith(11);
+  });
+
   it("switches to the edit form, saves, and reports the change (CU46)", async () => {
     mockAuthenticatedSession();
     vi.mocked(getOwnRating).mockResolvedValueOnce(ownRating());
@@ -251,7 +286,7 @@ describe("ActivityRatingSection", () => {
     await user.click(screen.getByRole("button", { name: "4 estrellas" }));
     await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
-    expect(updateRating).toHaveBeenCalledWith(1, { score: 4, comment: "Excelente" });
+    expect(updateRating).toHaveBeenCalledWith(1, { score: 4 });
     expect(await screen.findByText("Bastante bien")).toBeInTheDocument();
     expect(screen.queryByText("Editar tu valoración")).not.toBeInTheDocument();
     expect(onChange).toHaveBeenCalledTimes(1);
@@ -289,6 +324,7 @@ describe("ActivityRatingSection", () => {
       expect(screen.queryByText("¿Eliminar tu valoración?")).not.toBeInTheDocument();
     });
     expect(screen.queryByText("Tu valoración")).not.toBeInTheDocument();
+    expect(screen.getByText("Dejá tu valoración")).toBeInTheDocument();
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
