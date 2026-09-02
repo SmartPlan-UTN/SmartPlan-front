@@ -104,8 +104,8 @@ describe("RecoverPasswordForm", () => {
     ).toBeInTheDocument();
   });
 
-  it("returns to the form when Reenviar is clicked from the success view", async () => {
-    vi.mocked(requestPasswordRecovery).mockResolvedValueOnce(undefined);
+  it("resends the recovery email from the success view", async () => {
+    vi.mocked(requestPasswordRecovery).mockResolvedValue(undefined);
     const user = userEvent.setup();
     render(<RecoverPasswordForm />);
 
@@ -117,8 +117,40 @@ describe("RecoverPasswordForm", () => {
 
     await user.click(screen.getByRole("button", { name: "Reenviar" }));
 
-    expect(
+    expect(requestPasswordRecovery).toHaveBeenCalledTimes(2);
+    expect(requestPasswordRecovery).toHaveBeenLastCalledWith({
+      email: "ana@example.com",
+    });
+    expect(screen.getByText("¡Correo enviado!")).toBeInTheDocument();
+  });
+
+  it("shows resend errors and keeps the success view available for retry", async () => {
+    vi.mocked(requestPasswordRecovery)
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(
+        new ApiError({
+          message: "Too many attempts",
+          type: "HTTP",
+          status: 429,
+          code: "ATTEMPT_LIMIT_EXCEEDED",
+        }),
+      );
+    const user = userEvent.setup();
+    render(<RecoverPasswordForm />);
+
+    await user.type(screen.getByLabelText("Email"), "ana@example.com");
+    await user.click(
       screen.getByRole("button", { name: "Enviar enlace de recuperación" }),
+    );
+    await screen.findByText("¡Correo enviado!");
+    await user.click(screen.getByRole("button", { name: "Reenviar" }));
+
+    expect(
+      await screen.findByText(
+        "Hiciste demasiados intentos. Esperá un momento antes de volver a intentar.",
+      ),
     ).toBeInTheDocument();
+    expect(screen.getByText("¡Correo enviado!")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reenviar" })).toBeEnabled();
   });
 });

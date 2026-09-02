@@ -88,6 +88,24 @@ describe("ResetPasswordForm", () => {
     );
   });
 
+  it("accepts the backend minimum password length", async () => {
+    vi.mocked(resetPassword).mockResolvedValueOnce(undefined);
+    const user = userEvent.setup();
+    render(<ResetPasswordForm token="a-recovery-token" />);
+
+    await user.type(screen.getByLabelText("Contraseña nueva"), "12345678");
+    await user.type(screen.getByLabelText("Confirmar contraseña"), "12345678");
+    await user.click(
+      screen.getByRole("button", { name: "Actualizar contraseña" }),
+    );
+
+    expect(await screen.findByText("¡Contraseña actualizada!")).toBeInTheDocument();
+    expect(resetPassword).toHaveBeenCalledWith({
+      token: "a-recovery-token",
+      newPassword: "12345678",
+    });
+  });
+
   it.each([
     ["INVALID_RECOVERY_TOKEN", "Este enlace de recuperación no es válido."],
     ["EXPIRED_RECOVERY_TOKEN", "Este enlace de recuperación venció."],

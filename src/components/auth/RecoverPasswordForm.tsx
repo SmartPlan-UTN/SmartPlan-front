@@ -80,6 +80,7 @@ export function RecoverPasswordForm() {
   const [sent, setSent] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const [resendError, setResendError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   async function submit() {
@@ -115,6 +116,23 @@ export function RecoverPasswordForm() {
     void submit();
   }
 
+  async function resend() {
+    setResendError(null);
+    setSubmitting(true);
+
+    try {
+      await requestPasswordRecovery({ email: email.trim() });
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setResendError(requestErrorMessage(error));
+      } else {
+        setResendError("No pudimos enviar el email. Intentá de nuevo.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   if (sent) {
     return (
       <div className={styles.successState}>
@@ -130,15 +148,21 @@ export function RecoverPasswordForm() {
           reenvialo.
         </p>
 
+        {resendError ? (
+          <p className={styles.formError} role="alert">
+            <Icon name="circle-alert" size={18} />
+            {resendError}
+          </p>
+        ) : null}
+
         <Button
           type="button"
           variant="ghostLight"
           className={`${styles.submit} ${styles.resendButton}`}
-          onClick={() => {
-            setSent(false);
-          }}
+          onClick={() => void resend()}
+          disabled={submitting}
         >
-          Reenviar
+          {submitting ? "Enviando…" : "Reenviar"}
         </Button>
 
         <Link href={ROUTES.login} className={styles.backLink}>
