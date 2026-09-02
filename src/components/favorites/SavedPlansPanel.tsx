@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
-import { PlanCard } from "@/components/plan";
+import { PlanCard, type PlanCardProps } from "@/components/plan";
 import { Button, Icon, LoadingDots } from "@/components/ui";
-import { useFavorites } from "@/context";
 import { listFavoritePlans } from "@/lib/api";
-import type { FavoritePlan, PaginationMetadata, PlanSearchResult } from "@/types";
+import type { FavoritePlanResponse, PaginationMetadata } from "@/types";
 
 import styles from "./SavedPlansPanel.module.css";
 
@@ -15,29 +14,22 @@ type LoadStatus = "loading" | "idle" | "error";
 const PLANS_PER_PAGE = 12;
 
 /**
- * Maps a `FavoritePlan` (with its embedded `plan`) to the `PlanSearchResult`
- * shape expected by `PlanCard`.
- *
- * Aggregates such as categories and activity names are set to safe defaults
- * so `PlanCard` renders cleanly without throwing (CU40).
+ * Maps the favorites API projection to the data available to `PlanCard`.
+ * Rating and itinerary aggregates are omitted rather than invented.
  */
-function toPlanSearchResult(fp: FavoritePlan): PlanSearchResult | null {
-  if (!fp.plan) return null;
+function toCardPlan(fp: FavoritePlanResponse): PlanCardProps["plan"] {
   const p = fp.plan;
   return {
     id: p.id,
     title: p.title,
-    description: p.description ?? null,
-    estimatedTotalCost: p.estimatedTotalCost ?? 0,
-    estimatedTotalDuration: p.estimatedTotalDuration ?? 0,
-    activityCount:
-      (p as unknown as { activityCount?: number }).activityCount ??
-      (p.details?.length ?? 0),
-    averageRating: 0,
+    description: p.description,
+    estimatedTotalCost: p.estimatedTotalCost,
+    estimatedTotalDuration: p.estimatedTotalDuration,
+    activityCount: p.activityCount,
     distanceKm: null,
     categories: [],
     activityNames: [],
-    status: p.status ?? { key: "confirmed", name: "Confirmada" },
+    status: p.status,
   };
 }
 
@@ -50,8 +42,7 @@ function toPlanSearchResult(fp: FavoritePlan): PlanSearchResult | null {
  * back automatically (rollback handled in `FavoritesContext`).
  */
 export function SavedPlansPanel() {
-  const { savedPlanIds } = useFavorites();
-  const [items, setItems] = useState<FavoritePlan[]>([]);
+  const [items, setItems] = useState<FavoritePlanResponse[]>([]);
   const [status, setStatus] = useState<LoadStatus>("loading");
   const [reloadSequence, setReloadSequence] = useState(0);
   const [page, setPage] = useState(1);
@@ -87,22 +78,6 @@ export function SavedPlansPanel() {
     };
   }, [page, reloadSequence]);
 
-  /**
-   * Filter the fetched items through the context's live set of saved IDs.
-   *
-   * Because `FavoritesContext.toggleSavePlan` performs an optimistic update,
-   * unsaving a plan from this panel causes it to disappear from the list
-   * instantly without a network round-trip or page reload (CU42).
-   */
-  const cards = useMemo(
-    () =>
-      items
-        .filter((fp) => savedPlanIds.has(fp.idPlan))
-        .map(toPlanSearchResult)
-        .filter((r): r is PlanSearchResult => r !== null),
-    [items, savedPlanIds],
-  );
-
   return (
     <>
       {status === "loading" ? (
@@ -126,7 +101,7 @@ export function SavedPlansPanel() {
         </div>
       ) : null}
 
-      {status === "idle" && cards.length === 0 ? (
+      {status === "idle" && items.length === 0 ? (
         <div className={styles.stateBox}>
           <span className={styles.emptyIcon} aria-hidden="true">
             <Icon name="bookmark" size={30} />
@@ -139,12 +114,24 @@ export function SavedPlansPanel() {
         </div>
       ) : null}
 
-      {status === "idle" && cards.length > 0 ? (
+      {status === "idle" && items.length > 0 ? (
         <>
           <ul className={styles.grid} aria-label="Planes guardados">
-            {cards.map((plan) => (
-              <li key={plan.id}>
-                <PlanCard plan={plan} />
+            {items.map((favorite) => (
+              <li key={favorite.id}>
+                <PlanCard
+                  plan={toCardPlan(favorite)}
+                  isSaved
+                  onSavedChange={(saved) => {
+                    setItems((current) =>
+                      saved
+                        ? current.some((item) => item.id === favorite.id)
+                          ? current
+                          : [...current, favorite]
+                        : current.filter((item) => item.id !== favorite.id),
+                    );
+                  }}
+                />
               </li>
             ))}
           </ul>

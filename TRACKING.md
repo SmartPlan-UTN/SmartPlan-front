@@ -105,9 +105,7 @@ traceability matrix (`skills/01-domain/`).
 | CU12 | Search plans | PAN 10, PAN 11 | `In review` | `SMART-21-cu9-buscar-actividades` | [#87](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/87) |
 | CU13 | View plan | PAN 17 | `In review` | `SMART-21-cu9-buscar-actividades` | [#87](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/87) |
 | CU14 | View activity | PAN 18 | `In review` | `SMART-21-cu9-buscar-actividades` | [#87](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/87) |
-| CU15 | Save activity | PAN 18, PAN 12 | `In review` | `feature/cu15-cu39-cu40-cu41-cu42-cu43-favoritos` | |
-| CU39 | View saved activities | PAN 12 | `In review` | `feature/cu15-cu39-cu40-cu41-cu42-cu43-favoritos` | |
-| CU41 | Remove saved activity | PAN 12 | `In review` | `feature/cu15-cu39-cu40-cu41-cu42-cu43-favoritos` | |
+| CU15 | Save activity | PAN 18, PAN 12 | `In review` | `feature/cu15-cu39-cu40-cu41-cu42-cu43-favoritos` | [#110](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/110) |
 | CU16 | View activities on a map | PAN 08 | `In review` | `SMART-21-cu9-buscar-actividades` | [#87](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/87) |
 
 ### Recommendation
@@ -151,11 +149,11 @@ traceability matrix (`skills/01-domain/`).
 
 | CU | Feature | Screen | Status | Branch | PR |
 |---|---|---|---|---|---|
-| CU39 | View saved activities | PAN 12 | `In review` | `feature/cu15-cu39-cu40-cu41-cu42-cu43-favoritos` | |
-| CU40 | View saved plans | PAN 12 | `In review` | `feature/cu15-cu39-cu40-cu41-cu42-cu43-favoritos` | |
-| CU41 | Remove saved activity | PAN 12 | `In review` | `feature/cu15-cu39-cu40-cu41-cu42-cu43-favoritos` | |
-| CU42 | Remove saved plan | PAN 12 | `In review` | `feature/cu15-cu39-cu40-cu41-cu42-cu43-favoritos` | |
-| CU43 | Save favorite plan | PAN 11, PAN 12, PAN 17 | `In review` | `feature/cu15-cu39-cu40-cu41-cu42-cu43-favoritos` | |
+| CU39 | View saved activities | PAN 12 | `In review` | `feature/cu15-cu39-cu40-cu41-cu42-cu43-favoritos` | [#110](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/110) |
+| CU40 | View saved plans | PAN 12 | `In review` | `feature/cu15-cu39-cu40-cu41-cu42-cu43-favoritos` | [#110](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/110) |
+| CU41 | Remove saved activity | PAN 12 | `In review` | `feature/cu15-cu39-cu40-cu41-cu42-cu43-favoritos` | [#110](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/110) |
+| CU42 | Remove saved plan | PAN 12 | `In review` | `feature/cu15-cu39-cu40-cu41-cu42-cu43-favoritos` | [#110](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/110) |
+| CU43 | Save favorite plan | PAN 11, PAN 12, PAN 17 | `In review` | `feature/cu15-cu39-cu40-cu41-cu42-cu43-favoritos` | [#110](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/110) |
 
 ### Ratings
 
@@ -291,7 +289,7 @@ Things that have been spotted but don't have an owner yet:
 
 | Date | What happened |
 |---|---|
-| 2026-08-31 | CU40, CU42, CU43 implemented and consolidated with CU15, CU39, CU41 on branch `feature/cu15-cu39-cu40-cu41-cu42-cu43-favoritos`: extended `FavoritesContext` and `favorites.ts` API with saved plans support (`GET /favorite-plans`, `POST /favorite-plans/:id`, `DELETE /favorite-plans/:id`, `savedPlanIds`, `toggleSavePlan`, `isPlanSaved`); added favorite bookmark toggle button to `PlanCard` and `PlanDetailView` action bar with optimistic update and rollback; created `SavedPlansPanel` for viewing saved plans on `/favorites` with pagination, loading, error/retry, and optimistic removal upon unsaving (CU40, CU42); enabled "Planes" tab on `/favorites` page (PAN 12); added full Vitest test suite (`SavedPlansPanel.test.tsx`, `PlanCard.test.tsx`, `PlanDetailView.test.tsx`, `favorites.test.ts`, `FavoritesContext.test.tsx`, `favorites/page.test.tsx`). `pnpm lint` and `pnpm test` (187/187) clean. |
+| 2026-08-31 | CU40, CU42, CU43 implemented and consolidated with CU15, CU39, CU41 on branch `feature/cu15-cu39-cu40-cu41-cu42-cu43-favoritos`: extended `FavoritesContext` and `favorites.ts` API with saved plans support (`GET /favorite-plans`, `POST /favorite-plans` with `idPlan` in the body, `DELETE /favorite-plans/:id`, `savedPlanIds`, `toggleSavePlan`, `isPlanSaved`); added favorite bookmark toggle button to `PlanCard` and `PlanDetailView` action bar with optimistic update and rollback; created `SavedPlansPanel` for viewing saved plans on `/favorites` with pagination, loading, error/retry, and optimistic removal upon unsaving (CU40, CU42); enabled "Planes" tab on `/favorites` page (PAN 12); added full Vitest test suite (`SavedPlansPanel.test.tsx`, `PlanCard.test.tsx`, `PlanDetailView.test.tsx`, `favorites.test.ts`, `FavoritesContext.test.tsx`, `favorites/page.test.tsx`). `pnpm lint` and `pnpm test` (187/187) clean. |
 | 2026-08-28 | CU15 implemented on `SMART-27-cu15-guardar-actividad`: added `src/lib/api/favorites.ts` calling backend `/favorite-activities` endpoints; created `FavoritesContext` and `useFavorites` hook for session-aware saved activity management with optimistic state updates and error rollback; added bookmark toggle button to `ActivityCard` with active/inactive visual states and click-propagation prevention; connected `ActivityDetailView` hero bookmark and action bar buttons to `useFavorites`; wrapped root layout in `FavoritesProvider`; added complete test coverage in Vitest (`favorites.test.ts`, `FavoritesContext.test.tsx`, `ActivityCard.test.tsx`, `ActivityDetailView.test.tsx`). `pnpm lint`, `pnpm test`, and `pnpm build` clean. |
 | 2026-08-28 | CU39 implemented on `SMART-51-cu39-ver-actividades-guardadas`: created `SavedActivitiesPanel` (new `src/components/favorites/` folder) — paginated list of saved activities reading from `GET /favorite-activities`, with loading, empty, and error states; integrated into `/favorites` page replacing the disabled "Actividades" tab placeholder; each card reuses the existing `ActivityCard` with its CU15 bookmark toggle already built in; `CollectionsPanel` remains below as a secondary section. Added `SavedActivitiesPanel.test.tsx` (5 tests: loading, render, empty, error+retry, pagination). Favorites page tests updated (4 tests). `pnpm lint` and `pnpm test` (164/164) clean. |
 | 2026-08-28 | CU41 implemented on `SMART-52-cu41-quitar-actividad-guardada`: extended `SavedActivitiesPanel` to filter visible cards through `FavoritesContext.savedActivityIds` using `useMemo`. When the user unsaves an activity from the listing (via the bookmark on any `ActivityCard`) the card disappears immediately without a network round-trip or page reload (optimistic removal via context); if the API call fails the card reappears automatically (rollback in context). Unsaving from `ActivityDetailView` also removes the card because both share the same context. Added 3 new tests (card removed on unsave, empty state after last removal, card restored on rollback). `pnpm lint` and `pnpm test` (8/8 for panel) clean. |

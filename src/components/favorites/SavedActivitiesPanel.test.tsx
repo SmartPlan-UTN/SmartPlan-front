@@ -14,12 +14,9 @@ vi.mock("@/lib/api", async (importOriginal) => {
   };
 });
 
-/**
- * The context mock is stateful so toggling savedActivityIds causes a re-render
- * and the panel's filter picks up the new set (CU41).
- */
 let mockSavedIds = new Set<number>();
 const mockToggle = vi.fn();
+const mockSetActivitySaved = vi.fn();
 
 vi.mock("@/context", () => ({
   useFavorites: () => ({
@@ -27,6 +24,7 @@ vi.mock("@/context", () => ({
       return mockSavedIds;
     },
     isActivitySaved: (id: number) => mockSavedIds.has(id),
+    setActivitySaved: mockSetActivitySaved,
     toggleSaveActivity: mockToggle,
     loading: false,
   }),
@@ -37,6 +35,7 @@ function makeFavorite(id: number) {
     id,
     idFavoriteList: 1,
     idActivity: id,
+    savedAt: "2026-08-28T00:00:00.000Z",
     createdAt: "2026-08-28T00:00:00.000Z",
     updatedAt: "2026-08-28T00:00:00.000Z",
     deletedAt: null,
@@ -66,6 +65,7 @@ describe("SavedActivitiesPanel (CU39 + CU41)", () => {
     vi.clearAllMocks();
     mockSavedIds = new Set<number>();
     mockToggle.mockResolvedValue(true);
+    mockSetActivitySaved.mockResolvedValue(true);
   });
 
   it("shows a loading indicator while the request is in flight", () => {
@@ -139,20 +139,20 @@ describe("SavedActivitiesPanel (CU39 + CU41)", () => {
       makePage([makeFavorite(10), makeFavorite(11)]),
     );
 
-    const { rerender } = render(<SavedActivitiesPanel />);
+    render(<SavedActivitiesPanel />);
 
     expect(await screen.findByText("Actividad 10")).toBeInTheDocument();
     expect(screen.getByText("Actividad 11")).toBeInTheDocument();
 
-    // Simulate optimistic removal of activity 10 by the FavoritesContext.
-    mockSavedIds = new Set([11]);
-    rerender(<SavedActivitiesPanel />);
+    const [firstUnsaveButton] = screen.getAllByRole("button", {
+      name: "Quitar de guardados",
+    });
+    expect(firstUnsaveButton).toBeDefined();
+    await userEvent.click(firstUnsaveButton as HTMLButtonElement);
 
-    // Activity 10 disappears immediately; 11 remains.
-    await waitFor(() =>
-      expect(screen.queryByText("Actividad 10")).not.toBeInTheDocument(),
-    );
+    expect(screen.queryByText("Actividad 10")).not.toBeInTheDocument();
     expect(screen.getByText("Actividad 11")).toBeInTheDocument();
+    expect(mockSetActivitySaved).toHaveBeenCalledWith(10, false);
   });
 
   it("shows the empty state after the last activity is unsaved (CU41)", async () => {
@@ -161,12 +161,12 @@ describe("SavedActivitiesPanel (CU39 + CU41)", () => {
       makePage([makeFavorite(10)]),
     );
 
-    const { rerender } = render(<SavedActivitiesPanel />);
+    render(<SavedActivitiesPanel />);
     expect(await screen.findByText("Actividad 10")).toBeInTheDocument();
 
-    // Simulate removing the last saved activity.
-    mockSavedIds = new Set();
-    rerender(<SavedActivitiesPanel />);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Quitar de guardados" }),
+    );
 
     await waitFor(() =>
       expect(
@@ -176,26 +176,25 @@ describe("SavedActivitiesPanel (CU39 + CU41)", () => {
   });
 
   it("restores the card if the unsave API call fails and the context rolls back (CU41)", async () => {
-    mockSavedIds = new Set([10]);
+    let rejectRequest: ((reason?: unknown) => void) | undefined;
+    mockSetActivitySaved.mockReturnValueOnce(
+      new Promise((_resolve, reject) => {
+        rejectRequest = reject;
+      }),
+    );
     vi.mocked(listFavoriteActivities).mockResolvedValue(
       makePage([makeFavorite(10)]),
     );
 
-    const { rerender } = render(<SavedActivitiesPanel />);
+    render(<SavedActivitiesPanel />);
     expect(await screen.findByText("Actividad 10")).toBeInTheDocument();
 
-    // Simulate optimistic removal.
-    mockSavedIds = new Set();
-    rerender(<SavedActivitiesPanel />);
-    await waitFor(() =>
-      expect(screen.queryByText("Actividad 10")).not.toBeInTheDocument(),
+    await userEvent.click(
+      screen.getByRole("button", { name: "Quitar de guardados" }),
     );
+    expect(screen.queryByText("Actividad 10")).not.toBeInTheDocument();
 
-    // Simulate context rollback after API failure.
-    mockSavedIds = new Set([10]);
-    rerender(<SavedActivitiesPanel />);
-    await waitFor(() =>
-      expect(screen.getByText("Actividad 10")).toBeInTheDocument(),
-    );
+    rejectRequest?.(new Error("Network"));
+    expect(await screen.findByText("Actividad 10")).toBeInTheDocument();
   });
 });

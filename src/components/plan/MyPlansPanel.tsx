@@ -56,7 +56,7 @@ export function MyPlansPanel() {
         });
         if (ignore) return;
         setPlans(
-          result.data.filter((plan) => plan.status?.key !== "cancelled"),
+          result.data.filter((plan) => plan.status.key !== "cancelled"),
         );
         setStatus("idle");
       } catch (_error) {

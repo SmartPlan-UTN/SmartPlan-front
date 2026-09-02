@@ -60,4 +60,3 @@ export {
   removeFavoritePlan,
   saveFavoritePlan,
 } from './favorites';
-

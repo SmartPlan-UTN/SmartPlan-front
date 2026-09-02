@@ -20,6 +20,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
  */
 let mockSavedPlanIds = new Set<number>();
 const mockTogglePlan = vi.fn();
+const mockSetPlanSaved = vi.fn();
 
 vi.mock("@/context", () => ({
   useFavorites: () => ({
@@ -27,6 +28,7 @@ vi.mock("@/context", () => ({
       return mockSavedPlanIds;
     },
     isPlanSaved: (id: number) => mockSavedPlanIds.has(id),
+    setPlanSaved: mockSetPlanSaved,
     toggleSavePlan: mockTogglePlan,
     loading: false,
   }),
@@ -80,6 +82,7 @@ describe("SavedPlansPanel (CU40 + CU42)", () => {
     vi.clearAllMocks();
     mockSavedPlanIds = new Set<number>();
     mockTogglePlan.mockResolvedValue(true);
+    mockSetPlanSaved.mockResolvedValue(true);
   });
 
   it("shows a loading indicator while the request is in flight", () => {
@@ -153,20 +156,20 @@ describe("SavedPlansPanel (CU40 + CU42)", () => {
       makePage([makeFavoritePlan(10), makeFavoritePlan(11)]),
     );
 
-    const { rerender } = render(<SavedPlansPanel />);
+    render(<SavedPlansPanel />);
 
     expect(await screen.findByText("Plan 10")).toBeInTheDocument();
     expect(screen.getByText("Plan 11")).toBeInTheDocument();
 
-    // Simulate optimistic removal of plan 10 by FavoritesContext.
-    mockSavedPlanIds = new Set([11]);
-    rerender(<SavedPlansPanel />);
+    const [firstUnsaveButton] = screen.getAllByRole("button", {
+      name: "Quitar de guardados",
+    });
+    expect(firstUnsaveButton).toBeDefined();
+    await userEvent.click(firstUnsaveButton as HTMLButtonElement);
 
-    // Plan 10 disappears immediately; 11 remains.
-    await waitFor(() =>
-      expect(screen.queryByText("Plan 10")).not.toBeInTheDocument(),
-    );
+    expect(screen.queryByText("Plan 10")).not.toBeInTheDocument();
     expect(screen.getByText("Plan 11")).toBeInTheDocument();
+    expect(mockSetPlanSaved).toHaveBeenCalledWith(10, false);
   });
 
   it("shows the empty state after the last plan is unsaved (CU42)", async () => {
@@ -175,12 +178,12 @@ describe("SavedPlansPanel (CU40 + CU42)", () => {
       makePage([makeFavoritePlan(10)]),
     );
 
-    const { rerender } = render(<SavedPlansPanel />);
+    render(<SavedPlansPanel />);
     expect(await screen.findByText("Plan 10")).toBeInTheDocument();
 
-    // Simulate removing the last saved plan.
-    mockSavedPlanIds = new Set();
-    rerender(<SavedPlansPanel />);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Quitar de guardados" }),
+    );
 
     await waitFor(() =>
       expect(
@@ -190,26 +193,25 @@ describe("SavedPlansPanel (CU40 + CU42)", () => {
   });
 
   it("restores the card if the unsave API call fails and context rolls back (CU42)", async () => {
-    mockSavedPlanIds = new Set([10]);
+    let rejectRequest: ((reason?: unknown) => void) | undefined;
+    mockSetPlanSaved.mockReturnValueOnce(
+      new Promise((_resolve, reject) => {
+        rejectRequest = reject;
+      }),
+    );
     vi.mocked(listFavoritePlans).mockResolvedValue(
       makePage([makeFavoritePlan(10)]),
     );
 
-    const { rerender } = render(<SavedPlansPanel />);
+    render(<SavedPlansPanel />);
     expect(await screen.findByText("Plan 10")).toBeInTheDocument();
 
-    // Simulate optimistic removal.
-    mockSavedPlanIds = new Set();
-    rerender(<SavedPlansPanel />);
-    await waitFor(() =>
-      expect(screen.queryByText("Plan 10")).not.toBeInTheDocument(),
+    await userEvent.click(
+      screen.getByRole("button", { name: "Quitar de guardados" }),
     );
+    expect(screen.queryByText("Plan 10")).not.toBeInTheDocument();
 
-    // Simulate rollback.
-    mockSavedPlanIds = new Set([10]);
-    rerender(<SavedPlansPanel />);
-    await waitFor(() =>
-      expect(screen.getByText("Plan 10")).toBeInTheDocument(),
-    );
+    rejectRequest?.(new Error("Network"));
+    expect(await screen.findByText("Plan 10")).toBeInTheDocument();
   });
 });

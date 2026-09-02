@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
-import { ActivityCard } from "@/components/activity";
+import { ActivityCard, type ActivityCardProps } from "@/components/activity";
 import { Button, Icon, LoadingDots } from "@/components/ui";
-import { useFavorites } from "@/context";
 import { listFavoriteActivities } from "@/lib/api";
-import type { ActivitySearchResult, FavoriteActivity, PaginationMetadata } from "@/types";
+import type { FavoriteActivityResponse, PaginationMetadata } from "@/types";
 
 import styles from "./SavedActivitiesPanel.module.css";
 
@@ -15,16 +14,12 @@ type LoadStatus = "loading" | "idle" | "error";
 const ACTIVITIES_PER_PAGE = 12;
 
 /**
- * Maps a `FavoriteActivity` (with its embedded `activity`) to the
- * `ActivitySearchResult` shape expected by `ActivityCard`.
- *
- * The backend's `GET /favorite-activities` response embeds the full
- * `Activity` entity but does not compute aggregates such as `averageRating`,
- * `ratingCount`, `distanceKm`, or `categories`. These are set to safe
- * defaults so `ActivityCard` renders correctly without throwing (CU39).
+ * Maps the favorites API projection to the data available to `ActivityCard`.
+ * Rating aggregates are intentionally absent instead of being shown as zero.
  */
-function toSearchResult(fa: FavoriteActivity): ActivitySearchResult | null {
-  if (!fa.activity) return null;
+function toCardActivity(
+  fa: FavoriteActivityResponse,
+): ActivityCardProps["activity"] {
   const a = fa.activity;
   return {
     id: a.id,
@@ -32,9 +27,7 @@ function toSearchResult(fa: FavoriteActivity): ActivitySearchResult | null {
     description: a.description,
     estimatedCost: a.estimatedCost,
     estimatedDuration: a.estimatedDuration,
-    type: (a as unknown as { type?: string }).type ?? null,
-    averageRating: 0,
-    ratingCount: 0,
+    type: a.type,
     distanceKm: null,
     categories: [],
   };
@@ -49,8 +42,7 @@ function toSearchResult(fa: FavoriteActivity): ActivitySearchResult | null {
  * back automatically (rollback handled in `FavoritesContext`).
  */
 export function SavedActivitiesPanel() {
-  const { savedActivityIds } = useFavorites();
-  const [items, setItems] = useState<FavoriteActivity[]>([]);
+  const [items, setItems] = useState<FavoriteActivityResponse[]>([]);
   const [status, setStatus] = useState<LoadStatus>("loading");
   const [reloadSequence, setReloadSequence] = useState(0);
   const [page, setPage] = useState(1);
@@ -86,25 +78,6 @@ export function SavedActivitiesPanel() {
     };
   }, [page, reloadSequence]);
 
-  /**
-   * Filter the fetched items through the context's live set of saved IDs.
-   *
-   * Because `FavoritesContext.toggleSaveActivity` performs an optimistic
-   * update — removing the ID from the set immediately before the API call
-   * resolves — unsaving an activity from this panel causes it to disappear
-   * from the list instantly, without a network round-trip or page reload
-   * (CU41). If the API call subsequently fails the ID is restored in the
-   * context and the card reappears.
-   */
-  const cards = useMemo(
-    () =>
-      items
-        .filter((fa) => savedActivityIds.has(fa.idActivity))
-        .map(toSearchResult)
-        .filter((r): r is ActivitySearchResult => r !== null),
-    [items, savedActivityIds],
-  );
-
   return (
     <>
       {status === "loading" ? (
@@ -128,7 +101,7 @@ export function SavedActivitiesPanel() {
         </div>
       ) : null}
 
-      {status === "idle" && cards.length === 0 ? (
+      {status === "idle" && items.length === 0 ? (
         <div className={styles.stateBox}>
           <span className={styles.emptyIcon} aria-hidden="true">
             <Icon name="bookmark" size={30} />
@@ -141,12 +114,24 @@ export function SavedActivitiesPanel() {
         </div>
       ) : null}
 
-      {status === "idle" && cards.length > 0 ? (
+      {status === "idle" && items.length > 0 ? (
         <>
           <ul className={styles.grid} aria-label="Actividades guardadas">
-            {cards.map((activity) => (
-              <li key={activity.id}>
-                <ActivityCard activity={activity} />
+            {items.map((favorite) => (
+              <li key={favorite.id}>
+                <ActivityCard
+                  activity={toCardActivity(favorite)}
+                  isSaved
+                  onSavedChange={(saved) => {
+                    setItems((current) =>
+                      saved
+                        ? current.some((item) => item.id === favorite.id)
+                          ? current
+                          : [...current, favorite]
+                        : current.filter((item) => item.id !== favorite.id),
+                    );
+                  }}
+                />
               </li>
             ))}
           </ul>

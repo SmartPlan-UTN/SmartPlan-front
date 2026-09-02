@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ROUTES } from "@/lib/routes";
 
-import FavoritesPage from "./page";
+import FavoritesPage, { metadata } from "./page";
 
 vi.mock("@/components/favorites", () => ({
   SavedActivitiesPanel: () => (
@@ -30,19 +30,19 @@ describe("FavoritesPage (CU39, CU40)", () => {
     ).toBeInTheDocument();
   });
 
-  it("marks Actividades as default active tab and Colecciones as pending", () => {
+  it("keeps route metadata in the server page", () => {
+    expect(metadata.title).toBe("Favoritos");
+  });
+
+  it("marks Actividades as the default active tab", () => {
     render(<FavoritesPage />);
 
     expect(
-      screen.getByRole("button", { name: "Actividades" }),
-    ).toHaveAttribute("aria-current", "page");
+      screen.getByRole("tab", { name: "Actividades" }),
+    ).toHaveAttribute("aria-selected", "true");
     expect(
-      screen.getByRole("button", { name: "Planes" }),
-    ).not.toHaveAttribute("aria-current");
-    expect(screen.getByText("Colecciones")).toHaveAttribute(
-      "aria-disabled",
-      "true",
-    );
+      screen.getByRole("tab", { name: "Planes" }),
+    ).toHaveAttribute("aria-selected", "false");
   });
 
   it("renders the SavedActivitiesPanel by default (CU39)", () => {
@@ -56,10 +56,10 @@ describe("FavoritesPage (CU39, CU40)", () => {
     const user = userEvent.setup();
     render(<FavoritesPage />);
 
-    const plansTab = screen.getByRole("button", { name: "Planes" });
+    const plansTab = screen.getByRole("tab", { name: "Planes" });
     await user.click(plansTab);
 
-    expect(plansTab).toHaveAttribute("aria-current", "page");
+    expect(plansTab).toHaveAttribute("aria-selected", "true");
     expect(screen.getByTestId("saved-plans-panel")).toBeInTheDocument();
     expect(screen.queryByTestId("saved-activities-panel")).not.toBeInTheDocument();
   });

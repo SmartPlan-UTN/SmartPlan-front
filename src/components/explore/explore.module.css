@@ -361,14 +361,13 @@
    the two card kinds always look and behave the same without keeping two
    copies of this ruleset in sync by hand. */
 .card {
+  position: relative;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   border: 1.5px solid var(--hairline);
   border-radius: var(--r-card);
   background: var(--surface-card);
-  color: inherit;
-  text-decoration: none;
   box-shadow: var(--shadow-card);
   transition:
     transform 220ms ease,
@@ -382,7 +381,15 @@
   transform: translateY(-3px);
 }
 
-.card:focus-visible {
+.cardContent {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  color: inherit;
+  text-decoration: none;
+}
+
+.cardContent:focus-visible {
   outline: 2px solid var(--ember);
   outline-offset: 2px;
 }

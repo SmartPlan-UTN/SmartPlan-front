@@ -112,7 +112,7 @@ export function AddToPlanDialog({
         // A cancelled plan is immutable back-side (`PLAN_CANCELLED`), so
         // offering it here would only produce a failed add.
         setPlans(
-          result.data.filter((plan) => plan.status?.key !== "cancelled"),
+          result.data.filter((plan) => plan.status.key !== "cancelled"),
         );
         setStatus("idle");
       } catch (_error) {

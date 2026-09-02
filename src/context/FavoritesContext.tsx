@@ -27,6 +27,8 @@ export interface FavoritesContextValue {
   savedPlanIds: Set<number>;
   isActivitySaved: (idActivity: number) => boolean;
   isPlanSaved: (idPlan: number) => boolean;
+  setActivitySaved: (idActivity: number, saved: boolean) => Promise<boolean>;
+  setPlanSaved: (idPlan: number, saved: boolean) => Promise<boolean>;
   toggleSaveActivity: (idActivity: number) => Promise<boolean>;
   toggleSavePlan: (idPlan: number) => Promise<boolean>;
   loading: boolean;
@@ -34,12 +36,50 @@ export interface FavoritesContextValue {
 
 const FavoritesContext = createContext<FavoritesContextValue | null>(null);
 
+const FAVORITES_PAGE_SIZE = 100;
+
+async function loadAllActivityIds(): Promise<Set<number>> {
+  const ids = new Set<number>();
+  let page = 1;
+  let totalPages = 1;
+
+  do {
+    const result = await listFavoriteActivities({
+      page,
+      limit: FAVORITES_PAGE_SIZE,
+    });
+    result.data.forEach((favorite) => ids.add(favorite.idActivity));
+    totalPages = result.pagination.totalPages;
+    page += 1;
+  } while (page <= totalPages);
+
+  return ids;
+}
+
+async function loadAllPlanIds(): Promise<Set<number>> {
+  const ids = new Set<number>();
+  let page = 1;
+  let totalPages = 1;
+
+  do {
+    const result = await listFavoritePlans({
+      page,
+      limit: FAVORITES_PAGE_SIZE,
+    });
+    result.data.forEach((favorite) => ids.add(favorite.idPlan));
+    totalPages = result.pagination.totalPages;
+    page += 1;
+  } while (page <= totalPages);
+
+  return ids;
+}
+
 export interface FavoritesProviderProps {
   children: ReactNode;
 }
 
 export function FavoritesProvider({ children }: FavoritesProviderProps) {
-  const { authenticated } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
   const [savedActivityIds, setSavedActivityIds] = useState<Set<number>>(
@@ -51,7 +91,9 @@ export function FavoritesProvider({ children }: FavoritesProviderProps) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!authenticated) {
+    if (status === "loading") return;
+
+    if (status === "anonymous") {
       setSavedActivityIds(new Set());
       setSavedPlanIds(new Set());
       setLoading(false);
@@ -64,25 +106,18 @@ export function FavoritesProvider({ children }: FavoritesProviderProps) {
       setLoading(true);
       try {
         const [activitiesResult, plansResult] = await Promise.allSettled([
-          listFavoriteActivities({ limit: 100 }),
-          listFavoritePlans({ limit: 100 }),
+          loadAllActivityIds(),
+          loadAllPlanIds(),
         ]);
 
         if (cancelled) return;
 
-        if (
-          activitiesResult.status === "fulfilled" &&
-          activitiesResult.value?.data
-        ) {
-          const ids = new Set(
-            activitiesResult.value.data.map((fav) => fav.idActivity),
-          );
-          setSavedActivityIds(ids);
+        if (activitiesResult.status === "fulfilled") {
+          setSavedActivityIds(activitiesResult.value);
         }
 
-        if (plansResult.status === "fulfilled" && plansResult.value?.data) {
-          const ids = new Set(plansResult.value.data.map((fav) => fav.idPlan));
-          setSavedPlanIds(ids);
+        if (plansResult.status === "fulfilled") {
+          setSavedPlanIds(plansResult.value);
         }
       } finally {
         if (!cancelled) {
@@ -96,7 +131,7 @@ export function FavoritesProvider({ children }: FavoritesProviderProps) {
     return () => {
       cancelled = true;
     };
-  }, [authenticated]);
+  }, [status]);
 
   const isActivitySaved = useCallback(
     (idActivity: number) => savedActivityIds.has(idActivity),
@@ -108,94 +143,105 @@ export function FavoritesProvider({ children }: FavoritesProviderProps) {
     [savedPlanIds],
   );
 
-  const toggleSaveActivity = useCallback(
-    async (idActivity: number): Promise<boolean> => {
-      if (!authenticated) {
+  const setActivitySaved = useCallback(
+    async (idActivity: number, saved: boolean): Promise<boolean> => {
+      if (status === "loading") return false;
+
+      if (status === "anonymous") {
         const redirectUrl = loginRoute(pathname);
         router.push(redirectUrl);
         return false;
       }
 
-      const isSaved = savedActivityIds.has(idActivity);
-
       // Optimistic update
       setSavedActivityIds((prev) => {
         const next = new Set(prev);
-        if (isSaved) {
-          next.delete(idActivity);
-        } else {
+        if (saved) {
           next.add(idActivity);
+        } else {
+          next.delete(idActivity);
         }
         return next;
       });
 
       try {
-        if (isSaved) {
-          await removeFavoriteActivity(idActivity);
-        } else {
+        if (saved) {
           await saveFavoriteActivity(idActivity);
+        } else {
+          await removeFavoriteActivity(idActivity);
         }
         return true;
       } catch (err) {
         // Rollback on error
         setSavedActivityIds((prev) => {
           const next = new Set(prev);
-          if (isSaved) {
-            next.add(idActivity);
-          } else {
+          if (saved) {
             next.delete(idActivity);
+          } else {
+            next.add(idActivity);
           }
           return next;
         });
         throw err;
       }
     },
-    [authenticated, pathname, router, savedActivityIds],
+    [pathname, router, status],
   );
 
-  const toggleSavePlan = useCallback(
-    async (idPlan: number): Promise<boolean> => {
-      if (!authenticated) {
+  const toggleSaveActivity = useCallback(
+    (idActivity: number) =>
+      setActivitySaved(idActivity, !savedActivityIds.has(idActivity)),
+    [savedActivityIds, setActivitySaved],
+  );
+
+  const setPlanSaved = useCallback(
+    async (idPlan: number, saved: boolean): Promise<boolean> => {
+      if (status === "loading") return false;
+
+      if (status === "anonymous") {
         const redirectUrl = loginRoute(pathname);
         router.push(redirectUrl);
         return false;
       }
 
-      const isSaved = savedPlanIds.has(idPlan);
-
       // Optimistic update
       setSavedPlanIds((prev) => {
         const next = new Set(prev);
-        if (isSaved) {
-          next.delete(idPlan);
-        } else {
+        if (saved) {
           next.add(idPlan);
+        } else {
+          next.delete(idPlan);
         }
         return next;
       });
 
       try {
-        if (isSaved) {
-          await removeFavoritePlan(idPlan);
-        } else {
+        if (saved) {
           await saveFavoritePlan(idPlan);
+        } else {
+          await removeFavoritePlan(idPlan);
         }
         return true;
       } catch (err) {
         // Rollback on error
         setSavedPlanIds((prev) => {
           const next = new Set(prev);
-          if (isSaved) {
-            next.add(idPlan);
-          } else {
+          if (saved) {
             next.delete(idPlan);
+          } else {
+            next.add(idPlan);
           }
           return next;
         });
         throw err;
       }
     },
-    [authenticated, pathname, router, savedPlanIds],
+    [pathname, router, status],
+  );
+
+  const toggleSavePlan = useCallback(
+    (idPlan: number) => setPlanSaved(idPlan, !savedPlanIds.has(idPlan)),
+    [savedPlanIds, setPlanSaved],
   );
 
   const value = useMemo(
@@ -204,6 +250,8 @@ export function FavoritesProvider({ children }: FavoritesProviderProps) {
       savedPlanIds,
       isActivitySaved,
       isPlanSaved,
+      setActivitySaved,
+      setPlanSaved,
       toggleSaveActivity,
       toggleSavePlan,
       loading,
@@ -213,6 +261,8 @@ export function FavoritesProvider({ children }: FavoritesProviderProps) {
       savedPlanIds,
       isActivitySaved,
       isPlanSaved,
+      setActivitySaved,
+      setPlanSaved,
       toggleSaveActivity,
       toggleSavePlan,
       loading,
@@ -227,15 +277,14 @@ const defaultFavoritesContext: FavoritesContextValue = {
   savedPlanIds: new Set(),
   isActivitySaved: () => false,
   isPlanSaved: () => false,
+  setActivitySaved: async () => false,
+  setPlanSaved: async () => false,
   toggleSaveActivity: async () => false,
   toggleSavePlan: async () => false,
   loading: false,
 };
 
-/**
- * Hook to access favorites state and methods.
- * Falls back to safe default state when used outside FavoritesProvider.
- */
+/** Hook to access favorites state and methods. */
 export function useFavorites(): FavoritesContextValue {
   const context = useContext(FavoritesContext);
   return context ?? defaultFavoritesContext;

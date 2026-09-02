@@ -1,7 +1,7 @@
 import type {
   ExplorationQueryParams,
-  FavoriteActivity,
-  FavoritePlan,
+  FavoriteActivityResponse,
+  FavoritePlanResponse,
   PaginatedResult,
 } from '@/types';
 import { apiClient } from './client';
@@ -12,8 +12,8 @@ import { apiClient } from './client';
  */
 export async function saveFavoriteActivity(
   idActivity: number,
-): Promise<FavoriteActivity> {
-  return apiClient.post<FavoriteActivity>('/favorite-activities', {
+): Promise<FavoriteActivityResponse> {
+  return apiClient.post<FavoriteActivityResponse>('/favorite-activities', {
     idActivity,
   });
 }
@@ -34,8 +34,8 @@ export async function removeFavoriteActivity(
  */
 export async function listFavoriteActivities(
   params?: ExplorationQueryParams,
-): Promise<PaginatedResult<FavoriteActivity>> {
-  return apiClient.get<PaginatedResult<FavoriteActivity>>(
+): Promise<PaginatedResult<FavoriteActivityResponse>> {
+  return apiClient.get<PaginatedResult<FavoriteActivityResponse>>(
     '/favorite-activities',
     { params },
   );
@@ -47,8 +47,8 @@ export async function listFavoriteActivities(
  */
 export async function saveFavoritePlan(
   idPlan: number,
-): Promise<FavoritePlan> {
-  return apiClient.post<FavoritePlan>('/favorite-plans', {
+): Promise<FavoritePlanResponse> {
+  return apiClient.post<FavoritePlanResponse>('/favorite-plans', {
     idPlan,
   });
 }
@@ -69,8 +69,8 @@ export async function removeFavoritePlan(
  */
 export async function listFavoritePlans(
   params?: ExplorationQueryParams,
-): Promise<PaginatedResult<FavoritePlan>> {
-  return apiClient.get<PaginatedResult<FavoritePlan>>(
+): Promise<PaginatedResult<FavoritePlanResponse>> {
+  return apiClient.get<PaginatedResult<FavoritePlanResponse>>(
     '/favorite-plans',
     { params },
   );

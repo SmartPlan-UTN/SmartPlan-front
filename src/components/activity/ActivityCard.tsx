@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import type { MouseEvent } from "react";
 
 import { Badge, Icon, Stars } from "@/components/ui";
 import { useFavorites } from "@/context";
@@ -15,19 +14,32 @@ import styles from "./activity.module.css";
 import exploreStyles from "../explore/explore.module.css";
 
 export interface ActivityCardProps {
-  activity: ActivitySearchResult;
+  activity: Omit<ActivitySearchResult, "averageRating" | "ratingCount"> &
+    Partial<Pick<ActivitySearchResult, "averageRating" | "ratingCount">>;
+  isSaved?: boolean;
+  onSavedChange?: (saved: boolean) => void;
 }
 
-export function ActivityCard({ activity }: ActivityCardProps) {
-  const { isActivitySaved, toggleSaveActivity } = useFavorites();
-  const saved = isActivitySaved(activity.id);
+export function ActivityCard({
+  activity,
+  isSaved: controlledSaved,
+  onSavedChange,
+}: ActivityCardProps) {
+  const { isActivitySaved, setActivitySaved, toggleSaveActivity } = useFavorites();
+  const saved = controlledSaved ?? isActivitySaved(activity.id);
   const visibleCategories = activity.categories.slice(0, 2);
 
-  const handleToggleSave = (e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleSaveActivity(activity.id).catch(() => {
-      // Optimistic rollback handled in FavoritesContext
+  const handleToggleSave = () => {
+    const nextSaved = !saved;
+    onSavedChange?.(nextSaved);
+
+    const request =
+      controlledSaved === undefined
+        ? toggleSaveActivity(activity.id)
+        : setActivitySaved(activity.id, nextSaved);
+
+    request.catch(() => {
+      onSavedChange?.(saved);
     });
   };
 
@@ -36,28 +48,19 @@ export function ActivityCard({ activity }: ActivityCardProps) {
     // cost, rating, distance) already gives a screen reader everything a
     // sighted user sees, and an explicit label would hide all of it behind
     // just the activity's name.
-    <Link href={activityDetailRoute(activity.id)} className={exploreStyles.card}>
-      <div
-        className={exploreStyles.imageWrapper}
-        style={{ background: gradientFor(activity.id) }}
+    <article className={exploreStyles.card}>
+      <Link
+        href={activityDetailRoute(activity.id)}
+        className={exploreStyles.cardContent}
       >
-        <Icon name="route" size={40} className={exploreStyles.imagePlaceholder} />
-        <button
-          type="button"
-          className={styles.cardBookmark}
-          aria-pressed={saved}
-          aria-label={saved ? "Quitar de guardados" : "Guardar actividad"}
-          onClick={handleToggleSave}
+        <div
+          className={exploreStyles.imageWrapper}
+          style={{ background: gradientFor(activity.id) }}
         >
-          <Icon
-            name="bookmark"
-            size={16}
-            className={saved ? styles.cardBookmarkSaved : undefined}
-          />
-        </button>
-      </div>
+          <Icon name="route" size={40} className={exploreStyles.imagePlaceholder} />
+        </div>
 
-      <div className={exploreStyles.body}>
+        <div className={exploreStyles.body}>
         <h3 className={exploreStyles.name}>{activity.name}</h3>
         <p className={styles.description}>{activity.description}</p>
 
@@ -67,10 +70,12 @@ export function ActivityCard({ activity }: ActivityCardProps) {
             {formatDuration(activity.estimatedDuration)}
           </span>
           <Badge variant="cost">{formatArs(activity.estimatedCost)}</Badge>
-          <span className={exploreStyles.metaItem}>
-            <Stars rating={activity.averageRating} size={11} />
-            {activity.averageRating.toFixed(1)}
-          </span>
+          {activity.averageRating != null ? (
+            <span className={exploreStyles.metaItem}>
+              <Stars rating={activity.averageRating} size={11} />
+              {activity.averageRating.toFixed(1)}
+            </span>
+          ) : null}
           {activity.distanceKm != null ? (
             <span className={exploreStyles.metaItem}>
               <Icon name="map-pin" size={12} />
@@ -91,7 +96,22 @@ export function ActivityCard({ activity }: ActivityCardProps) {
             </Badge>
           ))}
         </div>
-      </div>
-    </Link>
+        </div>
+      </Link>
+
+      <button
+        type="button"
+        className={styles.cardBookmark}
+        aria-pressed={saved}
+        aria-label={saved ? "Quitar de guardados" : "Guardar actividad"}
+        onClick={handleToggleSave}
+      >
+        <Icon
+          name="bookmark"
+          size={16}
+          className={saved ? styles.cardBookmarkSaved : undefined}
+        />
+      </button>
+    </article>
   );
 }
