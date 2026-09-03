@@ -4,28 +4,26 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import {
-  Badge,
-  Button,
-  ConfirmationDialog,
-  Divider,
-  FloatingBackLink,
-  Icon,
-  LoadingDots,
-  Stars,
-} from "@/components/ui";
-import { useDetailFetch } from "@/hooks";
+import { ExperienceSummary, FeedbackInvite } from "@/components/feedback";
+import { Badge, Button, ConfirmationDialog, Divider, FloatingBackLink, Icon, Stars } from "@/components/ui";
 import { useFavorites } from "@/context";
+import { useDetailFetch, usePlanSelection } from "@/hooks";
+import { ApiError, cancelOwnPlan, getOwnPlan, getPlan } from "@/lib/api";
 import { useSession } from "@/lib/auth";
-import { getPlan, getOwnPlan, cancelOwnPlan, ApiError } from "@/lib/api";
 import { activityDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
 import { formatArs, formatDuration, googleMapsUrl } from "@/lib/utils";
 import type {
-  OwnPlanDetail,
+  FeedbackState,
   PlanDetailResult,
+  PlanFeedback,
   PlanItineraryItem,
+  PlanStatusKey,
+  ViewerPlanState,
 } from "@/types";
 
+import { PlanIntentionPanel } from "./PlanIntentionPanel";
+import { PLAN_SELECTION } from "./planSelectionContent";
+import { planStatusPresentation } from "./statusPresentation";
 import styles from "./plan.module.css";
 import activityStyles from "../activity/activity.module.css";
 
@@ -131,62 +129,66 @@ function ItineraryStep({
 }
 
 /**
- * Plan detail (CU13, CU26, CU29 · PAN 17), after
- * SmartPlanSystemDesign/v2/PlanDetail.jsx: a dark hero with the title
- * overlaid on it, a timeline itinerary, a dark cost breakdown card, and a
- * non-sticky action row (the mockup keeps it in normal flow, unlike
- * ActivityDetail.jsx's fixed one).
- *
- * The hero's 300px band matches the mockup exactly. There are no photos in
- * the catalog, so — same substitution `ActivityCard`/`ActivityDetailView`
- * already made for the same reason — a muted icon watermark stands in for
- * the mockup's huge faded emoji: no emoji anywhere in the product
- * interface (`skills/06-design-system/SKILL.md`). `FloatingBackLink` gets
- * `heroRef` here too, so it tracks this hero the same way
- * `ActivityDetailView`'s does.
+ * Plan detail (CU13 · PAN 17), matching
+ * SmartPlanSystemDesign/v2/PlanDetail.jsx: a full-bleed dark hero, a
+ * timeline itinerary, a dark cost breakdown card, and a non-sticky action
+ * row (the mockup keeps it in normal flow, unlike ActivityDetail.jsx's
+ * fixed one).
  *
  * The mockup's social-proof strip ("312 personas hicieron este plan · 97%
- * lo recomiendan") is fabricated demo data with no backend behind it —
- * there's no "people who did this plan" tracking in the contract, so it's
- * left out rather than invented. "Lo quiero hacer" needs CU22 (out of
- * scope), so it stays disabled; "Compartir" is real — it copies the page
- * URL.
- *
- * The owner-only actions (CU25's "Editar plan", CU26's "Cancelar plan")
- * hang off `isOwner`, not off the plan itself: this screen reads from
- * `GET /plans/:id`, which is public and returns the same projection to
- * everyone, with no owner field to compare against. Probing
- * `GET /users/me/plans/:id` is the only way to tell ownership apart under
- * the current contract — it 403/404s for a plan that isn't yours.
+ * lo recomiendan") and per-person cost split are fabricated demo numbers
+ * with no backend behind them — there's no "people who did this plan"
+ * tracking or party-size field in the contract, so both are left out
+ * rather than inventing data. "Lo voy a hacer" is CU22 — a reversible intent
+ * toggle (`PATCH`/`DELETE /plans/:id/select`), shown only when the caller can
+ * act on it. "Compartir" is real — it copies the page URL.
  */
 export function PlanDetailView({ planId }: PlanDetailViewProps) {
   const router = useRouter();
-  const { data: plan, status, errorMessage } = useDetailFetch<PlanDetailResult>(
+  const { status: sessionStatus } = useSession();
+  const {
+    data: plan,
+    status,
+    errorMessage,
+    refetch,
+  } = useDetailFetch<PlanDetailResult>(
     getPlan,
     planId,
     GENERIC_ERROR,
+    sessionStatus !== "loading",
   );
-  const { authenticated } = useSession();
   const { isPlanSaved, toggleSavePlan } = useFavorites();
   const saved = isPlanSaved(planId);
   const [copied, setCopied] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
-  const [ownPlan, setOwnPlan] = useState<OwnPlanDetail | null>(null);
+  const [ownPlan, setOwnPlan] = useState<import("@/types").OwnPlanDetail | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
   const heroRef = useRef<HTMLDivElement>(null);
+  const [ownFeedback, setOwnFeedback] = useState<{
+    planId: number;
+    feedbackState: FeedbackState;
+    feedback: PlanFeedback | null;
+    completedAt: string | null;
+    activityCount: number;
+  } | null>(null);
 
-  // Ownership probe (CU25, CU26): see the note above the component.
   useEffect(() => {
-    // No reset on the anonymous branch: `isOwner` is only ever read
-    // through `isPlanOwner` below, which already folds in `authenticated`,
-    // so a logout hides the actions without a synchronous setState here.
-    if (!authenticated) return;
-
+    if (sessionStatus !== "authenticated") return;
     let active = true;
     getOwnPlan(planId)
       .then((data) => {
         if (active) {
           setIsOwner(true);
           setOwnPlan(data);
+          setOwnFeedback({
+            planId: data.id,
+            feedbackState: data.feedbackState,
+            feedback: data.feedback,
+            completedAt: data.completedAt ?? data.createdAt,
+            activityCount: data.activityCount,
+          });
         }
       })
       .catch(() => {
@@ -195,16 +197,103 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           setOwnPlan(null);
         }
       });
-
     return () => {
       active = false;
     };
-  }, [authenticated, planId]);
+  }, [sessionStatus, planId]);
 
-  // Cancellation state (CU26)
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
-  const [cancelError, setCancelError] = useState<string | null>(null);
+  // CU23. Feedback lives on the owner-only endpoint; the public detail never
+  // carries it. A secondary, non-blocking fetch — a viewer who isn't the
+  // owner just gets a 403/404 here and no feedback section shows. Keyed by
+  // plan id so a stale result from a previous plan never renders.
+  const planId_ = plan?.id ?? null;
+  useEffect(() => {
+    if (sessionStatus !== "authenticated" || planId_ == null) return;
+    let active = true;
+    getOwnPlan(planId_)
+      .then((own) => {
+        if (active) {
+          setOwnFeedback({
+            planId: own.id,
+            feedbackState: own.feedbackState,
+            feedback: own.feedback,
+            completedAt: own.completedAt ?? own.createdAt,
+            activityCount: own.activityCount,
+          });
+        }
+      })
+      .catch(() => {
+        // Not the owner, or offline — leave the feedback section hidden.
+      });
+    return () => {
+      active = false;
+    };
+  }, [sessionStatus, planId_]);
+
+  const feedbackInfo =
+    ownFeedback && ownFeedback.planId === planId_ ? ownFeedback : null;
+
+  async function reconcileFeedback() {
+    if (planId_ == null) return;
+    try {
+      const own = await getOwnPlan(planId_);
+      setOwnFeedback({
+        planId: own.id,
+        feedbackState: own.feedbackState,
+        feedback: own.feedback,
+        completedAt: own.completedAt ?? own.createdAt,
+        activityCount: own.activityCount,
+      });
+    } catch {
+      // Keep the current owner-only projection if reconciliation is offline.
+    }
+  }
+
+  // CU22. The new status is applied from the backend result, not optimistically;
+  // `useDetailFetch` has no mutate, so a local override reflects it until the
+  // next real load (a navigation back here re-reads the authoritative state).
+  const selection = usePlanSelection();
+  const [override, setOverride] = useState<{
+    statusKey: PlanStatusKey;
+    viewerPlanState: ViewerPlanState;
+  } | null>(null);
+  const [liveMessage, setLiveMessage] = useState("");
+
+  async function toggleIntent(direction: "on" | "off") {
+    if (!plan || selection.status === "working") return;
+    setLiveMessage("");
+
+    const outcome = await (direction === "on"
+      ? selection.select(plan.id)
+      : selection.deselect(plan.id));
+    if (!outcome) return;
+
+    if (outcome.ok) {
+      setOverride({
+        statusKey: outcome.result.status.key,
+        viewerPlanState: direction === "on" ? "selected" : "selectable",
+      });
+      setLiveMessage(
+        direction === "on"
+          ? PLAN_SELECTION.detail.announceOn
+          : PLAN_SELECTION.detail.announceOff,
+      );
+      selection.reset();
+      return;
+    }
+
+    if (outcome.error.reconcile) {
+      // The plan moved on — reconcile from the server, drop the local override.
+      setOverride(null);
+      setLiveMessage(PLAN_SELECTION.error.reconciled);
+      selection.reset();
+      refetch();
+    } else {
+      // Network / unknown: nothing changed.
+      setLiveMessage(PLAN_SELECTION.error.retry);
+      selection.reset();
+    }
+  }
 
   async function handleShare() {
     try {
@@ -228,18 +317,23 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
       router.push(ROUTES.plans);
     } catch (error: unknown) {
       setIsCancelling(false);
-      const message =
+      setCancelError(
         error instanceof ApiError
           ? error.message
-          : "No pudimos eliminar el plan. Intentá de nuevo.";
-      setCancelError(message);
+          : "No pudimos eliminar el plan. Intentá de nuevo.",
+      );
     }
   }
 
   if (status === "loading") {
     return (
       <div className={activityStyles.stateBlock}>
-        <LoadingDots label="Cargando el plan..." />
+        <div className={activityStyles.loadingDots}>
+          <span className={activityStyles.loadingDot} />
+          <span className={activityStyles.loadingDot} />
+          <span className={activityStyles.loadingDot} />
+        </div>
+        <p className="sp-body">Cargando el plan...</p>
       </div>
     );
   }
@@ -268,53 +362,61 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
     );
   }
 
-  const isCancelled = plan.status?.key === "cancelled";
-  const isPlanOwner = authenticated && isOwner;
   const routeSummary = plan.details
     .map((detail) => detail.activity.name)
     .join(" → ");
+
+  const statusKey = override?.statusKey ?? plan.status.key;
+  const viewerPlanState = override?.viewerPlanState ?? plan.viewerPlanState;
+  const statusInfo = planStatusPresentation(statusKey);
 
   return (
     <div>
       <FloatingBackLink href={ROUTES.explore} label="Volver" heroRef={heroRef} />
 
+      <p className={styles.srOnly} role="status" aria-live="polite">
+        {liveMessage}
+      </p>
+
       <div className={styles.hero} ref={heroRef}>
-        <Icon name="route" size={90} className={styles.heroIcon} aria-hidden="true" />
-        <div className={styles.heroOverlay} aria-hidden="true" />
+        <Icon name="route" size={110} className={styles.heroIcon} />
         <Badge variant="cost" className={styles.heroCostBadge}>
           {formatArs(plan.estimatedTotalCost)}
         </Badge>
 
-        <div className={styles.heroContent}>
-          <div className={styles.heroMeta}>
+        <div className={styles.heroTitleBlock}>
+          <div className={styles.heroMetaRow}>
+            {statusInfo ? (
+              <>
+                <span className={styles.heroStatus}>{statusInfo.label}</span>
+                <span className={styles.heroMetaDot}>·</span>
+              </>
+            ) : null}
             <Stars rating={plan.averageRating} size={14} />
             <span>{plan.averageRating.toFixed(1)}</span>
             <span className={styles.heroMetaDot}>·</span>
             <span>{formatDuration(plan.estimatedTotalDuration)}</span>
           </div>
-
-          <h1 className={`sp-h1 ${styles.heroTitle}`}>{plan.title}</h1>
-
+          <h1 className={styles.heroTitle}>{plan.title}</h1>
           {routeSummary ? (
-            <p className={styles.heroRoute}>
-              <Icon name="map-pin" size={14} aria-hidden="true" />
+            <div className={styles.heroLocation}>
+              <Icon name="map-pin" size={14} />
               {routeSummary}
-            </p>
+            </div>
           ) : null}
         </div>
       </div>
 
       <div className={styles.content}>
-        {isCancelled && (
-          <div className={styles.cancelledBanner}>
-            <Icon name="triangle-alert" size={20} />
+        {plan.status.key === "cancelled" ? (
+          <div className={styles.cancelledBanner} role="status">
+            <Icon name="triangle-alert" size={20} aria-hidden="true" />
             <div>
-              <strong>Plan cancelado:</strong> Este plan se encuentra
-              conservado como historial de lectura y no acepta modificaciones.
+              <strong>Plan cancelado:</strong> Este plan se conserva como
+              historial de lectura y no acepta modificaciones.
             </div>
           </div>
-        )}
-
+        ) : null}
         {plan.description ? (
           <p className={`sp-body-lg ${activityStyles.detailDescription}`}>
             {plan.description}
@@ -338,9 +440,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           <div className={styles.costBreakdown}>
             {plan.details.map((detail) => (
               <div className={styles.costRow} key={detail.id}>
-                <span className={styles.costRowLabel}>
-                  {detail.activity.name}
-                </span>
+                <span className={styles.costRowLabel}>{detail.activity.name}</span>
                 <span className={styles.costRowValue}>
                   {formatArs(detail.estimatedCost)}
                 </span>
@@ -367,71 +467,99 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           ) : null}
         </div>
 
+        {feedbackInfo?.feedback ? (
+          <ExperienceSummary
+            feedback={feedbackInfo.feedback}
+            estimatedTotalCost={plan.estimatedTotalCost}
+          />
+        ) : feedbackInfo?.feedbackState === "available" ? (
+          <FeedbackInvite
+            planId={plan.id}
+            planTitle={plan.title}
+            estimatedTotalCost={plan.estimatedTotalCost}
+            completedAt={feedbackInfo.completedAt}
+            activityCount={feedbackInfo.activityCount}
+            onSubmitted={(feedback) =>
+              setOwnFeedback({
+                planId: plan.id,
+                feedbackState: "submitted",
+                feedback,
+                completedAt: feedbackInfo.completedAt,
+                activityCount: feedbackInfo.activityCount,
+              })
+            }
+            onReconcile={() => void reconcileFeedback()}
+          />
+        ) : null}
+
         <div className={styles.actionBar}>
-          {isPlanOwner && !isCancelled && (
+          {sessionStatus === "authenticated" && isOwner && plan.status.key !== "cancelled" ? (
             <>
-              <Link
-                href={planEditRoute(planId)}
-                style={{ textDecoration: "none", display: "flex", flex: 1 }}
-              >
-                <Button variant="ghostLight" size="sm" style={{ width: "100%" }}>
-                  <Icon name="pencil" size={14} aria-hidden="true" />
+              <Link href={planEditRoute(planId)} className={styles.ownerActionLink}>
+                <Button variant="ghostLight" className={styles.ownerActionButton}>
+                  <Icon name="pencil" size={16} aria-hidden="true" />
                   Editar plan
                 </Button>
               </Link>
-
               <Button
                 variant="ghostLight"
-                size="sm"
-                style={{ flex: 1 }}
+                className={styles.ownerActionButton}
                 onClick={() => setShowCancelModal(true)}
               >
                 <Icon name="trash-2" size={14} aria-hidden="true" />
                 Eliminar plan
               </Button>
             </>
-          )}
+          ) : null}
+          {/* Guardar + Compartir — secondary. Each control reserves its
+              widest label so a state swap never changes its box. */}
+          <div className={styles.actionSecondary}>
+            <Button
+              variant="ghostLight"
+              size="sm"
+              className={styles.saveButton}
+              aria-pressed={saved}
+              aria-label={saved ? "Quitar de guardados" : "Guardar plan"}
+              onClick={() => {
+                // Optimistic rollback is handled inside FavoritesContext (CU43).
+                void toggleSavePlan(planId);
+              }}
+            >
+              <Icon
+                name="bookmark"
+                size={16}
+                aria-hidden="true"
+                className={saved ? styles.saveIconOn : undefined}
+              />
+              {saved ? "Guardado" : "Guardar plan"}
+            </Button>
+            <Button
+              variant="ghostLight"
+              size="sm"
+              className={styles.shareButton}
+              onClick={() => {
+                void handleShare();
+              }}
+            >
+              <Icon name="share-2" size={16} aria-hidden="true" />
+              {copied ? "¡Copiado!" : "Compartir"}
+            </Button>
+          </div>
 
-          <Button
-            variant={saved ? "secondary" : "ghostLight"}
-            size="sm"
-            className={styles.actionFlex1}
-            aria-pressed={saved}
-            aria-label={saved ? "Quitar de guardados" : "Guardar plan"}
-            onClick={() => {
-              toggleSavePlan(planId).catch(() => {
-                // Optimistic rollback handled in FavoritesContext
-              });
-            }}
-          >
-            <Icon name="bookmark" size={14} aria-hidden="true" />
-            {saved ? "¡Guardado!" : "Guardar plan"}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={styles.actionShare}
-            onClick={() => {
-              void handleShare();
-            }}
-          >
-            <Icon name="share-2" size={14} aria-hidden="true" />
-            {copied ? "¡Copiado!" : "Compartir"}
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            className={styles.actionFlex2}
-            disabled
-            title="Próximamente"
-          >
-            Lo quiero hacer →
-          </Button>
-      </div>
+          {/* Personal state on the plan (CU22) — carries the visual weight.
+              Supersedes the disabled "Lo quiero hacer" placeholder this
+              action bar used before CU22 landed. */}
+          <PlanIntentionPanel
+            viewerPlanState={viewerPlanState}
+            statusKey={statusKey}
+            busy={selection.status === "working"}
+            onIntend={() => void toggleIntent("on")}
+            onWithdraw={() => void toggleIntent("off")}
+          />
+        </div>
       </div>
 
-      {/* Explicit Delete Confirmation Dialog (CU26) */}
-      {showCancelModal && (
+      {showCancelModal ? (
         <ConfirmationDialog
           title="¿Eliminar este plan?"
           confirmLabel="Sí, eliminar plan"
@@ -440,15 +568,11 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           isConfirming={isCancelling}
           error={cancelError}
           onCancel={() => setShowCancelModal(false)}
-          onConfirm={() => {
-            void handleConfirmCancel();
-          }}
+          onConfirm={() => void handleConfirmCancel()}
         >
-          <p>
-            El plan se eliminará de tus planes y ya no estará disponible.
-          </p>
+          <p>El plan se eliminará de tus planes y ya no estará disponible.</p>
         </ConfirmationDialog>
-      )}
+      ) : null}
     </div>
   );
 }

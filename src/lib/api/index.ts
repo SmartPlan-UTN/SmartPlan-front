@@ -30,16 +30,17 @@ export {
   createPlan,
   addPlanActivity,
   getOwnPlan,
+  selectPlan,
+  deselectPlan,
   updateOwnPlan,
   cancelOwnPlan,
   removePlanActivity,
   generateSuggestedPlan,
 } from './plans';
 export { listCategories } from './categories';
-export { listCities, listDepartments } from './places';
-export { listPlaces } from './places';
+export { listCities, listDepartments, listPlaces, searchPlace } from './places';
 export { getProfile, updateProfile, changePassword, deleteAccount } from './users';
-export type { UpdateProfileData, ChangePasswordData } from './users';
+export type { UpdateProfileData, ChangePasswordData, DeleteAccountData } from './users';
 export {
   changeAdminUserStatus,
   deleteAdminUser,
@@ -64,6 +65,12 @@ export {
   removeActivityFromCollection,
   updateCollection,
 } from './collections';
+export {
+  submitFeedback,
+} from './feedback';
+export { getPreferences, updatePreferences } from './users';
+export { createPlanRequest, createSurprisePlanRequest, getPlanRequestStatus } from './plan-requests';
+export { getRecommendations, dismissRecommendation, undoDismissRecommendation } from './plan-recommendations';
 export {
   listFavoriteActivities,
   removeFavoriteActivity,

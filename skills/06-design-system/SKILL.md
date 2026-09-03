@@ -214,9 +214,16 @@ the same rules as Security.
 > enforces.
 
 **Preferences** — CU8, CU18 · PAN 15
-Categories of interest as selectable chips (cultura, compras, gastronomía...),
-usual budget with validation (*"Ingresá un presupuesto válido mayor a $0"*),
-and preferred area.
+A progressive recommendation profile with three focused sections: categories
+of interest, usual budget, and preferred area, laid out as a step rail
+(desktop) / horizontal numbered stepper (mobile) next to the active section's
+panel. Only one section is expanded at a time so the screen does not present
+every setting at once. A compact progress summary explains how each completed
+answer improves plan results without making optional fields feel mandatory.
+Budget validation says *"Ingresá un presupuesto válido mayor a $0"*. The
+preferred area accepts a neighborhood, city, or department and makes clear
+that an exact address is not required. PAN 15 uses a plain text header, no
+`MoodBackground` — it's a focused form, not a full-bleed hero.
 
 **Security** — CU6
 Password change with a strength meter and a requirements checklist:

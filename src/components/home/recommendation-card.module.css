@@ -1,0 +1,329 @@
+/* ================================================================
+   CU20/CU21 recommendation card — discovery density, one primary
+   action, one discreet "no me interesa". Shares the landing's card
+   language (surface, hairline, hover lift) and its motion vocabulary
+   (transform + opacity only, --ease-out, nothing overshoots).
+   ================================================================ */
+
+.card {
+  position: relative; /* anchors the dismiss control to THIS card */
+  flex: 0 0 clamp(260px, 78vw, 320px);
+  scroll-snap-align: start;
+  list-style: none;
+}
+
+@media (min-width: 760px) {
+  .card {
+    flex-basis: 300px;
+  }
+}
+
+.link {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+  color: inherit;
+  text-decoration: none;
+  box-shadow: 0 2px 10px -6px color-mix(in srgb, var(--char) 40%, transparent);
+  transition:
+    transform var(--d-base, 420ms) var(--ease-out, ease),
+    box-shadow var(--d-base, 420ms) var(--ease-out, ease),
+    border-color var(--d-base, 420ms) var(--ease-out, ease);
+  will-change: transform;
+}
+
+.link:hover,
+.link:focus-visible {
+  transform: translateY(-6px);
+  border-color: color-mix(in srgb, var(--ember) 40%, var(--hairline));
+  box-shadow:
+    0 28px 50px -26px color-mix(in srgb, var(--char) 62%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--ember) 14%, transparent);
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+/* ── Media ─────────────────────────────────────────────────────── */
+
+.media {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  aspect-ratio: 16 / 10;
+  padding: var(--s-3);
+  overflow: hidden;
+}
+
+.mediaPhoto {
+  object-fit: cover;
+  transition: transform var(--d-slow, 900ms) var(--ease-out, ease);
+}
+
+.link:hover .mediaPhoto {
+  transform: scale(1.04);
+}
+
+/* The itinerary is the graphic when there is no photo — not decoration,
+   the actual content of the plan. */
+.mediaSequence {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 0;
+  color: var(--white);
+  font-size: 15px;
+  font-weight: var(--w-heading);
+  line-height: 1.35;
+  text-shadow: 0 1px 12px color-mix(in srgb, var(--char) 55%, transparent);
+}
+
+.mediaSequence svg {
+  flex: none;
+  margin-top: 3px;
+  opacity: 0.85;
+  transition: transform var(--d-base, 420ms) var(--ease-out, ease);
+}
+
+.link:hover .mediaSequence svg {
+  transform: translateX(2px);
+}
+
+.mediaSequenceText {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+/* A single diagonal light sweep across the media on hover — the only
+   flourish, and it stays under the text and chips. */
+.sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 40%,
+    color-mix(in srgb, var(--white) 24%, transparent) 50%,
+    transparent 60%
+  );
+  opacity: 0;
+  transform: translateX(-60%);
+  transition:
+    transform 720ms var(--ease-out, ease),
+    opacity 200ms ease;
+}
+
+.link:hover .sheen {
+  opacity: 1;
+  transform: translateX(60%);
+}
+
+/* ── Reason chip ───────────────────────────────────────────────── */
+
+.reason {
+  position: absolute;
+  top: var(--s-3);
+  left: var(--s-3);
+  z-index: 1;
+  padding: 4px 10px;
+  border-radius: var(--r-chip);
+  background: color-mix(in srgb, var(--char) 74%, transparent);
+  color: var(--fg-on-dark);
+  font-size: 10.5px;
+  font-weight: var(--w-label);
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(8px);
+  transition: background var(--d-base, 420ms) var(--ease-out, ease);
+}
+
+.link:hover .reason {
+  background: color-mix(in srgb, var(--ember) 88%, var(--char));
+}
+
+/* ── Dismiss ("no me interesa", CU21) ──────────────────────────── */
+
+.dismissWrap {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  width: 28px;
+  height: 28px;
+}
+
+.dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--char) 78%, transparent);
+  color: var(--fg-on-dark);
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px -3px color-mix(in srgb, var(--char) 50%, transparent);
+  opacity: 0;
+  transform: scale(0.8);
+  transition:
+    opacity var(--d-fast, 180ms) var(--ease-out, ease),
+    transform var(--d-fast, 180ms) var(--ease-out, ease),
+    background var(--d-fast, 180ms) var(--ease-out, ease);
+}
+
+/* Comfortable tap target without a big visual footprint. */
+.dismiss::before {
+  content: "";
+  position: absolute;
+  inset: -9px;
+  border-radius: 50%;
+}
+
+.card:hover .dismiss,
+.card:focus-within .dismiss {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.dismiss:hover {
+  background: var(--ember);
+  transform: scale(1.1);
+}
+
+.dismiss:focus-visible {
+  opacity: 1;
+  transform: scale(1);
+  outline: 2px solid var(--white);
+  outline-offset: 2px;
+}
+
+/* Floating label, to the LEFT of the button, out of flow so it never
+   shifts the button. Reveals only when the button is hovered/focused. */
+.dismissLabel {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 8px);
+  padding: 4px 9px;
+  border-radius: var(--r-chip);
+  background: var(--char);
+  color: var(--fg-on-dark);
+  font-size: 11px;
+  font-weight: var(--w-label);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-50%) translateX(6px);
+  transition:
+    opacity var(--d-fast, 180ms) var(--ease-out, ease),
+    transform var(--d-fast, 180ms) var(--ease-out, ease);
+}
+
+.dismiss:hover ~ .dismissLabel,
+.dismiss:focus-visible ~ .dismissLabel {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* Touch devices have no hover — keep the button findable but quiet, and
+   never show the floating label there. */
+@media (hover: none) {
+  .dismiss {
+    opacity: 0.72;
+    transform: scale(1);
+  }
+  .dismissLabel {
+    display: none;
+  }
+}
+
+/* ── Body ──────────────────────────────────────────────────────── */
+
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-4);
+}
+
+.title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: var(--w-heading);
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  text-wrap: balance;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.description {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--fg-2);
+  font-size: var(--t-label, 12px);
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+  margin-top: auto;
+  padding-top: var(--s-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link,
+  .mediaPhoto,
+  .mediaSequence svg,
+  .sheen,
+  .reason,
+  .dismiss,
+  .dismissLabel {
+    transition: none;
+  }
+  .link:hover,
+  .link:focus-visible {
+    transform: none;
+  }
+  .link:hover .mediaPhoto,
+  .link:hover .mediaSequence svg {
+    transform: none;
+  }
+  .sheen {
+    display: none;
+  }
+}

@@ -20,12 +20,6 @@
   text-overflow: ellipsis;
 }
 
-/* Matches `Results.jsx`'s "Ver plan completo" CTA — a light neutral pill
-   that turns ember under the pointer, same as the source's own button
-   `:hover`. It isn't its own interactive element (see the doc comment on
-   its usage in `PlanCard`), but a plain element still gets its own
-   `:hover` for whatever area it covers, so this needs no help from the
-   card's hover state. */
 .viewPlanButton {
   display: block;
   margin-top: var(--s-2);
@@ -49,23 +43,12 @@
   color: var(--ember);
 }
 
-/* ── Plan detail (CU13), after
-   SmartPlanSystemDesign/v2/PlanDetail.jsx ─────────────────────── */
-
-/* Dark hero, matching the mockup's 300px band exactly (unlike the earlier
-   pass on this screen, which sized the header to its own content and sat
-   it on the cream background instead — see PR review for why: the flat
-   gradient-plus-icon read as a third of the first screenful saying
-   nothing. Requested back explicitly, so this now follows
-   `ActivityDetailView`'s own hero/watermark-icon substitution for "no
-   photos in the catalog" — same reasoning, applied here too — but keeps
-   the mockup's own overlay-title-on-hero layout, which
-   `ActivityDetailView` doesn't use. */
+/* Bookmark overlay on the card image (CU43) — same shell as
+   ActivityCard's. */
 .cardBookmark {
   position: absolute;
   top: var(--s-3);
   right: var(--s-3);
-  z-index: 2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -78,6 +61,7 @@
   color: var(--white);
   cursor: pointer;
   transition: background 150ms ease, color 150ms ease, transform 150ms ease;
+  z-index: 2;
 }
 
 .cardBookmark:hover {
@@ -94,53 +78,43 @@
   color: var(--gold);
 }
 
+/* ── Plan detail (CU13), matching
+   SmartPlanSystemDesign/v2/PlanDetail.jsx ─────────────────────── */
 .hero {
   position: relative;
   display: flex;
   align-items: flex-end;
-  min-height: 300px;
+  height: 300px;
   overflow: hidden;
-  background: linear-gradient(155deg, var(--char) 0%, #2d1506 100%);
+  background: linear-gradient(155deg, #2d1506 0%, var(--char) 100%);
 }
 
-/* Centered watermark icon standing in for the mockup's huge faded emoji
-   (`opacity: 0.18`) — no emoji anywhere in the product interface
-   (`skills/06-design-system/SKILL.md`), same substitution `ActivityCard`/
-   `ActivityDetailView` already made for the same reason. */
 .heroIcon {
   position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   color: rgba(255, 255, 255, 0.18);
-}
-
-.heroOverlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(26, 17, 9, 0.92) 0%, transparent 55%);
 }
 
 .heroCostBadge {
   position: absolute;
-  top: var(--s-4);
-  right: var(--s-5);
-  z-index: 1;
-  padding: 6px 14px;
+  top: var(--s-3);
+  right: var(--s-4);
   font-size: var(--t-small);
+  padding: 6px 14px;
 }
 
-.heroContent {
+.heroTitleBlock {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 760px;
-  margin: 0 auto;
   padding: 0 var(--s-6) var(--s-5);
+  background: linear-gradient(to top, rgba(26, 17, 9, 0.92) 0%, transparent 65%);
+  padding-top: var(--s-8);
 }
 
-.heroMeta {
+.heroMetaRow {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -150,6 +124,21 @@
   font-size: var(--t-small);
 }
 
+/* Plan status pill (CU22) — only for `confirmed` / `completed` (states that
+   matter to any viewer). `generated`/`selected` render no pill. */
+.heroStatus {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  background: rgba(245, 240, 232, 0.22);
+  color: var(--fg-on-dark);
+  font-size: var(--t-label);
+  font-weight: var(--w-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
 .heroMetaDot {
   color: var(--fg-on-dark-3);
 }
@@ -157,11 +146,15 @@
 .heroTitle {
   margin: 0;
   color: var(--fg-on-dark);
+  font-size: clamp(var(--t-h2), 5vw, var(--t-h1));
+  font-weight: var(--w-display);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
   overflow-wrap: anywhere;
   text-wrap: balance;
 }
 
-.heroRoute {
+.heroLocation {
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
@@ -171,18 +164,19 @@
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 600px) {
-  .heroContent {
+@media (max-width: 640px) {
+  .hero {
+    min-height: 300px;
+    height: auto;
+  }
+
+  .heroTitleBlock {
     padding-inline: var(--s-4);
   }
 
   .heroTitle {
     font-size: var(--t-h2);
     line-height: 1.08;
-  }
-
-  .heroRoute {
-    max-width: 100%;
   }
 }
 
@@ -423,8 +417,302 @@
   margin-top: var(--s-2);
 }
 
-/* A derivation of the total (CU25), so it sits under it rather than
-   among the per-activity rows. */
+.costTotalValue {
+  color: var(--ember);
+  font-size: 28px;
+  font-weight: var(--w-display);
+  letter-spacing: -0.02em;
+}
+
+/* ── Action row (not sticky — normal document flow) ───────────────
+   Three peer controls at one fixed height. Every control reserves the
+   width of its widest label and centres its content, so a state swap
+   (icon, text, colour, border, fill) only repaints inside the box —
+   nothing here ever changes width, height or position. */
+.actionBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+/* Guardar + Compartir — grouped, secondary weight. The tighter inner
+   gap sets them apart from the intent toggle without a divider. */
+.actionSecondary {
+  display: flex;
+  flex: 0 1 auto;
+  gap: var(--s-2);
+}
+
+.editLink {
+  display: flex;
+  text-decoration: none;
+}
+
+.cancelledBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  margin-bottom: var(--s-5);
+  padding: var(--s-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: var(--ember-04);
+  color: var(--fg-1);
+}
+
+.saveButton,
+.shareButton {
+  justify-content: center;
+  min-height: 44px;
+  border-radius: var(--r-btn);
+  white-space: nowrap;
+}
+
+.saveButton {
+  min-width: 9rem;
+}
+
+.shareButton {
+  min-width: 7.25rem;
+}
+
+.saveButton:hover:not(:disabled),
+.shareButton:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--char) 4%, transparent);
+  border-color: var(--ember-20);
+  filter: none;
+}
+
+/* The bookmark fills the instant it is saved — a short settle, no
+   overshoot, no effect on the button's metrics. */
+.saveIconOn {
+  fill: currentColor;
+  animation: sp-icon-settle var(--d-fast) var(--ease-out) both;
+}
+
+@keyframes sp-icon-settle {
+  from {
+    transform: scale(0.8);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* ── Intent toggle (CU22) ────────────────────────────────────────
+   The prominent control in the row. Same box in both states — same
+   size, same label ("Lo voy a hacer") — so a state change only
+   repaints: warm ember-tint fill when open (the design system's
+   `ghostEmber`), solid ember fill + check when marked (`primary`). */
+.statePanel {
+  display: flex;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.stateToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-width: 10.5rem;
+  min-height: 44px;
+  padding: var(--s-2) var(--s-4);
+  border: 1px solid transparent;
+  border-radius: var(--r-btn);
+  background: var(--ember-15);
+  color: var(--ember);
+  font-size: var(--t-body);
+  font-weight: var(--w-label);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--d-fast) var(--ease-inout),
+    color var(--d-fast) var(--ease-inout),
+    transform var(--d-fast) var(--ease-inout);
+}
+
+.stateToggle:hover:not(:disabled) {
+  background: var(--ember-20);
+}
+
+.stateToggle:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.stateToggle[aria-pressed="true"] {
+  background: var(--ember);
+  color: var(--white);
+}
+
+.stateToggle[aria-pressed="true"]:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ember) 90%, var(--char));
+}
+
+.stateToggle:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.stateToggle:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+/* Icon crossfade — the check is the hero of the state change. Both
+   glyphs share one 18px box (absolutely stacked), so nothing around
+   them moves as they swap. */
+.toggleIcon {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  transition: transform var(--d-fast) var(--ease-out);
+}
+
+.stateToggle:hover:not(:disabled) .toggleIcon {
+  transform: scale(1.06);
+}
+
+.toggleIconOff,
+.toggleIconOn {
+  position: absolute;
+  inset: 0;
+  transition:
+    opacity var(--d-fast) var(--ease-inout),
+    transform var(--d-fast) var(--ease-inout);
+}
+
+.toggleIconOn {
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+.stateToggle[aria-pressed="true"] .toggleIconOff {
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+.stateToggle[aria-pressed="true"] .toggleIconOn {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.stateChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0;
+  color: var(--ember);
+  font-size: var(--t-body);
+  font-weight: var(--w-label);
+}
+
+.stateIcon {
+  display: inline-flex;
+}
+
+.stateIconMuted {
+  color: var(--fg-2);
+}
+
+/* State C (completed) — a quiet record, matching the toggle's box. */
+.stateRecord {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  align-content: center;
+  gap: var(--s-1) var(--s-3);
+  min-width: 10.5rem;
+  min-height: 44px;
+  padding: var(--s-2) var(--s-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-btn);
+  background: var(--ember-04);
+}
+
+.stateMeta {
+  color: var(--fg-3);
+  font-size: var(--t-small);
+}
+
+.stateActions {
+  display: flex;
+  gap: var(--s-2);
+  width: 100%;
+}
+
+/* Mobile — intent toggle on top, Guardar/Compartir a full-width pair
+   below. State changes still never move anything. */
+@media (max-width: 640px) {
+  .actionBar {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .actionSecondary {
+    width: 100%;
+  }
+
+  .actionSecondary > * {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .statePanel {
+    width: 100%;
+  }
+
+  .stateToggle,
+  .stateRecord {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stateToggle,
+  .toggleIcon,
+  .saveIconOn {
+    animation: none;
+    transition: none;
+    transform: none;
+  }
+
+  /* Keep the crossfade instant but still correct: the marked state
+     shows the check, the open state shows the circle — no motion. */
+  .toggleIconOff,
+  .toggleIconOn {
+    transition: none;
+    transform: none;
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ownerActionLink {
+  display: flex;
+  flex: 1;
+  text-decoration: none;
+}
+
+.ownerActionButton {
+  width: 100%;
+  flex: 1;
+}
+
 .costPerPersonRow {
   display: flex;
   align-items: baseline;
@@ -434,92 +722,15 @@
   border-top: 1px dashed var(--hairline-dark);
 }
 
-.costTotalValue {
-  color: var(--ember);
-  font-size: 28px;
-  font-weight: var(--w-display);
-  letter-spacing: -0.02em;
-}
-
-/* ── Action row (not sticky — normal document flow) ───────────── */
-.actionBar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2);
-}
-
-.actionFlex1 {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-}
-
-.actionFlex2 {
-  display: flex;
-  flex: 2;
-  align-items: center;
-  justify-content: center;
-}
-
-/* `Button variant="ghost"` already sets the border and text color this
-   needs (`--white-15` / `--fg-on-dark`) — only the opaque background is a
-   real override, so this doesn't fight the variant's own cascade. */
-.actionShare {
-  background: var(--char);
-}
-
-/* Modal Overlay for explicit cancel confirmation (CU26) */
-.modalOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(26, 17, 9, 0.55);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  padding: var(--s-4);
-}
-
-.modalCard {
-  background: var(--surface-card);
-  border-radius: var(--r-card);
-  padding: var(--s-5) var(--s-5) var(--s-4);
-  width: 100%;
-  max-width: 420px;
-  box-shadow: var(--shadow-card);
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-4);
-}
-
-.modalIcon {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--error) 12%, transparent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--error);
-}
-
-.modalActions {
-  display: flex;
-  gap: 10px;
-  margin-top: var(--s-2);
-}
-
 .cancelledBanner {
-  background: color-mix(in srgb, var(--warning) 12%, #fff);
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-bottom: var(--s-4);
+  padding: var(--s-3) var(--s-4);
   border: 1.5px solid var(--warning);
   border-radius: var(--r-card-sm);
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  background: color-mix(in srgb, var(--warning) 12%, #fff);
   color: var(--fg-1);
-  font-size: 14px;
-  margin-bottom: var(--s-4);
+  font-size: var(--t-small);
 }

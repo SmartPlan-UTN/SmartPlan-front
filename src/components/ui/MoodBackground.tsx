@@ -199,8 +199,11 @@ export function MoodBackground({
       teardownRef.current = null;
     }
 
-    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    reducedMotionRef.current = motionQuery.matches;
+    const motionQuery =
+      typeof window.matchMedia === "function"
+        ? window.matchMedia("(prefers-reduced-motion: reduce)")
+        : null;
+    reducedMotionRef.current = motionQuery?.matches ?? false;
 
     function measure() {
       const node = containerRef.current;
@@ -257,13 +260,13 @@ export function MoodBackground({
     observer.observe(container);
     window.addEventListener("resize", handleResize);
     document.addEventListener("visibilitychange", syncRunning);
-    motionQuery.addEventListener("change", handleMotionChange);
+    motionQuery?.addEventListener("change", handleMotionChange);
 
     return () => {
       observer.disconnect();
       window.removeEventListener("resize", handleResize);
       document.removeEventListener("visibilitychange", syncRunning);
-      motionQuery.removeEventListener("change", handleMotionChange);
+      motionQuery?.removeEventListener("change", handleMotionChange);
       teardownRef.current = setTimeout(() => {
         engineRef.current?.destroy();
         engineRef.current = null;
