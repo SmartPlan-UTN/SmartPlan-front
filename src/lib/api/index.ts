@@ -63,6 +63,14 @@ export {
   updateCollection,
 } from './collections';
 export {
+  listFavoriteActivities,
+  removeFavoriteActivity,
+  saveFavoriteActivity,
+  listFavoritePlans,
+  removeFavoritePlan,
+  saveFavoritePlan,
+} from './favorites';
+export {
   createRating,
   deleteRating,
   getOwnRating,

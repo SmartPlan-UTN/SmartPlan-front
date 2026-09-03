@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 
 import { AppBackground } from "@/components/layout";
+import { FavoritesProvider } from "@/context";
 import { SessionProvider } from "@/lib/auth";
 
 import "./globals.css";
@@ -35,7 +36,9 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <AppBackground />
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider>
+          <FavoritesProvider>{children}</FavoritesProvider>
+        </SessionProvider>
       </body>
     </html>
   );

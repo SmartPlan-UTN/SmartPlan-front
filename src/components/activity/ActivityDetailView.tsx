@@ -14,6 +14,7 @@ import {
   LoadingDots,
   Stars,
 } from "@/components/ui";
+import { useFavorites } from "@/context";
 import { useDetailFetch } from "@/hooks";
 import { getActivity } from "@/lib/api";
 import { ROUTES } from "@/lib/routes";
@@ -40,9 +41,9 @@ const GENERIC_ERROR = "No pudimos cargar la actividad. Intentá de nuevo.";
  * hours — there's no such field in the schema), a decorative map preview
  * linking out to Google Maps, and a sticky action bar.
  *
- * "Guardar" mirrors the mockup exactly: a local, unpersisted toggle. CU15
- * (real favorites) isn't part of this delivery, so "Agregar a plan" remains
- * disabled. "Colección" opens the real CU35 selector.
+ * "Guardar" handles real activity favorites (CU15) with optimistic updates.
+ * "Agregar a plan" opens the real CU27 dialog.
+ * "Colección" opens the real CU35 selector.
  *
  * The Valoraciones tab's `ActivityRatingSection` (CU44 writing a rating,
  * CU46 editing it, CU47 deleting it — see its own doc comment for why none
@@ -65,8 +66,8 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
     activityId,
     GENERIC_ERROR,
   );
+  const { isActivitySaved, toggleSaveActivity } = useFavorites();
   const [tab, setTab] = useState<Tab>("info");
-  const [saved, setSaved] = useState(false);
   const [showCollectionDialog, setShowCollectionDialog] = useState(false);
   const [showPlanDialog, setShowPlanDialog] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
@@ -75,6 +76,15 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
   // until then (CU47's "Recalculo del promedio").
   const [ratingSummary, setRatingSummary] = useState<RatingSummary | null>(null);
   const [ratingsRefreshToken, setRatingsRefreshToken] = useState(0);
+
+  const saved = activity != null ? isActivitySaved(activity.id) : false;
+
+  const handleToggleSave = () => {
+    if (activity == null) return;
+    toggleSaveActivity(activity.id).catch(() => {
+      // Optimistic rollback handled in context
+    });
+  };
 
   if (status === "loading") {
     return (
@@ -132,9 +142,7 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
           className={styles.heroBookmark}
           aria-pressed={saved}
           aria-label={saved ? "Quitar de guardados" : "Guardar actividad"}
-          onClick={() => {
-            setSaved((current) => !current);
-          }}
+          onClick={handleToggleSave}
         >
           <Icon name="bookmark" size={17} className={saved ? styles.heroBookmarkSaved : undefined} />
         </button>
@@ -287,9 +295,7 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
         <div className={styles.actionBarInner}>
           <Button
             variant={saved ? "secondary" : "ghostLight"}
-            onClick={() => {
-              setSaved((current) => !current);
-            }}
+            onClick={handleToggleSave}
           >
             <Icon name="bookmark" size={16} aria-hidden="true" />
             {saved ? "Guardada" : "Guardar"}
