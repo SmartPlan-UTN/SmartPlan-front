@@ -47,12 +47,12 @@ export function PlanCard({
     // screen reader everything a sighted user sees.
     <article className={exploreStyles.card}>
       <Link href={planDetailRoute(plan.id)} className={exploreStyles.cardContent}>
-      <div
-        className={exploreStyles.imageWrapper}
-        style={{ background: gradientFor(plan.id) }}
-      >
-        <Icon name="route" size={40} className={exploreStyles.imagePlaceholder} />
-      </div>
+        <div
+          className={exploreStyles.imageWrapper}
+          style={{ background: gradientFor(plan.id) }}
+        >
+          <Icon name="route" size={40} className={exploreStyles.imagePlaceholder} />
+        </div>
 
       <div className={exploreStyles.body}>
         <h3 className={exploreStyles.name}>{plan.title}</h3>
@@ -103,19 +103,19 @@ export function PlanCard({
       </div>
       </Link>
 
-    <button
-      type="button"
-      className={styles.cardBookmark}
-      aria-pressed={saved}
-      aria-label={saved ? "Quitar de guardados" : "Guardar plan"}
-      onClick={handleToggleSave}
-    >
-      <Icon
-        name="bookmark"
-        size={16}
-        className={saved ? styles.cardBookmarkSaved : undefined}
-      />
-    </button>
+      <button
+        type="button"
+        className={styles.cardBookmark}
+        aria-pressed={saved}
+        aria-label={saved ? "Quitar de guardados" : "Guardar plan"}
+        onClick={handleToggleSave}
+      >
+        <Icon
+          name="bookmark"
+          size={16}
+          className={saved ? styles.cardBookmarkSaved : undefined}
+        />
+      </button>
     </article>
   );
 }
