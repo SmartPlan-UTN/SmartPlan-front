@@ -20,6 +20,29 @@
   text-overflow: ellipsis;
 }
 
+.viewPlanButton {
+  display: block;
+  margin-top: var(--s-2);
+  padding: 10px;
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-btn);
+  background: color-mix(in srgb, var(--char) 4%, transparent);
+  color: var(--fg-2);
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  text-align: center;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.viewPlanButton:hover {
+  border-color: var(--ember-20);
+  background: var(--ember-04);
+  color: var(--ember);
+}
+
 /* Bookmark overlay on the card image (CU43) — same shell as
    ActivityCard's. */
 .cardBookmark {
@@ -123,10 +146,12 @@
 .heroTitle {
   margin: 0;
   color: var(--fg-on-dark);
-  font-size: 42px;
+  font-size: clamp(var(--t-h2), 5vw, var(--t-h1));
   font-weight: var(--w-display);
   letter-spacing: -0.02em;
   line-height: 1.05;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 .heroLocation {
@@ -136,6 +161,23 @@
   margin-top: var(--s-2);
   color: var(--fg-on-dark-2);
   font-size: var(--t-small);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .hero {
+    min-height: 300px;
+    height: auto;
+  }
+
+  .heroTitleBlock {
+    padding-inline: var(--s-4);
+  }
+
+  .heroTitle {
+    font-size: var(--t-h2);
+    line-height: 1.08;
+  }
 }
 
 .content {

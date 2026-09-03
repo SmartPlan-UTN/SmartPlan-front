@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 
 import { Badge, Icon, Stars } from "@/components/ui";
@@ -56,7 +54,7 @@ export function PlanCard({
           <Icon name="route" size={40} className={exploreStyles.imagePlaceholder} />
         </div>
 
-        <div className={exploreStyles.body}>
+      <div className={exploreStyles.body}>
         <h3 className={exploreStyles.name}>{plan.title}</h3>
         {/* One line, ellipsized — matches Results.jsx's uppercase chain
             caption ("BODEGA → ALMUERZO → DEGUSTACIÓN"). A long itinerary
@@ -96,7 +94,13 @@ export function PlanCard({
             </Badge>
           ))}
         </div>
-        </div>
+
+        {/* Decorative — the click affordance is the card-wide `Link` this
+            sits inside, not this span (a real `<button>` can't nest inside
+            an `<a>`), same reasoning as `PlanDetailView`'s `.stepDetailHint`.
+            Matches `Results.jsx`'s `ResultCard` "Ver plan completo" CTA. */}
+        <span className={styles.viewPlanButton}>Ver plan completo</span>
+      </div>
       </Link>
 
       <button

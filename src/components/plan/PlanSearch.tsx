@@ -45,6 +45,12 @@ function toNumber(value: string): number | undefined {
  * Plan search box, filters, sort, and results grid (CU12 · PAN 10/11).
  * Mirrors `ActivitySearch` field for field — see `useExplorationSearch` for
  * the shared fetch/pagination/error orchestration.
+ *
+ * The big "Armando tu plan perfecto..." transition lives in `Navbar`, not
+ * here: it's a navigation transition (clicking Explorar from elsewhere in
+ * the app), not a per-fetch one, so switching between this screen's own
+ * Actividades/Planes tabs never triggers it. This screen's own first-load
+ * state stays the same small `LoadingDots` every other list uses.
  */
 export function PlanSearch() {
   const { status: sessionStatus } = useSession();
