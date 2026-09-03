@@ -17,6 +17,7 @@ export {
 } from "./links";
 export { UserMenu } from "./UserMenu";
 export { Navbar } from "./Navbar";
+export { SiteFooter } from "./SiteFooter";
 export {
   PendingScreen,
   type PendingScreenProps,

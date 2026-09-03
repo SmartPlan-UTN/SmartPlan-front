@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { ApiError } from "@/lib/api";
 
@@ -8,6 +8,8 @@ export interface UseDetailFetchResult<TResult> {
   data: TResult | null;
   status: DetailFetchStatus;
   errorMessage: string | null;
+  /** Re-runs the fetch for the same id (e.g. to reconcile after a mutation). */
+  refetch: () => void;
 }
 
 /**
@@ -19,12 +21,20 @@ export function useDetailFetch<TResult>(
   fetcher: (id: number) => Promise<TResult>,
   id: number,
   genericErrorMessage: string,
+  enabled = true,
 ): UseDetailFetchResult<TResult> {
   const [data, setData] = useState<TResult | null>(null);
   const [status, setStatus] = useState<DetailFetchStatus>("loading");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [reloadNonce, setReloadNonce] = useState(0);
+
+  const refetch = useCallback(() => {
+    setReloadNonce((nonce) => nonce + 1);
+  }, []);
 
   useEffect(() => {
+    if (!enabled) return;
+
     let ignore = false;
 
     async function run() {
@@ -50,7 +60,7 @@ export function useDetailFetch<TResult>(
     return () => {
       ignore = true;
     };
-  }, [fetcher, id, genericErrorMessage]);
+  }, [fetcher, id, genericErrorMessage, reloadNonce, enabled]);
 
-  return { data, status, errorMessage };
+  return { data, status, errorMessage, refetch };
 }

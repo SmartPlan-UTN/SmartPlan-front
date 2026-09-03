@@ -10,6 +10,7 @@ import type {
   OwnPlanSummary,
   Plan,
   PlanSuggestionDto,
+  PlanSelectionResult,
 } from '@/types';
 import { apiClient } from './client';
 
@@ -60,6 +61,14 @@ export async function listOwnPlans(
  */
 export async function getOwnPlan(id: number): Promise<OwnPlanDetail> {
   return apiClient.get<OwnPlanDetail>(`/users/me/plans/${id}`);
+}
+
+export async function selectPlan(id: number): Promise<PlanSelectionResult> {
+  return apiClient.patch<PlanSelectionResult>(`/plans/${id}/select`);
+}
+
+export async function deselectPlan(id: number): Promise<PlanSelectionResult> {
+  return apiClient.delete<PlanSelectionResult>(`/plans/${id}/select`);
 }
 
 /**

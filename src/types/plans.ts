@@ -1,7 +1,7 @@
 import { BaseEntity, CatalogEntity } from './common';
 import type { ExplorationQueryParams, SortDirection } from './common';
 import type { User } from './users';
-import type { PlanRequest } from './recommendation';
+import type { FeedbackState, PlanFeedback, PlanRequest } from './recommendation';
 import type { Activity, ActivityCategorySummary, ActivityLocationSummary } from './activities';
 
 /**
@@ -71,6 +71,7 @@ export interface PlanSearchResult {
   /** Activity names in itinerary order, e.g. `["Bodega", "Almuerzo"]`. */
   activityNames: string[];
   status: { key: PlanStatusKey; name: string };
+  viewerPlanState?: ViewerPlanState;
 }
 
 /** Activity as embedded in a plan's itinerary (CU13). */
@@ -97,11 +98,86 @@ export interface PlanItineraryItem {
 }
 
 /**
+ * What a plan means for the current viewer (CU22, PAN 17). Computed
+ * server-side; the frontend never infers it. Any authenticated viewer of a
+ * non-`cancelled` plan is `selectable` (or `selected` once they hold an
+ * intention) — ownership and visibility don't matter. An anonymous viewer is
+ * always `view-only`.
+ * Matches `ViewerPlanState` in `SmartPlan-back` (`src/plans/plan-selectability.ts`).
+ */
+export type ViewerPlanState = 'selectable' | 'selected' | 'view-only';
+
+/**
  * Plan detail returned by `GET /plans/:id` (CU13): the search summary plus
  * its ordered itinerary.
  */
 export interface PlanDetailResult extends PlanSearchResult {
   details: PlanItineraryItem[];
+  /** Selection affordance for the caller (CU22). */
+  viewerPlanState: ViewerPlanState;
+}
+
+/**
+ * Result of `PATCH /plans/:id/select` (CU22). The plan always belongs to a
+ * request on success, so `planRequestId` is never null.
+ * Matches `PlanSelectionResponseDto` in `SmartPlan-back`.
+ */
+export interface PlanSelectionResult {
+  id: number;
+  planRequestId: number | null;
+  status: { key: PlanStatusKey; name: string };
+  viewerPlanState?: ViewerPlanState;
+}
+
+/* ── CU23 · Plan history (PAN 13) ────────────────────────────────── */
+
+/**
+ * A plan in the signed-in user's own history, from `GET /users/me/plans`
+ * (list) and `GET /users/me/plans/:id` (detail). Matches `OwnPlanSummaryDto`
+ * in `SmartPlan-back`. Carries the CU23 feedback layer that the public
+ * projections never expose.
+ */
+export interface OwnPlanSummary {
+  id: number;
+  title: string;
+  description: string | null;
+  estimatedTotalCost: number;
+  estimatedTotalDuration: number;
+  peopleCount: number;
+  estimatedCostPerPerson: number;
+  activityCount: number;
+  status: { key: PlanStatusKey; name: string };
+  /** ISO date the plan was marked `completed`, or `null`. */
+  completedAt: string | null;
+  feedbackState: FeedbackState;
+  feedback: PlanFeedback | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Own plan plus its ordered itinerary — `GET /users/me/plans/:id`. */
+export interface OwnPlanDetail extends OwnPlanSummary {
+  details: {
+    id: number;
+    order: number;
+    estimatedCost: number;
+    estimatedDuration: number;
+    activity: {
+      id: number;
+      name: string;
+      description: string;
+      estimatedCost: number;
+      estimatedDuration: number;
+      type: string | null;
+    };
+  }[];
+}
+
+/** Query params accepted by `GET /users/me/plans` (CU23). */
+export interface MyPlansParams {
+  page?: number;
+  limit?: number;
+  direction?: SortDirection;
 }
 
 /** Sortable fields accepted by `GET /plans`. */
@@ -148,16 +224,6 @@ export interface OwnPlanCostSummary {
   estimatedTotalDuration: number;
 }
 
-export interface OwnPlanSummary extends OwnPlanCostSummary {
-  id: number;
-  title: string;
-  description: string | null;
-  activityCount: number;
-  status: { key: PlanStatusKey; name: string };
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface OwnPlanDetailItem {
   id: number;
   order: number;
@@ -173,10 +239,6 @@ export interface OwnPlanDetailItem {
   };
 }
 
-export interface OwnPlanDetail extends OwnPlanSummary {
-  details: OwnPlanDetailItem[];
-}
-
 /**
  * Payload for requesting a suggested plan (CU31).
  * Backend contract: `POST /api/plan-suggestions`.
@@ -190,4 +252,3 @@ export interface PlanSuggestionDto {
   preferences?: string[];
   notes?: string;
 }
-

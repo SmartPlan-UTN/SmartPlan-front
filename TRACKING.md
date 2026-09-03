@@ -112,13 +112,13 @@ traceability matrix (`skills/01-domain/`).
 
 | CU | Feature | Screen | Status | Branch | PR |
 |---|---|---|---|---|---|
-| CU17 | Generate automatic plan | PAN 07 | `Not started` | | |
-| CU18 | Customize user preferences | PAN 15 | `Not started` | | |
-| CU19 | Generate surprise plan | PAN 09 | `Not started` | | |
-| CU20 | Show recommendations | PAN 10 | `Not started` | | |
-| CU21 | Adjust recommendations based on history | — | `Not started` | | |
-| CU22 | Select plan | PAN 11, PAN 17 | `Not started` | | |
-| CU23 | Submit plan feedback | PAN 13, PAN 17 | `Not started` | | |
+| CU17 | Generate automatic plan | PAN 07 | `In review` | `feature/rediseno-hero` | #117 |
+| CU18 | Customize user preferences | PAN 15 | `In review` | `7-epica-recomendacion` | #117 |
+| CU19 | Generate surprise plan | PAN 09 | `In review` | `7-epica-recomendacion` | #117 |
+| CU20 | Show recommendations | PAN 10 | `In review` | `7-epica-recomendacion` | #117 |
+| CU21 | Adjust recommendations based on history | — | `In review` | `7-epica-recomendacion` | #117 |
+| CU22 | Select plan | PAN 11, PAN 17 | `In review` | `7-epica-recomendacion` | #117 |
+| CU23 | Submit plan feedback | PAN 13, PAN 17 | `In review` | `7-epica-recomendacion` | #117 |
 
 ### Planning
 

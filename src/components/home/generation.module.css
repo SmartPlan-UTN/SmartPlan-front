@@ -1,0 +1,354 @@
+/* ================================================================
+   Generation and results — the two states that replace the landing
+   hero's composer in place while a plan is being made (CU17, CU19).
+
+   These belong to the plan-request machinery rather than to the
+   landing's visual language, which is why they live here next to the
+   components that use them and not in `components/landing/`.
+   ================================================================ */
+
+/* Scoped to this module: `.resultCard` below animates by this name, and
+   a CSS module rewrites both the declaration and the reference. */
+@keyframes hero-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.generatingCard, .failedCard {
+  z-index: 1;
+  justify-content: center;
+  align-items: center;
+  gap: var(--s-5);
+  width: 100%;
+  max-width: 520px;
+  min-height: 380px;
+  padding: var(--s-7) var(--s-5);
+  text-align: center;
+  flex-direction: column;
+  margin-inline: auto;
+  display: flex;
+  position: relative;
+}
+
+.ringStack {
+  width: 96px;
+  height: 96px;
+  position: relative;
+}
+
+.ring {
+  border: 1.5px solid var(--ember-15);
+  border-radius: 50%;
+  animation: 2s ease-in-out infinite hero-ring-pulse;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+}
+
+.ringTrack {
+  border: 3px solid var(--ember-15);
+  border-radius: 50%;
+  position: absolute;
+  inset: 0;
+}
+
+.ringSpinner {
+  border: 3px solid #0000;
+  border-top-color: var(--ember);
+  border-radius: 50%;
+  animation: .9s linear infinite spin;
+  position: absolute;
+  inset: 0;
+}
+
+.ringCore {
+  background: var(--ember);
+  width: 34px;
+  height: 34px;
+  box-shadow: 0 5px 20px var(--ember-15);
+  color: var(--white);
+  border-radius: 50%;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.generatingLabel {
+  color: var(--fg-1);
+  font-size: var(--t-h4);
+  font-weight: var(--w-heading);
+  margin: 0;
+}
+
+.generatingAmbient {
+  min-height: 1.4em;
+  color: var(--fg-3);
+  font-size: var(--t-small);
+  margin: 0;
+}
+
+.timedOutActions {
+  gap: var(--s-3);
+  display: flex;
+}
+
+.failedIcon {
+  color: var(--error);
+}
+
+@keyframes hero-ring-pulse {
+  0%, 100% {
+    opacity: .12;
+  }
+
+  50% {
+    opacity: .34;
+  }
+}
+
+.resultsWrapper {
+  z-index: 1;
+  align-items: center;
+  gap: var(--s-5);
+  flex-direction: column;
+  width: 100%;
+  max-width: 960px;
+  margin-inline: auto;
+  display: flex;
+  position: relative;
+}
+
+.resultsHeader {
+  gap: var(--s-1);
+  text-align: center;
+  flex-direction: column;
+  display: flex;
+}
+
+.resultsTitle, .resultsSubtitle {
+  margin: 0;
+}
+
+.resultsTitle {
+  color: var(--fg-1);
+}
+
+.resultsSubtitle {
+  color: var(--fg-2);
+}
+
+.resultsGrid {
+  gap: var(--s-4);
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  width: 100%;
+  display: grid;
+}
+
+.resultCard {
+  opacity: 0;
+  animation: .34s cubic-bezier(.2, .8, .2, 1) forwards hero-rise;
+}
+
+.resultsFooter {
+  justify-content: center;
+  display: flex;
+}
+
+.emptyResults {
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-6) var(--s-4);
+  color: var(--fg-2);
+  text-align: center;
+  flex-direction: column;
+  display: flex;
+}
+
+@media (max-width: 640px) {
+  .generatingCard, .failedCard {
+    min-height: 340px;
+    padding-inline: 0;
+  }
+  .timedOutActions {
+    flex-direction: column;
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resultCard, .ring, .ringSpinner {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
+}
+
+/* ── CU17/CU19 result actions + CU22 selection ───────────────────── */
+
+/* The itinerary, one line, ellipsised — the card is a summary, the detail
+   view has the full list (CU19 asks each option to name its activities). */
+.resultActivities {
+  margin: var(--s-2) 0 0;
+  overflow: hidden;
+  color: var(--fg-2);
+  font-size: 13px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The card is two real targets: the body links to the detail (CU13), the
+   footer row toggles the intent to do the plan (CU22). No stretched link, no
+   button nested in an anchor. */
+.resultCardShell {
+  transition:
+    border-color var(--d-fast, 180ms) var(--ease-out, ease),
+    box-shadow var(--d-base, 420ms) var(--ease-out, ease),
+    transform var(--d-base, 420ms) var(--ease-out, ease);
+}
+
+.resultCardLink {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  color: inherit;
+  text-decoration: none;
+}
+
+.resultCardLink:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: -2px;
+  border-radius: var(--r-card);
+}
+
+.resultActionRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  min-height: 52px;
+  padding: var(--s-3) var(--s-4) var(--s-4);
+  border-top: 1px solid var(--hairline);
+}
+
+.resultActionRow > button:only-child {
+  width: 100%;
+}
+
+/* Marked "voy a hacer": the card gains a warm EMBER presence. The others are
+   left exactly as they were — nothing was rejected, the user just plans to do
+   this one, and can change their mind. */
+.resultCardChosen {
+  border-color: var(--ember);
+  background: color-mix(in srgb, var(--ember) 5%, var(--surface-card));
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--ember) 18%, transparent);
+}
+
+.resultCardChosen:hover {
+  border-color: var(--ember);
+  transform: none;
+}
+
+.resultChosen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ember);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+}
+
+/* "Ya no lo voy a hacer" — discreet, secondary to the ✓ state. */
+.resultUndo {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg-3);
+  font: inherit;
+  font-size: 13px;
+  font-weight: var(--w-label);
+  cursor: pointer;
+  transition: color 160ms ease;
+}
+
+.resultUndo:hover:not(:disabled) {
+  color: var(--fg-1);
+}
+
+.resultUndo:disabled {
+  color: var(--fg-3);
+  cursor: default;
+}
+
+.resultUndo:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+  border-radius: var(--r-btn);
+}
+
+.resultSpinner {
+  animation: spin 800ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.resultLive,
+.resultLiveWarn {
+  min-height: 1.4em;
+  margin: var(--s-1) 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.resultLive {
+  color: var(--ember);
+}
+
+.resultLiveWarn {
+  color: var(--fg-2);
+}
+
+.resultsFooter,
+.resultsActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-3);
+}
+
+@media (max-width: 560px) {
+  /* Stacked, full-width targets: three actions side by side at this width
+     make each one too narrow to read or to hit. */
+  .resultsFooter,
+  .resultsActions,
+  .timedOutActions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .resultsFooter > *,
+  .resultsActions > *,
+  .timedOutActions > * {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resultCardShell {
+    transition: none;
+  }
+
+  .resultSpinner {
+    animation-duration: 1600ms;
+  }
+}

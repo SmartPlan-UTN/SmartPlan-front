@@ -130,6 +130,16 @@ const eslintConfig = defineConfig([
     "build/**", // artefactos de compilación
     "node_modules/**", // dependencias de terceros
     "next-env.d.ts", // types autogenerados por Next.js
+    // Volcados de prototipo / referencia de diseño en la raíz del repo
+    // (HTML y JSX sueltos, sin transpilar, fuera de `src/`). No son código
+    // de la app y no deben romper `pnpm lint`.
+    "v2/**",
+    "standalone/**",
+    "assets/**",
+    "uploads/**",
+    "fonts/**",
+    "screenshots/**",
+    "*.html",
   ]),
 ]);
 

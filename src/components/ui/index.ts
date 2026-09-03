@@ -19,6 +19,7 @@ export { LoadingDots, type LoadingDotsProps } from "./LoadingDots";
 export { Logo, type LogoKind, type LogoProps, type LogoVariant } from "./Logo";
 export { MoodBackground, type Mood, type MoodBackgroundProps } from "./MoodBackground";
 export { PasswordStrength, type PasswordStrengthProps } from "./PasswordStrength";
+export { RatingInput, type RatingInputProps } from "./RatingInput";
 export { Select, type SelectOption, type SelectProps } from "./Select";
-export { Stars, type StarsProps } from "./Stars";
 export { StarRatingInput, type StarRatingInputProps } from "./StarRatingInput";
+export { Stars, type StarsProps } from "./Stars";

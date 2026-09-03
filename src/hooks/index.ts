@@ -17,4 +17,37 @@ export {
   type ExplorationStatus,
   type UseExplorationSearchResult,
 } from "./useExplorationSearch";
+export { useReducedMotion } from "./useReducedMotion";
+export {
+  useScrollProgress,
+  type UseScrollProgressResult,
+} from "./useScrollProgress";
 export { useToggle } from "./useToggle";
+export { useTypewriter, type UseTypewriterResult } from "./useTypewriter";
+export {
+  usePlanRequestPolling,
+  type PlanRequestPhase,
+  type PlanRequestFailure,
+  type UsePlanRequestPollingResult,
+  type LastSubmission,
+} from "./usePlanRequestPolling";
+export {
+  useRecommendations,
+  resetRecommendationsCache,
+  type RecommendationsStatus,
+  type RecommendationSlot,
+  type UseRecommendationsResult,
+} from "./useRecommendations";
+export {
+  usePlanSelection,
+  type PlanSelectionStatus,
+  type PlanSelectionOutcome,
+  type UsePlanSelectionResult,
+} from "./usePlanSelection";
+export { useMyPlans, type UseMyPlansResult } from "./useMyPlans";
+export {
+  useFeedbackSubmit,
+  type FeedbackSubmitStatus,
+  type FeedbackSubmitOutcome,
+  type UseFeedbackSubmitResult,
+} from "./useFeedbackSubmit";

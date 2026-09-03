@@ -1,9 +1,25 @@
-import { BaseEntity, CatalogEntity } from './common';
+import { BaseEntity, CatalogEntity } from "./common";
+
+/**
+ * A place resolved by `GET /external-integration/places/search?query=…`
+ * (public, cached, rate-limited). Matches `ResolvedPlaceDto` in
+ * `SmartPlan-back`. Used by PAN 15 to turn what the user typed for their
+ * preferred area into a stored `PreferredArea` (label + placeId + coords).
+ */
+export interface ResolvedPlace {
+  placeId: string;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  rating?: number;
+  ratingCount?: number;
+}
 
 /**
  * Expected keys for an external service provider (CU48-CU52).
  */
-export type ExternalProviderKey = 'google_maps' | 'gemini';
+export type ExternalProviderKey = "google_maps" | "gemini";
 
 /**
  * External service provider (CU48-CU52).

@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "../styles/tokens.css";
+@import "../styles/motion.css";
 
 /* Expone los tokens de src/styles/tokens.css como namespaces de Tailwind 4
    (--color-*, --radius-*, --font-*) para poder usarlos como utilidades:

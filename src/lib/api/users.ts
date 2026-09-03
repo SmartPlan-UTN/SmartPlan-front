@@ -1,26 +1,30 @@
 import type { AuthenticationResponse } from '@/lib/auth/api';
-import type { UserProfile } from '@/types';
+import type {
+  UpdateUserPreferencesInput,
+  UserPreferencesResponse,
+  UserProfile,
+} from '@/types';
 import { apiClient } from './client';
+
+export async function getPreferences(): Promise<UserPreferencesResponse> {
+  return apiClient.get<UserPreferencesResponse>('/users/me/preferences');
+}
+
+export async function updatePreferences(
+  input: UpdateUserPreferencesInput
+): Promise<UserPreferencesResponse> {
+  return apiClient.patch<UserPreferencesResponse>('/users/me/preferences', input);
+}
 
 export interface UpdateProfileData {
   name: string;
   lastName: string;
 }
 
-/**
- * Loads the signed-in user's editable profile (CU5).
- * Backend contract: `GET /users/me`.
- */
 export async function getProfile(): Promise<UserProfile> {
   return apiClient.get<UserProfile>('/users/me');
 }
 
-/**
- * Saves the signed-in user's name and last name (CU5). Email is read-only:
- * it's the login credential and this endpoint doesn't accept changing it;
- * role and status are informational and aren't sent either.
- * Backend contract: `PATCH /users/me`.
- */
 export async function updateProfile(
   data: UpdateProfileData
 ): Promise<UserProfile> {
@@ -52,15 +56,6 @@ export interface DeleteAccountData {
   currentPassword: string;
 }
 
-/**
- * Permanently deletes the signed-in user's account (CU7): soft-removes the
- * row, revokes every session and pending recovery token, and clears the
- * refresh cookie server-side. 204 with no body on success. The caller is
- * responsible for closing the local session afterward (see
- * `DeleteAccountDialog`, which calls `useSession().logout()`), the same way
- * CU6's `changePassword` does.
- * Backend contract: `DELETE /users/me`.
- */
 export async function deleteAccount(data: DeleteAccountData): Promise<void> {
   await apiClient.delete<void>('/users/me', { data });
 }
