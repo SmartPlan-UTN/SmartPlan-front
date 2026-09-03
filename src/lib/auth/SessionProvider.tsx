@@ -65,6 +65,14 @@ export interface Session {
    * UI. Never rejects.
    */
   logout: () => Promise<void>;
+  /**
+   * Applies a fresh `AuthenticationResponse` without making a request of
+   * its own — for an endpoint that reissues this session's tokens as a
+   * side effect of something else, like CU6's `changePassword`, whose
+   * response is the same shape as login/refresh. Doesn't touch the refresh
+   * cookie: the endpoint that returned `response` already wrote it.
+   */
+  applyAuthentication: (response: AuthenticationResponse) => void;
 }
 
 const SessionContext = createContext<Session | null>(null);
@@ -174,8 +182,9 @@ export function SessionProvider({ children }: SessionProviderProps) {
       login,
       register,
       logout,
+      applyAuthentication: applyAuthenticated,
     }),
-    [status, user, login, register, logout],
+    [status, user, login, register, logout, applyAuthenticated],
   );
 
   return <SessionContext value={value}>{children}</SessionContext>;

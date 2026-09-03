@@ -1,14 +1,27 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { AdminUser, AdminUsersResult } from "@/types";
+import type { AdminActivityInput, AdminUser, AdminUsersResult } from "@/types";
 
 import { apiClient } from "./client";
-import { changeAdminUserStatus, getAdminUserMetrics, listAdminUsers } from "./administration";
+import {
+  changeAdminUserStatus,
+  createAdminActivity,
+  deleteAdminActivity,
+  deleteAdminPlan,
+  getAdminUserMetrics,
+  listAdminActivities,
+  listAdminPlans,
+  listAdminUsers,
+  updateAdminActivity,
+  updateAdminPlan,
+} from "./administration";
 
 vi.mock("./client", () => ({
   apiClient: {
     get: vi.fn(),
+    post: vi.fn(),
     patch: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 
@@ -67,5 +80,44 @@ describe("administration user API", () => {
       activeUsers: 9,
       newUsersThisWeek: 2,
     });
+  });
+
+  it("uses the CU53 activity management contract", async () => {
+    const input: AdminActivityInput = {
+      name: "Tarde de juegos",
+      description: "Actividad sin ubicación física obligatoria.",
+      estimatedCost: 0,
+      estimatedDuration: 90,
+      type: null,
+      categoryIds: [2],
+      placeIds: [],
+    };
+
+    await listAdminActivities({ categoryId: 2, type: "recreational", page: 3 });
+    await createAdminActivity(input);
+    await updateAdminActivity(8, { placeIds: [4, 7] });
+    await deleteAdminActivity(8);
+
+    expect(apiClient.get).toHaveBeenCalledWith("/admin/activities", {
+      params: { categoryId: 2, type: "recreational", page: 3 },
+    });
+    expect(apiClient.post).toHaveBeenCalledWith("/admin/activities", input);
+    expect(apiClient.patch).toHaveBeenCalledWith("/admin/activities/8", { placeIds: [4, 7] });
+    expect(apiClient.delete).toHaveBeenCalledWith("/admin/activities/8");
+  });
+
+  it("uses the CU60 plan management contract", async () => {
+    await listAdminPlans({ status: "confirmed", page: 2 });
+    await updateAdminPlan(11, { title: "Plan actualizado", status: "completed" });
+    await deleteAdminPlan(11);
+
+    expect(apiClient.get).toHaveBeenCalledWith("/admin/plans", {
+      params: { status: "confirmed", page: 2 },
+    });
+    expect(apiClient.patch).toHaveBeenCalledWith("/admin/plans/11", {
+      title: "Plan actualizado",
+      status: "completed",
+    });
+    expect(apiClient.delete).toHaveBeenCalledWith("/admin/plans/11");
   });
 });

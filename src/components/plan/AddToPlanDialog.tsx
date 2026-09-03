@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 
 import { Button, Icon } from "@/components/ui";
 import {
@@ -244,7 +245,9 @@ export function AddToPlanDialog({
     }
   }
 
-  return (
+  // Portaled to `document.body` — see `ConfirmationDialog`'s comment on why
+  // a `position: fixed` overlay can't just render in place.
+  return createPortal(
     <div
       className={styles.overlay}
       onMouseDown={(event) => {
@@ -459,6 +462,7 @@ export function AddToPlanDialog({
           </form>
         )}
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 }

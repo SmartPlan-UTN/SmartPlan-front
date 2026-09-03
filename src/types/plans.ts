@@ -20,7 +20,6 @@ export interface Plan extends BaseEntity {
   status?: PlanStatus;
   details?: PlanDetail[];
 }
-
 /**
  * Individual item in a plan (CU13, CU27-CU30).
  */

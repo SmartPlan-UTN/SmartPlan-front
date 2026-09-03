@@ -1,9 +1,22 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ActivitySearchResult } from "@/types";
 
 import { ActivityCard } from "./ActivityCard";
+
+const mockToggleSaveActivity = vi.fn();
+const mockIsActivitySaved = vi.fn();
+
+vi.mock("@/context", () => ({
+  useFavorites: () => ({
+    isActivitySaved: mockIsActivitySaved,
+    toggleSaveActivity: mockToggleSaveActivity,
+    savedActivityIds: new Set(),
+    loading: false,
+  }),
+}));
 
 const baseActivity: ActivitySearchResult = {
   id: 1,
@@ -22,6 +35,11 @@ const baseActivity: ActivitySearchResult = {
 };
 
 describe("ActivityCard", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockIsActivitySaved.mockReturnValue(false);
+  });
+
   it("renders the activity's name, description, cost, and categories", () => {
     render(<ActivityCard activity={baseActivity} />);
 
@@ -73,5 +91,31 @@ describe("ActivityCard", () => {
     expect(screen.getByText("Uno")).toBeInTheDocument();
     expect(screen.getByText("Dos")).toBeInTheDocument();
     expect(screen.queryByText("Tres")).not.toBeInTheDocument();
+  });
+
+  it("toggles favorite state when clicking bookmark button without following link", async () => {
+    const user = userEvent.setup();
+    mockIsActivitySaved.mockReturnValue(false);
+    mockToggleSaveActivity.mockResolvedValue(true);
+
+    render(<ActivityCard activity={baseActivity} />);
+
+    const saveBtn = screen.getByRole("button", { name: "Guardar actividad" });
+    expect(saveBtn).toBeInTheDocument();
+    expect(saveBtn).toHaveAttribute("aria-pressed", "false");
+
+    await user.click(saveBtn);
+
+    expect(mockToggleSaveActivity).toHaveBeenCalledWith(1);
+  });
+
+  it("shows active state when activity is saved", () => {
+    mockIsActivitySaved.mockReturnValue(true);
+
+    render(<ActivityCard activity={baseActivity} />);
+
+    const saveBtn = screen.getByRole("button", { name: "Quitar de guardados" });
+    expect(saveBtn).toBeInTheDocument();
+    expect(saveBtn).toHaveAttribute("aria-pressed", "true");
   });
 });

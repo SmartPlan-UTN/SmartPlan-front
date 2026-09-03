@@ -8,6 +8,7 @@ import { useDebouncedValue } from "@/hooks";
 import {
   ApiError,
   changeAdminUserStatus,
+  deleteAdminUser,
   getAdminUserMetrics,
   listAdminUsers,
   updateAdminUser,
@@ -273,6 +274,22 @@ export function AdminUsersView() {
     return updatedUser;
   }
 
+  async function deleteUser(id: number) {
+    await deleteAdminUser(id);
+    setResult((current) => {
+      if (!current) return current;
+      return {
+        data: current.data.filter((user) => user.id !== id),
+        pagination: {
+          ...current.pagination,
+          total: Math.max(0, current.pagination.total - 1),
+        },
+      };
+    });
+    setViewingUser(null);
+    setMetricsReloadSequence((current) => current + 1);
+  }
+
   const users = result?.data ?? [];
   const activePercentage = metrics?.totalUsers
     ? `${Math.round((metrics.activeUsers / metrics.totalUsers) * 100)}% del total`
@@ -444,6 +461,7 @@ export function AdminUsersView() {
           user={viewingUser}
           onClose={() => setViewingUser(null)}
           onSave={saveUser}
+          onDelete={deleteUser}
         />
       ) : null}
 

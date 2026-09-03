@@ -70,7 +70,7 @@ export function Select<TValue extends string>({
           setOpen((current) => !current);
         }}
       >
-        <span>{current?.label ?? ""}</span>
+        <span className={styles.triggerLabel}>{current?.label ?? ""}</span>
         <Icon
           name="chevron-down"
           size={16}

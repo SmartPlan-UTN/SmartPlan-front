@@ -23,6 +23,18 @@ vi.mock("@/lib/api", async (importOriginal) => {
   };
 });
 
+const mockToggleSavePlan = vi.fn();
+const mockIsPlanSaved = vi.fn();
+
+vi.mock("@/context", () => ({
+  useFavorites: () => ({
+    isPlanSaved: mockIsPlanSaved,
+    toggleSavePlan: mockToggleSavePlan,
+    savedPlanIds: new Set(),
+    loading: false,
+  }),
+}));
+
 vi.mock("@/lib/auth", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/auth")>();
   return { ...actual, useSession: vi.fn() };
@@ -253,5 +265,31 @@ describe("PlanDetailView Component (CU13, CU26)", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText("Editar plan")).not.toBeInTheDocument();
     expect(screen.queryByText("Eliminar plan")).not.toBeInTheDocument();
+  });
+
+  it("toggles favorite plan when clicking the save button (CU43 / CU42)", async () => {
+    mockIsPlanSaved.mockReturnValue(false);
+    mockToggleSavePlan.mockResolvedValue(true);
+
+    render(<PlanDetailView planId={1} />);
+
+    const saveBtn = await screen.findByRole("button", { name: "Guardar plan" });
+    expect(saveBtn).toBeInTheDocument();
+    expect(saveBtn).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(saveBtn);
+
+    expect(mockToggleSavePlan).toHaveBeenCalledWith(1);
+  });
+
+  it("shows saved state when plan is saved (CU43)", async () => {
+    mockIsPlanSaved.mockReturnValue(true);
+
+    render(<PlanDetailView planId={1} />);
+
+    const saveBtn = await screen.findByRole("button", { name: "Quitar de guardados" });
+    expect(saveBtn).toBeInTheDocument();
+    expect(saveBtn).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("¡Guardado!")).toBeInTheDocument();
   });
 });

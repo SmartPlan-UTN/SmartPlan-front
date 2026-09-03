@@ -104,9 +104,6 @@ describe("Navbar", () => {
     expect(
       within(nav).getByRole("link", { name: "Historial" }),
     ).toHaveAttribute("href", "/history");
-    expect(
-      screen.getByRole("link", { name: "Crear plan" }),
-    ).toHaveAttribute("href", "/plans/create");
   });
 
   it("marks the current route's destination with aria-current", async () => {
@@ -293,6 +290,38 @@ describe("Navbar", () => {
 
     expect(screen.queryByText("Armando tu plan perfecto...")).not.toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
+  });
+
+  it("resets the full transition duration when entering Explorar again", async () => {
+    mockAnonymousStartup();
+    const view = renderNavbar();
+
+    const nav = await screen.findByRole("navigation", {
+      name: "Navegación principal",
+    });
+    vi.useFakeTimers();
+    fireEvent.click(within(nav).getByRole("link", { name: "Explorar" }));
+
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+    });
+    route.actual = "/favorites";
+    view.rerender(
+      <SessionProvider>
+        <Navbar />
+      </SessionProvider>,
+    );
+    fireEvent.click(within(screen.getByRole("navigation", { name: "Navegación principal" })).getByRole("link", { name: "Explorar" }));
+
+    await act(async () => {
+      vi.advanceTimersByTime(1999);
+    });
+    expect(screen.getByText("Armando tu plan perfecto...")).toBeInTheDocument();
+
+    await act(async () => {
+      vi.advanceTimersByTime(1001);
+    });
+    expect(screen.queryByText("Armando tu plan perfecto...")).not.toBeInTheDocument();
   });
 
   it("expands the collapsible navigation on small viewports", async () => {

@@ -108,6 +108,10 @@ export function ProfileForm() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
+  // Read-only until "Editar perfil" is clicked (CU5): landing on the screen
+  // with the fields already open for editing made it too easy to change
+  // something by accident while just checking your own data.
+  const [editing, setEditing] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -152,6 +156,15 @@ export function ProfileForm() {
     setFormError(null);
   }
 
+  function startEditing() {
+    setEditing(true);
+  }
+
+  function cancelEditing() {
+    resetDraft();
+    setEditing(false);
+  }
+
   async function submit() {
     setFormError(null);
 
@@ -170,6 +183,7 @@ export function ProfileForm() {
       setProfile(updated);
       setName(updated.name);
       setLastName(updated.lastName);
+      setEditing(false);
       setToastState("visible");
       setTimeout(() => {
         setToastState("leaving");
@@ -242,7 +256,15 @@ export function ProfileForm() {
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
           <div className={styles.divider} />
 
-          <p className={`sp-label ${styles.sectionLabel}`}>Información personal</p>
+          <div className={styles.sectionHeader}>
+            <p className={`sp-label ${styles.sectionLabel}`}>Información personal</p>
+            {!editing ? (
+              <Button type="button" variant="ghostLight" onClick={startEditing}>
+                <Icon name="pencil" size={14} aria-hidden="true" />
+                Editar perfil
+              </Button>
+            ) : null}
+          </div>
 
           {formError ? (
             <p className={styles.formError} role="alert">
@@ -261,7 +283,7 @@ export function ProfileForm() {
                 setName(event.target.value);
               }}
               error={fieldErrors.name}
-              disabled={saving}
+              disabled={!editing || saving}
               required
             />
             <Field
@@ -273,7 +295,7 @@ export function ProfileForm() {
                 setLastName(event.target.value);
               }}
               error={fieldErrors.lastName}
-              disabled={saving}
+              disabled={!editing || saving}
               required
             />
           </div>
@@ -282,19 +304,21 @@ export function ProfileForm() {
 
           <div className={styles.divider} />
 
-          <div className={styles.actions}>
-            <Button
-              type="button"
-              variant="ghostLight"
-              onClick={resetDraft}
-              disabled={saving}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? "Guardando…" : "Guardar cambios"}
-            </Button>
-          </div>
+          {editing ? (
+            <div className={styles.actions}>
+              <Button
+                type="button"
+                variant="ghostLight"
+                onClick={cancelEditing}
+                disabled={saving}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? "Guardando…" : "Guardar cambios"}
+              </Button>
+            </div>
+          ) : null}
         </form>
       </div>
 

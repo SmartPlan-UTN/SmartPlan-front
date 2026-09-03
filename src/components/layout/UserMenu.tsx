@@ -107,7 +107,7 @@ function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
           <Button variant="ghostLight" ref={cancelRef} onClick={onCancel}>
             Cancelar
           </Button>
-          <Button variant="danger" onClick={onConfirm}>
+          <Button variant="primary" onClick={onConfirm}>
             Confirmar
           </Button>
         </div>

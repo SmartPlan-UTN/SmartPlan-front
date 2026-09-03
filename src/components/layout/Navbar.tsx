@@ -104,6 +104,9 @@ export function Navbar() {
     event.preventDefault();
     setTransitioning(true);
     router.push(ROUTES.explore);
+    if (transitionTimerRef.current) {
+      clearTimeout(transitionTimerRef.current);
+    }
     transitionTimerRef.current = setTimeout(() => {
       transitionTimerRef.current = null;
       setTransitioning(false);

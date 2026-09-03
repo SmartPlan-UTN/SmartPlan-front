@@ -1,3 +1,5 @@
+import { MIN_PASSWORD_LENGTH } from "@/lib/utils";
+
 import styles from "./PasswordStrength.module.css";
 
 export interface PasswordStrengthProps {
@@ -13,19 +15,31 @@ const LABELS: Record<Strength, string> = {
   3: "Fuerte",
 };
 
-/** 0 = none, 1 = weak, 2 = medium, 3 = strong. Same heuristic as the v2
- * system design's `PasswordStrength`/`ProfStrengthBar` (length + mixed
- * case/digits) — purely a visual nudge, not the backend's actual password
- * policy (12-128 characters, checked separately). */
+const VARIETY_PATTERNS = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/];
+
+/** 0 = none, 1 = weak, 2 = medium, 3 = strong — purely a visual nudge, not
+ * the backend's actual password policy.
+ *
+ * Scored mostly by length past `MIN_PASSWORD_LENGTH`, with a mix of
+ * character types (lower/upper/digit/symbol) as a shortcut: an earlier
+ * version required uppercase *and* a digit together for the top score, so a
+ * long password made of a single character class (all lowercase, say)
+ * could never turn green no matter how long it got. */
 function computeStrength(password: string): Strength {
   if (!password) return 0;
 
-  let score = 0;
-  if (password.length >= 6) score++;
-  if (password.length >= 10) score++;
-  if (/[A-Z]/.test(password) && /[0-9]/.test(password)) score++;
+  const variety = VARIETY_PATTERNS.filter((pattern) => pattern.test(password)).length;
 
-  return score as Strength;
+  let score = 0;
+  if (password.length >= MIN_PASSWORD_LENGTH) score++;
+  if (password.length >= MIN_PASSWORD_LENGTH + 4 || variety >= 3) score++;
+  if (
+    password.length >= MIN_PASSWORD_LENGTH + 8 ||
+    (password.length >= MIN_PASSWORD_LENGTH + 4 && variety >= 3)
+  )
+    score++;
+
+  return Math.min(score, 3) as Strength;
 }
 
 /**

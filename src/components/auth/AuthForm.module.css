@@ -37,8 +37,44 @@
   gap: 20px;
 }
 
+/* CU3 recovery-request progress and result states. */
+.stepBar { display: flex; align-items: center; gap: var(--s-2); margin-bottom: 28px; }
+.stepLabel { color: var(--fg-3); }
+.stepSegments { display: flex; gap: 4px; }
+.stepSegment { width: 8px; height: 4px; border-radius: var(--r-chip); background: var(--ember-15); transition: background 300ms; }
+.stepSegmentFirst { width: 20px; }
+.stepSegmentActive { background: var(--ember); }
+.successState { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.successIcon { display: flex; align-items: center; justify-content: center; width: 72px; height: 72px; margin-bottom: var(--s-5); border: 2px solid color-mix(in srgb, var(--success) 25%, transparent); border-radius: 50%; background: var(--success-15); color: var(--success); }
+.errorIcon { border-color: color-mix(in srgb, var(--error) 25%, transparent); background: color-mix(in srgb, var(--error) 12%, transparent); color: var(--error); }
+.successTitle { margin: 0 0 10px; }
+.successMessage { max-width: 300px; margin: 0 0 var(--s-6); color: var(--fg-3); line-height: 1.6; }
+button.resendButton { border-width: 1.5px; border-color: var(--ember); color: var(--ember); }
+.primaryLinkButton { display: inline-flex; width: 100%; align-items: center; justify-content: center; padding: 10px 20px; border-radius: var(--r-btn); background: var(--ember); color: var(--white); font-size: var(--t-small); font-weight: var(--w-heading); text-decoration: none; }
+.primaryLinkButton:hover { filter: brightness(1.1); }
+.primaryLinkButton:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; box-shadow: var(--focus-ember); }
+.backLink { display: block; margin-top: var(--s-5); color: var(--fg-2); font-size: var(--t-small); font-weight: 500; text-align: center; text-decoration: none; }
+.backLink:hover { color: var(--ember); }
+.backLink:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; border-radius: var(--r-btn); }
+
 .formRegister {
   gap: 16px;
+}
+
+/* RegisterForm-only: the terms checkbox's own error line. `Field` has its
+   own identical pair in `Field.module.css` — this one is for the checkbox
+   below, which isn't a `Field`. */
+.fieldError {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--error);
+  font-size: var(--t-small);
+  font-weight: 600;
+}
+
+.fieldErrorHidden {
+  visibility: hidden;
 }
 
 .formError {
@@ -148,9 +184,9 @@
 
 /* ── RegisterForm-only: terms checkbox ───────────────────────────────
    Purely a client-side UX gate: the backend's CU2 contract has no terms
-   field, and there's no terms-of-service page to link to yet — same as
-   the v2 prototype, whose "términos y condiciones" link doesn't go
-   anywhere either. */
+   field, so acceptance is enforced only here, before `submit()` ever calls
+   `register()`. The "términos y condiciones" text opens `TermsDialog`
+   instead of linking to a dedicated page, which doesn't exist yet. */
 .terms {
   display: flex;
   align-items: flex-start;
@@ -201,4 +237,21 @@
   font-size: var(--t-small);
   color: var(--fg-2);
   line-height: 1.5;
+}
+
+.termsLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ember);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.termsLink:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+  border-radius: 2px;
 }

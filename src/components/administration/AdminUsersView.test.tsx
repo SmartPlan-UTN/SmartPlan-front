@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   changeAdminUserStatus,
+  deleteAdminUser,
   getAdminUserMetrics,
   listAdminUsers,
   updateAdminUser,
@@ -15,6 +16,7 @@ import { AdminUsersView } from "./AdminUsersView";
 vi.mock("@/lib/api", () => ({
   ApiError: class ApiError extends Error {},
   changeAdminUserStatus: vi.fn(),
+  deleteAdminUser: vi.fn(),
   getAdminUserMetrics: vi.fn(),
   listAdminUsers: vi.fn(),
   updateAdminUser: vi.fn(),
@@ -66,6 +68,7 @@ describe("AdminUsersView", () => {
           : updated.role,
       };
     });
+    vi.mocked(deleteAdminUser).mockResolvedValue(undefined);
   });
 
   it("renders REP-02 metrics and the user table", async () => {
@@ -161,8 +164,7 @@ describe("AdminUsersView", () => {
 
     await user.click(screen.getByRole("button", { name: "Ver detalle de Martina García" }));
     const dialog = screen.getByRole("dialog", { name: "Martina García" });
-    await user.click(within(dialog).getByRole("button", { name: "Acciones" }));
-    await user.click(within(dialog).getByRole("menuitem", { name: /Editar usuario/ }));
+    await user.click(within(dialog).getByRole("button", { name: "Editar" }));
 
     await user.clear(screen.getByLabelText("Nombre"));
     await user.type(screen.getByLabelText("Nombre"), "Marina");
@@ -180,6 +182,27 @@ describe("AdminUsersView", () => {
       }));
     });
     expect(screen.getByRole("dialog", { name: "Marina García" })).toBeInTheDocument();
+  });
+
+  it("deletes a user after confirming and removes it from the table", async () => {
+    const user = userEvent.setup();
+    render(<AdminUsersView />);
+    await screen.findByText("Martina García");
+
+    await user.click(screen.getByRole("button", { name: "Ver detalle de Martina García" }));
+    const dialog = screen.getByRole("dialog", { name: "Martina García" });
+    await user.click(within(dialog).getByRole("button", { name: "Eliminar usuario" }));
+
+    expect(
+      screen.getByRole("alertdialog", { name: "¿Eliminar a Martina García?" }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Sí, eliminar usuario" }));
+
+    await waitFor(() => {
+      expect(deleteAdminUser).toHaveBeenCalledWith(7);
+    });
+    expect(screen.queryByRole("dialog", { name: "Martina García" })).not.toBeInTheDocument();
+    expect(await screen.findByText("Sin resultados")).toBeInTheDocument();
   });
 
   it("shows page controls when the backend reports more than one page", async () => {
