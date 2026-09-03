@@ -50,7 +50,6 @@ export interface LocationOption {
   id: number;
   name: string;
 }
-
 /** Place catalog projection returned by `GET /places`. */
 export interface PlaceOption {
   id: number;

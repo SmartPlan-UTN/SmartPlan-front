@@ -23,7 +23,6 @@ export async function listDepartments(
     params: { cityId, limit: 100 },
   });
 }
-
 /** Lists registered places that can be associated with an activity. */
 export async function listPlaces(
   params: PlaceListParams = {},

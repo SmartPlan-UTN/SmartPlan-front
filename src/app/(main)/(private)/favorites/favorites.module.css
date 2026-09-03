@@ -11,36 +11,40 @@
   margin-top: var(--s-5);
 }
 
-.sectionList {
+.sectionNav {
   display: flex;
   align-items: flex-end;
   gap: var(--s-6);
-  margin: 0;
-  padding: 0;
-  list-style: none;
 }
 
-.pendingSection,
-.activeSection {
+.tabButton {
   position: relative;
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  padding-inline: var(--s-1);
+  padding: 0 var(--s-1);
+  border: 0;
+  background: none;
+  font-family: inherit;
   font-size: var(--t-small);
   font-weight: var(--w-heading);
 }
 
-.pendingSection {
-  color: var(--fg-3);
-  cursor: not-allowed;
+.tabButton {
+  color: var(--fg-2);
+  cursor: pointer;
+  transition: color 150ms ease;
 }
 
-.activeSection {
+.tabButton:hover {
   color: var(--fg-1);
 }
 
-.activeSection::after {
+.tabButton.activeTab {
+  color: var(--fg-1);
+}
+
+.tabButton.activeTab::after {
   content: "";
   position: absolute;
   right: 0;
@@ -56,27 +60,36 @@
     margin-top: var(--s-4);
   }
 
-  .sectionList {
+  .sectionNav {
     width: 100%;
     justify-content: space-between;
     gap: var(--s-2);
   }
 
-  .pendingSection,
-  .activeSection {
+  .tabButton {
     min-width: 0;
     padding-inline: 0;
     white-space: nowrap;
   }
 }
 
+.collectionsSection {
+  margin-top: var(--s-8);
+  padding-top: var(--s-6);
+  border-top: 1px solid var(--hairline);
+}
+
+.sectionTitle {
+  margin-bottom: 0;
+  color: var(--fg-2);
+}
+
 @media (max-width: 360px) {
-  .sectionList {
+  .sectionNav {
     gap: var(--s-1);
   }
 
-  .pendingSection,
-  .activeSection {
+  .tabButton {
     font-size: var(--t-label);
   }
 }

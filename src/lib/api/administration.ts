@@ -55,7 +55,6 @@ export async function updateAdminUser(
 export async function deleteAdminUser(id: number): Promise<void> {
   await apiClient.delete<void>(`/admin/users/${id}`);
 }
-
 /** Lists the activity catalog for PAN 21 (CU53). */
 export async function listAdminActivities(
   params: AdminActivitiesQuery = {},

@@ -15,6 +15,7 @@ import {
   Stars,
 } from "@/components/ui";
 import { useDetailFetch } from "@/hooks";
+import { useFavorites } from "@/context";
 import { useSession } from "@/lib/auth";
 import { getPlan, getOwnPlan, cancelOwnPlan, ApiError } from "@/lib/api";
 import { activityDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
@@ -163,7 +164,8 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
     GENERIC_ERROR,
   );
   const { authenticated } = useSession();
-  const [saved, setSaved] = useState(false);
+  const { isPlanSaved, toggleSavePlan } = useFavorites();
+  const saved = isPlanSaved(planId);
   const [copied, setCopied] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [ownPlan, setOwnPlan] = useState<OwnPlanDetail | null>(null);
@@ -385,8 +387,12 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
             variant={saved ? "secondary" : "ghostLight"}
             size="sm"
             className={styles.actionFlex1}
+            aria-pressed={saved}
+            aria-label={saved ? "Quitar de guardados" : "Guardar plan"}
             onClick={() => {
-              setSaved((current) => !current);
+              toggleSavePlan(planId).catch(() => {
+                // Optimistic rollback handled in FavoritesContext
+              });
             }}
           >
             <Icon name="bookmark" size={14} aria-hidden="true" />
