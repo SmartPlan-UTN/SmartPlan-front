@@ -82,6 +82,27 @@ export async function register(
   return apiClient.post<AuthenticationResponse>("/users", data);
 }
 
+export interface PasswordRecoveryRequest {
+  email: string;
+}
+
+export interface PasswordReset {
+  token: string;
+  newPassword: string;
+}
+
+/** CU3: requests a password-recovery email without opening a session. */
+export async function requestPasswordRecovery(
+  data: PasswordRecoveryRequest,
+): Promise<void> {
+  await apiClient.post<void>("/password-recoveries", data);
+}
+
+/** CU3: sets a new password with the opaque token from the recovery email. */
+export async function resetPassword(data: PasswordReset): Promise<void> {
+  await apiClient.patch<void>("/password-recoveries", data);
+}
+
 /**
  * CU4: closes the session.
  *

@@ -24,6 +24,10 @@ export const ROUTES = {
   login: "/login",
   signup: "/signup",
   recoverPassword: "/recover-password",
+  /** Opened from the recovery email's link: `${FRONTEND_URL}/reset-password?token=...`
+   * (see `SmartPlan-back`'s `auth.service.ts`). The token is read from the
+   * query string, not this constant. */
+  resetPassword: "/reset-password",
   admin: "/admin",
   adminActivities: "/admin/activities",
   adminPlans: "/admin/plans",
