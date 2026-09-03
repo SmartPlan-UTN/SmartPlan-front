@@ -70,6 +70,7 @@ export {
   removeFavoritePlan,
   saveFavoritePlan,
 } from './favorites';
+export {
   createRating,
   deleteRating,
   getOwnRating,
