@@ -183,7 +183,7 @@ traceability matrix (`skills/01-domain/`).
 |---|---|---|---|---|---|
 | CU53 | Manage activities | PAN 21 | `In review` | `SMART-59-63-cu53-cu60-admin-management` | #109 |
 | CU54 | Manage categories | — | `Not started` | | |
-| CU55 | Moderate ratings | PAN 20 | `In review` | `SMART-60-cu55-moderar-valoraciones` | #PR |
+| CU55 | Moderate ratings | PAN 20 | `In review` | `SMART-60-cu55-moderar-valoraciones` | [#118](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/118) |
 | CU56 | Delete content | — | `Not started` | | |
 | CU57 | Manage users | PAN 19 | `In review` | `SMART-62-cu58-panel-de-control` | #99 |
 | CU58 | View system metrics | REP-01 | `In review` | `SMART-62-cu58-panel-de-control` | #99 |
