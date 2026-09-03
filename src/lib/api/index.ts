@@ -52,6 +52,9 @@ export {
   listAdminPlans,
   updateAdminActivity,
   updateAdminPlan,
+  getAdminRatingCounts,
+  listAdminRatings,
+  moderateAdminRating,
 } from './administration';
 export {
   addActivityToCollection,

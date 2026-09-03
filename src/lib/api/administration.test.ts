@@ -8,10 +8,13 @@ import {
   createAdminActivity,
   deleteAdminActivity,
   deleteAdminPlan,
+  getAdminRatingCounts,
   getAdminUserMetrics,
   listAdminActivities,
   listAdminPlans,
+  listAdminRatings,
   listAdminUsers,
+  moderateAdminRating,
   updateAdminActivity,
   updateAdminPlan,
 } from "./administration";
@@ -119,5 +122,44 @@ describe("administration user API", () => {
       status: "completed",
     });
     expect(apiClient.delete).toHaveBeenCalledWith("/admin/plans/11");
+  });
+
+  it("uses the CU55 rating moderation contract", async () => {
+    await listAdminRatings({ status: "pending", page: 2, limit: 20 });
+    await moderateAdminRating(31, { status: "approved" });
+    await moderateAdminRating(32, { status: "rejected", reason: "Lenguaje ofensivo." });
+
+    expect(apiClient.get).toHaveBeenCalledWith("/admin/ratings", {
+      params: { status: "pending", page: 2, limit: 20 },
+    });
+    expect(apiClient.patch).toHaveBeenCalledWith("/admin/ratings/31/moderation", {
+      status: "approved",
+    });
+    expect(apiClient.patch).toHaveBeenCalledWith("/admin/ratings/32/moderation", {
+      status: "rejected",
+      reason: "Lenguaje ofensivo.",
+    });
+  });
+
+  it("counts ratings per moderation state from the listing totals", async () => {
+    const totals: Record<string, number> = { pending: 7, approved: 40, rejected: 3 };
+    vi.mocked(apiClient.get).mockImplementation((_url, config) => {
+      const status = (config?.params as { status: string }).status;
+      return Promise.resolve({
+        data: [],
+        pagination: { page: 1, limit: 1, total: totals[status], totalPages: 1 },
+      });
+    });
+
+    await expect(getAdminRatingCounts()).resolves.toEqual({
+      pending: 7,
+      approved: 40,
+      rejected: 3,
+    });
+    // Only the totals are wanted, so each state is asked for a single row.
+    expect(apiClient.get).toHaveBeenCalledTimes(3);
+    expect(apiClient.get).toHaveBeenCalledWith("/admin/ratings", {
+      params: { status: "rejected", page: 1, limit: 1 },
+    });
   });
 });
