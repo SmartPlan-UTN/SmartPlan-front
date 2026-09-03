@@ -88,6 +88,25 @@ describe("AdminRatingsView", () => {
     );
   });
 
+  it("replaces stale cards with a retryable error when a filtered load fails", async () => {
+    const user = userEvent.setup();
+    render(<AdminRatingsView />);
+    await screen.findByText("Martina García");
+    vi.mocked(listAdminRatings).mockRejectedValueOnce(new Error("network"));
+
+    await user.click(screen.getByRole("tab", { name: /Rechazadas/ }));
+
+    expect(await screen.findByText("No pudimos cargar las valoraciones")).toBeInTheDocument();
+    expect(screen.queryByText("Martina García")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Reintentar" }));
+
+    expect(await screen.findByText("Martina García")).toBeInTheDocument();
+    expect(listAdminRatings).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: "rejected", page: 1 }),
+    );
+  });
+
   it("approves a pending rating without asking for anything else", async () => {
     const user = userEvent.setup();
     render(<AdminRatingsView />);

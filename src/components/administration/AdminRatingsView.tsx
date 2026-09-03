@@ -27,6 +27,11 @@ import shared from "./AdminManagement.module.css";
 
 const PAGE_SIZE = 20;
 
+type RatingsLoadState =
+  | { key: string; phase: "loading" }
+  | { key: string; phase: "success"; result: AdminRatingsResult }
+  | { key: string; phase: "error"; message: string };
+
 /**
  * The prototype's third tab is "Ocultas", but the domain has three moderation
  * states, not four: `SmartPlan-back`'s `RatingModerationStatus` is
@@ -66,18 +71,21 @@ function readableError(error: unknown, fallback: string): string {
 export function AdminRatingsView() {
   const [status, setStatus] = useState<RatingModerationStatus>("pending");
   const [page, setPage] = useState(1);
-  const [result, setResult] = useState<AdminRatingsResult | null>(null);
   const [counts, setCounts] = useState<AdminRatingCounts | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadSequence, setReloadSequence] = useState(0);
   const [rejecting, setRejecting] = useState<AdminRating | null>(null);
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const requestKey = `${status}:${page}:${reloadSequence}`;
+  const [loadState, setLoadState] = useState<RatingsLoadState>({
+    key: requestKey,
+    phase: "loading",
+  });
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    const key = requestKey;
+    setLoadState({ key, phase: "loading" });
     listAdminRatings({
       status,
       page,
@@ -87,19 +95,21 @@ export function AdminRatingsView() {
     })
       .then((data) => {
         if (cancelled) return;
-        setResult(data);
-        setLoadError(null);
+        setLoadState({ key, phase: "success", result: data });
       })
       .catch((error: unknown) => {
-        if (!cancelled) setLoadError(readableError(error, "No pudimos cargar las valoraciones."));
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoadState({
+            key,
+            phase: "error",
+            message: readableError(error, "No pudimos cargar las valoraciones."),
+          });
+        }
       });
     return () => {
       cancelled = true;
     };
-  }, [status, page, reloadSequence]);
+  }, [status, page, requestKey]);
 
   // The counters ride along with the listing rather than in it: a moderation
   // moves a rating between two tabs, so the badge of the tab it left is as
@@ -155,6 +165,14 @@ export function AdminRatingsView() {
     }
   }
 
+  // State from a prior tab, page, or reload never belongs to the active
+  // request. Treat the render before its effect runs as loading as well, so
+  // stale cards cannot remain actionable under a newly selected tab.
+  const currentLoadState: RatingsLoadState =
+    loadState.key === requestKey ? loadState : { key: requestKey, phase: "loading" };
+  const loading = currentLoadState.phase === "loading";
+  const loadError = currentLoadState.phase === "error" ? currentLoadState.message : null;
+  const result = currentLoadState.phase === "success" ? currentLoadState.result : null;
   const ratings = result?.data ?? [];
   const firstVisible =
     result && result.pagination.total > 0
@@ -206,7 +224,7 @@ export function AdminRatingsView() {
         </p>
       ) : null}
 
-      {loadError && !result ? (
+      {loadError ? (
         <div className={shared.state} role="alert">
           <span className={shared.stateIcon}>
             <Icon name="triangle-alert" size={24} />
@@ -221,7 +239,7 @@ export function AdminRatingsView() {
             Reintentar
           </Button>
         </div>
-      ) : loading && !result ? (
+      ) : loading ? (
         <div className={shared.state} role="status">
           <Icon name="loader-circle" className="sp-spin" size={28} />
           <p>Cargando valoraciones...</p>
