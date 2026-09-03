@@ -7,6 +7,15 @@ import type {
   DashboardRange,
   UserStatusKey,
   UpdateAdminUserInput,
+  AdminActivitiesQuery,
+  AdminActivitiesResult,
+  AdminActivity,
+  AdminActivityInput,
+  UpdateAdminActivityInput,
+  AdminPlansQuery,
+  AdminPlansResult,
+  AdminPlan,
+  UpdateAdminPlanInput,
 } from '@/types';
 import { apiClient } from './client';
 
@@ -45,6 +54,48 @@ export async function updateAdminUser(
 /** Deletes (soft) a user account and revokes its active sessions (CU57). */
 export async function deleteAdminUser(id: number): Promise<void> {
   await apiClient.delete<void>(`/admin/users/${id}`);
+}
+
+/** Lists the activity catalog for PAN 21 (CU53). */
+export async function listAdminActivities(
+  params: AdminActivitiesQuery = {},
+): Promise<AdminActivitiesResult> {
+  return apiClient.get<AdminActivitiesResult>('/admin/activities', { params });
+}
+
+export async function createAdminActivity(
+  input: AdminActivityInput,
+): Promise<AdminActivity> {
+  return apiClient.post<AdminActivity>('/admin/activities', input);
+}
+
+export async function updateAdminActivity(
+  id: number,
+  input: UpdateAdminActivityInput,
+): Promise<AdminActivity> {
+  return apiClient.patch<AdminActivity>(`/admin/activities/${id}`, input);
+}
+
+export async function deleteAdminActivity(id: number): Promise<void> {
+  return apiClient.delete<void>(`/admin/activities/${id}`);
+}
+
+/** Lists every user's plans for PAN 22 (CU60). */
+export async function listAdminPlans(
+  params: AdminPlansQuery = {},
+): Promise<AdminPlansResult> {
+  return apiClient.get<AdminPlansResult>('/admin/plans', { params });
+}
+
+export async function updateAdminPlan(
+  id: number,
+  input: UpdateAdminPlanInput,
+): Promise<AdminPlan> {
+  return apiClient.patch<AdminPlan>(`/admin/plans/${id}`, input);
+}
+
+export async function deleteAdminPlan(id: number): Promise<void> {
+  return apiClient.delete<void>(`/admin/plans/${id}`);
 }
 
 /**

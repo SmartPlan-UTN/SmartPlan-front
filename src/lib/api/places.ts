@@ -1,4 +1,4 @@
-import type { LocationOption, PaginatedResult } from '@/types';
+import type { LocationOption, PaginatedResult, PlaceListParams, PlaceOption } from '@/types';
 import { apiClient } from './client';
 
 /**
@@ -22,4 +22,11 @@ export async function listDepartments(
   return apiClient.get<PaginatedResult<LocationOption>>('/places/departments', {
     params: { cityId, limit: 100 },
   });
+}
+
+/** Lists registered places that can be associated with an activity. */
+export async function listPlaces(
+  params: PlaceListParams = {},
+): Promise<PaginatedResult<PlaceOption>> {
+  return apiClient.get<PaginatedResult<PlaceOption>>('/places', { params });
 }

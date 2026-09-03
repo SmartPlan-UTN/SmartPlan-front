@@ -50,3 +50,28 @@ export interface LocationOption {
   id: number;
   name: string;
 }
+
+/** Place catalog projection returned by `GET /places`. */
+export interface PlaceOption {
+  id: number;
+  name: string;
+  description: string | null;
+  address: string;
+  department: {
+    id: number;
+    name: string;
+    city: {
+      id: number;
+      name: string;
+      country: { id: number; name: string };
+    };
+  };
+}
+
+export interface PlaceListParams {
+  search?: string;
+  departmentId?: number;
+  page?: number;
+  limit?: number;
+  direction?: 'asc' | 'desc';
+}
