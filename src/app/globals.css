@@ -1,26 +1,65 @@
 @import "tailwindcss";
+@import "../styles/tokens.css";
+@import "../styles/motion.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* Expone los tokens de src/styles/tokens.css como namespaces de Tailwind 4
+   (--color-*, --radius-*, --font-*) para poder usarlos como utilidades:
+   bg-ember, text-fg-2, rounded-card, etc. Los valores siguen viviendo en
+   tokens.css; acá solo se los referencia, nunca se los reescribe. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* next/font/local expone el name real de family generated en build */
+  --font-sans: var(--font-bricolage-grotesque);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+  /* Paleta EMBER */
+  --color-ember: var(--ember);
+  --color-char: var(--char);
+  --color-cream: var(--cream);
+  --color-electric: var(--electric);
+  --color-gold: var(--gold);
+  --color-white: var(--white);
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Status */
+  --color-success: var(--success);
+  --color-error: var(--error);
+  --color-warning: var(--warning);
+
+  /* Tints */
+  --color-ember-04: var(--ember-04);
+  --color-ember-10: var(--ember-10);
+  --color-ember-15: var(--ember-15);
+  --color-ember-20: var(--ember-20);
+  --color-electric-15: var(--electric-15);
+  --color-gold-15: var(--gold-15);
+  --color-gold-22: var(--gold-22);
+  --color-success-15: var(--success-15);
+  --color-warning-15: var(--warning-15);
+  --color-white-15: var(--white-15);
+  --color-white-18: var(--white-18);
+
+  /* Superficies oscuras */
+  --color-char-surface: var(--char-surface);
+  --color-char-surface-2: var(--char-surface2);
+
+  /* Texto */
+  --color-fg-on-dark: var(--fg-on-dark);
+  --color-fg-on-dark-2: var(--fg-on-dark-2);
+  --color-fg-on-dark-3: var(--fg-on-dark-3);
+  --color-fg-1: var(--fg-1);
+  --color-fg-2: var(--fg-2);
+  --color-fg-3: var(--fg-3);
+  --color-rating-ink: var(--rating-ink);
+  --color-warning-ink: var(--warning-ink);
+
+  /* Superficies y bordes */
+  --color-surface: var(--surface);
+  --color-surface-card: var(--surface-card);
+  --color-hairline: var(--hairline);
+  --color-hairline-dark: var(--hairline-dark);
+
+  /* Radios */
+  --radius-pill: var(--r-pill);
+  --radius-card: var(--r-card);
+  --radius-card-sm: var(--r-card-sm);
+  --radius-btn: var(--r-btn);
+  --radius-chip: var(--r-chip);
 }

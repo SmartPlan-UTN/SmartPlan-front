@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  # En un PR, cada push cancela la corrida anterior. En develop y main no: si
+  # entran dos merges seguidos, el primero quedaría sin check y no sabríamos si
+  # ese commit estaba verde.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    # Un install colgado no debe comerse las 6 horas por defecto del runner.
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # La versión de pnpm sale de "packageManager" en package.json.
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v6
+
+      # Node sale de ".nvmrc" — una sola fuente de verdad, para que un bump no
+      # deje a CI en la versión vieja ni corriendo una versión distinta de la
+      # que se usa en las máquinas.
+      - name: Configurar Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Analizar el código
+        run: pnpm lint
+
+      - name: Ejecutar tests
+        run: pnpm test
+
+      - name: Compilar la aplicación
+        run: pnpm build

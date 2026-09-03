@@ -1,0 +1,145 @@
+.shell {
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+  display: flex;
+  align-items: stretch;
+  background: transparent;
+}
+
+/* ── Left panel: only from tablet up (matches the v2 prototype breakpoint) ── */
+.leftPanel {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .leftPanel {
+    display: flex;
+    flex: 0 0 46%;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: var(--s-7);
+    position: relative;
+    z-index: 1;
+    background:
+      linear-gradient(160deg, rgba(232, 93, 32, 0.72) 0%, rgba(26, 17, 9, 0.88) 100%),
+      url("/mock/login-hero.jpg") center / cover no-repeat;
+  }
+}
+
+/* The v2 prototype's raw <img> stretches full-width under the column's
+   default `align-items: stretch` and centers itself via `object-fit:
+   contain`; the app's `Logo` primitive sizes itself explicitly instead, so
+   it needs an explicit `align-self` to land in the same place. Decorative
+   and non-interactive here (no href), so it shouldn't offer a text cursor
+   or become selectable like the panel's other text does. */
+.leftLogo {
+  align-self: center;
+  cursor: default;
+  user-select: none;
+}
+
+.chips {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-3);
+  margin-bottom: var(--s-8);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 9px 18px;
+  background: rgba(245, 240, 232, 0.1);
+  border: 1px solid rgba(245, 240, 232, 0.18);
+  border-radius: var(--r-pill);
+  color: rgba(245, 240, 232, 0.85);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.headline {
+  color: rgba(245, 240, 232, 0.92);
+  font-size: var(--t-h3);
+  font-weight: var(--w-display);
+  line-height: 1.18;
+  letter-spacing: -0.02em;
+  margin: 0 0 10px;
+}
+
+.tagline {
+  color: rgba(245, 240, 232, 0.48);
+  font-size: var(--t-small);
+  margin: 0;
+}
+
+/* ── Right panel ─────────────────────────────────────────────────── */
+.rightPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-7) var(--s-5);
+  position: relative;
+  z-index: 2;
+}
+
+@media (min-width: 768px) {
+  .rightPanel {
+    padding: var(--s-7) var(--s-8);
+  }
+}
+
+/* Not wired up yet — see the "¿Sos admin?" entry in TRACKING.md's Known
+   Pending Items for what a follow-up ticket needs to decide. Rendered as a
+   plain span, not a link/button, so it doesn't announce itself as an
+   interactive control that does nothing. */
+.adminLink {
+  position: absolute;
+  top: var(--s-4);
+  right: var(--s-5);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: var(--r-pill);
+  font-size: var(--t-small);
+  font-weight: 600;
+  color: var(--fg-3);
+}
+
+.mobileLogo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--s-6);
+}
+
+@media (min-width: 768px) {
+  .mobileLogo {
+    display: none;
+  }
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface-card);
+  border-radius: 24px;
+  box-shadow: 0 8px 48px rgba(26, 17, 9, 0.09), 0 2px 8px rgba(26, 17, 9, 0.04);
+}
+
+/* Literal px, not the --s-* scale: matches the v2 prototype's per-view card
+   padding exactly, which the spacing scale can't express. The prototype
+   gives the register card a touch less padding since it holds more fields. */
+.cardLogin {
+  padding: 40px 36px 36px;
+}
+
+.cardRegister {
+  padding: 36px 36px 32px;
+}

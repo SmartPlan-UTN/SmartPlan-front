@@ -1,0 +1,257 @@
+/* CU1/CU2 - Login and signup (PAN 04), per the v2 "EMBER" system design.
+   Shared by `LoginForm` and `RegisterForm`. Rendered inside the white card
+   that `app/login/layout.tsx` (and its signup counterpart) provides.
+   Field-level styles (label, input, error) live in
+   `components/ui/Field.module.css`, and the password-strength meter's in
+   `components/ui/PasswordStrength.module.css` — both promoted there once a
+   second domain (CU5/CU6's profile forms) needed them too. */
+
+/* Literal px below, not the --s-* scale: the v2 prototype gives login and
+   register slightly different vertical rhythm (28/20px vs 24/16px) that the
+   spacing scale can't express, and stacking `.header`/`.form` with the
+   scale's 32/24px was visibly looser than the design. */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.headerLogin {
+  margin-bottom: 28px;
+}
+
+.headerRegister {
+  margin-bottom: 24px;
+}
+
+.subtitle {
+  color: var(--fg-3);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+}
+
+.formLogin {
+  gap: 20px;
+}
+
+/* CU3 recovery-request progress and result states. */
+.stepBar { display: flex; align-items: center; gap: var(--s-2); margin-bottom: 28px; }
+.stepLabel { color: var(--fg-3); }
+.stepSegments { display: flex; gap: 4px; }
+.stepSegment { width: 8px; height: 4px; border-radius: var(--r-chip); background: var(--ember-15); transition: background 300ms; }
+.stepSegmentFirst { width: 20px; }
+.stepSegmentActive { background: var(--ember); }
+.successState { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.successIcon { display: flex; align-items: center; justify-content: center; width: 72px; height: 72px; margin-bottom: var(--s-5); border: 2px solid color-mix(in srgb, var(--success) 25%, transparent); border-radius: 50%; background: var(--success-15); color: var(--success); }
+.errorIcon { border-color: color-mix(in srgb, var(--error) 25%, transparent); background: color-mix(in srgb, var(--error) 12%, transparent); color: var(--error); }
+.successTitle { margin: 0 0 10px; }
+.successMessage { max-width: 300px; margin: 0 0 var(--s-6); color: var(--fg-3); line-height: 1.6; }
+button.resendButton { border-width: 1.5px; border-color: var(--ember); color: var(--ember); }
+.primaryLinkButton { display: inline-flex; width: 100%; align-items: center; justify-content: center; padding: 10px 20px; border-radius: var(--r-btn); background: var(--ember); color: var(--white); font-size: var(--t-small); font-weight: var(--w-heading); text-decoration: none; }
+.primaryLinkButton:hover { filter: brightness(1.1); }
+.primaryLinkButton:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; box-shadow: var(--focus-ember); }
+.backLink { display: block; margin-top: var(--s-5); color: var(--fg-2); font-size: var(--t-small); font-weight: 500; text-align: center; text-decoration: none; }
+.backLink:hover { color: var(--ember); }
+.backLink:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; border-radius: var(--r-btn); }
+
+.formRegister {
+  gap: 16px;
+}
+
+/* RegisterForm-only: the terms checkbox's own error line. `Field` has its
+   own identical pair in `Field.module.css` — this one is for the checkbox
+   below, which isn't a `Field`. */
+.fieldError {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--error);
+  font-size: var(--t-small);
+  font-weight: 600;
+}
+
+.fieldErrorHidden {
+  visibility: hidden;
+}
+
+.formError {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border-radius: var(--r-btn);
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+  color: var(--fg-1);
+  font-size: var(--t-small);
+}
+
+.formError svg {
+  flex-shrink: 0;
+  color: var(--error);
+  margin-top: 2px;
+}
+
+/* Login-only: the explanatory notice after CU6 closes the session
+   server-side ("Tu contraseña fue actualizada..."). Same shape as
+   `.formError`, success palette instead — it's good news, not a warning. */
+.formNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border-radius: var(--r-btn);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  color: var(--fg-1);
+  font-size: var(--t-small);
+}
+
+.formNotice svg {
+  flex-shrink: 0;
+  color: var(--success);
+  margin-top: 2px;
+}
+
+/* Groups the password Field with the "forgot password" link right
+   below it (login only) — a tighter gap than `.formLogin`'s 20px, matching
+   the wrapping div around both in the v2 prototype. */
+.passwordGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.forgotLink {
+  align-self: flex-end;
+  font-size: var(--t-small);
+  color: var(--fg-2);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.forgotLink:hover {
+  color: var(--ember);
+}
+
+.forgotLink:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+  border-radius: var(--r-btn);
+}
+
+.submit {
+  width: 100%;
+}
+
+.footer {
+  text-align: center;
+  font-size: var(--t-small);
+  color: var(--fg-2);
+}
+
+.footerLogin {
+  margin-top: 26px;
+}
+
+.footerRegister {
+  margin-top: 22px;
+}
+
+.footerLink {
+  color: var(--ember);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.footerLink:hover {
+  text-decoration: underline;
+}
+
+.footerLink:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+  border-radius: var(--r-btn);
+}
+
+/* ── RegisterForm-only: two-column row (Nombre / Apellido) ──────────── */
+.row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-3);
+}
+
+/* ── RegisterForm-only: terms checkbox ───────────────────────────────
+   Purely a client-side UX gate: the backend's CU2 contract has no terms
+   field, so acceptance is enforced only here, before `submit()` ever calls
+   `register()`. The "términos y condiciones" text opens `TermsDialog`
+   instead of linking to a dedicated page, which doesn't exist yet. */
+.terms {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+/* Visually hidden, not `display:none`/`hidden`: stays focusable and
+   announced by screen readers. `.checkboxBox` is purely decorative
+   (`aria-hidden`) and mirrors its checked state from React, not CSS. */
+.checkboxInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.checkboxInput:focus-visible + .checkboxBox {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.checkboxBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border: 1.5px solid var(--hairline);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--cream) 70%, transparent);
+  transition: border-color 150ms, background 150ms;
+}
+
+.checkboxBoxChecked {
+  background: var(--ember);
+  border-color: var(--ember);
+}
+
+.termsText {
+  margin: 0;
+  font-size: var(--t-small);
+  color: var(--fg-2);
+  line-height: 1.5;
+}
+
+.termsLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ember);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.termsLink:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+  border-radius: 2px;
+}

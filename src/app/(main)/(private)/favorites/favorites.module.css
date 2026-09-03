@@ -1,0 +1,95 @@
+.header {
+  border-bottom: 1px solid var(--hairline);
+}
+
+.eyebrow {
+  margin-bottom: var(--s-2);
+  color: var(--ember);
+}
+
+.sectionNav {
+  margin-top: var(--s-5);
+}
+
+.sectionNav {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s-6);
+}
+
+.tabButton {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--s-1);
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+}
+
+.tabButton {
+  color: var(--fg-2);
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.tabButton:hover {
+  color: var(--fg-1);
+}
+
+.tabButton.activeTab {
+  color: var(--fg-1);
+}
+
+.tabButton.activeTab::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 3px;
+  border-radius: var(--r-chip) var(--r-chip) 0 0;
+  background: var(--ember);
+}
+
+@media (max-width: 560px) {
+  .sectionNav {
+    margin-top: var(--s-4);
+  }
+
+  .sectionNav {
+    width: 100%;
+    justify-content: space-between;
+    gap: var(--s-2);
+  }
+
+  .tabButton {
+    min-width: 0;
+    padding-inline: 0;
+    white-space: nowrap;
+  }
+}
+
+.collectionsSection {
+  margin-top: var(--s-8);
+  padding-top: var(--s-6);
+  border-top: 1px solid var(--hairline);
+}
+
+.sectionTitle {
+  margin-bottom: 0;
+  color: var(--fg-2);
+}
+
+@media (max-width: 360px) {
+  .sectionNav {
+    gap: var(--s-1);
+  }
+
+  .tabButton {
+    font-size: var(--t-label);
+  }
+}

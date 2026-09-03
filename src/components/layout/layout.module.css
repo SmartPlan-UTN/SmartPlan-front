@@ -1,0 +1,608 @@
+/* ================================================================
+   Application shell: navbar, user menu, and containers.
+
+   All values come from the tokens in src/styles/tokens.css.
+   Transparency mixes are derived from the token with color-mix()
+   instead of hand-writing an rgba().
+   ================================================================ */
+
+/* ── Skip link ───────────────────────────────────────────────── */
+/* First focusable element on the page: lets keyboard users skip
+   navigation instead of tabbing through four links on every screen. */
+.skipLink {
+  position: fixed;
+  top: var(--s-2);
+  left: var(--s-4);
+  z-index: 100;
+  padding: var(--s-2) var(--s-4);
+  border-radius: var(--r-btn);
+  background: var(--ember);
+  color: var(--white);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.skipLink:focus {
+  transform: translateY(0);
+}
+
+/* ── Navbar ────────────────────────────────────────────────────── */
+/* Light, always — SmartPlanSystemDesign/v2's `Navbar` component still has a
+   `dark` prop, but the running prototype (SmartPlan v3.html) hardcodes
+   `navDark = false` with the comment "Results is now light theme": the
+   design settled on one light navbar for every screen, not a dark one over
+   the hero. There's no dark hero screen in this repo yet to contradict
+   that. The border is transparent until the page scrolls past 10px, same
+   as the prototype — it keeps the navbar from drawing a hard edge over a
+   full-bleed hero once one exists. */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: color-mix(in srgb, var(--cream) 92%, transparent);
+  /* The prefixed one goes first. The minifier deduplicates equivalent
+     declarations and keeps the last one: with the order reversed, the
+     published CSS only had -webkit-backdrop-filter and Firefox lost the blur. */
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 200ms ease;
+}
+
+.navbarScrolled {
+  border-bottom-color: var(--hairline);
+}
+
+/* Without backdrop-filter the navbar stays translucent and the page text
+   shows through: a solid background is better there. */
+@supports not (
+  (backdrop-filter: blur(18px)) or (-webkit-backdrop-filter: blur(18px))
+) {
+  .navbar {
+    background: var(--cream);
+  }
+}
+
+/* Explorar navigation transition ("Armando tu plan perfecto..."), matching
+   `ResultsLoading` in `Results.jsx`. Sits under `.navbar` (z-index 50) —
+   the bar itself stays up and usable through the transition, only the
+   content below it is covered, same as the mockup's own
+   `paddingTop: 'var(--navbar-h)'` treatment. Opaque instead of translucent:
+   the destination route is already navigating underneath it, and a
+   see-through overlay would let that render peek through before the
+   illusion finishes. */
+.exploreTransition {
+  position: fixed;
+  inset: var(--navbar-h) 0 0 0;
+  z-index: 40;
+  overflow: hidden;
+  background: var(--cream);
+  animation: fadeUp 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Above `MoodBackground`'s own `.root` (`position: absolute; z-index: 0`,
+   fills `.exploreTransition`) the same way `ProfileScreen`'s `.wrapper`
+   sits above its own — a plain in-flow sibling would otherwise paint
+   *under* an absolutely-positioned one, even at z-index 0. */
+.exploreTransitionContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+/* Inner navbar row: logo, links, and user menu. Unlike `.container`, this
+   is NOT capped at `--max-w` — SmartPlanSystemDesign/v2/Navbar.jsx spans
+   the full window edge to edge with 48px of padding, not a centered,
+   content-width band; capping it made the bar look narrow and cramped on
+   a wide viewport compared to the mockup. Deliberately a class separate
+   from `.navbar`: they are two elements (sticky header vs. this row) with
+   different responsibilities. */
+.navbarInner {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  height: var(--navbar-h);
+  width: 100%;
+  min-width: 0;
+  padding-inline: var(--s-4);
+}
+
+@media (min-width: 900px) {
+  .navbarInner {
+    padding-inline: var(--s-7);
+  }
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: var(--r-btn);
+}
+
+.brand:focus-visible,
+.link:focus-visible,
+.option:focus-visible,
+.trigger:focus-visible,
+.menuButton:focus-visible,
+.buttonLink:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+/* `flex: 1` makes the nav claim all the space between the logo and the
+   session control, so `justify-content: center` centers the links in the
+   bar as a whole rather than in the leftover space next to the logo —
+   matches SmartPlanSystemDesign/v2/Navbar.jsx. */
+.nav {
+  display: none;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-1);
+}
+
+/* Pushes the session control —and with it the nav toggle— against the
+   right edge on mobile, where `.nav` is hidden and its `flex: 1` doesn't
+   apply. On desktop `.nav` already claims the free space, so this margin
+   resolves to 0 and does nothing. */
+.sessionControl {
+  margin-inline-start: auto;
+}
+
+/* ── Navbar links ─────────────────────────────────────────────── */
+.link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-chip);
+  color: var(--fg-2);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.link:hover {
+  color: var(--fg-1);
+}
+
+/* A hairline that grows from the centre on hover — only on links that
+   aren't the current page (the active one already carries its dot). */
+.link:not(.activeLink)::after {
+  content: "";
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  width: calc(100% - var(--s-3) * 2);
+  height: 1px;
+  background: var(--ember);
+  transform: translateX(-50%) scaleX(0);
+  transition: transform var(--d-fast, 180ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.link:not(.activeLink):hover::after,
+.link:not(.activeLink):focus-visible::after {
+  transform: translateX(-50%) scaleX(1);
+}
+
+/* A dot below the label, not a filled pill: matches
+   SmartPlanSystemDesign/v2/Navbar.jsx's active-link treatment. Still backed
+   by `aria-current="page"` on the link itself, not just this dot. */
+.activeLink {
+  color: var(--fg-1);
+  background: transparent;
+}
+
+.activeLink::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: var(--r-chip);
+  background: var(--ember);
+  transform: translateX(-50%);
+  animation: nav-dot-in var(--d-fast, 180ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+
+@keyframes nav-dot-in {
+  from { transform: translateX(-50%) scale(0); opacity: 0; }
+  to   { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link:not(.activeLink)::after { transition: none; }
+  .activeLink::after { animation: none; }
+}
+
+/* ── User menu ──────────────────────────────────────────────── */
+.userMenu {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Circular gradient avatar, not a text pill: matches the account trigger in
+   SmartPlanSystemDesign/v2/Navbar.jsx. There's no user name/photo yet
+   (CU1-CU5 haven't wired up a profile), so it shows the `user` icon instead
+   of an initial. */
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: linear-gradient(
+    135deg,
+    var(--ember) 0%,
+    color-mix(in srgb, var(--ember) 55%, black) 100%
+  );
+  color: var(--white);
+  cursor: pointer;
+  box-shadow: 0 2px 8px var(--ember-20);
+  transition: box-shadow 150ms ease;
+}
+
+.trigger:hover {
+  box-shadow: 0 2px 12px color-mix(in srgb, var(--ember) 50%, transparent);
+}
+
+/* At 320px the logo, the session control with text, and the nav toggle
+   don't fit: below 900px the control collapses to just an icon, with its aria-label. */
+.labelSession {
+  display: none;
+}
+
+.buttonLink {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-4);
+  border-radius: var(--r-btn);
+  background: var(--ember);
+  color: var(--white);
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: filter 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.buttonLink:hover {
+  filter: brightness(1.1);
+}
+
+/* Primary create-plan action in the desktop navbar. It stays a real link so
+   it remains available to keyboard and modified-click users. */
+.createPlanNavBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  flex-shrink: 0;
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-btn);
+  background: var(--ember);
+  color: var(--white);
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: filter 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.createPlanNavBtn:hover {
+  filter: brightness(1.1);
+}
+
+.createPlanNavBtn:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  .createPlanNavLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .createPlanNavBtn {
+    padding: var(--s-2);
+  }
+}
+
+/* Reserves the control's space while the session resolves, so the navbar
+   doesn't jump when the menu or the login button appears. The width matches
+   the resolved control: icon only on small viewports, with a label above
+   900px. */
+.sessionPlaceholder {
+  display: inline-block;
+  width: 56px;
+  height: 34px;
+}
+
+/* Always light-card styled, independent of the navbar's own background —
+   matches the dropdown in SmartPlanSystemDesign/v2/Navbar.jsx, which never
+   switched with the `dark` prop either. */
+.panel {
+  position: absolute;
+  top: calc(100% + var(--s-2));
+  right: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  padding: var(--s-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card-sm);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
+  animation: fadeUp 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  padding: var(--s-2) var(--s-3);
+  border: 0;
+  border-radius: var(--r-btn);
+  background: transparent;
+  color: var(--fg-1);
+  font-size: var(--t-small);
+  font-weight: var(--w-body);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    color 130ms ease,
+    background 130ms ease;
+}
+
+.option:hover {
+  color: var(--ember);
+  background: color-mix(in srgb, var(--ember) 7%, transparent);
+}
+
+.activeOption {
+  color: var(--ember);
+}
+
+.divider {
+  height: 1px;
+  margin: var(--s-1) 0;
+  border: 0;
+  background: var(--hairline);
+}
+
+/* ── Small-viewport menu ──────────────────────────────────────── */
+.menuButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: var(--s-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-btn);
+  background: transparent;
+  color: var(--fg-1);
+  cursor: pointer;
+}
+
+.mobilePanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-3) var(--s-4) var(--s-4);
+  border-top: 1px solid var(--hairline);
+  background: color-mix(in srgb, var(--cream) 96%, transparent);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+
+@media (min-width: 900px) {
+  .nav {
+    display: flex;
+  }
+
+  .labelSession {
+    display: inline;
+  }
+
+  .sessionPlaceholder {
+    width: 140px;
+  }
+
+  .menuButton,
+  .mobilePanel {
+    display: none;
+  }
+}
+
+/* ── Content containers ───────────────────────────────────────── */
+.content {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+.container {
+  width: 100%;
+  max-width: var(--max-w);
+  margin-inline: auto;
+  padding: var(--section-v) var(--s-4);
+}
+
+/* ── Centered shell: 404 ───────────────────────────────────────────
+   Session screens (login, signup, password recovery) moved to
+   AuthSplitShell; this dark blurred-card shell is only 404's now. */
+.centeredScreen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-5);
+  padding: var(--s-7) var(--s-4);
+  background: var(--char);
+}
+
+.centeredCard {
+  width: 100%;
+  max-width: 420px;
+  padding: var(--s-6);
+  border: 1px solid var(--hairline-dark);
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--char-surface) 88%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-card-dark);
+  color: var(--fg-on-dark);
+}
+
+/* ── Pending-implementation screen ──────────────────────────────── */
+.pendingScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-4);
+  max-width: 620px;
+}
+
+.pendingNote {
+  color: var(--fg-2);
+}
+
+.pendingNoteDark {
+  color: var(--fg-on-dark-2);
+}
+
+/* ── Logout confirmation modal ───────────────────────────────────
+   Matches the LogoutModal in SmartPlanSystemDesign/v2/Navbar.jsx: an
+   overlay with a blurred backdrop and a centered card, so "Cerrar sesión"
+   needs a deliberate second action instead of firing on the first click. */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-5);
+  background: color-mix(in srgb, var(--char) 55%, transparent);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  animation: fadeUp 180ms ease both;
+}
+
+.modalCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  width: 100%;
+  max-width: 380px;
+  padding: var(--s-6) var(--s-5) var(--s-5);
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
+}
+
+.modalIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--r-card-sm);
+  background: var(--ember-15);
+  color: var(--ember);
+}
+
+.modalTitle {
+  margin: 0 0 var(--s-1);
+  color: var(--fg-1);
+}
+
+.modalText {
+  margin: 0;
+  color: var(--fg-2);
+}
+
+.modalActions {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.modalActions > * {
+  flex: 1;
+}
+
+/* ── App-wide wave background ──────────────────────────────────── */
+.appBackground {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* The waves repaint continuously; `contain` keeps that work from
+     invalidating layout or paint for the content scrolling above them. */
+  contain: strict;
+}
+
+.appBackgroundBelowNavbar {
+  top: var(--navbar-h);
+}
+
+.appBackgroundHidden {
+  visibility: hidden;
+}
+
+/* ── Screen wrapper ────────────────────────────────────────────── */
+.screen {
+  width: 100%;
+  min-height: calc(
+    100dvh - var(--navbar-h) - var(--section-v) - var(--section-v)
+  );
+  /* `fadeUpNoTransform`, not `fadeUp`: this wraps every screen's content,
+     including any `position: fixed` modal mounted inside it. `fadeUp`'s
+     `transform: translateY(0)` end value would persist here forever
+     (`animation-fill-mode: both`) and turn `.screen` into the containing
+     block for those descendants — see `fadeUpNoTransform` in tokens.css. */
+  animation: fadeUpNoTransform 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .exploreTransition {
+    animation: none;
+  }
+
+  .screen {
+    animation: none;
+  }
+}

@@ -1,0 +1,252 @@
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+}
+
+/* Two classes on purpose. The primitive `.chip` and a single-class override
+   have the same specificity, so which one wins would depend on the order
+   the two CSS modules happen to land in the bundle. `.row .chipCompact`
+   outranks `.chip` no matter what that order turns out to be. */
+.row .chipCompact {
+  gap: 6px;
+  padding: 7px 13px;
+  border-color: color-mix(in srgb, var(--hairline) 80%, transparent);
+  background: color-mix(in srgb, var(--surface-card) 70%, transparent);
+  color: var(--fg-2);
+  font-size: 12.5px;
+}
+
+.row .chipCompact:hover:not(:disabled) {
+  border-color: var(--ember-20);
+  background: var(--surface-card);
+  color: var(--fg-1);
+}
+
+.row .chipCompact[aria-pressed="true"] {
+  border-color: var(--ember);
+  background: var(--ember);
+  color: var(--white);
+}
+
+.chipWrapper {
+  position: relative;
+}
+
+@media (max-width: 560px) {
+  .row {
+    gap: 6px;
+  }
+
+  .row .chipCompact {
+    gap: 5px;
+    padding: 6px 10px;
+    font-size: 11.5px;
+  }
+}
+
+/* Centred under its own chip, not left-aligned: the rail itself is centred
+   under the composer, so a left-anchored popover reads as misaligned. */
+.popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  z-index: 10;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 160px;
+  padding: var(--s-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card-sm);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
+  /* A local keyframe, not the global `fadeUp`: that one animates `transform`
+     to `translateY(0)`, which with `both` would permanently wipe the
+     `translateX(-50%)` that centres this popover. */
+  animation: context-popover-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* The last chip sits closest to the right edge on a narrow viewport, where
+   a centred popover would hang off screen. */
+@media (max-width: 560px) {
+  .chipWrapper:last-child .popover {
+    right: 0;
+    left: auto;
+    transform: none;
+    animation-name: context-popover-in-edge;
+  }
+}
+
+@keyframes context-popover-in-edge {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes context-popover-in {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.popoverOption {
+  padding: var(--s-2) var(--s-3);
+  border: none;
+  border-radius: var(--r-btn);
+  background: transparent;
+  color: var(--fg-1);
+  font-size: var(--t-small);
+  font-weight: var(--w-body);
+  text-align: left;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.popoverOption:hover,
+.popoverOption:focus-visible {
+  background: var(--ember-04);
+  color: var(--ember);
+}
+
+.popoverOption:focus-visible,
+.popoverClear:focus-visible,
+.stepperButton:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.popoverOption[aria-selected="true"] {
+  background: var(--ember-10);
+  color: var(--ember);
+  font-weight: var(--w-heading);
+}
+
+.popoverLabel {
+  color: var(--fg-2);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+}
+
+.popoverInput {
+  width: 100%;
+  height: 36px;
+  padding: 0 var(--s-3);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-btn);
+  background: var(--cream);
+  color: var(--fg-1);
+  font-family: inherit;
+  font-size: var(--t-small);
+}
+
+.popoverInput:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+  border-color: var(--ember);
+  box-shadow: var(--focus-ember);
+}
+
+.popoverClear {
+  padding: 4px 0;
+  border: none;
+  background: none;
+  color: var(--fg-3);
+  font-size: 12px;
+  font-weight: var(--w-label);
+  text-align: left;
+  cursor: pointer;
+}
+
+.popoverClear:hover {
+  color: var(--error);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-3);
+}
+
+.stepperButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid var(--hairline);
+  border-radius: 50%;
+  background: var(--cream);
+  color: var(--fg-1);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease;
+}
+
+.stepperButton:hover:not(:disabled),
+.stepperButton:focus-visible {
+  border-color: var(--ember);
+  color: var(--ember);
+}
+
+.stepperButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.stepperValue {
+  min-width: 20px;
+  color: var(--fg-1);
+  font-weight: var(--w-heading);
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .chipWrapper > button {
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    padding-inline: 7px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .chipWrapper:nth-child(2) .popover {
+    right: 50%;
+    left: auto;
+    transform: translateX(50%);
+  }
+
+  .popover {
+    min-width: 148px;
+  }
+}
+
+@media (max-width: 350px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+
+  .chipWrapper .popover,
+  .chipWrapper:nth-child(2) .popover,
+  .chipWrapper:last-child .popover {
+    right: 0;
+    left: 0;
+    min-width: 100%;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popover {
+    animation: none;
+  }
+}

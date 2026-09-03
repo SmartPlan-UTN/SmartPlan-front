@@ -1,0 +1,454 @@
+/* ================================================================
+   Illustrative recorridos — a browsable rail, not a dashboard table.
+   ================================================================ */
+
+.section {
+  position: relative;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 720px;
+  /* The clip belongs here, on the section, not on the rail's wrapper.
+     A horizontal scroll container leaks its content into the *document's*
+     scroll width, and clipping the immediate wrapper turned out not to
+     stop it — what appeared to work was the reveal animation's transform
+     incidentally containing the overflow, which meant the page grew a
+     stray horizontal scrollbar for exactly the visitors who had asked for
+     reduced motion. `clip` rather than `hidden`: `hidden` would force the
+     vertical axis into a scroll container too and cut off the cards'
+     hover lift. */
+  overflow-x: clip;
+  padding-block: clamp(60px, 9vh, 104px);
+  background:
+    linear-gradient(180deg, var(--cream) 0%, color-mix(in srgb, var(--gold) 9%, var(--cream)) 100%);
+}
+
+.shell {
+  width: 100%;
+  max-width: var(--max-w);
+  padding-inline: clamp(20px, 5vw, 48px);
+  margin-inline: auto;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-5);
+  margin-bottom: clamp(28px, 4.5vh, 48px);
+}
+
+.kicker {
+  margin: 0 0 var(--s-3);
+  color: var(--ember);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(28px, 4.2vw, 48px);
+  font-weight: var(--w-display);
+  letter-spacing: var(--track-h1);
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+.titleSoft {
+  color: var(--fg-3);
+}
+
+.lead {
+  max-width: 42ch;
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 15px;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+/* ── Featured card — the plan the "how it works" scene hands over ─── */
+
+.featuredWrap {
+  margin-top: clamp(28px, 4.5vh, 48px);
+}
+
+.featured {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ember) 30%, var(--hairline));
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+  box-shadow: 0 24px 54px -30px color-mix(in srgb, var(--char) 55%, transparent);
+}
+
+.featuredMedia {
+  position: relative;
+  min-height: 260px;
+  overflow: hidden;
+}
+
+.featuredBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: clamp(20px, 2.6vw, 34px);
+}
+
+.featuredTitle {
+  margin: 0;
+  font-size: clamp(19px, 2vw, 25px);
+  font-weight: var(--w-display);
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+@media (max-width: 760px) {
+  .featured {
+    grid-template-columns: 1fr;
+  }
+
+  .featuredMedia {
+    min-height: 0;
+    aspect-ratio: 16 / 10;
+  }
+}
+
+/* ── Rail ──────────────────────────────────────────────────────── */
+
+.railWrap {
+  width: 100%;
+  margin-top: clamp(36px, 6vh, 64px);
+}
+
+.railLabel {
+  width: 100%;
+  max-width: var(--max-w);
+  padding-inline: clamp(20px, 5vw, 48px);
+  margin: 0 auto clamp(14px, 2vh, 20px);
+  color: var(--fg-3);
+  font-size: 12px;
+  font-weight: var(--w-label);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* The rail scaffolding (overflow, snap, padding, arrows, edge fade) lives
+   in the shared `Rail` component; these are just the card metrics. */
+.card {
+  flex: 0 0 clamp(268px, 30vw, 332px);
+  scroll-snap-align: start;
+}
+
+/* Cards arrive one after another, left to right, like a hand of cards
+   being dealt. Driven by the class the rail's wrapper gains, so it is
+   one observer for the whole rail. */
+:global(.sp-reveal-in) .card {
+  animation: sp-card-in 640ms var(--ease-out) both;
+}
+
+@keyframes sp-card-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 22px, 0) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.card:nth-child(1) { animation-delay: 0ms; }
+.card:nth-child(2) { animation-delay: 80ms; }
+.card:nth-child(3) { animation-delay: 160ms; }
+.card:nth-child(4) { animation-delay: 240ms; }
+.card:nth-child(5) { animation-delay: 320ms; }
+
+.cardInner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+  box-shadow: 0 2px 10px -6px color-mix(in srgb, var(--char) 40%, transparent);
+  transition:
+    transform var(--d-base) var(--ease-out),
+    box-shadow var(--d-base) var(--ease-out),
+    border-color var(--d-base) var(--ease-out);
+}
+
+/* ── Media panel ───────────────────────────────────────────────── */
+
+.media {
+  position: relative;
+  height: 152px;
+  overflow: hidden;
+}
+
+.mediaField {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 90% 80% at 20% 15%, var(--wash-1), transparent 64%),
+    radial-gradient(ellipse 80% 90% at 90% 95%, var(--wash-2), transparent 66%),
+    var(--base);
+}
+
+.card[data-tone="char"],
+.featured[data-tone="char"] {
+  --base: var(--char);
+  --wash-1: color-mix(in srgb, var(--ember) 36%, transparent);
+  --wash-2: color-mix(in srgb, var(--electric) 20%, transparent);
+  --glyph: var(--fg-on-dark);
+}
+
+.card[data-tone="ember"],
+.featured[data-tone="ember"] {
+  --base: color-mix(in srgb, var(--ember) 86%, var(--char));
+  --wash-1: color-mix(in srgb, var(--gold) 42%, transparent);
+  --wash-2: color-mix(in srgb, var(--char) 34%, transparent);
+  --glyph: var(--white);
+}
+
+/* Matched to the gallery's dusk tile, for the same reason. */
+.card[data-tone="electric"],
+.featured[data-tone="electric"] {
+  --base: color-mix(in srgb, var(--electric) 44%, var(--char));
+  --wash-1: color-mix(in srgb, var(--gold) 32%, transparent);
+  --wash-2: color-mix(in srgb, var(--ember) 24%, transparent);
+  --glyph: var(--white);
+}
+
+.card[data-tone="gold"],
+.featured[data-tone="gold"] {
+  --base: color-mix(in srgb, var(--gold) 72%, var(--cream));
+  --wash-1: color-mix(in srgb, var(--white) 58%, transparent);
+  --wash-2: color-mix(in srgb, var(--ember) 28%, transparent);
+  --glyph: var(--char);
+}
+
+.card[data-tone="cream"],
+.featured[data-tone="cream"] {
+  --base: color-mix(in srgb, var(--cream) 92%, var(--white));
+  --wash-1: color-mix(in srgb, var(--gold) 26%, transparent);
+  --wash-2: color-mix(in srgb, var(--ember) 12%, transparent);
+  --glyph: var(--char);
+}
+
+.mediaPhoto {
+  object-fit: cover;
+  transition: transform 260ms var(--ease-out);
+}
+
+.card:focus-within .cardInner {
+  border-color: color-mix(in srgb, var(--ember) 35%, var(--hairline));
+  outline: 2px solid transparent;
+}
+
+.cardInner:focus-visible {
+  outline-color: var(--ember);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:hover .cardInner,
+  .card:focus-within .cardInner {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--ember) 35%, var(--hairline));
+    box-shadow: 0 22px 42px -24px color-mix(in srgb, var(--char) 60%, transparent);
+  }
+
+  .card:hover .mediaPhoto,
+  .card:focus-within .mediaPhoto {
+    transform: scale(1.025);
+  }
+}
+
+/* Always visible, never a hover reveal: this badge is the page's promise
+   that these recorridos are illustrations rather than real plans, and a
+   disclosure that only appears on hover is not a disclosure. */
+.badge {
+  position: absolute;
+  top: var(--s-3);
+  left: var(--s-3);
+  padding: 5px 9px;
+  margin: 0;
+  border-radius: var(--r-chip);
+  background: color-mix(in srgb, var(--char) 74%, transparent);
+  color: var(--fg-on-dark);
+  font-size: 10.5px;
+  font-weight: var(--w-label);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  backdrop-filter: blur(6px);
+}
+
+/* ── Body ──────────────────────────────────────────────────────── */
+
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: var(--s-4) var(--s-4) var(--s-5);
+}
+
+.cardTitle {
+  margin: 0 0 var(--s-3);
+  font-size: 16.5px;
+  font-weight: var(--w-heading);
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0 0 var(--s-4);
+  color: var(--fg-2);
+  font-size: 13px;
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.metaDot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--fg-3);
+}
+
+.budget {
+  display: inline-flex;
+  gap: 1px;
+  font-weight: var(--w-heading);
+}
+
+.budgetMark {
+  color: var(--fg-3);
+  opacity: 0.4;
+}
+
+.budgetMark[data-on="true"] {
+  color: var(--ember);
+  opacity: 1;
+}
+
+/* ── The three moments ─────────────────────────────────────────── */
+/* A hairline runs down the left of the list, which is what makes three
+   rows read as a sequence rather than as three facts. */
+
+.moments {
+  position: relative;
+  flex: 1;
+  padding: 0 0 0 var(--s-4);
+  margin: 0 0 var(--s-4);
+  list-style: none;
+}
+
+.moments::before {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 3px;
+  width: 1px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ember) 55%, transparent),
+    var(--hairline)
+  );
+  content: "";
+}
+
+.moment {
+  position: relative;
+  display: flex;
+  gap: var(--s-3);
+  padding-block: 5px;
+}
+
+.moment::before {
+  position: absolute;
+  top: 11px;
+  left: calc(-1 * var(--s-4) + 1px);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ember);
+  content: "";
+}
+
+.moment:not(:first-child)::before {
+  background: var(--fg-3);
+}
+
+.momentTime {
+  flex: 0 0 38px;
+  color: var(--fg-1);
+  font-size: 12px;
+  font-weight: var(--w-label);
+  font-variant-numeric: tabular-nums;
+}
+
+.momentLabel {
+  color: var(--fg-2);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+/* ── Tags ──────────────────────────────────────────────────────── */
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.tag {
+  padding: 4px 9px;
+  border-radius: var(--r-chip);
+  background: var(--ember-10);
+  color: color-mix(in srgb, var(--ember) 78%, var(--char));
+  font-size: 11.5px;
+  font-weight: var(--w-label);
+}
+
+/* ── Responsive ────────────────────────────────────────────────── */
+
+@media (max-width: 760px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .card {
+    flex-basis: 82%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cardInner,
+  .mediaPhoto {
+    transition: none;
+  }
+
+  :global(.sp-reveal-in) .card {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .card:hover .mediaPhoto,
+  .card:focus-within .mediaPhoto {
+    transform: none;
+  }
+}

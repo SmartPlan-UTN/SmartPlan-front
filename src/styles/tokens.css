@@ -1,0 +1,291 @@
+/* ================================================================
+   smartplan v2 — EMBER Design System tokens
+   Palette: Char · Ember · Cream · Electric · Gold
+
+   La tipografía (Bricolage Grotesque) NO se declara acá con @font-face:
+   ya la carga next/font/local en src/app/layout.tsx, que expone la
+   variable --font-bricolage-grotesque. Declararla dos veces duplica
+   la carga del archivo .ttf.
+   ================================================================ */
+
+:root {
+  /* ── Core palette ────────────────────────────────── */
+  --ember:    #E85D20;
+  --char:     #1A1109;
+  --cream:    #F5F0E8;
+  --electric: #2B5BFF;
+  --gold:     #FFD166;
+  --white:    #FFFFFF;
+
+  /* ── Semantic status ─────────────────────────────── */
+  --success:  #22C06B;
+  --error:    #F04040;
+  --warning:  #F5A623;
+
+  /* ── Tints ───────────────────────────────────────── */
+  --ember-04:      rgba(232,93,32,0.04);
+  --ember-10:      rgba(232,93,32,0.10);
+  --ember-15:      rgba(232,93,32,0.15);
+  --ember-20:      rgba(232,93,32,0.20);
+  --electric-15:   rgba(43,91,255,0.15);
+  --gold-15:       rgba(255,209,102,0.15);
+  --gold-22:       rgba(255,209,102,0.22);
+  --success-15:    rgba(34,192,107,0.15);
+  --warning-15:    rgba(245,166,35,0.15);
+  --white-15:      rgba(255,255,255,0.15);
+  --white-18:      rgba(255,255,255,0.18);
+
+  /* Fixed glow under the animated wave canvas. Mood palettes live in
+     styles/wave-palettes.ts because the Web Worker cannot read the DOM. */
+  --wave-bottom-glow: rgba(232,93,32,0.06);
+
+  /* ── Dark surfaces ───────────────────────────────── */
+  --char-surface:  #1E1812;   /* card on dark bg        */
+  --char-surface2: #241D14;   /* elevated/hover on dark */
+
+  /* ── Foreground tokens ───────────────────────────── */
+  --fg-on-dark:   #F5F0E8;
+  --fg-on-dark-2: rgba(245,240,232,0.55);
+  --fg-on-dark-3: rgba(245,240,232,0.30);
+
+  --fg-1: #1A1109;    /* primary on cream   */
+  --fg-2: #5C5448;    /* secondary on cream */
+  --fg-3: #9E9589;    /* placeholder/caption */
+  --rating-ink: #7A5C00;
+  --warning-ink: #7A4A00;
+
+  /* ── Surfaces ────────────────────────────────────── */
+  --surface:      var(--cream);
+  --surface-card: #FFFCF8;    /* card on cream    */
+  --admin-surface: #FDFBF7;   /* admin canvas from v2 AdminActivities.jsx */
+
+  /* ── Borders ─────────────────────────────────────── */
+  --hairline:      #E2DDD5;
+  --hairline-dark: rgba(255,255,255,0.07);
+
+  /* ── Typography ──────────────────────────────────── */
+  --font: var(--font-bricolage-grotesque), "Arial Narrow", sans-serif;
+  /* Display serif — hero headline second line only (see hero.module.css).
+     Loaded by next/font/local in layout.tsx. */
+  --font-display-serif: var(--font-fraunces), Georgia, "Times New Roman", serif;
+
+  /* ── Type scale ──────────────────────────────────── */
+  --t-display: 78px;
+  --t-h1:      50px;
+  --t-h2:      36px;
+  --t-h3:      26px;
+  --t-h4:      20px;
+  --t-body-lg: 18px;
+  --t-body:    16px;
+  --t-small:   14px;
+  --t-label:   12px;
+
+  /* ── Weights ─────────────────────────────────────── */
+  --w-body:    400; /* @kind other */
+  --w-label:   600; /* @kind other */
+  --w-heading: 700; /* @kind other */
+  --w-display: 800; /* @kind other */
+
+  /* ── Tracking ────────────────────────────────────── */
+  --track-display: -0.03em;
+  --track-h1:      -0.02em;
+  --track-label:    0.05em;
+
+  /* ── Layout ──────────────────────────────────────── */
+  --navbar-h:   60px;
+  --max-w:      1200px;
+  --section-v:  64px;
+
+  /* ── Radii ───────────────────────────────────────── */
+  --r-pill:    40px;
+  --r-card:    16px;
+  --r-card-sm: 12px;
+  --r-btn:     10px;
+  --r-chip:    99px;
+
+  /* ── Shadows ─────────────────────────────────────── */
+  --shadow-card:      0 4px 16px rgba(0,0,0,0.08);
+  --shadow-card-dark: 0 4px 20px rgba(0,0,0,0.30);
+  --focus-ember:      0 0 0 3px rgba(232,93,32,0.18);
+
+  /* ── Spacing ─────────────────────────────────────── */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
+  --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px;
+}
+
+/* ── Reset ───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--font);
+  background: var(--cream);
+  color: var(--fg-1);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* A full-bleed element sized with `100vw` (profile/security's `.backdrop`)
+     can overshoot the visible viewport by the vertical scrollbar's own
+     width on a platform where it takes up layout space, adding a sliver of
+     horizontal scroll for something purely decorative. Clipping it here
+     costs nothing: nothing in this app relies on horizontal overflow being
+     reachable. */
+  overflow-x: hidden;
+}
+#root { min-height: 100vh; }
+input, button, textarea, select { font-family: inherit; }
+input::placeholder { color: var(--fg-3); }
+::selection { background: var(--ember); color: var(--white); }
+
+/* ── Type utility classes ─────────────────────────────── */
+.sp-display {
+  font-size: var(--t-display);
+  font-weight: var(--w-display);
+  letter-spacing: var(--track-display);
+  line-height: 0.96;
+  font-optical-sizing: auto;
+}
+.sp-h1 {
+  font-size: var(--t-h1);
+  font-weight: var(--w-display);
+  letter-spacing: var(--track-h1);
+  line-height: 1.04;
+}
+.sp-h2 { font-size: var(--t-h2); font-weight: var(--w-heading); line-height: 1.1; letter-spacing: -0.01em; }
+.sp-h3 { font-size: var(--t-h3); font-weight: var(--w-heading); line-height: 1.15; letter-spacing: -0.01em; }
+.sp-h4 { font-size: var(--t-h4); font-weight: var(--w-heading); line-height: 1.2; }
+.sp-body-lg { font-size: var(--t-body-lg); font-weight: var(--w-body); line-height: 1.6; }
+.sp-body { font-size: var(--t-body); font-weight: var(--w-body); line-height: 1.55; }
+.sp-small { font-size: var(--t-small); font-weight: var(--w-body); line-height: 1.45; }
+.sp-label {
+  font-size: var(--t-label);
+  font-weight: var(--w-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+/* Visually hidden but still reachable by screen readers: for a heading a
+   screen doesn't visually show but still needs as a landmark. */
+.sp-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Animation keyframes ──────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* Opacity only, no `transform` — for elements that wrap `position: fixed`
+   descendants (`.screen`). `animation-fill-mode: both` keeps whichever
+   properties a keyframe animates pinned to their end value forever, and any
+   non-`none` `transform` — even a no-op `translateY(0)` — turns the element
+   into the containing block for its `position: fixed` children, which then
+   size and center themselves against it instead of the viewport. */
+@keyframes fadeUpNoTransform {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes pulseDot {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50%       { opacity: 1;   transform: scale(1.2); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 1; }
+}
+
+.fade-in { animation: fadeUp 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.sp-spin  { animation: spin 0.8s linear infinite; }
+
+@keyframes shimmer {
+  to { background-position: 200% center; }
+}
+@keyframes up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-12px); }
+}
+
+/* Dark textarea placeholder */
+.sp-textarea-dark::placeholder { color: rgba(255,255,255,0.22); }
+.sp-textarea-light::placeholder { color: rgba(26,17,9,0.28); }
+
+/* ── Infinite carousel scroll ─────────────────────────── */
+/* translates exactly one full set: 5 items × (210 + 44)px */
+@keyframes sp-carousel {
+  from { transform: translateX(0); }
+  to   { transform: translateX(calc(-5 * (210px + 44px))); }
+}
+
+/* ── 3D float micro-interaction ───────────────────────── */
+/* Four distinct levitation curves so a row of floating chips/cards doesn't
+   move in lockstep. Apply .sp-float-1 through .sp-float-4 in rotation. */
+@keyframes sp-levitate-1 {
+  0%   { transform: translateY(0)    rotateX(0deg)   rotateZ(0deg)   scale(1);    }
+  20%  { transform: translateY(-8px) rotateX(2deg)   rotateZ(-1deg)  scale(1.01);  }
+  50%  { transform: translateY(-14px) rotateX(-1deg)  rotateZ(1.5deg) scale(1.02); }
+  80%  { transform: translateY(-6px) rotateX(1.5deg) rotateZ(-0.5deg) scale(1.005); }
+  100% { transform: translateY(0)    rotateX(0deg)   rotateZ(0deg)   scale(1);    }
+}
+@keyframes sp-levitate-2 {
+  0%   { transform: translateY(0)    rotateX(0deg)    rotateZ(0deg)   scale(1);    }
+  30%  { transform: translateY(-11px) rotateX(-2deg)   rotateZ(1deg)   scale(1.015); }
+  55%  { transform: translateY(-6px)  rotateX(1deg)    rotateZ(-1.5deg) scale(0.99); }
+  75%  { transform: translateY(-13px) rotateX(-1.5deg) rotateZ(0.8deg) scale(1.02); }
+  100% { transform: translateY(0)    rotateX(0deg)    rotateZ(0deg)   scale(1);    }
+}
+@keyframes sp-levitate-3 {
+  0%   { transform: translateY(0)     rotateX(0deg)   rotateZ(0deg)    scale(1);    }
+  15%  { transform: translateY(-5px)  rotateX(1.5deg) rotateZ(1deg)    scale(1.01); }
+  45%  { transform: translateY(-16px) rotateX(-2deg)  rotateZ(-1.2deg) scale(1.025); }
+  70%  { transform: translateY(-9px)  rotateX(0.5deg) rotateZ(0.6deg)  scale(0.995); }
+  100% { transform: translateY(0)     rotateX(0deg)   rotateZ(0deg)    scale(1);    }
+}
+@keyframes sp-levitate-4 {
+  0%   { transform: translateY(0)     rotateX(0deg)    rotateZ(0deg)    scale(1);    }
+  25%  { transform: translateY(-10px) rotateX(-1deg)   rotateZ(-1.2deg) scale(1.02); }
+  50%  { transform: translateY(-4px)  rotateX(2deg)    rotateZ(0.8deg)  scale(0.985); }
+  80%  { transform: translateY(-12px) rotateX(-0.5deg) rotateZ(-0.6deg) scale(1.015); }
+  100% { transform: translateY(0)     rotateX(0deg)    rotateZ(0deg)    scale(1);    }
+}
+
+.sp-float-1 {
+  animation: sp-levitate-1 4.2s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+  will-change: transform;
+  transform-style: preserve-3d;
+}
+.sp-float-2 {
+  animation: sp-levitate-2 5.0s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+  animation-delay: -1.3s;
+  will-change: transform;
+  transform-style: preserve-3d;
+}
+.sp-float-3 {
+  animation: sp-levitate-3 4.6s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+  animation-delay: -2.5s;
+  will-change: transform;
+  transform-style: preserve-3d;
+}
+.sp-float-4 {
+  animation: sp-levitate-4 5.4s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+  animation-delay: -0.7s;
+  will-change: transform;
+  transform-style: preserve-3d;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sp-float-1, .sp-float-2, .sp-float-3, .sp-float-4 { animation: none; }
+}

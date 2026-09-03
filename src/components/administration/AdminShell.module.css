@@ -1,0 +1,261 @@
+.shell {
+  display: flex;
+  min-height: 100dvh;
+  background: var(--admin-surface);
+}
+
+.skipLink {
+  position: fixed;
+  top: var(--s-2);
+  left: var(--s-4);
+  z-index: 200;
+  padding: var(--s-2) var(--s-4);
+  border-radius: var(--r-btn);
+  background: var(--ember);
+  color: var(--white);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.skipLink:focus {
+  transform: translateY(0);
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  width: 248px;
+  height: 100dvh;
+  flex-shrink: 0;
+  flex-direction: column;
+  padding: var(--s-5) 20px;
+  border-right: 1px solid var(--hairline);
+  background: var(--surface-card);
+  /* On a short viewport, the nav items plus the footer (identity + "Salir
+     del panel") can add up to more than 100dvh. Without this, the footer
+     — including the only way back to the app — gets pushed off the bottom
+     with nothing to scroll it back into view. */
+  overflow-y: auto;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: var(--s-1);
+}
+
+.brand > span {
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: var(--ember-10);
+  color: var(--ember);
+  font-size: 10.5px;
+  font-weight: var(--w-heading);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.navLabel {
+  margin: 28px 0 10px;
+  padding: 0 14px;
+  color: var(--fg-3);
+  font-size: 11px;
+  font-weight: var(--w-heading);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.navItem,
+.exitLink {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 11px 14px;
+  border-radius: var(--r-btn);
+  color: var(--fg-2);
+  font-size: 15px;
+  font-weight: var(--w-label);
+  text-decoration: none;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.navItem {
+  position: relative;
+}
+
+.navItem:hover,
+.exitLink:hover {
+  background: color-mix(in srgb, var(--char) 4%, transparent);
+  color: var(--fg-1);
+}
+
+.navItemActive {
+  background: var(--ember-10);
+  color: var(--ember);
+}
+
+.navItemActive::before {
+  position: absolute;
+  top: 50%;
+  left: -14px;
+  width: 4px;
+  height: 20px;
+  border-radius: var(--r-chip);
+  background: var(--ember);
+  content: "";
+  transform: translateY(-50%);
+}
+
+.navItem:focus-visible,
+.exitLink:focus-visible,
+.mobileTrigger:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.sidebarFooter {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: auto;
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--hairline);
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  padding: 0 var(--s-1);
+}
+
+.identityAvatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: var(--r-chip);
+  background: var(--char);
+  color: var(--cream);
+  font-size: 15px;
+  font-weight: var(--w-heading);
+}
+
+.identityCopy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.identityCopy strong {
+  overflow: hidden;
+  color: var(--fg-1);
+  font-size: var(--t-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.identityCopy span {
+  color: var(--fg-3);
+  font-size: 12.5px;
+}
+
+.exitLink {
+  font-size: var(--t-small);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  max-width: 1320px;
+  padding: 36px 44px 56px;
+}
+
+.mobileHeader {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .shell {
+    display: block;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .mobileHeader {
+    position: sticky;
+    top: 0;
+    z-index: 80;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--navbar-h);
+    padding: 0 var(--s-4);
+    border-bottom: 1px solid var(--hairline);
+    background: color-mix(in srgb, var(--admin-surface) 94%, transparent);
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+  }
+
+  .mobileTrigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-btn);
+    background: var(--surface-card);
+    color: var(--fg-1);
+    cursor: pointer;
+  }
+
+  .mobilePanel {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-3);
+    padding: var(--s-3) var(--s-4) var(--s-4);
+    border-bottom: 1px solid var(--hairline);
+    background: var(--surface-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  .mobilePanel .navItemActive::before {
+    left: -4px;
+  }
+
+  .mobilePanel .exitLink {
+    border-top: 1px solid var(--hairline);
+  }
+
+  .main {
+    max-width: none;
+    padding: var(--s-6) var(--s-4) var(--s-7);
+  }
+}
+
+@media (max-width: 480px) {
+  .main {
+    padding-top: var(--s-5);
+  }
+}
