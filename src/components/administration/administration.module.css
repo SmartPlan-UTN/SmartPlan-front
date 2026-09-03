@@ -633,48 +633,6 @@
   border-top: 1px solid var(--hairline);
 }
 
-.readActionMenu {
-  position: relative;
-  margin-right: auto;
-}
-
-.readActionPopover {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 0;
-  z-index: 5;
-  min-width: 180px;
-  padding: 6px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-btn);
-  background: var(--surface-card);
-  box-shadow: var(--shadow-card);
-}
-
-.readActionPopover button {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  width: 100%;
-  padding: 9px 10px;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--fg-1);
-  font: inherit;
-  font-size: var(--t-small);
-  font-weight: var(--w-label);
-  text-align: left;
-  cursor: pointer;
-}
-
-.readActionPopover button:hover,
-.readActionPopover button:focus-visible {
-  background: var(--ember-04);
-  color: var(--ember);
-  outline: none;
-}
-
 .editGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

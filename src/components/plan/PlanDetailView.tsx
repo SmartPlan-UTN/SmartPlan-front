@@ -365,18 +365,19 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
                 href={planEditRoute(planId)}
                 style={{ textDecoration: "none", display: "flex", flex: 1 }}
               >
-                <Button variant="ghostLight" style={{ width: "100%" }}>
-                  <Icon name="pencil" size={16} aria-hidden="true" />
+                <Button variant="ghostLight" size="sm" style={{ width: "100%" }}>
+                  <Icon name="pencil" size={14} aria-hidden="true" />
                   Editar plan
                 </Button>
               </Link>
 
               <Button
                 variant="ghostLight"
+                size="sm"
                 style={{ flex: 1 }}
                 onClick={() => setShowCancelModal(true)}
               >
-                <Icon name="trash-2" size={16} aria-hidden="true" />
+                <Icon name="trash-2" size={14} aria-hidden="true" />
                 Eliminar plan
               </Button>
             </>
@@ -384,6 +385,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
 
           <Button
             variant={saved ? "secondary" : "ghostLight"}
+            size="sm"
             className={styles.actionFlex1}
             aria-pressed={saved}
             aria-label={saved ? "Quitar de guardados" : "Guardar plan"}
@@ -393,21 +395,23 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
               });
             }}
           >
-            <Icon name="bookmark" size={16} aria-hidden="true" />
+            <Icon name="bookmark" size={14} aria-hidden="true" />
             {saved ? "¡Guardado!" : "Guardar plan"}
           </Button>
           <Button
             variant="ghost"
+            size="sm"
             className={styles.actionShare}
             onClick={() => {
               void handleShare();
             }}
           >
-            <Icon name="share-2" size={16} aria-hidden="true" />
+            <Icon name="share-2" size={14} aria-hidden="true" />
             {copied ? "¡Copiado!" : "Compartir"}
           </Button>
           <Button
             variant="primary"
+            size="sm"
             className={styles.actionFlex2}
             disabled
             title="Próximamente"

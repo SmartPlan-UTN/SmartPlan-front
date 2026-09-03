@@ -41,6 +41,15 @@ export interface Place extends BaseEntity {
   department?: Department;
 }
 
+/**
+ * A "Provincia" (`GET /places/cities`) or "Localidad" (`GET /places/departments`)
+ * filter option: just enough to fill a `Select`, not the full `City`/`Department`
+ * catalog entity.
+ */
+export interface LocationOption {
+  id: number;
+  name: string;
+}
 /** Place catalog projection returned by `GET /places`. */
 export interface PlaceOption {
   id: number;

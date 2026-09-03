@@ -78,6 +78,11 @@ export type ActivitySortField = 'relevance' | 'price' | 'rating' | 'distance';
 export interface ActivitySearchParams extends ExplorationQueryParams {
   type?: string;
   sortBy?: ActivitySortField;
+  /** "Provincia" filter: only activities with a meeting point in this city. */
+  cityId?: number;
+  /** "Localidad" filter: only activities with a meeting point in this
+   * department. Sent alongside `cityId` once a department is chosen. */
+  departmentId?: number;
 }
 
 /**

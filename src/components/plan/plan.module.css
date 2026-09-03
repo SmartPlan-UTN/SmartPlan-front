@@ -365,8 +365,17 @@
 /* ── Action row (not sticky — normal document flow) ───────────── */
 .actionBar {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2);
+  flex-wrap: nowrap;
+  gap: var(--s-1);
+  /* A safety net, not the fix: `size="sm"` on every button here is what
+     keeps five actions on one line at normal widths. On a viewport too
+     narrow even for that, this scrolls the row horizontally instead of
+     wrapping it to a second line. */
+  overflow-x: auto;
+}
+
+.actionBar button {
+  white-space: nowrap;
 }
 
 .actionFlex1 {

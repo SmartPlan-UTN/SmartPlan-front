@@ -22,6 +22,18 @@
   transition: border-color 150ms ease;
 }
 
+/* A long option label (e.g. "Elegí una provincia primero") would otherwise
+   wrap inside the fixed-height trigger instead of shrinking — flex items
+   don't get `white-space: nowrap` for free. Truncating with an ellipsis
+   keeps every `Select` one line tall regardless of label length. */
+.triggerLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .trigger:hover {
   border-color: color-mix(in srgb, var(--fg-1) 25%, var(--hairline));
 }
@@ -64,6 +76,7 @@
 .option {
   display: block;
   width: 100%;
+  overflow: hidden;
   padding: var(--s-2) var(--s-3);
   border: 0;
   border-radius: var(--r-btn);
@@ -72,6 +85,8 @@
   font-size: var(--t-small);
   font-family: inherit;
   text-align: left;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   cursor: pointer;
 }
 

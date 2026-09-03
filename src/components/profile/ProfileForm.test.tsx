@@ -55,12 +55,31 @@ describe("ProfileForm", () => {
     expect(await screen.findByDisplayValue("Ana")).toBeInTheDocument();
   });
 
-  it("shows required-field errors without calling the API", async () => {
+  it("starts read-only, with the fields enabled only after Editar perfil", async () => {
     getProfile.mockResolvedValueOnce(profile);
     const user = userEvent.setup();
     render(<ProfileForm />);
 
     const nameInput = await screen.findByLabelText("Nombre");
+    expect(nameInput).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Guardar cambios" })).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Editar perfil" }));
+
+    expect(nameInput).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Guardar cambios" }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows required-field errors without calling the API", async () => {
+    getProfile.mockResolvedValueOnce(profile);
+    const user = userEvent.setup();
+    render(<ProfileForm />);
+
+    await user.click(await screen.findByRole("button", { name: "Editar perfil" }));
+
+    const nameInput = screen.getByLabelText("Nombre");
     await user.clear(nameInput);
     await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
@@ -74,7 +93,9 @@ describe("ProfileForm", () => {
     const user = userEvent.setup();
     render(<ProfileForm />);
 
-    const nameInput = await screen.findByLabelText("Nombre");
+    await user.click(await screen.findByRole("button", { name: "Editar perfil" }));
+
+    const nameInput = screen.getByLabelText("Nombre");
     await user.clear(nameInput);
     await user.type(nameInput, "  Ana María  ");
     await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
@@ -93,7 +114,9 @@ describe("ProfileForm", () => {
     const user = userEvent.setup();
     render(<ProfileForm />);
 
-    const nameInput = await screen.findByLabelText("Nombre");
+    await user.click(await screen.findByRole("button", { name: "Editar perfil" }));
+
+    const nameInput = screen.getByLabelText("Nombre");
     await user.clear(nameInput);
     await user.type(nameInput, "Otro nombre");
     await user.click(screen.getByRole("button", { name: "Cancelar" }));
@@ -116,6 +139,7 @@ describe("ProfileForm", () => {
     render(<ProfileForm />);
 
     await screen.findByDisplayValue("Ana");
+    await user.click(screen.getByRole("button", { name: "Editar perfil" }));
     await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
     expect(
@@ -139,7 +163,9 @@ describe("ProfileForm", () => {
     const user = userEvent.setup();
     render(<ProfileForm />);
 
-    const nameInput = await screen.findByLabelText("Nombre");
+    await user.click(await screen.findByRole("button", { name: "Editar perfil" }));
+
+    const nameInput = screen.getByLabelText("Nombre");
     await user.clear(nameInput);
     await user.type(nameInput, "Otro nombre");
     await user.click(screen.getByRole("button", { name: "Guardar cambios" }));

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
-import { Button, Icon } from "@/components/ui";
+import { Button, ConfirmationDialog, Icon } from "@/components/ui";
 import { ApiError } from "@/lib/api";
 import type {
   AdminUser,
@@ -38,15 +38,23 @@ export interface UserReadDialogProps {
   user: AdminUser;
   onClose: () => void;
   onSave: (id: number, input: UpdateAdminUserInput) => Promise<AdminUser>;
+  onDelete: (id: number) => Promise<void>;
 }
 
-export function UserReadDialog({ user, onClose, onSave }: UserReadDialogProps) {
+export function UserReadDialog({
+  user,
+  onClose,
+  onSave,
+  onDelete,
+}: UserReadDialogProps) {
   const dialogRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
-  const [actionsOpen, setActionsOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: user.name,
     lastName: user.lastName,
@@ -60,7 +68,7 @@ export function UserReadDialog({ user, onClose, onSave }: UserReadDialogProps) {
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        if (actionsOpen) setActionsOpen(false);
+        if (showDeleteConfirm) setShowDeleteConfirm(false);
         else if (!saving) onClose();
         return;
       }
@@ -84,7 +92,7 @@ export function UserReadDialog({ user, onClose, onSave }: UserReadDialogProps) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [actionsOpen, onClose, saving]);
+  }, [showDeleteConfirm, onClose, saving]);
 
   function cancelEditing() {
     setForm({
@@ -115,6 +123,23 @@ export function UserReadDialog({ user, onClose, onSave }: UserReadDialogProps) {
       }
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await onDelete(user.id);
+    } catch (caught) {
+      if (caught instanceof ApiError && caught.code === "ADMIN_SELF_DELETE") {
+        setDeleteError("No podés eliminar tu propia cuenta.");
+      } else if (caught instanceof ApiError && caught.isForbidden) {
+        setDeleteError("No tenés permisos para eliminar este usuario.");
+      } else {
+        setDeleteError("No pudimos eliminar el usuario. Intentá nuevamente.");
+      }
+      setDeleting(false);
     }
   }
 
@@ -172,23 +197,35 @@ export function UserReadDialog({ user, onClose, onSave }: UserReadDialogProps) {
               <div><dt>Identificador</dt><dd>#{user.id}</dd></div>
             </dl>
             <div className={styles.readActions}>
-              <div className={styles.readActionMenu}>
-                <Button variant="ghostEmber" aria-haspopup="menu" aria-expanded={actionsOpen} onClick={() => setActionsOpen((current) => !current)}>
-                  Acciones <Icon name="chevron-down" size={15} />
-                </Button>
-                {actionsOpen ? (
-                  <div className={styles.readActionPopover} role="menu">
-                    <button type="button" role="menuitem" onClick={() => { setActionsOpen(false); setEditing(true); }}>
-                      <Icon name="pencil" size={16} /> Editar usuario
-                    </button>
-                  </div>
-                ) : null}
-              </div>
+              <Button variant="ghostEmber" onClick={() => setEditing(true)}>
+                <Icon name="pencil" size={15} /> Editar
+              </Button>
+              <Button variant="danger" onClick={() => setShowDeleteConfirm(true)}>
+                <Icon name="trash-2" size={15} /> Eliminar usuario
+              </Button>
               <Button variant="ghostLight" onClick={onClose}>Cerrar</Button>
             </div>
           </>
         )}
       </section>
+
+      {showDeleteConfirm ? (
+        <ConfirmationDialog
+          title={`¿Eliminar a ${user.name} ${user.lastName}?`}
+          confirmLabel="Sí, eliminar usuario"
+          confirmingLabel="Eliminando..."
+          cancelLabel="Volver"
+          isConfirming={deleting}
+          error={deleteError}
+          onCancel={() => setShowDeleteConfirm(false)}
+          onConfirm={() => void handleDelete()}
+        >
+          <p>
+            La cuenta se elimina y ya no va a poder iniciar sesión. Sus
+            planes y valoraciones existentes se conservan.
+          </p>
+        </ConfirmationDialog>
+      ) : null}
     </div>
   );
 }
