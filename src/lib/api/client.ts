@@ -2,7 +2,7 @@ import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios';
 import { getApiBaseUrl } from './config';
 import { getToken } from './token-provider';
 import { notifyUnauthorized } from './auth-events';
-import { normalizeError } from './errors';
+import { normalizeError, type ApiError } from './errors';
 
 /**
  * Configuration options for apiClient requests, omitting `url` and `method`.
@@ -85,9 +85,33 @@ instance.interceptors.request.use(
 );
 
 /**
+ * 401 codes that mean "this specific credential check failed," not "your
+ * session or access token is invalid." `SmartPlan-back` reuses HTTP 401 for
+ * both: an expired/revoked session (`INVALID_TOKEN`, `INVALID_SESSION`,
+ * `UNAUTHENTICATED`) genuinely means the app should log out, but
+ * `INVALID_CURRENT_PASSWORD` (CU6's password change, CU7's account
+ * deletion) is a business check on a *different* credential — the session
+ * making the request is still perfectly valid. Without this exclusion,
+ * typing the wrong current password would silently log the user out of an
+ * otherwise-fine session instead of just showing a field error.
+ */
+const NON_SESSION_UNAUTHORIZED_CODES = new Set(['INVALID_CURRENT_PASSWORD']);
+
+/**
+ * Whether a 401 should trigger the global "close the session" event.
+ * Exported (not part of the public `@/lib/api` barrel) so it can be tested
+ * directly without exercising axios itself — see `client.test.ts`.
+ */
+export function isSessionInvalidating(apiError: ApiError): boolean {
+  return apiError.isUnauthorized && !NON_SESSION_UNAUTHORIZED_CODES.has(apiError.code ?? '');
+}
+
+/**
  * Response interceptor:
  * - Captures response errors.
- * - If the error is a 401 (Unauthorized), notifies the event bus through `notifyUnauthorized()`.
+ * - If the error is a 401 that actually means the session/token is invalid
+ *   (not one of `NON_SESSION_UNAUTHORIZED_CODES`), notifies the event bus
+ *   through `notifyUnauthorized()`.
  * - Ensures every thrown exception is an `ApiError`.
  */
 instance.interceptors.response.use(
@@ -95,7 +119,7 @@ instance.interceptors.response.use(
   (error: unknown) => {
     const apiError = normalizeError(error);
 
-    if (apiError.isUnauthorized) {
+    if (isSessionInvalidating(apiError)) {
       notifyUnauthorized();
     }
 

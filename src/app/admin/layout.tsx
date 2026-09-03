@@ -7,15 +7,14 @@ import { ProtectedRoute } from "@/components/auth";
  * Layout for the administration panel.
  *
  * Uses the dedicated administration sidebar from the v2 system design and
- * requires a session. **The role check doesn't exist yet**: today
- * any valid session gets in. Restricting it to admin users is part of CU61
- * and CU62, which define permissions and roles.
+ * requires an administrator session. The backend remains the authoritative
+ * security boundary and checks role plus endpoint permissions.
  */
 export default function AdminLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requiredRole="admin">
       <AdminShell>{children}</AdminShell>
     </ProtectedRoute>
   );

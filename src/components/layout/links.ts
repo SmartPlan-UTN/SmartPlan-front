@@ -25,8 +25,14 @@ export const MAIN_LINKS: readonly NavigationLink[] = [
   { href: ROUTES.history, label: "Historial", icon: "clock" },
 ];
 
-/** User menu options. */
+/**
+ * User menu options. Seguridad (CU6's password change) sits between
+ * Preferencias and Cerrar sesión — its own `/security` destination, not a
+ * card on `/profile`, matching the system design's dedicated `Security.jsx`
+ * screen instead of `Profile.jsx`'s duplicate inline card.
+ */
 export const USER_LINKS: readonly NavigationLink[] = [
   { href: ROUTES.profile, label: "Mi perfil", icon: "user" },
   { href: ROUTES.preferences, label: "Preferencias", icon: "settings" },
+  { href: ROUTES.security, label: "Seguridad", icon: "lock" },
 ];

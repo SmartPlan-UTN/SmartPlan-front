@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
-import { PendingScreen } from "@/components/layout";
+import { AdminPlansView } from "@/components/administration";
 
 export const metadata: Metadata = { title: "Administrar planes" };
 
 export default function AdminPlansPage() {
-  return <PendingScreen title="Administrar planes" description="Gestión de planes registrados." references="CU60 · PAN 22" />;
+  return <AdminPlansView />;
 }

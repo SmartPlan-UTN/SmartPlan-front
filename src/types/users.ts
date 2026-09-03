@@ -68,3 +68,18 @@ export interface UserPreference extends BaseEntity {
   user?: User;
   category?: Category;
 }
+
+/**
+ * Editable profile view (CU5). Matches `UserProfileResponseDto` in
+ * `SmartPlan-back`'s `GET /users/me` and `PATCH /users/me` — narrower than
+ * `User`: role and status always come embedded, never as bare `idRole`/
+ * `idUserStatus` foreign keys.
+ */
+export interface UserProfile {
+  id: number;
+  name: string;
+  lastName: string;
+  email: string;
+  role: { key: RoleKey; name: string };
+  status: { key: UserStatusKey; name: string };
+}
