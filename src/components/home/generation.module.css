@@ -37,7 +37,7 @@
 }
 
 .ring {
-  border: 1.5px solid var(--electric-15);
+  border: 1.5px solid var(--ember-15);
   border-radius: 50%;
   animation: 2s ease-in-out infinite hero-ring-pulse;
   position: absolute;
@@ -46,7 +46,7 @@
 }
 
 .ringTrack {
-  border: 3px solid var(--electric-15);
+  border: 3px solid var(--ember-15);
   border-radius: 50%;
   position: absolute;
   inset: 0;
@@ -54,7 +54,7 @@
 
 .ringSpinner {
   border: 3px solid #0000;
-  border-top-color: var(--electric);
+  border-top-color: var(--ember);
   border-radius: 50%;
   animation: .9s linear infinite spin;
   position: absolute;
@@ -62,10 +62,10 @@
 }
 
 .ringCore {
-  background: var(--electric);
+  background: var(--ember);
   width: 34px;
   height: 34px;
-  box-shadow: 0 5px 20px var(--electric-15);
+  box-shadow: 0 5px 20px var(--ember-15);
   color: var(--white);
   border-radius: 50%;
   justify-content: center;

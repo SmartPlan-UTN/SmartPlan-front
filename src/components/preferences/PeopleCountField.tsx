@@ -16,9 +16,10 @@ interface PeopleCountFieldProps {
 }
 
 /**
- * PAN 15 "cantidad habitual de personas": a +/- stepper. Optional — the
- * field starts empty and can be cleared back to empty; when it has a value
- * it is clamped to 1..20 and never sends 0.
+ * PAN 15 "cantidad habitual de personas": a +/- stepper with a typable
+ * number field in the middle. Optional — the field starts empty and can be
+ * cleared back to empty; when it has a value it is clamped to 1..20 and
+ * never sends 0.
  */
 export function PeopleCountField({
   value,
@@ -50,15 +51,39 @@ export function PeopleCountField({
           <Icon name="minus" size={18} stroke={2.4} />
         </button>
 
-        <span className={styles.stepperValue} aria-live="polite">
-          {value === null ? (
-            <span className={styles.stepperEmpty}>Sin definir</span>
-          ) : (
-            <>
-              <strong>{value}</strong>
-              {value === 1 ? " persona" : " personas"}
-            </>
-          )}
+        <span className={styles.stepperValue}>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={MIN_PEOPLE}
+            max={MAX_PEOPLE}
+            className={
+              value === null
+                ? `${styles.stepperInput} ${styles.stepperInputEmpty}`
+                : styles.stepperInput
+            }
+            value={value ?? ""}
+            disabled={disabled}
+            placeholder="Sin definir"
+            aria-label="Cantidad de personas"
+            onChange={(event) => {
+              const raw = event.target.value;
+              if (raw.trim() === "") {
+                onChange(null);
+                return;
+              }
+              const parsed = Number(raw);
+              if (!Number.isFinite(parsed)) return;
+              onChange(
+                Math.min(MAX_PEOPLE, Math.max(MIN_PEOPLE, Math.round(parsed))),
+              );
+            }}
+          />
+          {value !== null ? (
+            <span aria-live="polite">
+              {value === 1 ? "persona" : "personas"}
+            </span>
+          ) : null}
         </span>
 
         <button

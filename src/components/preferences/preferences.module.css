@@ -124,9 +124,7 @@
 }
 
 .stepButton:focus-visible,
-.stepButtonActive:focus-visible,
-.moneyInput input:focus-visible,
-.areaInput input:focus-visible {
+.stepButtonActive:focus-visible {
   outline: 2px solid var(--ember);
   outline-offset: 2px;
   box-shadow: var(--focus-ember);
@@ -473,7 +471,7 @@
 
 .moneyInput input:focus-visible,
 .areaInput input:focus-visible {
-  outline-offset: 0;
+  outline: none;
   box-shadow: none;
 }
 
@@ -538,6 +536,12 @@
   border: 1px solid var(--hairline);
   border-radius: var(--r-pill);
   background: var(--surface-card);
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.stepper:focus-within {
+  border-color: var(--ember);
+  box-shadow: var(--focus-ember);
 }
 
 .stepperButton {
@@ -562,16 +566,50 @@
 
 .stepperValue {
   min-width: 132px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-1);
   color: var(--fg-2);
   font-size: var(--t-small);
 }
-.stepperValue strong {
+
+.stepperInput {
+  width: 2.5em;
+  border: 0;
+  background: transparent;
   color: var(--fg-1);
+  font: inherit;
   font-size: var(--t-body-lg);
   font-weight: var(--w-heading);
+  text-align: center;
+  -moz-appearance: textfield;
+  transition: width 160ms ease;
 }
-.stepperEmpty { color: var(--fg-3); font-style: italic; }
+
+.stepperInputEmpty {
+  width: 7em;
+}
+
+.stepperInput::-webkit-outer-spin-button,
+.stepperInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.stepperInput::placeholder {
+  color: var(--fg-3);
+  font-style: italic;
+  font-weight: var(--w-body);
+  font-size: var(--t-small);
+}
+
+.stepperInput:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.stepperInput:disabled { cursor: not-allowed; }
 
 /* Device location toggle */
 .toggleField {

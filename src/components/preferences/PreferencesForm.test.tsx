@@ -275,7 +275,10 @@ describe("PreferencesForm", () => {
 
     await screen.findByRole("button", { name: "Gastronomía" });
     await openStep(user, /Tu salida habitual/);
-    await user.type(screen.getByRole("spinbutton"), "0");
+    await user.type(
+      screen.getByRole("spinbutton", { name: /Cuánto solés gastar/ }),
+      "0",
+    );
     await user.click(
       screen.getByRole("button", { name: "Guardar preferencias" }),
     );
@@ -324,7 +327,9 @@ describe("PreferencesForm", () => {
 
     await user.click(await screen.findByRole("button", { name: "Cultura" }));
     await openStep(user, /Tu salida habitual/);
-    const budget = screen.getByRole("spinbutton");
+    const budget = screen.getByRole("spinbutton", {
+      name: /Cuánto solés gastar/,
+    });
     await user.clear(budget);
     await user.type(budget, "45000");
     await user.click(screen.getByRole("button", { name: "Descartar cambios" }));
