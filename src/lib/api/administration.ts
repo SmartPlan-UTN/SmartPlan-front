@@ -16,6 +16,11 @@ import type {
   AdminPlansResult,
   AdminPlan,
   UpdateAdminPlanInput,
+  AdminRatingCounts,
+  AdminRatingsQuery,
+  AdminRatingsResult,
+  AdminRating,
+  ModerateRatingInput,
 } from '@/types';
 import { apiClient } from './client';
 
@@ -95,6 +100,47 @@ export async function updateAdminPlan(
 
 export async function deleteAdminPlan(id: number): Promise<void> {
   return apiClient.delete<void>(`/admin/plans/${id}`);
+}
+
+/** Lists ratings awaiting or past moderation for PAN 20 (CU55). */
+export async function listAdminRatings(
+  params: AdminRatingsQuery = {},
+): Promise<AdminRatingsResult> {
+  return apiClient.get<AdminRatingsResult>('/admin/ratings', { params });
+}
+
+/**
+ * Approves or rejects one rating (CU55). A rejection carries the reason the
+ * backend requires; the input type makes sending one without it impossible.
+ * Answers with the moderated row, already in its new state.
+ */
+export async function moderateAdminRating(
+  id: number,
+  input: ModerateRatingInput,
+): Promise<AdminRating> {
+  return apiClient.patch<AdminRating>(`/admin/ratings/${id}/moderation`, input);
+}
+
+/**
+ * Counts the ratings in each moderation state, for PAN 20's tab badges.
+ *
+ * There's no counters endpoint, so this reads `pagination.total` from three
+ * one-row listings — the same way `getAdminUserMetrics` builds REP-02's
+ * header out of the listing contract. `limit: 1` because only the total is
+ * wanted; the rows themselves are thrown away.
+ */
+export async function getAdminRatingCounts(): Promise<AdminRatingCounts> {
+  const [pending, approved, rejected] = await Promise.all([
+    listAdminRatings({ status: 'pending', page: 1, limit: 1 }),
+    listAdminRatings({ status: 'approved', page: 1, limit: 1 }),
+    listAdminRatings({ status: 'rejected', page: 1, limit: 1 }),
+  ]);
+
+  return {
+    pending: pending.pagination.total,
+    approved: approved.pagination.total,
+    rejected: rejected.pagination.total,
+  };
 }
 
 /**

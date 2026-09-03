@@ -3,6 +3,7 @@ import type { PaginatedResult, SortDirection } from './common';
 import type { User } from './users';
 import type { RoleKey, UserStatusKey } from './users';
 import type { PlanStatusKey } from './plans';
+import type { RatingModerationStatus } from './ratings';
 
 /**
  * Possible actions recorded in the audit log.
@@ -215,3 +216,55 @@ export interface UpdateAdminPlanInput {
 }
 
 export type AdminPlansResult = PaginatedResult<AdminPlan>;
+
+/**
+ * A rating as PAN 20 sees it (CU55) — the only projection that pairs
+ * moderation state with the author's real identity, and the only one that
+ * names the rated activity and the plan it came from.
+ *
+ * `authorAlias` ("Ana P.") stays in the payload because the administrative
+ * row extends the public one, but the moderation tray shows `author`: an
+ * administrator deciding on a comment is entitled to know who wrote it.
+ * Matches `AdminRatingDto` in `SmartPlan-back`.
+ */
+export interface AdminRating {
+  id: number;
+  score: number;
+  comment: string | null;
+  authorAlias: string;
+  createdAt: string;
+  updatedAt: string;
+  activityId: number;
+  planId: number;
+  moderationStatus: RatingModerationStatus;
+  moderationReason: string | null;
+  author: { id: number; name: string; lastName: string };
+  activity: { id: number; name: string };
+  plan: { id: number; title: string };
+}
+
+/** Filters and pagination accepted by `GET /admin/ratings`. */
+export interface AdminRatingsQuery {
+  status?: RatingModerationStatus;
+  page?: number;
+  limit?: number;
+  sortBy?: 'createdAt' | 'score';
+  direction?: SortDirection;
+}
+
+export type AdminRatingsResult = PaginatedResult<AdminRating>;
+
+/**
+ * Payload for `PATCH /admin/ratings/:id/moderation` (CU55).
+ *
+ * A discriminated union rather than `{ status, reason? }`: `SmartPlan-back`'s
+ * `ModerateRatingDto` requires a non-empty reason only when rejecting
+ * (`ValidateIf`), and this shape makes a rejection without one impossible to
+ * build instead of a `400` discovered at runtime.
+ */
+export type ModerateRatingInput =
+  | { status: 'approved' }
+  | { status: 'rejected'; reason: string };
+
+/** How many ratings sit in each moderation state, for PAN 20's tab counters. */
+export type AdminRatingCounts = Record<RatingModerationStatus, number>;
