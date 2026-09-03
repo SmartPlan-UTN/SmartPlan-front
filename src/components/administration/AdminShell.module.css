@@ -34,6 +34,11 @@
   padding: var(--s-5) 20px;
   border-right: 1px solid var(--hairline);
   background: var(--surface-card);
+  /* On a short viewport, the nav items plus the footer (identity + "Salir
+     del panel") can add up to more than 100dvh. Without this, the footer
+     — including the only way back to the app — gets pushed off the bottom
+     with nothing to scroll it back into view. */
+  overflow-y: auto;
 }
 
 .brand {

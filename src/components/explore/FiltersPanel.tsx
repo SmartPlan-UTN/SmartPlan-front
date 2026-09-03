@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Select } from "@/components/ui";
-import type { SortDirection } from "@/types";
+import type { LocationOption, SortDirection } from "@/types";
 
 import styles from "./explore.module.css";
 
@@ -10,9 +10,26 @@ const DIRECTION_OPTIONS = [
   { value: "desc" as const, label: "Descendente" },
 ];
 
+const ANY_LOCATION = "";
+
 export interface SortOption<TSortField extends string> {
   value: TSortField;
   label: string;
+}
+
+/**
+ * "Provincia"/"Localidad" cascading filter (CU10). Only activities have a
+ * location to filter by — `PlanSearch` doesn't pass this prop, and the
+ * fields don't render without it.
+ */
+export interface LocationFilterProps {
+  cities: LocationOption[];
+  cityId: number | null;
+  onCityIdChange: (value: number | null) => void;
+  departments: LocationOption[];
+  departmentId: number | null;
+  onDepartmentIdChange: (value: number | null) => void;
+  departmentsLoading?: boolean;
 }
 
 export interface FiltersPanelProps<TSortField extends string> {
@@ -28,6 +45,7 @@ export interface FiltersPanelProps<TSortField extends string> {
   direction: SortDirection;
   onDirectionChange: (value: SortDirection) => void;
   onClear: () => void;
+  location?: LocationFilterProps;
 }
 
 /**
@@ -51,10 +69,64 @@ export function FiltersPanel<TSortField extends string>({
   direction,
   onDirectionChange,
   onClear,
+  location,
 }: FiltersPanelProps<TSortField>) {
   return (
     <div className={styles.panel}>
       <div className={styles.panelGrid}>
+        {location ? (
+          <>
+            <div className={styles.field}>
+              <span className={styles.fieldLabel}>Provincia</span>
+              <Select
+                value={location.cityId === null ? ANY_LOCATION : String(location.cityId)}
+                onChange={(value) => {
+                  location.onCityIdChange(value === ANY_LOCATION ? null : Number(value));
+                }}
+                options={[
+                  { value: ANY_LOCATION, label: "Cualquiera" },
+                  ...location.cities.map((city) => ({
+                    value: String(city.id),
+                    label: city.name,
+                  })),
+                ]}
+                aria-label="Provincia"
+              />
+            </div>
+
+            <div className={styles.field}>
+              <span className={styles.fieldLabel}>Localidad</span>
+              <Select
+                value={
+                  location.departmentId === null
+                    ? ANY_LOCATION
+                    : String(location.departmentId)
+                }
+                onChange={(value) => {
+                  location.onDepartmentIdChange(
+                    value === ANY_LOCATION ? null : Number(value),
+                  );
+                }}
+                options={[
+                  {
+                    value: ANY_LOCATION,
+                    label:
+                      location.cityId === null
+                        ? "Elegí provincia"
+                        : location.departmentsLoading
+                          ? "Cargando..."
+                          : "Cualquiera",
+                  },
+                  ...location.departments.map((department) => ({
+                    value: String(department.id),
+                    label: department.name,
+                  })),
+                ]}
+                aria-label="Localidad"
+              />
+            </div>
+          </>
+        ) : null}
         <label className={styles.field}>
           <span className={styles.fieldLabel}>Precio mínimo</span>
           <input

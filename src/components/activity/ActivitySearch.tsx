@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import {
@@ -11,9 +11,9 @@ import {
 } from "@/components/explore";
 import { Button, Icon, LoadingDots } from "@/components/ui";
 import { useDebouncedValue, useExplorationFilters, useExplorationSearch } from "@/hooks";
-import { searchActivities } from "@/lib/api";
+import { listCities, listDepartments, searchActivities } from "@/lib/api";
 import { ROUTES } from "@/lib/routes";
-import type { ActivitySearchParams, ActivitySortField } from "@/types";
+import type { ActivitySearchParams, ActivitySortField, LocationOption } from "@/types";
 
 import { ActivityCard } from "./ActivityCard";
 import styles from "./activity.module.css";
@@ -70,6 +70,68 @@ export function ActivitySearch() {
     clear: clearFilters,
   } = useExplorationFilters<ActivitySortField>("relevance");
 
+  // "Provincia"/"Localidad" (CU10): kept outside `useExplorationFilters`
+  // since it's shared with `PlanSearch`, which has no location to filter by.
+  const [cities, setCities] = useState<LocationOption[]>([]);
+  const [cityId, setCityId] = useState<number | null>(null);
+  const [departments, setDepartments] = useState<LocationOption[]>([]);
+  const [departmentId, setDepartmentId] = useState<number | null>(null);
+  const [departmentsLoading, setDepartmentsLoading] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    listCities()
+      .then((result) => {
+        if (active) setCities(result.data);
+      })
+      .catch(() => {
+        // A failed lookup just leaves the "Provincia" filter without
+        // options — the rest of the search still works.
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    // No fetch for `null`: `handleCityIdChange` already clears `departments`
+    // itself the moment "Provincia" changes, so there's nothing to
+    // synchronize here — an effect resetting it too would just be a second,
+    // redundant `setState` reacting to its own cause.
+    if (cityId === null) {
+      return;
+    }
+
+    const selectedCityId = cityId;
+    let active = true;
+
+    async function run() {
+      setDepartmentsLoading(true);
+      try {
+        const result = await listDepartments(selectedCityId);
+        if (active) setDepartments(result.data);
+      } catch {
+        if (active) setDepartments([]);
+      } finally {
+        if (active) setDepartmentsLoading(false);
+      }
+    }
+    void run();
+
+    return () => {
+      active = false;
+    };
+  }, [cityId]);
+
+  const handleCityIdChange = useCallback((value: number | null) => {
+    setCityId(value);
+    // A department only makes sense within its own city: switching
+    // "Provincia" without resetting it would silently keep filtering by a
+    // locality that isn't even offered as an option anymore.
+    setDepartmentId(null);
+    setDepartments([]);
+  }, []);
+
   const handleQueryChange = useCallback((value: string) => {
     setQuery(value);
     setManualQuery(null);
@@ -92,6 +154,8 @@ export function ActivitySearch() {
       minPrice: toNumber(debouncedMinPrice),
       maxPrice: toNumber(debouncedMaxPrice),
       minRating: toNumber(debouncedMinRating),
+      cityId: cityId ?? undefined,
+      departmentId: departmentId ?? undefined,
       sortBy,
       direction,
     }),
@@ -101,6 +165,8 @@ export function ActivitySearch() {
       debouncedMinPrice,
       debouncedMaxPrice,
       debouncedMinRating,
+      cityId,
+      departmentId,
       sortBy,
       direction,
     ],
@@ -115,6 +181,10 @@ export function ActivitySearch() {
     if (params.minPrice != null) searchParams.set("minPrice", String(params.minPrice));
     if (params.maxPrice != null) searchParams.set("maxPrice", String(params.maxPrice));
     if (params.minRating != null) searchParams.set("minRating", String(params.minRating));
+    if (params.cityId != null) searchParams.set("cityId", String(params.cityId));
+    if (params.departmentId != null) {
+      searchParams.set("departmentId", String(params.departmentId));
+    }
     const query = searchParams.toString();
     return query ? `${ROUTES.exploreMap}?${query}` : ROUTES.exploreMap;
   }, [params]);
@@ -207,7 +277,19 @@ export function ActivitySearch() {
           sortOptions={SORT_OPTIONS}
           direction={direction}
           onDirectionChange={setDirection}
-          onClear={clearFilters}
+          onClear={() => {
+            clearFilters();
+            handleCityIdChange(null);
+          }}
+          location={{
+            cities,
+            cityId,
+            onCityIdChange: handleCityIdChange,
+            departments,
+            departmentId,
+            onDepartmentIdChange: setDepartmentId,
+            departmentsLoading,
+          }}
         />
       ) : null}
 

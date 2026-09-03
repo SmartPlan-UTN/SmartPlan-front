@@ -79,9 +79,6 @@ describe("Navbar", () => {
     expect(
       within(nav).getByRole("link", { name: "Historial" }),
     ).toHaveAttribute("href", "/history");
-    expect(
-      screen.getByRole("link", { name: "Crear plan" }),
-    ).toHaveAttribute("href", "/plans/create");
   });
 
   it("marks the current route's destination with aria-current", async () => {

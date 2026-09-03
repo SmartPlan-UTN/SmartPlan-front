@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 import { Button } from "./Button";
 import { Icon } from "./Icon";
@@ -99,7 +100,14 @@ export function ConfirmationDialog({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [hideCancel, isConfirming, onCancel]);
 
-  return (
+  // Portaled to `document.body`, not rendered in place: `Screen`'s entrance
+  // animation leaves a `transform` on itself via `animation-fill-mode:
+  // both` (see `layout.module.css` `.screen`), and a `transform` on any
+  // ancestor turns it into the containing block for `position: fixed`
+  // descendants — the overlay would size and center itself against
+  // `Screen`'s box instead of the viewport. A portal sidesteps that
+  // regardless of which page mounts this dialog.
+  return createPortal(
     <div className={styles.overlay}>
       <section
         className={styles.dialog}
@@ -144,6 +152,7 @@ export function ConfirmationDialog({
           </Button>
         </div>
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 }

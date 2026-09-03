@@ -217,7 +217,6 @@ export function CreatePlanForm() {
       <div>
         <div className={styles.card}>
           <form className={styles.form} onSubmit={handleSubmit} noValidate>
-
             {/* Nombre */}
             <div className={styles.field}>
               <div className={styles.labelRow}>

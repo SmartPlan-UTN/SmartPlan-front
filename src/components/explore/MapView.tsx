@@ -59,6 +59,10 @@ function readFiltersFromSearchParams(
   const minPriceRaw = searchParams.get("minPrice");
   const maxPriceRaw = searchParams.get("maxPrice");
   const minRatingRaw = searchParams.get("minRating");
+  const cityIdRaw = searchParams.get("cityId");
+  const departmentIdRaw = searchParams.get("departmentId");
+  const cityId = cityIdRaw ? Number(cityIdRaw) : undefined;
+  const departmentId = departmentIdRaw ? Number(departmentIdRaw) : undefined;
 
   return {
     search,
@@ -66,6 +70,11 @@ function readFiltersFromSearchParams(
     minPrice: minPriceRaw ? Number(minPriceRaw) : undefined,
     maxPrice: maxPriceRaw ? Number(maxPriceRaw) : undefined,
     minRating: minRatingRaw ? Number(minRatingRaw) : undefined,
+    cityId: cityId != null && Number.isInteger(cityId) && cityId > 0 ? cityId : undefined,
+    departmentId:
+      departmentId != null && Number.isInteger(departmentId) && departmentId > 0
+        ? departmentId
+        : undefined,
   };
 }
 

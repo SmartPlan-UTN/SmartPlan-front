@@ -122,6 +122,13 @@ body {
   color: var(--fg-1);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* A full-bleed element sized with `100vw` (profile/security's `.backdrop`)
+     can overshoot the visible viewport by the vertical scrollbar's own
+     width on a platform where it takes up layout space, adding a sliver of
+     horizontal scroll for something purely decorative. Clipping it here
+     costs nothing: nothing in this app relies on horizontal overflow being
+     reachable. */
+  overflow-x: hidden;
 }
 #root { min-height: 100vh; }
 input, button, textarea, select { font-family: inherit; }
@@ -174,6 +181,16 @@ input::placeholder { color: var(--fg-3); }
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+/* Opacity only, no `transform` — for elements that wrap `position: fixed`
+   descendants (`.screen`). `animation-fill-mode: both` keeps whichever
+   properties a keyframe animates pinned to their end value forever, and any
+   non-`none` `transform` — even a no-op `translateY(0)` — turns the element
+   into the containing block for its `position: fixed` children, which then
+   size and center themselves against it instead of the viewport. */
+@keyframes fadeUpNoTransform {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 @keyframes pulseDot {
   0%, 100% { opacity: 0.3; transform: scale(0.8); }

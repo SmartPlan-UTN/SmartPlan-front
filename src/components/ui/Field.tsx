@@ -92,11 +92,19 @@ export function Field({
           </button>
         ) : null}
       </div>
-      {error ? (
-        <p className={styles.fieldError} id={errorId} role="alert">
-          {error}
-        </p>
-      ) : null}
+      {/* Always rendered, with the text hidden (not removed) when there's no
+          error: reserving the line's height keeps every field — and the
+          form around it — the same size whether or not it's showing a
+          message, instead of growing/shrinking as errors appear. */}
+      <p
+        className={
+          error ? styles.fieldError : `${styles.fieldError} ${styles.fieldErrorHidden}`
+        }
+        id={errorId}
+        role={error ? "alert" : undefined}
+      >
+        {error || " "}
+      </p>
     </div>
   );
 }

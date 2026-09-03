@@ -119,3 +119,10 @@
   font-size: var(--t-small);
   font-weight: 600;
 }
+
+/* `visibility: hidden`, not a conditional render: the paragraph's box still
+   takes up space this way, so a field showing its error and one that isn't
+   occupy the same height — see `Field`. */
+.fieldErrorHidden {
+  visibility: hidden;
+}

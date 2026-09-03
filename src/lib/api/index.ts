@@ -38,11 +38,12 @@ export {
   generateSuggestedPlan,
 } from './plans';
 export { listCategories } from './categories';
-export { listPlaces, searchPlace } from './places';
+export { listCities, listDepartments, listPlaces, searchPlace } from './places';
 export { getProfile, updateProfile, changePassword, deleteAccount } from './users';
 export type { UpdateProfileData, ChangePasswordData, DeleteAccountData } from './users';
 export {
   changeAdminUserStatus,
+  deleteAdminUser,
   getAdminUserMetrics,
   getDashboardMetrics,
   listAdminUsers,

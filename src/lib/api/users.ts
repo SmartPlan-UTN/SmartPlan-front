@@ -1,3 +1,4 @@
+import type { AuthenticationResponse } from '@/lib/auth/api';
 import type {
   UpdateUserPreferencesInput,
   UserPreferencesResponse,
@@ -35,8 +36,20 @@ export interface ChangePasswordData {
   newPassword: string;
 }
 
-export async function changePassword(data: ChangePasswordData): Promise<void> {
-  await apiClient.patch<void>('/users/me/password', data);
+/**
+ * Changes the signed-in user's password (CU6). The backend revokes every
+ * *other* active session and every pending password-recovery token as part
+ * of the same transaction, but keeps this one alive: the response is a
+ * fresh `AuthenticationResponse` (new access token, new refresh cookie)
+ * for the session making the request, same shape as login/refresh, so the
+ * caller can stay authenticated instead of being signed out — see
+ * `ChangePasswordForm`, which feeds this straight into `useSession()`.
+ * Backend contract: `PATCH /users/me/password`.
+ */
+export async function changePassword(
+  data: ChangePasswordData
+): Promise<AuthenticationResponse> {
+  return apiClient.patch<AuthenticationResponse>('/users/me/password', data);
 }
 
 export interface DeleteAccountData {

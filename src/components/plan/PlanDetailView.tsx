@@ -506,7 +506,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
                 className={styles.ownerActionButton}
                 onClick={() => setShowCancelModal(true)}
               >
-                <Icon name="trash-2" size={16} aria-hidden="true" />
+                <Icon name="trash-2" size={14} aria-hidden="true" />
                 Eliminar plan
               </Button>
             </>

@@ -61,6 +61,22 @@ button.resendButton { border-width: 1.5px; border-color: var(--ember); color: va
   gap: 16px;
 }
 
+/* RegisterForm-only: the terms checkbox's own error line. `Field` has its
+   own identical pair in `Field.module.css` — this one is for the checkbox
+   below, which isn't a `Field`. */
+.fieldError {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--error);
+  font-size: var(--t-small);
+  font-weight: 600;
+}
+
+.fieldErrorHidden {
+  visibility: hidden;
+}
+
 .formError {
   display: flex;
   align-items: flex-start;
@@ -168,9 +184,9 @@ button.resendButton { border-width: 1.5px; border-color: var(--ember); color: va
 
 /* ── RegisterForm-only: terms checkbox ───────────────────────────────
    Purely a client-side UX gate: the backend's CU2 contract has no terms
-   field, and there's no terms-of-service page to link to yet — same as
-   the v2 prototype, whose "términos y condiciones" link doesn't go
-   anywhere either. */
+   field, so acceptance is enforced only here, before `submit()` ever calls
+   `register()`. The "términos y condiciones" text opens `TermsDialog`
+   instead of linking to a dedicated page, which doesn't exist yet. */
 .terms {
   display: flex;
   align-items: flex-start;
@@ -221,4 +237,21 @@ button.resendButton { border-width: 1.5px; border-color: var(--ember); color: va
   font-size: var(--t-small);
   color: var(--fg-2);
   line-height: 1.5;
+}
+
+.termsLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ember);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.termsLink:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
