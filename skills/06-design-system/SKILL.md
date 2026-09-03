@@ -323,16 +323,23 @@ language. It's decorative, `aria-hidden`, and must not compete with content.
 
 There is no screen in the kit for:
 
-- **PAN 05** — Password recovery (CU3 has the form in Login, but not the
-  token flow)
 - **PAN 08** — Map search (CU16)
 - **PAN 10** — Recommended plans (CU20 appears embedded in Home, with no
   screen of its own)
 - **Full collections module** — CU32 through CU38. Favorites has a
   collections tab, but neither the detail view nor the creation flow exist.
 
-That's 7 use cases with no design. They need to be resolved while building
+That's 6 use cases with no design. They need to be resolved while building
 the screens, or the designer needs to be asked for them.
+
+> **PAN 05 (password recovery, CU3) was resolved without the designer**: the
+> kit only had the request-email form, nested as a third view inside Login's
+> split-screen card (`v2/Login.jsx`'s `ForgotPasswordForm`), with no screen
+> at all for the second step — setting a new password from the emailed
+> token. CU3's implementation extends that same pattern (step indicator,
+> success state, same card) for both steps. If the real designer kit
+> surfaces a dedicated PAN 05, diff it against `ResetPasswordForm` and
+> `RecoverPasswordForm`.
 
 ## Card image placeholders
 

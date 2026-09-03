@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { ExperienceSummary, FeedbackInvite } from "@/components/feedback";
 import { Badge, Button, ConfirmationDialog, Divider, FloatingBackLink, Icon, Stars } from "@/components/ui";
+import { useFavorites } from "@/context";
 import { useDetailFetch, usePlanSelection } from "@/hooks";
 import { ApiError, cancelOwnPlan, getOwnPlan, getPlan } from "@/lib/api";
 import { useSession } from "@/lib/auth";
@@ -156,7 +157,8 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
     GENERIC_ERROR,
     sessionStatus !== "loading",
   );
-  const [saved, setSaved] = useState(false);
+  const { isPlanSaved, toggleSavePlan } = useFavorites();
+  const saved = isPlanSaved(planId);
   const [copied, setCopied] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [ownPlan, setOwnPlan] = useState<import("@/types").OwnPlanDetail | null>(null);
@@ -517,8 +519,10 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
               size="sm"
               className={styles.saveButton}
               aria-pressed={saved}
+              aria-label={saved ? "Quitar de guardados" : "Guardar plan"}
               onClick={() => {
-                setSaved((current) => !current);
+                // Optimistic rollback is handled inside FavoritesContext (CU43).
+                void toggleSavePlan(planId);
               }}
             >
               <Icon
@@ -542,7 +546,9 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
             </Button>
           </div>
 
-          {/* Personal state on the plan (CU22) — carries the visual weight. */}
+          {/* Personal state on the plan (CU22) — carries the visual weight.
+              Supersedes the disabled "Lo quiero hacer" placeholder this
+              action bar used before CU22 landed. */}
           <PlanIntentionPanel
             viewerPlanState={viewerPlanState}
             statusKey={statusKey}

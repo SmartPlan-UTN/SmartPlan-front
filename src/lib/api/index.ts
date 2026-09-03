@@ -38,6 +38,7 @@ export {
   generateSuggestedPlan,
 } from './plans';
 export { listCategories } from './categories';
+export { listPlaces, searchPlace } from './places';
 export { getProfile, updateProfile, changePassword, deleteAccount } from './users';
 export type { UpdateProfileData, ChangePasswordData, DeleteAccountData } from './users';
 export {
@@ -46,6 +47,13 @@ export {
   getDashboardMetrics,
   listAdminUsers,
   updateAdminUser,
+  createAdminActivity,
+  deleteAdminActivity,
+  deleteAdminPlan,
+  listAdminActivities,
+  listAdminPlans,
+  updateAdminActivity,
+  updateAdminPlan,
 } from './administration';
 export {
   addActivityToCollection,
@@ -56,11 +64,24 @@ export {
   removeActivityFromCollection,
   updateCollection,
 } from './collections';
-
 export {
   submitFeedback,
 } from './feedback';
 export { getPreferences, updatePreferences } from './users';
-export { searchPlace } from './places';
 export { createPlanRequest, createSurprisePlanRequest, getPlanRequestStatus } from './plan-requests';
 export { getRecommendations, dismissRecommendation, undoDismissRecommendation } from './plan-recommendations';
+export {
+  listFavoriteActivities,
+  removeFavoriteActivity,
+  saveFavoriteActivity,
+  listFavoritePlans,
+  removeFavoritePlan,
+  saveFavoritePlan,
+} from './favorites';
+export {
+  createRating,
+  deleteRating,
+  getOwnRating,
+  listRatings,
+  updateRating,
+} from './ratings';

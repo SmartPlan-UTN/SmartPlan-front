@@ -1,5 +1,17 @@
-import type { ResolvedPlace } from "@/types";
-import { apiClient } from "./client";
+import type {
+  PaginatedResult,
+  PlaceListParams,
+  PlaceOption,
+  ResolvedPlace,
+} from '@/types';
+import { apiClient } from './client';
+
+/** Lists registered places that can be associated with an activity. */
+export async function listPlaces(
+  params: PlaceListParams = {},
+): Promise<PaginatedResult<PlaceOption>> {
+  return apiClient.get<PaginatedResult<PlaceOption>>('/places', { params });
+}
 
 /**
  * Resolves a free-text location to a real place (CU8/CU18, PAN 15 preferred
@@ -12,7 +24,7 @@ import { apiClient } from "./client";
  * `EXTERNAL_PROVIDER_RATE_LIMITED` when the quota is hit.
  */
 export async function searchPlace(query: string): Promise<ResolvedPlace> {
-  return apiClient.get<ResolvedPlace>("/external-integration/places/search", {
+  return apiClient.get<ResolvedPlace>('/external-integration/places/search', {
     params: { query },
   });
 }

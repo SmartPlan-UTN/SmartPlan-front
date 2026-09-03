@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 
 import { Badge, Icon, Stars } from "@/components/ui";
+import { useFavorites } from "@/context";
 import { planDetailRoute } from "@/lib/routes";
 import { formatArs, formatDuration, gradientFor } from "@/lib/utils";
 import type { PlanSearchResult } from "@/types";
@@ -11,25 +14,49 @@ import styles from "./plan.module.css";
 import exploreStyles from "../explore/explore.module.css";
 
 export interface PlanCardProps {
-  plan: PlanSearchResult;
+  plan: Omit<PlanSearchResult, "averageRating" | "status"> &
+    Partial<Pick<PlanSearchResult, "averageRating" | "status">>;
+  isSaved?: boolean;
+  onSavedChange?: (saved: boolean) => void;
 }
 
-export function PlanCard({ plan }: PlanCardProps) {
+export function PlanCard({
+  plan,
+  isSaved: controlledSaved,
+  onSavedChange,
+}: PlanCardProps) {
+  const { isPlanSaved, setPlanSaved, toggleSavePlan } = useFavorites();
+  const saved = controlledSaved ?? isPlanSaved(plan.id);
   const visibleCategories = plan.categories.slice(0, 2);
   const routeSummary = plan.activityNames.join(" → ");
+
+  const handleToggleSave = () => {
+    const nextSaved = !saved;
+    onSavedChange?.(nextSaved);
+
+    const request =
+      controlledSaved === undefined
+        ? toggleSavePlan(plan.id)
+        : setPlanSaved(plan.id, nextSaved);
+
+    request.catch(() => {
+      onSavedChange?.(saved);
+    });
+  };
 
   return (
     // No `aria-label` override: the card's own content already gives a
     // screen reader everything a sighted user sees.
-    <Link href={planDetailRoute(plan.id)} className={exploreStyles.card}>
-      <div
-        className={exploreStyles.imageWrapper}
-        style={{ background: gradientFor(plan.id) }}
-      >
-        <Icon name="route" size={40} className={exploreStyles.imagePlaceholder} />
-      </div>
+    <article className={exploreStyles.card}>
+      <Link href={planDetailRoute(plan.id)} className={exploreStyles.cardContent}>
+        <div
+          className={exploreStyles.imageWrapper}
+          style={{ background: gradientFor(plan.id) }}
+        >
+          <Icon name="route" size={40} className={exploreStyles.imagePlaceholder} />
+        </div>
 
-      <div className={exploreStyles.body}>
+        <div className={exploreStyles.body}>
         <h3 className={exploreStyles.name}>{plan.title}</h3>
         {/* One line, ellipsized — matches Results.jsx's uppercase chain
             caption ("BODEGA → ALMUERZO → DEGUSTACIÓN"). A long itinerary
@@ -45,10 +72,12 @@ export function PlanCard({ plan }: PlanCardProps) {
             {formatDuration(plan.estimatedTotalDuration)}
           </span>
           <Badge variant="cost">{formatArs(plan.estimatedTotalCost)}</Badge>
-          <span className={exploreStyles.metaItem}>
-            <Stars rating={plan.averageRating} size={11} />
-            {plan.averageRating.toFixed(1)}
-          </span>
+          {plan.averageRating != null ? (
+            <span className={exploreStyles.metaItem}>
+              <Stars rating={plan.averageRating} size={11} />
+              {plan.averageRating.toFixed(1)}
+            </span>
+          ) : null}
           {plan.distanceKm != null ? (
             <span className={exploreStyles.metaItem}>
               <Icon name="map-pin" size={12} />
@@ -67,7 +96,22 @@ export function PlanCard({ plan }: PlanCardProps) {
             </Badge>
           ))}
         </div>
-      </div>
-    </Link>
+        </div>
+      </Link>
+
+      <button
+        type="button"
+        className={styles.cardBookmark}
+        aria-pressed={saved}
+        aria-label={saved ? "Quitar de guardados" : "Guardar plan"}
+        onClick={handleToggleSave}
+      >
+        <Icon
+          name="bookmark"
+          size={16}
+          className={saved ? styles.cardBookmarkSaved : undefined}
+        />
+      </button>
+    </article>
   );
 }

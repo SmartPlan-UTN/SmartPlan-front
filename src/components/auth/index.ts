@@ -6,3 +6,5 @@ export { ProtectedRoute, type ProtectedRouteProps } from "./ProtectedRoute";
 export { AuthSplitShell, type AuthSplitShellProps } from "./AuthSplitShell";
 export { LoginForm, type LoginFormProps } from "./LoginForm";
 export { RegisterForm } from "./RegisterForm";
+export { RecoverPasswordForm } from "./RecoverPasswordForm";
+export { ResetPasswordForm, type ResetPasswordFormProps } from "./ResetPasswordForm";

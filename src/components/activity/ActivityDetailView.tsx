@@ -14,12 +14,15 @@ import {
   LoadingDots,
   Stars,
 } from "@/components/ui";
+import { useFavorites } from "@/context";
 import { useDetailFetch } from "@/hooks";
 import { getActivity } from "@/lib/api";
 import { ROUTES } from "@/lib/routes";
 import { formatArs, formatDuration } from "@/lib/utils";
-import type { ActivityDetailResult } from "@/types";
+import type { ActivityDetailResult, RatingSummary } from "@/types";
 
+import { ActivityRatingSection } from "./ActivityRatingSection";
+import { RatingsList } from "./RatingsList";
 import styles from "./activity.module.css";
 
 export interface ActivityDetailViewProps {
@@ -38,9 +41,24 @@ const GENERIC_ERROR = "No pudimos cargar la actividad. Intentá de nuevo.";
  * hours — there's no such field in the schema), a decorative map preview
  * linking out to Google Maps, and a sticky action bar.
  *
- * "Guardar" mirrors the mockup exactly: a local, unpersisted toggle. CU15
- * (real favorites) isn't part of this delivery, so "Agregar a plan" remains
- * disabled. "Colección" opens the real CU35 selector.
+ * "Guardar" handles real activity favorites (CU15) with optimistic updates.
+ * "Agregar a plan" opens the real CU27 dialog.
+ * "Colección" opens the real CU35 selector.
+ *
+ * The Valoraciones tab's `ActivityRatingSection` (CU44 writing a rating,
+ * CU46 editing it, CU47 deleting it — see its own doc comment for why none
+ * of the three has a mockup to follow) sits above `RatingsList` (CU45,
+ * reading them — real pagination, since the mockup's own "ver todas" just
+ * reveals three hardcoded objects already in memory).
+ *
+ * `ratingSummary`/`ratingsRefreshToken` exist purely for CU47's "Recalculo
+ * del promedio": the average/count shown here (both in this tab and in the
+ * title block's badge, above the tabs) starts from `activity.averageRating`/
+ * `ratingCount` — the snapshot `getActivity` returned on load — and is
+ * replaced by `RatingsList`'s own fetch the moment it resolves, which
+ * `ActivityRatingSection` forces a fresh one of after any create/edit/
+ * delete. `SmartPlan-back` stays the only source of truth for the number;
+ * nothing here computes it client-side.
  */
 export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
   const { data: activity, status, errorMessage } = useDetailFetch<ActivityDetailResult>(
@@ -48,11 +66,25 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
     activityId,
     GENERIC_ERROR,
   );
+  const { isActivitySaved, toggleSaveActivity } = useFavorites();
   const [tab, setTab] = useState<Tab>("info");
-  const [saved, setSaved] = useState(false);
   const [showCollectionDialog, setShowCollectionDialog] = useState(false);
   const [showPlanDialog, setShowPlanDialog] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
+  // `null` until `RatingsList` fetches its own copy — see the rendering
+  // below for the `activity.averageRating`/`ratingCount` fallback used
+  // until then (CU47's "Recalculo del promedio").
+  const [ratingSummary, setRatingSummary] = useState<RatingSummary | null>(null);
+  const [ratingsRefreshToken, setRatingsRefreshToken] = useState(0);
+
+  const saved = activity != null ? isActivitySaved(activity.id) : false;
+
+  const handleToggleSave = () => {
+    if (activity == null) return;
+    toggleSaveActivity(activity.id).catch(() => {
+      // Optimistic rollback handled in context
+    });
+  };
 
   if (status === "loading") {
     return (
@@ -91,6 +123,11 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
       ? activity.categories.map((category) => category.name).join(" · ")
       : null;
   const firstLocation = activity.locations[0] ?? null;
+  const displayRatingSummary: RatingSummary =
+    ratingSummary ?? {
+      averageRating: activity.averageRating,
+      ratingCount: activity.ratingCount,
+    };
   const address = firstLocation?.place.address ?? null;
 
   return (
@@ -105,9 +142,7 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
           className={styles.heroBookmark}
           aria-pressed={saved}
           aria-label={saved ? "Quitar de guardados" : "Guardar actividad"}
-          onClick={() => {
-            setSaved((current) => !current);
-          }}
+          onClick={handleToggleSave}
         >
           <Icon name="bookmark" size={17} className={saved ? styles.heroBookmarkSaved : undefined} />
         </button>
@@ -123,11 +158,11 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
             </Badge>
           )}
           <span className={styles.ratingSummary}>
-            <Stars rating={activity.averageRating} size={12} />
+            <Stars rating={displayRatingSummary.averageRating} size={12} />
             <span className="sp-small">
-              {activity.averageRating.toFixed(1)}
-              {activity.ratingCount > 0
-                ? ` · ${activity.ratingCount.toLocaleString("es-AR")} valoraciones`
+              {displayRatingSummary.averageRating.toFixed(1)}
+              {displayRatingSummary.ratingCount > 0
+                ? ` · ${displayRatingSummary.ratingCount.toLocaleString("es-AR")} valoraciones`
                 : ""}
             </span>
           </span>
@@ -233,20 +268,26 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
         <div className={styles.tabContent}>
           <div className={styles.ratingSummaryCard}>
             <div className={styles.ratingBigBlock}>
-              <p className={styles.ratingBig}>{activity.averageRating.toFixed(1)}</p>
-              <Stars rating={activity.averageRating} size={14} />
+              <p className={styles.ratingBig}>{displayRatingSummary.averageRating.toFixed(1)}</p>
+              <Stars rating={displayRatingSummary.averageRating} size={14} />
               <p className={styles.ratingCountNote}>
-                {activity.ratingCount > 0
-                  ? `${activity.ratingCount.toLocaleString("es-AR")} valoraciones`
+                {displayRatingSummary.ratingCount > 0
+                  ? `${displayRatingSummary.ratingCount.toLocaleString("es-AR")} valoraciones`
                   : "Sin valoraciones aún"}
               </p>
             </div>
           </div>
 
-          <div className={styles.reviewsEmptyState}>
-            <Icon name="message-circle" size={32} className={styles.stateIcon} />
-            <p className="sp-body">Todavía no hay reseñas para mostrar en detalle.</p>
-          </div>
+          <ActivityRatingSection
+            activityId={activity.id}
+            onChange={() => setRatingsRefreshToken((token) => token + 1)}
+          />
+
+          <RatingsList
+            activityId={activity.id}
+            refreshToken={ratingsRefreshToken}
+            onSummaryChange={setRatingSummary}
+          />
         </div>
       )}
 
@@ -254,9 +295,7 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
         <div className={styles.actionBarInner}>
           <Button
             variant={saved ? "secondary" : "ghostLight"}
-            onClick={() => {
-              setSaved((current) => !current);
-            }}
+            onClick={handleToggleSave}
           >
             <Icon name="bookmark" size={16} aria-hidden="true" />
             {saved ? "Guardada" : "Guardar"}

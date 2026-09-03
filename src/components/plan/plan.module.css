@@ -20,6 +20,41 @@
   text-overflow: ellipsis;
 }
 
+/* Bookmark overlay on the card image (CU43) — same shell as
+   ActivityCard's. */
+.cardBookmark {
+  position: absolute;
+  top: var(--s-3);
+  right: var(--s-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--white-18);
+  border-radius: var(--r-chip);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--white);
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, transform 150ms ease;
+  z-index: 2;
+}
+
+.cardBookmark:hover {
+  background: rgba(0, 0, 0, 0.6);
+  transform: scale(1.05);
+}
+
+.cardBookmark:focus-visible {
+  outline: 2px solid var(--white);
+  outline-offset: 2px;
+}
+
+.cardBookmarkSaved {
+  color: var(--gold);
+}
+
 /* ── Plan detail (CU13), matching
    SmartPlanSystemDesign/v2/PlanDetail.jsx ─────────────────────── */
 .hero {

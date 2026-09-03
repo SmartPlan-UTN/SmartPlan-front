@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -22,6 +22,18 @@ const useSession = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/auth", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/auth")>()),
   useSession,
+}));
+
+const mockToggleSavePlan = vi.hoisted(() => vi.fn());
+const mockIsPlanSaved = vi.hoisted(() => vi.fn());
+
+vi.mock("@/context", () => ({
+  useFavorites: () => ({
+    isPlanSaved: mockIsPlanSaved,
+    toggleSavePlan: mockToggleSavePlan,
+    savedPlanIds: new Set(),
+    loading: false,
+  }),
 }));
 
 const getPlan = vi.hoisted(() => vi.fn());
@@ -173,15 +185,9 @@ describe("PlanDetailView — plan intent (CU22, PAN 17)", () => {
     expect(screen.queryByRole("button", intendButton)).not.toBeInTheDocument();
   });
 
-  it("toggles the save control between its two states without breaking", async () => {
-    const user = userEvent.setup();
-    await renderDetail("selectable");
-
-    await user.click(screen.getByRole("button", { name: /guardar plan/i }));
-    expect(
-      screen.getByRole("button", { name: /^guardado$/i }),
-    ).toBeInTheDocument();
-  });
+  // The save control's own coverage lives in the two CU43 tests below: it
+  // is no longer a local useState toggle, so clicking it delegates to
+  // FavoritesContext instead of flipping its own label.
 
   it("marks the plan with one direct PATCH — no modal", async () => {
     const user = userEvent.setup();
@@ -367,5 +373,31 @@ describe("PlanDetailView — feedback (CU23, PAN 17)", () => {
     await waitFor(() => expect(getOwnPlan).toHaveBeenCalledTimes(3));
     expect(await screen.findByText(/tu experiencia/i)).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("toggles favorite plan when clicking the save button (CU43 / CU42)", async () => {
+    mockIsPlanSaved.mockReturnValue(false);
+    mockToggleSavePlan.mockResolvedValue(true);
+
+    render(<PlanDetailView planId={1} />);
+
+    const saveBtn = await screen.findByRole("button", { name: "Guardar plan" });
+    expect(saveBtn).toBeInTheDocument();
+    expect(saveBtn).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(saveBtn);
+
+    expect(mockToggleSavePlan).toHaveBeenCalledWith(1);
+  });
+
+  it("shows saved state when plan is saved (CU43)", async () => {
+    mockIsPlanSaved.mockReturnValue(true);
+
+    render(<PlanDetailView planId={1} />);
+
+    const saveBtn = await screen.findByRole("button", { name: "Quitar de guardados" });
+    expect(saveBtn).toBeInTheDocument();
+    expect(saveBtn).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("Guardado")).toBeInTheDocument();
   });
 });
