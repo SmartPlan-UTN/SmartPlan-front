@@ -19,14 +19,14 @@
  *     transformed.
  *
  *  2. **One continuous object.** The composer does not disappear between
- *     beats — it is written into, annotated, then shrinks to make room. The
- *     chosen option does not disappear either — it grows into the featured
- *     card of the section that follows.
+ *     beats — it is written into, then shrinks to make room. The chosen
+ *     option does not disappear either — it grows into the featured card of
+ *     the section that follows.
  *
- *  3. **Signals come and go.** The three context annotations rise out of the
- *     phrase and then retract, because interpretation is a step smartplan
- *     takes, not a state it stays in. `signals` is the one non-monotonic
- *     beat, the same shape as `warm` in the story.
+ *  3. **Every beat is monotonic on the track.** An earlier `signals` beat
+ *     rose and retracted three annotations around the composer; it was
+ *     removed because they overlapped the field they annotated. Nothing in
+ *     the scene now moves backwards.
  *
  *  4. **The chosen option is index 1.** It sits in the middle of the three,
  *     already the largest, so "elegís" reads as one of them coming forward
@@ -76,8 +76,6 @@ export interface HowBeats {
   emphasis: number;
   /** The phrase typing itself into the composer replica. */
   type: number;
-  /** The three context annotations rising out of the phrase and retracting. */
-  signals: number;
   /** The composer stepping back to make room for the options. */
   shrink: number;
   /** The options arriving. Per-card timing via `optionProgress`. */
@@ -105,19 +103,20 @@ const ease = (value: number) => value * value * (3 - 2 * value);
  * and carries everything else, packed tight: the whole point of this section
  * is that it feels fast, so no beat is given room it does not need.
  *
- * ── `signals`, and why it goes back down ────────────────────────────
+ * ── The beat that used to sit between `type` and `shrink` ───────────
  *
- * It rises between 0.26 and 0.46 and is gone again by 0.6. Interpretation is
- * a step, not a place the product stays — leaving the annotations on screen
- * would turn "smartplan entiende" into a permanent HUD. Same reasoning, and
- * same shape, as `warm` in `getStoryBeats`.
+ * `signals` raised three orange annotations out of the phrase and retracted
+ * them again. It is gone: the annotations were positioned against the
+ * composer's edges, and at the field's real width they landed on its border
+ * and across the phrase they were annotating. Interpretation now reads
+ * through the typed sentence itself, and `shrink` follows `type` directly.
+ * The static composition still states the fragments as chips in normal flow.
  */
 export function getHowBeats(enter: number, t: number): HowBeats {
   return {
     headline: ease(span(enter, 0.34, 0.7)) * (1 - ease(span(t, 0.44, 0.6))),
     emphasis: ease(span(t, 0.02, 0.34)),
     type: ease(span(t, 0.06, 0.24)),
-    signals: clamp01(ease(span(t, 0.26, 0.46)) - ease(span(t, 0.48, 0.6))),
     shrink: ease(span(t, 0.46, 0.62)),
     options: span(t, 0.5, 0.84),
     choose: ease(span(t, 0.8, 0.92)),

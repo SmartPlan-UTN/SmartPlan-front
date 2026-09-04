@@ -33,7 +33,6 @@
   --headline: 0;
   --emphasis: 0;
   --type: 0;
-  --signals: 0;
   --shrink: 0;
   --options: 0;
   --choose: 0;
@@ -192,65 +191,11 @@
   }
 }
 
-/* ── Signals ────────────────────────────────────────────────────────── */
-
-/* Centred on the composer, height 0 so its children hang off the field's
-   edges. The whole group fades in and back out with `--signals`. */
-.signals {
-  position: absolute;
-  left: 50%;
-  top: 40%;
-  width: min(560px, 82%);
-  height: 0;
-  transform: translate(-50%, -50%);
-  opacity: var(--signals, 0);
-  pointer-events: none;
-}
-
-.signal {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--ember);
-  font-size: 12px;
-  font-weight: var(--w-label);
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-  transform: translate3d(0, calc((1 - var(--signals, 0)) * 6px), 0);
-}
-
-.signal::before {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--ember);
-  content: "";
-}
-
-.signal::after {
-  width: 34px;
-  height: 1px;
-  background: color-mix(in srgb, var(--ember) 58%, transparent);
-  content: "";
-}
-
-.signal[data-slot="0"] {
-  left: 1%;
-  top: -38px;
-  flex-direction: row-reverse;
-}
-
-.signal[data-slot="1"] {
-  left: 42%;
-  top: -38px;
-}
-
-.signal[data-slot="2"] {
-  right: 1%;
-  top: 34px;
-  flex-direction: row-reverse;
-}
+/* The scrubbed scene had a `.signals` group here: three annotations hung
+   off the composer's edges on a zero-height absolute layer. Removed —
+   pinned to the field's edges they overlapped its border and the phrase
+   they pointed at. `.staticSignals` below keeps the same three fragments
+   in normal flow, which is where they never collide with anything. */
 
 /* ── Option cards ───────────────────────────────────────────────────── */
 
@@ -679,8 +624,6 @@
 
   .headline,
   .composer,
-  .signals,
-  .signal,
   .option,
   .marker {
     opacity: 1;

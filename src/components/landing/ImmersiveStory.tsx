@@ -8,6 +8,7 @@ import { usePrefersReducedMotion, useIsClient } from "@/lib/motion";
 import { STORY } from "./landingContent";
 import { MEDIA } from "./landingMedia";
 import { Reveal } from "./Reveal";
+import { sceneProgress, useSceneClock } from "./sceneClock";
 import {
   STORY_MOMENTS,
   STORY_WORDS,
@@ -92,71 +93,38 @@ export function ImmersiveStory() {
 /* ── Scroll-scrubbed scene (desktop, motion allowed) ─────────────────── */
 
 /**
- * The scene's clock.
+ * The scene's beats, from one rect.
  *
  * Two progress values feed `getStoryBeats`: `enter`, the section's approach,
- * and `t`, its pinned track. Both come from a single
- * `getBoundingClientRect` — and the order inside the frame is deliberate and
- * load-bearing: **read once, compute, then write**. `innerHeight` is cached
- * and refreshed only on resize, and nothing reads the DOM again after the
- * first `setProperty`, so a frame costs one style recalculation rather than
- * one per property. This is the same discipline as
- * `InspirationGallery.tsx:useSceneClock`; it has to survive every value
+ * and `t`, its pinned track. Both come from the single
+ * `getBoundingClientRect` that `useSceneClock` takes for the frame — the
+ * order is deliberate and load-bearing: **read once, compute, then write**,
+ * with nothing here touching the DOM again. The clock damps every value it
+ * is handed and owns the writes, so a frame costs one style recalculation
+ * rather than one per property. Same discipline as
+ * `InspirationGallery.tsx:measureGallery`; it has to survive every value
  * added here.
  */
-function useSceneClock(track: React.RefObject<HTMLDivElement | null>) {
-  useEffect(() => {
-    const node = track.current;
-    if (!node) return;
+function measureStory(
+  rect: DOMRect,
+  viewportHeight: number,
+): Record<string, number> {
+  const { enter, t } = sceneProgress(rect, viewportHeight);
+  const beats = getStoryBeats(enter, t);
 
-    let frame = 0;
-    let viewportHeight = window.innerHeight;
-
-    function write() {
-      frame = 0;
-      if (!node) return;
-
-      // ── read (once) ──
-      const rect = node.getBoundingClientRect();
-
-      // ── compute ──
-      const enter = clamp01(1 - rect.top / Math.max(viewportHeight, 1));
-      const travel = Math.max(rect.height - viewportHeight, 1);
-      const t = clamp01(-rect.top / travel);
-      const beats = getStoryBeats(enter, t);
-
-      // ── write ──
-      node.style.setProperty("--copy", beats.copy.toFixed(3));
-      node.style.setProperty("--sort", beats.sort.toFixed(3));
-      node.style.setProperty("--fade", beats.fade.toFixed(3));
-      node.style.setProperty("--warm", beats.warm.toFixed(3));
-      node.style.setProperty("--route", beats.route.toFixed(3));
-      node.style.setProperty("--payoff", beats.payoff.toFixed(3));
-      for (const moment of STORY_MOMENTS) {
-        node.style.setProperty(
-          `--plan-${moment.id}`,
-          momentProgress(beats.route, moment.at).toFixed(3),
-        );
-      }
-    }
-
-    function schedule() {
-      if (!frame) frame = requestAnimationFrame(write);
-    }
-    function onResize() {
-      viewportHeight = window.innerHeight;
-      schedule();
-    }
-
-    write();
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", onResize);
-    return () => {
-      if (frame) cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", onResize);
-    };
-  }, [track]);
+  const values: Record<string, number> = {
+    "--present": beats.present,
+    "--copy": beats.copy,
+    "--sort": beats.sort,
+    "--fade": beats.fade,
+    "--warm": beats.warm,
+    "--route": beats.route,
+    "--payoff": beats.payoff,
+  };
+  for (const moment of STORY_MOMENTS) {
+    values[`--plan-${moment.id}`] = momentProgress(beats.route, moment.at);
+  }
+  return values;
 }
 
 /**
@@ -212,13 +180,11 @@ function useRouteLength(path: React.RefObject<SVGPathElement | null>, d: string)
   }, [path, d]);
 }
 
-const clamp01 = (value: number) => (value < 0 ? 0 : value > 1 ? 1 : value);
-
 function ScrubStory() {
   const track = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const path = useRef<SVGPathElement>(null);
-  useSceneClock(track);
+  useSceneClock(track, measureStory);
   const box = useStageBox(stage);
   const d = box.w > 0 && box.h > 0 ? routePath(box.w, box.h) : "";
   useRouteLength(path, d);

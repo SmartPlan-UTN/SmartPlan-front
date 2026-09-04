@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  useEffect,
+  useCallback,
   useRef,
   useState,
   useSyncExternalStore,
@@ -24,6 +24,7 @@ import {
   getHowBeats,
   optionProgress,
 } from "./howScene";
+import { sceneProgress, useSceneClock } from "./sceneClock";
 import styles from "./how.module.css";
 
 const COMPACT_QUERY = "(max-width: 900px)";
@@ -115,85 +116,56 @@ export function HowItWorks() {
 
 /* ── Scroll-scrubbed scene (desktop, motion allowed) ─────────────────── */
 
-const clamp01 = (value: number) => (value < 0 ? 0 : value > 1 ? 1 : value);
-
 /**
- * The scene's clock. One `getBoundingClientRect` per frame, then the
- * arithmetic, then every custom property written at once onto `.track`.
- * Reading the DOM after a write forces synchronous layout, so it never
- * happens. Same discipline as `ImmersiveStory.tsx:useSceneClock`.
+ * The scene's beats, from one rect.
  *
- * The step marker is the one thing kept in React — four thresholds, so it
- * re-renders exactly three times across the whole scroll.
+ * `useSceneClock` takes the single `getBoundingClientRect` for the frame and
+ * owns every write; this does the arithmetic in between and touches no DOM.
+ * Reading after a write forces synchronous layout, so it never happens. Same
+ * discipline as `ImmersiveStory.tsx:measureStory`.
+ *
+ * The step marker is the one thing kept in React, and `onStep` is the reason
+ * this takes a callback: four thresholds, reported only when the step
+ * actually changes, so the scene re-renders exactly three times across the
+ * whole scroll rather than once a frame.
  */
-function useSceneClock(
-  track: React.RefObject<HTMLDivElement | null>,
+function measureHow(
+  rect: DOMRect,
+  viewportHeight: number,
   onStep: (step: 0 | 1 | 2 | 3) => void,
-) {
-  useEffect(() => {
-    const node = track.current;
-    if (!node) return;
+): Record<string, number> {
+  const { enter, t } = sceneProgress(rect, viewportHeight);
+  const beats = getHowBeats(enter, t);
 
-    let frame = 0;
-    let viewportHeight = window.innerHeight;
-    let lastStep = -1;
+  const values: Record<string, number> = {
+    "--headline": beats.headline,
+    "--emphasis": beats.emphasis,
+    "--type": beats.type,
+    "--shrink": beats.shrink,
+    "--options": beats.options,
+    "--choose": beats.choose,
+    "--expand": beats.expand,
+  };
+  HOW_OPTION_SLOTS.forEach((slot, index) => {
+    values[`--opt-${index}`] = optionProgress(beats.options, slot.delay);
+  });
 
-    function write() {
-      frame = 0;
-      if (!node) return;
-
-      const rect = node.getBoundingClientRect();
-
-      const enter = clamp01(1 - rect.top / Math.max(viewportHeight, 1));
-      const travel = Math.max(rect.height - viewportHeight, 1);
-      const t = clamp01(-rect.top / travel);
-
-      const beats = getHowBeats(enter, t);
-      node.style.setProperty("--headline", beats.headline.toFixed(3));
-      node.style.setProperty("--emphasis", beats.emphasis.toFixed(3));
-      node.style.setProperty("--type", beats.type.toFixed(3));
-      node.style.setProperty("--signals", beats.signals.toFixed(3));
-      node.style.setProperty("--shrink", beats.shrink.toFixed(3));
-      node.style.setProperty("--options", beats.options.toFixed(3));
-      node.style.setProperty("--choose", beats.choose.toFixed(3));
-      node.style.setProperty("--expand", beats.expand.toFixed(3));
-      HOW_OPTION_SLOTS.forEach((slot, index) => {
-        node.style.setProperty(
-          `--opt-${index}`,
-          optionProgress(beats.options, slot.delay).toFixed(3),
-        );
-      });
-
-      const step = activeStep(t);
-      if (step !== lastStep) {
-        lastStep = step;
-        onStep(step);
-      }
-    }
-
-    function schedule() {
-      if (!frame) frame = requestAnimationFrame(write);
-    }
-    function onResize() {
-      viewportHeight = window.innerHeight;
-      schedule();
-    }
-
-    write();
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", onResize);
-    return () => {
-      if (frame) cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", onResize);
-    };
-  }, [track, onStep]);
+  onStep(activeStep(t));
+  return values;
 }
 
 function ScrubHow() {
   const track = useRef<HTMLDivElement>(null);
   const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
-  useSceneClock(track, setStep);
+  const lastStep = useRef<number>(-1);
+  const measure = useCallback((rect: DOMRect, viewportHeight: number) => {
+    return measureHow(rect, viewportHeight, (next) => {
+      if (next === lastStep.current) return;
+      lastStep.current = next;
+      setStep(next);
+    });
+  }, []);
+  useSceneClock(track, measure);
 
   return (
     <div ref={track} className={styles.track}>
@@ -201,7 +173,6 @@ function ScrubHow() {
         <div className={styles.stage}>
           <Headline />
           <FauxComposer />
-          <Signals />
 
           {OPTIONS.map((option, index) => (
             <Option
@@ -279,20 +250,12 @@ function FauxComposer() {
   );
 }
 
-/** The three context annotations. Each one is a literal fragment of the
- * phrase; they rise around the composer and then retract, because reading
- * the sentence is a step, not a state. */
-function Signals() {
-  return (
-    <div className={styles.signals} aria-hidden="true">
-      {HOW.signals.map((signal, index) => (
-        <span key={signal} className={styles.signal} data-slot={index}>
-          {signal}
-        </span>
-      ))}
-    </div>
-  );
-}
+/* The three context annotations that used to rise around the composer are
+ * gone from this scene. They were absolutely positioned against the field's
+ * edges, and at the composer's real width they sat on top of its border and
+ * its own typed phrase rather than beside them — three orange labels
+ * crossing the one element the beat is about. The static composition below
+ * still states them, as chips in normal flow, where nothing can collide. */
 
 /** The card itself — one visual, used pinned in the scene and in normal flow
  * in the static layout. Photo over a toned wash, short title, duration and a

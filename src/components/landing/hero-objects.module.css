@@ -58,8 +58,19 @@
     scale(calc(1 + (var(--exit-scale, 1) - 1) * var(--object-progress)));
   transform-origin: center;
   /* Fade tracks the departure gradually rather than snapping off at the
-     end — the pieces should ease away, not blink out. */
-  opacity: clamp(0, calc((1 - var(--object-progress)) * 1.6), 1);
+     end — the pieces should ease away, not blink out.
+     The window closes at 0.62 rather than 1: the travel is deliberately
+     slow (see the damping above) and used to leave a piece still at ~85%
+     ink while the inspiration scene below had already arrived, which read
+     as two sections stacked on one screen. The pieces still drift off over
+     most of a screen of scroll; they simply stop being opaque over the
+     photographs they were drifting across. */
+  opacity: clamp(0, calc((0.62 - var(--object-progress)) * 3.1), 1);
+  /* The departure changes `transform` and `opacity` every frame while the
+     child carries a `drop-shadow`. Without a layer of its own the filter
+     is re-rasterised on each of those frames, for all fourteen pieces —
+     measurably the most expensive thing on the first screen. */
+  will-change: transform, opacity;
 }
 
 /* A touch of extra rotation as a piece leaves, signed with its rest tilt. */
