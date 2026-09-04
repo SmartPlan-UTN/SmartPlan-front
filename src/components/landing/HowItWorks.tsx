@@ -141,7 +141,6 @@ function measureHow(
     "--headline": beats.headline,
     "--emphasis": beats.emphasis,
     "--type": beats.type,
-    "--signals": beats.signals,
     "--shrink": beats.shrink,
     "--options": beats.options,
     "--choose": beats.choose,
@@ -174,7 +173,6 @@ function ScrubHow() {
         <div className={styles.stage}>
           <Headline />
           <FauxComposer />
-          <Signals />
 
           {OPTIONS.map((option, index) => (
             <Option
@@ -252,20 +250,12 @@ function FauxComposer() {
   );
 }
 
-/** The three context annotations. Each one is a literal fragment of the
- * phrase; they rise around the composer and then retract, because reading
- * the sentence is a step, not a state. */
-function Signals() {
-  return (
-    <div className={styles.signals} aria-hidden="true">
-      {HOW.signals.map((signal, index) => (
-        <span key={signal} className={styles.signal} data-slot={index}>
-          {signal}
-        </span>
-      ))}
-    </div>
-  );
-}
+/* The three context annotations that used to rise around the composer are
+ * gone from this scene. They were absolutely positioned against the field's
+ * edges, and at the composer's real width they sat on top of its border and
+ * its own typed phrase rather than beside them — three orange labels
+ * crossing the one element the beat is about. The static composition below
+ * still states them, as chips in normal flow, where nothing can collide. */
 
 /** The card itself — one visual, used pinned in the scene and in normal flow
  * in the static layout. Photo over a toned wash, short title, duration and a

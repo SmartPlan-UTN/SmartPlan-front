@@ -65,7 +65,7 @@ describe("how beats", () => {
     }
   });
 
-  it("advances monotonically along the track, except the signals", () => {
+  it("advances monotonically along the track", () => {
     const keys = [
       "emphasis",
       "type",
@@ -84,20 +84,9 @@ describe("how beats", () => {
     }
   });
 
-  it("rises the signals and then fully retracts them", () => {
-    expect(getHowBeats(1, 0).signals).toBe(0);
-    expect(Math.max(...TRACK.map((t) => getHowBeats(1, t).signals))).toBeCloseTo(
-      1,
-      2,
-    );
-    expect(getHowBeats(1, 0.62).signals).toBe(0);
-    expect(getHowBeats(1, 1).signals).toBe(0);
-  });
-
-  it("types the phrase before it interprets it", () => {
-    // Type is done well before the signals rise.
+  it("finishes typing the phrase before the composer steps back", () => {
     expect(getHowBeats(1, 0.24).type).toBeCloseTo(1, 2);
-    expect(getHowBeats(1, 0.24).signals).toBe(0);
+    expect(getHowBeats(1, 0.24).shrink).toBe(0);
   });
 
   it("holds every option until the composer has stepped back", () => {
