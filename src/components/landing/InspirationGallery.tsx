@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useSyncExternalStore, type CSSProperties } from "react";
+import { useRef, useSyncExternalStore, type CSSProperties } from "react";
 import Image from "next/image";
 
 import { usePrefersReducedMotion, useIsClient } from "@/lib/motion";
@@ -14,6 +14,7 @@ import {
 import { INSPIRATION, type InspirationTile } from "./landingContent";
 import { MEDIA } from "./landingMedia";
 import { Reveal } from "./Reveal";
+import { sceneProgress, useSceneClock } from "./sceneClock";
 import styles from "./gallery.module.css";
 
 const COMPACT_QUERY = "(max-width: 900px)";
@@ -86,76 +87,39 @@ export function InspirationGallery() {
 
 /* ── Scrubbed scene (desktop, motion allowed) ────────────────────────── */
 
-const clamp01 = (value: number) => (value < 0 ? 0 : value > 1 ? 1 : value);
-
 /**
- * The scene's clock.
+ * The scene's beats, from one rect.
  *
  * A frame does exactly three things, in this order: one
  * `getBoundingClientRect` — the only layout read, since `innerHeight` is
- * cached by the resize listener — then the arithmetic, then every custom
- * property written at once onto a single node. Reading after writing
- * within a frame is what forces synchronous layout, so it never happens.
+ * cached by the resize listener — then the arithmetic here, then every
+ * custom property written at once onto a single node by `useSceneClock`.
+ * Reading after writing within a frame is what forces synchronous layout,
+ * so it never happens.
  */
-function useSceneClock(track: React.RefObject<HTMLDivElement | null>) {
-  useEffect(() => {
-    const node = track.current;
-    if (!node) return;
+function measureGallery(
+  rect: DOMRect,
+  viewportHeight: number,
+): Record<string, number> {
+  const { enter, t } = sceneProgress(rect, viewportHeight);
+  const beats = getGalleryBeats(enter, t);
 
-    let frame = 0;
-    let viewportHeight = window.innerHeight;
-
-    function write() {
-      frame = 0;
-      if (!node) return;
-
-      const rect = node.getBoundingClientRect();
-
-      // Approach: 0 with the section's top edge at the bottom of the
-      // viewport, 1 when it reaches the top. Alive long before the pin.
-      const enter = clamp01(1 - rect.top / Math.max(viewportHeight, 1));
-      // Pinned travel: the track's height beyond one viewport.
-      const travel = Math.max(rect.height - viewportHeight, 1);
-      const t = clamp01(-rect.top / travel);
-
-      const beats = getGalleryBeats(enter, t);
-
-      node.style.setProperty("--enter", beats.enter.toFixed(3));
-      node.style.setProperty("--copy", beats.copy.toFixed(3));
-      node.style.setProperty("--shift", beats.shift.toFixed(3));
-      node.style.setProperty("--open", beats.open.toFixed(3));
-      for (const tile of GALLERY_TILES) {
-        if (tile.role === "lead") continue;
-        node.style.setProperty(
-          `--open-${tile.id}`,
-          tileProgress(beats.open, tile.delay).toFixed(3),
-        );
-      }
-    }
-
-    function schedule() {
-      if (!frame) frame = requestAnimationFrame(write);
-    }
-
-    function onResize() {
-      viewportHeight = window.innerHeight;
-      schedule();
-    }
-
-    write();
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", onResize);
-    return () => {
-      if (frame) cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", onResize);
-    };
-  }, [track]);
+  const values: Record<string, number> = {
+    "--enter": beats.enter,
+    "--copy": beats.copy,
+    "--shift": beats.shift,
+    "--open": beats.open,
+  };
+  for (const tile of GALLERY_TILES) {
+    if (tile.role === "lead") continue;
+    values[`--open-${tile.id}`] = tileProgress(beats.open, tile.delay);
+  }
+  return values;
 }
 
 function ScrubScene() {
   const track = useRef<HTMLDivElement>(null);
-  useSceneClock(track);
+  useSceneClock(track, measureGallery);
 
   return (
     <div ref={track} className={styles.track}>

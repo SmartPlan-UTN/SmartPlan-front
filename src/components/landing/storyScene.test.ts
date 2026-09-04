@@ -232,17 +232,47 @@ describe("story beats", () => {
   /**
    * The section stays cream. An earlier version darkened the whole page to
    * `--char`, which broke the continuity with the hero and the gallery; the
-   * ground may now only warm a few degrees and must settle back near the
-   * cream `HowItWorks` is painted on.
+   * ground may now only warm a few degrees, and it has to come back to
+   * nothing — a residue at the boundary is a visible horizontal band across
+   * the page, since `HowItWorks` below is painted on plain cream.
    */
-  it("warms the ground and settles it back", () => {
+  it("warms the ground and settles it back to nothing", () => {
     expect(getStoryBeats(1, 0).warm).toBe(0);
     expect(getStoryBeats(1, 0.66).warm).toBeCloseTo(1, 5);
-    expect(getStoryBeats(1, 1).warm).toBeLessThan(0.5);
+    expect(getStoryBeats(1, 1).warm).toBe(0);
   });
 
   it("holds the copy back until the section is genuinely arriving", () => {
     expect(getStoryBeats(0.12, 0).copy).toBe(0);
     expect(getStoryBeats(1, 0).copy).toBe(1);
+  });
+
+  /**
+   * `present` is what keeps two scenes off one screen. The words are placed
+   * by the pinned clock, which is still zero while the section is only
+   * approaching — so without this beat they are painted at full ink over an
+   * inspiration scene that still owns the viewport.
+   */
+  describe("presence", () => {
+    it("is nothing while the section is only approaching", () => {
+      expect(getStoryBeats(0, 0).present).toBe(0);
+      expect(getStoryBeats(0.3, 0).present).toBe(0);
+    });
+
+    it("is complete before the section pins", () => {
+      expect(getStoryBeats(0.68, 0).present).toBeCloseTo(1, 5);
+      expect(getStoryBeats(1, 0).present).toBeCloseTo(1, 5);
+    });
+
+    /**
+     * It must never come back down. The exit is the sticky release, and a
+     * fade on top of that empties the stage while the track still has most
+     * of a screen left — a blank screen instead of a hand-off.
+     */
+    it("never lets go once the section is on stage", () => {
+      for (const t of TRACK) {
+        expect(getStoryBeats(1, t).present).toBeCloseTo(1, 5);
+      }
+    });
   });
 });

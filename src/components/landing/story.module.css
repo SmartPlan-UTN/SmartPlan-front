@@ -35,6 +35,11 @@
 }
 
 .track {
+  /* `--present` defaults to 1, unlike every other beat: it multiplies the
+     whole stage's opacity, so a 0 here would leave the section blank if the
+     clock never ran (no JS, a script error upstream). Same failure-mode rule
+     as `Reveal.tsx` — the page is never hidden by a default. */
+  --present: 1;
   --copy: 0;
   --sort: 0;
   --fade: 0;
@@ -63,10 +68,10 @@
  * `#efe3d6` is not a new colour: it is the tone the hero's own gradient
  * passes through, so this reads as the same page a little later in the day
  * rather than as a theme. The overlay peaks around the middle of the track
- * and eases back to about a third, which leaves the ground it hands to
- * `HowItWorks` within a hair of that section's cream. If the change ever
- * becomes noticeable while scrolling, move this colour closer to `--cream`
- * before touching the curve in `getStoryBeats`. */
+ * and eases back to nothing, so the ground handed to `HowItWorks` is that
+ * section's cream exactly. It used to stop at about a third, and a third of
+ * this sand over cream is a step the eye catches as a horizontal band at the
+ * section boundary — which is why the curve now closes. */
 .warm {
   position: absolute;
   z-index: 1;
@@ -89,6 +94,11 @@
   container-type: size;
   width: min(100%, 1280px);
   height: 100%;
+  /* The scene arrives and leaves as one object. Without this the words —
+     placed by the pinned clock, which is still zero — are painted at full
+     ink the moment the section's top edge enters the viewport, on top of an
+     inspiration scene that still owns the screen. */
+  opacity: var(--present, 1);
 }
 
 /* ── The intentions that do not survive ─────────────────────────────── */

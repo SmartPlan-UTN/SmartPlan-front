@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 
+import { useSceneClock } from "./sceneClock";
 import styles from "./landing.module.css";
 
 interface IntroSequenceProps {
@@ -36,59 +37,53 @@ export function getIntroPhases(progress: number) {
   };
 }
 
-/** One rAF-throttled scroll clock, driving the hero exit. */
+const findHero = (node: HTMLElement) =>
+  node.querySelector<HTMLElement>("[data-intro-hero]");
+
+/**
+ * The hero's beats, from its own rect.
+ *
+ * Reduced motion pins every beat at zero rather than merely undamping
+ * them: the hero's CSS neutralises the exit as well, and this keeps the
+ * two from disagreeing if one of them is ever edited alone.
+ */
+function measureIntro(rect: DOMRect): Record<string, number> {
+  if (
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  ) {
+    return {
+      "--intro-progress": 0,
+      "--hero-stage-progress": 0,
+      "--object-exit-progress": 0,
+    };
+  }
+
+  // Measured over more than the hero's own height so the beats have room
+  // to breathe instead of firing off in the first screen of scroll.
+  // Untouched: this curve is the hero's feel.
+  const phases = getIntroPhases(-rect.top / Math.max(rect.height * 1.75, 1));
+
+  return {
+    "--intro-progress": phases.raw,
+    "--hero-stage-progress": phases.hero,
+    "--object-exit-progress": phases.objects,
+  };
+}
+
+/**
+ * One damped rAF scroll clock, driving the hero exit.
+ *
+ * The hero is measured rather than the wrapper: this component renders a
+ * plain relatively-positioned div with no height of its own, so its own
+ * rect would not describe the beat. `useSceneClock` writes onto the
+ * wrapper all the same, because that is the element the hero's CSS
+ * inherits the properties from.
+ */
 export function IntroSequence({ active, children }: IntroSequenceProps) {
   const root = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const node = root.current;
-    if (!node || !active || typeof window.matchMedia !== "function") return;
-    const sequence = node;
-
-    const hero = sequence.querySelector<HTMLElement>("[data-intro-hero]");
-    if (!hero) return;
-    const heroNode = hero;
-
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let frame = 0;
-
-    function update() {
-      frame = 0;
-      if (reduced.matches) {
-        sequence.style.setProperty("--intro-progress", "0");
-        sequence.style.setProperty("--hero-stage-progress", "0");
-        sequence.style.setProperty("--object-exit-progress", "0");
-        return;
-      }
-
-      const rect = heroNode.getBoundingClientRect();
-      // Measured over more than the hero's own height so the beats have
-      // room to breathe instead of firing off in the first screen of
-      // scroll. Untouched: this curve is the hero's feel.
-      const phases = getIntroPhases(
-        -rect.top / Math.max(rect.height * 1.75, 1),
-      );
-
-      sequence.style.setProperty("--intro-progress", phases.raw.toFixed(3));
-      sequence.style.setProperty("--hero-stage-progress", phases.hero.toFixed(3));
-      sequence.style.setProperty("--object-exit-progress", phases.objects.toFixed(3));
-    }
-
-    function schedule() {
-      if (!frame) frame = requestAnimationFrame(update);
-    }
-
-    update();
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
-    reduced.addEventListener("change", schedule);
-    return () => {
-      if (frame) cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
-      reduced.removeEventListener("change", schedule);
-    };
-  }, [active]);
+  useSceneClock(root, measureIntro, { active, target: findHero });
 
   return (
     <div

@@ -178,6 +178,12 @@ export function routePath(w: number, h: number): string {
 }
 
 export interface StoryBeats {
+  /**
+   * The stage's own presence, across the approach only. Everything else is
+   * placed inside it, so this is what keeps the scene from being painted
+   * over the one above. The exit belongs to the sticky release.
+   */
+  present: number;
   /** Kicker, first title line and lead. Rises on approach, leaves on the track. */
   copy: number;
   /** The sort: three words gain presence, five lose it. */
@@ -201,23 +207,37 @@ const span = (value: number, start: number, end: number) =>
 const ease = (value: number) => value * value * (3 - 2 * value);
 
 /**
- * The two clocks, resolved into six beats.
+ * The two clocks, resolved into seven beats.
  *
  * `enter` is the section's approach, 0 when its top edge is at the bottom of
  * the viewport and 1 when it reaches the top; `t` is the pinned track. Only
- * the copy's arrival hangs off the approach — everything else needs the room
- * the track buys.
+ * the copy's arrival and the scene's own presence hang off the approach —
+ * everything else needs the room the track buys.
  *
- * ── `warm`, and why it goes back down ───────────────────────────────
+ * ── `present`, and why it only fades in ─────────────────────────────
+ *
+ * The words are placed by the pinned clock, which is zero until the section
+ * pins — so without this beat the whole field of intentions is painted at
+ * full ink the instant the section's top edge crosses into the viewport,
+ * while the inspiration scene above still owns most of the screen. Two
+ * scenes at once is the overlap that reads as clutter, and this closes it.
+ *
+ * It deliberately has no matching fade *out*. The exit is already carried
+ * by the sticky release — the scene scrolls away with its viewport — and
+ * fading on top of that empties the stage while the track still has most
+ * of a screen of scroll left in it, which buys a blank one instead of a
+ * hand-off. The seam that made the exit look abrupt was the ground, not
+ * the content: see `warm`.
+ *
+ * ── `warm`, and why it goes back to nothing ─────────────────────────
  *
  * The only change of ground in the section, and it is deliberately almost
  * invisible: an overlay of a warm sand the hero already paints in its own
  * gradient, so it is not a new colour on the page. It rises to full between
- * 0.30 and 0.66 and then **recedes to about a third**, which is the
- * cream -> warm sand -> lightly toasted cream the section wants, and which
- * also means the ground it hands to `HowItWorks` is within a hair of that
- * section's own cream. If the change is ever noticeable while scrolling,
- * lower the overlay's colour distance before touching this curve.
+ * 0.30 and 0.66 and then **recedes all the way to zero**, so the ground the
+ * section hands to `HowItWorks` is that section's cream exactly. It used to
+ * settle at about a third, which left a visible horizontal step at the
+ * boundary — the seam this curve exists to avoid.
  *
  * ── `route`, and why nothing precedes it ────────────────────────────
  *
@@ -236,10 +256,11 @@ const ease = (value: number) => value * value * (3 - 2 * value);
  */
 export function getStoryBeats(enter: number, t: number): StoryBeats {
   return {
+    present: ease(span(enter, 0.3, 0.68)),
     copy: ease(span(enter, 0.38, 0.7)) * (1 - ease(span(t, 0.26, 0.46))),
     sort: ease(span(t, 0.06, 0.38)),
     fade: ease(span(t, 0.4, 0.56)),
-    warm: ease(span(t, 0.3, 0.66)) - ease(span(t, 0.78, 1)) * 0.65,
+    warm: ease(span(t, 0.3, 0.66)) * (1 - ease(span(t, 0.78, 1))),
     route: ease(span(t, 0.42, 0.86)),
     payoff: ease(span(t, 0.76, 0.9)),
   };
