@@ -69,7 +69,9 @@
 .headline {
   position: absolute;
   left: 4%;
-  top: 17%;
+  /* Shared upper composition band: the title must stay spatially connected
+     to the composer while the latter begins its move toward the cards. */
+  top: 26%;
   width: min(44%, 460px);
   opacity: var(--headline, 0);
   transform: translate3d(0, calc(-50% + (1 - var(--headline, 0)) * 16px), 0);

@@ -7,29 +7,21 @@
   transition: transform 260ms var(--ease-out), opacity 220ms var(--ease-out);
 }
 
-/* ── Layer 1: placement + pointer parallax ──────────────────────────
-   Position, size and resting opacity only. `translate` (not `transform`)
-   carries the parallax so the drift keyframe below can own `transform`
-   without a collision. `--pf` (parallax) and drift amplitude default off
-   the depth plane; a few pieces override. */
+/* ── Layer 1: placement ─────────────────────────────────────────────
+   Decorative objects stay anchored to keep the composer stable. */
 .object {
   position: absolute;
   opacity: var(--rest-opacity, 1);
-  translate:
-    calc(var(--px, 0) * var(--pf, 0) * 1px)
-    calc(var(--py, 0) * var(--pf, 0) * 1px);
-  transition: translate 220ms var(--ease-out), transform 200ms var(--ease-out);
 }
 
-.object[data-plane="fore"] { --pf: 18; --drift-y: -5px; --drift-rot: 0.4deg; }
-.object[data-plane="mid"]  { --pf: 10; --drift-y: -3px; --drift-rot: 0.25deg; }
-.object[data-plane="back"] { --pf: 4;  --drift-y: 0px;  --drift-rot: 0deg; }
+.object[data-plane="fore"] { --drift-y: -5px; --drift-rot: 0.4deg; }
+.object[data-plane="mid"]  { --drift-y: -3px; --drift-rot: 0.25deg; }
+.object[data-plane="back"] { --drift-y: 0px;  --drift-rot: 0deg; }
 
-/* ── Layer 2: the scroll-linked departure + pointer tilt ────────────
+/* ── Layer 2: the scroll-linked departure ───────────────────────────
    Rests at the object's rotation; as `--object-exit-progress` climbs it
    slides along its own exit vector and scales, each object at its own
-   rate. `--tf` adds a fraction of a degree of tilt against the pointer on
-   the three foreground pieces, so the parallax reads as depth. */
+   rate. This transform is intentionally independent from pointer input. */
 .objectExit {
   /* The per-object rate is damped hard here: the pieces should read as
      drifting off over most of a screen of scroll, not clearing the frame
@@ -46,7 +38,6 @@
     rotate(
       calc(
         var(--rot, 0deg) +
-        var(--px, 0) * var(--tf, 0) * 1deg +
         var(--object-progress) * var(--exit-spin, 0deg)
       )
     )
@@ -88,7 +79,7 @@
 
 /* ── Idle drift ────────────────────────────────────────────────────
    A few pieces breathe a little while the hero sits still. `transform`
-   on the outer `.object` — free now that parallax uses `translate`.
+   on the outer `.object`.
    Amplitude comes from the plane; periods are deliberately coprime-ish
    and phases offset so the pieces never fall into step. */
 @media (prefers-reduced-motion: no-preference) {
@@ -157,7 +148,6 @@
   left: -5%;
   width: clamp(280px, 26vw, 420px);
   --rot: -11deg;
-  --tf: 1.4;
 }
 
 .object[data-object="notebook"] {
@@ -180,7 +170,6 @@
   right: 2%;
   width: clamp(190px, 18vw, 290px);
   --rot: 9deg;
-  --tf: -1.2;
 }
 
 .object[data-object="wine"] {
@@ -216,7 +205,6 @@
   bottom: 6%;
   width: clamp(190px, 20vw, 300px);
   --rot: -9deg;
-  --tf: 1;
 }
 
 /* ── Responsive: thin the scene, keep the composition ──────────────── */
@@ -286,9 +274,6 @@
 }
 
 @media (max-width: 620px) {
-  /* Parallax off on touch; the smaller pieces sit dead still. */
-  .object { --pf: 0; }
-
   .object[data-object="map"],
   .object[data-object="gorrito"],
   .object[data-object="wine"],
@@ -327,5 +312,4 @@
   .scene { opacity: 1; transition: none; }
   :global([data-writing="true"]) .scene { transform: none; }
   .objectExit { transform: rotate(var(--rot, 0deg)); opacity: 1; }
-  .object { translate: none; }
 }

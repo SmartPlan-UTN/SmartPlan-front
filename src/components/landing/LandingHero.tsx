@@ -117,50 +117,6 @@ export function LandingHero({
     onPrefillConsumed?.();
   }, [prefill, composing, onPrefillConsumed]);
 
-  // A few pixels of pointer parallax across the whole object field, on
-  // fine pointers only. Writes `--px`/`--py` (−0.5..0.5) on the hero
-  // root; `hero-objects.module.css` scales each object against its own
-  // depth factor. rAF-throttled, same shape as the scroll effect above.
-  useEffect(() => {
-    const node = hero.current;
-    if (!node || !composing) return;
-    const heroNode: HTMLElement = node;
-    if (typeof window.matchMedia !== "function") return;
-    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    let frame = 0;
-    let px = 0;
-    let py = 0;
-
-    function apply() {
-      frame = 0;
-      heroNode.style.setProperty("--px", px.toFixed(3));
-      heroNode.style.setProperty("--py", py.toFixed(3));
-    }
-
-    function onMove(event: PointerEvent) {
-      const rect = heroNode.getBoundingClientRect();
-      px = (event.clientX - rect.left) / rect.width - 0.5;
-      py = (event.clientY - rect.top) / rect.height - 0.5;
-      if (!frame) frame = requestAnimationFrame(apply);
-    }
-
-    function onLeave() {
-      px = 0;
-      py = 0;
-      if (!frame) frame = requestAnimationFrame(apply);
-    }
-
-    window.addEventListener("pointermove", onMove, { passive: true });
-    heroNode.addEventListener("pointerleave", onLeave);
-    return () => {
-      if (frame) cancelAnimationFrame(frame);
-      window.removeEventListener("pointermove", onMove);
-      heroNode.removeEventListener("pointerleave", onLeave);
-    };
-  }, [composing]);
-
   return (
     <section
       ref={hero}

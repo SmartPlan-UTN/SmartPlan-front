@@ -168,7 +168,7 @@ export function LoginForm({ destination, passwordChanged, accountDeleted }: Logi
     <>
       <div className={`${styles.header} ${styles.headerLogin}`}>
         <h1 className="sp-h2">Iniciar sesión</h1>
-        <p className={`sp-small ${styles.subtitle}`}>Bienvenido de vuelta ✦</p>
+        <p className={`sp-small ${styles.subtitle}`}>Bienvenido de vuelta</p>
       </div>
 
       <form

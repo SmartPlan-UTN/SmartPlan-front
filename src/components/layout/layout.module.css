@@ -104,9 +104,10 @@
    from `.navbar`: they are two elements (sticky header vs. this row) with
    different responsibilities. */
 .navbarInner {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  gap: var(--s-3);
+  column-gap: var(--s-4);
   height: var(--navbar-h);
   width: 100%;
   min-width: 0;
@@ -124,6 +125,7 @@
   align-items: center;
   flex-shrink: 0;
   border-radius: var(--r-btn);
+  justify-self: start;
 }
 
 .brand:focus-visible,
@@ -142,18 +144,20 @@
    matches SmartPlanSystemDesign/v2/Navbar.jsx. */
 .nav {
   display: none;
-  flex: 1;
   align-items: center;
   justify-content: center;
   gap: var(--s-1);
+  grid-column: 2;
+  justify-self: center;
 }
 
-/* Pushes the session control —and with it the nav toggle— against the
-   right edge on mobile, where `.nav` is hidden and its `flex: 1` doesn't
-   apply. On desktop `.nav` already claims the free space, so this margin
-   resolves to 0 and does nothing. */
-.sessionControl {
-  margin-inline-start: auto;
+.actions {
+  display: flex;
+  grid-column: 3;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--s-3);
+  min-width: 0;
 }
 
 /* ── Navbar links ─────────────────────────────────────────────── */
@@ -240,8 +244,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
   border: 0;
   border-radius: var(--r-chip);
@@ -270,20 +274,28 @@
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
-  gap: var(--s-2);
-  padding: var(--s-2) var(--s-4);
+  gap: var(--s-1);
+  padding: 6px var(--s-3);
   border-radius: var(--r-btn);
-  background: var(--ember);
-  color: var(--white);
+  background: transparent;
+  color: var(--fg-1);
+  border: 1px solid var(--hairline);
   font-size: var(--t-small);
-  font-weight: var(--w-heading);
+  font-weight: 650;
   text-decoration: none;
   white-space: nowrap;
   transition: filter 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .buttonLink:hover {
-  filter: brightness(1.1);
+  border-color: var(--ember-20);
+  background: var(--ember-04);
+  color: var(--ember);
+  filter: none;
+}
+
+.sessionLink {
+  min-height: 40px;
 }
 
 /* Primary create-plan action in the desktop navbar. It stays a real link so
@@ -291,14 +303,15 @@
 .createPlanNavBtn {
   display: inline-flex;
   align-items: center;
-  gap: var(--s-1);
+  gap: 5px;
   flex-shrink: 0;
-  padding: var(--s-2) var(--s-3);
+  min-height: 40px;
+  padding: 6px var(--s-3);
   border-radius: var(--r-btn);
   background: var(--ember);
   color: var(--white);
   font-size: var(--t-small);
-  font-weight: var(--w-heading);
+  font-weight: 650;
   text-decoration: none;
   white-space: nowrap;
   transition: filter 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -327,7 +340,15 @@
   }
 
   .createPlanNavBtn {
+    width: 44px;
+    min-height: 44px;
+    justify-content: center;
     padding: var(--s-2);
+  }
+
+  .sessionLink {
+    min-height: 44px;
+    padding-inline: var(--s-2);
   }
 }
 
@@ -337,8 +358,8 @@
    900px. */
 .sessionPlaceholder {
   display: inline-block;
-  width: 56px;
-  height: 34px;
+  width: 44px;
+  height: 40px;
 }
 
 /* Always light-card styled, independent of the navbar's own background —
@@ -402,6 +423,8 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  width: 44px;
+  height: 44px;
   padding: var(--s-2);
   border: 1px solid var(--hairline);
   border-radius: var(--r-btn);
@@ -431,12 +454,27 @@
   }
 
   .sessionPlaceholder {
-    width: 140px;
+    width: 128px;
+    height: 40px;
   }
 
   .menuButton,
   .mobilePanel {
     display: none;
+  }
+}
+
+@media (max-width: 899px) {
+  .navbarInner {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .actions {
+    grid-column: 2;
+  }
+
+  .sessionPlaceholder {
+    height: 44px;
   }
 }
 

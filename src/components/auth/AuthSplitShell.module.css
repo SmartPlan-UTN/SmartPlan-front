@@ -89,28 +89,37 @@
   z-index: 2;
 }
 
+.backLink {
+  position: absolute;
+  top: var(--s-4);
+  left: var(--s-5);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 44px;
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-btn);
+  color: var(--fg-2);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+  text-decoration: none;
+  transition: color var(--d-fast) var(--ease-out), background var(--d-fast) var(--ease-out);
+}
+
+.backLink:hover {
+  background: var(--ember-04);
+  color: var(--ember);
+}
+
+.backLink:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
 @media (min-width: 768px) {
   .rightPanel {
     padding: var(--s-7) var(--s-8);
   }
-}
-
-/* Not wired up yet — see the "¿Sos admin?" entry in TRACKING.md's Known
-   Pending Items for what a follow-up ticket needs to decide. Rendered as a
-   plain span, not a link/button, so it doesn't announce itself as an
-   interactive control that does nothing. */
-.adminLink {
-  position: absolute;
-  top: var(--s-4);
-  right: var(--s-5);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
-  border-radius: var(--r-pill);
-  font-size: var(--t-small);
-  font-weight: 600;
-  color: var(--fg-3);
 }
 
 .mobileLogo {
@@ -142,4 +151,26 @@
 
 .cardRegister {
   padding: 36px 36px 32px;
+}
+
+@media (max-width: 560px) {
+  .rightPanel {
+    justify-content: flex-start;
+    padding: 72px var(--s-4) var(--s-5);
+  }
+
+  .backLink {
+    top: var(--s-3);
+    left: var(--s-3);
+  }
+
+  .mobileLogo {
+    margin-bottom: var(--s-5);
+  }
+
+  .cardLogin,
+  .cardRegister {
+    padding: 28px var(--s-4) 24px;
+    border-radius: var(--r-card);
+  }
 }
