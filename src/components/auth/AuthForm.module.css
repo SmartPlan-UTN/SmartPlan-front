@@ -17,7 +17,7 @@
 }
 
 .headerLogin {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
 .headerRegister {
@@ -34,7 +34,7 @@
 }
 
 .formLogin {
-  gap: 20px;
+  gap: 16px;
 }
 
 /* CU3 recovery-request progress and result states. */
@@ -58,7 +58,7 @@ button.resendButton { border-width: 1.5px; border-color: var(--ember); color: va
 .backLink:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; border-radius: var(--r-btn); }
 
 .formRegister {
-  gap: 16px;
+  gap: 14px;
 }
 
 /* RegisterForm-only: the terms checkbox's own error line. `Field` has its
@@ -152,11 +152,11 @@ button.resendButton { border-width: 1.5px; border-color: var(--ember); color: va
 }
 
 .footerLogin {
-  margin-top: 26px;
+  margin-top: 22px;
 }
 
 .footerRegister {
-  margin-top: 22px;
+  margin-top: 18px;
 }
 
 .footerLink {
@@ -180,6 +180,31 @@ button.resendButton { border-width: 1.5px; border-color: var(--ember); color: va
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--s-3);
+}
+
+@media (max-width: 560px) {
+  .headerLogin,
+  .headerRegister {
+    margin-bottom: 20px;
+  }
+
+  .formLogin {
+    gap: 14px;
+  }
+
+  .formRegister {
+    gap: 12px;
+  }
+
+  .row2 {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .footerLogin,
+  .footerRegister {
+    margin-top: 18px;
+  }
 }
 
 /* ── RegisterForm-only: terms checkbox ───────────────────────────────

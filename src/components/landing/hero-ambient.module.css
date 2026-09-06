@@ -14,11 +14,7 @@
   display: block;
   color: var(--char);
   opacity: 0;
-  translate:
-    calc(var(--px, 0) * var(--pf, 3) * 1px)
-    calc(var(--py, 0) * var(--pf, 3) * 1px);
   animation: hero-mark-in 640ms var(--ease-out) var(--mark-in-delay, 0ms) forwards;
-  transition: translate 260ms var(--ease-out);
 }
 
 .mark svg {
@@ -42,7 +38,6 @@
   width: 88%;
   color: var(--ember);
   --rest-opacity: 0.09;
-  --pf: 2;
 }
 
 .pin {
@@ -51,7 +46,6 @@
   width: clamp(22px, 2.4vw, 32px);
   color: var(--fg-3);
   --rest-opacity: 0.5;
-  --pf: 6;
 }
 
 @media (max-width: 900px) {
@@ -66,7 +60,5 @@
   .mark {
     animation: none;
     opacity: var(--rest-opacity, 0.2);
-    translate: none;
-    transition: none;
   }
 }

@@ -25,7 +25,7 @@ interface Mote {
   alpha: number;
   /** 0 = ember, 1 = gold. Interpolated, so the field is never two flat colours. */
   warmth: number;
-  /** Parallax factor: bigger motes sit nearer and travel further. */
+  /** Depth factor: bigger motes sit nearer and render slightly larger. */
   depth: number;
 }
 
@@ -43,8 +43,7 @@ function mix(a: number, b: number, t: number): number {
 }
 
 /**
- * The hero's depth layer: slow warm motes drifting behind the composer,
- * with a little parallax against the pointer.
+ * The hero's depth layer: slow warm motes drifting behind the composer.
  *
  * This is the third of three background layers, and the quietest. The
  * mood waves underneath it carry the colour; this carries the sense that
@@ -87,8 +86,6 @@ export function HeroAtmosphere({ calm = false }: HeroAtmosphereProps) {
     // Eased toward `calmRef`, so focusing the field slows the air over
     // about a second instead of freezing it on the spot.
     let stillness = 0;
-
-    const pointer = { x: 0.5, y: 0.5, currentX: 0.5, currentY: 0.5 };
 
     function seed() {
       if (!canvas) return;
@@ -157,13 +154,7 @@ export function HeroAtmosphere({ calm = false }: HeroAtmosphereProps) {
       stillness += (target - stillness) * Math.min(delta * 3.2, 1);
       const speed = 1 - stillness * 0.86;
 
-      pointer.currentX += (pointer.x - pointer.currentX) * Math.min(delta * 2.4, 1);
-      pointer.currentY += (pointer.y - pointer.currentY) * Math.min(delta * 2.4, 1);
-
       context.clearRect(0, 0, width, height);
-
-      const shiftX = (pointer.currentX - 0.5) * 9;
-      const shiftY = (pointer.currentY - 0.5) * 6;
 
       for (const mote of motes) {
         mote.x += mote.vx * delta * speed;
@@ -187,8 +178,8 @@ export function HeroAtmosphere({ calm = false }: HeroAtmosphereProps) {
 
         context.beginPath();
         context.arc(
-          mote.x + shiftX * mote.depth,
-          mote.y + shiftY * mote.depth,
+          mote.x,
+          mote.y,
           mote.r,
           0,
           Math.PI * 2,
@@ -200,11 +191,6 @@ export function HeroAtmosphere({ calm = false }: HeroAtmosphereProps) {
       frame = visible && !(calmRef.current && stillness > 0.98)
         ? requestAnimationFrame(draw)
         : null;
-    }
-
-    function onPointerMove(event: PointerEvent) {
-      pointer.x = event.clientX / window.innerWidth;
-      pointer.y = event.clientY / window.innerHeight;
     }
 
     seed();
@@ -248,9 +234,6 @@ export function HeroAtmosphere({ calm = false }: HeroAtmosphereProps) {
       frame = null;
     } else {
       frame = requestAnimationFrame(draw);
-      if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
-        window.addEventListener("pointermove", onPointerMove, { passive: true });
-      }
     }
 
     const observer =
@@ -262,7 +245,6 @@ export function HeroAtmosphere({ calm = false }: HeroAtmosphereProps) {
       observer?.disconnect();
       visObserver?.disconnect();
       resumeRef.current = null;
-      window.removeEventListener("pointermove", onPointerMove);
     };
   }, [reduced]);
 

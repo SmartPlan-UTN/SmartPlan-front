@@ -31,15 +31,15 @@
   text-decoration: none;
   box-shadow: 0 2px 10px -6px color-mix(in srgb, var(--char) 40%, transparent);
   transition:
-    transform var(--d-base, 420ms) var(--ease-out, ease),
-    box-shadow var(--d-base, 420ms) var(--ease-out, ease),
-    border-color var(--d-base, 420ms) var(--ease-out, ease);
+    transform var(--d-fast, 180ms) var(--ease-out, ease),
+    box-shadow var(--d-fast, 180ms) var(--ease-out, ease),
+    border-color var(--d-fast, 180ms) var(--ease-out, ease);
   will-change: transform;
 }
 
 .link:hover,
 .link:focus-visible {
-  transform: translateY(-6px);
+  transform: translateY(-3px);
   border-color: color-mix(in srgb, var(--ember) 40%, var(--hairline));
   box-shadow:
     0 28px 50px -26px color-mix(in srgb, var(--char) 62%, transparent),
@@ -158,16 +158,16 @@
   top: 10px;
   right: 10px;
   z-index: 3;
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
 }
 
 .dismiss {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: 0;
   border-radius: 50%;

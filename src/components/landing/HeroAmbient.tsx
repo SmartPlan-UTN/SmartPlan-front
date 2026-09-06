@@ -8,9 +8,7 @@ import styles from "./hero-ambient.module.css";
  * reads as a composed surface rather than a few cut-outs on cream.
  *
  * Pure inline SVG — no image requests, no bytes over the wire. Each mark
- * barely moves: a sliver of pointer parallax (`--pf` is tiny) and a soft
- * one-time fade-in, nothing on scroll beyond the shared exit the objects
- * already ride.
+ * stays anchored around the composer and uses only a soft one-time fade-in.
  */
 
 type MarkKind = "coordPin" | "routeArc";

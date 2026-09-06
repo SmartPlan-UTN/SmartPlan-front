@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 
 import { Icon, Logo } from "@/components/ui";
+import { ROUTES } from "@/lib/routes";
 
 import styles from "./AuthSplitShell.module.css";
 
@@ -21,6 +23,8 @@ export interface AuthSplitShellProps {
   /** The v2 prototype gives the register card a touch less padding than
    * login, since it holds more fields. */
   cardVariant: "login" | "register";
+  backHref?: string;
+  backLabel?: string;
 }
 
 /**
@@ -33,7 +37,12 @@ export interface AuthSplitShellProps {
  * each screen lives at the top level, outside a shared route group, so this
  * shell (and its `MoodBackground`) doesn't leak into unrelated routes.
  */
-export function AuthSplitShell({ children, cardVariant }: AuthSplitShellProps) {
+export function AuthSplitShell({
+  children,
+  cardVariant,
+  backHref = ROUTES.home,
+  backLabel = "Volver al inicio",
+}: AuthSplitShellProps) {
   return (
     <div className={styles.shell}>
       <div className={styles.leftPanel}>
@@ -64,13 +73,10 @@ export function AuthSplitShell({ children, cardVariant }: AuthSplitShellProps) {
       </div>
 
       <div className={styles.rightPanel}>
-        {/* "¿Sos admin?" from the v2 design. Deliberately inert — see the
-         * comment on `.adminLink` below. */}
-        <span className={styles.adminLink}>
-          <Icon name="shield" size={15} />
-          ¿Sos admin?
-        </span>
-
+        <Link href={backHref} className={styles.backLink}>
+          <Icon name="arrow-left" size={15} aria-hidden="true" />
+          {backLabel}
+        </Link>
         <div className={styles.mobileLogo}>
           <Logo variant="ink" kind="full" height={28} />
         </div>

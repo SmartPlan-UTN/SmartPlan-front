@@ -16,13 +16,13 @@ import styles from "./hero-objects.module.css";
  * reading as "N cut-outs floating":
  *
  *   fore  large, sharp, high-contrast — clipped by the viewport corners,
- *         most pointer parallax, leaves first and fastest on scroll.
+ *         largest and first to leave on scroll.
  *   mid   category objects at the sides, moderate everything.
  *   back  small / faint — barely moves, leaves last.
  *
  * Four nested layers keep the choreography from fighting itself:
  *
- *   .object       position + size + media queries + pointer parallax
+ *   .object       position + size + media queries
  *   .objectExit   the scroll-linked departure (CSS, `--object-exit-progress`)
  *   motion.div    the one-time entrance (Motion, on mount)
  *   img
@@ -42,7 +42,7 @@ interface HeroObject {
   height: number;
   sizes: string;
   priority?: boolean;
-  /** Depth plane — drives parallax, drift and exit rate (see CSS). */
+  /** Depth plane — drives drift and exit rate (see CSS). */
   plane: Plane;
   /** Resting opacity. Far / ambient pieces sit back. */
   opacity?: number;

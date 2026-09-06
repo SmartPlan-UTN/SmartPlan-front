@@ -253,7 +253,7 @@ describe("Navbar", () => {
     expect(push).toHaveBeenCalledWith("/explore");
 
     await act(async () => {
-      vi.advanceTimersByTime(2999);
+      vi.advanceTimersByTime(899);
     });
     expect(screen.getByText("Armando tu plan perfecto...")).toBeInTheDocument();
 
@@ -314,12 +314,12 @@ describe("Navbar", () => {
     fireEvent.click(within(screen.getByRole("navigation", { name: "Navegación principal" })).getByRole("link", { name: "Explorar" }));
 
     await act(async () => {
-      vi.advanceTimersByTime(1999);
+      vi.advanceTimersByTime(899);
     });
     expect(screen.getByText("Armando tu plan perfecto...")).toBeInTheDocument();
 
     await act(async () => {
-      vi.advanceTimersByTime(1001);
+      vi.advanceTimersByTime(1);
     });
     expect(screen.queryByText("Armando tu plan perfecto...")).not.toBeInTheDocument();
   });

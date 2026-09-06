@@ -205,7 +205,7 @@ export function UserMenu() {
     return (
       <Link
         href={loginRoute(currentRoute)}
-        className={cn(styles.buttonLink, styles.sessionControl)}
+        className={cn(styles.buttonLink, styles.sessionControl, styles.sessionLink)}
         // The label is hidden on small viewports, same as on the trigger.
         aria-label="Iniciar sesión"
       >

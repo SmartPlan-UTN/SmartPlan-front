@@ -17,7 +17,7 @@ import styles from "./layout.module.css";
 // How long the Explorar transition stays up — purely decorative (no real
 // fetch to wait on here, unlike a search result), so it's just a fixed
 // delay before `router.push`'s navigation is revealed.
-const EXPLORE_TRANSITION_MS = 3000;
+const EXPLORE_TRANSITION_MS = 900;
 
 /**
  * 60px navigation bar (`--navbar-h`), fixed at the top with a
@@ -68,6 +68,18 @@ export function Navbar() {
       window.removeEventListener("scroll", onScroll);
     };
   }, []);
+
+  useEffect(() => {
+    if (!transitioning || !isActiveRoute(currentRoute, ROUTES.explore)) return;
+
+    const timer = window.setTimeout(() => {
+      setTransitioning(false);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [currentRoute, transitioning]);
 
   // `Navbar` is mounted once by the `(main)` layout and never unmounts on
   // in-app navigation, so this is mostly a safety net (a hard reload during
@@ -133,14 +145,15 @@ export function Navbar() {
             ))}
           </nav>
 
-          <Link href={ROUTES.createPlan} className={styles.createPlanNavBtn}>
+          <div className={styles.actions}>
+            <Link href={ROUTES.createPlan} className={styles.createPlanNavBtn}>
             <Icon name="plus" size={15} aria-hidden="true" />
-            <span className={styles.createPlanNavLabel}>Crear plan</span>
-          </Link>
+              <span className={styles.createPlanNavLabel}>Crear plan</span>
+            </Link>
 
-          <UserMenu />
+            <UserMenu />
 
-          <button
+            <button
             type="button"
             className={styles.menuButton}
             aria-expanded={menuOpen}
@@ -150,8 +163,9 @@ export function Navbar() {
               setMenuOpen((isOpen) => !isOpen);
             }}
           >
-            <Icon name={menuOpen ? "x" : "menu"} size={20} />
-          </button>
+              <Icon name={menuOpen ? "x" : "menu"} size={20} />
+            </button>
+          </div>
         </div>
 
         {menuOpen ? (
