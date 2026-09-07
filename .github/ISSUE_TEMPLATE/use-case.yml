@@ -1,0 +1,77 @@
+name: Caso de uso
+description: A feature that comes out of the document's traceability matrix (CU1 through CU62).
+title: "[CU00] "
+# Only labels that already exist in the repository: GitHub silently ignores
+# ones that don't. The module label (auth, search, collection...) and the
+# points one (pts: 3) are added during refinement, not by whoever opens the issue.
+labels: ["frontend"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before opening the issue, look up the use case in
+        [`skills/01-domain/SKILL.md`](https://github.com/SmartPlan-UTN/SmartPlan-front/blob/develop/skills/01-domain/SKILL.md) and
+        check [`TRACKING.md`](https://github.com/SmartPlan-UTN/SmartPlan-front/blob/develop/TRACKING.md) to make sure it isn't
+        already in progress. The title goes with the number in brackets:
+        `[CU17] Generar plan automatico`, since that's where the branch name comes from.
+
+  - type: input
+    id: use-case
+    attributes:
+      label: Caso de uso
+      description: Exact number and name, as they appear in the traceability matrix. Don't rephrase it.
+      placeholder: CU17 — Generar plan automático
+    validations:
+      required: true
+
+  - type: input
+    id: screen
+    attributes:
+      label: Pantalla
+      description: Prototype screen code (see `skills/06-design-system/`). If the CU has no interface, put "—".
+      placeholder: PAN 07 — Generar plan
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-needs-to-be-done
+    attributes:
+      label: Qué hay que hacer
+      description: In two or three paragraphs. What the user sees, what they can do, and which endpoint it works against.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Criterios de aceptación
+      description: One per line, in the "vos" form and observable from the outside. These are what get checked when reviewing the PR.
+      value: |
+        - [ ] Cuando ... , el sistema ...
+        - [ ] Si ... , se muestra ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Qué queda afuera
+      description: Anything someone might assume is included but isn't. Avoids arguments during review.
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencias
+      description: Backend endpoints, design system components, or other issues that need to land first. Link them with "#".
+      placeholder: |
+        - Depende de SmartPlan-back#17 (endpoint POST /api/plans/generar)
+        - Necesita el primitivo Button portado a React
+
+  - type: checkboxes
+    id: definition-of-done
+    attributes:
+      label: Definition of Done
+      description: The issue is closed based on the criteria in [`skills/02-git-flow/DEFINITION-OF-DONE.md`](https://github.com/SmartPlan-UTN/SmartPlan-front/blob/develop/skills/02-git-flow/DEFINITION-OF-DONE.md), not just because the code works.
+      options:
+        - label: I read the Definition of Done and this issue will be closed against those criteria
+          required: true

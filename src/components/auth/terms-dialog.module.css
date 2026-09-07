@@ -1,0 +1,72 @@
+/* CU2 - Terms and conditions popup opened from the signup checkbox. Mirrors
+   `confirmation-dialog.module.css`'s overlay/dialog shell, but the body
+   scrolls internally instead of the dialog growing with the page, since
+   this text runs much longer than a confirmation prompt. */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: var(--s-4);
+  background: color-mix(in srgb, var(--char) 58%, transparent);
+  backdrop-filter: blur(4px);
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 560px);
+  max-height: min(80vh, 640px);
+  padding: var(--s-6);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
+  animation: fadeUp 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.dialog h2 {
+  margin-top: var(--s-3);
+  flex-shrink: 0;
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-card-sm);
+  background: var(--ember-15);
+  color: var(--ember);
+}
+
+.body {
+  margin-top: var(--s-3);
+  padding-right: var(--s-2);
+  overflow-y: auto;
+  color: var(--fg-2);
+}
+
+.body h3 {
+  margin-top: var(--s-4);
+  color: var(--fg-1);
+}
+
+.body h3:first-child {
+  margin-top: 0;
+}
+
+.body p {
+  margin-top: var(--s-2);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  margin-top: var(--s-5);
+}

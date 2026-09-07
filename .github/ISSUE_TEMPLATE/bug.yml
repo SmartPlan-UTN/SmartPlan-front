@@ -1,0 +1,93 @@
+name: Bug
+description: Something already implemented that isn't working as it should.
+title: "[BUG] "
+labels: ["bug", "frontend"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For new work, use the **use case** template. This one is for
+        something that already exists in `develop` and is broken.
+
+  - type: textarea
+    id: what-happens
+    attributes:
+      label: What happens
+      description: One or two sentences. Don't try to interpret the cause yet.
+      placeholder: Al guardar un plan desde el detalle, el botón queda cargando para siempre y el plan no aparece en Guardados.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce it
+      description: Numbered, starting from a clean session. If it can't be reproduced on demand, say so and mention when it appeared.
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: input
+    id: expected
+    attributes:
+      label: What you expected to happen
+    validations:
+      required: true
+
+  - type: input
+    id: actual
+    attributes:
+      label: What happened instead
+      description: If there's a console error or an HTTP response with an error code, put it here.
+    validations:
+      required: true
+
+  - type: input
+    id: where
+    attributes:
+      label: Where
+      description: Route and prototype screen, if applicable.
+      placeholder: /plans/17 — PAN 17
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: Blocking and severe go into the current sprint; the rest is prioritized during refinement.
+      options:
+        - Blocking — the feature can't be used and there's no workaround
+        - Severe — fails often or loses data, but there's a workaround
+        - Annoying — fails in a specific case
+        - Cosmetic — looks wrong, works fine
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser and version, branch or commit where you saw it, and whether the backend was running locally.
+      placeholder: Chrome 141, rama develop (9658f3e), back local en :3001
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots, logs, or API response
+      description: Drag images here. Paste logs between triple backticks. **Remove tokens and credentials before pasting.**
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched open issues and this isn't already reported
+          required: true
+        - label: I reproduced it on the latest `develop` (`git switch develop && git pull && pnpm install`)
+          required: true

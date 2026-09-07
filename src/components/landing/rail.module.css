@@ -1,0 +1,159 @@
+/* ================================================================
+   Shared horizontal rail (see Rail.tsx).
+   ================================================================ */
+
+.viewport {
+  position: relative;
+  width: 100%;
+}
+
+.rail {
+  --rail-pad: clamp(20px, 5vw, 48px);
+  --rail-gap: clamp(14px, 1.6vw, 22px);
+
+  display: flex;
+  gap: var(--rail-gap);
+  width: 100%;
+  padding: 6px var(--rail-pad);
+  margin: 0;
+  overflow-x: auto;
+  list-style: none;
+  scroll-padding-inline: var(--rail-pad);
+  scrollbar-width: none;
+}
+
+.rail[data-snap="true"] {
+  scroll-snap-type: x proximity;
+}
+
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+.rail:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 4px;
+  border-radius: var(--r-card);
+}
+
+/* Line the first card up with the header/shell above the rail on wide
+   viewports, instead of a full-bleed inset. */
+@media (min-width: 1024px) {
+  .rail {
+    --rail-pad: max(
+      clamp(20px, 5vw, 48px),
+      calc((100% - var(--max-w)) / 2 + clamp(20px, 5vw, 48px))
+    );
+  }
+}
+
+@media (max-width: 760px) {
+  .rail[data-snap="true"] {
+    scroll-snap-type: x mandatory;
+  }
+}
+
+/* ── "There is more this way" — an edge fade, toggled by overflow ── */
+
+.viewport::before,
+.viewport::after {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  bottom: 0;
+  width: clamp(32px, 6vw, 64px);
+  content: "";
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms var(--ease-out);
+}
+
+.viewport::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--cream), transparent);
+}
+
+.viewport::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--cream), transparent);
+}
+
+.viewport[data-overflow-left="true"]::before {
+  opacity: 1;
+}
+
+.viewport[data-overflow-right="true"]::after {
+  opacity: 1;
+}
+
+/* ── Pointer arrows (wide viewports only) ────────────────────────── */
+
+.arrow {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-chip);
+  background: var(--surface-card);
+  color: var(--fg-1);
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  transform: translateY(-50%);
+  transition:
+    opacity 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    transform 150ms var(--ease-out);
+}
+
+.arrow[aria-hidden="true"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.arrowLeft {
+  left: clamp(6px, 2vw, 18px);
+}
+
+.arrowRight {
+  right: clamp(6px, 2vw, 18px);
+}
+
+.arrow:hover {
+  border-color: var(--ember);
+  color: var(--ember);
+  transform: translateY(-50%) scale(1.06);
+}
+
+.arrow:active {
+  transform: translateY(-50%) scale(0.96);
+}
+
+.arrow:focus-visible {
+  outline: none;
+  border-color: var(--ember);
+  box-shadow: var(--focus-ember);
+}
+
+@media (min-width: 900px) and (hover: hover) {
+  .arrow {
+    display: inline-flex;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viewport::before,
+  .viewport::after,
+  .arrow {
+    transition: none;
+  }
+  .arrow:hover,
+  .arrow:active {
+    transform: translateY(-50%);
+  }
+}

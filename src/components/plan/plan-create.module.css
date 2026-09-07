@@ -1,0 +1,387 @@
+/* CSS for Plan creation form (CU24) following EMBER v2 Design System */
+
+.container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--s-6);
+  /* The page shell (`plans.module.css`) owns the outer spacing now, so
+     this only needs the gap above the header rule it sits under. */
+  margin-top: var(--s-6);
+}
+
+@media (min-width: 1024px) {
+  .container {
+    grid-template-columns: 1.2fr 1fr;
+  }
+}
+
+.autoPlanBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  grid-column: 1 / -1;
+  padding: var(--s-4) var(--s-5);
+  border: 1.5px dashed var(--ember);
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--ember) 6%, transparent);
+}
+
+.autoPlanText strong {
+  display: block;
+  color: var(--fg-1);
+  font-size: var(--t-body);
+}
+
+.autoPlanText p {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: var(--t-small);
+}
+
+@media (max-width: 768px) {
+  .autoPlanBanner {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+}
+
+.title {
+  margin-bottom: var(--s-5);
+  color: var(--fg-1);
+}
+
+.card {
+  background: var(--surface-card);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card);
+  padding: var(--s-5);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.label {
+  color: var(--fg-2);
+  font-weight: 600;
+}
+
+.required {
+  color: var(--ember);
+  font-weight: 700;
+}
+
+.input, .textarea {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card-sm);
+  background: color-mix(in srgb, var(--cream) 70%, transparent);
+  color: var(--fg-1);
+  font-size: var(--t-body);
+  font-family: inherit;
+  transition: border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.input:focus, .textarea:focus {
+  outline: none;
+  border-color: var(--ember);
+  background: var(--surface-card);
+  box-shadow: var(--focus-ember);
+}
+
+.inputInvalid {
+  border-color: var(--error);
+  background: color-mix(in srgb, var(--error) 4%, var(--surface-card));
+}
+
+.fieldError {
+  color: var(--error);
+  font-size: var(--t-small);
+  margin-top: 2px;
+}
+
+.autocompleteContainer {
+  position: relative;
+}
+
+/* Activity Selector */
+.activitySelector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding-bottom: var(--s-5);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.activitySearchInput {
+  composes: input;
+  background: var(--surface-card);
+}
+
+.activityList {
+  max-height: 250px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-right: var(--s-1);
+}
+
+.activityCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--s-3);
+  background: var(--surface-card);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card-sm);
+  transition: transform 150ms, box-shadow 150ms;
+}
+
+.activityCard:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-card);
+}
+
+.activityInfo {
+  flex: 1;
+  min-width: 0;
+  padding-right: var(--s-2);
+}
+
+.activityName {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--fg-1);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activityMeta {
+  display: flex;
+  gap: var(--s-3);
+  font-size: 12px;
+  color: var(--fg-3);
+}
+
+/* Itinerary Timeline */
+.itineraryList {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--s-5);
+}
+
+.itineraryRow {
+  display: flex;
+  gap: var(--s-4);
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.timelineLine {
+  width: 2px;
+  background: var(--ember-20);
+  flex: 1;
+}
+
+.timelineDot {
+  width: 28px;
+  height: 28px;
+  border-radius: 99px;
+  background: var(--ember);
+  color: var(--white);
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 4px var(--ember-15);
+}
+
+.itineraryCard {
+  flex: 1;
+  background: var(--surface-card);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card-sm);
+  padding: 12px var(--s-4);
+  margin-bottom: var(--s-3);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.itineraryName {
+  font-weight: 700;
+  font-size: var(--t-body);
+  color: var(--fg-1);
+}
+
+.itineraryCost {
+  font-size: 14px;
+  color: var(--ember);
+  font-weight: 700;
+}
+
+.itineraryMeta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--fg-3);
+  margin-top: 2px;
+}
+
+.removeButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--fg-3);
+  border-radius: var(--r-btn);
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 150ms, color 150ms;
+}
+
+.removeButton:hover {
+  background: color-mix(in srgb, var(--error) 8%, transparent);
+  color: var(--error);
+}
+
+.summarySection {
+  margin-top: var(--s-5);
+  background: var(--char);
+  color: var(--fg-on-dark);
+  border-radius: var(--r-card);
+  padding: var(--s-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.summaryTitle {
+  font-size: var(--t-h4);
+  font-weight: 700;
+  margin-bottom: var(--s-1);
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: var(--fg-on-dark-2);
+}
+
+.summaryRowTotal {
+  display: flex;
+  justify-content: space-between;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--fg-on-dark);
+  border-top: 1.5px solid var(--hairline-dark);
+  padding-top: var(--s-3);
+  margin-top: var(--s-2);
+}
+
+.actionRow {
+  display: flex;
+  gap: var(--s-3);
+  justify-content: flex-end;
+  margin-top: var(--s-2);
+}
+
+.toast {
+  padding: 12px var(--s-4);
+  border-radius: var(--r-card-sm);
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toastSuccess {
+  background: color-mix(in srgb, var(--success) 12%, var(--surface-card));
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+
+.toastError {
+  background: color-mix(in srgb, var(--error) 12%, var(--surface-card));
+  color: var(--error);
+  border: 1px solid var(--error);
+}
+
+/* Panel heading and shared inline-layout helpers */
+.panelTitle {
+  margin-bottom: var(--s-4);
+}
+
+.buttonContent {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.itineraryTrailing {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.searchSpinner {
+  position: absolute;
+  top: 14px;
+  right: 12px;
+  color: var(--fg-3);
+}
+
+.emptyState {
+  margin-top: var(--s-5);
+  padding: var(--s-6) var(--s-5);
+  border: 1.5px dashed var(--hairline);
+  border-radius: var(--r-card-sm);
+  background: color-mix(in srgb, var(--char) 3%, transparent);
+  text-align: center;
+}
+
+.emptyStateText {
+  margin: 0;
+  color: var(--fg-3);
+  font-size: var(--t-small);
+}

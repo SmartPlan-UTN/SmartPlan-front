@@ -1,0 +1,45 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-3);
+  padding: var(--s-6) var(--s-4);
+  color: var(--fg-2);
+  text-align: center;
+}
+
+/* Matches ResultsLoading in Results.jsx: three dots pulsing in sequence,
+   using the `pulseDot` keyframe already defined in tokens.css. */
+.dots {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.dot {
+  width: 11px;
+  height: 11px;
+  border-radius: var(--r-chip);
+  background: var(--ember);
+  animation: pulseDot 1.3s ease-in-out infinite;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.22s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.44s;
+}
+
+.title {
+  margin: 0;
+  color: var(--fg-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot {
+    animation: none;
+    opacity: 0.55;
+  }
+}

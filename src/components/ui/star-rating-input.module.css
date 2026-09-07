@@ -1,0 +1,45 @@
+/* CU44 - Rate activity: interactive star picker. Same `--gold`/`--gold-22`
+   pair as `Stars`' read-only display in `primitives.module.css`, so a
+   selected score visually matches how it's shown everywhere else once
+   submitted. */
+
+.group {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.star {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: var(--r-btn);
+  transition: transform 120ms ease;
+}
+
+.star:hover:not(:disabled) {
+  transform: scale(1.12);
+}
+
+.star:disabled {
+  cursor: not-allowed;
+}
+
+.star:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.starEmpty {
+  color: var(--gold-22);
+  fill: currentColor;
+}
+
+.starFilled {
+  color: var(--gold);
+  fill: currentColor;
+}
