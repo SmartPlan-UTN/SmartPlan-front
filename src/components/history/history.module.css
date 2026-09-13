@@ -14,17 +14,6 @@
 .header {
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
-}
-
-.title {
-  margin: 0;
-}
-
-.subtitle {
-  margin: 0;
-  max-width: 52ch;
-  color: var(--fg-2);
 }
 
 .list {
@@ -176,6 +165,21 @@
   padding: var(--s-8) var(--s-4);
   text-align: center;
   color: var(--fg-2);
+}
+
+.state:not([role="alert"])::before {
+  width: min(100%, 520px);
+  height: 120px;
+  border-radius: var(--r-card);
+  background:
+    linear-gradient(
+      180deg,
+      transparent,
+      color-mix(in srgb, var(--char) 28%, transparent)
+    ),
+    url("/landing/mesa-noche.jpg") center 58% / cover;
+  content: "";
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--char) 10%, transparent);
 }
 
 .stateIcon {

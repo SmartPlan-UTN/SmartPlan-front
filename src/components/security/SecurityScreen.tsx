@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Icon, MoodBackground } from "@/components/ui";
+import { Icon } from "@/components/ui";
 import { ROUTES } from "@/lib/routes";
 
 import { ActiveSessionCard } from "./ActiveSessionCard";
@@ -25,13 +25,12 @@ import styles from "./security.module.css";
  * the request (`GET /sessions/me`) — see its own doc comment for why it
  * doesn't show the prototype's fake multi-device list.
  *
- * `MoodBackground` sits behind `.backdrop`, full-bleed, same split as
- * `ProfileScreen`'s `.backdrop`/`.wrapper`.
+ * The root layout's `AppBackground` owns the single shared wave background;
+ * this screen only contributes its content and never mounts another canvas.
  */
 export function SecurityScreen() {
   return (
     <div className={styles.backdrop}>
-      <MoodBackground mood="idle" />
       <div className={styles.wrapper}>
         <div className={styles.header}>
           <Link
@@ -41,10 +40,13 @@ export function SecurityScreen() {
           >
             <Icon name="arrow-left" size={20} />
           </Link>
-          <div>
-            <h1 className={`sp-h2 ${styles.title}`}>Seguridad</h1>
-            <p className={`sp-small ${styles.subtitle}`}>
-              Mantené tu cuenta protegida.
+          <div className="sp-page-intro">
+            <p className="sp-label sp-page-kicker">Tu cuenta</p>
+            <h1 className="sp-page-title">
+              Tu <span className="sp-page-title-accent">seguridad.</span>
+            </h1>
+            <p className="sp-page-lead">
+              Actualizá tu contraseña y revisá cómo está protegida tu sesión.
             </p>
           </div>
         </div>

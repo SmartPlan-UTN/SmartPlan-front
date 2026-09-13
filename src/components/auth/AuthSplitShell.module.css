@@ -87,6 +87,24 @@
   padding: var(--s-7) var(--s-5);
   position: relative;
   z-index: 2;
+  isolation: isolate;
+}
+
+/* A quiet paper halo protects the form from the low wave horizon while
+   keeping its colour visible around the card. This borrows the protected
+   centre used by the landing hero without repeating its object collage. */
+.rightPanel::before {
+  position: absolute;
+  z-index: -1;
+  inset: 12% 5% 8%;
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--surface-card) 92%, transparent) 0%,
+    color-mix(in srgb, var(--cream) 72%, transparent) 58%,
+    transparent 78%
+  );
+  content: "";
+  pointer-events: none;
 }
 
 .backLink {

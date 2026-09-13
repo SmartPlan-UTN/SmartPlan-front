@@ -84,9 +84,8 @@
 }
 
 /* Above `MoodBackground`'s own `.root` (`position: absolute; z-index: 0`,
-   fills `.exploreTransition`) the same way `ProfileScreen`'s `.wrapper`
-   sits above its own — a plain in-flow sibling would otherwise paint
-   *under* an absolutely-positioned one, even at z-index 0. */
+   fills `.exploreTransition`) — a plain in-flow sibling would otherwise
+   paint *under* an absolutely-positioned one, even at z-index 0. */
 .exploreTransitionContent {
   position: relative;
   z-index: 1;
@@ -600,21 +599,42 @@
 }
 
 /* ── App-wide wave background ──────────────────────────────────── */
+/* The shared user-app water is a horizon, not a wallpaper: a band anchored
+   to the bottom of the viewport, so it never reaches the navbar. The
+   shorter canvas keeps the moving edge low; the mask lets it arrive like
+   atmosphere instead of beginning on a hard horizontal seam. The only
+   full-height waves left are the short transition into Explore, which
+   mounts its own MoodBackground inside the navbar's overlay. */
 .appBackground {
   position: fixed;
-  top: 0;
   right: 0;
   bottom: 0;
   left: 0;
   z-index: 0;
+  height: min(48dvh, 520px);
+  opacity: 0.66;
   pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 32%);
+  mask-image: linear-gradient(to bottom, transparent, black 32%);
   /* The waves repaint continuously; `contain` keeps that work from
      invalidating layout or paint for the content scrolling above them. */
   contain: strict;
 }
 
-.appBackgroundBelowNavbar {
-  top: var(--navbar-h);
+/* The photo owns the left side of the split login composition. Cropping the
+   canvas to the form panel makes the wave connect with that surface rather
+   than tinting the whole screen. The same shell is shared by sign-up and
+   both password screens, so all session screens receive one treatment. */
+.appBackground.appBackgroundAuthHorizon {
+  height: min(58dvh, 620px);
+  clip-path: inset(0 0 0 46%);
+  opacity: 0.58;
+}
+
+@media (max-width: 767px) {
+  .appBackground.appBackgroundAuthHorizon {
+    clip-path: none;
+  }
 }
 
 .appBackgroundHidden {

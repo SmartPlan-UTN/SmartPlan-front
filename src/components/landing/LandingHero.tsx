@@ -66,10 +66,11 @@ export const HERO_COMPOSER_ID = "plan-composer";
  * away, so "I wrote an idea" and "here are the plans" are visibly the same
  * screen answering.
  *
- * Three background layers, in order of how much they carry: mood waves
- * for colour, `HeroAtmosphere` for air, and a radial veil that lifts the
- * cream back up under the field so neither of the other two ever costs
- * the composer contrast.
+ * Background layers, back to front: `HeroAmbient`'s faint marks,
+ * `HeroObjects`' photographs, `HeroAtmosphere` for air, and a paper-light
+ * veil that lifts the cream back up under the field so none of them ever
+ * costs the composer contrast. The landing has no wave canvas —
+ * `AppBackground` skips this route.
  */
 export function LandingHero({
   planning,

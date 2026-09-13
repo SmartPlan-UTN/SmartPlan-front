@@ -5,40 +5,40 @@ import { usePathname } from "next/navigation";
 import { MoodBackground } from "@/components/ui";
 import { ROUTES, isActiveRoute } from "@/lib/routes";
 
-import { moodForRoute } from "./section-mood";
 import styles from "./layout.module.css";
 
+const AUTH_ROUTES = [
+  ROUTES.login,
+  ROUTES.signup,
+  ROUTES.recoverPassword,
+  ROUTES.resetPassword,
+] as const;
+
 /**
- * The user-facing app's animated wave background, mounted by the root layout.
- * The landing owns a separate quiet surface, and administration has its own
- * visual language, so both routes stay out of the shared canvas.
+ * The user-facing app's animated wave background, mounted by the root layout:
+ * a low horizon band with the same palette on every route. The landing owns a
+ * separate quiet surface, and administration has its own visual language, so
+ * both routes stay out of the shared canvas.
  *
  * On the routes that use it, keeping the canvas above the route groups lets
  * navigation read as a swell passing through the same water instead of a new
- * animation starting from zero.
- *
- * `pathname` drives both halves: the palette for the section, and the
- * `tideKey` whose change breaks the wave.
+ * animation starting from zero. `pathname` is the `tideKey` whose change
+ * breaks the wave; on the auth screens the band is cropped to the form panel.
  */
 export function AppBackground() {
   const pathname = usePathname();
   const isLanding = pathname === ROUTES.home;
   const isAdmin = isActiveRoute(pathname, ROUTES.admin);
+  const isAuth = AUTH_ROUTES.some((route) => pathname === route);
 
   // The landing owns its own quiet cream-to-sand surface. Keeping the shared
   // canvas out of this route preserves the composer hierarchy and avoids
   // paying for an animation that the landing does not need.
   if (isLanding) return null;
 
-  const hasNavbar =
-    !isAdmin &&
-    pathname !== ROUTES.login &&
-    pathname !== ROUTES.signup &&
-    pathname !== ROUTES.recoverPassword;
-
   const className = [
     styles.appBackground,
-    hasNavbar ? styles.appBackgroundBelowNavbar : "",
+    isAuth ? styles.appBackgroundAuthHorizon : "",
     isAdmin ? styles.appBackgroundHidden : "",
   ]
     .filter(Boolean)
@@ -46,11 +46,7 @@ export function AppBackground() {
 
   return (
     <div className={className} aria-hidden="true">
-      <MoodBackground
-        active={!isAdmin}
-        mood={moodForRoute(pathname)}
-        tideKey={pathname}
-      />
+      <MoodBackground active={!isAdmin} tideKey={pathname} />
     </div>
   );
 }

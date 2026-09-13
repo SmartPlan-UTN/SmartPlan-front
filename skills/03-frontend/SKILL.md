@@ -117,9 +117,8 @@ import { Container } from "@/components/layout";
 ```
 
 The `(private)` group and `admin/` already set it in their layout, so their
-screens don't repeat it. Public screens opt in: the home hero, with
-`MoodBackground` behind it, goes full-bleed, and a container imposed from
-the layout would box it in.
+screens don't repeat it. Public screens opt in: the home hero goes
+full-bleed, and a container imposed from the layout would box it in.
 
 ### Routes
 

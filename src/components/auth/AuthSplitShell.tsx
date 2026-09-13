@@ -35,7 +35,8 @@ export interface AuthSplitShellProps {
  * Used by `app/login/layout.tsx`, `app/signup/layout.tsx`,
  * `app/recover-password/layout.tsx`, and `app/reset-password/layout.tsx` —
  * each screen lives at the top level, outside a shared route group, so this
- * shell (and its `MoodBackground`) doesn't leak into unrelated routes.
+ * shell provides their shared photo-and-form composition while the root
+ * `AppBackground` provides one cropped wave horizon behind the form panel.
  */
 export function AuthSplitShell({
   children,

@@ -49,8 +49,11 @@ export function HistoryView() {
   return (
     <div className={styles.screen}>
       <header className={styles.header}>
-        <h1 className={`sp-h2 ${styles.title}`}>Historial</h1>
-        <p className={`sp-body ${styles.subtitle}`}>
+        <p className="sp-label sp-page-kicker">Tus salidas</p>
+        <h1 className="sp-page-title">
+          Tu <span className="sp-page-title-accent">historial.</span>
+        </h1>
+        <p className="sp-page-lead">
           Tus planes, con su estado y la experiencia que registraste en cada
           uno.
         </p>

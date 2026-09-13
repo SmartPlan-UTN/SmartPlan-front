@@ -11,17 +11,6 @@
   flex-wrap: wrap;
 }
 
-.eyebrow {
-  margin-bottom: var(--s-2);
-  color: var(--ember);
-}
-
-.lead {
-  max-width: 56ch;
-  margin-top: var(--s-3);
-  color: var(--fg-2);
-}
-
 .createButton {
   display: inline-flex;
   align-items: center;
@@ -71,11 +60,6 @@
 @media (max-width: 560px) {
   .header {
     padding-bottom: var(--s-3);
-  }
-
-  .lead {
-    max-width: none;
-    margin-top: var(--s-2);
   }
 
   /* A tap target you can actually hit: the inline link was 18px tall. */

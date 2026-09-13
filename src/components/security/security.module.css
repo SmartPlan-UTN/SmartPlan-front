@@ -4,24 +4,10 @@
    `profile.module.css` with `ProfileForm` — see the doc comment on
    `SecurityScreen` for why. */
 
-/* Breaks out of the `(private)` layout's `Container`, which caps this
-   screen at `--max-w` and pads it `--section-v` top/bottom, `--s-4`
-   left/right — so `MoodBackground`, which only paints its own nearest
-   positioned ancestor, would otherwise stop short of the container's real
-   edges on every side (cancelling just `Container`'s padding, a first pass
-   at this fix, still left a plain cream margin on any viewport wider than
-   `--max-w` plus its padding — most of them). `width: 100vw` plus the
-   negative `margin-inline` is the standard full-bleed-inside-a-centered-
-   container trick: it re-centers a 100%-viewport-wide box regardless of
-   where `Container` itself stops. `padding-inline` puts `--s-4` of it back
-   on the inside, so `.wrapper`'s content keeps the same edge breathing
-   room it had before, while the absolutely-positioned `MoodBackground`
-   (`inset: 0` against `.backdrop`'s padding edge) still reaches every
-   corner of the full-bleed box. `margin-block`/`padding-block` do the same
-   cancel-and-restore for the vertical padding, and `min-height` grows by
-   the same two `--section-v` to keep covering a full screen on a short
-   page. Same fix as `profile.module.css`'s `.backdrop` — both screens
-   share this layout. */
+/* Full-bleed box (`100vw` plus negative margins cancelling `Container`'s
+   padding) that fills at least one screen. It paints nothing: the waves
+   come from the root layout's `AppBackground`, and this screen never mounts
+   its own canvas. Same box as `profile.module.css`'s `.backdrop`. */
 .backdrop {
   position: relative;
   min-height: calc(100dvh - var(--navbar-h) + var(--section-v) * 2);
@@ -44,7 +30,7 @@
 
 .header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--s-3);
 }
 
@@ -59,15 +45,6 @@
 
 .backLink:hover {
   color: var(--ember);
-}
-
-.title {
-  color: var(--fg-1);
-}
-
-.subtitle {
-  margin: 3px 0 0;
-  color: var(--fg-3);
 }
 
 /* Same radius/shadow as `profile.module.css`'s `.card`: both are the v2

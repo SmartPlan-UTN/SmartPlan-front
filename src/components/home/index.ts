@@ -36,4 +36,3 @@ export {
   RecommendedPlans,
   type RecommendedPlansProps,
 } from "./RecommendedPlans";
-export { detectMood } from "./moodDetection";
