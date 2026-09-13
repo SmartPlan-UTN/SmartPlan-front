@@ -10,7 +10,7 @@ import { isActiveRoute, ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 import { NavLink } from "./NavLink";
-import { MAIN_LINKS } from "./links";
+import { CREATE_PLAN_LINK, MAIN_LINKS, MOBILE_LINKS } from "./links";
 import { UserMenu } from "./UserMenu";
 import styles from "./layout.module.css";
 
@@ -20,17 +20,29 @@ import styles from "./layout.module.css";
 const EXPLORE_TRANSITION_MS = 900;
 
 /**
+ * The one bottom-bar tab that owns the current route. `isActiveRoute` alone
+ * isn't enough there: `/plans/create` also falls inside `/plans`, which lit
+ * up Crear plan and Mis planes at once. The longest matching `href` wins, so
+ * a nested destination with its own tab takes precedence over its parent.
+ */
+function activeMobileHref(currentRoute: string): string | undefined {
+  return MOBILE_LINKS.filter((link) => isActiveRoute(currentRoute, link.href))
+    .map((link) => link.href)
+    .sort((a, b) => b.length - a.length)[0];
+}
+
+/**
  * 60px navigation bar (`--navbar-h`), fixed at the top with a
  * `backdrop-filter` over the content, as required by the EMBER design system.
  *
  * Always the light variant (cream, ink logo, dark text): the
  * SmartPlanSystemDesign prototype's `Navbar` component still has a `dark`
  * prop, but the shipped build hardcodes it to light for every screen. The
- * border below the bar stays transparent until the page scrolls, same as
+ * hairline below the bar stays transparent until the page scrolls, same as
  * the prototype.
  *
- * Below 900px the links collapse into a dropdown panel; the user menu
- * stays visible at every size.
+ * Below 900px the top bar keeps identity and session only; the frequent
+ * destinations move to a persistent, thumb-reachable bottom bar.
  *
  * Explorar also gets a full-screen "Armando tu plan perfecto..." transition
  * (matching `Results.jsx`'s own loading state) when it's clicked from
@@ -40,22 +52,12 @@ const EXPLORE_TRANSITION_MS = 900;
  * this link, so it never re-triggers.
  */
 export function Navbar() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const currentRoute = usePathname();
-  const [menuRoute, setMenuRoute] = useState(currentRoute);
   const router = useRouter();
   const [transitioning, setTransitioning] = useState(false);
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Navigating has to close the panel: otherwise the new screen appears
-  // covered. This is adjusted during render instead of with an effect,
-  // which would trigger a second render with the panel still open:
-  // https://react.dev/learn/you-might-not-need-an-effect
-  if (currentRoute !== menuRoute) {
-    setMenuRoute(currentRoute);
-    setMenuOpen(false);
-  }
+  const mobileActiveHref = activeMobileHref(currentRoute);
 
   useEffect(() => {
     const onScroll = () => {
@@ -146,59 +148,41 @@ export function Navbar() {
           </nav>
 
           <div className={styles.actions}>
-            <Link href={ROUTES.createPlan} className={styles.createPlanNavBtn}>
-            <Icon name="plus" size={15} aria-hidden="true" />
-              <span className={styles.createPlanNavLabel}>Crear plan</span>
+            <Link href={CREATE_PLAN_LINK.href} className={styles.createPlanNavBtn}>
+              <Icon name={CREATE_PLAN_LINK.icon} size={15} aria-hidden="true" />
+              {CREATE_PLAN_LINK.label}
             </Link>
 
             <UserMenu />
-
-            <button
-            type="button"
-            className={styles.menuButton}
-            aria-expanded={menuOpen}
-            aria-controls="collapsible-navigation"
-            aria-label={menuOpen ? "Cerrar la navegación" : "Abrir la navegación"}
-            onClick={() => {
-              setMenuOpen((isOpen) => !isOpen);
-            }}
-          >
-              <Icon name={menuOpen ? "x" : "menu"} size={20} />
-            </button>
           </div>
         </div>
-
-        {menuOpen ? (
-          <nav
-            id="collapsible-navigation"
-            className={styles.mobilePanel}
-            aria-label="Navegación principal plegable"
-          >
-            {MAIN_LINKS.map((link) => (
-              <NavLink
-                key={link.href}
-                href={link.href}
-                label={link.label}
-                icon={link.icon}
-                variant="option"
-                onClick={link.href === ROUTES.explore ? handleExploreClick : undefined}
-                onNavigate={() => {
-                  setMenuOpen(false);
-                }}
-              />
-            ))}
-            <NavLink
-              href={ROUTES.createPlan}
-              label="Crear plan"
-              icon="plus"
-              variant="option"
-              onNavigate={() => {
-                setMenuOpen(false);
-              }}
-            />
-          </nav>
-        ) : null}
       </header>
+
+      <nav className={styles.mobileNav} aria-label="Navegación móvil">
+        {MOBILE_LINKS.map((link) => {
+          const active = link.href === mobileActiveHref;
+          const isCreate = link.href === CREATE_PLAN_LINK.href;
+
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                styles.mobileNavLink,
+                active && styles.mobileNavLinkActive,
+                isCreate && styles.mobileNavCreate,
+              )}
+              aria-current={active ? "page" : undefined}
+              onClick={link.href === ROUTES.explore ? handleExploreClick : undefined}
+            >
+              <span className={styles.mobileNavIcon}>
+                <Icon name={link.icon} size={isCreate ? 22 : 20} aria-hidden="true" />
+              </span>
+              <span className={styles.mobileNavLabel}>{link.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
 
       {/* Portaled to `document.body`, not rendered as a child of `<header>`
           above: `.navbar` sets `backdrop-filter` for its sticky-blur

@@ -21,7 +21,9 @@
 }
 
 .viewPlanButton {
-  display: block;
+  /* Hidden by the search grid's horizontal card on mobile, where the whole
+     card is already the link — see `.grid` in explore.module.css. */
+  display: var(--card-cta-display, block);
   margin-top: var(--s-2);
   padding: 10px;
   border: 1.5px solid var(--hairline);
@@ -47,8 +49,11 @@
    ActivityCard's. */
 .cardBookmark {
   position: absolute;
-  top: var(--s-3);
-  right: var(--s-3);
+  top: var(--card-bookmark-inset, var(--s-3));
+  /* Placement is overridable by the layout that hosts the card (the search
+     grid's horizontal card on mobile, see explore.module.css). */
+  right: var(--card-bookmark-right, var(--s-3));
+  left: var(--card-bookmark-left, auto);
   display: inline-flex;
   align-items: center;
   justify-content: center;

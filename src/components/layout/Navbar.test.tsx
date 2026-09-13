@@ -84,7 +84,7 @@ describe("Navbar", () => {
     vi.useRealTimers();
   });
 
-  it("offers the four main navigation destinations", async () => {
+  it("offers the five main navigation destinations", async () => {
     mockAnonymousStartup();
     renderNavbar();
 
@@ -98,6 +98,9 @@ describe("Navbar", () => {
     expect(
       within(nav).getByRole("link", { name: "Explorar" }),
     ).toHaveAttribute("href", "/explore");
+    expect(
+      within(nav).getByRole("link", { name: "Mis planes" }),
+    ).toHaveAttribute("href", "/plans");
     expect(
       within(nav).getByRole("link", { name: "Favoritos" }),
     ).toHaveAttribute("href", "/favorites");
@@ -165,6 +168,25 @@ describe("Navbar", () => {
     expect(
       screen.getByRole("button", { name: "Cerrar sesión" }),
     ).toBeInTheDocument();
+  });
+
+  // The bottom bar has no Historial tab, so the account menu carries it
+  // (CSS hides that entry from 900px, where `.nav` already has it).
+  it("offers Historial from the account menu", async () => {
+    mockAuthenticatedStartup();
+    const user = userEvent.setup();
+    renderNavbar();
+
+    const trigger = await screen.findByRole("button", { name: /mi cuenta/i });
+    await user.click(trigger);
+
+    const panel = document.getElementById(
+      trigger.getAttribute("aria-controls") ?? "",
+    );
+    expect(panel).not.toBeNull();
+    expect(
+      within(panel as HTMLElement).getByRole("link", { name: "Historial" }),
+    ).toHaveAttribute("href", "/history");
   });
 
   it("closes the user menu with Escape", async () => {
@@ -324,23 +346,99 @@ describe("Navbar", () => {
     expect(screen.queryByText("Armando tu plan perfecto...")).not.toBeInTheDocument();
   });
 
-  it("expands the collapsible navigation on small viewports", async () => {
+  it("lists the bottom bar's destinations with the same names as desktop", async () => {
     mockAnonymousStartup();
-    const user = userEvent.setup();
     renderNavbar();
 
-    const button = await screen.findByRole("button", {
-      name: "Abrir la navegación",
+    const mobileNav = await screen.findByRole("navigation", {
+      name: "Navegación móvil",
     });
-    await user.click(button);
+    const links = within(mobileNav).getAllByRole("link");
 
-    const collapsible = screen.getByRole("navigation", {
-      name: "Navegación principal plegable",
+    expect(links.map((link) => link.textContent)).toEqual([
+      "Inicio",
+      "Explorar",
+      "Crear plan",
+      "Mis planes",
+      "Favoritos",
+    ]);
+    expect(
+      within(mobileNav).getByRole("link", { name: "Crear plan" }),
+    ).toHaveAttribute("href", "/plans/create");
+    expect(
+      within(mobileNav).queryByRole("link", { name: "Historial" }),
+    ).toBeNull();
+  });
+
+  it("marks the current route's tab in the mobile navigation", async () => {
+    route.actual = "/favorites";
+    mockAnonymousStartup();
+    renderNavbar();
+
+    const mobileNav = await screen.findByRole("navigation", {
+      name: "Navegación móvil",
     });
 
     expect(
-      within(collapsible).getByRole("link", { name: "Historial" }),
-    ).toBeInTheDocument();
-    expect(button).toHaveAccessibleName("Cerrar la navegación");
+      within(mobileNav).getByRole("link", { name: "Favoritos" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      within(mobileNav).getByRole("link", { name: "Inicio" }),
+    ).not.toHaveAttribute("aria-current");
+  });
+
+  // `/plans/create` is also inside `/plans`: only the more specific tab
+  // may claim it.
+  it("marks only Crear plan as current on the create screen", async () => {
+    route.actual = "/plans/create";
+    mockAnonymousStartup();
+    renderNavbar();
+
+    const mobileNav = await screen.findByRole("navigation", {
+      name: "Navegación móvil",
+    });
+    const current = within(mobileNav)
+      .getAllByRole("link")
+      .filter((link) => link.getAttribute("aria-current") === "page");
+
+    expect(current).toHaveLength(1);
+    expect(current[0]).toHaveTextContent("Crear plan");
+  });
+
+  it("keeps Mis planes current inside a plan's own screens", async () => {
+    route.actual = "/plans/42/edit";
+    mockAnonymousStartup();
+    renderNavbar();
+
+    const mobileNav = await screen.findByRole("navigation", {
+      name: "Navegación móvil",
+    });
+
+    expect(
+      within(mobileNav).getByRole("link", { name: "Mis planes" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      within(mobileNav).getByRole("link", { name: "Crear plan" }),
+    ).not.toHaveAttribute("aria-current");
+  });
+
+  it("shows the Explorar transition from the mobile navigation too", async () => {
+    mockAnonymousStartup();
+    renderNavbar();
+
+    const mobileNav = await screen.findByRole("navigation", {
+      name: "Navegación móvil",
+    });
+
+    vi.useFakeTimers();
+    fireEvent.click(within(mobileNav).getByRole("link", { name: "Explorar" }));
+
+    expect(screen.getByText("Armando tu plan perfecto...")).toBeInTheDocument();
+    expect(push).toHaveBeenCalledWith("/explore");
+
+    await act(async () => {
+      vi.advanceTimersByTime(900);
+    });
+    expect(screen.queryByText("Armando tu plan perfecto...")).not.toBeInTheDocument();
   });
 });

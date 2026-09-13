@@ -222,7 +222,22 @@
   }
 
   .createCard {
-    min-height: 150px;
+    min-height: 76px;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--s-3);
+    padding: var(--s-4);
+    text-align: left;
+  }
+
+  .createIcon {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+  }
+
+  .createHint {
+    display: none;
   }
 
   /* Title and actions stop competing for one line: on a narrow card the

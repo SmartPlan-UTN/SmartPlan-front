@@ -136,9 +136,21 @@ constant breaks the build and the string breaks silently.
 ### Navbar
 
 `Navbar` (in `@/components/layout`) is the 60px bar (`--navbar-h`) with
-`backdrop-filter`, fixed at the top. It carries Inicio, Explorar, Favoritos,
-and Historial, plus the user menu with Mi perfil, Preferencias, and Cerrar
-sesión. Below 900px the links collapse into a panel.
+`backdrop-filter`, fixed at the top. On desktop it carries the main links
+(Inicio, Explorar, Mis planes, Favoritos, Historial), the Crear plan CTA,
+and the user menu. Below 900px the top bar keeps only identity and session,
+while a thumb-reachable bottom bar exposes Inicio, Explorar, Crear plan,
+Mis planes, and Favoritos without hiding primary destinations behind a
+hamburger. Historial has no sixth tab: below 900px it's an extra entry in
+the account menu. Both bars read their entries from `links.ts`, so a
+destination keeps one name across viewports.
+
+The shell publishes its spacing as tokens: `--page-pad-top` /
+`--page-pad-bottom` (`Container`'s vertical padding) and
+`--bottom-nav-space` (what `<main>` reserves under the mobile bar, `0px`
+from 900px). A screen that bleeds past `Container`, fills the viewport, or
+floats something at the bottom (a toast) reads these instead of repeating
+the numbers.
 
 **The navbar's inner row is not capped at `Container`'s `--max-w`.** Unlike
 every screen's content, `.navbarInner` spans the full window width (48px

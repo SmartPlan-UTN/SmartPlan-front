@@ -93,8 +93,17 @@
 
   /* ── Layout ──────────────────────────────────────── */
   --navbar-h:   60px;
+  --mobile-nav-h: 64px;
   --max-w:      1200px;
   --section-v:  64px;
+
+  /* Shell spacing that screens measure against. `Container`'s vertical
+     padding and the room `<main>` reserves below the floating mobile bar
+     change with the viewport; screens that bleed past the container or
+     fill the viewport read these instead of repeating the numbers. */
+  --page-pad-top:      var(--section-v);
+  --page-pad-bottom:   var(--section-v);
+  --bottom-nav-space:  0px;
 
   /* ── Radii ───────────────────────────────────────── */
   --r-pill:    40px;
@@ -111,6 +120,21 @@
   /* ── Spacing ─────────────────────────────────────── */
   --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
   --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px;
+}
+
+/* Below 900px the primary navigation is a fixed bottom bar (see
+   `.mobileNav` in layout.module.css), so the page keeps that much room. */
+@media (max-width: 899px) {
+  :root {
+    --bottom-nav-space: calc(var(--mobile-nav-h) + var(--s-5) + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --page-pad-top:    var(--s-6);
+    --page-pad-bottom: var(--s-7);
+  }
 }
 
 /* ── Reset ───────────────────────────────────────────── */
