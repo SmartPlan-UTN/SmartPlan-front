@@ -296,28 +296,25 @@ overflow, rather than a full copy's width, reads as stuck on a wide screen
 where the content barely spills past the edge). Pauses on hover/touch so a
 chip stays clickable.
 
-**MoodBackground** — persistent animated user-app background. Very subtle
-color blobs (5-10% opacity) transition over 1.4s based on the current section.
-One canvas is mounted by the root layout so its phase survives navigation;
+**MoodBackground** — persistent animated user-app background. Four very
+subtle wave layers (4-8% opacity) in a single palette
+(`src/styles/wave-palettes.ts`) on every route — there are no per-section
+colours. One canvas is mounted by the root layout's `AppBackground` as a low
+horizon band fixed to the bottom of the viewport, faded in with a mask, so its
+phase survives navigation and every navigation breaks one swell. On the auth
+screens the band is cropped to the form panel; the landing has no canvas; and
 administration hides and pauses it because that area has a separate visual
-language. It's decorative, `aria-hidden`, and must not compete with content.
+language. Screens never mount their own — the only other instance is the
+short Explore transition overlay in `Navbar`. It's decorative, `aria-hidden`,
+and must not compete with content.
 
-> **Size the SVG off the actual container, not the viewport.** The React
-> port originally set the wave `viewBox` from `window.innerWidth/Height`,
-> which only matches the box it paints into (`position: absolute; inset:
-> 0` on a `position: relative` parent) when that parent happens to be
-> exactly one screen tall. A sparse results page (few cards) made the
-> parent shorter than the viewport, so the waves — positioned as a
-> fraction of the wrong, taller height — ended up compressed near the
-> bottom and cut off; a long page had the opposite mismatch, briefly
-> visible as one wrongly-proportioned frame before a resize handler
-> corrected it. Fixed by measuring the wrapper's own
-> `getBoundingClientRect()` via `ResizeObserver`, in `useLayoutEffect` (not
-> `useEffect` — that runs after the first paint, which is exactly the
-> flash this avoids). The page that hosts it also needs its own
-> `min-height` (e.g. `calc(100dvh - var(--navbar-h))` on `.backdrop`): a
-> background is expected to cover at least one screen even when its
-> content doesn't reach that far.
+> **Size the canvas off the actual container, not the viewport.** The React
+> port originally sized the waves from `window.innerWidth/Height`, which only
+> matches the box it paints into (`position: absolute; inset: 0`) when that
+> box happens to be exactly one screen tall — and the horizon band never is.
+> Measure the wrapper's own `getBoundingClientRect()` via `ResizeObserver`,
+> in `useLayoutEffect` (not `useEffect` — that runs after the first paint,
+> which is exactly the flash this avoids).
 
 ### What's still missing a design
 

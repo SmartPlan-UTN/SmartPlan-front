@@ -45,10 +45,10 @@ function mix(a: number, b: number, t: number): number {
 /**
  * The hero's depth layer: slow warm motes drifting behind the composer.
  *
- * This is the third of three background layers, and the quietest. The
- * mood waves underneath it carry the colour; this carries the sense that
- * the page has air in it. If it ever becomes noticeable on its own, it is
- * too strong.
+ * This is the quietest of the hero's background layers. The landing has no
+ * wave canvas; the ambient marks and photographic objects carry the
+ * composition, and this carries the sense that the page has air in it. If
+ * it ever becomes noticeable on its own, it is too strong.
  *
  * Canvas rather than DOM nodes: forty absolutely-positioned divs each
  * with their own keyframe animation is forty composited layers and a

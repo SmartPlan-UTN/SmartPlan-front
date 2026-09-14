@@ -216,11 +216,12 @@ export function Navbar() {
                   through before the illusion finishes), so nothing behind
                   it would otherwise be visible here. Same reasoning
                   `ResultsLoading` in `Results.jsx` has its own
-                  `<MoodBackground mood="idle" />` rather than assuming one
-                  from a parent. Temporary (unmounts with the overlay in
-                  `EXPLORE_TRANSITION_MS`), so it doesn't compete with the
-                  ambient canvas' own tide continuity. */}
-              <MoodBackground mood="idle" />
+                  `<MoodBackground />` rather than assuming one from a
+                  parent. It fills the whole overlay, unlike the app-wide
+                  canvas' low horizon band. Temporary (unmounts with the
+                  overlay in `EXPLORE_TRANSITION_MS`), so it doesn't compete
+                  with the ambient canvas' own tide continuity. */}
+              <MoodBackground />
               <div className={styles.exploreTransitionContent}>
                 <LoadingDots
                   title="Armando tu plan perfecto..."

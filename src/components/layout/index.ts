@@ -6,7 +6,6 @@
 
 export { AppShell, type AppShellProps } from "./AppShell";
 export { AppBackground } from "./AppBackground";
-export { moodForRoute } from "./section-mood";
 export { Container, type ContainerProps } from "./Container";
 export { Screen, type ScreenProps } from "./Screen";
 export { NavLink, type NavLinkProps, type LinkVariant } from "./NavLink";

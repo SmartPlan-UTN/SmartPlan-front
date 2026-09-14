@@ -1,13 +1,19 @@
-/* The wave background is mounted once by `AppShell` and spans the page;
-   `Container` keeps the actual content at --max-w on top of it, matching
-   Results.jsx in SmartPlanSystemDesign (the background spans the page, the
-   content doesn't). */
+/* The wave horizon is mounted once by the root layout's `AppBackground`,
+   fixed to the bottom of the viewport; this backdrop only adds a soft light
+   at the top, and `Container` keeps the actual content at --max-w over
+   both. */
 /* Never shorter than one screen: without a floor, a sparse results page
    (e.g. only 3 plans) left the content ending well above the fold, with
    the footer riding up into the middle of the waves. */
 .backdrop {
   position: relative;
   min-height: calc(100dvh - var(--navbar-h));
+  background:
+    radial-gradient(
+      ellipse 54% 28% at 50% 4%,
+      color-mix(in srgb, var(--surface-card) 72%, transparent),
+      transparent 76%
+    );
 }
 
 .page {
@@ -16,4 +22,19 @@
   display: flex;
   flex-direction: column;
   gap: var(--s-5);
+}
+
+.title {
+  font-size: clamp(38px, 5vw, 64px);
+}
+
+.titleAccent {
+  display: block;
+}
+
+@media (max-width: 560px) {
+  .title {
+    max-width: 10ch;
+    font-size: clamp(36px, 11vw, 46px);
+  }
 }

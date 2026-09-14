@@ -134,16 +134,56 @@
    SmartPlanSystemDesign/v2/ActivityDetail.jsx ─────────────────── */
 .hero {
   position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
   justify-content: center;
   height: 240px;
   overflow: hidden;
-  background: linear-gradient(155deg, var(--char) 0%, #2d1506 100%);
+  background:
+    radial-gradient(
+      circle at 22% 28%,
+      color-mix(in srgb, var(--gold) 34%, transparent),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 78% 70%,
+      color-mix(in srgb, var(--ember) 22%, transparent),
+      transparent 36%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--surface-card) 84%, var(--gold)) 0%,
+      color-mix(in srgb, var(--cream) 88%, var(--ember)) 100%
+    );
+}
+
+.hero::before,
+.hero::after {
+  position: absolute;
+  z-index: -1;
+  width: 42%;
+  height: 74%;
+  border: 1px solid color-mix(in srgb, var(--ember) 22%, transparent);
+  border-radius: 50%;
+  content: "";
+}
+
+.hero::before {
+  left: -9%;
+  bottom: -38%;
+  transform: rotate(-10deg);
+}
+
+.hero::after {
+  top: -44%;
+  right: -7%;
+  border-color: color-mix(in srgb, var(--gold) 46%, transparent);
+  transform: rotate(14deg);
 }
 
 .heroIcon {
-  color: rgba(255, 255, 255, 0.2);
+  color: color-mix(in srgb, var(--char) 20%, transparent);
 }
 
 .heroBadge {
@@ -152,9 +192,12 @@
   right: 64px;
   padding: 4px 10px;
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.38);
-  color: var(--fg-on-dark-2);
+  border: 1px solid color-mix(in srgb, var(--char) 8%, transparent);
+  background: color-mix(in srgb, var(--surface-card) 78%, transparent);
+  color: var(--fg-2);
   font-size: 11px;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 .heroBookmark {
@@ -211,9 +254,17 @@
 
 
 .titleBlock {
+  position: relative;
+  z-index: 1;
   max-width: 720px;
-  margin: 0 auto;
-  padding: var(--s-5) var(--s-4) 0;
+  margin: -36px auto 0;
+  padding: var(--s-5);
+  border: 1px solid color-mix(in srgb, var(--hairline) 82%, transparent);
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--surface-card) 94%, transparent);
+  box-shadow: 0 18px 42px color-mix(in srgb, var(--char) 8%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 
 .badgeRow {

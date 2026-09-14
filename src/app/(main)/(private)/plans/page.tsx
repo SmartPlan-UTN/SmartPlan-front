@@ -17,21 +17,21 @@ export default function MyPlansPage() {
     <Screen labelledBy="my-plans-title">
       <header className={styles.header}>
         <div className={styles.headerRow}>
-          <div>
-            <p className={`sp-label ${styles.eyebrow}`}>Para vos</p>
-            <h1 id="my-plans-title" className="sp-h2">
-              Mis planes
+          <div className="sp-page-intro">
+            <p className="sp-label sp-page-kicker">Tus recorridos</p>
+            <h1 id="my-plans-title" className="sp-page-title">
+              Mis <span className="sp-page-title-accent">planes</span>
             </h1>
+            <p className="sp-page-lead">
+              Los planes que armaste, con su itinerario, su duración y lo que
+              sale cada uno.
+            </p>
           </div>
           <Link href={ROUTES.createPlan} className={styles.createButton}>
             <Icon name="plus" size={16} aria-hidden="true" />
             Crear plan
           </Link>
         </div>
-        <p className={`sp-body ${styles.lead}`}>
-          Los planes que armaste, con su itinerario, su duración y lo que
-          sale cada uno.
-        </p>
       </header>
 
       <MyPlansPanel />

@@ -1,5 +1,3 @@
-import { MoodBackground } from "@/components/ui";
-
 import { DangerZone } from "./DangerZone";
 import { ProfileForm } from "./ProfileForm";
 import styles from "./profile.module.css";
@@ -12,16 +10,22 @@ import styles from "./profile.module.css";
  * card sharing this screen — see `SecurityScreen`'s doc comment.
  * `DangerZone` is the same prototype screen's delete-account card (CU7).
  *
- * `MoodBackground` sits behind `.backdrop`, full-bleed; `.wrapper` keeps the
- * actual content at its own max width on top of it — same split as
- * `explore`'s `.backdrop`/`.page` for Results.jsx's wave background.
+ * The root layout's `AppBackground` owns the single shared wave background;
+ * this screen only contributes its content and never mounts another canvas.
  */
 export function ProfileScreen() {
   return (
     <div className={styles.backdrop}>
-      <MoodBackground mood="idle" />
       <div className={styles.wrapper}>
-        <h1 className={`sp-h2 ${styles.heading}`}>Mi perfil</h1>
+        <header className="sp-page-intro">
+          <p className="sp-label sp-page-kicker">Tu cuenta</p>
+          <h1 className="sp-page-title">
+            Mi <span className="sp-page-title-accent">perfil.</span>
+          </h1>
+          <p className="sp-page-lead">
+            Mantené tus datos al día para que cada plan empiece desde vos.
+          </p>
+        </header>
         <ProfileForm />
         <DangerZone />
       </div>

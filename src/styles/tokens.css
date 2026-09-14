@@ -35,7 +35,7 @@
   --white-15:      rgba(255,255,255,0.15);
   --white-18:      rgba(255,255,255,0.18);
 
-  /* Fixed glow under the animated wave canvas. Mood palettes live in
+  /* Fixed glow under the animated wave canvas. The wave fills live in
      styles/wave-palettes.ts because the Web Worker cannot read the DOM. */
   --wave-bottom-glow: rgba(232,93,32,0.06);
 
@@ -161,6 +161,51 @@ input::placeholder { color: var(--fg-3); }
   letter-spacing: var(--track-label);
   text-transform: uppercase;
   line-height: 1;
+}
+
+/* ── Editorial page heading ──────────────────────────────────────
+   Shared by focused application screens. It carries the landing's type
+   voice into the product without bringing its hero objects or scale into
+   task-oriented pages. */
+.sp-page-intro {
+  max-width: 680px;
+}
+.sp-page-kicker {
+  margin: 0 0 var(--s-3);
+  color: var(--ember);
+}
+.sp-page-title {
+  margin: 0;
+  color: var(--char);
+  font-size: clamp(36px, 4.4vw, 54px);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+.sp-page-title-accent {
+  color: var(--ember);
+  font-family: var(--font-display-serif);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+.sp-page-lead {
+  max-width: 52ch;
+  margin: var(--s-4) 0 0;
+  color: var(--fg-2);
+  font-size: var(--t-body);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+@media (max-width: 560px) {
+  .sp-page-title {
+    font-size: clamp(34px, 10vw, 44px);
+  }
+
+  .sp-page-lead {
+    font-size: var(--t-small);
+  }
 }
 
 /* Visually hidden but still reachable by screen readers: for a heading a
