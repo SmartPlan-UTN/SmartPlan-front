@@ -7,6 +7,7 @@ import {
   GenerationState,
   PlanComposer,
   PlanResults,
+  PreferencesHint,
   SurpriseButton,
   type PlanComposerHandle,
   type SurpriseCoords,
@@ -36,7 +37,10 @@ export interface LandingHeroProps {
   planning: UsePlanRequestPollingResult;
   sessionLoading: boolean;
   onSubmit: (query: string, context: PlanRequestContext) => void;
-  onSurprise: (coords: SurpriseCoords, meta: SurpriseResolvedMeta) => void;
+  onSurprise: (
+    coords: SurpriseCoords | null,
+    meta: SurpriseResolvedMeta,
+  ) => void;
   /** Creates a fresh surprise request from the same coordinates (CU19). */
   onRegenerate: () => void;
   /** One-line note under the surprise waiting / results copy (CU19). */
@@ -191,6 +195,8 @@ export function LandingHero({
                 onPick={(query) => composer.current?.fill(query)}
               />
             </div>
+
+            <PreferencesHint />
           </div>
         ) : null}
 

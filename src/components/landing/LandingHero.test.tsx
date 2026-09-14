@@ -11,6 +11,13 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
 }));
 
+// PreferencesHint (rendered in the composing stage) needs a session; these
+// tests aren't about preferences, so keep it a no-op by staying anonymous.
+vi.mock("@/lib/auth", async (importActual) => ({
+  ...(await importActual<typeof import("@/lib/auth")>()),
+  useSession: () => ({ status: "anonymous", authenticated: false }),
+}));
+
 function polling(
   overrides: Partial<UsePlanRequestPollingResult> = {},
 ): UsePlanRequestPollingResult {

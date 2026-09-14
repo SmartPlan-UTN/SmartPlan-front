@@ -14,6 +14,7 @@ export {
   type ComposerVariant,
 } from "./PlanComposer";
 export { ContextChips, type ContextChipsProps } from "./ContextChips";
+export { PreferencesHint } from "./PreferencesHint";
 export {
   SurpriseButton,
   type SurpriseButtonProps,
