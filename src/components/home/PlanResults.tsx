@@ -151,6 +151,10 @@ export function PlanResults({
   return (
     <div className={styles.resultsWrapper}>
       <div className={styles.resultsHeader}>
+        <Badge variant="ai" className={styles.resultsEyebrow}>
+          <Icon name="sparkles" size={11} aria-hidden="true" />
+          Generado con IA
+        </Badge>
         <h2 className={`sp-h2 ${styles.resultsTitle}`}>
           {surprise ? "Elegimos estas ideas para vos" : "Tu plan ya está listo"}
         </h2>

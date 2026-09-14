@@ -33,7 +33,7 @@ describe("GenerationState (CU17)", () => {
   it("announces the wait to assistive technology while queued", () => {
     renderState("pending");
 
-    const card = screen.getByText(/tu pedido está en cola/i).closest("div");
+    const card = screen.getByText(/empezamos a armar tu plan/i).closest("div");
     expect(card).toHaveAttribute("aria-busy", "true");
   });
 
@@ -91,11 +91,11 @@ describe("GenerationState (CU19 surprise)", () => {
     ).toBeInTheDocument();
   });
 
-  it("maps a NO_LOCATION_AVAILABLE failure to the spec copy", () => {
+  it("maps a NO_VALID_COMBINATIONS failure to the spec copy", () => {
     render(
       <GenerationState
         phase="failed"
-        failure={{ code: "NO_LOCATION_AVAILABLE", message: "ignored" }}
+        failure={{ code: "NO_VALID_COMBINATIONS", message: "ignored" }}
         mode="surprise"
         onKeepWaiting={vi.fn()}
         onRetry={vi.fn()}

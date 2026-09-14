@@ -37,7 +37,7 @@
 }
 
 .ring {
-  border: 1.5px solid var(--ember-15);
+  border: 1.5px solid var(--electric-15);
   border-radius: 50%;
   animation: 2s ease-in-out infinite hero-ring-pulse;
   position: absolute;
@@ -46,7 +46,7 @@
 }
 
 .ringTrack {
-  border: 3px solid var(--ember-15);
+  border: 3px solid var(--electric-15);
   border-radius: 50%;
   position: absolute;
   inset: 0;
@@ -54,7 +54,7 @@
 
 .ringSpinner {
   border: 3px solid #0000;
-  border-top-color: var(--ember);
+  border-top-color: var(--electric);
   border-radius: 50%;
   animation: .9s linear infinite spin;
   position: absolute;
@@ -62,10 +62,10 @@
 }
 
 .ringCore {
-  background: var(--ember);
+  background: var(--electric);
   width: 34px;
   height: 34px;
-  box-shadow: 0 5px 20px var(--ember-15);
+  box-shadow: 0 5px 20px var(--electric-15);
   color: var(--white);
   border-radius: 50%;
   justify-content: center;
@@ -143,14 +143,31 @@
 
 .resultsGrid {
   gap: var(--s-4);
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   width: 100%;
   display: grid;
+}
+
+@media (max-width: 860px) {
+  .resultsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .resultsGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .resultCard {
   opacity: 0;
   animation: .34s cubic-bezier(.2, .8, .2, 1) forwards hero-rise;
+}
+
+.resultsEyebrow {
+  gap: 5px;
+  margin: 0 auto var(--s-1);
 }
 
 .resultsFooter {
@@ -205,6 +222,11 @@
    footer row toggles the intent to do the plan (CU22). No stretched link, no
    button nested in an anchor. */
 .resultCardShell {
+  /* The grid stretches `.resultCard` (this article's parent) to the row's
+     tallest card; without height:100% here the article sizes to its own
+     content instead, which is what produced visibly uneven card heights
+     when a plan's optional rows (activities/rating/distance) differ. */
+  height: 100%;
   transition:
     border-color var(--d-fast, 180ms) var(--ease-out, ease),
     box-shadow var(--d-base, 420ms) var(--ease-out, ease),

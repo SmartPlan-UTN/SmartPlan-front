@@ -28,7 +28,7 @@ const AMBIENT_COPY: Record<GenerationMode, string[]> = {
 
 const WAITING_LABEL: Record<GenerationMode, { queued: string; working: string }> = {
   auto: {
-    queued: "Tu pedido está en cola",
+    queued: "Empezamos a armar tu plan",
     working: "smartplan está armando tu plan",
   },
   surprise: {
