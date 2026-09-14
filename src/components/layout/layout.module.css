@@ -35,7 +35,7 @@
    `navDark = false` with the comment "Results is now light theme": the
    design settled on one light navbar for every screen, not a dark one over
    the hero. There's no dark hero screen in this repo yet to contradict
-   that. The border is transparent until the page scrolls past 10px, same
+   that. The hairline is transparent until the page scrolls past 10px, same
    as the prototype — it keeps the navbar from drawing a hard edge over a
    full-bleed hero once one exists. */
 .navbar {
@@ -48,12 +48,15 @@
      published CSS only had -webkit-backdrop-filter and Firefox lost the blur. */
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
-  border-bottom: 1px solid transparent;
-  transition: border-color 200ms ease;
+  /* A shadow, not a `border-bottom`: a border made the bar 61px tall while
+     every screen measures against `--navbar-h` (60px), so a page that
+     exactly fills the viewport scrolled by one pixel. */
+  box-shadow: 0 1px 0 transparent;
+  transition: box-shadow 200ms ease;
 }
 
 .navbarScrolled {
-  border-bottom-color: var(--hairline);
+  box-shadow: 0 1px 0 var(--hairline);
 }
 
 /* Without backdrop-filter the navbar stays translucent and the page text
@@ -110,12 +113,14 @@
   height: var(--navbar-h);
   width: 100%;
   min-width: 0;
-  padding-inline: var(--s-4);
+  padding-inline: max(var(--s-4), env(safe-area-inset-left))
+    max(var(--s-4), env(safe-area-inset-right));
 }
 
 @media (min-width: 900px) {
   .navbarInner {
-    padding-inline: var(--s-7);
+    padding-inline: max(var(--s-7), env(safe-area-inset-left))
+      max(var(--s-7), env(safe-area-inset-right));
   }
 }
 
@@ -131,7 +136,7 @@
 .link:focus-visible,
 .option:focus-visible,
 .trigger:focus-visible,
-.menuButton:focus-visible,
+.mobileNavLink:focus-visible,
 .buttonLink:focus-visible {
   outline: 2px solid var(--ember);
   outline-offset: 2px;
@@ -263,8 +268,8 @@
   box-shadow: 0 2px 12px color-mix(in srgb, var(--ember) 50%, transparent);
 }
 
-/* At 320px the logo, the session control with text, and the nav toggle
-   don't fit: below 900px the control collapses to just an icon, with its aria-label. */
+/* At 320px the logo and the session control with text don't fit: below
+   900px the control collapses to just an icon, with its aria-label. */
 .labelSession {
   display: none;
 }
@@ -326,25 +331,6 @@
 }
 
 @media (max-width: 600px) {
-  .createPlanNavLabel {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-  }
-
-  .createPlanNavBtn {
-    width: 44px;
-    min-height: 44px;
-    justify-content: center;
-    padding: var(--s-2);
-  }
-
   .sessionLink {
     min-height: 44px;
     padding-inline: var(--s-2);
@@ -416,31 +402,114 @@
   background: var(--hairline);
 }
 
-/* ── Small-viewport menu ──────────────────────────────────────── */
-.menuButton {
+/* ── Mobile-first primary navigation ──────────────────────────── */
+.mobileNav {
+  position: fixed;
+  right: max(var(--s-3), env(safe-area-inset-right));
+  bottom: max(var(--s-2), env(safe-area-inset-bottom));
+  left: max(var(--s-3), env(safe-area-inset-left));
+  z-index: 55;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: end;
+  min-height: var(--mobile-nav-h);
+  padding: 5px 6px;
+  border: 1px solid color-mix(in srgb, var(--hairline) 82%, transparent);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--surface-card) 94%, transparent);
+  box-shadow: 0 12px 36px color-mix(in srgb, var(--char) 16%, transparent);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+.mobileNavLink {
+  display: flex;
+  min-width: 0;
+  min-height: 52px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: var(--r-card-sm);
+  /* `--fg-2`, not `--fg-3`: at this size the caption tone falls under
+     WCAG AA (2.9:1 on the card); `--fg-2` clears 7:1. */
+  color: var(--fg-2);
+  font-size: 11px;
+  font-weight: var(--w-label);
+  line-height: 1;
+  text-align: center;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobileNavLabel {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobileNavIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  padding: var(--s-2);
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-btn);
-  background: transparent;
-  color: var(--fg-1);
-  cursor: pointer;
+  width: 34px;
+  height: 27px;
+  border-radius: var(--r-chip);
+  transition: background var(--d-fast) var(--ease-out), color var(--d-fast) var(--ease-out);
 }
 
-.mobilePanel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-1);
-  padding: var(--s-3) var(--s-4) var(--s-4);
-  border-top: 1px solid var(--hairline);
-  background: color-mix(in srgb, var(--cream) 96%, transparent);
-  -webkit-backdrop-filter: blur(18px);
-  backdrop-filter: blur(18px);
+/* The label goes dark rather than ember: ember text is 3.4:1 on the card,
+   below AA for 11px copy. The icon keeps the ember (3:1 over its pill is
+   enough for a graphic), and `aria-current` carries the state for AT. */
+.mobileNavLinkActive {
+  color: var(--fg-1);
+}
+
+.mobileNavLinkActive .mobileNavIcon {
+  background: var(--ember-10);
+  color: var(--ember);
+}
+
+.mobileNavCreate {
+  color: var(--fg-1);
+}
+
+.mobileNavCreate .mobileNavIcon {
+  width: 44px;
+  height: 44px;
+  margin-top: -19px;
+  border: 4px solid var(--surface-card);
+  background: var(--ember);
+  color: var(--white);
+  box-shadow: 0 6px 16px var(--ember-20);
+}
+
+/* At 320px five columns are ~57px: tighten the bar's own insets so the
+   longest labels ("Mis planes") fit without an ellipsis. */
+@media (max-width: 359px) {
+  .mobileNav {
+    right: max(var(--s-2), env(safe-area-inset-right));
+    left: max(var(--s-2), env(safe-area-inset-left));
+    padding-inline: 2px;
+  }
+
+  .mobileNavLink {
+    letter-spacing: -0.01em;
+  }
+}
+
+.mobileNavCreate.mobileNavLinkActive .mobileNavIcon {
+  background: var(--char);
+  color: var(--white);
+}
+
+/* Account-menu entries that only exist to cover destinations the bottom
+   bar has no room for (Historial). On desktop they're already in `.nav`. */
+@media (min-width: 900px) {
+  .mobileOnlyOption {
+    display: none;
+  }
 }
 
 @media (min-width: 900px) {
@@ -457,8 +526,7 @@
     height: 40px;
   }
 
-  .menuButton,
-  .mobilePanel {
+  .mobileNav {
     display: none;
   }
 }
@@ -470,6 +538,10 @@
 
   .actions {
     grid-column: 2;
+  }
+
+  .createPlanNavBtn {
+    display: none;
   }
 
   .sessionPlaceholder {
@@ -485,13 +557,17 @@
   width: 100%;
   min-width: 0;
   overflow-x: clip;
+  /* `viewport-fit=cover` lets the page reach under a landscape notch; the
+     insets are 0 everywhere else. */
+  padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
+  padding-bottom: var(--bottom-nav-space);
 }
 
 .container {
   width: 100%;
   max-width: var(--max-w);
   margin-inline: auto;
-  padding: var(--section-v) var(--s-4);
+  padding: var(--page-pad-top) var(--s-4) var(--page-pad-bottom);
 }
 
 /* ── Centered shell: 404 ───────────────────────────────────────────
@@ -645,7 +721,8 @@
 .screen {
   width: 100%;
   min-height: calc(
-    100dvh - var(--navbar-h) - var(--section-v) - var(--section-v)
+    100dvh - var(--navbar-h) - var(--page-pad-top) - var(--page-pad-bottom) -
+      var(--bottom-nav-space)
   );
   /* `fadeUpNoTransform`, not `fadeUp`: this wraps every screen's content,
      including any `position: fixed` modal mounted inside it. `fadeUp`'s
@@ -658,6 +735,10 @@
 @media (prefers-reduced-motion: reduce) {
   .exploreTransition {
     animation: none;
+  }
+
+  .mobileNavIcon {
+    transition: none;
   }
 
   .screen {

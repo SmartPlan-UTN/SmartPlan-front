@@ -57,6 +57,14 @@
   border-radius: var(--r-btn);
 }
 
+/* Below 900px Crear plan is the bottom bar's centre tab (and the create
+   cards right under this header), so a third copy here is just noise. */
+@media (max-width: 899px) {
+  .createButton {
+    display: none;
+  }
+}
+
 @media (max-width: 560px) {
   .header {
     padding-bottom: var(--s-3);

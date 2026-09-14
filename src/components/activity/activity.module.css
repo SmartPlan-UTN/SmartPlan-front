@@ -222,8 +222,10 @@
 
 .cardBookmark {
   position: absolute;
-  top: var(--s-2);
-  right: var(--s-2);
+  top: var(--card-bookmark-inset, var(--s-2));
+  /* Same overridable placement as `PlanCard`'s bookmark (plan.module.css). */
+  right: var(--card-bookmark-right, var(--s-2));
+  left: var(--card-bookmark-left, auto);
   display: flex;
   align-items: center;
   justify-content: center;

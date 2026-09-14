@@ -476,3 +476,64 @@
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--s-4);
 }
+
+@media (max-width: 560px) {
+  .searchScreen {
+    gap: var(--s-4);
+  }
+
+  .toolbar {
+    align-items: flex-start;
+  }
+
+  .toolbarActions {
+    width: 100%;
+  }
+
+  .toolbarActions > * {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  /* Search results only: one column of horizontal cards. Scoped under
+     `.grid` because the card shell is shared — the home results, the
+     landing rail and Favoritos keep the vertical card.
+
+     The grid also publishes the card overlays' placement as custom
+     properties (read by `.cardBookmark` / `.viewPlanButton` in the
+     activity and plan modules), so the bookmark follows the media column
+     instead of hard-coding its width a second time. */
+  .grid {
+    --card-media-w: 112px;
+    --card-bookmark-inset: var(--s-2);
+    --card-bookmark-left: calc(
+      var(--card-media-w) - 44px - var(--card-bookmark-inset)
+    );
+    --card-bookmark-right: auto;
+    --card-cta-display: none;
+
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-3);
+  }
+
+  .grid .cardContent {
+    display: grid;
+    grid-template-columns: var(--card-media-w) minmax(0, 1fr);
+  }
+
+  .grid .imageWrapper {
+    height: 100%;
+    min-height: 156px;
+  }
+
+  .grid .body {
+    min-width: 0;
+    padding: var(--s-3);
+  }
+
+  .grid .tagRow {
+    max-height: 24px;
+    overflow: hidden;
+  }
+}

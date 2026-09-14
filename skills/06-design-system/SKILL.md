@@ -274,9 +274,12 @@ trigger is a circular ember-gradient avatar (icon-only until there's a real
 user name/photo); its dropdown is always light-card styled
 (`--surface-card` / `--hairline` / `--shadow-card`) regardless of the
 navbar's own background — same as in the prototype. "Cerrar sesión" opens a
-confirmation dialog instead of logging out immediately. Navigation: Inicio,
-Explorar, Favoritos, Historial, and a user menu with Mi Perfil and
-Preferencias.
+confirmation dialog instead of logging out immediately. On desktop,
+navigation includes Inicio, Explorar, Mis planes, Favoritos and Historial.
+Below 900px, the top bar keeps only the logo and session control; a fixed
+bottom bar exposes Inicio, Explorar, Crear plan, Mis planes and Favoritos as
+persistent, thumb-reachable destinations (labels in `--fg-2`, not `--fg-3`,
+for AA contrast), and Historial moves into the account menu.
 
 **Carousel** — infinite carousel of categories: Gastronomía, Vinos &
 Bodegas, Cultura & Arte, Vida nocturna, Cócteles, Café & Brunch, and of

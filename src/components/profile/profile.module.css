@@ -10,11 +10,15 @@
    its own canvas. Same box as `security.module.css`'s `.backdrop`. */
 .backdrop {
   position: relative;
-  min-height: calc(100dvh - var(--navbar-h) + var(--section-v) * 2);
+  /* Exactly the viewport left between the navbar and the mobile bar's
+     reserved space: the negative margins cancel `Container`'s padding and
+     this box takes it back as its own, so the padding is already inside
+     this height. */
+  min-height: calc(100dvh - var(--navbar-h) - var(--bottom-nav-space));
   width: 100vw;
   margin-inline: calc(50% - 50vw);
-  margin-block: calc(var(--section-v) * -1);
-  padding-block: var(--section-v);
+  margin-block: calc(var(--page-pad-top) * -1) calc(var(--page-pad-bottom) * -1);
+  padding-block: var(--page-pad-top) var(--page-pad-bottom);
   padding-inline: var(--s-4);
 }
 
@@ -200,7 +204,8 @@
    more, with a wider and less opaque shadow than the standard dark card. */
 .toast {
   position: fixed;
-  bottom: var(--s-6);
+  /* Clears the mobile bottom bar wherever it's shown (0 above 900px). */
+  bottom: calc(var(--s-6) + var(--bottom-nav-space));
   left: 50%;
   z-index: 9999;
   display: flex;
@@ -276,4 +281,76 @@
 .dangerButton:focus-visible {
   outline: 2px solid #d94b2b;
   outline-offset: 2px;
+}
+
+@media (max-width: 767px) {
+  .wrapper {
+    gap: var(--s-5);
+  }
+
+  .identity {
+    padding-inline: var(--s-5);
+    padding-bottom: var(--s-5);
+  }
+
+  .form {
+    gap: var(--s-4);
+    padding: 0 var(--s-5) var(--s-5);
+  }
+
+  .divider {
+    margin-inline: calc(var(--s-5) * -1);
+  }
+
+  .actions > * {
+    flex: 1;
+    min-height: 46px;
+  }
+
+  .dangerZone {
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--s-4);
+  }
+
+  .dangerButton {
+    min-height: 44px;
+  }
+
+  /* Full-width instead of centred on `left: 50%`, so the slide keyframes
+     must not carry the base toast's `translateX(-50%)` — with `both` fill
+     it would stay applied and push half the toast off-screen. */
+  .toast {
+    right: var(--s-4);
+    left: var(--s-4);
+    justify-content: center;
+    white-space: normal;
+    animation-name: profileToastInFull;
+  }
+
+  .toastOut {
+    animation-name: profileToastOutFull;
+  }
+}
+
+@keyframes profileToastInFull {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes profileToastOutFull {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
 }

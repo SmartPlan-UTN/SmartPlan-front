@@ -7,7 +7,7 @@
    the footer riding up into the middle of the waves. */
 .backdrop {
   position: relative;
-  min-height: calc(100dvh - var(--navbar-h));
+  min-height: calc(100dvh - var(--navbar-h) - var(--bottom-nav-space));
   background:
     radial-gradient(
       ellipse 54% 28% at 50% 4%,

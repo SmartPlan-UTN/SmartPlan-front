@@ -7,8 +7,9 @@ export interface ContainerProps {
 }
 
 /**
- * Centers content at the 1200px max width (`--max-w`) with the vertical
- * section spacing (`--section-v`).
+ * Centers content at the 1200px max width (`--max-w`) with the page's
+ * vertical padding (`--page-pad-top` / `--page-pad-bottom`: the section
+ * spacing on wide viewports, tighter below 768px).
  *
  * Deliberately not part of the layout: some screens go full-bleed —the home
  * hero, the plan-generation waiting screen— and a container imposed from

@@ -11,7 +11,7 @@ import { loginRoute, ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 import { NavLink } from "./NavLink";
-import { USER_LINKS } from "./links";
+import { MOBILE_USER_LINKS, USER_LINKS } from "./links";
 import styles from "./layout.module.css";
 
 interface LogoutConfirmModalProps {
@@ -125,7 +125,9 @@ function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
  * - `loading`: a same-sized placeholder, so the navbar doesn't jump once
  *   the token resolves.
  * - `anonymous`: link to log in.
- * - `authenticated`: dropdown with Mi perfil, Preferencias, and Cerrar sesión.
+ * - `authenticated`: dropdown with Mi perfil, Preferencias, Seguridad, and
+ *   Cerrar sesión. Below 900px it also carries Historial, the one main
+ *   destination the bottom bar has no tab for.
  *   The trigger is a circular avatar, not a text pill — there's no user
  *   name or photo yet, so it shows the `user` icon.
  *
@@ -246,6 +248,18 @@ export function UserMenu() {
               label={link.label}
               icon={link.icon}
               variant="option"
+              onNavigate={close}
+            />
+          ))}
+
+          {MOBILE_USER_LINKS.map((link) => (
+            <NavLink
+              key={link.href}
+              href={link.href}
+              label={link.label}
+              icon={link.icon}
+              variant="option"
+              className={styles.mobileOnlyOption}
               onNavigate={close}
             />
           ))}

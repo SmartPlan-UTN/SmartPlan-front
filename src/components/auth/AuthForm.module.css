@@ -196,14 +196,16 @@ button.resendButton { border-width: 1.5px; border-color: var(--ember); color: va
     gap: 12px;
   }
 
-  .row2 {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
   .footerLogin,
   .footerRegister {
     margin-top: 18px;
+  }
+}
+
+@media (max-width: 340px) {
+  .row2 {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 }
 
