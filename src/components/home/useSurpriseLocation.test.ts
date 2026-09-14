@@ -96,7 +96,7 @@ describe("useSurpriseLocation", () => {
     );
   });
 
-  it("surfaces an actionable error when GPS is denied and there is no preferred area", async () => {
+  it("still resolves (with no coordinates) when GPS is denied and there is no preferred area", async () => {
     mockGeolocation((_success, error) =>
       error({ code: PERMISSION_DENIED } as GeolocationPositionError),
     );
@@ -106,8 +106,9 @@ describe("useSurpriseLocation", () => {
 
     await waitFor(() =>
       expect(result.current.state).toEqual({
-        status: "error",
-        kind: "no-location",
+        status: "resolved",
+        coords: null,
+        source: "default",
       }),
     );
   });

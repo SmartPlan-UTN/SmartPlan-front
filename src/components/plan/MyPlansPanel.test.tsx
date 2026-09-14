@@ -149,18 +149,12 @@ describe("MyPlansPanel (CU29)", () => {
     expect(screen.queryByText("Domingo de bodegas")).not.toBeInTheDocument();
   });
 
-  it("shows under construction modal when automatic plan button card is clicked (CU31)", async () => {
-    const user = userEvent.setup();
+  it("sends the automatic plan card to the real AI composer on the Home page", async () => {
     render(<MyPlansPanel />);
 
-    await user.click(screen.getByRole("button", { name: /Generar plan automático/i }));
+    const link = screen.getByRole("link", { name: /Generar plan automático/i });
 
-    expect(screen.getByRole("alertdialog", { name: "Módulo en construcción" })).toBeInTheDocument();
-    expect(
-      screen.getByText(/generación automática de itinerarios/i),
-    ).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Entendido, crear manualmente" }));
+    expect(link).toHaveAttribute("href", "/?startComposer=1");
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
   });
 });

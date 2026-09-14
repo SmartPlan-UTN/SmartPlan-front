@@ -20,6 +20,7 @@ vi.mock("@/hooks", async (importActual) => ({
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
+  usePathname: () => "/",
 }));
 
 // The rest of the landing is noise for this test: it only checks which

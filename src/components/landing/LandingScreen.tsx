@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { usePathname, useRouter } from "next/navigation";
 
 import { MotionConfig } from "motion/react";
 
@@ -67,6 +68,31 @@ export function LandingScreen() {
   const sessionLoading = status === "loading";
   const [prefill, setPrefill] = useState<string | null>(null);
   const [surpriseNote, setSurpriseNote] = useState<string | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  /**
+   * Other entry points (the manual create form's "Generar plan automático",
+   * `MyPlansPanel`'s equivalent card) land here with `?startComposer=1`
+   * instead of a dead "under construction" dialog — this puts the visitor
+   * straight into the real composer, focused, the same way the empty-state
+   * CTA does. Read directly off `window.location` (not `useSearchParams`)
+   * so this page keeps rendering statically for crawlers rather than
+   * opting the whole route into client-only rendering. The param is
+   * stripped right after so a back/forward navigation doesn't refocus
+   * the field.
+   */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (new URLSearchParams(window.location.search).get("startComposer") !== "1") {
+      return;
+    }
+    if (!authenticated || planning.phase !== "idle") return;
+
+    handleStartPlan();
+    router.replace(pathname);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authenticated, planning.phase]);
 
   /**
    * Generation needs a session. Sending someone to log in with a
@@ -103,10 +129,13 @@ export function LandingScreen() {
     scrollToHero();
   }
 
-  function handleSurprise(coords: SurpriseCoords, meta: SurpriseResolvedMeta) {
+  function handleSurprise(
+    coords: SurpriseCoords | null,
+    meta: SurpriseResolvedMeta,
+  ) {
     if (!requireSession()) return;
     setSurpriseNote(surpriseNoteFor(meta));
-    planning.submitSurprise(coords);
+    planning.submitSurprise(coords ?? {});
     scrollToHero();
   }
 
@@ -170,6 +199,9 @@ export function LandingScreen() {
  * preferences.
  */
 function surpriseNoteFor(meta: SurpriseResolvedMeta): string | null {
+  if (meta.source === "default") {
+    return "No pudimos usar tu ubicación — te mostramos algo igual.";
+  }
   if (meta.hasCategoryPreferences === false) {
     return "Aún no tenés preferencias guardadas, así que te sorprendemos con algo completamente nuevo.";
   }

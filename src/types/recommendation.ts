@@ -36,12 +36,15 @@ export interface CreatePlanRequestPayload {
 }
 
 /**
- * Body accepted by `POST /plan-requests/surprise` (CU19).
+ * Body accepted by `POST /plan-requests/surprise` (CU19). Both fields are
+ * optional: without them the backend falls back to the user's saved
+ * preferred area and, failing that, a sensible default department — a
+ * missing location is never a reason to withhold the request.
  * Matches `CreateSurprisePlanRequestDto` in `SmartPlan-back`.
  */
 export interface CreateSurprisePlanRequestPayload {
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
 }
 
 /**
