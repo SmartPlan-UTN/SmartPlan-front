@@ -40,6 +40,7 @@ const getPlan = vi.hoisted(() => vi.fn());
 const getOwnPlan = vi.hoisted(() => vi.fn());
 const selectPlan = vi.hoisted(() => vi.fn());
 const deselectPlan = vi.hoisted(() => vi.fn());
+const completeOwnPlan = vi.hoisted(() => vi.fn());
 const submitFeedback = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api", async (importActual) => ({
@@ -48,6 +49,7 @@ vi.mock("@/lib/api", async (importActual) => ({
   getOwnPlan,
   selectPlan,
   deselectPlan,
+  completeOwnPlan,
   submitFeedback,
 }));
 
@@ -399,5 +401,46 @@ describe("PlanDetailView — feedback (CU23, PAN 17)", () => {
     expect(saveBtn).toBeInTheDocument();
     expect(saveBtn).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByText("Guardado")).toBeInTheDocument();
+  });
+});
+
+describe("PlanDetailView — owner marks the plan as done (CU23/CU44)", () => {
+  const doneButton = { name: /^lo hice$/i } as const;
+
+  it("replaces the intent toggle with 'Lo hice' and completes after confirming", async () => {
+    const user = userEvent.setup();
+    getOwnPlan.mockResolvedValue(
+      ownPlan({ status: { key: "confirmed", name: "Confirmado" }, completedAt: null }),
+    );
+    completeOwnPlan.mockResolvedValue(
+      ownPlan({ completedAt: "2026-09-15T00:00:00.000Z" }),
+    );
+    await renderDetail("selectable", "confirmed");
+
+    await user.click(await screen.findByRole("button", doneButton));
+    expect(screen.queryByRole("button", intendButton)).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /sí, lo hice/i }));
+
+    expect(await screen.findByText("Hiciste este plan")).toBeInTheDocument();
+    expect(completeOwnPlan).toHaveBeenCalledExactlyOnceWith(7);
+    expect(screen.queryByRole("button", doneButton)).not.toBeInTheDocument();
+    expect(selectPlan).not.toHaveBeenCalled();
+  });
+
+  it("keeps 'Lo hice' and explains the failure when completing fails", async () => {
+    const user = userEvent.setup();
+    getOwnPlan.mockResolvedValue(
+      ownPlan({ status: { key: "confirmed", name: "Confirmado" }, completedAt: null }),
+    );
+    completeOwnPlan.mockRejectedValue(new Error("offline"));
+    await renderDetail("selectable", "confirmed");
+
+    await user.click(await screen.findByRole("button", doneButton));
+    await user.click(screen.getByRole("button", { name: /sí, lo hice/i }));
+
+    expect(
+      await screen.findByText(/no pudimos marcar el plan como realizado/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Hiciste este plan")).not.toBeInTheDocument();
   });
 });

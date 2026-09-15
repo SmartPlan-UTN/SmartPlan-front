@@ -286,7 +286,8 @@ export function ActivityRatingSection({ activityId, onChange }: ActivityRatingSe
         <Icon name="info" size={18} className={styles.ratingGateIcon} />
         <p className="sp-body">
           Todavía no podés valorar esta actividad: necesitás haber completado un
-          plan que la incluya.
+          plan que la incluya. Si ya lo hiciste, marcalo con «Lo hice» desde el
+          detalle del plan.
         </p>
       </div>
     );
