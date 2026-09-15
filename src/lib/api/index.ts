@@ -20,6 +20,9 @@ export type { TokenGetter } from './token-provider';
 export { onUnauthorized, notifyUnauthorized } from './auth-events';
 export type { UnauthorizedListener } from './auth-events';
 
+export { setSessionRefresher, refreshSessionOnce } from './session-refresher';
+export type { SessionRefresher } from './session-refresher';
+
 export { getApiBaseUrl } from './config';
 
 export { searchActivities, getActivity, getActivityMapMarkers } from './activities';
