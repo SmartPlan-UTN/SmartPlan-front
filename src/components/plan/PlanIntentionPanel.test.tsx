@@ -79,4 +79,28 @@ describe("PlanIntentionPanel (CU22, PAN 17)", () => {
     expect(screen.getByText("Hiciste este plan")).toBeInTheDocument();
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
+
+  it("owner of an unfinished plan: 'Lo hice' replaces the intent toggle", async () => {
+    const user = userEvent.setup();
+    const onComplete = vi.fn();
+    renderPanel({ viewerPlanState: "selectable", onComplete });
+
+    expect(
+      screen.queryByRole("button", { name: /^lo voy a hacer$/i }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /^lo hice$/i }));
+    expect(onComplete).toHaveBeenCalledOnce();
+    expect(handlers.onIntend).not.toHaveBeenCalled();
+  });
+
+  it("owner of a completed plan sees the record, not 'Lo hice'", () => {
+    renderPanel({
+      viewerPlanState: "selected",
+      statusKey: "completed",
+      onComplete: vi.fn(),
+    });
+
+    expect(screen.getByText("Hiciste este plan")).toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
 });

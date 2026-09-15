@@ -34,6 +34,7 @@ export {
   deselectPlan,
   updateOwnPlan,
   cancelOwnPlan,
+  completeOwnPlan,
   removePlanActivity,
   generateSuggestedPlan,
 } from './plans';

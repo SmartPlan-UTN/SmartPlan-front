@@ -204,7 +204,7 @@ describe("ActivityRatingSection", () => {
 
     expect(
       await screen.findByText(
-        "Todavía no podés valorar esta actividad: necesitás haber completado un plan que la incluya.",
+        "Todavía no podés valorar esta actividad: necesitás haber completado un plan que la incluya. Si ya lo hiciste, marcalo con «Lo hice» desde el detalle del plan.",
       ),
     ).toBeInTheDocument();
     expect(getOwnPlan).not.toHaveBeenCalled();

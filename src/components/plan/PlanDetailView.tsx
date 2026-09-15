@@ -8,7 +8,7 @@ import { ExperienceSummary, FeedbackInvite } from "@/components/feedback";
 import { Badge, Button, ConfirmationDialog, Divider, FloatingBackLink, Icon, Stars } from "@/components/ui";
 import { useFavorites } from "@/context";
 import { useDetailFetch, usePlanSelection } from "@/hooks";
-import { ApiError, cancelOwnPlan, getOwnPlan, getPlan } from "@/lib/api";
+import { ApiError, cancelOwnPlan, completeOwnPlan, getOwnPlan, getPlan } from "@/lib/api";
 import { useSession } from "@/lib/auth";
 import { activityDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
 import { formatArs, formatDuration, googleMapsUrl } from "@/lib/utils";
@@ -165,6 +165,9 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [completeError, setCompleteError] = useState<string | null>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const [ownFeedback, setOwnFeedback] = useState<{
     planId: number;
@@ -322,6 +325,32 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           ? error.message
           : "No pudimos eliminar el plan. Intentá de nuevo.",
       );
+    }
+  }
+
+  // Owner-only "Lo hice" (CU23/CU44). Like CU22, the new state comes from the
+  // backend result: the override flips the panel to the "Hiciste este plan"
+  // record, and the owner projection is replaced so feedback can follow.
+  async function handleConfirmComplete() {
+    setIsCompleting(true);
+    setCompleteError(null);
+    try {
+      const own = await completeOwnPlan(planId);
+      setOwnPlan(own);
+      setOwnFeedback({
+        planId: own.id,
+        feedbackState: own.feedbackState,
+        feedback: own.feedback,
+        completedAt: own.completedAt ?? own.createdAt,
+        activityCount: own.activityCount,
+      });
+      setOverride({ statusKey: own.status.key, viewerPlanState: "selected" });
+      setShowCompleteModal(false);
+      setLiveMessage(PLAN_SELECTION.detail.announceCompleted);
+    } catch {
+      setCompleteError(PLAN_SELECTION.error.completeFailed);
+    } finally {
+      setIsCompleting(false);
     }
   }
 
@@ -552,9 +581,18 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           <PlanIntentionPanel
             viewerPlanState={viewerPlanState}
             statusKey={statusKey}
-            busy={selection.status === "working"}
+            busy={selection.status === "working" || isCompleting}
             onIntend={() => void toggleIntent("on")}
             onWithdraw={() => void toggleIntent("off")}
+            completedAt={ownPlan?.completedAt ?? null}
+            onComplete={
+              isOwner && statusKey !== "cancelled"
+                ? () => {
+                    setCompleteError(null);
+                    setShowCompleteModal(true);
+                  }
+                : undefined
+            }
           />
         </div>
       </div>
@@ -571,6 +609,21 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           onConfirm={() => void handleConfirmCancel()}
         >
           <p>El plan se eliminará de tus planes y ya no estará disponible.</p>
+        </ConfirmationDialog>
+      ) : null}
+
+      {showCompleteModal ? (
+        <ConfirmationDialog
+          title={PLAN_SELECTION.detail.completeDialog.title}
+          confirmLabel={PLAN_SELECTION.detail.completeDialog.confirm}
+          confirmingLabel={PLAN_SELECTION.detail.completeDialog.confirming}
+          cancelLabel={PLAN_SELECTION.detail.completeDialog.cancel}
+          isConfirming={isCompleting}
+          error={completeError}
+          onCancel={() => setShowCompleteModal(false)}
+          onConfirm={() => void handleConfirmComplete()}
+        >
+          <p>{PLAN_SELECTION.detail.completeDialog.body}</p>
         </ConfirmationDialog>
       ) : null}
     </div>

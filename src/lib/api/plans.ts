@@ -98,6 +98,15 @@ export async function cancelOwnPlan(id: number): Promise<void> {
 }
 
 /**
+ * The owner marks a plan as done ("Lo hice"), which makes its activities
+ * ratable (CU44) and opens experience feedback (CU23). Idempotent.
+ * Backend contract: `PATCH /users/me/plans/:id/complete`.
+ */
+export async function completeOwnPlan(id: number): Promise<OwnPlanDetail> {
+  return apiClient.patch<OwnPlanDetail>(`/users/me/plans/${id}/complete`);
+}
+
+/**
  * Adds an activity stop to a plan (CU24/CU27).
  * Backend contract: `POST /users/me/plans/:id/details`.
  */
