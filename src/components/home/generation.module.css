@@ -7,13 +7,6 @@
    components that use them and not in `components/landing/`.
    ================================================================ */
 
-/* Scoped to this module: `.resultCard` below animates by this name, and
-   a CSS module rewrites both the declaration and the reference. */
-@keyframes hero-rise {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: none; }
-}
-
 .generatingCard, .failedCard {
   z-index: 1;
   justify-content: center;
@@ -116,7 +109,7 @@
   gap: var(--s-5);
   flex-direction: column;
   width: 100%;
-  max-width: 960px;
+  max-width: 1320px;
   margin-inline: auto;
   display: flex;
   position: relative;
@@ -127,6 +120,8 @@
   text-align: center;
   flex-direction: column;
   display: flex;
+  max-width: 640px;
+  margin-inline: auto;
 }
 
 .resultsTitle, .resultsSubtitle {
@@ -141,28 +136,23 @@
   color: var(--fg-2);
 }
 
-.resultsGrid {
-  gap: var(--s-4);
-  grid-template-columns: repeat(3, 1fr);
-  width: 100%;
-  display: grid;
+.searchedQuery {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 13px;
 }
 
-@media (max-width: 860px) {
-  .resultsGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.searchedQuery span {
+  color: var(--fg-1);
+  font-style: italic;
 }
 
-@media (max-width: 560px) {
-  .resultsGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.resultCard {
-  opacity: 0;
-  animation: .34s cubic-bezier(.2, .8, .2, 1) forwards hero-rise;
+.contextBadges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
 }
 
 .resultsEyebrow {
@@ -197,129 +187,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .resultCard, .ring, .ringSpinner {
+  .ring, .ringSpinner {
     opacity: 1;
     animation: none;
     transform: none;
-  }
-}
-
-/* ── CU17/CU19 result actions + CU22 selection ───────────────────── */
-
-/* The itinerary, one line, ellipsised — the card is a summary, the detail
-   view has the full list (CU19 asks each option to name its activities). */
-.resultActivities {
-  margin: var(--s-2) 0 0;
-  overflow: hidden;
-  color: var(--fg-2);
-  font-size: 13px;
-  line-height: 1.4;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* The card is two real targets: the body links to the detail (CU13), the
-   footer row toggles the intent to do the plan (CU22). No stretched link, no
-   button nested in an anchor. */
-.resultCardShell {
-  /* The grid stretches `.resultCard` (this article's parent) to the row's
-     tallest card; without height:100% here the article sizes to its own
-     content instead, which is what produced visibly uneven card heights
-     when a plan's optional rows (activities/rating/distance) differ. */
-  height: 100%;
-  transition:
-    border-color var(--d-fast, 180ms) var(--ease-out, ease),
-    box-shadow var(--d-base, 420ms) var(--ease-out, ease),
-    transform var(--d-base, 420ms) var(--ease-out, ease);
-}
-
-.resultCardLink {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  color: inherit;
-  text-decoration: none;
-}
-
-.resultCardLink:focus-visible {
-  outline: 2px solid var(--ember);
-  outline-offset: -2px;
-  border-radius: var(--r-card);
-}
-
-.resultActionRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s-2);
-  min-height: 52px;
-  padding: var(--s-3) var(--s-4) var(--s-4);
-  border-top: 1px solid var(--hairline);
-}
-
-.resultActionRow > button:only-child {
-  width: 100%;
-}
-
-/* Marked "voy a hacer": the card gains a warm EMBER presence. The others are
-   left exactly as they were — nothing was rejected, the user just plans to do
-   this one, and can change their mind. */
-.resultCardChosen {
-  border-color: var(--ember);
-  background: color-mix(in srgb, var(--ember) 5%, var(--surface-card));
-  box-shadow: 0 10px 28px color-mix(in srgb, var(--ember) 18%, transparent);
-}
-
-.resultCardChosen:hover {
-  border-color: var(--ember);
-  transform: none;
-}
-
-.resultChosen {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--ember);
-  font-size: var(--t-small);
-  font-weight: var(--w-label);
-}
-
-/* "Ya no lo voy a hacer" — discreet, secondary to the ✓ state. */
-.resultUndo {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--fg-3);
-  font: inherit;
-  font-size: 13px;
-  font-weight: var(--w-label);
-  cursor: pointer;
-  transition: color 160ms ease;
-}
-
-.resultUndo:hover:not(:disabled) {
-  color: var(--fg-1);
-}
-
-.resultUndo:disabled {
-  color: var(--fg-3);
-  cursor: default;
-}
-
-.resultUndo:focus-visible {
-  outline: 2px solid var(--ember);
-  outline-offset: 2px;
-  border-radius: var(--r-btn);
-}
-
-.resultSpinner {
-  animation: spin 800ms linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
   }
 }
 
@@ -362,15 +233,5 @@
   .resultsActions > *,
   .timedOutActions > * {
     width: 100%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .resultCardShell {
-    transition: none;
-  }
-
-  .resultSpinner {
-    animation-duration: 1600ms;
   }
 }

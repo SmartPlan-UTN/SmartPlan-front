@@ -31,6 +31,12 @@ function status(overrides: Partial<PlanRequestStatus> = {}): PlanRequestStatus {
     statusKey: "pending",
     mode: "automatic",
     requestedAt: new Date().toISOString(),
+    resolvedContext: {
+      budget: null,
+      partySize: null,
+      departmentName: null,
+      categories: [],
+    },
     ...overrides,
   };
 }
@@ -73,6 +79,8 @@ describe("usePlanRequestPolling", () => {
               categories: [],
               activityNames: ["Degustación", "Almuerzo", "Paseo"],
               status: { key: "generated", name: "Generated" },
+              viewerPlanState: "selectable",
+              details: [],
             },
           ],
         }),

@@ -4,8 +4,9 @@ import { ApiError, createPlanRequest, createSurprisePlanRequest, getPlanRequestS
 import type {
   CreatePlanRequestPayload,
   CreateSurprisePlanRequestPayload,
-  PlanRequestPlanSummary,
+  PlanDetailResult,
   PlanSelectionResult,
+  ResolvedPlanContext,
   RequestStatusKey,
 } from "@/types";
 
@@ -47,7 +48,9 @@ export type LastSubmission =
 export interface UsePlanRequestPollingResult {
   phase: PlanRequestPhase;
   planRequestId: number | null;
-  plans: PlanRequestPlanSummary[] | null;
+  plans: PlanDetailResult[] | null;
+  /** What the system understood from the request — null until a result exists. */
+  resolvedContext: ResolvedPlanContext | null;
   failure: PlanRequestFailure | null;
   submit: (payload: CreatePlanRequestPayload) => void;
   submitSurprise: (payload: CreateSurprisePlanRequestPayload) => void;
@@ -112,7 +115,8 @@ function statusKeyToPhase(statusKey: RequestStatusKey): PlanRequestPhase {
 export function usePlanRequestPolling(): UsePlanRequestPollingResult {
   const [phase, setPhase] = useState<PlanRequestPhase>("idle");
   const [planRequestId, setPlanRequestId] = useState<number | null>(null);
-  const [plans, setPlans] = useState<PlanRequestPlanSummary[] | null>(null);
+  const [plans, setPlans] = useState<PlanDetailResult[] | null>(null);
+  const [resolvedContext, setResolvedContext] = useState<ResolvedPlanContext | null>(null);
   const [failure, setFailure] = useState<PlanRequestFailure | null>(null);
   const [lastSubmission, setLastSubmission] = useState<LastSubmission | null>(null);
 
@@ -154,6 +158,7 @@ export function usePlanRequestPolling(): UsePlanRequestPollingResult {
           if (status.statusKey === "generated") {
             clearTimers();
             setPlans(status.plans ?? []);
+            setResolvedContext(status.resolvedContext);
             setPhase("generated");
             return;
           }
@@ -189,6 +194,7 @@ export function usePlanRequestPolling(): UsePlanRequestPollingResult {
     async (accept: () => Promise<{ id: number }>) => {
       setFailure(null);
       setPlans(null);
+      setResolvedContext(null);
       setPhase("submitting");
 
       try {
@@ -250,6 +256,7 @@ export function usePlanRequestPolling(): UsePlanRequestPollingResult {
     activeRequestId.current = null;
     setPlanRequestId(null);
     setPlans(null);
+    setResolvedContext(null);
     setFailure(null);
     setPhase("idle");
     // `lastSubmission` deliberately survives: going back to the composer
@@ -264,7 +271,7 @@ export function usePlanRequestPolling(): UsePlanRequestPollingResult {
           return {
             ...plan,
             status: result.status,
-            viewerPlanState: result.viewerPlanState,
+            viewerPlanState: result.viewerPlanState ?? plan.viewerPlanState,
           };
         return plan;
       });
@@ -275,7 +282,10 @@ export function usePlanRequestPolling(): UsePlanRequestPollingResult {
     if (planRequestId === null) return;
     void getPlanRequestStatus(planRequestId)
       .then((status) => {
-        if (status.statusKey === "generated") setPlans(status.plans ?? []);
+        if (status.statusKey === "generated") {
+          setPlans(status.plans ?? []);
+          setResolvedContext(status.resolvedContext);
+        }
       })
       .catch(() => {
         // A failed reconcile leaves the current view untouched; the user can
@@ -287,6 +297,7 @@ export function usePlanRequestPolling(): UsePlanRequestPollingResult {
     phase,
     planRequestId,
     plans,
+    resolvedContext,
     failure,
     submit,
     submitSurprise,

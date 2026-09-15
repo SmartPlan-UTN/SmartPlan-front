@@ -1,7 +1,7 @@
 import { BaseEntity, CatalogEntity } from './common';
 import type { PaginationMetadata } from './common';
 import type { ActivityCategorySummary } from './activities';
-import type { PlanStatusKey } from './plans';
+import type { PlanDetailResult, PlanStatusKey } from './plans';
 
 /**
  * Expected keys for a plan request's status (CU17, CU19).
@@ -80,17 +80,35 @@ export interface PlanRequestPlanSummary {
 }
 
 /**
+ * What the system understood from a plan request — explicit context, free
+ * text interpreted by Gemini, or the user's stored preference profile,
+ * whichever resolved it. Null fields mean that piece was never resolved
+ * (e.g. no budget could be inferred) — render "no badge for it", not a
+ * placeholder. Matches `ResolvedPlanContextDto` in `SmartPlan-back`.
+ */
+export interface ResolvedPlanContext {
+  budget: number | null;
+  partySize: number | null;
+  departmentName: string | null;
+  categories: ActivityCategorySummary[];
+}
+
+/**
  * Response returned by `GET /plan-requests/:id` (CU17, CU19). `plans` is
- * only populated once `statusKey === 'generated'`; `failedAt`/`failureCode`/
- * `failureDetail` are only populated once `statusKey === 'failed'`. Matches
- * `PlanRequestStatusDto` in `SmartPlan-back`.
+ * only populated once `statusKey === 'generated'` — and, once it is, each
+ * entry is the full plan detail shape (title/cost/duration plus the ordered
+ * `details[]` itinerary with per-activity coordinates), not just the
+ * summary fields; `failedAt`/`failureCode`/`failureDetail` are only
+ * populated once `statusKey === 'failed'`. Matches `PlanRequestStatusDto`
+ * in `SmartPlan-back`.
  */
 export interface PlanRequestStatus {
   id: number;
   statusKey: RequestStatusKey;
   mode: string;
   requestedAt: string;
-  plans?: PlanRequestPlanSummary[];
+  plans?: PlanDetailResult[];
+  resolvedContext: ResolvedPlanContext;
   failedAt?: string | null;
   failureCode?: string | null;
   failureDetail?: Record<string, unknown> | null;

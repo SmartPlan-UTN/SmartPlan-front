@@ -94,6 +94,7 @@ export function LandingHero({
   const {
     phase,
     plans,
+    resolvedContext,
     failure,
     keepWaiting,
     discard,
@@ -104,6 +105,7 @@ export function LandingHero({
   } = planning;
   const canRepeat = lastSubmission?.kind === "auto";
   const generationMode = lastSubmission?.kind === "surprise" ? "surprise" : "auto";
+  const submittedQuery = lastSubmission?.kind === "auto" ? lastSubmission.payload.query : null;
   const composing = phase === "idle";
   const generating =
     phase === "submitting" ||
@@ -216,6 +218,8 @@ export function LandingHero({
         {phase === "generated" ? (
           <PlanResults
             plans={plans ?? []}
+            query={submittedQuery}
+            resolvedContext={resolvedContext}
             onAdjust={onAdjust}
             onDiscard={discard}
             canAdjust={canRepeat}
