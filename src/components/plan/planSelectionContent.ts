@@ -21,6 +21,16 @@ export const PLAN_SELECTION = {
     undo: "Ya no lo voy a hacer",
     /** State C (CU23): the plan already happened. Reads as a record, not a CTA. */
     completed: "Hiciste este plan",
+    /** Owner only (CU23/CU44): replaces the intent toggle on an own plan. */
+    complete: "Lo hice",
+    completeDialog: {
+      title: "¿Ya hiciste este plan?",
+      body: "Lo vamos a marcar como realizado. Después vas a poder valorar sus actividades y contarnos cómo te fue.",
+      confirm: "Sí, lo hice",
+      confirming: "Guardando...",
+      cancel: "Volver",
+    },
+    announceCompleted: "Marcamos el plan como realizado.",
     announceOn: "Lo marcamos como un plan que vas a hacer.",
     announceOff: "Lo sacamos de tus planes.",
   },
@@ -29,5 +39,6 @@ export const PLAN_SELECTION = {
     reconciled: "Este plan cambió de estado. Lo actualizamos.",
     /** Network / unknown: nothing was saved, the control stays as it was. */
     retry: "No pudimos guardar el cambio. Probá de nuevo.",
+    completeFailed: "No pudimos marcar el plan como realizado. Probá de nuevo.",
   },
 } as const;

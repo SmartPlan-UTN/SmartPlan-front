@@ -18,6 +18,9 @@ import styles from "./plan.module.css";
  *  - `intending`  → same toggle, on. The label stays "Lo voy a hacer" in both
  *                   states — the check and the fill carry the change; clicking
  *                   again withdraws, no separate control.
+ *  - owner      → when `onComplete` is given (the viewer owns an unfinished
+ *                   plan), "Lo hice" replaces the toggle: doing the plan is
+ *                   what makes its activities ratable (CU44).
  *  - `done`       → record: "Hiciste este plan". Date + feedback actions are
  *                   CU23 — the slots exist but stay empty until then.
  */
@@ -54,6 +57,11 @@ export interface PlanIntentionPanelProps {
   completedAt?: string | null;
   /** CU23, not wired yet: feedback actions for a completed plan. */
   feedbackSlot?: ReactNode;
+  /**
+   * Owner only: marks the plan as done. When given, "Lo hice" replaces the
+   * intent toggle on an unfinished plan.
+   */
+  onComplete?: () => void;
 }
 
 export function PlanIntentionPanel({
@@ -64,6 +72,7 @@ export function PlanIntentionPanel({
   onWithdraw,
   completedAt,
   feedbackSlot,
+  onComplete,
 }: PlanIntentionPanelProps) {
   const state = resolvePanelState(viewerPlanState, statusKey);
   if (state === "absent") return null;
@@ -89,6 +98,28 @@ export function PlanIntentionPanel({
             <div className={styles.stateActions}>{feedbackSlot}</div>
           ) : null}
         </div>
+      </div>
+    );
+  }
+
+  // An owner records that the plan happened instead of an intent: an action,
+  // not a toggle, so no `aria-pressed`. Same box as the toggle it replaces.
+  if (onComplete) {
+    return (
+      <div className={styles.statePanel} data-state="complete">
+        <button
+          type="button"
+          className={styles.stateToggle}
+          disabled={busy}
+          onClick={onComplete}
+        >
+          <span className={styles.toggleIcon} aria-hidden="true">
+            <Icon name="circle-check" size={18} />
+          </span>
+          <span className={styles.stateLabel}>
+            {PLAN_SELECTION.detail.complete}
+          </span>
+        </button>
       </div>
     );
   }
