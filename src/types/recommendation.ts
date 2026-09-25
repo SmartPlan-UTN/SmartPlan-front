@@ -105,14 +105,29 @@ export interface ResolvedPlanContext {
 export interface PlanRequestStatus {
   id: number;
   statusKey: RequestStatusKey;
-  mode: string;
+  mode: 'automatic' | 'surprise';
   requestedAt: string;
+  /** Persisted raw query; null for surprise requests and older rows. */
+  query?: string | null;
+  progressStage?: PlanRequestProgressStage | null;
+  progressStageAt?: string | null;
+  /** Only present when there is enough same-mode production history. */
+  estimatedRemainingSeconds?: number | null;
   plans?: PlanDetailResult[];
   resolvedContext: ResolvedPlanContext;
   failedAt?: string | null;
   failureCode?: string | null;
   failureDetail?: Record<string, unknown> | null;
 }
+
+export type PlanRequestProgressStage =
+  | 'queued'
+  | 'interpreting'
+  | 'locating'
+  | 'searching'
+  | 'composing'
+  | 'routing'
+  | 'finalizing';
 
 /**
  * Domain entity backing a plan request, as embedded in `Plan.request`

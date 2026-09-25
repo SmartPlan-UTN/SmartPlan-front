@@ -30,11 +30,37 @@ function renderState(
  * two are different situations and these assert they behave differently.
  */
 describe("GenerationState (CU17)", () => {
+  it("puts the backend-confirmed stage in the main status line", () => {
+    render(
+      <GenerationState
+        phase="processing"
+        failure={null}
+        progressStage="searching"
+        requestedAt={new Date().toISOString()}
+        progressStageAt={new Date().toISOString()}
+        onKeepWaiting={vi.fn()}
+        onRetry={vi.fn()}
+        onDiscard={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Buscando actividades" })).toBeInTheDocument();
+    expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Buscando actividades");
+  });
+
+  it("reflects the backend processing state when detailed stages are unavailable", () => {
+    renderState("processing");
+
+    expect(screen.getByRole("heading", { name: "Estamos convirtiendo tu idea en una salida" })).toBeInTheDocument();
+  });
+
   it("announces the wait to assistive technology while queued", () => {
     renderState("pending");
 
-    const card = screen.getByText(/empezamos a armar tu plan/i).closest("div");
+    const card = screen.getByText(/ya recibimos tu búsqueda/i).closest("div");
     expect(card).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByRole("progressbar", { name: /ya recibimos tu búsqueda/i })).toBeInTheDocument();
+    expect(screen.queryByRole("list", { name: "Etapas confirmadas" })).not.toBeInTheDocument();
   });
 
   it("keeps waiting on a display timeout without discarding the request", async () => {

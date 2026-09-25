@@ -13,7 +13,7 @@ import type {
 import { SiteFooter } from "@/components/layout";
 import { usePlanRequestPolling } from "@/hooks";
 import { useSession } from "@/lib/auth";
-import { loginRoute } from "@/lib/routes";
+import { loginRoute, planRequestRoute } from "@/lib/routes";
 import type { PlanRequestContext } from "@/types";
 
 import { RecommendedPlans } from "@/components/home";
@@ -93,6 +93,11 @@ export function LandingScreen() {
     router.replace(pathname);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authenticated, planning.phase]);
+
+  useEffect(() => {
+    if (planning.planRequestId == null || planning.phase === "idle") return;
+    router.push(planRequestRoute(planning.planRequestId));
+  }, [planning.planRequestId, planning.phase, router]);
 
   /**
    * Generation needs a session. Sending someone to log in with a

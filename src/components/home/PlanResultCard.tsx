@@ -5,7 +5,7 @@ import Link from "next/link";
 import { PLAN_SELECTION } from "@/components/plan/planSelectionContent";
 import { Badge, Button, Icon, Stars } from "@/components/ui";
 import { planDetailRoute } from "@/lib/routes";
-import { formatArs, formatDuration, getPlanZone, gradientFor } from "@/lib/utils";
+import { formatArs, formatDuration, getPlanZone } from "@/lib/utils";
 import type { PlanDetailResult } from "@/types";
 
 import styles from "./plan-result-card.module.css";
@@ -50,7 +50,7 @@ export function PlanResultCard({
   registerRef,
 }: PlanResultCardProps) {
   const zone = getPlanZone(plan);
-
+  const itinerary = [...plan.details].sort((a, b) => a.order - b.order);
   return (
     <article
       ref={(el) => registerRef(plan.id, el)}
@@ -63,13 +63,11 @@ export function PlanResultCard({
         .join(" ")}
       style={{ animationDelay: `${index * 60}ms` }}
     >
-      <div className={styles.media} style={{ background: gradientFor(plan.id) }}>
+      <div className={styles.media} aria-hidden="true">
         <span className={styles.indexBadge} style={{ background: accentColor }}>
           {index + 1}
         </span>
-        <Icon name="route" size={30} className={styles.mediaIcon} aria-hidden="true" />
       </div>
-
       <div className={styles.body}>
         <h3 className={styles.title}>
           <Link href={planDetailRoute(plan.id)} className={styles.titleLink}>
@@ -78,6 +76,18 @@ export function PlanResultCard({
         </h3>
 
         {plan.description ? <p className={styles.description}>{plan.description}</p> : null}
+
+        {itinerary.length > 0 ? (
+          <ol className={styles.itinerary} aria-label="Itinerario del plan">
+            {itinerary.slice(0, 3).map((stop, stopIndex) => (
+              <li key={stop.id}>
+                <span className={styles.itineraryNumber}>{stopIndex + 1}</span>
+                <span className={styles.itineraryName}>{stop.activity.name}</span>
+              </li>
+            ))}
+            {itinerary.length > 3 ? <li className={styles.moreStops}>+{itinerary.length - 3} paradas más</li> : null}
+          </ol>
+        ) : null}
 
         <div className={styles.metaRow}>
           <span className={styles.metaItem}>

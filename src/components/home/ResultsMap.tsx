@@ -34,6 +34,13 @@ function pinIcon(color: string, label: string, active: boolean): google.maps.Ico
   const size = active ? PIN_SIZE_ACTIVE : PIN_SIZE;
   const svg = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42">`,
+    // A grounded shadow at the pin's tip reads as sitting on the map
+    // rather than floating on it — cheap (no SVG filter) and reliable
+    // inside a data-URI across browsers.
+    `<ellipse cx="16" cy="39" rx="6" ry="2" fill="rgba(20,15,10,0.22)"/>`,
+    active
+      ? `<circle cx="16" cy="16" r="14.5" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.3"/>`
+      : "",
     `<path d="M16 0C7.163 0 0 7.163 0 16c0 11.5 16 26 16 26s16-14.5 16-26C32 7.163 24.837 0 16 0z" fill="${color}"/>`,
     `<circle cx="16" cy="16" r="10.5" fill="#FFFCF8"/>`,
     `<text x="16" y="20.5" font-size="12" font-family="system-ui,sans-serif" font-weight="700" text-anchor="middle" fill="${color}">${label}</text>`,
@@ -232,7 +239,10 @@ export function ResultsMap({
   }
 
   return (
-    <div className={[styles.mapCanvasWrapper, className].filter(Boolean).join(" ")}>
+    <div
+      className={[styles.mapCanvasWrapper, className].filter(Boolean).join(" ")}
+      data-active={activePlanId !== null ? "true" : undefined}
+    >
       <div ref={containerRef} className={styles.mapCanvas} />
     </div>
   );

@@ -36,30 +36,31 @@ export function SearchContextHeader({
 
   return (
     <div className={styles.resultsHeader}>
-      <Badge variant="ai" className={styles.resultsEyebrow}>
-        <Icon name="sparkles" size={11} aria-hidden="true" />
-        Generado con IA
-      </Badge>
+      <div className={styles.resultsHeaderTop}>
+        <h2 className={`sp-h3 ${styles.resultsTitle}`}>
+          {surprise
+            ? "Elegimos estas ideas para vos"
+            : `${planCount} ${planCount === 1 ? "plan" : "planes"} para vos`}
+        </h2>
+      </div>
 
-      {hasQuery ? (
-        <p className={styles.searchedQuery}>
-          Buscaste: <span>&ldquo;{query}&rdquo;</span>
-        </p>
-      ) : null}
-
-      <h2 className={`sp-h2 ${styles.resultsTitle}`}>
-        {surprise
-          ? "Elegimos estas ideas para vos"
-          : `Encontramos ${planCount} ${planCount === 1 ? "plan" : "planes"} para vos`}
-      </h2>
-      <p className={`sp-body ${styles.resultsSubtitle}`}>
+      <p className={`sp-small ${styles.resultsSubtitle}`}>
         {surprise
           ? "Cualquiera de las alternativas es un buen plan."
           : "Mirá cada una en el mapa y marcá la que pensás hacer."}
       </p>
       {note ? <p className={`sp-small ${styles.resultsSubtitle}`}>{note}</p> : null}
 
-      {resolvedContext ? <ContextBadges context={resolvedContext} /> : null}
+      {hasQuery || resolvedContext ? (
+        <div className={styles.resultsMetaRow}>
+          {hasQuery ? (
+            <p className={styles.searchedQuery}>
+              Buscaste: <span>&ldquo;{query}&rdquo;</span>
+            </p>
+          ) : null}
+          {resolvedContext ? <ContextBadges context={resolvedContext} /> : null}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -92,7 +93,7 @@ function ContextBadges({ context }: { context: ResolvedPlanContext }) {
           {context.departmentName}
         </Badge>
       ) : null}
-      {context.categories.map((category) => (
+      {context.categories.slice(0, 2).map((category) => (
         <Badge variant="tag" key={category.id}>
           {category.name}
         </Badge>

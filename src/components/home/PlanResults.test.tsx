@@ -192,6 +192,19 @@ describe("PlanResults (CU17)", () => {
     expect(screen.getAllByText("Luján de Cuyo").length).toBeGreaterThan(0);
   });
 
+  it("synchronizes the mobile map's plan sheet with its accessible controls", async () => {
+    const user = userEvent.setup();
+    const secondPlan = { ...PLAN, id: 8, title: "Paseo por el parque" };
+    render(<PlanResults plans={[PLAN, secondPlan]} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
+
+    await user.click(screen.getByRole("tab", { name: /mapa/i }));
+    const sheet = screen.getByRole("region", { name: /plan seleccionado en el mapa/i });
+    expect(sheet).toHaveTextContent(PLAN.title);
+
+    await user.click(screen.getByRole("button", { name: /plan siguiente/i }));
+    expect(sheet).toHaveTextContent(secondPlan.title);
+  });
+
   it("shows at most three alternatives", () => {
     const many = Array.from({ length: 5 }, (_, index) => ({
       ...PLAN,

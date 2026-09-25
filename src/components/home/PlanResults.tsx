@@ -1,11 +1,14 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import Link from "next/link";
 
 import { PLAN_SELECTION } from "@/components/plan/planSelectionContent";
 import { Button, Icon } from "@/components/ui";
 import { usePlanSelection, useReducedMotion } from "@/hooks";
+import { planDetailRoute } from "@/lib/routes";
 import { buildPlanPins } from "@/lib/maps/buildPlanPins";
+import { formatArs, formatDuration } from "@/lib/utils";
 import type { PlanDetailResult, PlanSelectionResult, ResolvedPlanContext } from "@/types";
 
 import { PlanResultCard } from "./PlanResultCard";
@@ -109,6 +112,10 @@ export function PlanResults({
   function handlePinClick(planId: number) {
     setActivePlanId(planId);
     mapRef.current?.panToPlan(planId);
+    if (window.matchMedia("(max-width: 860px)").matches) {
+      setMobileView("map");
+      return;
+    }
     cardRefs.current.get(planId)?.scrollIntoView({
       behavior: reducedMotion ? "auto" : "smooth",
       block: "nearest",
@@ -189,23 +196,27 @@ export function PlanResults({
   }
 
   return (
-    <div className={styles.resultsWrapper}>
-      <SearchContextHeader
-        mode={mode}
-        query={query}
-        resolvedContext={resolvedContext}
-        planCount={visiblePlans.length}
-        note={note}
-      />
-      <p
-        className={statusNote?.tone === "warn" ? styles.resultLiveWarn : styles.resultLive}
-        role="status"
-        aria-live="polite"
-      >
-        {statusNote?.text ?? ""}
-      </p>
+    <div className={styles.resultsWrapper} data-mobile-view={mobileView}>
+      {mobileView === "list" ? (
+        <>
+          <SearchContextHeader
+            mode={mode}
+            query={query}
+            resolvedContext={resolvedContext}
+            planCount={visiblePlans.length}
+            note={note}
+          />
+          <p
+            className={statusNote?.tone === "warn" ? styles.resultLiveWarn : styles.resultLive}
+            role="status"
+            aria-live="polite"
+          >
+            {statusNote?.text ?? ""}
+          </p>
+        </>
+      ) : null}
 
-      <div className={layoutStyles.viewToggle} role="tablist" aria-label="Vista de resultados">
+      <div className={layoutStyles.viewToggle} data-view={mobileView} role="tablist" aria-label="Vista de resultados">
         <span
           className={[layoutStyles.viewTogglePill, mobileView === "map" ? layoutStyles.viewTogglePillMap : ""]
             .filter(Boolean)
@@ -234,7 +245,7 @@ export function PlanResults({
         </button>
       </div>
 
-      <div className={layoutStyles.resultsLayout}>
+      <div className={layoutStyles.resultsLayout} data-mobile-view={mobileView}>
         <div className={layoutStyles.resultsListCol} data-mobile-hidden={mobileView !== "list"}>
           {visiblePlans.map((plan, index) => {
             const intended = plan.viewerPlanState === "selected";
@@ -243,7 +254,7 @@ export function PlanResults({
                 key={plan.id}
                 plan={plan}
                 index={index}
-                accentColor={planColors.get(plan.id) ?? "#E85D20"}
+                accentColor={planColors.get(plan.id) ?? "var(--ember)"}
                 active={activePlanId === plan.id}
                 intended={intended}
                 busy={workingId === plan.id}
@@ -267,6 +278,16 @@ export function PlanResults({
             onPinClick={handlePinClick}
             visible={mobileView === "map"}
           />
+          {mobileView === "map" && visiblePlans.length > 0 ? (
+            <MobilePlanSheet
+              plans={visiblePlans}
+              selectedPlanId={activePlanId ?? visiblePlans[0].id}
+              onSelect={(id) => {
+                setActivePlanId(id);
+                mapRef.current?.panToPlan(id);
+              }}
+            />
+          ) : null}
         </div>
       </div>
 
@@ -288,5 +309,61 @@ export function PlanResults({
         </Button>
       </div>
     </div>
+  );
+}
+
+function MobilePlanSheet({
+  plans,
+  selectedPlanId,
+  onSelect,
+}: {
+  plans: PlanDetailResult[];
+  selectedPlanId: number;
+  onSelect: (id: number) => void;
+}) {
+  const startX = useRef<number | null>(null);
+  const index = Math.max(0, plans.findIndex((plan) => plan.id === selectedPlanId));
+  const plan = plans[index];
+
+  function selectOffset(offset: number) {
+    const next = (index + offset + plans.length) % plans.length;
+    onSelect(plans[next].id);
+  }
+
+  return (
+    <section
+      className={layoutStyles.mobilePlanSheet}
+      aria-label="Plan seleccionado en el mapa"
+      aria-live="polite"
+      onTouchStart={(event) => { startX.current = event.touches[0]?.clientX ?? null; }}
+      onTouchEnd={(event) => {
+        if (startX.current == null) return;
+        const delta = event.changedTouches[0]?.clientX - startX.current;
+        startX.current = null;
+        if (delta != null && Math.abs(delta) > 44) selectOffset(delta < 0 ? 1 : -1);
+      }}
+    >
+      <div className={layoutStyles.sheetHandle} aria-hidden="true" />
+      <div className={layoutStyles.sheetTopline}>
+        <span>{index + 1} de {plans.length} planes</span>
+        <div className={layoutStyles.sheetControls}>
+          <button type="button" onClick={() => selectOffset(-1)} aria-label="Plan anterior" disabled={plans.length < 2}>
+            <Icon name="chevron-left" size={17} />
+          </button>
+          <button type="button" onClick={() => selectOffset(1)} aria-label="Plan siguiente" disabled={plans.length < 2}>
+            <Icon name="chevron-right" size={17} />
+          </button>
+        </div>
+      </div>
+      <h3>{plan.title}</h3>
+      {plan.description ? <p className={layoutStyles.sheetDescription}>{plan.description}</p> : null}
+      <div className={layoutStyles.sheetMeta}>
+        <span><Icon name="clock" size={13} />{formatDuration(plan.estimatedTotalDuration)}</span>
+        <span><Icon name="wallet" size={13} />{formatArs(plan.estimatedTotalCost)}</span>
+        <span><Icon name="map-pin" size={13} />{plan.activityCount} paradas</span>
+        <Link href={planDetailRoute(plan.id)}>Ver plan</Link>
+      </div>
+      <p className={layoutStyles.sheetSwipeHint}>Deslizá para comparar</p>
+    </section>
   );
 }

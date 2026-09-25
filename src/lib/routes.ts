@@ -10,6 +10,7 @@
  */
 export const ROUTES = {
   home: "/",
+  planRequests: "/plan-requests",
   explore: "/explore",
   exploreMap: "/explore/map",
   plans: "/plans",
@@ -45,6 +46,11 @@ export function activityDetailRoute(id: number): string {
 /** `/plans/:id` — plan detail (CU13, CU29). */
 export function planDetailRoute(id: number): string {
   return `${ROUTES.plans}/${id}`;
+}
+
+/** `/plan-requests/:id` — durable generation and results route (CU17, CU19). */
+export function planRequestRoute(id: number): string {
+  return `${ROUTES.planRequests}/${id}`;
 }
 
 /** `/plans/:id/edit` — edit an owned plan (CU25). */
