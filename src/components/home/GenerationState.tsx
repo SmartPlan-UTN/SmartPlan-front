@@ -1,35 +1,58 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Button, Icon } from "@/components/ui";
 import type { PlanRequestFailure, PlanRequestPhase } from "@/hooks";
+import type { PlanRequestProgressStage } from "@/types";
 import { surpriseGenerationErrorCopy } from "@/lib/recommendation/planRequestErrors";
 
 import styles from "./generation.module.css";
 
 export type GenerationMode = "auto" | "surprise";
 
-// Ambient, illustrative copy only — never presented as completed steps.
-// The backend has no sub-status inside `processing`; these phrases just
-// give the wait some texture while `processing` is the real, honest state.
-const AMBIENT_COPY: Record<GenerationMode, string[]> = {
+export interface GenerationStateProps {
+  phase: Exclude<PlanRequestPhase, "idle">;
+  failure: PlanRequestFailure | null;
+  onKeepWaiting: () => void;
+  onRetry: () => void;
+  onDiscard: () => void;
+  canRetry?: boolean;
+  mode?: GenerationMode;
+  note?: string | null;
+  query?: string | null;
+  progressStage?: PlanRequestProgressStage | null;
+  progressStageAt?: string | null;
+  requestedAt?: string | null;
+  estimatedRemainingSeconds?: number | null;
+}
+
+type Step = { id: PlanRequestProgressStage; label: string };
+
+const STEPS: Record<GenerationMode, Step[]> = {
   auto: [
-    "Cruzando actividades compatibles con tu pedido…",
-    "Chequeando horarios y disponibilidad…",
-    "Armando el orden que más rinde…",
+    { id: "queued", label: "Solicitud recibida" },
+    { id: "interpreting", label: "Entendiendo tu idea" },
+    { id: "locating", label: "Definiendo la zona" },
+    { id: "searching", label: "Buscando actividades" },
+    { id: "composing", label: "Combinando el itinerario" },
+    { id: "routing", label: "Calculando recorridos" },
+    { id: "finalizing", label: "Preparando tus opciones" },
   ],
   surprise: [
-    "Mirando qué hay cerca tuyo…",
-    "Combinando actividades que pegan…",
-    "Eligiendo un orden que valga la pena…",
+    { id: "queued", label: "Solicitud recibida" },
+    { id: "locating", label: "Mirando qué hay cerca" },
+    { id: "searching", label: "Buscando actividades" },
+    { id: "composing", label: "Combinando el itinerario" },
+    { id: "routing", label: "Calculando recorridos" },
+    { id: "finalizing", label: "Preparando tus opciones" },
   ],
 };
 
 const WAITING_LABEL: Record<GenerationMode, { queued: string; working: string }> = {
   auto: {
-    queued: "Tu pedido está en cola",
-    working: "smartplan está armando tu plan",
+    queued: "Empezamos a armar tu plan",
+    working: "Estamos convirtiendo tu idea en una salida",
   },
   surprise: {
     queued: "Estamos eligiendo algo para vos",
@@ -37,52 +60,22 @@ const WAITING_LABEL: Record<GenerationMode, { queued: string; working: string }>
   },
 };
 
-export interface GenerationStateProps {
-  phase: Extract<PlanRequestPhase, "submitting" | "pending" | "processing" | "timedOut" | "failed">;
-  failure: PlanRequestFailure | null;
-  onKeepWaiting: () => void;
-  /** Issues the same request again. Only offered when there is one to repeat. */
-  onRetry: () => void;
-  onDiscard: () => void;
-  canRetry?: boolean;
-  /** `surprise` swaps the copy; the states and motion are shared (CU19). */
-  mode?: GenerationMode;
-  /** A one-line, non-intrusive note shown under the waiting label (CU19). */
-  note?: string | null;
+function elapsedLabel(start: string | null | undefined, now: number): string | null {
+  if (!start) return null;
+  const seconds = Math.max(0, Math.floor((now - new Date(start).getTime()) / 1000));
+  if (!Number.isFinite(seconds)) return null;
+  if (seconds < 60) return `${seconds} s transcurridos`;
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
+  return remainder < 10 ? `${minutes} min transcurridos` : `${minutes} min ${remainder} s transcurridos`;
 }
 
-function useRotatingCopy(active: boolean, phrases: string[]): string {
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    if (!active) return;
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-
-    const id = setInterval(() => {
-      setIndex((current) => (current + 1) % phrases.length);
-    }, 3200);
-    return () => clearInterval(id);
-  }, [active, phrases]);
-
-  return phrases[index % phrases.length] ?? phrases[0];
+function remainingLabel(seconds: number | null | undefined): string | null {
+  if (seconds == null || seconds <= 0 || !Number.isFinite(seconds)) return null;
+  if (seconds < 60) return `Estimamos unos ${seconds} s más`;
+  return `Estimamos unos ${Math.ceil(seconds / 60)} min más`;
 }
 
-/**
- * The composer's own area, transformed in place while a plan request is
- * in flight (CU17, CU19). `pending`/`processing` are the only real
- * in-flight states the backend reports — this component never claims a
- * finer-grained step is individually "done"; ambient copy under
- * `processing` is illustrative texture, not a checklist.
- *
- * The two failure modes are handled separately, because they are genuinely
- * different situations:
- *
- * - **Timeout** is ours, not the backend's. The request is still alive and
- *   still being processed, so the offer is to keep waiting (resume polling,
- *   no new POST) or to walk away.
- * - **Failure** is terminal on the backend. There is nothing left to
- *   resume, so the offer is to issue the same request again.
- */
 export function GenerationState({
   phase,
   failure,
@@ -91,89 +84,126 @@ export function GenerationState({
   onDiscard,
   canRetry = true,
   mode = "auto",
-  note = null,
+  note,
+  query,
+  progressStage = null,
+  progressStageAt,
+  requestedAt,
+  estimatedRemainingSeconds,
 }: GenerationStateProps) {
-  const ambientCopy = useRotatingCopy(phase === "processing", AMBIENT_COPY[mode]);
+  const [now, setNow] = useState(() => Date.now());
+  const waiting = phase === "submitting" || phase === "pending" || phase === "processing";
+  const steps = STEPS[mode];
+  const activeIndex = progressStage ? steps.findIndex((step) => step.id === progressStage) : -1;
+  const activeStep = activeIndex >= 0 ? steps[activeIndex] : null;
+  const elapsed = useMemo(() => elapsedLabel(requestedAt, now), [now, requestedAt]);
+  const stageElapsed = useMemo(() => elapsedLabel(progressStageAt, now), [now, progressStageAt]);
+  const remaining = remainingLabel(estimatedRemainingSeconds);
+  const hasActiveStage = activeIndex >= 0;
+
+  useEffect(() => {
+    if (!waiting || !requestedAt) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [requestedAt, waiting]);
 
   if (phase === "failed") {
-    const surprise = mode === "surprise";
-    const copy = surprise
-      ? surpriseGenerationErrorCopy({ code: failure?.code ?? null })
+    const surpriseCopy = mode === "surprise" && failure
+      ? surpriseGenerationErrorCopy({ code: failure.code })
       : null;
 
     return (
-      <div className={styles.failedCard} role="alert" aria-live="polite">
-        <Icon name="triangle-alert" size={32} className={styles.failedIcon} />
-        <p className="sp-h4">{copy?.title ?? "No pudimos generar tu plan"}</p>
-        <p className="sp-body">
-          {copy?.body ??
-            failure?.message ??
-            "Algo salió mal. Probá de nuevo en un momento."}
-        </p>
-        <div className={styles.timedOutActions}>
-          {canRetry ? (
-            <Button variant="ghostEmber" onClick={onRetry}>
-              Reintentar
-            </Button>
-          ) : null}
-          <Button variant="ghostLight" onClick={onDiscard}>
-            {surprise ? "Volver al inicio" : "Volver al buscador"}
-          </Button>
+      <div className={styles.generationState}>
+        <div className={styles.generationCard} role="alert">
+          <span className={styles.generationEyebrow}>No salió esta vez</span>
+          <h2 className="sp-h3">{surpriseCopy?.title ?? "No pudimos generar tu plan"}</h2>
+          <p className="sp-body">{surpriseCopy?.body ?? failure?.message ?? "Intentá de nuevo en un momento."}</p>
+          <div className={styles.generationActions}>
+            {canRetry ? <Button onClick={onRetry}><Icon name="repeat" size={15} />Reintentar</Button> : null}
+            <Button variant="ghostEmber" onClick={onDiscard}>Volver al buscador</Button>
+          </div>
         </div>
       </div>
     );
   }
 
-  const labels = WAITING_LABEL[mode];
-  const label =
-    phase === "submitting" || phase === "pending" ? labels.queued : labels.working;
-
-  return (
-    <div className={styles.generatingCard} aria-live="polite" aria-busy="true">
-      <div className={styles.ringStack} aria-hidden="true">
-        {[1.8, 1.45, 1.1].map((scale) => (
-          <div
-            key={scale}
-            className={styles.ring}
-            style={{
-              width: 96,
-              height: 96,
-              transform: `translate(-50%, -50%) scale(${scale})`,
-            }}
-          />
-        ))}
-        <div className={styles.ringTrack} />
-        <div className={styles.ringSpinner} />
-        <div className={styles.ringCore}>
-          <Icon name="sparkles" size={14} />
+  if (phase === "timedOut") {
+    return (
+      <div className={styles.generationState}>
+        <div className={styles.generationCard}>
+          <span className={styles.generationEyebrow}>Seguimos en eso</span>
+          <h2 className="sp-h3">Sigue tardando más de lo esperado</h2>
+          <p className="sp-body">La búsqueda sigue activa. Podés quedarte y retomamos el mismo pedido.</p>
+          <div className={styles.generationActions}>
+            <Button onClick={onKeepWaiting}>Seguir esperando</Button>
+            <Button variant="ghostEmber" onClick={onDiscard}>Volver al buscador</Button>
+          </div>
         </div>
       </div>
+    );
+  }
 
-      <p className={styles.generatingLabel}>{label}</p>
+  const heading = phase === "submitting"
+    ? mode === "surprise" ? "Preparando tu sorpresa" : "Enviando tu búsqueda"
+    : activeStep && activeStep.id !== "queued"
+      ? activeStep.label
+      : phase === "pending"
+        ? mode === "surprise" ? WAITING_LABEL[mode].queued : "Ya recibimos tu búsqueda"
+        : phase === "processing"
+          ? WAITING_LABEL[mode].working
+          : WAITING_LABEL[mode].queued;
 
-      {note ? <p className={styles.generatingAmbient}>{note}</p> : null}
+  return (
+    <section className={styles.generationState} aria-label="Generando tu plan">
+      <div className={styles.generationCard} aria-busy={waiting}>
+        <div className={styles.generationCopy} aria-busy={waiting}>
+          <span className={styles.generationEyebrow}>
+            <Icon name="sparkles" size={13} aria-hidden="true" />
+            {mode === "surprise" ? "Una sorpresa bien pensada" : "Tu próxima salida"}
+          </span>
+          <h2 className="sp-h3" aria-live="polite" aria-atomic="true">{heading}</h2>
+          {query ? <p className={styles.generationQuery}>“{query}”</p> : null}
+          {note ? <p className={styles.generationNote}>{note}</p> : null}
 
-      {phase === "processing" ? (
-        <p className={styles.generatingAmbient}>{ambientCopy}</p>
-      ) : null}
+          {hasActiveStage ? (
+            <ol className={styles.progressSteps} aria-label="Etapas confirmadas">
+              {steps.slice(0, activeIndex + 1).map((step, index) => {
+                const active = step.id === progressStage;
+                const confirmed = index < activeIndex;
+                return (
+                  <li
+                    key={step.id}
+                    className={styles.progressStep}
+                    data-active={active}
+                    data-confirmed={confirmed}
+                    aria-current={active ? "step" : undefined}
+                  >
+                    <span className={styles.stepMark} aria-hidden="true">
+                      {confirmed ? <Icon name="check" size={11} /> : active ? <span className={styles.stepDot} /> : null}
+                    </span>
+                    <span>{step.label}</span>
+                  </li>
+                );
+              })}
+            </ol>
+          ) : (
+            <div className={styles.waitingProgress} role="progressbar" aria-label={heading} aria-valuetext={heading}>
+              <span className={styles.indeterminateTrack} aria-hidden="true" />
+            </div>
+          )}
 
-      {phase === "timedOut" ? (
-        <>
-          <p className={styles.generatingAmbient}>
-            {mode === "surprise"
-              ? "La sorpresa está tardando un poco más de lo esperado, pero tu pedido sigue en marcha."
-              : "Sigue tardando más de lo esperado, pero tu pedido sigue en marcha."}
-          </p>
-          <div className={styles.timedOutActions}>
-            <Button variant="ghostEmber" onClick={onKeepWaiting}>
-              Seguir esperando
-            </Button>
-            <Button variant="ghostLight" onClick={onDiscard}>
-              {mode === "surprise" ? "Volver" : "Descartar"}
-            </Button>
+          {activeStep && stageElapsed ? <p className={styles.activeStage}>{stageElapsed.replace(" transcurridos", " en esta etapa")}</p> : null}
+          {elapsed || remaining ? (
+            <p className={styles.generationTiming} aria-live="polite">
+              {elapsed}{elapsed && remaining ? <span aria-hidden="true"> · </span> : null}{remaining}
+            </p>
+          ) : null}
+
+          <div className={styles.generationActions}>
+            <Button variant="ghostEmber" onClick={onDiscard}>Volver al inicio</Button>
           </div>
-        </>
-      ) : null}
-    </div>
+        </div>
+      </div>
+    </section>
   );
 }

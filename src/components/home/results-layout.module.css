@@ -1,0 +1,321 @@
+/* ================================================================
+   Airbnb-style split layout for the results screen (CU17, CU19):
+   a card list on the left, a sticky branded map on the right. Kept
+   separate from generation.module.css, which stays owned by the
+   waiting/failed states and the shared card-shell tokens.
+   ================================================================ */
+
+.resultsLayout {
+  display: grid;
+  grid-template-columns: minmax(360px, 1.02fr) minmax(360px, .98fr);
+  gap: var(--s-4);
+  align-items: start;
+  width: 100%;
+  max-width: 1320px;
+  margin-inline: auto;
+}
+
+.resultsListCol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.resultsMapCol {
+  position: sticky;
+  top: calc(var(--navbar-h) + var(--s-5));
+  height: calc(100vh - var(--navbar-h) - var(--s-6) * 2);
+  min-height: 420px;
+  max-height: 780px;
+  border-radius: var(--r-card);
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-card);
+  opacity: 0;
+  animation: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) 80ms forwards map-rise;
+}
+
+.mapCanvasWrapper {
+  width: 100%;
+  height: 100%;
+  transition: box-shadow 260ms ease;
+}
+
+/* A soft inset highlight while a plan is active (hover or "Ver recorrido")
+   — the marker/polyline restyle already happens imperatively (Google Maps
+   overlays aren't DOM nodes Motion can reach), so this is the one piece of
+   the active-state feedback CSS can still own. */
+.mapCanvasWrapper[data-active="true"] {
+  box-shadow: inset 0 0 0 2px var(--ember-20);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mapCanvasWrapper {
+    transition: none;
+  }
+}
+
+.mapCanvas {
+  width: 100%;
+  height: 100%;
+}
+
+.mapError {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  width: 100%;
+  height: 100%;
+  padding: var(--s-6) var(--s-4);
+  text-align: center;
+  color: var(--fg-2);
+}
+
+@keyframes map-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Mobile: List/Map toggle ─────────────────────────────────────── */
+
+.viewToggle {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .resultsLayout {
+    display: block;
+  }
+
+  .resultsListCol {
+    display: flex;
+  }
+
+  .resultsMapCol {
+    position: relative;
+    height: min(70vh, 560px);
+    margin-top: var(--s-4);
+    animation: none;
+    opacity: 1;
+  }
+
+  .viewToggle {
+    position: relative;
+    display: inline-flex;
+    gap: 2px;
+    margin: 0 auto var(--s-4);
+    padding: 3px;
+    background: var(--surface-card);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-pill);
+  }
+
+  .viewToggleTab {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 88px;
+    min-height: 44px;
+    justify-content: center;
+    padding: 7px 16px;
+    border: 0;
+    background: transparent;
+    color: var(--fg-2);
+    font-size: 13px;
+    font-weight: var(--w-label);
+    border-radius: var(--r-pill);
+    cursor: pointer;
+    transition: color 180ms ease;
+  }
+
+  .viewToggleTab[aria-selected="true"] {
+    color: var(--white);
+  }
+
+  .viewTogglePill {
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    width: calc(50% - 3px);
+    left: 3px;
+    background: var(--ember);
+    border-radius: var(--r-pill);
+    transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .viewTogglePillMap {
+    transform: translateX(100%);
+  }
+
+  .resultsListCol[data-mobile-hidden="true"],
+  .resultsMapCol[data-mobile-hidden="true"] {
+    display: none;
+  }
+
+  .viewToggle[data-view="map"] {
+    position: fixed;
+    z-index: 9;
+    top: calc(var(--navbar-h) + 102px);
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    box-shadow: var(--shadow-card);
+  }
+
+  .viewToggle[data-view="map"] .viewTogglePill {
+    transform: translateX(100%);
+  }
+
+  .resultsLayout[data-mobile-view="map"] ~ .resultsFooter {
+    display: none;
+  }
+
+  .resultsMapCol[data-mobile-hidden="false"] {
+    position: fixed;
+    z-index: 5;
+    inset: calc(var(--navbar-h) + 152px) 0 calc(var(--mobile-nav-h) + env(safe-area-inset-bottom));
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    margin: 0;
+    border-inline: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resultsMapCol {
+    animation: none;
+    opacity: 1;
+  }
+
+  .viewTogglePill {
+    transition: none;
+  }
+}
+
+.mobilePlanSheet {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .mobilePlanSheet {
+    position: absolute;
+    right: var(--s-3);
+    bottom: var(--s-3);
+    left: var(--s-3);
+    z-index: 2;
+    display: block;
+    padding: var(--s-3) var(--s-4) var(--s-2);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-card);
+    background: var(--surface-card);
+    box-shadow: var(--shadow-card);
+    touch-action: pan-y;
+  }
+
+  .sheetHandle {
+    width: 38px;
+    height: 4px;
+    margin: 0 auto var(--s-2);
+    border-radius: var(--r-pill);
+    background: var(--hairline);
+  }
+
+  .sheetTopline,
+  .sheetControls,
+  .sheetMeta {
+    display: flex;
+    align-items: center;
+  }
+
+  .sheetTopline {
+    justify-content: space-between;
+    color: var(--fg-3);
+    font-size: var(--t-label);
+  }
+
+  .sheetControls {
+    gap: var(--s-1);
+  }
+
+  .sheetControls button {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border: 1px solid var(--hairline);
+    border-radius: 50%;
+    background: var(--surface-card);
+    color: var(--fg-1);
+  }
+
+  .sheetControls button:disabled {
+    opacity: .45;
+  }
+
+  .mobilePlanSheet h3 {
+    margin: 0 0 var(--s-1);
+    overflow: hidden;
+    color: var(--fg-1);
+    font-size: var(--t-h4);
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sheetDescription {
+    display: -webkit-box;
+    overflow: hidden;
+    margin: 0 0 var(--s-2);
+    color: var(--fg-2);
+    font-size: var(--t-small);
+    line-height: 1.35;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+
+  .sheetMeta {
+    flex-wrap: wrap;
+    gap: var(--s-2) var(--s-3);
+    color: var(--fg-2);
+    font-size: var(--t-label);
+  }
+
+  .sheetMeta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .sheetMeta a {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    padding-inline: var(--s-2);
+    margin-left: auto;
+    color: var(--ember);
+    font-weight: var(--w-label);
+  }
+
+  .sheetSwipeHint {
+    margin: var(--s-1) 0 0;
+    color: var(--fg-3);
+    font-size: 11px;
+    text-align: center;
+  }
+}

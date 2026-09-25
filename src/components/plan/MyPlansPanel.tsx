@@ -9,8 +9,6 @@ import { planDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
 import { formatArs, formatDuration } from "@/lib/utils";
 import type { OwnPlanSummary } from "@/types";
 
-import { AutoPlanUnavailableDialog } from "./AutoPlanUnavailableDialog";
-
 import styles from "./MyPlansPanel.module.css";
 
 type LoadStatus = "loading" | "idle" | "error";
@@ -40,7 +38,6 @@ export function MyPlansPanel() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [showAutoPlanModal, setShowAutoPlanModal] = useState(false);
 
   useEffect(() => {
     let ignore = false;
@@ -120,10 +117,9 @@ export function MyPlansPanel() {
           </span>
         </Link>
 
-        <button
-          type="button"
+        <Link
           className={styles.createCard}
-          onClick={() => setShowAutoPlanModal(true)}
+          href={`${ROUTES.home}?startComposer=1`}
         >
           <span className={styles.createIcon} aria-hidden="true">
             <Icon name="sparkles" size={22} />
@@ -132,7 +128,7 @@ export function MyPlansPanel() {
           <span className={styles.createHint}>
             Itinerario sugerido con IA
           </span>
-        </button>
+        </Link>
 
         {status === "loading" ? (
           <LoadingDots
@@ -246,13 +242,6 @@ export function MyPlansPanel() {
           </p>
         </ConfirmationDialog>
       ) : null}
-
-      {/* Auto Plan Generation - Módulo en construcción Modal (CU31) */}
-      {showAutoPlanModal && (
-        <AutoPlanUnavailableDialog
-          onClose={() => setShowAutoPlanModal(false)}
-        />
-      )}
     </>
   );
 }

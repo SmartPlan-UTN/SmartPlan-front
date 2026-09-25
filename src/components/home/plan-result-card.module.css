@@ -1,0 +1,381 @@
+/* ================================================================
+   A single result row (CU17) — horizontal card next to the map, not
+   a tile in a grid. Its own module: the shape (row vs. tile) is
+   different enough from `explore.module.css`'s `.card` that forcing
+   it into that shell would fight more than it'd reuse. Same surface
+   tokens throughout so it still reads as the same design system.
+   ================================================================ */
+
+@keyframes card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.card {
+  display: flex;
+  gap: var(--s-3);
+  padding: var(--s-2);
+  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-card);
+  opacity: 0;
+  animation: 0.34s cubic-bezier(0.2, 0.8, 0.2, 1) forwards card-rise;
+  transition:
+    border-color 180ms ease,
+    box-shadow 220ms ease,
+    transform 220ms ease;
+}
+
+.card:hover,
+.cardActive {
+  border-color: var(--ember-20);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--char) 10%, transparent);
+  transform: translateY(-2px);
+}
+
+.cardChosen {
+  border-color: var(--ember);
+  background: color-mix(in srgb, var(--ember) 5%, var(--surface-card));
+  box-shadow: 0 10px 28px var(--ember-15);
+}
+
+.media {
+  position: relative;
+  flex: 0 0 84px;
+  width: 84px;
+  min-height: 122px;
+  border-radius: var(--r-card-sm);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--ember) 8%, var(--surface-card));
+}
+
+.indexBadge {
+  position: absolute;
+  top: var(--s-2);
+  left: var(--s-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: var(--white);
+  font-size: 12px;
+  font-weight: var(--w-label);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.mediaIcon {
+  color: color-mix(in srgb, var(--char) 30%, transparent);
+}
+
+.miniRoute {
+  width: min(100%, 140px);
+  overflow: visible;
+}
+
+.miniRouteLine {
+  fill: none;
+  stroke: var(--ember);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 4 5;
+}
+
+.miniRoutePin {
+  fill: var(--surface-card);
+  stroke: var(--ember);
+  stroke-width: 2.5;
+}
+
+.miniRouteNumber {
+  fill: var(--ember);
+  font-family: var(--font);
+  font-size: 8px;
+  font-weight: var(--w-heading);
+  text-anchor: middle;
+}
+
+.mapCaption {
+  position: absolute;
+  right: var(--s-1);
+  bottom: var(--s-1);
+  left: var(--s-1);
+  color: var(--fg-2);
+  font-size: 10px;
+  text-align: center;
+}
+
+.itinerarySketch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--fg-2);
+  font-size: 10px;
+}
+
+.sketchStops {
+  display: flex;
+  align-items: center;
+}
+
+.sketchStop {
+  display: flex;
+  align-items: center;
+}
+
+.sketchStop i {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1px solid var(--ember-20);
+  border-radius: 50%;
+  background: var(--surface-card);
+  color: var(--ember);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: var(--w-label);
+}
+
+.sketchStop b {
+  width: 15px;
+  height: 1px;
+  background: var(--ember-20);
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--t-h4);
+  font-weight: var(--w-heading);
+  line-height: 1.25;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.titleLink {
+  color: var(--fg-1);
+  text-decoration: none;
+}
+
+.titleLink:hover,
+.titleLink:focus-visible {
+  color: var(--ember);
+}
+
+.titleLink:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.description {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 13.5px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.itinerary {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+  overflow: hidden;
+  margin: var(--s-1) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.itinerary li {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0;
+  align-items: center;
+  gap: var(--s-1);
+  color: var(--fg-2);
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.itineraryNumber {
+  display: grid;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ember-10);
+  color: var(--ember);
+  font-size: 10px;
+  font-weight: var(--w-label);
+}
+
+.itineraryName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itineraryDuration {
+  display: none;
+}
+
+.itinerary li.moreStops {
+  flex: 0 0 auto;
+  padding-left: 0;
+  color: var(--fg-3);
+  font-size: 11px;
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  margin-top: var(--s-1);
+  color: var(--fg-2);
+  font-size: 13px;
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+  margin-top: var(--s-1);
+}
+
+.ctaRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  margin-top: auto;
+  padding-top: var(--s-2);
+}
+
+.ctaRow button {
+  min-height: 44px;
+}
+
+.chosenGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.resultChosen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ember);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+}
+
+.resultUndo {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg-3);
+  font: inherit;
+  font-size: 13px;
+  font-weight: var(--w-label);
+  cursor: pointer;
+  transition: color 160ms ease;
+}
+
+.resultUndo:hover:not(:disabled) {
+  color: var(--fg-1);
+}
+
+.resultUndo:disabled {
+  color: var(--fg-3);
+  cursor: default;
+}
+
+.resultSpinner {
+  animation: spin 800ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .card {
+    flex-direction: column;
+  }
+
+  .media {
+    width: 100%;
+    min-height: 0;
+    height: 64px;
+    flex-basis: 64px;
+  }
+
+  .miniRoute {
+    height: 78px;
+  }
+
+  .itinerary {
+    gap: var(--s-1);
+  }
+
+  .itinerary li {
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
+
+  .card:hover,
+  .cardActive {
+    transform: none;
+  }
+
+  .resultSpinner {
+    animation-duration: 1600ms;
+  }
+}

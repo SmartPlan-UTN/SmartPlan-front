@@ -10,8 +10,6 @@ import { ROUTES } from "@/lib/routes";
 import { formatArs, formatDuration } from "@/lib/utils";
 import type { ActivitySearchResult } from "@/types";
 
-import { AutoPlanUnavailableDialog } from "./AutoPlanUnavailableDialog";
-
 import styles from "./plan-create.module.css";
 
 export function CreatePlanForm() {
@@ -49,7 +47,6 @@ export function CreatePlanForm() {
 
   // Cancel Confirmation Modal State
   const [showCancelModal, setShowCancelModal] = useState(false);
-  const [showAutoPlanModal, setShowAutoPlanModal] = useState(false);
 
   // Activities search effect
   useEffect(() => {
@@ -206,7 +203,7 @@ export function CreatePlanForm() {
         <Button
           type="button"
           variant="secondary"
-          onClick={() => setShowAutoPlanModal(true)}
+          onClick={() => router.push(`${ROUTES.home}?startComposer=1`)}
         >
           <Icon name="sparkles" size={16} aria-hidden="true" />
           Generar plan automático
@@ -472,13 +469,6 @@ export function CreatePlanForm() {
             los datos ingresados en el formulario.
           </p>
         </ConfirmationDialog>
-      )}
-
-      {/* Auto Plan Generation - Módulo en construcción Modal (CU31) */}
-      {showAutoPlanModal && (
-        <AutoPlanUnavailableDialog
-          onClose={() => setShowAutoPlanModal(false)}
-        />
       )}
 
     </div>

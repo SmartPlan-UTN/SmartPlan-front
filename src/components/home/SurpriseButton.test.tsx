@@ -6,11 +6,6 @@ import type { UserPreferencesResponse } from "@/types";
 
 import { SurpriseButton } from "./SurpriseButton";
 
-const push = vi.hoisted(() => vi.fn());
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push, replace: vi.fn(), refresh: vi.fn() }),
-}));
-
 const getPreferences = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/api", async () => {
   const actual = await vi.importActual<typeof import("@/lib/api")>("@/lib/api");
@@ -37,7 +32,6 @@ function mockGeolocation(
 
 describe("SurpriseButton (CU19)", () => {
   beforeEach(() => {
-    push.mockReset();
     getPreferences.mockReset().mockResolvedValue(EMPTY_PREFERENCES);
   });
 
@@ -68,20 +62,23 @@ describe("SurpriseButton (CU19)", () => {
     );
   });
 
-  it("answers a missing location in one line, with a route to preferences", async () => {
+  it("still resolves (with no coordinates) when there is no GPS and no preferred area, instead of blocking", async () => {
     const user = userEvent.setup();
     mockGeolocation((_success, error) =>
       error({ code: 1 } as GeolocationPositionError),
     );
-    render(<SurpriseButton submitting={false} onResolved={vi.fn()} />);
+    const onResolved = vi.fn();
+    render(<SurpriseButton submitting={false} onResolved={onResolved} />);
 
     await user.click(screen.getByRole("button", { name: /sorpréndeme/i }));
 
-    const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent(/necesitamos tu ubicación/i);
-
-    await user.click(screen.getByRole("button", { name: /ir a preferencias/i }));
-    expect(push).toHaveBeenCalledWith("/preferences");
+    await waitFor(() =>
+      expect(onResolved).toHaveBeenCalledWith(null, {
+        source: "default",
+        hasCategoryPreferences: false,
+      }),
+    );
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("is inert while a generation is already running", () => {

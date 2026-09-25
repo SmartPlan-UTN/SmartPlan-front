@@ -1,20 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 import { PLAN_SELECTION } from "@/components/plan/planSelectionContent";
-import { Badge, Button, Icon, Stars } from "@/components/ui";
-import { usePlanSelection } from "@/hooks";
+import { Button, Icon } from "@/components/ui";
+import { usePlanSelection, useReducedMotion } from "@/hooks";
 import { planDetailRoute } from "@/lib/routes";
-import { formatArs, formatDuration, gradientFor } from "@/lib/utils";
-import type { PlanRequestPlanSummary, PlanSelectionResult } from "@/types";
+import { buildPlanPins } from "@/lib/maps/buildPlanPins";
+import { formatArs, formatDuration } from "@/lib/utils";
+import type { PlanDetailResult, PlanSelectionResult, ResolvedPlanContext } from "@/types";
 
+import { PlanResultCard } from "./PlanResultCard";
+import { ResultsMap, type ResultsMapHandle } from "./ResultsMap";
+import { SearchContextHeader } from "./SearchContextHeader";
 import styles from "./generation.module.css";
-import exploreStyles from "../explore/explore.module.css";
+import layoutStyles from "./results-layout.module.css";
 
 export interface PlanResultsProps {
-  plans: PlanRequestPlanSummary[];
+  plans: PlanDetailResult[];
+  /** The free-text idea that produced these plans, for the "Buscaste:" line. `null`/absent for surprise mode. */
+  query?: string | null;
+  /** What the system understood from the request (budget/location/party size/categories). */
+  resolvedContext?: ResolvedPlanContext | null;
   /** Back to the composer with the previous idea loaded, ready to edit. */
   onAdjust: () => void;
   onDiscard: () => void;
@@ -42,8 +50,10 @@ export interface PlanResultsProps {
 const MAX_VISIBLE_PLANS = 3;
 
 /**
- * Up to 3 generated plans (CU17, CU19), shown as a continuation of the
- * landing hero rather than as a new screen.
+ * Up to 3 generated plans (CU17, CU19), Airbnb-style: a card list on the
+ * left, a branded interactive map on the right (desktop), a List/Map toggle
+ * on mobile. Shown as a continuation of the landing hero rather than as a
+ * new screen.
  *
  * CU17 asks for three things to be possible on a result: adjust it, discard
  * it, or say you're going to do it. That last one is CU22 — a reversible
@@ -54,6 +64,8 @@ const MAX_VISIBLE_PLANS = 3;
  */
 export function PlanResults({
   plans,
+  query = null,
+  resolvedContext = null,
   onAdjust,
   onDiscard,
   canAdjust = true,
@@ -64,7 +76,8 @@ export function PlanResults({
   onSelectionReconcile,
 }: PlanResultsProps) {
   const surprise = mode === "surprise";
-  const visiblePlans = plans.slice(0, MAX_VISIBLE_PLANS);
+  const visiblePlans = useMemo(() => plans.slice(0, MAX_VISIBLE_PLANS), [plans]);
+  const reducedMotion = useReducedMotion();
 
   const selection = usePlanSelection();
   const [workingId, setWorkingId] = useState<number | null>(null);
@@ -72,11 +85,45 @@ export function PlanResults({
     tone: "ok" | "warn";
     text: string;
   } | null>(null);
+  const [activePlanId, setActivePlanId] = useState<number | null>(null);
+  const [mobileView, setMobileView] = useState<"list" | "map">("list");
 
-  async function toggleIntent(
-    plan: PlanRequestPlanSummary,
-    direction: "on" | "off",
-  ) {
+  const mapRef = useRef<ResultsMapHandle>(null);
+  const cardRefs = useRef(new Map<number, HTMLElement>());
+
+  const mapPins = useMemo(() => buildPlanPins(visiblePlans), [visiblePlans]);
+  const planColors = useMemo(() => {
+    const byId = new Map<number, string>();
+    mapPins.forEach((pin) => byId.set(pin.planId, pin.color));
+    return byId;
+  }, [mapPins]);
+
+  function registerCardRef(id: number, el: HTMLElement | null) {
+    if (el) cardRefs.current.set(id, el);
+    else cardRefs.current.delete(id);
+  }
+
+  function handleViewRoute(planId: number) {
+    setActivePlanId(planId);
+    mapRef.current?.panToPlan(planId);
+    if (mobileView !== "map") setMobileView("map");
+  }
+
+  function handlePinClick(planId: number) {
+    setActivePlanId(planId);
+    mapRef.current?.panToPlan(planId);
+    if (window.matchMedia("(max-width: 860px)").matches) {
+      setMobileView("map");
+      return;
+    }
+    cardRefs.current.get(planId)?.scrollIntoView({
+      behavior: reducedMotion ? "auto" : "smooth",
+      block: "nearest",
+    });
+    if (mobileView !== "list") setMobileView("list");
+  }
+
+  async function toggleIntent(plan: PlanDetailResult, direction: "on" | "off") {
     if (selection.status === "working" || workingId !== null) return;
     setStatusNote(null);
     setWorkingId(plan.id);
@@ -149,155 +196,99 @@ export function PlanResults({
   }
 
   return (
-    <div className={styles.resultsWrapper}>
-      <div className={styles.resultsHeader}>
-        <h2 className={`sp-h2 ${styles.resultsTitle}`}>
-          {surprise ? "Elegimos estas ideas para vos" : "Tu plan ya está listo"}
-        </h2>
-        <p className={`sp-body ${styles.resultsSubtitle}`}>
-          {surprise
-            ? "Cualquiera de las alternativas es un buen plan."
-            : "Marcá la que pensás hacer."}
-        </p>
-        {note ? (
-          <p className={`sp-small ${styles.resultsSubtitle}`}>{note}</p>
-        ) : null}
-        <p
-          className={
-            statusNote?.tone === "warn"
-              ? styles.resultLiveWarn
-              : styles.resultLive
-          }
-          role="status"
-          aria-live="polite"
+    <div className={styles.resultsWrapper} data-mobile-view={mobileView}>
+      {mobileView === "list" ? (
+        <>
+          <SearchContextHeader
+            mode={mode}
+            query={query}
+            resolvedContext={resolvedContext}
+            planCount={visiblePlans.length}
+            note={note}
+          />
+          <p
+            className={statusNote?.tone === "warn" ? styles.resultLiveWarn : styles.resultLive}
+            role="status"
+            aria-live="polite"
+          >
+            {statusNote?.text ?? ""}
+          </p>
+        </>
+      ) : null}
+
+      <div className={layoutStyles.viewToggle} data-view={mobileView} role="tablist" aria-label="Vista de resultados">
+        <span
+          className={[layoutStyles.viewTogglePill, mobileView === "map" ? layoutStyles.viewTogglePillMap : ""]
+            .filter(Boolean)
+            .join(" ")}
+          aria-hidden="true"
+        />
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mobileView === "list"}
+          className={layoutStyles.viewToggleTab}
+          onClick={() => setMobileView("list")}
         >
-          {statusNote?.text ?? ""}
-        </p>
+          <Icon name="list" size={14} aria-hidden="true" />
+          Lista
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mobileView === "map"}
+          className={layoutStyles.viewToggleTab}
+          onClick={() => setMobileView("map")}
+        >
+          <Icon name="map" size={14} aria-hidden="true" />
+          Mapa
+        </button>
       </div>
 
-      <div className={styles.resultsGrid}>
-        {visiblePlans.map((plan, index) => {
-          const intended = plan.viewerPlanState === "selected";
-          const busy = workingId === plan.id;
+      <div className={layoutStyles.resultsLayout} data-mobile-view={mobileView}>
+        <div className={layoutStyles.resultsListCol} data-mobile-hidden={mobileView !== "list"}>
+          {visiblePlans.map((plan, index) => {
+            const intended = plan.viewerPlanState === "selected";
+            return (
+              <PlanResultCard
+                key={plan.id}
+                plan={plan}
+                index={index}
+                accentColor={planColors.get(plan.id) ?? "var(--ember)"}
+                active={activePlanId === plan.id}
+                intended={intended}
+                busy={workingId === plan.id}
+                selectionWorking={selection.status === "working"}
+                onActivate={setActivePlanId}
+                onDeactivate={(id) => setActivePlanId((current) => (current === id ? null : current))}
+                onViewRoute={handleViewRoute}
+                onToggleIntent={(target, direction) => void toggleIntent(target, direction)}
+                registerRef={registerCardRef}
+              />
+            );
+          })}
+        </div>
 
-          return (
-            <div
-              key={plan.id}
-              className={styles.resultCard}
-              style={{ animationDelay: `${index * 60}ms` }}
-            >
-              <article
-                className={[
-                  exploreStyles.card,
-                  styles.resultCardShell,
-                  intended ? styles.resultCardChosen : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-              >
-                <Link
-                  href={planDetailRoute(plan.id)}
-                  className={styles.resultCardLink}
-                >
-                  <div
-                    className={exploreStyles.imageWrapper}
-                    style={{ background: gradientFor(plan.id) }}
-                  >
-                    <Icon
-                      name="route"
-                      size={40}
-                      className={exploreStyles.imagePlaceholder}
-                    />
-                  </div>
-
-                  <div className={exploreStyles.body}>
-                    <h3 className={exploreStyles.name}>{plan.title}</h3>
-
-                    <div className={exploreStyles.metaRow}>
-                      <span className={exploreStyles.metaItem}>
-                        <Icon name="clock" size={12} />
-                        {formatDuration(plan.estimatedTotalDuration)}
-                      </span>
-                      <Badge variant="cost">
-                        {formatArs(plan.estimatedTotalCost)}
-                      </Badge>
-                      {plan.averageRating > 0 ? (
-                        <span className={exploreStyles.metaItem}>
-                          <Stars rating={plan.averageRating} size={11} />
-                          {plan.averageRating.toFixed(1)}
-                        </span>
-                      ) : null}
-                      {plan.distanceKm != null ? (
-                        <span className={exploreStyles.metaItem}>
-                          <Icon name="map-pin" size={12} />
-                          {plan.distanceKm.toFixed(1)} km
-                        </span>
-                      ) : null}
-                    </div>
-
-                    {plan.activityNames && plan.activityNames.length > 0 ? (
-                      <p className={styles.resultActivities}>
-                        {plan.activityNames.join(" · ")}
-                      </p>
-                    ) : null}
-
-                    <div className={exploreStyles.tagRow}>
-                      {plan.categories.slice(0, 2).map((category) => (
-                        <Badge variant="tag" key={category.id}>
-                          {category.name}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </Link>
-
-                <div className={styles.resultActionRow}>
-                  {intended ? (
-                    <>
-                      <span className={styles.resultChosen}>
-                        <Icon
-                          name="circle-check"
-                          size={15}
-                          aria-hidden="true"
-                        />
-                        {PLAN_SELECTION.results.intended}
-                      </span>
-                      <button
-                        type="button"
-                        className={styles.resultUndo}
-                        disabled={selection.status === "working"}
-                        onClick={() => void toggleIntent(plan, "off")}
-                      >
-                        {busy ? "…" : PLAN_SELECTION.results.undo}
-                      </button>
-                    </>
-                  ) : (
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      disabled={selection.status === "working"}
-                      onClick={() => void toggleIntent(plan, "on")}
-                    >
-                      {busy ? (
-                        <>
-                          <Icon
-                            name="loader-circle"
-                            size={14}
-                            className={styles.resultSpinner}
-                            aria-hidden="true"
-                          />
-                          {PLAN_SELECTION.results.intend}
-                        </>
-                      ) : (
-                        PLAN_SELECTION.results.intend
-                      )}
-                    </Button>
-                  )}
-                </div>
-              </article>
-            </div>
-          );
-        })}
+        <div className={layoutStyles.resultsMapCol} data-mobile-hidden={mobileView !== "map"}>
+          <ResultsMap
+            ref={mapRef}
+            plans={mapPins}
+            activePlanId={activePlanId}
+            onPinHover={setActivePlanId}
+            onPinClick={handlePinClick}
+            visible={mobileView === "map"}
+          />
+          {mobileView === "map" && visiblePlans.length > 0 ? (
+            <MobilePlanSheet
+              plans={visiblePlans}
+              selectedPlanId={activePlanId ?? visiblePlans[0].id}
+              onSelect={(id) => {
+                setActivePlanId(id);
+                mapRef.current?.panToPlan(id);
+              }}
+            />
+          ) : null}
+        </div>
       </div>
 
       <div className={styles.resultsFooter}>
@@ -318,5 +309,61 @@ export function PlanResults({
         </Button>
       </div>
     </div>
+  );
+}
+
+function MobilePlanSheet({
+  plans,
+  selectedPlanId,
+  onSelect,
+}: {
+  plans: PlanDetailResult[];
+  selectedPlanId: number;
+  onSelect: (id: number) => void;
+}) {
+  const startX = useRef<number | null>(null);
+  const index = Math.max(0, plans.findIndex((plan) => plan.id === selectedPlanId));
+  const plan = plans[index];
+
+  function selectOffset(offset: number) {
+    const next = (index + offset + plans.length) % plans.length;
+    onSelect(plans[next].id);
+  }
+
+  return (
+    <section
+      className={layoutStyles.mobilePlanSheet}
+      aria-label="Plan seleccionado en el mapa"
+      aria-live="polite"
+      onTouchStart={(event) => { startX.current = event.touches[0]?.clientX ?? null; }}
+      onTouchEnd={(event) => {
+        if (startX.current == null) return;
+        const delta = event.changedTouches[0]?.clientX - startX.current;
+        startX.current = null;
+        if (delta != null && Math.abs(delta) > 44) selectOffset(delta < 0 ? 1 : -1);
+      }}
+    >
+      <div className={layoutStyles.sheetHandle} aria-hidden="true" />
+      <div className={layoutStyles.sheetTopline}>
+        <span>{index + 1} de {plans.length} planes</span>
+        <div className={layoutStyles.sheetControls}>
+          <button type="button" onClick={() => selectOffset(-1)} aria-label="Plan anterior" disabled={plans.length < 2}>
+            <Icon name="chevron-left" size={17} />
+          </button>
+          <button type="button" onClick={() => selectOffset(1)} aria-label="Plan siguiente" disabled={plans.length < 2}>
+            <Icon name="chevron-right" size={17} />
+          </button>
+        </div>
+      </div>
+      <h3>{plan.title}</h3>
+      {plan.description ? <p className={layoutStyles.sheetDescription}>{plan.description}</p> : null}
+      <div className={layoutStyles.sheetMeta}>
+        <span><Icon name="clock" size={13} />{formatDuration(plan.estimatedTotalDuration)}</span>
+        <span><Icon name="wallet" size={13} />{formatArs(plan.estimatedTotalCost)}</span>
+        <span><Icon name="map-pin" size={13} />{plan.activityCount} paradas</span>
+        <Link href={planDetailRoute(plan.id)}>Ver plan</Link>
+      </div>
+      <p className={layoutStyles.sheetSwipeHint}>Deslizá para comparar</p>
+    </section>
   );
 }

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@/lib/api";
-import type { PlanRequestPlanSummary, PlanSelectionResult } from "@/types";
+import type { PlanDetailResult, PlanSelectionResult } from "@/types";
 
 import { PlanResults } from "./PlanResults";
 
@@ -17,10 +17,39 @@ vi.mock("@/lib/api", async (importActual) => ({
   deselectPlan,
 }));
 
-const PLAN: PlanRequestPlanSummary = {
+// The real map loads the Google Maps JS API from a CDN script — not
+// available (and not the point) in a jsdom unit test. PlanResults' own
+// tests are about the header/cards/CU22 wiring; ResultsMap gets its own
+// coverage (buildPlanPins.test.ts) for the data it's actually built from.
+vi.mock("./ResultsMap", () => ({
+  ResultsMap: () => <div data-testid="results-map-stub" />,
+}));
+
+function location(overrides: Partial<PlanDetailResult["details"][number]["activity"]["locations"][number]> = {}) {
+  return {
+    id: 1,
+    latitude: -32.9,
+    longitude: -68.8,
+    notes: null,
+    place: {
+      id: 1,
+      name: "Bodega Central",
+      description: null,
+      address: "Calle 1",
+      department: {
+        id: 1,
+        name: "Luján de Cuyo",
+        city: { id: 1, name: "Mendoza", country: { id: 1, name: "Argentina" } },
+      },
+    },
+    ...overrides,
+  };
+}
+
+const PLAN: PlanDetailResult = {
   id: 7,
   title: "Tarde de vinos sin manejar",
-  description: null,
+  description: "Recorrido por bodegas con almuerzo incluido.",
   estimatedTotalDuration: 300,
   estimatedTotalCost: 24000,
   activityCount: 2,
@@ -30,6 +59,44 @@ const PLAN: PlanRequestPlanSummary = {
   activityNames: ["Degustación guiada", "Almuerzo entre viñedos"],
   status: { key: "generated", name: "Generated" },
   viewerPlanState: "selectable",
+  details: [
+    {
+      id: 1,
+      order: 1,
+      estimatedCost: 15000,
+      estimatedDuration: 150,
+      activity: {
+        id: 101,
+        name: "Degustación guiada",
+        description: "desc",
+        estimatedCost: 15000,
+        estimatedDuration: 150,
+        type: null,
+        averageRating: 4.5,
+        ratingCount: 10,
+        categories: [{ id: 1, name: "Vinos" }],
+        locations: [location()],
+      },
+    },
+    {
+      id: 2,
+      order: 2,
+      estimatedCost: 9000,
+      estimatedDuration: 150,
+      activity: {
+        id: 102,
+        name: "Almuerzo entre viñedos",
+        description: "desc",
+        estimatedCost: 9000,
+        estimatedDuration: 150,
+        type: null,
+        averageRating: 0,
+        ratingCount: 0,
+        categories: [],
+        locations: [],
+      },
+    },
+  ],
 };
 
 /**
@@ -87,12 +154,55 @@ describe("PlanResults (CU17)", () => {
     expect(onAdjust).toHaveBeenCalledOnce();
   });
 
-  it("names each option's activities (CU19)", () => {
+  it("shows each option's description and a way to see its route on the map", () => {
     render(<PlanResults plans={[PLAN]} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
 
     expect(
-      screen.getByText("Degustación guiada · Almuerzo entre viñedos"),
+      screen.getByText("Recorrido por bodegas con almuerzo incluido."),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /ver recorrido/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the zone derived from the plan's first located stop", () => {
+    render(<PlanResults plans={[PLAN]} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
+
+    expect(screen.getByText("Luján de Cuyo")).toBeInTheDocument();
+  });
+
+  it("shows what was searched and what the system understood from it", () => {
+    render(
+      <PlanResults
+        plans={[PLAN]}
+        query="algo romántico para el finde"
+        resolvedContext={{
+          budget: 20000,
+          partySize: 2,
+          departmentName: "Luján de Cuyo",
+          categories: [{ id: 1, name: "Vinos" }],
+        }}
+        onAdjust={vi.fn()}
+        onDiscard={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(/algo romántico para el finde/)).toBeInTheDocument();
+    expect(screen.getByText(/2 personas/i)).toBeInTheDocument();
+    expect(screen.getAllByText("Luján de Cuyo").length).toBeGreaterThan(0);
+  });
+
+  it("synchronizes the mobile map's plan sheet with its accessible controls", async () => {
+    const user = userEvent.setup();
+    const secondPlan = { ...PLAN, id: 8, title: "Paseo por el parque" };
+    render(<PlanResults plans={[PLAN, secondPlan]} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
+
+    await user.click(screen.getByRole("tab", { name: /mapa/i }));
+    const sheet = screen.getByRole("region", { name: /plan seleccionado en el mapa/i });
+    expect(sheet).toHaveTextContent(PLAN.title);
+
+    await user.click(screen.getByRole("button", { name: /plan siguiente/i }));
+    expect(sheet).toHaveTextContent(secondPlan.title);
   });
 
   it("shows at most three alternatives", () => {
@@ -172,7 +282,7 @@ describe("PlanResults (CU22 — plan intent)", () => {
     viewerPlanState: "selectable",
   };
 
-  const twoPlans: PlanRequestPlanSummary[] = [
+  const twoPlans: PlanDetailResult[] = [
     PLAN,
     { ...PLAN, id: 8, title: "Otra tarde" },
   ];
@@ -182,7 +292,7 @@ describe("PlanResults (CU22 — plan intent)", () => {
     initial,
     onReconcile,
   }: {
-    initial: PlanRequestPlanSummary[];
+    initial: PlanDetailResult[];
     onReconcile?: () => void;
   }) {
     const [plans, setPlans] = useState(initial);
@@ -198,7 +308,7 @@ describe("PlanResults (CU22 — plan intent)", () => {
                 return {
                   ...plan,
                   status: result.status,
-                  viewerPlanState: result.viewerPlanState,
+                  viewerPlanState: result.viewerPlanState ?? plan.viewerPlanState,
                 };
               return plan;
             }),

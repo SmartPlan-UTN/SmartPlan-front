@@ -2,18 +2,29 @@
 
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { AnimatePresence, motion } from "motion/react";
 
 import {
   GenerationState,
   PlanComposer,
   PlanResults,
+  PreferencesHint,
   SurpriseButton,
   type PlanComposerHandle,
   type SurpriseCoords,
   type SurpriseResolvedMeta,
 } from "@/components/home";
-import type { UsePlanRequestPollingResult } from "@/hooks";
+import { useReducedMotion, type UsePlanRequestPollingResult } from "@/hooks";
+import { EASE_OUT } from "@/lib/motion";
 import type { PlanRequestContext } from "@/types";
+
+/**
+ * How long `GenerationState` keeps showing its `generated` completion beat
+ * (progress rail snapping to 100%) before this component swaps in
+ * `PlanResults`. Presentation-only sequencing — `usePlanRequestPolling`'s
+ * own phase never has a "holding" concept.
+ */
+const HANDOFF_HOLD_MS = 340;
 
 import { HeroAmbient } from "./HeroAmbient";
 import { HeroObjects } from "./HeroObjects";
@@ -36,7 +47,10 @@ export interface LandingHeroProps {
   planning: UsePlanRequestPollingResult;
   sessionLoading: boolean;
   onSubmit: (query: string, context: PlanRequestContext) => void;
-  onSurprise: (coords: SurpriseCoords, meta: SurpriseResolvedMeta) => void;
+  onSurprise: (
+    coords: SurpriseCoords | null,
+    meta: SurpriseResolvedMeta,
+  ) => void;
   /** Creates a fresh surprise request from the same coordinates (CU19). */
   onRegenerate: () => void;
   /** One-line note under the surprise waiting / results copy (CU19). */
@@ -86,11 +100,18 @@ export function LandingHero({
   const [writing, setWriting] = useState(false);
   const composer = useRef<PlanComposerHandle>(null);
   const hero = useRef<HTMLElement>(null);
+  const reducedMotion = useReducedMotion();
 
   const {
     phase,
     plans,
+    resolvedContext,
     failure,
+    query,
+    requestedAt,
+    progressStage,
+    progressStageAt,
+    estimatedRemainingSeconds,
     keepWaiting,
     discard,
     retry,
@@ -100,6 +121,7 @@ export function LandingHero({
   } = planning;
   const canRepeat = lastSubmission?.kind === "auto";
   const generationMode = lastSubmission?.kind === "surprise" ? "surprise" : "auto";
+  const submittedQuery = lastSubmission?.kind === "auto" ? lastSubmission.payload.query : null;
   const composing = phase === "idle";
   const generating =
     phase === "submitting" ||
@@ -107,6 +129,38 @@ export function LandingHero({
     phase === "processing" ||
     phase === "timedOut" ||
     phase === "failed";
+  const generationPhase = phase !== "idle" ? phase : null;
+
+  // `GenerationState` keeps showing its `generated` completion beat for
+  // `HANDOFF_HOLD_MS` before this component swaps to `PlanResults` — a
+  // shared crossfade moment instead of an abrupt unmount/mount. Adjusting
+  // state during render (not in an effect) so `holdGenerated` is already
+  // true on the very same render that `phase` first reports `generated`;
+  // this is the documented pattern for deriving state from a prop
+  // transition (react.dev, "Adjusting state when a prop changes").
+  const [prevPhase, setPrevPhase] = useState(phase);
+  const [holdGenerated, setHoldGenerated] = useState(false);
+  if (phase !== prevPhase) {
+    setPrevPhase(phase);
+    if (phase === "generated") setHoldGenerated(true);
+    else if (holdGenerated) setHoldGenerated(false);
+  }
+  const showGenerationState = generating || (phase === "generated" && holdGenerated);
+  const showResults = phase === "generated" && !holdGenerated;
+
+  // The scroll and the timer are real side effects (DOM + a clock), so
+  // they belong here, not in the render-time state adjustment above.
+  useEffect(() => {
+    if (!holdGenerated) return;
+
+    hero.current?.scrollIntoView({
+      behavior: reducedMotion ? "auto" : "smooth",
+      block: "start",
+    });
+
+    const id = setTimeout(() => setHoldGenerated(false), reducedMotion ? 0 : HANDOFF_HOLD_MS);
+    return () => clearTimeout(id);
+  }, [holdGenerated, reducedMotion]);
 
   // Runs after the composer is back in the tree, which is the whole
   // reason this is an effect and not a call inside the click handler:
@@ -191,35 +245,57 @@ export function LandingHero({
                 onPick={(query) => composer.current?.fill(query)}
               />
             </div>
+
+            <PreferencesHint />
           </div>
         ) : null}
 
-        {generating ? (
-          <GenerationState
-            phase={phase}
-            failure={failure}
-            onKeepWaiting={keepWaiting}
-            onRetry={retry}
-            onDiscard={discard}
-            canRetry={lastSubmission != null}
-            mode={generationMode}
-            note={generationMode === "surprise" ? surpriseNote : null}
-          />
-        ) : null}
-
-        {phase === "generated" ? (
-          <PlanResults
-            plans={plans ?? []}
-            onAdjust={onAdjust}
-            onDiscard={discard}
-            canAdjust={canRepeat}
-            mode={generationMode}
-            note={generationMode === "surprise" ? surpriseNote : null}
-            onRegenerate={onRegenerate}
-            onPlanSelected={applySelectionChange}
-            onSelectionReconcile={refresh}
-          />
-        ) : null}
+        <AnimatePresence mode="wait" initial={false}>
+          {showGenerationState && generationPhase ? (
+            <motion.div
+              key="generating"
+              exit={reducedMotion ? undefined : { opacity: 0, y: -8 }}
+              transition={{ duration: 0.22, ease: EASE_OUT }}
+            >
+              <GenerationState
+                phase={generationPhase}
+                failure={failure}
+                onKeepWaiting={keepWaiting}
+                onRetry={retry}
+                onDiscard={discard}
+                canRetry={lastSubmission != null}
+                mode={generationMode}
+                note={generationMode === "surprise" ? surpriseNote : null}
+                query={query ?? submittedQuery}
+                requestedAt={requestedAt}
+                progressStage={progressStage}
+                progressStageAt={progressStageAt}
+                estimatedRemainingSeconds={estimatedRemainingSeconds}
+              />
+            </motion.div>
+          ) : showResults ? (
+            <motion.div
+              key="results"
+              initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.26, ease: EASE_OUT }}
+            >
+              <PlanResults
+                plans={plans ?? []}
+                query={submittedQuery}
+                resolvedContext={resolvedContext}
+                onAdjust={onAdjust}
+                onDiscard={discard}
+                canAdjust={canRepeat}
+                mode={generationMode}
+                note={generationMode === "surprise" ? surpriseNote : null}
+                onRegenerate={onRegenerate}
+                onPlanSelected={applySelectionChange}
+                onSelectionReconcile={refresh}
+              />
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </div>
     </section>
   );
