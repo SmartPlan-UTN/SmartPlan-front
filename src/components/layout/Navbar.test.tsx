@@ -37,13 +37,21 @@ const authenticatedResponse = {
   },
 };
 
+const adminAuthenticatedResponse = {
+  ...authenticatedResponse,
+  user: {
+    ...authenticatedResponse.user,
+    role: { key: "admin", name: "Administrador" },
+  },
+};
+
 /** No refresh cookie, or an expired/revoked one: the normal anonymous case. */
 function mockAnonymousStartup() {
   vi.mocked(refreshSession).mockRejectedValueOnce(new Error("no session"));
 }
 
-function mockAuthenticatedStartup() {
-  vi.mocked(refreshSession).mockResolvedValueOnce(authenticatedResponse);
+function mockAuthenticatedStartup(response = authenticatedResponse) {
+  vi.mocked(refreshSession).mockResolvedValueOnce(response);
 }
 
 function renderNavbar() {
@@ -168,6 +176,43 @@ describe("Navbar", () => {
     expect(
       screen.getByRole("button", { name: "Cerrar sesión" }),
     ).toBeInTheDocument();
+  });
+
+  it("shows the authenticated user's initials in the account trigger", async () => {
+    mockAuthenticatedStartup();
+    renderNavbar();
+
+    const trigger = await screen.findByRole("button", { name: /mi cuenta/i });
+    const initials = within(trigger).getByText("AP");
+
+    expect(initials).toHaveAttribute("aria-hidden", "true");
+    expect(trigger).toHaveAttribute("aria-label", "Mi cuenta");
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(trigger).toHaveAttribute("aria-controls");
+  });
+
+  it("offers the administration panel only to administrators", async () => {
+    mockAuthenticatedStartup(adminAuthenticatedResponse);
+    const user = userEvent.setup();
+    renderNavbar();
+
+    await user.click(await screen.findByRole("button", { name: /mi cuenta/i }));
+
+    expect(
+      screen.getByRole("link", { name: "Panel de control" }),
+    ).toHaveAttribute("href", "/admin");
+  });
+
+  it("does not offer the administration panel to regular users", async () => {
+    mockAuthenticatedStartup();
+    const user = userEvent.setup();
+    renderNavbar();
+
+    await user.click(await screen.findByRole("button", { name: /mi cuenta/i }));
+
+    expect(
+      screen.queryByRole("link", { name: "Panel de control" }),
+    ).not.toBeInTheDocument();
   });
 
   // The bottom bar has no Historial tab, so the account menu carries it

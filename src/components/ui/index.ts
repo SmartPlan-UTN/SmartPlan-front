@@ -23,3 +23,9 @@ export { RatingInput, type RatingInputProps } from "./RatingInput";
 export { Select, type SelectOption, type SelectProps } from "./Select";
 export { StarRatingInput, type StarRatingInputProps } from "./StarRatingInput";
 export { Stars, type StarsProps } from "./Stars";
+export {
+  UserAvatar,
+  type UserAvatarProps,
+  type UserAvatarSize,
+  type UserAvatarTone,
+} from "./UserAvatar";
