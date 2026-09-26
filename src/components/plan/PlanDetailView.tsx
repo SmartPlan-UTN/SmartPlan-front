@@ -205,7 +205,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
     };
   }, [sessionStatus, planId]);
 
-  // CU23. Feedback lives on the owner-only endpoint; the public detail never
+  // CU23. Feedback lives on the owner-only endpoint; the shared detail never
   // carries it. A secondary, non-blocking fetch — a viewer who isn't the
   // owner just gets a 403/404 here and no feedback section shows. Keyed by
   // plan id so a stale result from a previous plan never renders.

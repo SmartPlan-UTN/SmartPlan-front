@@ -101,8 +101,8 @@ export interface PlanItineraryItem {
  * What a plan means for the current viewer (CU22, PAN 17). Computed
  * server-side; the frontend never infers it. Any authenticated viewer of a
  * non-`cancelled` plan is `selectable` (or `selected` once they hold an
- * intention) — ownership and visibility don't matter. An anonymous viewer is
- * always `view-only`.
+ * intention) — ownership and visibility don't matter. Public plan-list items
+ * are `view-only` for an anonymous viewer.
  * Matches `ViewerPlanState` in `SmartPlan-back` (`src/plans/plan-selectability.ts`).
  */
 export type ViewerPlanState = 'selectable' | 'selected' | 'view-only';

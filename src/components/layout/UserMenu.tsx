@@ -5,13 +5,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { Button, Icon } from "@/components/ui";
+import { Button, Icon, UserAvatar } from "@/components/ui";
 import { useSession } from "@/lib/auth";
 import { loginRoute, ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 import { NavLink } from "./NavLink";
-import { MOBILE_USER_LINKS, USER_LINKS } from "./links";
+import { ADMIN_USER_LINK, MOBILE_USER_LINKS, USER_LINKS } from "./links";
 import styles from "./layout.module.css";
 
 interface LogoutConfirmModalProps {
@@ -128,8 +128,7 @@ function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
  * - `authenticated`: dropdown with Mi perfil, Preferencias, Seguridad, and
  *   Cerrar sesión. Below 900px it also carries Historial, the one main
  *   destination the bottom bar has no tab for.
- *   The trigger is a circular avatar, not a text pill — there's no user
- *   name or photo yet, so it shows the `user` icon.
+ *   The trigger is a circular avatar with the authenticated user's initials.
  *
  * It's a *disclosure* pattern, not an ARIA `menu`: the dropdown is regular
  * links navigated with Tab. It closes on Escape —returning focus to the
@@ -141,7 +140,7 @@ function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
  * `SessionProvider.logout`) and replaces the current entry with `/login`.
  */
 export function UserMenu() {
-  const { status, logout } = useSession();
+  const { status, user, logout } = useSession();
   const currentRoute = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -219,6 +218,15 @@ export function UserMenu() {
     );
   }
 
+  if (!user) {
+    return (
+      <span
+        className={cn(styles.sessionPlaceholder, styles.sessionControl)}
+        aria-hidden="true"
+      />
+    );
+  }
+
   return (
     <div
       className={cn(styles.userMenu, styles.sessionControl)}
@@ -228,7 +236,7 @@ export function UserMenu() {
         ref={triggerRef}
         type="button"
         className={styles.trigger}
-        // Icon-only: without this aria-label the button would have no name.
+        // The initials are decorative, so this label remains the button's name.
         aria-label="Mi cuenta"
         aria-expanded={open}
         aria-controls={panelId}
@@ -236,7 +244,13 @@ export function UserMenu() {
           setOpen((isOpen) => !isOpen);
         }}
       >
-        <Icon name="user" size={16} />
+        <UserAvatar
+          name={user.name}
+          lastName={user.lastName}
+          userId={user.id}
+          size="large"
+          tone="ember"
+        />
       </button>
 
       {open ? (
@@ -263,6 +277,16 @@ export function UserMenu() {
               onNavigate={close}
             />
           ))}
+
+          {user.role.key === "admin" ? (
+            <NavLink
+              href={ADMIN_USER_LINK.href}
+              label={ADMIN_USER_LINK.label}
+              icon={ADMIN_USER_LINK.icon}
+              variant="option"
+              onNavigate={close}
+            />
+          ) : null}
 
           <hr className={styles.divider} />
 
