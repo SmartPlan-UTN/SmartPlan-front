@@ -59,8 +59,10 @@ src/
 │   │   ├── layout.tsx      navbar + content container
 │   │   ├── page.tsx        home
 │   │   ├── explore/
-│   │   └── (private)/      what requires a session: favorites, history,
-│   │       └── layout.tsx  profile, preferences. The layout uses ProtectedRoute
+│   │   ├── (private)/      session routes with a Container: favorites, history,
+│   │   │   └── layout.tsx  profile, preferences. Uses ProtectedRoute
+│   │   └── (private-full-bleed)/ session routes without a Container:
+│   │       └── layout.tsx  plan detail and generation results
 │   └── admin/              administration panel
 ├── components/
 │   ├── ui/                 design system primitives
@@ -94,6 +96,7 @@ instead of long relative paths.
 |---|---|---|
 | is public | `app/(main)/<route>/page.tsx` | navbar and container |
 | requires a session | `app/(main)/(private)/<route>/page.tsx` | navbar, container, and `ProtectedRoute` |
+| requires a session and full-bleed layout | `app/(main)/(private-full-bleed)/<route>/page.tsx` | navbar and `ProtectedRoute` |
 | is a session screen (login, signup...) | `app/(auth)/<route>/page.tsx` | dark surface, no navbar |
 | is an admin screen | `app/admin/<route>/page.tsx` | navbar and `ProtectedRoute` |
 
@@ -102,7 +105,9 @@ they organize folders without appearing in the URL. `(main)/(private)/favorites`
 is `/favorites`.
 
 **A screen is protected by where it lives, not by what it writes.** Creating
-it inside `(private)` is enough: the group's layout wraps it in `ProtectedRoute`.
+it inside `(private)` or `(private-full-bleed)` is enough: the group's layout
+wraps it in `ProtectedRoute`. Use the latter only when the screen owns a
+viewport-wide composition and must not inherit `Container`.
 
 ### Content width
 

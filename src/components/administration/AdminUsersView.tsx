@@ -3,7 +3,13 @@
 import { useEffect, useState } from "react";
 
 import { Pagination } from "@/components/explore";
-import { Button, Icon, Select, type IconName } from "@/components/ui";
+import {
+  Button,
+  Icon,
+  Select,
+  UserAvatar,
+  type IconName,
+} from "@/components/ui";
 import { useDebouncedValue } from "@/hooks";
 import {
   ApiError,
@@ -23,7 +29,6 @@ import type {
 } from "@/types";
 
 import { UserActionsMenu } from "./UserActionsMenu";
-import { UserAvatar } from "./UserAvatar";
 import { UserReadDialog } from "./UserReadDialog";
 import { UserStatusBadge } from "./UserStatusBadge";
 import { UserStatusDialog } from "./UserStatusDialog";

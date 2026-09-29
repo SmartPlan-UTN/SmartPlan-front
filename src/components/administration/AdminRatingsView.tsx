@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { Pagination } from "@/components/explore";
-import { Button, Icon, Stars } from "@/components/ui";
+import { Button, Icon, Stars, UserAvatar } from "@/components/ui";
 import {
   ApiError,
   getAdminRatingCounts,
@@ -21,7 +21,6 @@ import type {
 } from "@/types";
 
 import { RatingRejectionDialog } from "./RatingRejectionDialog";
-import { UserAvatar } from "./UserAvatar";
 import styles from "./AdminRatings.module.css";
 import shared from "./AdminManagement.module.css";
 

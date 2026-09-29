@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { GenerationState } from "@/components/home/GenerationState";
 import { PlanResults } from "@/components/home/PlanResults";
 import { Button, Icon } from "@/components/ui";
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { usePlanRequestPolling } from "@/hooks";
 import { ROUTES, planRequestRoute } from "@/lib/routes";
 import type { PlanRequestContext } from "@/types";
@@ -14,11 +13,7 @@ import type { PlanRequestContext } from "@/types";
 import styles from "./plan-request.module.css";
 
 export function PlanRequestScreen({ requestId }: { requestId: number }) {
-  return (
-    <ProtectedRoute>
-      <PlanRequestBody requestId={requestId} />
-    </ProtectedRoute>
-  );
+  return <PlanRequestBody requestId={requestId} />;
 }
 
 function PlanRequestBody({ requestId }: { requestId: number }) {

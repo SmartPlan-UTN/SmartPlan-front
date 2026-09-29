@@ -1,0 +1,55 @@
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: var(--r-chip);
+  font-weight: var(--w-display);
+}
+
+.medium {
+  width: 40px;
+  height: 40px;
+  font-size: 14.5px;
+}
+
+.large {
+  width: 44px;
+  height: 44px;
+  font-size: 15.5px;
+}
+
+.ember {
+  background: var(--ember-15);
+  color: var(--ember);
+}
+
+.avatar_0 {
+  background: var(--ember-15);
+  color: var(--ember);
+}
+
+.avatar_1 {
+  background: var(--electric-15);
+  color: var(--electric);
+}
+
+.avatar_2 {
+  background: var(--gold-22);
+  color: var(--rating-ink);
+}
+
+.avatar_3 {
+  background: var(--success-15);
+  color: var(--success);
+}
+
+.avatar_4 {
+  background: var(--warning-15);
+  color: var(--warning-ink);
+}
+
+.avatar_5 {
+  background: color-mix(in srgb, var(--char) 8%, transparent);
+  color: var(--fg-2);
+}

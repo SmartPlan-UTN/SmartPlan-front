@@ -1,6 +1,6 @@
-import { notFound } from 'next/navigation';
+import { notFound } from "next/navigation";
 
-import { PlanRequestScreen } from '@/components/plan-request/PlanRequestScreen';
+import { PlanRequestScreen } from "@/components/plan-request/PlanRequestScreen";
 
 export default async function PlanRequestPage({
   params,

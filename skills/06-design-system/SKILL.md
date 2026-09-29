@@ -270,12 +270,15 @@ light theme") — there's no dark-over-hero navbar in the current design, on
 any screen. Nav links center between the logo and the session control; the
 active one gets a small ember dot below it, not a filled pill. The border
 under the bar is transparent until the page scrolls past 10px. The account
-trigger is a circular ember-gradient avatar (icon-only until there's a real
-user name/photo); its dropdown is always light-card styled
+trigger is a circular ember avatar with the authenticated user's initials;
+the shared avatar keeps its user-ID palette in administration, while the
+navbar uses the fixed brand tone. Its dropdown is always light-card styled
 (`--surface-card` / `--hairline` / `--shadow-card`) regardless of the
 navbar's own background — same as in the prototype. "Cerrar sesión" opens a
 confirmation dialog instead of logging out immediately. On desktop,
 navigation includes Inicio, Explorar, Mis planes, Favoritos and Historial.
+Administrators also see a "Panel de control" entry in the account
+dropdown; regular users never see that role-specific destination.
 Below 900px, the top bar keeps only the logo and session control; a fixed
 bottom bar exposes Inicio, Explorar, Crear plan, Mis planes and Favoritos as
 persistent, thumb-reachable destinations (labels in `--fg-2`, not `--fg-3`,

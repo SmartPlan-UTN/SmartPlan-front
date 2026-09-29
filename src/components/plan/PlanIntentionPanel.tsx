@@ -12,8 +12,8 @@ import styles from "./plan.module.css";
  * The viewer's personal state on a plan (CU22, PAN 17). Not an action next to
  * "Guardar"/"Compartir" — a small state surface with its own visual weight.
  *
- *  - `absent`     → nothing to show (anonymous, `view-only`, or a finished plan
- *                   the viewer never intended).
+ *  - `absent`     → nothing to show (`view-only`, or a finished plan the viewer
+ *                   never intended).
  *  - `intend`     → toggle, off.
  *  - `intending`  → same toggle, on. The label stays "Lo voy a hacer" in both
  *                   states — the check and the fill carry the change; clicking

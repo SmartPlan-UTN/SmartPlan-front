@@ -240,10 +240,7 @@
   display: inline-flex;
 }
 
-/* Circular gradient avatar, not a text pill: matches the account trigger in
-   SmartPlanSystemDesign/v2/Navbar.jsx. There's no user name/photo yet
-   (CU1-CU5 haven't wired up a profile), so it shows the `user` icon instead
-   of an initial. */
+/* Circular avatar trigger with the authenticated user's initials. */
 .trigger {
   display: inline-flex;
   align-items: center;
@@ -251,21 +248,16 @@
   width: 44px;
   height: 44px;
   flex-shrink: 0;
+  padding: 0;
   border: 0;
   border-radius: var(--r-chip);
-  background: linear-gradient(
-    135deg,
-    var(--ember) 0%,
-    color-mix(in srgb, var(--ember) 55%, black) 100%
-  );
-  color: var(--white);
+  background: transparent;
   cursor: pointer;
-  box-shadow: 0 2px 8px var(--ember-20);
-  transition: box-shadow 150ms ease;
+  transition: filter 150ms ease;
 }
 
 .trigger:hover {
-  box-shadow: 0 2px 12px color-mix(in srgb, var(--ember) 50%, transparent);
+  filter: brightness(0.92);
 }
 
 /* At 320px the logo and the session control with text don't fit: below
@@ -337,14 +329,18 @@
   }
 }
 
-/* Reserves the control's space while the session resolves, so the navbar
-   doesn't jump when the menu or the login button appears. The width matches
-   the resolved control: icon only on small viewports, with a label above
-   900px. */
-.sessionPlaceholder {
-  display: inline-block;
+/* Every session state reserves the same horizontal footprint, so the navbar
+   doesn't jump when the session resolves. The actual avatar remains aligned
+   to the right edge of that footprint on desktop. */
+.sessionControl {
+  display: inline-flex;
+  justify-content: flex-end;
   width: 44px;
-  height: 40px;
+  flex-shrink: 0;
+}
+
+.sessionPlaceholder {
+  height: 44px;
 }
 
 /* Always light-card styled, independent of the navbar's own background —
@@ -507,6 +503,10 @@
 /* Account-menu entries that only exist to cover destinations the bottom
    bar has no room for (Historial). On desktop they're already in `.nav`. */
 @media (min-width: 900px) {
+  .sessionControl {
+    width: 128px;
+  }
+
   .mobileOnlyOption {
     display: none;
   }
@@ -522,8 +522,7 @@
   }
 
   .sessionPlaceholder {
-    width: 128px;
-    height: 40px;
+    height: 44px;
   }
 
   .mobileNav {
@@ -568,33 +567,6 @@
   max-width: var(--max-w);
   margin-inline: auto;
   padding: var(--page-pad-top) var(--s-4) var(--page-pad-bottom);
-}
-
-/* ── Centered shell: 404 ───────────────────────────────────────────
-   Session screens (login, signup, password recovery) moved to
-   AuthSplitShell; this dark blurred-card shell is only 404's now. */
-.centeredScreen {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--s-5);
-  padding: var(--s-7) var(--s-4);
-  background: var(--char);
-}
-
-.centeredCard {
-  width: 100%;
-  max-width: 420px;
-  padding: var(--s-6);
-  border: 1px solid var(--hairline-dark);
-  border-radius: var(--r-card);
-  background: color-mix(in srgb, var(--char-surface) 88%, transparent);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  box-shadow: var(--shadow-card-dark);
-  color: var(--fg-on-dark);
 }
 
 /* ── Pending-implementation screen ──────────────────────────────── */

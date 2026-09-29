@@ -69,5 +69,12 @@ export const USER_LINKS: readonly NavigationLink[] = [
   { href: ROUTES.security, label: "Seguridad", icon: "lock" },
 ];
 
+/** Role-specific account-menu entry for users who can access administration. */
+export const ADMIN_USER_LINK: NavigationLink = {
+  href: ROUTES.admin,
+  label: "Panel de control",
+  icon: "layout-dashboard",
+};
+
 /** Account-menu entries shown only below 900px, where `.nav` is hidden. */
 export const MOBILE_USER_LINKS: readonly NavigationLink[] = [HISTORY_LINK];
