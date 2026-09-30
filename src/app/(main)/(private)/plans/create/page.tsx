@@ -9,7 +9,7 @@ import { ROUTES } from "@/lib/routes";
 import styles from "../plans.module.css";
 
 export const metadata: Metadata = {
-  title: "Crear plan",
+  title: "Crear un plan",
 };
 
 export default function CreatePlanPage() {
@@ -22,7 +22,7 @@ export default function CreatePlanPage() {
         </Link>
         <p className={`sp-label ${styles.eyebrow}`}>Nuevo plan</p>
         <h1 id="create-plan-title" className="sp-h2">
-          Crear plan
+          Crear un plan
         </h1>
         <p className={`sp-body ${styles.lead}`}>
           Ponele nombre, decidí para cuántas personas es y sumale las

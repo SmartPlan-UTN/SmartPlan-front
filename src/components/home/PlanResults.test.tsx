@@ -4,17 +4,16 @@ import { useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@/lib/api";
-import type { PlanDetailResult, PlanSelectionResult } from "@/types";
+import { outingCreation } from "@/test/fixtures/outings";
+import type { PlanDetailResult } from "@/types";
 
 import { PlanResults } from "./PlanResults";
 
-const selectPlan = vi.hoisted(() => vi.fn());
-const deselectPlan = vi.hoisted(() => vi.fn());
+const createOuting = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/api")>()),
-  selectPlan,
-  deselectPlan,
+  createOuting,
 }));
 
 // The real map loads the Google Maps JS API from a CDN script — not
@@ -59,6 +58,10 @@ const PLAN: PlanDetailResult = {
   activityNames: ["Degustación guiada", "Almuerzo entre viñedos"],
   status: { key: "generated", name: "Generated" },
   viewerPlanState: "selectable",
+  activeOutingId: null,
+  kind: "generated",
+  visibility: "private",
+  ownedByViewer: true,
   details: [
     {
       id: 1,
@@ -264,30 +267,17 @@ describe("PlanResults (CU19 surprise)", () => {
 });
 
 /**
- * CU22 — marking (and un-marking) the intent to do a plan. Reversible, no
- * modal: "Lo voy a hacer" fires the PATCH directly; "Ya no lo voy a hacer"
- * fires the DELETE. `selected` shows only after the backend confirms.
+ * CU22, #130 — "Lo voy a hacer" adds the result to Mis salidas once. No
+ * modal, no undo on the card: the button is disabled while it saves, then
+ * the card reads "Agregado a Mis salidas" with a link to the outing.
  */
-describe("PlanResults (CU22 — plan intent)", () => {
-  const selectedResult: PlanSelectionResult = {
-    id: 7,
-    planRequestId: 3,
-    status: { key: "selected", name: "Elegido" },
-    viewerPlanState: "selected",
-  };
-  const generatedResult: PlanSelectionResult = {
-    id: 7,
-    planRequestId: 3,
-    status: { key: "generated", name: "Generado" },
-    viewerPlanState: "selectable",
-  };
-
+describe("PlanResults (CU22 — Lo voy a hacer)", () => {
   const twoPlans: PlanDetailResult[] = [
     PLAN,
     { ...PLAN, id: 8, title: "Otra tarde" },
   ];
 
-  /** Mirrors what LandingHero does: applies the backend result in place. */
+  /** Mirrors what LandingHero does: applies the outing in place. */
   function Harness({
     initial,
     onReconcile,
@@ -301,17 +291,13 @@ describe("PlanResults (CU22 — plan intent)", () => {
         plans={plans}
         onAdjust={vi.fn()}
         onDiscard={vi.fn()}
-        onPlanSelected={(result) =>
+        onPlanSelected={(planId, outingId) =>
           setPlans((current) =>
-            current.map((plan) => {
-              if (plan.id === result.id)
-                return {
-                  ...plan,
-                  status: result.status,
-                  viewerPlanState: result.viewerPlanState ?? plan.viewerPlanState,
-                };
-              return plan;
-            }),
+            current.map((plan) =>
+              plan.id === planId
+                ? { ...plan, viewerPlanState: "selected", activeOutingId: outingId }
+                : plan,
+            ),
           )
         }
         onSelectionReconcile={onReconcile ?? vi.fn()}
@@ -321,11 +307,10 @@ describe("PlanResults (CU22 — plan intent)", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    selectPlan.mockResolvedValue(selectedResult);
-    deselectPlan.mockResolvedValue(generatedResult);
+    createOuting.mockResolvedValue(outingCreation({ id: 40 }));
   });
 
-  it("marks a plan with one direct PATCH — no modal — and shows the resolved state", async () => {
+  it("adds the plan to Mis salidas with one direct call — no modal", async () => {
     const user = userEvent.setup();
     render(<Harness initial={twoPlans} />);
 
@@ -334,62 +319,53 @@ describe("PlanResults (CU22 — plan intent)", () => {
     );
 
     await waitFor(() =>
-      expect(screen.getByText("Lo vas a hacer")).toBeInTheDocument(),
+      expect(screen.getByText("Agregado a Mis salidas")).toBeInTheDocument(),
     );
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(selectPlan).toHaveBeenCalledOnce();
-    expect(selectPlan).toHaveBeenCalledWith(7);
+    expect(createOuting).toHaveBeenCalledOnce();
+    expect(createOuting).toHaveBeenCalledWith(7);
     expect(
-      screen.getByText(/marcamos .* como uno que vas a hacer/i),
-    ).toBeInTheDocument();
+      screen.getByRole("link", { name: /ver en mis salidas/i }),
+    ).toHaveAttribute("href", "/outings/40");
+    expect(screen.getByText(/agregamos .* a mis salidas/i)).toBeInTheDocument();
     // The other alternative is untouched — still its own "Lo voy a hacer".
     expect(
       screen.getAllByRole("button", { name: /^lo voy a hacer$/i }),
     ).toHaveLength(1);
+    // No way back from the card: that is Mis salidas' job.
     expect(
-      screen.getByRole("button", { name: /ya no lo voy a hacer/i }),
-    ).toBeInTheDocument();
+      screen.queryByRole("button", { name: /ya no lo voy a hacer/i }),
+    ).not.toBeInTheDocument();
   });
 
-  it("un-marks a plan with a direct DELETE", async () => {
-    const user = userEvent.setup();
-    render(
-      <Harness
-        initial={[{ ...PLAN, viewerPlanState: "selected" }]}
-      />,
+  it("disables the button while saving and never double-submits", async () => {
+    let release!: () => void;
+    createOuting.mockReturnValue(
+      new Promise((resolve) => {
+        release = () => resolve(outingCreation({ id: 40 }));
+      }),
     );
-
-    await user.click(
-      screen.getByRole("button", { name: /ya no lo voy a hacer/i }),
-    );
-
-    await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: /^lo voy a hacer$/i }),
-      ).toBeInTheDocument(),
-    );
-    expect(deselectPlan).toHaveBeenCalledOnce();
-    expect(deselectPlan).toHaveBeenCalledWith(7);
-  });
-
-  it("does not double-submit on a double click", async () => {
     const user = userEvent.setup();
     render(<Harness initial={[PLAN]} />);
 
     const button = screen.getByRole("button", { name: /^lo voy a hacer$/i });
     await user.dblClick(button);
 
-    await waitFor(() => expect(selectPlan).toHaveBeenCalled());
-    expect(selectPlan).toHaveBeenCalledTimes(1);
+    expect(button).toBeDisabled();
+    expect(createOuting).toHaveBeenCalledTimes(1);
+    release();
+    await waitFor(() =>
+      expect(screen.getByText("Agregado a Mis salidas")).toBeInTheDocument(),
+    );
   });
 
   it("reconciles from the server on a 409 and reports it", async () => {
-    selectPlan.mockRejectedValue(
+    createOuting.mockRejectedValue(
       new ApiError({
         message: "x",
         type: "HTTP",
         status: 409,
-        code: "PLAN_REQUEST_ALREADY_ADVANCED",
+        code: "PLAN_NOT_ACTIONABLE",
       }),
     );
     const onReconcile = vi.fn();
@@ -403,7 +379,7 @@ describe("PlanResults (CU22 — plan intent)", () => {
   });
 
   it("reports a network error without changing the card", async () => {
-    selectPlan.mockRejectedValue(
+    createOuting.mockRejectedValue(
       new ApiError({ message: "sin red", type: "NETWORK" }),
     );
     const user = userEvent.setup();
@@ -413,30 +389,29 @@ describe("PlanResults (CU22 — plan intent)", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText(/no pudimos guardar el cambio/i),
+        screen.getByText(/no pudimos agregarlo a mis salidas/i),
       ).toBeInTheDocument(),
     );
-    // Still offering to mark it — nothing was applied.
     expect(
       screen.getByRole("button", { name: /^lo voy a hacer$/i }),
-    ).toBeInTheDocument();
+    ).toBeEnabled();
   });
 
-  it("shows the resolved state for an alternative that is already marked", () => {
+  it("shows an alternative already chosen as added, linking to its outing", () => {
     render(
       <PlanResults
-        plans={[{ ...PLAN, viewerPlanState: "selected" }]}
+        plans={[{ ...PLAN, viewerPlanState: "selected", activeOutingId: 55 }]}
         onAdjust={vi.fn()}
         onDiscard={vi.fn()}
       />,
     );
 
-    expect(screen.getByText("Lo vas a hacer")).toBeInTheDocument();
+    expect(screen.getByText("Agregado a Mis salidas")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /ver en mis salidas/i }),
+    ).toHaveAttribute("href", "/outings/55");
     expect(
       screen.queryByRole("button", { name: /^lo voy a hacer$/i }),
     ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /ya no lo voy a hacer/i }),
-    ).toBeInTheDocument();
   });
 });

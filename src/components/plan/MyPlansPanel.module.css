@@ -269,3 +269,30 @@
     gap: var(--s-2);
   }
 }
+
+/* ── Visibility (#130) ─────────────────────────────────────── */
+.visibilityRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+
+.visibilityBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: var(--r-chip);
+  background: color-mix(in srgb, var(--fg-3) 16%, transparent);
+  color: var(--fg-2);
+  font-size: var(--t-label);
+  font-weight: var(--w-label);
+  letter-spacing: 0.02em;
+}
+
+.visibilityPublic {
+  background: var(--success-15);
+  color: var(--success);
+}

@@ -6,11 +6,12 @@ import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
 
 import { Icon, LoadingDots, Logo, MoodBackground } from "@/components/ui";
-import { isActiveRoute, ROUTES } from "@/lib/routes";
+import { isActiveRoute, ROUTES, START_COMPOSER_EVENT } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 import { NavLink } from "./NavLink";
-import { CREATE_PLAN_LINK, MAIN_LINKS, MOBILE_LINKS } from "./links";
+import { MAIN_LINKS, MOBILE_LINKS, PLAN_OUTING_LINK } from "./links";
+import { NotificationBell } from "./NotificationBell";
 import { UserMenu } from "./UserMenu";
 import styles from "./layout.module.css";
 
@@ -21,9 +22,10 @@ const EXPLORE_TRANSITION_MS = 900;
 
 /**
  * The one bottom-bar tab that owns the current route. `isActiveRoute` alone
- * isn't enough there: `/plans/create` also falls inside `/plans`, which lit
- * up Crear plan and Mis planes at once. The longest matching `href` wins, so
- * a nested destination with its own tab takes precedence over its parent.
+ * isn't enough there: a nested destination with its own tab must take
+ * precedence over its parent, so the longest matching `href` wins.
+ * "Planificar" carries a query string, so it never claims a route: no bottom
+ * tab stays active while Inicio or its composer is open.
  */
 function activeMobileHref(currentRoute: string): string | undefined {
   return MOBILE_LINKS.filter((link) => isActiveRoute(currentRoute, link.href))
@@ -127,6 +129,14 @@ export function Navbar() {
     }, EXPLORE_TRANSITION_MS);
   }
 
+  // Already on Inicio: the URL would not change, so the landing never sees
+  // `?startComposer=1`. Ask it to focus the composer directly instead.
+  function handlePlanOutingClick(event: MouseEvent<HTMLAnchorElement>) {
+    if (currentRoute !== ROUTES.home) return;
+    event.preventDefault();
+    window.dispatchEvent(new Event(START_COMPOSER_EVENT));
+  }
+
   return (
     <>
       <header className={cn(styles.navbar, scrolled && styles.navbarScrolled)}>
@@ -148,11 +158,7 @@ export function Navbar() {
           </nav>
 
           <div className={styles.actions}>
-            <Link href={CREATE_PLAN_LINK.href} className={styles.createPlanNavBtn}>
-              <Icon name={CREATE_PLAN_LINK.icon} size={15} aria-hidden="true" />
-              {CREATE_PLAN_LINK.label}
-            </Link>
-
+            <NotificationBell />
             <UserMenu />
           </div>
         </div>
@@ -161,7 +167,7 @@ export function Navbar() {
       <nav className={styles.mobileNav} aria-label="Navegación móvil">
         {MOBILE_LINKS.map((link) => {
           const active = link.href === mobileActiveHref;
-          const isCreate = link.href === CREATE_PLAN_LINK.href;
+          const isCreate = link.href === PLAN_OUTING_LINK.href;
 
           return (
             <Link
@@ -173,7 +179,13 @@ export function Navbar() {
                 isCreate && styles.mobileNavCreate,
               )}
               aria-current={active ? "page" : undefined}
-              onClick={link.href === ROUTES.explore ? handleExploreClick : undefined}
+              onClick={
+                link.href === ROUTES.explore
+                  ? handleExploreClick
+                  : isCreate
+                    ? handlePlanOutingClick
+                    : undefined
+              }
             >
               <span className={styles.mobileNavIcon}>
                 <Icon name={link.icon} size={isCreate ? 22 : 20} aria-hidden="true" />

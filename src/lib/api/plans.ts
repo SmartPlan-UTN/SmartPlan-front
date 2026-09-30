@@ -10,7 +10,9 @@ import type {
   OwnPlanSummary,
   Plan,
   PlanSuggestionDto,
-  PlanSelectionResult,
+  PlanVisibility,
+  ActivitySuggestion,
+  ActivitySuggestionsParams,
 } from '@/types';
 import { apiClient } from './client';
 
@@ -63,14 +65,6 @@ export async function getOwnPlan(id: number): Promise<OwnPlanDetail> {
   return apiClient.get<OwnPlanDetail>(`/users/me/plans/${id}`);
 }
 
-export async function selectPlan(id: number): Promise<PlanSelectionResult> {
-  return apiClient.patch<PlanSelectionResult>(`/plans/${id}/select`);
-}
-
-export async function deselectPlan(id: number): Promise<PlanSelectionResult> {
-  return apiClient.delete<PlanSelectionResult>(`/plans/${id}/select`);
-}
-
 /**
  * Updates basic details of an owned plan (CU25).
  * Backend contract: `PATCH /users/me/plans/:id`.
@@ -98,12 +92,38 @@ export async function cancelOwnPlan(id: number): Promise<void> {
 }
 
 /**
- * The owner marks a plan as done ("Lo hice"), which makes its activities
- * ratable (CU44) and opens experience feedback (CU23). Idempotent.
- * Backend contract: `PATCH /users/me/plans/:id/complete`.
+ * Publishes an authored plan or makes it private again (#98). An empty plan
+ * cannot be published (`409 PLAN_EMPTY`).
+ * Backend contract: `PATCH /users/me/plans/:id/visibility`.
  */
-export async function completeOwnPlan(id: number): Promise<OwnPlanDetail> {
-  return apiClient.patch<OwnPlanDetail>(`/users/me/plans/${id}/complete`);
+export async function setOwnPlanVisibility(
+  id: number,
+  visibility: PlanVisibility
+): Promise<OwnPlanDetail> {
+  return apiClient.patch<OwnPlanDetail>(`/users/me/plans/${id}/visibility`, {
+    visibility,
+  });
+}
+
+/**
+ * "Recomendar actividades" in the plan editor (#98): catalog activities that
+ * match the plan's title and description, excluding the ones already added.
+ * Backend contract: `GET /activity-suggestions`.
+ */
+export async function suggestActivities({
+  title,
+  description,
+  excludeActivityIds = [],
+}: ActivitySuggestionsParams): Promise<{ data: ActivitySuggestion[] }> {
+  return apiClient.get<{ data: ActivitySuggestion[] }>('/activity-suggestions', {
+    params: {
+      title,
+      ...(description ? { description } : {}),
+      ...(excludeActivityIds.length > 0
+        ? { excludeActivityIds: excludeActivityIds.join(',') }
+        : {}),
+    },
+  });
 }
 
 /**

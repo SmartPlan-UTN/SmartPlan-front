@@ -505,11 +505,11 @@
   }
 }
 
-/* ── Intent toggle (CU22) ────────────────────────────────────────
-   The prominent control in the row. Same box in both states — same
-   size, same label ("Lo voy a hacer") — so a state change only
-   repaints: warm ember-tint fill when open (the design system's
-   `ghostEmber`), solid ember fill + check when marked (`primary`). */
+/* ── "Lo voy a hacer" (CU22, #130) ──────────────────────────────
+   The prominent control in the row. One-shot: the button (warm
+   ember-tint fill, the design system's `ghostEmber`) turns into the
+   "Agregado a Mis salidas" record once the outing exists; both share
+   the same box, so the swap never moves anything around it. */
 .statePanel {
   display: flex;
   flex: 0 1 auto;
@@ -623,7 +623,7 @@
   color: var(--fg-2);
 }
 
-/* State C (completed) — a quiet record, matching the toggle's box. */
+/* "Agregado a Mis salidas" — a quiet record, matching the button's box. */
 .stateRecord {
   display: flex;
   flex: 0 1 auto;
@@ -648,6 +648,36 @@
   display: flex;
   gap: var(--s-2);
   width: 100%;
+}
+
+.stateLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--fg-1);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.stateLink:hover {
+  color: var(--ember);
+}
+
+.stateLink:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.stateSpinner {
+  position: absolute;
+  inset: 0;
+  animation: sp-state-spin 900ms linear infinite;
+}
+
+@keyframes sp-state-spin {
+  to { transform: rotate(360deg); }
 }
 
 /* Mobile — intent toggle on top, Guardar/Compartir a full-width pair
@@ -680,6 +710,7 @@
 @media (prefers-reduced-motion: reduce) {
   .stateToggle,
   .toggleIcon,
+  .stateSpinner,
   .saveIconOn {
     animation: none;
     transition: none;
@@ -737,5 +768,25 @@
   border-radius: var(--r-card-sm);
   background: color-mix(in srgb, var(--warning) 12%, #fff);
   color: var(--fg-1);
+  font-size: var(--t-small);
+}
+
+/* ── Visibility of an authored plan (#130) ───────────────────── */
+.visibilityBox {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-top: var(--s-6);
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card-sm);
+  background: var(--surface-card);
+}
+
+.visibilityHint {
+  margin: var(--s-1) 0 0;
+  color: var(--fg-2);
   font-size: var(--t-small);
 }

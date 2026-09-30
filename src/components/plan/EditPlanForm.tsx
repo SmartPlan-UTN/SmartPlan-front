@@ -22,6 +22,7 @@ import type {
   OwnPlanDetailItem,
 } from "@/types";
 
+import { ActivitySuggestionsPanel } from "./ActivitySuggestionsPanel";
 import styles from "./plan-create.module.css";
 import activityStyles from "../activity/activity.module.css";
 
@@ -307,6 +308,13 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
 
   return (
     <div className={styles.container}>
+      <ActivitySuggestionsPanel
+        title={title}
+        description={description}
+        excludeActivityIds={details.map((item) => item.activity.id)}
+        onAdd={(activity) => void handleAddActivity(activity)}
+      />
+
       {/* LEFT: General details form */}
       <div>
         <div className={styles.card}>

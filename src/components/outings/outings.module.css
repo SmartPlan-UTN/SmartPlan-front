@@ -1,5 +1,5 @@
 /* ================================================================
-   CU23 · PAN 13 — Historial de planes
+   Mis salidas (CU22, CU23 · #130) — formerly Historial
    A personal record: past plans should read as "things I did", not
    as archived rows. The feedback layer (invite / rated) sits on top
    of an ordinary finished-plan card.
@@ -45,30 +45,16 @@
   transform: translateY(-2px);
 }
 
-/* Stretched link: the whole card navigates, but the feedback controls
-   sit above it and keep their own clicks. */
-.cardLink {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
+/* The summary is the navigation target; lifecycle and feedback controls
+   remain separate interactive siblings. */
+.cardMainLink {
+  color: inherit;
+  text-decoration: none;
   border-radius: inherit;
 }
-.cardLink:focus-visible {
+.cardMainLink:focus-visible {
   outline: 2px solid var(--ember);
   outline-offset: 2px;
-}
-
-.cardMain,
-.cardFeedback {
-  position: relative;
-  z-index: 1;
-}
-
-.cardFeedback {
-  pointer-events: none;
-}
-.cardFeedback > * {
-  pointer-events: auto;
 }
 
 .cardHead {
@@ -198,10 +184,10 @@
     )
     var(--surface-card);
   background-size: 220% 100%;
-  animation: sp-history-shimmer 1.4s ease-in-out infinite;
+  animation: sp-outings-shimmer 1.4s ease-in-out infinite;
 }
 
-@keyframes sp-history-shimmer {
+@keyframes sp-outings-shimmer {
   to { background-position: -120% 0; }
 }
 
@@ -279,5 +265,97 @@
     animation: none;
     transition: none;
     transform: none;
+  }
+}
+
+/* ── Mis salidas (#130) ─────────────────────────────────────── */
+.tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s-6);
+  margin-top: var(--s-5);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--s-1);
+  border: 0;
+  background: none;
+  color: var(--fg-2);
+  font-family: inherit;
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.tab:hover,
+.tabActive {
+  color: var(--fg-1);
+}
+
+.tabActive::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 3px;
+  border-radius: var(--r-chip) var(--r-chip) 0 0;
+  background: var(--ember);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0;
+  color: var(--success);
+  font-size: var(--t-small);
+}
+
+.noticeWarn {
+  color: var(--fg-2);
+}
+
+.route {
+  margin: var(--s-2) 0 0;
+  color: var(--fg-2);
+  font-size: var(--t-small);
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.stateCta {
+  margin-top: var(--s-2);
+}
+
+@media (max-width: 560px) {
+  .tabs {
+    justify-content: space-between;
+    gap: var(--s-2);
+    margin-top: var(--s-4);
+  }
+
+  .tab {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .cardActions > * {
+    flex: 1 1 auto;
   }
 }

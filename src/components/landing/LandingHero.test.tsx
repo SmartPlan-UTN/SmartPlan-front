@@ -96,7 +96,7 @@ describe("LandingHero", () => {
     const { onSubmit } = renderHero();
 
     await user.type(screen.getByLabelText(FIELD), "algo tranquilo");
-    await user.click(screen.getByRole("button", { name: "Planificar" }));
+    await user.click(screen.getByRole("button", { name: "Planificar una salida" }));
 
     expect(onSubmit).toHaveBeenCalledWith("algo tranquilo", {});
   });

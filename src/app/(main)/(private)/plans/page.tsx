@@ -18,18 +18,18 @@ export default function MyPlansPage() {
       <header className={styles.header}>
         <div className={styles.headerRow}>
           <div className="sp-page-intro">
-            <p className="sp-label sp-page-kicker">Tus recorridos</p>
+            <p className="sp-label sp-page-kicker">Lo que creaste</p>
             <h1 id="my-plans-title" className="sp-page-title">
               Mis <span className="sp-page-title-accent">planes</span>
             </h1>
             <p className="sp-page-lead">
-              Los planes que armaste, con su itinerario, su duración y lo que
-              sale cada uno.
+              Los planes que creaste vos, privados o públicos. Los que elegiste
+              hacer están en Mis salidas.
             </p>
           </div>
           <Link href={ROUTES.createPlan} className={styles.createButton}>
             <Icon name="plus" size={16} aria-hidden="true" />
-            Crear plan
+            Crear un plan
           </Link>
         </div>
       </header>

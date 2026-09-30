@@ -18,7 +18,8 @@ export const ROUTES = {
   favorites: "/favorites",
   collections: "/collections",
   createCollection: "/collections/new",
-  history: "/history",
+  /** "Mis salidas" (CU22, CU23): outings to do and done. */
+  outings: "/outings",
   profile: "/profile",
   preferences: "/preferences",
   security: "/security",
@@ -52,6 +53,35 @@ export function planDetailRoute(id: number): string {
 export function planRequestRoute(id: number): string {
   return `${ROUTES.planRequests}/${id}`;
 }
+
+/** `/outings/:id` — one outing of "Mis salidas" (CU22, CU23). */
+export function outingDetailRoute(id: number): string {
+  return `${ROUTES.outings}/${id}`;
+}
+
+/** The tabs of "Mis salidas", selected through `?tab=`. */
+export type OutingsTab = "to-do" | "completed";
+
+/** `/outings?tab=completed` — a given tab of "Mis salidas". */
+export function outingsTabRoute(tab: OutingsTab): string {
+  return tab === "to-do" ? ROUTES.outings : `${ROUTES.outings}?tab=${tab}`;
+}
+
+/**
+ * Query parameter that makes Inicio focus the "Planificar" composer on
+ * arrival — the main feature, reachable from the bottom bar and from other
+ * screens.
+ */
+export const START_COMPOSER_PARAM = "startComposer";
+
+/** `/?startComposer=1` — Inicio with the "Planificar" composer focused. */
+export const PLAN_COMPOSER_ROUTE = `${ROUTES.home}?${START_COMPOSER_PARAM}=1`;
+
+/**
+ * Fired on `window` when "Planificar" is chosen while Inicio is already on
+ * screen: the URL doesn't change, so the landing listens for this instead.
+ */
+export const START_COMPOSER_EVENT = "smartplan:start-composer";
 
 /** `/plans/:id/edit` — edit an owned plan (CU25). */
 export function planEditRoute(id: number): string {

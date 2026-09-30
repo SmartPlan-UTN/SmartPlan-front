@@ -1,44 +1,22 @@
 /**
- * Copy for marking the intent to do a plan (CU22). Everyday, reversible tone,
- * shared by the results rail (PAN 11) and the plan detail (PAN 17).
+ * Copy for "Lo voy a hacer" (CU22, #130), shared by the results rail
+ * (PAN 11) and the plan detail (PAN 17). One-shot: choosing a plan adds an
+ * outing to "Mis salidas"; there is no undo here — an outing is cancelled
+ * from Mis salidas, with a confirmation.
  *
  * Forbidden: "Elegir este plan", "Sí, este es", "Tu plan elegido",
  * "¿Está seguro…?", "Powered by AI" — anything that sounds definitive.
  */
 export const PLAN_SELECTION = {
-  results: {
-    intend: "Lo voy a hacer",
-    intended: "Lo vas a hacer", // preceded by a ✓
-    undo: "Ya no lo voy a hacer",
-    viewChosen: "Ver plan",
-    announceOn: (title: string) =>
-      `Marcamos «${title}» como uno que vas a hacer.`,
-    announceOff: (title: string) => `Sacamos «${title}» de tus planes.`,
-  },
-  detail: {
-    intend: "Lo voy a hacer",
-    intended: "Lo vas a hacer",
-    undo: "Ya no lo voy a hacer",
-    /** State C (CU23): the plan already happened. Reads as a record, not a CTA. */
-    completed: "Hiciste este plan",
-    /** Owner only (CU23/CU44): replaces the intent toggle on an own plan. */
-    complete: "Lo hice",
-    completeDialog: {
-      title: "¿Ya hiciste este plan?",
-      body: "Lo vamos a marcar como realizado. Después vas a poder valorar sus actividades y contarnos cómo te fue.",
-      confirm: "Sí, lo hice",
-      confirming: "Guardando...",
-      cancel: "Volver",
-    },
-    announceCompleted: "Marcamos el plan como realizado.",
-    announceOn: "Lo marcamos como un plan que vas a hacer.",
-    announceOff: "Lo sacamos de tus planes.",
-  },
+  intend: "Lo voy a hacer",
+  /** Shown instead of the button once the outing exists (preceded by a ✓). */
+  added: "Agregado a Mis salidas",
+  viewOuting: "Ver en Mis salidas",
+  announceAdded: (title: string) => `Agregamos «${title}» a Mis salidas.`,
   error: {
     /** The plan's real state changed on the server; the view was reconciled. */
     reconciled: "Este plan cambió de estado. Lo actualizamos.",
     /** Network / unknown: nothing was saved, the control stays as it was. */
-    retry: "No pudimos guardar el cambio. Probá de nuevo.",
-    completeFailed: "No pudimos marcar el plan como realizado. Probá de nuevo.",
+    retry: "No pudimos agregarlo a Mis salidas. Probá de nuevo.",
   },
 } as const;
