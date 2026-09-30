@@ -99,6 +99,19 @@ describe("OutingsView — Mis salidas (#130, CU22, CU23)", () => {
     expect(replaceState).toHaveBeenCalledWith(null, "", "/outings?tab=completed");
   });
 
+  it("makes the outing summary itself the link to its detail", async () => {
+    serve({ to_do: [toDo()], completed: [] });
+    render(<OutingsView />);
+
+    const detailLink = await screen.findByRole("link", {
+      name: "Ver Tarde de vinos en Luján",
+    });
+    expect(detailLink).toHaveAttribute("href", "/outings/1");
+    expect(detailLink).toContainElement(
+      screen.getByRole("heading", { name: "Tarde de vinos en Luján" }),
+    );
+  });
+
   it("opens on Realizadas when asked to, and follows a later link to a tab", async () => {
     serve({ to_do: [toDo()], completed: [done()] });
     const { rerender } = render(<OutingsView initialTab="completed" />);

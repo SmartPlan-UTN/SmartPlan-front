@@ -45,30 +45,16 @@
   transform: translateY(-2px);
 }
 
-/* Stretched link: the whole card navigates, but the feedback controls
-   sit above it and keep their own clicks. */
-.cardLink {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
+/* The summary is the navigation target; lifecycle and feedback controls
+   remain separate interactive siblings. */
+.cardMainLink {
+  color: inherit;
+  text-decoration: none;
   border-radius: inherit;
 }
-.cardLink:focus-visible {
+.cardMainLink:focus-visible {
   outline: 2px solid var(--ember);
   outline-offset: 2px;
-}
-
-.cardMain,
-.cardFeedback {
-  position: relative;
-  z-index: 1;
-}
-
-.cardFeedback {
-  pointer-events: none;
-}
-.cardFeedback > * {
-  pointer-events: auto;
 }
 
 .cardHead {
@@ -347,10 +333,7 @@
   font-size: var(--t-small);
 }
 
-/* Same stacking as `.cardFeedback`: above the stretched link. */
 .cardActions {
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-wrap: wrap;
   gap: var(--s-2);

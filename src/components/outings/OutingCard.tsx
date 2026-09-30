@@ -60,48 +60,48 @@ export function OutingCard({
     <article className={styles.card}>
       <Link
         href={outingDetailRoute(outing.id)}
-        className={styles.cardLink}
+        className={styles.cardMainLink}
         aria-label={`Ver ${outing.title}`}
-      />
+      >
+        <div className={styles.cardMain}>
+          <div className={styles.cardHead}>
+            <p className={styles.date}>
+              {done ? OUTINGS_COPY.doneOn : OUTINGS_COPY.chosenOn}{" "}
+              {dateFormatter.format(new Date(when))}
+            </p>
+            <h3 className={styles.cardTitle}>{outing.title}</h3>
+          </div>
 
-      <div className={styles.cardMain}>
-        <div className={styles.cardHead}>
-          <p className={styles.date}>
-            {done ? OUTINGS_COPY.doneOn : OUTINGS_COPY.chosenOn}{" "}
-            {dateFormatter.format(new Date(when))}
-          </p>
-          <h3 className={styles.cardTitle}>{outing.title}</h3>
-        </div>
-
-        <div className={styles.meta}>
-          {done ? (
-            <span className={styles.statusPill}>
-              <Icon name="circle-check" size={12} aria-hidden="true" />
-              {OUTINGS_COPY.completedPill}
-            </span>
-          ) : null}
-          <Badge variant="cost">{formatArs(outing.estimatedTotalCost)}</Badge>
-          <span className={styles.metaItem}>
-            <Icon name="route" size={13} aria-hidden="true" />
-            {outing.activityCount}{" "}
-            {outing.activityCount === 1 ? "actividad" : "actividades"}
-          </span>
-          {outing.source && !outing.source.available ? (
+          <div className={styles.meta}>
+            {done ? (
+              <span className={styles.statusPill}>
+                <Icon name="circle-check" size={12} aria-hidden="true" />
+                {OUTINGS_COPY.completedPill}
+              </span>
+            ) : null}
+            <Badge variant="cost">{formatArs(outing.estimatedTotalCost)}</Badge>
             <span className={styles.metaItem}>
-              <Icon name="info" size={13} aria-hidden="true" />
-              {OUTINGS_COPY.sourceUnavailable}
+              <Icon name="route" size={13} aria-hidden="true" />
+              {outing.activityCount}{" "}
+              {outing.activityCount === 1 ? "actividad" : "actividades"}
             </span>
+            {outing.source && !outing.source.available ? (
+              <span className={styles.metaItem}>
+                <Icon name="info" size={13} aria-hidden="true" />
+                {OUTINGS_COPY.sourceUnavailable}
+              </span>
+            ) : null}
+          </div>
+
+          {outing.activityNames.length > 0 ? (
+            <p className={styles.route}>{outing.activityNames.join(" → ")}</p>
+          ) : null}
+
+          {rated ? (
+            <RatedLine feedback={rated} estimated={outing.estimatedTotalCost} />
           ) : null}
         </div>
-
-        {outing.activityNames.length > 0 ? (
-          <p className={styles.route}>{outing.activityNames.join(" → ")}</p>
-        ) : null}
-
-        {rated ? (
-          <RatedLine feedback={rated} estimated={outing.estimatedTotalCost} />
-        ) : null}
-      </div>
+      </Link>
 
       {showInvite ? (
         <div className={styles.cardFeedback}>

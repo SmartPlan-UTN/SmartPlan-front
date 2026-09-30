@@ -78,11 +78,10 @@ export function LandingScreen() {
 
   // "Planificar" pressed while Inicio is already on screen (see Navbar).
   useEffect(() => {
-    if (!authenticated) return;
     const onStart = () => handleStartPlan();
     window.addEventListener(START_COMPOSER_EVENT, onStart);
     return () => window.removeEventListener(START_COMPOSER_EVENT, onStart);
-  }, [authenticated]);
+  }, []);
 
   /**
    * Other entry points (the mobile bar's "Planificar" tab, the empty states
@@ -100,12 +99,12 @@ export function LandingScreen() {
     if (new URLSearchParams(window.location.search).get(START_COMPOSER_PARAM) !== "1") {
       return;
     }
-    if (!authenticated || planning.phase !== "idle") return;
+    if (planning.phase !== "idle") return;
 
     handleStartPlan();
     router.replace(pathname);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authenticated, planning.phase]);
+  }, [planning.phase]);
 
   useEffect(() => {
     if (planning.planRequestId == null || planning.phase === "idle") return;
