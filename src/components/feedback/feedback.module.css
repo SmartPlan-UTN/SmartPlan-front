@@ -584,6 +584,102 @@
   line-height: 1.55;
 }
 
+.successMessage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+/* Optional follow-up: rate the activities of the outing just reviewed. */
+.offer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  width: min(100%, 420px);
+  margin-top: var(--s-4);
+  padding: var(--s-5) var(--s-4) var(--s-4);
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--gold) 8%, var(--cream));
+  animation: feedback-reveal 220ms var(--ease-out) both;
+}
+
+.offerQuestion {
+  margin: 0;
+  color: var(--fg-1);
+  font-size: var(--t-body-lg);
+  font-weight: var(--w-heading);
+}
+
+.offerBody {
+  max-width: 34ch;
+  margin: 0;
+  color: var(--fg-2);
+  font-size: var(--t-small);
+  line-height: 1.5;
+}
+
+.offerActions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--s-1);
+  width: 100%;
+  margin-top: var(--s-2);
+}
+
+.activityList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activityRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-4);
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--ember) 5%, var(--cream));
+}
+
+.activityRow[data-done="true"] {
+  background: color-mix(in srgb, var(--gold) 8%, var(--cream));
+}
+
+.activityHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-1) var(--s-3);
+}
+
+.activityName {
+  margin: 0;
+  color: var(--fg-1);
+  font-size: var(--t-body);
+  font-weight: var(--w-heading);
+}
+
+.activityDone {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--fg-3);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+}
+
+.activityComment {
+  display: flex;
+  flex-direction: column;
+}
+
 /* Contextual invite: deliberately preserved as the light PAN13/PAN17 entry. */
 .invite {
   display: flex;
