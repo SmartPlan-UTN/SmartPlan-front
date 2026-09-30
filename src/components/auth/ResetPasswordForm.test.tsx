@@ -12,8 +12,8 @@ vi.mock("@/lib/auth/api", () => ({
 }));
 
 async function fillMatchingPasswords(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByLabelText("Contraseña nueva"), "a-valid-password");
-  await user.type(screen.getByLabelText("Confirmar contraseña"), "a-valid-password");
+  await user.type(screen.getByLabelText("Contraseña nueva"), "Abcdef1!");
+  await user.type(screen.getByLabelText("Confirmar contraseña"), "Abcdef1!");
 }
 
 describe("ResetPasswordForm", () => {
@@ -53,8 +53,8 @@ describe("ResetPasswordForm", () => {
     const user = userEvent.setup();
     render(<ResetPasswordForm token="a-recovery-token" />);
 
-    await user.type(screen.getByLabelText("Contraseña nueva"), "a-valid-password");
-    await user.type(screen.getByLabelText("Confirmar contraseña"), "another-password");
+    await user.type(screen.getByLabelText("Contraseña nueva"), "Abcdef1!");
+    await user.type(screen.getByLabelText("Confirmar contraseña"), "Another2@");
     await user.click(
       screen.getByRole("button", { name: "Actualizar contraseña" }),
     );
@@ -80,7 +80,7 @@ describe("ResetPasswordForm", () => {
     ).toBeInTheDocument();
     expect(resetPassword).toHaveBeenCalledWith({
       token: "a-recovery-token",
-      newPassword: "a-valid-password",
+      newPassword: "Abcdef1!",
     });
     expect(screen.getByRole("link", { name: "Iniciar sesión" })).toHaveAttribute(
       "href",
@@ -88,13 +88,13 @@ describe("ResetPasswordForm", () => {
     );
   });
 
-  it("accepts the backend minimum password length", async () => {
+  it("accepts a valid password at the minimum length", async () => {
     vi.mocked(resetPassword).mockResolvedValueOnce(undefined);
     const user = userEvent.setup();
     render(<ResetPasswordForm token="a-recovery-token" />);
 
-    await user.type(screen.getByLabelText("Contraseña nueva"), "12345678");
-    await user.type(screen.getByLabelText("Confirmar contraseña"), "12345678");
+    await user.type(screen.getByLabelText("Contraseña nueva"), "Abcdef1!");
+    await user.type(screen.getByLabelText("Confirmar contraseña"), "Abcdef1!");
     await user.click(
       screen.getByRole("button", { name: "Actualizar contraseña" }),
     );
@@ -102,8 +102,30 @@ describe("ResetPasswordForm", () => {
     expect(await screen.findByText("¡Contraseña actualizada!")).toBeInTheDocument();
     expect(resetPassword).toHaveBeenCalledWith({
       token: "a-recovery-token",
-      newPassword: "12345678",
+      newPassword: "Abcdef1!",
     });
+  });
+
+  it("shows the shared mandatory requirements and rejects missing complexity", async () => {
+    const user = userEvent.setup();
+    render(<ResetPasswordForm token="a-recovery-token" />);
+
+    expect(
+      screen.getByRole("list", {
+        name: "Requisitos obligatorios de la contraseña",
+      }),
+    ).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("Contraseña nueva"), "abcdef1!");
+    await user.type(screen.getByLabelText("Confirmar contraseña"), "abcdef1!");
+    await user.click(
+      screen.getByRole("button", { name: "Actualizar contraseña" }),
+    );
+
+    expect(
+      await screen.findByText("La contraseña debe incluir al menos una mayúscula"),
+    ).toBeInTheDocument();
+    expect(resetPassword).not.toHaveBeenCalled();
   });
 
   it.each([

@@ -21,7 +21,7 @@ vi.mock("@/lib/api", async () => {
   return { ...actual, changePassword };
 });
 
-/** Satisfies all three requirements (8+ chars, uppercase, digit + symbol) so
+/** Satisfies all mandatory requirements (length, uppercase, digit and symbol) so
  * a success path doesn't accidentally get blocked by the same validation
  * the failure-path tests exercise on purpose. */
 const VALID_NEW_PASSWORD = "Passw0rd!123";
@@ -131,18 +131,18 @@ describe("ChangePasswordForm", () => {
     expect(changePassword).not.toHaveBeenCalled();
   });
 
-  it("rejects a new password missing a digit or symbol before calling the API", async () => {
+  it("rejects a new password missing a digit before calling the API", async () => {
     const user = userEvent.setup();
     renderForm();
 
     await openForm(user);
     await user.type(screen.getByLabelText("Contraseña actual"), "a-current-password");
-    await user.type(screen.getByLabelText("Contraseña nueva"), "OnlyLetters");
-    await user.type(screen.getByLabelText("Confirmar contraseña nueva"), "OnlyLetters");
+    await user.type(screen.getByLabelText("Contraseña nueva"), "OnlyLetters!");
+    await user.type(screen.getByLabelText("Confirmar contraseña nueva"), "OnlyLetters!");
     await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
     expect(
-      await screen.findByText("La contraseña debe incluir números y símbolos"),
+      await screen.findByText("La contraseña debe incluir al menos un número"),
     ).toBeInTheDocument();
     expect(changePassword).not.toHaveBeenCalled();
   });
@@ -196,12 +196,14 @@ describe("ChangePasswordForm", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("shows the minimum-length requirement as met once it's satisfied", async () => {
+  it("shows the length requirement as met once it's satisfied", async () => {
     const user = userEvent.setup();
     renderForm();
 
     await openForm(user);
-    const requirementRow = screen.getByText("Mínimo 8 caracteres").closest("li");
+    const requirementRow = screen
+      .getByText("Entre 8 y 128 caracteres")
+      .closest("li");
     expect(requirementRow).not.toBeNull();
 
     const newPasswordInput = screen.getByLabelText("Contraseña nueva");
@@ -212,20 +214,25 @@ describe("ChangePasswordForm", () => {
     expect(requirementRow?.querySelector("svg")).toBeTruthy();
   });
 
-  it("shows the uppercase/digit+symbol rows as met once satisfied", async () => {
+  it("shows each complexity requirement as met once satisfied", async () => {
     const user = userEvent.setup();
     renderForm();
 
     await openForm(user);
     const uppercaseRow = screen.getByText("Al menos una mayúscula").closest("li");
-    const symbolRow = screen.getByText("Incluir números y símbolos").closest("li");
+    const digitRow = screen.getByText("Al menos un número").closest("li");
+    const symbolRow = screen
+      .getByText("Al menos un símbolo (!@#$%^&*)")
+      .closest("li");
 
     await user.type(screen.getByLabelText("Contraseña nueva"), "lowercase-only-password");
     expect(uppercaseRow?.querySelector("svg")).toBeFalsy();
+    expect(digitRow?.querySelector("svg")).toBeFalsy();
     expect(symbolRow?.querySelector("svg")).toBeFalsy();
 
     await user.type(screen.getByLabelText("Contraseña nueva"), VALID_NEW_PASSWORD);
     expect(uppercaseRow?.querySelector("svg")).toBeTruthy();
+    expect(digitRow?.querySelector("svg")).toBeTruthy();
     expect(symbolRow?.querySelector("svg")).toBeTruthy();
   });
 
