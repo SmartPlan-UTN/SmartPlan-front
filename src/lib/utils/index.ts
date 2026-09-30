@@ -3,6 +3,7 @@
  */
 
 export { cn } from "./cn";
+export { formatAbsoluteDateTime } from "./absolute-date-time";
 export { formatArs } from "./currency";
 export { formatDuration } from "./duration";
 export { googleMapsUrl } from "./googleMaps";
