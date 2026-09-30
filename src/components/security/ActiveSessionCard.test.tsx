@@ -36,8 +36,8 @@ describe("ActiveSessionCard", () => {
     replace.mockClear();
   });
 
-  it("shows the current session's ip and relative time once loaded", async () => {
-    const startedAt = new Date(Date.now() - 5 * 60_000).toISOString();
+  it("shows only the absolute local start date once loaded", async () => {
+    const startedAt = new Date(2026, 8, 24, 14, 32).toISOString();
     vi.mocked(getCurrentSession).mockResolvedValueOnce({
       ip: "190.16.34.2",
       startedAt,
@@ -45,7 +45,11 @@ describe("ActiveSessionCard", () => {
     renderCard();
 
     expect(await screen.findByText("Sesión actual")).toBeInTheDocument();
-    expect(screen.getByText(/190\.16\.34\.2/)).toBeInTheDocument();
+    expect(
+      screen.getByText("Iniciada el 24/09/2026 a las 14:32"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/190\.16\.34\.2/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/IP desconocida/)).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Cerrar sesión" }),
     ).toBeInTheDocument();
