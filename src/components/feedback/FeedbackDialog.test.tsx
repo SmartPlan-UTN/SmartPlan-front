@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -7,12 +7,53 @@ import type { PlanFeedback } from "@/types";
 
 import { FeedbackDialog } from "./FeedbackDialog";
 
-const submitFeedback = vi.hoisted(() => vi.fn());
+const { submitFeedback, getOuting, getOwnRating, createRating } = vi.hoisted(() => ({
+  submitFeedback: vi.fn(),
+  getOuting: vi.fn(),
+  getOwnRating: vi.fn(),
+  createRating: vi.fn(),
+}));
 
 vi.mock("@/lib/api", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/api")>()),
   submitFeedback,
+  getOuting,
+  getOwnRating,
+  createRating,
 }));
+
+function detail(order: number, id: number, name: string) {
+  return { id: order * 10, order, estimatedCost: 0, estimatedDuration: 60, activity: { id, name } };
+}
+
+const OUTING = {
+  id: 7,
+  details: [
+    detail(2, 12, "Cata en bodega"),
+    detail(1, 11, "Almuerzo en finca"),
+    detail(3, 11, "Almuerzo en finca"),
+  ],
+};
+
+function ownRating(activityId: number, score: number, moderationStatus = "approved") {
+  return {
+    id: activityId * 100,
+    score,
+    comment: null,
+    authorAlias: "Tute",
+    createdAt: "2026-08-29T00:00:00.000Z",
+    updatedAt: "2026-08-29T00:00:00.000Z",
+    activityId,
+    planId: 7,
+    moderationStatus,
+    moderationReason: null,
+  };
+}
+
+async function sendFeedback(star = 3) {
+  await userEvent.click(screen.getAllByRole("radio")[star]);
+  await userEvent.click(screen.getByRole("button", { name: /enviar opinión/i }));
+}
 
 const FEEDBACK: PlanFeedback = {
   rating: 4,
@@ -47,6 +88,12 @@ function setup(overrides: Partial<Parameters<typeof FeedbackDialog>[0]> = {}) {
 beforeEach(() => {
   vi.clearAllMocks();
   submitFeedback.mockResolvedValue(FEEDBACK);
+  // By default everything is already rated, so no offer appears.
+  getOuting.mockResolvedValue(OUTING);
+  getOwnRating.mockImplementation((id: number) => Promise.resolve(ownRating(id, 4)));
+  createRating.mockImplementation((id: number, input: { score: number }) =>
+    Promise.resolve(ownRating(id, input.score))
+  );
 });
 
 describe("FeedbackDialog (CU23)", () => {
@@ -296,5 +343,186 @@ describe("FeedbackDialog (CU23)", () => {
     );
 
     await waitFor(() => expect(onReconcile).toHaveBeenCalledTimes(1));
+  });
+});
+
+describe("FeedbackDialog → rating the activities (CU23 → CU44)", () => {
+  beforeEach(() => {
+    getOwnRating.mockResolvedValue(null);
+  });
+
+  it("closes on its own when every activity is already rated", async () => {
+    getOwnRating.mockImplementation((id: number) => Promise.resolve(ownRating(id, 5)));
+    const { onSubmitted } = setup();
+    await sendFeedback();
+
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK), {
+      timeout: 2500,
+    });
+    expect(screen.queryByText(/valorar las actividades/i)).not.toBeInTheDocument();
+  });
+
+  it("closes on its own when the activities can't be loaded", async () => {
+    getOuting.mockRejectedValueOnce(new ApiError({ message: "x", type: "NETWORK" }));
+    const { onSubmitted } = setup();
+    await sendFeedback();
+
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK), {
+      timeout: 2500,
+    });
+  });
+
+  it("offers rating the activities after the feedback is saved", async () => {
+    const { onSubmitted } = setup();
+    await sendFeedback();
+
+    expect(await screen.findByText(/querés valorar las actividades/i)).toBeInTheDocument();
+    expect(screen.getByText(/gracias por tu opinión/i)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /valorar actividades/i })).toHaveFocus()
+    );
+    expect(onSubmitted).not.toHaveBeenCalled();
+  });
+
+  it("declining the offer still reports the saved feedback", async () => {
+    const { onSubmitted, onDismiss } = setup();
+    await sendFeedback();
+
+    await userEvent.click(await screen.findByRole("button", { name: /ahora no/i }));
+
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK));
+    expect(onDismiss).not.toHaveBeenCalled();
+    expect(createRating).not.toHaveBeenCalled();
+  });
+
+  it("Escape on the offer also reports the saved feedback", async () => {
+    const { onSubmitted, onDismiss } = setup();
+    await sendFeedback();
+    await screen.findByText(/querés valorar las actividades/i);
+
+    await userEvent.keyboard("{Escape}");
+
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK));
+    expect(onDismiss).not.toHaveBeenCalled();
+  });
+
+  it("lists each activity once, in itinerary order, and sends only the rated ones", async () => {
+    const { onSubmitted } = setup();
+    await sendFeedback();
+    await userEvent.click(await screen.findByRole("button", { name: /valorar actividades/i }));
+
+    const groups = screen.getAllByRole("radiogroup");
+    expect(groups).toHaveLength(2);
+    expect(groups[0]).toHaveAccessibleName("Almuerzo en finca");
+    expect(groups[1]).toHaveAccessibleName("Cata en bodega");
+    expect(groups[0]).toHaveAttribute("aria-required", "false");
+
+    const save = screen.getByRole("button", { name: /guardar valoraciones/i });
+    expect(save).toBeDisabled();
+
+    await userEvent.click(within(groups[1]).getByRole("radio", { name: /5 estrellas/i }));
+    await userEvent.click(screen.getByRole("button", { name: /agregar un comentario/i }));
+    await userEvent.type(
+      screen.getByLabelText(/tu comentario sobre cata en bodega/i),
+      "  Muy buena  "
+    );
+    await userEvent.click(save);
+
+    expect(createRating).toHaveBeenCalledTimes(1);
+    expect(createRating).toHaveBeenCalledWith(12, { planId: 7, score: 5, comment: "Muy buena" });
+    expect(await screen.findByText(/gracias por valorar/i)).toBeInTheDocument();
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK), {
+      timeout: 2500,
+    });
+  });
+
+  it("shows activities already rated as read-only", async () => {
+    getOwnRating.mockImplementation((id: number) =>
+      Promise.resolve(id === 11 ? ownRating(11, 3) : null)
+    );
+    setup();
+    await sendFeedback();
+    await userEvent.click(await screen.findByRole("button", { name: /valorar actividades/i }));
+
+    expect(screen.getAllByRole("radiogroup")).toHaveLength(1);
+    expect(screen.getByText(/ya la valoraste/i)).toBeInTheDocument();
+  });
+
+  it("keeps a failed rating open and the saved one read-only", async () => {
+    createRating.mockImplementation((id: number, input: { score: number }) =>
+      id === 11
+        ? Promise.reject(new ApiError({ message: "Se cortó la conexión.", type: "NETWORK" }))
+        : Promise.resolve(ownRating(id, input.score))
+    );
+    const { onSubmitted } = setup();
+    await sendFeedback();
+    await userEvent.click(await screen.findByRole("button", { name: /valorar actividades/i }));
+
+    const [lunch, tasting] = screen.getAllByRole("radiogroup");
+    await userEvent.click(within(lunch).getByRole("radio", { name: /4 estrellas/i }));
+    await userEvent.click(within(tasting).getByRole("radio", { name: /5 estrellas/i }));
+    await userEvent.click(screen.getByRole("button", { name: /guardar valoraciones/i }));
+
+    expect(await screen.findByText(/no pudimos guardar una valoración/i)).toBeInTheDocument();
+    expect(screen.getByText(/se cortó la conexión/i)).toBeInTheDocument();
+    expect(screen.getByText("Guardada")).toBeInTheDocument();
+    expect(screen.getAllByRole("radiogroup")).toHaveLength(1);
+    expect(onSubmitted).not.toHaveBeenCalled();
+
+    createRating.mockClear();
+    createRating.mockImplementation((id: number, input: { score: number }) =>
+      Promise.resolve(ownRating(id, input.score))
+    );
+    await userEvent.click(screen.getByRole("button", { name: /guardar valoraciones/i }));
+    expect(createRating).toHaveBeenCalledTimes(1);
+    expect(createRating).toHaveBeenCalledWith(11, { planId: 7, score: 4, comment: undefined });
+    expect(await screen.findByText(/gracias por valorar/i)).toBeInTheDocument();
+  });
+
+  it("treats a rating created elsewhere meanwhile as done", async () => {
+    createRating.mockRejectedValue(
+      new ApiError({
+        message: "Ya existe.",
+        type: "HTTP",
+        status: 409,
+        code: "RATING_ALREADY_EXISTS",
+      })
+    );
+    setup();
+    await sendFeedback();
+    await userEvent.click(await screen.findByRole("button", { name: /valorar actividades/i }));
+
+    const [lunch] = screen.getAllByRole("radiogroup");
+    await userEvent.click(within(lunch).getByRole("radio", { name: /2 estrellas/i }));
+    await userEvent.click(screen.getByRole("button", { name: /guardar valoraciones/i }));
+
+    expect(await screen.findByText(/gracias por valorar/i)).toBeInTheDocument();
+  });
+
+  it("warns when a comment didn't pass moderation", async () => {
+    createRating.mockImplementation((id: number, input: { score: number }) =>
+      Promise.resolve(ownRating(id, input.score, "rejected"))
+    );
+    setup();
+    await sendFeedback();
+    await userEvent.click(await screen.findByRole("button", { name: /valorar actividades/i }));
+
+    const [lunch] = screen.getAllByRole("radiogroup");
+    await userEvent.click(within(lunch).getByRole("radio", { name: /1 estrella/i }));
+    await userEvent.click(screen.getByRole("button", { name: /guardar valoraciones/i }));
+
+    expect(await screen.findByText(/no pasó la moderación/i)).toBeInTheDocument();
+  });
+
+  it("skipping the activities still reports the saved feedback", async () => {
+    const { onSubmitted, onDismiss } = setup();
+    await sendFeedback();
+    await userEvent.click(await screen.findByRole("button", { name: /valorar actividades/i }));
+
+    await userEvent.click(screen.getByRole("button", { name: /omitir/i }));
+
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK));
+    expect(onDismiss).not.toHaveBeenCalled();
+    expect(createRating).not.toHaveBeenCalled();
   });
 });
