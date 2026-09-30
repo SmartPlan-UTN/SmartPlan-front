@@ -1,8 +1,16 @@
-import { BaseEntity, CatalogEntity } from './common';
-import type { ExplorationQueryParams, SortDirection } from './common';
-import type { User } from './users';
-import type { FeedbackState, PlanFeedback, PlanRequest } from './recommendation';
-import type { Activity, ActivityCategorySummary, ActivityLocationSummary } from './activities';
+import { BaseEntity, CatalogEntity } from "./common";
+import type { ExplorationQueryParams, SortDirection } from "./common";
+import type { User } from "./users";
+import type {
+  FeedbackState,
+  PlanFeedback,
+  PlanRequest,
+} from "./recommendation";
+import type {
+  Activity,
+  ActivityCategorySummary,
+  ActivityLocationSummary,
+} from "./activities";
 
 /**
  * Plan made up of activities (CU12, CU13, CU17, CU24-CU31, CU60).
@@ -40,11 +48,11 @@ export interface PlanDetail extends BaseEntity {
  * (`src/database/seeds/definitions.ts`).
  */
 export type PlanStatusKey =
-  | 'generated'
-  | 'selected'
-  | 'confirmed'
-  | 'completed'
-  | 'cancelled';
+  | "generated"
+  | "selected"
+  | "confirmed"
+  | "completed"
+  | "cancelled";
 
 /**
  * Status of a plan (CU22, CU26, CU60).
@@ -105,7 +113,7 @@ export interface PlanItineraryItem {
  * always `view-only`.
  * Matches `ViewerPlanState` in `SmartPlan-back` (`src/plans/plan-selectability.ts`).
  */
-export type ViewerPlanState = 'selectable' | 'selected' | 'view-only';
+export type ViewerPlanState = "selectable" | "selected" | "view-only";
 
 /**
  * Plan detail returned by `GET /plans/:id` (CU13): the search summary plus
@@ -141,6 +149,7 @@ export interface OwnPlanSummary {
   id: number;
   title: string;
   description: string | null;
+  visibility: PlanVisibility;
   estimatedTotalCost: number;
   estimatedTotalDuration: number;
   peopleCount: number;
@@ -181,7 +190,7 @@ export interface MyPlansParams {
 }
 
 /** Sortable fields accepted by `GET /plans`. */
-export type PlanSortField = 'relevance' | 'price' | 'rating' | 'distance';
+export type PlanSortField = "relevance" | "price" | "rating" | "distance";
 
 /**
  * Query params accepted by `GET /plans` (CU12's search box only sends
@@ -197,7 +206,7 @@ export interface PlanSearchParams extends ExplorationQueryParams {
 export interface ListOwnPlansParams {
   page?: number;
   limit?: number;
-  sortBy?: 'createdAt';
+  sortBy?: "createdAt";
   direction?: SortDirection;
 }
 
@@ -205,6 +214,32 @@ export interface CreatePlanDto {
   title: string;
   description?: string | null;
   peopleCount: number;
+}
+
+export type PlanVisibility = "private" | "public";
+
+export interface PlanComposerStopDto {
+  activityId: number;
+  /** Sent only for a stop retained from the plan being edited. */
+  detailId?: number;
+}
+
+export interface CreatePlanComposerDto {
+  requestId: string;
+  title: string;
+  description: string | null;
+  peopleCount: number;
+  visibility: PlanVisibility;
+  stops: PlanComposerStopDto[];
+}
+
+export interface UpdatePlanComposerDto {
+  requestId: string;
+  title: string;
+  description: string | null;
+  peopleCount: number;
+  visibility: PlanVisibility;
+  stops: PlanComposerStopDto[];
 }
 
 export interface UpdatePlanDto {

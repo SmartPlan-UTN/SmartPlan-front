@@ -1,7 +1,9 @@
 import {
   Accessibility,
+  ArrowDown,
   ArrowLeft,
   ArrowRight,
+  ArrowUp,
   Ban,
   Bookmark,
   Calendar,
@@ -96,8 +98,10 @@ import {
  */
 export const iconRegistry = {
   accessibility: Accessibility,
+  "arrow-down": ArrowDown,
   "arrow-left": ArrowLeft,
   "arrow-right": ArrowRight,
+  "arrow-up": ArrowUp,
   ban: Ban,
   bookmark: Bookmark,
   calendar: Calendar,

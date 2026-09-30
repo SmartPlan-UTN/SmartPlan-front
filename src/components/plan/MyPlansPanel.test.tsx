@@ -17,6 +17,7 @@ function mockSummary(overrides: Partial<OwnPlanSummary> = {}): OwnPlanSummary {
     id: 12,
     title: "Domingo de bodegas",
     description: "Recorrido por viñedos",
+    visibility: "private",
     peopleCount: 2,
     estimatedTotalCost: 15000,
     estimatedCostPerPerson: 7500,

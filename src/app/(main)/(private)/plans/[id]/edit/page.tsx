@@ -37,8 +37,7 @@ export default async function EditPlanPage({
           Editar plan
         </h1>
         <p className={`sp-body ${styles.lead}`}>
-          Cambiá los datos del plan o ajustá su itinerario. Las paradas se
-          guardan apenas las agregás o las quitás.
+          Cambiá la idea y el recorrido en un solo borrador. Guardamos todo junto cuando confirmes.
         </p>
       </header>
 

@@ -37,6 +37,7 @@ function planSummary(overrides: Partial<OwnPlanSummary> = {}): OwnPlanSummary {
     id: 10,
     title: "Fin de semana en Mendoza",
     description: null,
+    visibility: "private",
     peopleCount: 2,
     estimatedTotalCost: 20000,
     estimatedCostPerPerson: 10000,

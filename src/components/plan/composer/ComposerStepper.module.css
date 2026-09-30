@@ -1,0 +1,142 @@
+.stepper {
+  display: flex;
+  align-items: center;
+  width: min(660px, 100%);
+  margin: 30px auto 36px;
+}
+
+.stepWrap {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.stepWrap:last-child {
+  flex: 0 0 auto;
+}
+
+.stepButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg-3);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.stepButton:disabled {
+  cursor: default;
+}
+
+.stepCurrent,
+.stepComplete {
+  color: var(--fg-1);
+}
+
+.stepCurrent {
+  font-weight: 800;
+}
+
+.stepNumber {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--fg-1) 17%, transparent);
+  border-radius: 50%;
+  background: var(--surface-card);
+  color: var(--fg-3);
+  font-size: 12px;
+  transition:
+    background 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease;
+}
+
+.stepCurrent .stepNumber,
+.stepComplete .stepNumber {
+  border-color: var(--ember);
+  background: var(--ember);
+  color: var(--fg-on-dark);
+}
+
+.stepLine {
+  display: block;
+  height: 1px;
+  flex: 1;
+  margin: 0 13px;
+  background: color-mix(in srgb, var(--fg-1) 14%, transparent);
+}
+
+.stepLineComplete {
+  background: var(--ember);
+}
+
+.stepButton:focus-visible {
+  border-radius: 8px;
+  outline: 2px solid var(--ember);
+  outline-offset: 3px;
+}
+
+@keyframes result-enter {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes step-enter {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 680px) {
+  .stepper {
+    margin: 24px 0;
+  }
+
+  .stepButton {
+    gap: 6px;
+    font-size: 11px;
+    padding: 0 2px;
+  }
+
+  .stepNumber {
+    width: 26px;
+    height: 26px;
+  }
+
+  .stepLine {
+    margin: 0 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stepNumber {
+    transition-duration: 0.01ms;
+  }
+}

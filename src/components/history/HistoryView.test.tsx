@@ -25,6 +25,7 @@ function plan(overrides: Partial<OwnPlanSummary> = {}): OwnPlanSummary {
     id: 1,
     title: "Tarde de vinos en Luján",
     description: null,
+    visibility: "private",
     estimatedTotalCost: 25000,
     estimatedTotalDuration: 180,
     peopleCount: 2,

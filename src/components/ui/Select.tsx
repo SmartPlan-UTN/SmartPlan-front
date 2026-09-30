@@ -16,6 +16,7 @@ export interface SelectProps<TValue extends string> {
   onChange: (value: TValue) => void;
   options: SelectOption<TValue>[];
   "aria-label"?: string;
+  disabled?: boolean;
 }
 
 /**
@@ -30,6 +31,7 @@ export function Select<TValue extends string>({
   onChange,
   options,
   "aria-label": ariaLabel,
+  disabled = false,
 }: SelectProps<TValue>) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -39,7 +41,10 @@ export function Select<TValue extends string>({
     if (!open) return;
 
     function onPointerDown(event: PointerEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setOpen(false);
       }
     }
@@ -63,6 +68,7 @@ export function Select<TValue extends string>({
       <button
         type="button"
         className={styles.trigger}
+        disabled={disabled}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={ariaLabel}
@@ -79,7 +85,7 @@ export function Select<TValue extends string>({
         />
       </button>
 
-      {open ? (
+      {open && !disabled ? (
         <ul className={styles.listbox} role="listbox" aria-label={ariaLabel}>
           {options.map((option) => (
             <li key={option.value}>

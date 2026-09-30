@@ -43,7 +43,7 @@ rereading the entire git history.
 |---|---|
 | **Phase** | Foundations — layout and navigation ready, no use cases implemented |
 | **Base branch** | `develop` |
-| **Last update** | 2026-09-02 |
+| **Last update** | 2026-09-30 |
 | **Completed use cases** | 0 / 62 |
 
 ---
@@ -134,6 +134,8 @@ traceability matrix (`skills/01-domain/`).
 | CU30 | Calculate plan cost | PAN 17 | `Not started` | | |
 | CU31 | Generate suggested plan | — | `In progress` | `feature/planificacion-cu24-cu25-cu26` | #103 |
 
+| #131 | Create/edit Plan Composer | `/plans/create`, `/plans/:id/edit` | `In progress` | `feature/plan-generation-ux-overhaul` | â€” |
+
 ### Collections
 
 | CU | Feature | Screen | Status | Branch | PR |
@@ -202,6 +204,7 @@ being re-discussed twice.
 
 | Date | Decision | Reason |
 |---|---|---|
+| 2026-09-30 | #131 keeps one in-memory draft for create and edit and saves it atomically at the end | Navigation between steps preserves edits; refresh discards them. Existing stops retain their `PlanDetail` identity so backend edits preserve saved cost/duration snapshots, while new stops use current catalog estimates. The catalog previews five results and reuses 12-item pagination. CU31 stays unavailable until its backend contract exists; Playwright and refresh recovery remain out of scope. |
 | 2026-09-13 | The wave background has one palette and is a low horizon band; per-section moods are gone | Route-driven palettes (`section-mood.ts`, the non-idle `WAVE_PALETTES`, the 1.4s colour cross-fade and the landing's `detectMood`) competed with the new editorial page headings and were already unused outside the root canvas. `AppBackground` now draws a single-palette band fixed to the bottom of the viewport (cropped to the form panel on auth screens), and screens no longer mount their own `MoodBackground`. The swell on every navigation (`tideKey`) is kept on purpose. |
 | 2026-09-02 | PAN 20's third tab is "Rechazadas", not the prototype's "Ocultas" | The domain has three moderation states, not four: `RatingModerationStatus` is `pending` / `approved` / `rejected`, and a rejected rating is exactly what the prototype called hidden — it stops being public and stops counting toward the activity's average, without the record being deleted. Labelling a tab for a state the backend cannot report would promise a distinction the screen can't make. The prototype's "Responder" action is dropped for the same reason: there is no reply endpoint. |
 | 2026-09-02 | The administrative rating row was widened in `SmartPlan-back` (#91) instead of resolving names from the frontend | US43 requires the moderator to see the activity a comment is about, and the merged contract only returned `activityId`. `listAdmin` already joined the activity and the plan, so projecting their name and title costs no extra query there; doing it from here meant one `GET /activities/:id` per listed rating — up to 20 requests a page, each with its own loading and failure state — to display data the backend already had in hand. |
@@ -304,6 +307,7 @@ Things that have been spotted but don't have an owner yet:
 
 | Date | What happened |
 |---|---|
+| 2026-09-30 | #131 Plan Composer is implemented locally on `feature/plan-generation-ux-overhaul`: shared create/edit Guided Canvas, in-memory draft, searchable/paginated catalog, accessible itinerary reorder, review, atomic-save API integration, and activity-origin routing. `pnpm test` (87 files, 576 tests), `pnpm lint`, and `pnpm build` pass. HTTP 200 on `/`, `/login`, and `/plans/create` at localhost:3210. Visual review remains static-only; desktop/mobile browser sign-off and PR are pending. |
 | 2026-09-13 | Mobile-first responsive work moved to review in PR #124 on `feature/mobile-first-responsive`, split from visual-refresh PR #123: a persistent five-destination bottom navigation below 900px, safe-area-aware shell spacing, mobile search-result cards, and targeted adaptations for Plans, Activity, History, Preferences, Profile, Security, and Auth. The landing's existing content and image layouts remain unchanged. No CU: cross-cutting UI. `pnpm lint`, `pnpm test` (562), and `pnpm build` pass. |
 | 2026-09-13 | Visual refresh moved to review on `feature/fondo-horizonte-encabezados`. The shared wave background is now a single-palette horizon band at the bottom of the viewport (cropped to the form panel on login, sign-up, and both password screens); per-section moods, their palettes, the colour cross-fade, and `detectMood` were removed, and Profile/Security no longer mount their own canvas. Explorar, Mis planes, Favoritos, Historial, Preferencias, Perfil, and Seguridad share a new editorial page heading (`sp-page-*` in `tokens.css`); the activity detail hero is light, and the empty states in Favoritos and Historial carry a photo. No CU: cross-cutting UI. `pnpm lint`, `pnpm test` (557), and `pnpm build` pass. |
 | 2026-09-02 | CU55 moved to review on `SMART-60-cu55-moderar-valoraciones`: PAN 20 is now the moderation tray the v2 prototype draws — a feed of cards behind Pendientes/Aprobadas/Rechazadas tabs with per-state counters, paginated, showing the author's real name, the rated activity and its plan (both linked), the score, the comment, and any moderation reason. Approving is one click; rejecting asks for the reason the backend requires. New `listAdminRatings`, `moderateAdminRating`, and `getAdminRatingCounts` in `lib/api/administration.ts`, `AdminRating`/`ModerateRatingInput` types, `AdminRatingsView`, `RatingRejectionDialog`, and `AdminRatings.module.css`. Deleting a rating stays out: that's CU56. Depends on SmartPlan-back#91, which adds `activity` and `plan` to the administrative row. `pnpm lint`, `pnpm test` (286), and `pnpm build` pass. |

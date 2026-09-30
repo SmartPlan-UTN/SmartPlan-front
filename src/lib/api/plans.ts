@@ -5,14 +5,16 @@ import type {
   PlanSearchParams,
   PlanSearchResult,
   CreatePlanDto,
+  CreatePlanComposerDto,
   UpdatePlanDto,
+  UpdatePlanComposerDto,
   OwnPlanDetail,
   OwnPlanSummary,
   Plan,
   PlanSuggestionDto,
   PlanSelectionResult,
-} from '@/types';
-import { apiClient } from './client';
+} from "@/types";
+import { apiClient } from "./client";
 
 /**
  * Searches, filters, sorts, and paginates plans (CU12).
@@ -20,9 +22,9 @@ import { apiClient } from './client';
  * `SmartPlan-back`.
  */
 export async function searchPlans(
-  params: PlanSearchParams
+  params: PlanSearchParams,
 ): Promise<PaginatedResult<PlanSearchResult>> {
-  return apiClient.get<PaginatedResult<PlanSearchResult>>('/plans', {
+  return apiClient.get<PaginatedResult<PlanSearchResult>>("/plans", {
     params,
   });
 }
@@ -40,7 +42,14 @@ export async function getPlan(id: number): Promise<PlanDetailResult> {
  * Backend contract: `POST /users/me/plans`.
  */
 export async function createPlan(dto: CreatePlanDto): Promise<OwnPlanDetail> {
-  return apiClient.post<OwnPlanDetail>('/users/me/plans', dto);
+  return apiClient.post<OwnPlanDetail>("/users/me/plans", dto);
+}
+
+/** Atomically creates a plan and its ordered itinerary from the composer. */
+export async function createPlanFromComposer(
+  dto: CreatePlanComposerDto,
+): Promise<OwnPlanDetail> {
+  return apiClient.post<OwnPlanDetail>("/users/me/plans/composer", dto);
 }
 
 /**
@@ -48,9 +57,9 @@ export async function createPlan(dto: CreatePlanDto): Promise<OwnPlanDetail> {
  * Backend contract: `GET /users/me/plans`.
  */
 export async function listOwnPlans(
-  params: ListOwnPlansParams = {}
+  params: ListOwnPlansParams = {},
 ): Promise<PaginatedResult<OwnPlanSummary>> {
-  return apiClient.get<PaginatedResult<OwnPlanSummary>>('/users/me/plans', {
+  return apiClient.get<PaginatedResult<OwnPlanSummary>>("/users/me/plans", {
     params,
   });
 }
@@ -77,9 +86,17 @@ export async function deselectPlan(id: number): Promise<PlanSelectionResult> {
  */
 export async function updateOwnPlan(
   id: number,
-  dto: UpdatePlanDto
+  dto: UpdatePlanDto,
 ): Promise<OwnPlanDetail> {
   return apiClient.patch<OwnPlanDetail>(`/users/me/plans/${id}`, dto);
+}
+
+/** Atomically updates plan metadata, visibility, and ordered stops. */
+export async function updatePlanFromComposer(
+  id: number,
+  dto: UpdatePlanComposerDto,
+): Promise<OwnPlanDetail> {
+  return apiClient.put<OwnPlanDetail>(`/users/me/plans/${id}/composer`, dto);
 }
 
 /**
@@ -103,7 +120,7 @@ export async function cancelOwnPlan(id: number): Promise<void> {
  */
 export async function addPlanActivity(
   planId: number,
-  activityId: number
+  activityId: number,
 ): Promise<OwnPlanDetail> {
   return apiClient.post<OwnPlanDetail>(`/users/me/plans/${planId}/details`, {
     activityId,
@@ -116,9 +133,11 @@ export async function addPlanActivity(
  */
 export async function removePlanActivity(
   planId: number,
-  detailId: number
+  detailId: number,
 ): Promise<void> {
-  return apiClient.delete<void>(`/users/me/plans/${planId}/details/${detailId}`);
+  return apiClient.delete<void>(
+    `/users/me/plans/${planId}/details/${detailId}`,
+  );
 }
 
 /**
@@ -128,7 +147,7 @@ export async function removePlanActivity(
  * until AI recommendation engine integration (CU17-CU23) is completed in SmartPlan-back.
  */
 export async function generateSuggestedPlan(
-  dto: PlanSuggestionDto
+  dto: PlanSuggestionDto,
 ): Promise<Plan> {
-  return apiClient.post<Plan>('/plan-suggestions', dto);
+  return apiClient.post<Plan>("/plan-suggestions", dto);
 }

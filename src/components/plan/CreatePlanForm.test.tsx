@@ -1,227 +1,494 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  ApiError,
-  addPlanActivity,
-  createPlan,
+  createPlanFromComposer,
+  getActivity,
   searchActivities,
+  updatePlanFromComposer,
 } from "@/lib/api";
-import { ROUTES } from "@/lib/routes";
-import type { ActivitySearchResult, OwnPlanDetail } from "@/types";
+import { activityDetailRoute, ROUTES } from "@/lib/routes";
+import type {
+  ActivityDetailResult,
+  ActivitySearchResult,
+  OwnPlanDetail,
+} from "@/types";
 
 import { CreatePlanForm } from "./CreatePlanForm";
+import { PlanComposer } from "./PlanComposer";
 
 const push = vi.hoisted(() => vi.fn());
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push }),
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+vi.mock("@/components/explore", () => ({
+  CategoryChips: ({ onToggle }: { onToggle: (id: number) => void }) => (
+    <button type="button" onClick={() => onToggle(1)}>
+      Bodegas
+    </button>
+  ),
 }));
-
 vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
   return {
     ...actual,
-    createPlan: vi.fn(),
-    addPlanActivity: vi.fn(),
+    createPlanFromComposer: vi.fn(),
+    updatePlanFromComposer: vi.fn(),
     searchActivities: vi.fn(),
+    getActivity: vi.fn(),
   };
 });
 
-function mockActivity(
-  overrides: Partial<ActivitySearchResult> = {},
-): ActivitySearchResult {
+function activity(id: number): ActivitySearchResult {
   return {
-    id: 42,
-    name: "Degustación en Bodega",
-    description: "Degustación de vinos",
-    estimatedCost: 15000,
-    estimatedDuration: 180,
-    type: "Bodega",
-    averageRating: 4.7,
-    ratingCount: 30,
+    id,
+    name: `Actividad ${id}`,
+    description: `Descripción ${id}`,
+    estimatedCost: id * 1000,
+    estimatedDuration: id * 10,
+    type: "Experiencia",
+    averageRating: 4.5,
+    ratingCount: 3,
     distanceKm: null,
     categories: [{ id: 1, name: "Bodega" }],
-    locations: [],
-    ...overrides,
-  } as ActivitySearchResult;
+  };
 }
 
-function mockCreatedPlan(): OwnPlanDetail {
-  return { id: 7 } as OwnPlanDetail;
+function canonicalPlan(): OwnPlanDetail {
+  return {
+    id: 7,
+    title: "Sábado entre viñas",
+    description: null,
+    visibility: "private",
+    peopleCount: 2,
+    estimatedTotalCost: 15000,
+    estimatedCostPerPerson: 7500,
+    estimatedTotalDuration: 150,
+    activityCount: 1,
+    status: { key: "confirmed", name: "Confirmado" },
+    completedAt: null,
+    feedbackState: "not_available",
+    feedback: null,
+    createdAt: "2026-09-01T00:00:00.000Z",
+    updatedAt: "2026-09-01T00:00:00.000Z",
+    details: [
+      {
+        id: 501,
+        order: 1,
+        estimatedCost: 15000,
+        estimatedDuration: 150,
+        activity: {
+          id: 15,
+          name: "Actividad 15",
+          description: "",
+          estimatedCost: 15000,
+          estimatedDuration: 150,
+          type: "Experiencia",
+        },
+      },
+    ],
+  };
 }
 
-/**
- * Types into the activity box and waits for the debounced search.
- *
- * `useDebouncedValue(activitySearch, 400)` plus `userEvent`'s per-character
- * delay puts this close to a second on an idle machine; 2s left no room on
- * a loaded one and the suite flaked roughly once in fourteen runs. The
- * timeout is a ceiling, not a wait — a passing run still resolves as soon
- * as the button appears.
- */
-async function searchActivity(user: ReturnType<typeof userEvent.setup>) {
+async function reachActivities(user: ReturnType<typeof userEvent.setup>) {
   await user.type(
-    screen.getByLabelText("Buscar Actividad"),
-    "degustación",
+    screen.getByLabelText(/Nombre del plan/),
+    "Sábado entre viñas",
   );
-  return screen.findByRole(
-    "button",
-    { name: "+ Agregar" },
-    { timeout: 8000 },
-  );
+  await user.click(screen.getByRole("button", { name: /Elegir actividades/ }));
 }
 
-describe("CreatePlanForm (CU24)", () => {
+describe("PlanComposer creation flow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(searchActivities).mockResolvedValue({
-      data: [mockActivity()],
-      pagination: { page: 1, limit: 5, total: 1, totalPages: 1 },
-    });
-    vi.mocked(createPlan).mockResolvedValue(mockCreatedPlan());
-    vi.mocked(addPlanActivity).mockResolvedValue(
-      {} as Awaited<ReturnType<typeof addPlanActivity>>,
-    );
-  });
-
-  it("refuses to submit without a title", async () => {
-    const user = userEvent.setup();
-    render(<CreatePlanForm />);
-
-    await user.click(screen.getByRole("button", { name: "Guardar Plan" }));
-
-    expect(
-      await screen.findByText("El nombre del plan es obligatorio"),
-    ).toBeInTheDocument();
-    expect(createPlan).not.toHaveBeenCalled();
-  });
-
-  it("refuses to submit with fewer than one person", async () => {
-    const user = userEvent.setup();
-    render(<CreatePlanForm />);
-
-    await user.type(screen.getByLabelText("Nombre del plan"), "Domingo");
-    await user.clear(screen.getByLabelText("Cantidad de personas"));
-    await user.type(screen.getByLabelText("Cantidad de personas"), "0");
-    await user.click(screen.getByRole("button", { name: "Guardar Plan" }));
-
-    expect(
-      await screen.findByText("La cantidad de personas debe ser al menos 1"),
-    ).toBeInTheDocument();
-    expect(createPlan).not.toHaveBeenCalled();
-  });
-
-  it("creates the plan, posts each stop and redirects to its detail", { timeout: 10000 }, async () => {
-    const user = userEvent.setup();
-    render(<CreatePlanForm />);
-
-    await user.type(screen.getByLabelText("Nombre del plan"), "Domingo de bodegas");
-    await user.type(screen.getByLabelText("Descripción"), "Recorrido por viñedos");
-
-    const addButton = await searchActivity(user);
-    await user.click(addButton);
-
-    await user.click(screen.getByRole("button", { name: "Guardar Plan" }));
-
-    await waitFor(() => {
-      expect(createPlan).toHaveBeenCalledWith({
-        title: "Domingo de bodegas",
-        description: "Recorrido por viñedos",
-        peopleCount: 1,
-      });
-    });
-    await waitFor(() => {
-      expect(addPlanActivity).toHaveBeenCalledWith(7, 42);
-    });
-    await waitFor(
-      () => {
-        expect(push).toHaveBeenCalledWith(`${ROUTES.plans}/7`);
+    vi.mocked(searchActivities).mockImplementation(
+      async ({ page = 1, limit = 12 }) => {
+        const all = Array.from({ length: 15 }, (_, index) =>
+          activity(index + 1),
+        );
+        return {
+          data: all.slice((page - 1) * limit, page * limit),
+          pagination: { page, limit, total: 15, totalPages: 2 },
+        };
       },
-      { timeout: 3000 },
+    );
+    vi.mocked(createPlanFromComposer).mockResolvedValue(canonicalPlan());
+    vi.mocked(updatePlanFromComposer).mockResolvedValue(canonicalPlan());
+    vi.mocked(getActivity).mockResolvedValue({
+      ...activity(42),
+      locations: [],
+    } satisfies ActivityDetailResult);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("waits until Recorrido to load the catalog and focuses its heading", async () => {
+    const user = userEvent.setup();
+    render(<CreatePlanForm />);
+    expect(searchActivities).not.toHaveBeenCalled();
+
+    await user.type(screen.getByLabelText(/Nombre del plan/), "Viaje");
+    await user.click(
+      screen.getByRole("button", { name: /Elegir actividades/ }),
+    );
+    expect(await screen.findByText("Actividad 1")).toBeInTheDocument();
+    expect(searchActivities).toHaveBeenCalledOnce();
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { name: "Armemos el recorrido" }),
+      ).toHaveFocus(),
     );
   });
 
-  it("drops an added activity from the suggestions so it can't be added twice", async () => {
+  it("validates idea fields before continuing", async () => {
     const user = userEvent.setup();
     render(<CreatePlanForm />);
-
-    const addButton = await searchActivity(user);
-    await user.click(addButton);
-
-    // It moves into the itinerary, and the suggestion goes away with it.
-    await waitFor(() => {
-      expect(
-        screen.queryByRole("button", { name: "+ Agregar" }),
-      ).not.toBeInTheDocument();
-    });
-    expect(screen.getByText("Degustación en Bodega")).toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: /Elegir actividades/ }),
+    );
+    expect(
+      await screen.findByText("Escribí un nombre para el plan."),
+    ).toBeInTheDocument();
+    expect(createPlanFromComposer).not.toHaveBeenCalled();
   });
 
-  it("resumes instead of creating a second plan when a stop fails", async () => {
-    vi.mocked(addPlanActivity).mockRejectedValueOnce(
-      new ApiError({
-        message: "La actividad no está disponible",
-        type: "HTTP",
-        status: 409,
+  it("validates the people count before opening the catalog", async () => {
+    const user = userEvent.setup();
+    render(<CreatePlanForm />);
+    await user.type(screen.getByLabelText(/Nombre del plan/), "Viaje");
+    const peopleCount = screen.getByLabelText(/personas/);
+    await user.clear(peopleCount);
+    await user.type(peopleCount, "1001");
+    await user.click(
+      screen.getByRole("button", { name: /Elegir actividades/ }),
+    );
+
+    expect(
+      await screen.findByText(/debe estar entre 1 y 1\.000/),
+    ).toBeInTheDocument();
+    expect(searchActivities).not.toHaveBeenCalled();
+  });
+
+  it("keeps the draft local until final confirmation, then saves all stops together", async () => {
+    const user = userEvent.setup();
+    render(<CreatePlanForm />);
+    await reachActivities(user);
+    await screen.findByText("Actividad 1");
+    await user.click(
+      screen.getByRole("button", { name: "Agregar Actividad 1" }),
+    );
+    expect(createPlanFromComposer).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: /Revisar plan/ }));
+    expect(screen.getByText("Actividad 1")).toBeInTheDocument();
+    expect(createPlanFromComposer).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: /Crear plan/ }));
+
+    await waitFor(() => expect(createPlanFromComposer).toHaveBeenCalledOnce());
+    const payload = vi.mocked(createPlanFromComposer).mock.calls[0][0];
+    expect(payload).toMatchObject({
+      title: "Sábado entre viñas",
+      description: null,
+      peopleCount: 2,
+      visibility: "private",
+      stops: [{ activityId: 1 }],
+    });
+    expect(payload.requestId).toMatch(/^[0-9a-f-]{36}$/i);
+    expect(push).toHaveBeenCalledWith(`${ROUTES.plans}/7`);
+  });
+
+  it("expands beyond five results and paginates to the fifteenth activity", async () => {
+    const user = userEvent.setup();
+    render(<CreatePlanForm />);
+    await reachActivities(user);
+    await screen.findByText("Actividad 1");
+    expect(screen.queryByText("Actividad 6")).not.toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: /Ver más resultados/ }),
+    );
+    expect(await screen.findByText("Actividad 12")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Siguiente" }));
+    expect(await screen.findByText("Actividad 15")).toBeInTheDocument();
+    expect(searchActivities).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 2, limit: 12 }),
+    );
+  });
+
+  it("requires two search characters and waits for the debounce", async () => {
+    const user = userEvent.setup();
+    render(<CreatePlanForm />);
+    await reachActivities(user);
+    await screen.findByText("Actividad 1");
+    vi.mocked(searchActivities).mockClear();
+
+    const searchBox = screen.getByRole("searchbox", {
+      name: "Buscar actividades",
+    });
+    await user.type(searchBox, "a");
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    });
+    expect(searchActivities).not.toHaveBeenCalled();
+    expect(
+      screen.getByText("La búsqueda empieza con dos letras"),
+    ).toBeInTheDocument();
+
+    await user.type(searchBox, "b");
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    });
+    expect(searchActivities).toHaveBeenCalledOnce();
+    expect(searchActivities).toHaveBeenLastCalledWith(
+      expect.objectContaining({ search: "ab", page: 1, limit: 12 }),
+    );
+  });
+
+  it("applies catalog category, price, and sort filters to the paginated search", async () => {
+    const user = userEvent.setup();
+    render(<CreatePlanForm />);
+    await reachActivities(user);
+    await screen.findByText("Actividad 1");
+
+    await user.click(screen.getByRole("button", { name: "Bodegas" }));
+    await user.type(screen.getByPlaceholderText("$ mín."), "2000");
+    await user.type(screen.getByPlaceholderText("$ máx."), "9000");
+    await user.click(
+      screen.getByRole("button", { name: "Ordenar actividades" }),
+    );
+    await user.click(screen.getByRole("option", { name: "Precio" }));
+
+    await waitFor(() =>
+      expect(searchActivities).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          categoryIds: [1],
+          minPrice: 2000,
+          maxPrice: 9000,
+          sortBy: "price",
+          page: 1,
+          limit: 12,
+        }),
+      ),
+    );
+  });
+
+  it("prevents duplicates, reorders stops, and recalculates totals as stops change", async () => {
+    const user = userEvent.setup();
+    render(<CreatePlanForm />);
+    await reachActivities(user);
+    await screen.findByText("Actividad 1");
+    await user.click(
+      screen.getByRole("button", { name: "Agregar Actividad 1" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Agregar Actividad 2" }),
+    );
+    await user.click(
+      screen.getByRole("button", {
+        name: /Actividad 1 ya está en el recorrido/,
       }),
     );
 
-    const user = userEvent.setup();
-    render(<CreatePlanForm />);
+    const stopList = screen.getByRole("list", { name: "Paradas en orden" });
+    expect(within(stopList).getAllByText("Actividad 1")).toHaveLength(1);
+    expect(within(stopList).getAllByRole("listitem")).toHaveLength(2);
 
-    await user.type(screen.getByLabelText("Nombre del plan"), "Domingo de bodegas");
-    const addButton = await searchActivity(user);
-    await user.click(addButton);
-
-    await user.click(screen.getByRole("button", { name: "Guardar Plan" }));
-    expect(
-      await screen.findByText("La actividad no está disponible"),
-    ).toBeInTheDocument();
-    expect(createPlan).toHaveBeenCalledTimes(1);
-
-    // Retrying must reuse the plan the first attempt already created.
-    vi.mocked(addPlanActivity).mockResolvedValue(
-      {} as Awaited<ReturnType<typeof addPlanActivity>>,
+    await user.click(
+      screen.getByRole("button", { name: "Mover Actividad 2 arriba" }),
     );
-    await user.click(screen.getByRole("button", { name: "Guardar Plan" }));
+    expect(within(stopList).getAllByRole("listitem")[0]).toHaveTextContent(
+      "Actividad 2",
+    );
+    expect(screen.getByLabelText("Estimación del recorrido")).toHaveTextContent(
+      /\$\s?3\.000/,
+    );
+    expect(screen.getByLabelText("Estimación del recorrido")).toHaveTextContent(
+      "30m",
+    );
 
-    await waitFor(() => {
-      expect(addPlanActivity).toHaveBeenCalledTimes(2);
-    });
-    expect(createPlan).toHaveBeenCalledTimes(1);
+    await user.click(
+      screen.getByRole("button", { name: "Quitar Actividad 1" }),
+    );
+    expect(within(stopList).getAllByRole("listitem")).toHaveLength(1);
+    expect(screen.getByLabelText("Estimación del recorrido")).toHaveTextContent(
+      /\$\s?2\.000/,
+    );
+    expect(screen.getByLabelText("Estimación del recorrido")).toHaveTextContent(
+      "20m",
+    );
   });
 
-  it("warns before discarding a form with data in it", async () => {
+  it("shows catalog errors with a working retry and handles an empty result", async () => {
+    vi.mocked(searchActivities)
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockResolvedValueOnce({
+        data: [],
+        pagination: { page: 1, limit: 12, total: 0, totalPages: 0 },
+      });
     const user = userEvent.setup();
     render(<CreatePlanForm />);
+    await reachActivities(user);
 
-    await user.type(screen.getByLabelText("Nombre del plan"), "Domingo");
-    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(
+      await screen.findByText(
+        "No pudimos completar la búsqueda. Intentá de nuevo.",
+      ),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Reintentar" }));
+    expect(
+      await screen.findByText("No encontramos actividades con esos criterios"),
+    ).toBeInTheDocument();
+  });
 
-    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
-    expect(screen.getByText("Descartar cambios")).toBeInTheDocument();
+  it("does not advance an empty itinerary to review", async () => {
+    const user = userEvent.setup();
+    render(<CreatePlanForm />);
+    await reachActivities(user);
+    await user.click(screen.getByRole("button", { name: /Revisar plan/ }));
+    expect(screen.queryByText("Un último vistazo")).not.toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Sumá al menos una actividad",
+    );
+  });
+
+  it("switches the mobile catalog and itinerary tabs with arrow keys", async () => {
+    const user = userEvent.setup();
+    render(<CreatePlanForm />);
+    await reachActivities(user);
+    const itineraryTab = screen.getByRole("tab", { name: /Recorrido 0/ });
+    await user.click(itineraryTab);
+    expect(itineraryTab).toHaveAttribute("aria-selected", "true");
+    await user.keyboard("{ArrowLeft}");
+    expect(screen.getByRole("tab", { name: "Catálogo" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+
+  it("preserves the draft and reuses a stable request id after a failed save", async () => {
+    vi.mocked(createPlanFromComposer)
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockResolvedValueOnce(canonicalPlan());
+    const user = userEvent.setup();
+    render(<CreatePlanForm />);
+    await reachActivities(user);
+    await screen.findByText("Actividad 1");
+    await user.click(
+      screen.getByRole("button", { name: "Agregar Actividad 1" }),
+    );
+    await user.click(screen.getByRole("button", { name: /Revisar plan/ }));
+    await user.click(screen.getByRole("button", { name: /Crear plan/ }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Tu borrador sigue acá",
+    );
+    expect(screen.getByText("Actividad 1")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /Crear plan/ }));
+    await waitFor(() =>
+      expect(createPlanFromComposer).toHaveBeenCalledTimes(2),
+    );
+    expect(vi.mocked(createPlanFromComposer).mock.calls[0][0].requestId).toBe(
+      vi.mocked(createPlanFromComposer).mock.calls[1][0].requestId,
+    );
+  });
+
+  it("asks only when explicitly leaving a dirty draft", async () => {
+    const user = userEvent.setup();
+    render(<CreatePlanForm />);
+    await user.type(screen.getByLabelText(/Nombre del plan/), "Viaje");
+    await user.click(screen.getByRole("button", { name: "Salir" }));
+    expect(
+      screen.getByRole("alertdialog", { name: "¿Salir sin guardar?" }),
+    ).toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
   });
 
-  it("leaves straight away when the form is untouched", async () => {
+  it("returns to the source activity after creating a prefilled plan", async () => {
     const user = userEvent.setup();
-    render(<CreatePlanForm />);
+    render(<CreatePlanForm initialActivityId={42} returnToActivity />);
+    expect(await screen.findByText("Actividad 42")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /Paso 1: Idea/ }));
+    await user.type(
+      screen.getByLabelText(/Nombre del plan/),
+      "Salida desde actividad",
+    );
+    await user.click(
+      screen.getByRole("button", { name: /Elegir actividades/ }),
+    );
+    await user.click(screen.getByRole("button", { name: /Revisar plan/ }));
+    await user.click(screen.getByRole("button", { name: /Crear plan/ }));
 
-    await user.click(screen.getByRole("button", { name: "Cancelar" }));
-
-    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
-    expect(push).toHaveBeenCalledWith(ROUTES.explore);
+    await waitFor(() => expect(createPlanFromComposer).toHaveBeenCalledOnce());
+    expect(createPlanFromComposer).toHaveBeenCalledWith(
+      expect.objectContaining({ stops: [{ activityId: 42 }] }),
+    );
+    expect(push).toHaveBeenCalledWith(activityDetailRoute(42));
   });
+});
 
-  it("sends the automatic plan button to the real AI composer on the Home page", async () => {
+describe("PlanComposer edit flow", () => {
+  it("reorders with keyboard controls and submits retained PlanDetail identities", async () => {
     const user = userEvent.setup();
-    render(<CreatePlanForm />);
+    const plan = {
+      ...canonicalPlan(),
+      details: [
+        {
+          id: 601,
+          order: 1,
+          estimatedCost: 20000,
+          estimatedDuration: 120,
+          activity: {
+            id: 1,
+            name: "Bodega A",
+            description: "",
+            estimatedCost: 30000,
+            estimatedDuration: 240,
+            type: "Bodega",
+          },
+        },
+        {
+          id: 602,
+          order: 2,
+          estimatedCost: 8000,
+          estimatedDuration: 60,
+          activity: {
+            id: 2,
+            name: "Bodega B",
+            description: "",
+            estimatedCost: 9000,
+            estimatedDuration: 90,
+            type: "Bodega",
+          },
+        },
+      ],
+    } as OwnPlanDetail;
+    vi.mocked(searchActivities).mockResolvedValue({
+      data: [],
+      pagination: { page: 1, limit: 12, total: 0, totalPages: 0 },
+    });
+    vi.mocked(updatePlanFromComposer).mockResolvedValue(plan);
+    render(<PlanComposer mode="edit" plan={plan} />);
+    const userPlanName = screen.getByLabelText(/Nombre del plan/);
+    expect(userPlanName).toHaveValue("Sábado entre viñas");
+    await user.click(
+      screen.getByRole("button", { name: /Elegir actividades/ }),
+    );
+    expect(screen.getByText(/20\.000/)).toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: "Mover Bodega B arriba" }),
+    );
+    await user.click(screen.getByRole("button", { name: /Revisar plan/ }));
+    await user.click(screen.getByRole("button", { name: /Guardar cambios/ }));
 
-    await user.click(screen.getByRole("button", { name: /Generar plan automático/i }));
-
-    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
-    expect(push).toHaveBeenCalledWith(`${ROUTES.home}?startComposer=1`);
+    await waitFor(() => expect(updatePlanFromComposer).toHaveBeenCalledOnce());
+    expect(updatePlanFromComposer).toHaveBeenCalledWith(
+      7,
+      expect.objectContaining({
+        stops: [
+          { activityId: 2, detailId: 602 },
+          { activityId: 1, detailId: 601 },
+        ],
+      }),
+    );
+    expect(push).toHaveBeenCalledWith(`${ROUTES.plans}/7`);
   });
 });
