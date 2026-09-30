@@ -1,16 +1,17 @@
 import { getOuting, getOwnRating } from "@/lib/api";
+import type { OwnRating } from "@/types";
 
 /** One activity of a completed outing, as the post-feedback step offers it. */
 export interface RatableActivity {
   id: number;
   name: string;
-  /** The score the person already gave it, or `null` while unrated. */
-  ownScore: number | null;
+  /** The person's current rating, editable through CU46, or `null`. */
+  ownRating: OwnRating | null;
 }
 
 /**
  * The activities of a completed outing, in itinerary order and without
- * repeats, each with the person's own rating if there is one (CU23 → CU44).
+ * repeats, each with the person's own rating if there is one (CU23 → CU44/CU46).
  * The outing itself is the plan `POST /activities/:id/ratings` needs: it's
  * theirs, `completed`, and keeps its details.
  *
@@ -40,7 +41,7 @@ export async function loadRatableActivities(
     return {
       id: activity.id,
       name: activity.name,
-      ownScore: result.status === "fulfilled" ? (result.value?.score ?? null) : null,
+      ownRating: result.status === "fulfilled" ? result.value : null,
     };
   });
 }

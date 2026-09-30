@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 
-import { Button, Icon, RatingInput, Stars } from "@/components/ui";
-import { ApiError, createRating } from "@/lib/api";
+import { Button, Icon, RatingInput } from "@/components/ui";
+import { ApiError, createRating, getOwnRating, updateRating } from "@/lib/api";
 import type { RatableActivity } from "@/lib/plans/ratableActivities";
 import type { OwnRating } from "@/types";
 
@@ -28,7 +28,7 @@ export interface ActivityRatingsStepProps {
   onSaved: (result: ActivityRatingsResult) => void;
 }
 
-type RowStatus = "open" | "saved" | "existing" | "error";
+type RowStatus = "open" | "saved" | "error";
 
 interface Row {
   score: number;
@@ -43,10 +43,10 @@ function initialRows(activities: RatableActivity[]): Record<number, Row> {
     activities.map((activity) => [
       activity.id,
       {
-        score: activity.ownScore ?? 0,
-        comment: "",
-        commentOpen: false,
-        status: activity.ownScore != null ? "saved" : "open",
+        score: activity.ownRating?.score ?? 0,
+        comment: activity.ownRating?.comment ?? "",
+        commentOpen: Boolean(activity.ownRating?.comment),
+        status: "open",
         error: null,
       } satisfies Row,
     ])
@@ -71,9 +71,8 @@ function rowErrorMessage(error: unknown): string {
 /**
  * The optional step after CU23's feedback: rate each activity of the outing
  * just reviewed (CU44), one star row per activity, a comment only if wanted.
- * Only the rows with stars are sent, each on its own, so one failure keeps
- * the others saved. Activities already rated show their score, read-only —
- * editing stays on the activity page (CU46).
+ * Existing ratings stay editable and are updated through CU46. Only new or
+ * changed rows are sent, each on its own, so one failure keeps the others saved.
  */
 export function ActivityRatingsStep({
   planId,
@@ -88,6 +87,7 @@ export function ActivityRatingsStep({
   const [rows, setRows] = useState(() => initialRows(activities));
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const rejectedComments = useRef(0);
 
   useEffect(() => {
     onBusyChange(busy);
@@ -95,7 +95,11 @@ export function ActivityRatingsStep({
 
   const pending = activities.filter((activity) => {
     const row = rows[activity.id];
-    return (row.status === "open" || row.status === "error") && row.score > 0;
+    if ((row.status !== "open" && row.status !== "error") || row.score === 0) {
+      return false;
+    }
+    const own = activity.ownRating;
+    return own == null || row.score !== own.score || row.comment.trim() !== (own.comment ?? "");
   });
 
   function patchRow(activityId: number, patch: Partial<Row>) {
@@ -111,16 +115,38 @@ export function ActivityRatingsStep({
     setBusy(true);
     setFormError(null);
 
-    const results = await Promise.allSettled(
-      pending.map((activity) => {
-        const row = rows[activity.id];
-        return createRating(activity.id, {
+    async function save(activity: RatableActivity): Promise<OwnRating> {
+      const row = rows[activity.id];
+      const comment = row.comment.trim();
+      if (activity.ownRating) {
+        return updateRating(activity.ownRating.id, {
+          score: row.score,
+          comment: comment || null,
+        });
+      }
+      try {
+        return await createRating(activity.id, {
           planId,
           score: row.score,
-          comment: row.comment.trim() || undefined,
+          comment: comment || undefined,
         });
-      })
-    );
+      } catch (error) {
+        // The lookup and submit can race with another tab. Resolve the current
+        // rating and apply this form's value instead of silently discarding it.
+        if (error instanceof ApiError && error.code === "RATING_ALREADY_EXISTS") {
+          const current = await getOwnRating(activity.id);
+          if (current) {
+            return updateRating(current.id, {
+              score: row.score,
+              comment: comment || null,
+            });
+          }
+        }
+        throw error;
+      }
+    }
+
+    const results = await Promise.allSettled(pending.map(save));
 
     const next = { ...rows };
     const saved: OwnRating[] = [];
@@ -130,11 +156,6 @@ export function ActivityRatingsStep({
       if (result.status === "fulfilled") {
         saved.push(result.value);
         next[activityId] = { ...next[activityId], status: "saved", error: null };
-      } else if (
-        result.reason instanceof ApiError &&
-        result.reason.code === "RATING_ALREADY_EXISTS"
-      ) {
-        next[activityId] = { ...next[activityId], status: "existing", error: null };
       } else {
         failed += 1;
         next[activityId] = {
@@ -146,14 +167,16 @@ export function ActivityRatingsStep({
     });
     setRows(next);
     setBusy(false);
+    rejectedComments.current += saved.filter(
+      (rating) => rating.moderationStatus === "rejected"
+    ).length;
 
     if (failed > 0) {
       setFormError(ACTIVITY_RATINGS_COPY.errors.partial(failed, pending.length));
       return;
     }
     onSaved({
-      rejectedComments: saved.filter((rating) => rating.moderationStatus === "rejected")
-        .length,
+      rejectedComments: rejectedComments.current,
     });
   }
 
@@ -173,7 +196,7 @@ export function ActivityRatingsStep({
             const row = rows[activity.id];
             const nameId = `${baseId}-${activity.id}-name`;
             const commentId = `${baseId}-${activity.id}-comment`;
-            const done = row.status === "saved" || row.status === "existing";
+            const done = row.status === "saved";
             return (
               <li key={activity.id} className={styles.activityRow} data-done={done}>
                 <div className={styles.activityHead}>
@@ -181,16 +204,16 @@ export function ActivityRatingsStep({
                   {done ? (
                     <span className={styles.activityDone}>
                       <Icon name="check" size={14} aria-hidden="true" />
-                      {row.status === "existing" || activity.ownScore != null
-                        ? ACTIVITY_RATINGS_COPY.alreadyRated
-                        : ACTIVITY_RATINGS_COPY.saved}
+                      {ACTIVITY_RATINGS_COPY.saved}
+                    </span>
+                  ) : activity.ownRating ? (
+                    <span className={styles.activityDone}>
+                      {ACTIVITY_RATINGS_COPY.currentRating}
                     </span>
                   ) : null}
                 </div>
 
-                {done ? (
-                  row.status === "saved" ? <Stars rating={row.score} size={18} /> : null
-                ) : (
+                {done ? null : (
                   <>
                     <RatingInput
                       value={row.score}

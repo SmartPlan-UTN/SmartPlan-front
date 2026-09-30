@@ -7,11 +7,12 @@ import type { PlanFeedback } from "@/types";
 
 import { FeedbackDialog } from "./FeedbackDialog";
 
-const { submitFeedback, getOuting, getOwnRating, createRating } = vi.hoisted(() => ({
+const { submitFeedback, getOuting, getOwnRating, createRating, updateRating } = vi.hoisted(() => ({
   submitFeedback: vi.fn(),
   getOuting: vi.fn(),
   getOwnRating: vi.fn(),
   createRating: vi.fn(),
+  updateRating: vi.fn(),
 }));
 
 vi.mock("@/lib/api", async (importActual) => ({
@@ -20,6 +21,7 @@ vi.mock("@/lib/api", async (importActual) => ({
   getOuting,
   getOwnRating,
   createRating,
+  updateRating,
 }));
 
 function detail(order: number, id: number, name: string) {
@@ -88,11 +90,14 @@ function setup(overrides: Partial<Parameters<typeof FeedbackDialog>[0]> = {}) {
 beforeEach(() => {
   vi.clearAllMocks();
   submitFeedback.mockResolvedValue(FEEDBACK);
-  // By default everything is already rated, so no offer appears.
-  getOuting.mockResolvedValue(OUTING);
+  // The CU23-only tests don't need a follow-up activity step.
+  getOuting.mockResolvedValue({ ...OUTING, details: [] });
   getOwnRating.mockImplementation((id: number) => Promise.resolve(ownRating(id, 4)));
   createRating.mockImplementation((id: number, input: { score: number }) =>
     Promise.resolve(ownRating(id, input.score))
+  );
+  updateRating.mockImplementation((id: number, input: { score: number }) =>
+    Promise.resolve(ownRating(id / 100, input.score))
   );
 });
 
@@ -348,18 +353,17 @@ describe("FeedbackDialog (CU23)", () => {
 
 describe("FeedbackDialog → rating the activities (CU23 → CU44)", () => {
   beforeEach(() => {
+    getOuting.mockResolvedValue(OUTING);
     getOwnRating.mockResolvedValue(null);
   });
 
-  it("closes on its own when every activity is already rated", async () => {
+  it("offers the activity step even when every activity is already rated", async () => {
     getOwnRating.mockImplementation((id: number) => Promise.resolve(ownRating(id, 5)));
     const { onSubmitted } = setup();
     await sendFeedback();
 
-    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK), {
-      timeout: 2500,
-    });
-    expect(screen.queryByText(/valorar las actividades/i)).not.toBeInTheDocument();
+    expect(await screen.findByText(/querés valorar las actividades/i)).toBeInTheDocument();
+    expect(onSubmitted).not.toHaveBeenCalled();
   });
 
   it("closes on its own when the activities can't be loaded", async () => {
@@ -436,7 +440,7 @@ describe("FeedbackDialog → rating the activities (CU23 → CU44)", () => {
     });
   });
 
-  it("shows activities already rated as read-only", async () => {
+  it("lets the person update an activity already rated", async () => {
     getOwnRating.mockImplementation((id: number) =>
       Promise.resolve(id === 11 ? ownRating(11, 3) : null)
     );
@@ -444,15 +448,22 @@ describe("FeedbackDialog → rating the activities (CU23 → CU44)", () => {
     await sendFeedback();
     await userEvent.click(await screen.findByRole("button", { name: /valorar actividades/i }));
 
-    expect(screen.getAllByRole("radiogroup")).toHaveLength(1);
-    expect(screen.getByText(/ya la valoraste/i)).toBeInTheDocument();
+    const [lunch] = screen.getAllByRole("radiogroup");
+    expect(screen.getAllByRole("radiogroup")).toHaveLength(2);
+    expect(screen.getByText(/tu valoración actual/i)).toBeInTheDocument();
+
+    await userEvent.click(within(lunch).getByRole("radio", { name: /5 estrellas/i }));
+    await userEvent.click(screen.getByRole("button", { name: /guardar valoraciones/i }));
+
+    expect(updateRating).toHaveBeenCalledWith(1100, { score: 5, comment: null });
+    expect(createRating).not.toHaveBeenCalled();
   });
 
   it("keeps a failed rating open and the saved one read-only", async () => {
     createRating.mockImplementation((id: number, input: { score: number }) =>
       id === 11
         ? Promise.reject(new ApiError({ message: "Se cortó la conexión.", type: "NETWORK" }))
-        : Promise.resolve(ownRating(id, input.score))
+        : Promise.resolve(ownRating(id, input.score, "rejected"))
     );
     const { onSubmitted } = setup();
     await sendFeedback();
@@ -476,10 +487,10 @@ describe("FeedbackDialog → rating the activities (CU23 → CU44)", () => {
     await userEvent.click(screen.getByRole("button", { name: /guardar valoraciones/i }));
     expect(createRating).toHaveBeenCalledTimes(1);
     expect(createRating).toHaveBeenCalledWith(11, { planId: 7, score: 4, comment: undefined });
-    expect(await screen.findByText(/gracias por valorar/i)).toBeInTheDocument();
+    expect(await screen.findByText(/no pasó la moderación/i)).toBeInTheDocument();
   });
 
-  it("treats a rating created elsewhere meanwhile as done", async () => {
+  it("updates a rating created elsewhere meanwhile", async () => {
     createRating.mockRejectedValue(
       new ApiError({
         message: "Ya existe.",
@@ -493,9 +504,11 @@ describe("FeedbackDialog → rating the activities (CU23 → CU44)", () => {
     await userEvent.click(await screen.findByRole("button", { name: /valorar actividades/i }));
 
     const [lunch] = screen.getAllByRole("radiogroup");
+    getOwnRating.mockResolvedValue(ownRating(11, 3));
     await userEvent.click(within(lunch).getByRole("radio", { name: /2 estrellas/i }));
     await userEvent.click(screen.getByRole("button", { name: /guardar valoraciones/i }));
 
+    expect(updateRating).toHaveBeenCalledWith(1100, { score: 2, comment: null });
     expect(await screen.findByText(/gracias por valorar/i)).toBeInTheDocument();
   });
 

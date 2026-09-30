@@ -95,7 +95,7 @@ export const ACTIVITY_RATINGS_COPY = {
   },
   heading: "Valorá las actividades",
   lead: "Solo las que quieras. Las que dejes sin estrellas no se envían.",
-  alreadyRated: "Ya la valoraste",
+  currentRating: "Tu valoración actual",
   saved: "Guardada",
   commentToggle: "Agregar un comentario",
   commentLabel: (activity: string) => `Tu comentario sobre ${activity}`,

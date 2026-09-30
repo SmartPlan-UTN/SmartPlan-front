@@ -316,7 +316,7 @@ export function FeedbackDialog({
       (): RatableActivity[] => []
     );
     if (!activeRef.current) return;
-    if (activities.some((activity) => activity.ownScore == null)) {
+    if (activities.length > 0) {
       setRatable(activities);
       setPhase("offer");
       return;
