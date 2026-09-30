@@ -303,7 +303,7 @@ Things that have been spotted but don't have an owner yet:
 
 ## Log
 
-2026-09-30 — `feature/image-galleries`: gallery UI and authenticated image loading in progress. Added avatar management, reusable gallery viewer/editor, cards and details, rating/feedback photos, and the minimal administration place gallery. Lint, 626 unit tests, and production build pass locally. End-to-end verification with a private test bucket and the backend database remains pending.
+2026-09-30 — `feature/image-galleries`: gallery UI and authenticated image loading in progress. Added avatar management, reusable gallery viewer/editor, cards and details, rating/feedback photos, and the minimal administration place gallery. Integrated the latest `origin/develop`; lint, 639 unit tests, and production build pass locally. End-to-end verification with a private test bucket and the backend database remains pending.
 
 | Date | What happened |
 |---|---|
