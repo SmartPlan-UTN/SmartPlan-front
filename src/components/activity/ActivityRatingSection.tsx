@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { ConfirmationDialog, Icon, LoadingDots, Stars } from "@/components/ui";
+import { MediaGalleryManager } from "@/components/media";
 import {
   ApiError,
   deleteRating,
@@ -260,6 +261,7 @@ export function ActivityRatingSection({ activityId, onChange }: ActivityRatingSe
           <p className={`sp-body ${styles.ownRatingComment}`}>{ownRating.comment}</p>
         ) : null}
         {note ? <p className={styles.ratingModerationNote}>{note}</p> : null}
+        <MediaGalleryManager target="rating" resourceId={ownRating.id} resourceName="tu valoración" onChanged={onChange} />
 
         {confirmingDelete ? (
           <ConfirmationDialog

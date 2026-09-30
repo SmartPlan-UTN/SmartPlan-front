@@ -6,6 +6,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Button, Icon, UserAvatar } from "@/components/ui";
+import { getProfile } from "@/lib/api";
 import { useSession } from "@/lib/auth";
 import { loginRoute, ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
@@ -144,9 +145,21 @@ export function UserMenu() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelId = useId();
+
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    let active = true;
+    getProfile().then((profile) => {
+      if (active) setAvatarUrl(profile.avatarUrl ?? null);
+    }).catch(() => {
+      if (active) setAvatarUrl(null);
+    });
+    return () => { active = false; };
+  }, [status, currentRoute]);
 
   const close = useCallback(() => {
     setOpen(false);
@@ -247,6 +260,7 @@ export function UserMenu() {
           name={user.name}
           lastName={user.lastName}
           userId={user.id}
+          avatarUrl={avatarUrl}
           size="large"
           tone="ember"
         />

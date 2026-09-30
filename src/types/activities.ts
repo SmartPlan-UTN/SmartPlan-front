@@ -52,6 +52,7 @@ export interface ActivityCategorySummary {
  */
 export interface ActivitySearchResult {
   id: number;
+  imageUrl?: string | null;
   name: string;
   description: string;
   estimatedCost: number;
@@ -118,6 +119,7 @@ export interface ActivityLocationSummary {
  * summary plus every meeting point.
  */
 export interface ActivityDetailResult extends ActivitySearchResult {
+  images?: import('./media').MediaImage[];
   locations: ActivityLocationSummary[];
 }
 

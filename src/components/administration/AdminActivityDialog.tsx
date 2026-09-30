@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 
 import { Button, Icon } from "@/components/ui";
+import { MediaGalleryManager } from "@/components/media";
 import type {
   AdminActivity,
   AdminActivityInput,
@@ -220,6 +221,7 @@ export function AdminActivityDialog({
             <Button type="submit" disabled={saving}>{saving ? "Guardando..." : "Guardar actividad"}</Button>
           </div>
         </form>
+        {activity ? <MediaGalleryManager target="activity" resourceId={activity.id} resourceName={activity.name} /> : null}
       </div>
     </div>
   );

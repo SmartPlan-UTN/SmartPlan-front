@@ -6,6 +6,9 @@
   border-radius: var(--r-chip);
   font-weight: var(--w-display);
 }
+.avatar img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
+.avatar img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
+.avatar img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
 
 .medium {
   width: 40px;

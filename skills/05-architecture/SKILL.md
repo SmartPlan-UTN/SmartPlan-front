@@ -43,10 +43,9 @@ flowchart TB
     BE -->|HTTPS| S3
     WK -->|HTTPS| GM
     WK -->|HTTPS| AI
-    FE -.->|"HTTPS · read-only"| S3
 ```
 
-> The dotted frontend-to-S3 line represents secondary image-reading access, not the application's main path.
+> Las imágenes se leen por la API: el bucket S3 es privado y el backend controla los permisos antes de transmitir cada archivo.
 
 ## Components and Technologies
 
@@ -57,7 +56,7 @@ flowchart TB
 | Database | SQL | PostgreSQL (TypeORM 0.3, `pg` driver) | Persistence for approximately 30 domain entities |
 | Message queue | — | RabbitMQ | Decouples asynchronous processing from HTTP responses |
 | Workers | TypeScript | NestJS consumers | Background and scheduled tasks |
-| Object storage | — | Amazon S3 | Activity and place images |
+| Object storage | — | Amazon S3 | Avatar and activity, place, plan, rating, and feedback images in a private bucket |
 | Geolocation | — | Google Maps Platform | Addresses, coordinates, activity distances |
 | Plan generation | — | Gemini API | Personalized plans and suggestions |
 
@@ -72,10 +71,10 @@ flowchart TB
 | RabbitMQ | Workers | AMQP | Workers consume and process jobs |
 | Backend / Workers | Google Maps | HTTPS REST | API key through an environment variable |
 | Workers | Gemini | HTTPS REST | API key through an environment variable |
-| Backend | S3 | HTTPS | Image upload |
-| Frontend | S3 | HTTPS | Direct image reading |
+| Backend | S3 | HTTPS | Image upload and private-object reading |
+| Frontend | Backend | HTTPS | Image download through `/api/media`, with Bearer JWT for private images |
 
-**Dependency rule:** the frontend never communicates with PostgreSQL, RabbitMQ, or Gemini. Everything it needs goes through the backend API, except reading images from S3.
+**Dependency rule:** the frontend never communicates with PostgreSQL, RabbitMQ, Gemini, or S3. Everything it needs goes through the backend API. The frontend downloads media with its authenticated Axios client, creates a temporary object URL, and revokes it when the component unmounts.
 
 ## Asynchronous Processing
 
@@ -155,7 +154,7 @@ Already decided **in code**:
 
 Defined in documentation but not yet in code:
 
-- Amazon S3 appears in the technical feasibility study and training plan, but has no dependencies or modules. Unlike Vercel, Railway, Google Maps, and Gemini, it is **not included in the Phase 3 cost table**.
+- Media galleries are implemented in the backend through a private S3 bucket and `/api/media` routes. Unlike Vercel, Railway, Google Maps, and Gemini, S3 is **not included in the Phase 3 cost table**.
 - Functional queue jobs for plan generation (CU17/19/31), notifications, external-data synchronization, scheduled cleanup, and internal reports. F12 prepares the infrastructure, but none has been written.
 
 The Gemini API replaces the OpenAI API anticipated by the original Phase 3 technical feasibility study. F10 (#32) validated the integration: Spanish plan generation, budget compliance, real places verifiable through Grounding with Google Maps, and a within-budget generation cost. The production integration for CU17, CU19, and CU31 is not yet written; the spike is isolated evaluation code, not the final recommendation engine. See `docs/decisions.md` for the decision details.

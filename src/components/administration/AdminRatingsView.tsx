@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { Pagination } from "@/components/explore";
 import { Button, Icon, Stars, UserAvatar } from "@/components/ui";
+import { MediaGallery, MediaGalleryManager } from "@/components/media";
 import {
   ApiError,
   getAdminRatingCounts,
@@ -286,6 +287,8 @@ export function AdminRatingsView() {
                 ) : (
                   <p className={styles.noComment}>Sin comentario: solo puntuación.</p>
                 )}
+                <MediaGallery target="rating" resourceId={rating.id} resourceName={`valoración de ${rating.author.name}`} />
+                <MediaGalleryManager target="rating" resourceId={rating.id} resourceName={`valoración de ${rating.author.name}`} />
                 {rating.moderationReason ? (
                   <p className={styles.reason}>
                     <Icon name="triangle-alert" size={16} />

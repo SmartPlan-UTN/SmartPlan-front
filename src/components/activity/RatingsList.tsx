@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { Pagination } from "@/components/explore";
+import { MediaGallery } from "@/components/media";
 import { Icon, LoadingDots, Stars } from "@/components/ui";
 import { listRatings } from "@/lib/api";
 import { formatRelativeTime } from "@/lib/utils";
@@ -145,6 +146,7 @@ export function RatingsList({ activityId, refreshToken, onSummaryChange }: Ratin
             <Stars rating={rating.score} size={11} />
           </div>
           {rating.comment ? <p className={styles.reviewText}>{rating.comment}</p> : null}
+          <MediaGallery target="rating" resourceId={rating.id} resourceName={`valoración de ${rating.authorAlias}`} />
         </div>
       ))}
 

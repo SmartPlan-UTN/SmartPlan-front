@@ -60,6 +60,7 @@ export interface PlanStatus extends CatalogEntity<PlanStatusKey> {
  */
 export interface PlanSearchResult {
   id: number;
+  imageUrl?: string | null;
   title: string;
   description: string | null;
   estimatedTotalCost: number;
@@ -128,6 +129,7 @@ export type PlanVisibility = 'private' | 'public';
  * its ordered itinerary.
  */
 export interface PlanDetailResult extends PlanSearchResult {
+  images?: import('./media').MediaImage[];
   details: PlanItineraryItem[];
   /** Selection affordance for the caller (CU22). */
   viewerPlanState: ViewerPlanState;
@@ -179,6 +181,7 @@ export interface OutingSource {
 /** One entry of "Mis salidas" — `GET /users/me/outings`. */
 export interface OutingSummary {
   id: number;
+  imageUrl?: string | null;
   title: string;
   description: string | null;
   estimatedTotalCost: number;
