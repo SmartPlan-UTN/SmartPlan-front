@@ -145,12 +145,12 @@ constant breaks the build and the string breaks silently.
 (Inicio, Explorar, Mis planes, Mis salidas, Favoritos), the notification
 bell, and the user menu — no create CTA: creating lives inside Mis planes.
 Below 900px the top bar keeps only identity, the bell, and session, while a
-thumb-reachable bottom bar exposes Inicio, Explorar, Planificar (the centre
-tab: Inicio's composer, SmartPlan's main feature), Mis planes, and Favoritos
-without hiding primary destinations behind a hamburger. Mis salidas has no
-sixth tab: below 900px it's an extra entry in the account menu. Both bars
-read their entries from `links.ts`, so a destination keeps one name across
-viewports.
+thumb-reachable bottom bar exposes Explorar, Mis planes, Planificar (the
+centre tab: Inicio's composer, SmartPlan's main feature), Mis salidas, and
+Favoritos without hiding primary destinations behind a hamburger. Inicio
+stays reachable through the brand logo instead of duplicating Planificar in
+the bottom bar. Both bars read their entries from `links.ts`, so a destination
+keeps one name across viewports.
 
 The four private collections never mix (#130): **Mis planes** is what the
 person created (private or public), **Mis salidas** what they chose to do

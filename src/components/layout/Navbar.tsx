@@ -24,8 +24,8 @@ const EXPLORE_TRANSITION_MS = 900;
  * The one bottom-bar tab that owns the current route. `isActiveRoute` alone
  * isn't enough there: a nested destination with its own tab must take
  * precedence over its parent, so the longest matching `href` wins.
- * "Planificar" carries a query string, so it never claims a route: Inicio
- * stays the active tab while the composer is up.
+ * "Planificar" carries a query string, so it never claims a route: no bottom
+ * tab stays active while Inicio or its composer is open.
  */
 function activeMobileHref(currentRoute: string): string | undefined {
   return MOBILE_LINKS.filter((link) => isActiveRoute(currentRoute, link.href))

@@ -477,15 +477,9 @@
   color: var(--white);
 }
 
-/* Account-menu entries that only exist to cover destinations the bottom
-   bar has no room for (Mis salidas). On desktop they're already in `.nav`. */
 @media (min-width: 900px) {
   .sessionControl {
     width: 128px;
-  }
-
-  .mobileOnlyOption {
-    display: none;
   }
 }
 

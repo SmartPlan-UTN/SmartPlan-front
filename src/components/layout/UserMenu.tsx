@@ -11,7 +11,7 @@ import { loginRoute, ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 import { NavLink } from "./NavLink";
-import { ADMIN_USER_LINK, MOBILE_USER_LINKS, USER_LINKS } from "./links";
+import { ADMIN_USER_LINK, USER_LINKS } from "./links";
 import styles from "./layout.module.css";
 
 interface LogoutConfirmModalProps {
@@ -126,8 +126,7 @@ function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
  *   the token resolves.
  * - `anonymous`: link to log in.
  * - `authenticated`: dropdown with Mi perfil, Preferencias, Seguridad, and
- *   Cerrar sesión. Below 900px it also carries Mis salidas, the one main
- *   destination the bottom bar has no tab for.
+ *   Cerrar sesión.
  *   The trigger is a circular avatar with the authenticated user's initials.
  *
  * It's a *disclosure* pattern, not an ARIA `menu`: the dropdown is regular
@@ -262,18 +261,6 @@ export function UserMenu() {
               label={link.label}
               icon={link.icon}
               variant="option"
-              onNavigate={close}
-            />
-          ))}
-
-          {MOBILE_USER_LINKS.map((link) => (
-            <NavLink
-              key={link.href}
-              href={link.href}
-              label={link.label}
-              icon={link.icon}
-              variant="option"
-              className={styles.mobileOnlyOption}
               onNavigate={close}
             />
           ))}

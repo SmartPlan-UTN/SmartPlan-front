@@ -232,25 +232,6 @@ describe("Navbar", () => {
     ).not.toBeInTheDocument();
   });
 
-  // The bottom bar has no Mis salidas tab, so the account menu carries it
-  // (CSS hides that entry from 900px, where `.nav` already has it).
-  it("offers Mis salidas from the account menu", async () => {
-    mockAuthenticatedStartup();
-    const user = userEvent.setup();
-    renderNavbar();
-
-    const trigger = await screen.findByRole("button", { name: /mi cuenta/i });
-    await user.click(trigger);
-
-    const panel = document.getElementById(
-      trigger.getAttribute("aria-controls") ?? "",
-    );
-    expect(panel).not.toBeNull();
-    expect(
-      within(panel as HTMLElement).getByRole("link", { name: "Mis salidas" }),
-    ).toHaveAttribute("href", "/outings");
-  });
-
   it("closes the user menu with Escape", async () => {
     mockAuthenticatedStartup();
     const user = userEvent.setup();
@@ -418,10 +399,10 @@ describe("Navbar", () => {
     const links = within(mobileNav).getAllByRole("link");
 
     expect(links.map((link) => link.textContent)).toEqual([
-      "Inicio",
       "Explorar",
-      "Planificar",
       "Mis planes",
+      "Planificar",
+      "Mis salidas",
       "Favoritos",
     ]);
     // The centre tab is the main feature: Inicio's composer, not the editor.
@@ -443,8 +424,11 @@ describe("Navbar", () => {
       within(mobileNav).getByRole("link", { name: "Favoritos" }),
     ).toHaveAttribute("aria-current", "page");
     expect(
-      within(mobileNav).getByRole("link", { name: "Inicio" }),
+      within(mobileNav).getByRole("link", { name: "Mis salidas" }),
     ).not.toHaveAttribute("aria-current");
+    expect(
+      within(mobileNav).queryByRole("link", { name: "Inicio" }),
+    ).toBeNull();
   });
 
   it("asks Inicio to focus the composer when Planificar is pressed there", async () => {
@@ -474,6 +458,13 @@ describe("Navbar", () => {
 
     expect(
       within(nav).getByRole("link", { name: "Mis salidas" }),
+    ).toHaveAttribute("aria-current", "page");
+
+    const mobileNav = await screen.findByRole("navigation", {
+      name: "Navegación móvil",
+    });
+    expect(
+      within(mobileNav).getByRole("link", { name: "Mis salidas" }),
     ).toHaveAttribute("aria-current", "page");
   });
 

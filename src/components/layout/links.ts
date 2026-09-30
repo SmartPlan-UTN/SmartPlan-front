@@ -24,7 +24,6 @@ const EXPLORE_LINK: NavigationLink = { href: ROUTES.explore, label: "Explorar", 
 const PLANS_LINK: NavigationLink = { href: ROUTES.plans, label: "Mis planes", icon: "route" };
 const FAVORITES_LINK: NavigationLink = { href: ROUTES.favorites, label: "Favoritos", icon: "heart" };
 
-/** Kept outside the bottom bar on purpose: see `MOBILE_LINKS`. */
 const OUTINGS_LINK: NavigationLink = {
   href: ROUTES.outings,
   label: "Mis salidas",
@@ -54,16 +53,14 @@ export const MAIN_LINKS: readonly NavigationLink[] = [
  * Bottom bar below 900px: the five highest-frequency destinations kept
  * visible at thumb level. Built from the same entries as `MAIN_LINKS` so a
  * destination can't be named one way on desktop and another on mobile.
- *
- * Mis salidas doesn't get a sixth tab — five is the most that fits at 320px
- * with legible labels. It lives in the account menu instead
- * (`MOBILE_USER_LINKS`).
+ * Inicio stays reachable through the brand logo; keeping it here as well as
+ * Planificar duplicated the same screen and displaced Mis salidas.
  */
 export const MOBILE_LINKS: readonly NavigationLink[] = [
-  HOME_LINK,
   EXPLORE_LINK,
-  PLAN_OUTING_LINK,
   PLANS_LINK,
+  PLAN_OUTING_LINK,
+  OUTINGS_LINK,
   FAVORITES_LINK,
 ];
 
@@ -85,6 +82,3 @@ export const ADMIN_USER_LINK: NavigationLink = {
   label: "Panel de control",
   icon: "layout-dashboard",
 };
-
-/** Account-menu entries shown only below 900px, where `.nav` is hidden. */
-export const MOBILE_USER_LINKS: readonly NavigationLink[] = [OUTINGS_LINK];

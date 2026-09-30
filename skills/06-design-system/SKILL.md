@@ -281,9 +281,10 @@ plus the notification bell next to the account avatar.
 Administrators also see a "Panel de control" entry in the account
 dropdown; regular users never see that role-specific destination.
 Below 900px, the top bar keeps only the logo and session control; a fixed
-bottom bar exposes Inicio, Explorar, Planificar, Mis planes and Favoritos as
-persistent, thumb-reachable destinations (labels in `--fg-2`, not `--fg-3`,
-for AA contrast), and Mis salidas moves into the account menu.
+bottom bar exposes Explorar, Mis planes, Planificar, Mis salidas and Favoritos
+as persistent, thumb-reachable destinations (labels in `--fg-2`, not
+`--fg-3`, for AA contrast). Inicio remains reachable through the logo instead
+of duplicating Planificar in the bottom bar.
 
 **Carousel** — infinite carousel of categories: Gastronomía, Vinos &
 Bodegas, Cultura & Arte, Vida nocturna, Cócteles, Café & Brunch, and of
