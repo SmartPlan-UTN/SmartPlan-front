@@ -307,25 +307,22 @@
   font-weight: var(--w-label);
 }
 
-.resultUndo {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--fg-3);
-  font: inherit;
+.resultViewOuting {
+  color: var(--fg-2);
   font-size: 13px;
   font-weight: var(--w-label);
-  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
   transition: color 160ms ease;
 }
 
-.resultUndo:hover:not(:disabled) {
+.resultViewOuting:hover {
   color: var(--fg-1);
 }
 
-.resultUndo:disabled {
-  color: var(--fg-3);
-  cursor: default;
+.resultViewOuting:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
 }
 
 .resultSpinner {

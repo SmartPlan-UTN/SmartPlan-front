@@ -7,6 +7,7 @@ import {
   addPlanActivity,
   createPlan,
   searchActivities,
+  suggestActivities,
 } from "@/lib/api";
 import { ROUTES } from "@/lib/routes";
 import type { ActivitySearchResult, OwnPlanDetail } from "@/types";
@@ -26,6 +27,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
     createPlan: vi.fn(),
     addPlanActivity: vi.fn(),
     searchActivities: vi.fn(),
+    suggestActivities: vi.fn(),
   };
 });
 
@@ -215,13 +217,47 @@ describe("CreatePlanForm (CU24)", () => {
     expect(push).toHaveBeenCalledWith(ROUTES.explore);
   });
 
-  it("sends the automatic plan button to the real AI composer on the Home page", async () => {
+  it("recommends activities from the plan's title and adds one (#130)", async () => {
+    vi.mocked(suggestActivities).mockResolvedValue({
+      data: [
+        {
+          id: 77,
+          name: "Bodega en Luján",
+          description: "Vinos de altura",
+          estimatedCost: 4000,
+          estimatedDuration: 60,
+          type: null,
+          categories: ["Vinos"],
+        },
+      ],
+    });
     const user = userEvent.setup();
     render(<CreatePlanForm />);
 
-    await user.click(screen.getByRole("button", { name: /Generar plan automático/i }));
+    const recommend = screen.getByRole("button", {
+      name: /recomendar actividades/i,
+    });
+    expect(recommend).toBeDisabled();
 
-    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
-    expect(push).toHaveBeenCalledWith(`${ROUTES.home}?startComposer=1`);
+    await user.type(screen.getByLabelText(/nombre del plan/i), "Tarde de bodegas");
+    await user.click(recommend);
+
+    expect(suggestActivities).toHaveBeenCalledWith({
+      title: "Tarde de bodegas",
+      description: undefined,
+      excludeActivityIds: [],
+    });
+    await user.click(
+      await screen.findByRole("button", { name: "Agregar Bodega en Luján" }),
+    );
+
+    // Added to the itinerary and no longer suggested.
+    expect(
+      screen.queryByRole("button", { name: "Agregar Bodega en Luján" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByText("Bodega en Luján").length).toBeGreaterThan(0);
+    expect(
+      screen.queryByRole("button", { name: /generar plan automático/i }),
+    ).not.toBeInTheDocument();
   });
 });

@@ -43,7 +43,7 @@ rereading the entire git history.
 |---|---|
 | **Phase** | Foundations — layout and navigation ready, no use cases implemented |
 | **Base branch** | `develop` |
-| **Last update** | 2026-09-15 |
+| **Last update** | 2026-09-30 |
 | **Completed use cases** | 0 / 62 |
 
 ---
@@ -118,8 +118,8 @@ traceability matrix (`skills/01-domain/`).
 | CU19 | Generate surprise plan | PAN 09 | `In review` | `7-epica-recomendacion` | #117 |
 | CU20 | Show recommendations | PAN 10 | `In review` | `7-epica-recomendacion` | #117 |
 | CU21 | Adjust recommendations based on history | — | `In review` | `7-epica-recomendacion` | #117 |
-| CU22 | Select plan | PAN 11, PAN 17 | `In review` | `7-epica-recomendacion` | #117 |
-| CU23 | Submit plan feedback | PAN 13, PAN 17 | `In review` | `7-epica-recomendacion` | #117 |
+| CU22 | Select plan | PAN 11, PAN 17 | `In progress` | `feature/130-mis-planes-mis-salidas` | #117 |
+| CU23 | Submit plan feedback | PAN 13, PAN 17 | `In progress` | `feature/130-mis-planes-mis-salidas` | #117 |
 
 ### Planning
 
@@ -305,6 +305,7 @@ Things that have been spotted but don't have an owner yet:
 
 | Date | What happened |
 |---|---|
+| 2026-09-30 | #130 on `feature/130-mis-planes-mis-salidas`, with SmartPlan-back#98 (`feature/98-plans-outings`). **Mis planes** lists only plans the person created, each with a Público/Privado badge and "Publicar" / "Hacer privado" (confirmed; `409 PLAN_EMPTY` explained); the "Generar plan automático" card is gone. **Mis salidas** (`/outings`, replaces Historial; `/history` redirects) has "Por hacer" and "Realizadas" tabs (`?tab=completed`): "Marcar como realizada" moves the outing to Realizadas and opens `FeedbackDialog` at once ("Ahora no" keeps the invite on the card), "Cancelar salida" asks first and only exists while to do, and "Volver a hacer este plan" adds a new outing and keeps the done one with its feedback. Each outing has its own page (`/outings/:id`, the target of notifications). **"Lo voy a hacer"** is one-shot on the results and the plan detail: disabled while `POST /users/me/outings` is in flight, then "Agregado a Mis salidas" + "Ver en Mis salidas"; no undo and no owner "Lo hice" (removed with `completeOwnPlan`, `selectPlan`, `deselectPlan`). **Navigation**: Mis salidas joins the desktop bar and the mobile account menu, the desktop "Crear plan" CTA is removed, and the mobile centre tab becomes "Planificar" (Inicio's composer; on Inicio it focuses the composer through a window event). A **notification bell** polls `GET /users/me/notifications` every 60 s and on focus; the 24 h feedback reminder opens its outing. The plan editor's banner is now **"Recomendar actividades"** (`GET /activity-suggestions`, from the title and description). The CU44 rating gate now looks for a completed outing with the activity. `pnpm lint`, `pnpm test` (609), and `pnpm build` pass. |
 | 2026-09-15 | Owners can now mark their own plan as done from the plan detail (CU23, CU44), on `feature/mark-plan-completed`. Rating an activity requires a `completed` plan of the user's that includes it, but until now only an administrator could complete a plan, so the Valoraciones gate could never open for regular users. On an unfinished own plan, "Lo hice" replaces the CU22 "Lo voy a hacer" toggle (same box); it confirms through `ConfirmationDialog`, calls the new `completeOwnPlan` (`PATCH /users/me/plans/:id/complete`), and the panel switches to the existing "Hiciste este plan" record from the backend result (no optimistic state). Non-owners keep the intent toggle. The PAN 18 gate message now points to "Lo hice". Depends on SmartPlan-back's `feature/mark-plan-completed`. `pnpm lint`, `pnpm test` (566), and `pnpm build` pass. |
 | 2026-09-15 | Session expiry fixed on `fix/jwt-refresh-expiration`, in review in [PR #125](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/125): the app logged everyone out exactly 15 minutes after login — the access token's lifetime — even though the `smartplan_refresh` cookie stays valid for 30 days. The backend was fine; `client.ts` simply fired `notifyUnauthorized()` on any session-invalidating 401 and never called `POST /sessions/refresh`, which `SessionProvider` only used to rehydrate on page load. The response interceptor now renews the session and replays the failed request once, and only reports the session closed when the renewal itself fails. New `lib/api/session-refresher.ts` holds the `setSessionRefresher` inversion (same shape as `token-provider`) and a single-flight that collapses concurrent callers, without which parallel 401s would each rotate the refresh cookie and trip the backend's `REFRESH_TOKEN_REUSED` revocation. No CU: cross-cutting session infrastructure, touches F17's axios client and CU1-CU4. `pnpm lint`, `pnpm test` (575), and `pnpm build` pass; four of the new tests drive the real interceptor through a per-request axios adapter, one of them pinning the replay to exactly one attempt so a still-rejected token cannot loop. Not yet verified by hand in a browser. |
 | 2026-09-13 | Mobile-first responsive work moved to review in PR #124 on `feature/mobile-first-responsive`, split from visual-refresh PR #123: a persistent five-destination bottom navigation below 900px, safe-area-aware shell spacing, mobile search-result cards, and targeted adaptations for Plans, Activity, History, Preferences, Profile, Security, and Auth. The landing's existing content and image layouts remain unchanged. No CU: cross-cutting UI. `pnpm lint`, `pnpm test` (562), and `pnpm build` pass. |

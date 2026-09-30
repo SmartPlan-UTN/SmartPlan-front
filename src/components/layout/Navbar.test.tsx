@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { listNotifications, markNotificationAsRead } from "@/lib/api";
 import { SessionProvider } from "@/lib/auth";
 import { logout, refreshSession } from "@/lib/auth/api";
 
@@ -11,6 +12,12 @@ vi.mock("@/lib/auth/api", () => ({
   refreshSession: vi.fn(),
   login: vi.fn(),
   logout: vi.fn(),
+}));
+
+vi.mock("@/lib/api", async (importActual) => ({
+  ...(await importActual<typeof import("@/lib/api")>()),
+  listNotifications: vi.fn(),
+  markNotificationAsRead: vi.fn(),
 }));
 
 const route = vi.hoisted(() => ({ actual: "/" }));
@@ -67,6 +74,13 @@ describe("Navbar", () => {
     route.actual = "/";
     replace.mockClear();
     push.mockClear();
+    vi.mocked(listNotifications).mockReset();
+    vi.mocked(listNotifications).mockResolvedValue({
+      data: [],
+      pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+      unreadCount: 0,
+    });
+    vi.mocked(markNotificationAsRead).mockReset();
 
     // The Explorar transition mounts its own `MoodBackground` — jsdom has
     // neither of these APIs, and it degrades gracefully without them (no
@@ -92,7 +106,7 @@ describe("Navbar", () => {
     vi.useRealTimers();
   });
 
-  it("offers the five main navigation destinations", async () => {
+  it("offers the five main navigation destinations, and no create CTA", async () => {
     mockAnonymousStartup();
     renderNavbar();
 
@@ -110,11 +124,14 @@ describe("Navbar", () => {
       within(nav).getByRole("link", { name: "Mis planes" }),
     ).toHaveAttribute("href", "/plans");
     expect(
+      within(nav).getByRole("link", { name: "Mis salidas" }),
+    ).toHaveAttribute("href", "/outings");
+    expect(
       within(nav).getByRole("link", { name: "Favoritos" }),
     ).toHaveAttribute("href", "/favorites");
-    expect(
-      within(nav).getByRole("link", { name: "Historial" }),
-    ).toHaveAttribute("href", "/history");
+    expect(screen.queryByRole("link", { name: "Historial" })).toBeNull();
+    // Creating lives inside Mis planes; the bar keeps no duplicate of it.
+    expect(screen.queryByRole("link", { name: /crear/i })).toBeNull();
   });
 
   it("marks the current route's destination with aria-current", async () => {
@@ -215,9 +232,9 @@ describe("Navbar", () => {
     ).not.toBeInTheDocument();
   });
 
-  // The bottom bar has no Historial tab, so the account menu carries it
+  // The bottom bar has no Mis salidas tab, so the account menu carries it
   // (CSS hides that entry from 900px, where `.nav` already has it).
-  it("offers Historial from the account menu", async () => {
+  it("offers Mis salidas from the account menu", async () => {
     mockAuthenticatedStartup();
     const user = userEvent.setup();
     renderNavbar();
@@ -230,8 +247,8 @@ describe("Navbar", () => {
     );
     expect(panel).not.toBeNull();
     expect(
-      within(panel as HTMLElement).getByRole("link", { name: "Historial" }),
-    ).toHaveAttribute("href", "/history");
+      within(panel as HTMLElement).getByRole("link", { name: "Mis salidas" }),
+    ).toHaveAttribute("href", "/outings");
   });
 
   it("closes the user menu with Escape", async () => {
@@ -403,16 +420,14 @@ describe("Navbar", () => {
     expect(links.map((link) => link.textContent)).toEqual([
       "Inicio",
       "Explorar",
-      "Crear plan",
+      "Planificar",
       "Mis planes",
       "Favoritos",
     ]);
+    // The centre tab is the main feature: Inicio's composer, not the editor.
     expect(
-      within(mobileNav).getByRole("link", { name: "Crear plan" }),
-    ).toHaveAttribute("href", "/plans/create");
-    expect(
-      within(mobileNav).queryByRole("link", { name: "Historial" }),
-    ).toBeNull();
+      within(mobileNav).getByRole("link", { name: "Planificar" }),
+    ).toHaveAttribute("href", "/?startComposer=1");
   });
 
   it("marks the current route's tab in the mobile navigation", async () => {
@@ -432,22 +447,34 @@ describe("Navbar", () => {
     ).not.toHaveAttribute("aria-current");
   });
 
-  // `/plans/create` is also inside `/plans`: only the more specific tab
-  // may claim it.
-  it("marks only Crear plan as current on the create screen", async () => {
-    route.actual = "/plans/create";
+  it("asks Inicio to focus the composer when Planificar is pressed there", async () => {
     mockAnonymousStartup();
+    const user = userEvent.setup();
+    const onStart = vi.fn();
+    window.addEventListener("smartplan:start-composer", onStart);
     renderNavbar();
 
     const mobileNav = await screen.findByRole("navigation", {
       name: "Navegación móvil",
     });
-    const current = within(mobileNav)
-      .getAllByRole("link")
-      .filter((link) => link.getAttribute("aria-current") === "page");
+    await user.click(within(mobileNav).getByRole("link", { name: "Planificar" }));
 
-    expect(current).toHaveLength(1);
-    expect(current[0]).toHaveTextContent("Crear plan");
+    expect(onStart).toHaveBeenCalledOnce();
+    window.removeEventListener("smartplan:start-composer", onStart);
+  });
+
+  it("keeps Mis salidas current inside an outing's own screen", async () => {
+    route.actual = "/outings/40";
+    mockAnonymousStartup();
+    renderNavbar();
+
+    const nav = await screen.findByRole("navigation", {
+      name: "Navegación principal",
+    });
+
+    expect(
+      within(nav).getByRole("link", { name: "Mis salidas" }),
+    ).toHaveAttribute("aria-current", "page");
   });
 
   it("keeps Mis planes current inside a plan's own screens", async () => {
@@ -463,7 +490,7 @@ describe("Navbar", () => {
       within(mobileNav).getByRole("link", { name: "Mis planes" }),
     ).toHaveAttribute("aria-current", "page");
     expect(
-      within(mobileNav).getByRole("link", { name: "Crear plan" }),
+      within(mobileNav).getByRole("link", { name: "Planificar" }),
     ).not.toHaveAttribute("aria-current");
   });
 

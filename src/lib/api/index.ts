@@ -33,14 +33,22 @@ export {
   createPlan,
   addPlanActivity,
   getOwnPlan,
-  selectPlan,
-  deselectPlan,
   updateOwnPlan,
   cancelOwnPlan,
-  completeOwnPlan,
+  setOwnPlanVisibility,
+  suggestActivities,
   removePlanActivity,
   generateSuggestedPlan,
 } from './plans';
+export {
+  cancelOuting,
+  completeOuting,
+  createOuting,
+  getOuting,
+  listOutings,
+  repeatOuting,
+} from './outings';
+export { listNotifications, markNotificationAsRead } from './notifications';
 export { listCategories } from './categories';
 export { listCities, listDepartments, listPlaces, searchPlace } from './places';
 export { getProfile, updateProfile, changePassword, deleteAccount } from './users';

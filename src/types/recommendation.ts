@@ -180,12 +180,12 @@ export interface PlanFeedback {
 }
 
 /**
- * Where a plan sits in the CU23 feedback lifecycle, derived server-side.
+ * Where an outing sits in the CU23 feedback lifecycle, derived server-side.
  * There is no `expired`: US18 defines no closing window. Matches
  * `FeedbackState` in `SmartPlan-back`.
  *
- *  - `not_available` → not `completed`, or completed < 24 h ago with no reminder.
- *  - `available`     → window open (reminder sent, or 24 h elapsed) and no feedback.
+ *  - `not_available` → the outing is still to do.
+ *  - `available`     → marked as done and no feedback yet (opens immediately).
  *  - `submitted`     → feedback already recorded.
  */
 export type FeedbackState = 'not_available' | 'available' | 'submitted';

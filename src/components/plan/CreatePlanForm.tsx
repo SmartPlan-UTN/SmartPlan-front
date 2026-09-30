@@ -10,6 +10,7 @@ import { ROUTES } from "@/lib/routes";
 import { formatArs, formatDuration } from "@/lib/utils";
 import type { ActivitySearchResult } from "@/types";
 
+import { ActivitySuggestionsPanel } from "./ActivitySuggestionsPanel";
 import styles from "./plan-create.module.css";
 
 export function CreatePlanForm() {
@@ -195,20 +196,13 @@ export function CreatePlanForm() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.autoPlanBanner}>
-        <div className={styles.autoPlanText}>
-          <strong>¿Querés ahorrar tiempo?</strong>
-          <p>Generá un itinerario personalizado automáticamente según tus preferencias con Inteligencia Artificial.</p>
-        </div>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => router.push(`${ROUTES.home}?startComposer=1`)}
-        >
-          <Icon name="sparkles" size={16} aria-hidden="true" />
-          Generar plan automático
-        </Button>
-      </div>
+      <ActivitySuggestionsPanel
+        title={title}
+        description={description}
+        excludeActivityIds={selectedActivities.map((activity) => activity.id)}
+        disabled={isPending}
+        onAdd={handleAddActivity}
+      />
 
       {/* LEFT: General details form */}
       <div>

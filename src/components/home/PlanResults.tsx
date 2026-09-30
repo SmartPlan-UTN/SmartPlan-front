@@ -9,7 +9,7 @@ import { usePlanSelection, useReducedMotion } from "@/hooks";
 import { planDetailRoute } from "@/lib/routes";
 import { buildPlanPins } from "@/lib/maps/buildPlanPins";
 import { formatArs, formatDuration } from "@/lib/utils";
-import type { PlanDetailResult, PlanSelectionResult, ResolvedPlanContext } from "@/types";
+import type { PlanDetailResult, ResolvedPlanContext } from "@/types";
 
 import { PlanResultCard } from "./PlanResultCard";
 import { ResultsMap, type ResultsMapHandle } from "./ResultsMap";
@@ -35,13 +35,13 @@ export interface PlanResultsProps {
   /** Creates a fresh surprise request from the same coordinates (CU19). */
   onRegenerate?: () => void;
   /**
-   * A plan's intent changed (CU22): the caller updates the alternatives in
-   * place from the backend result — no refetch.
+   * "Lo voy a hacer" added the plan to Mis salidas (CU22): the caller marks
+   * the alternative as chosen in place, with its outing — no refetch.
    */
-  onPlanSelected?: (result: PlanSelectionResult) => void;
+  onPlanSelected?: (planId: number, outingId: number) => void;
   /**
-   * The change was rejected because the request advanced (or the plan is
-   * gone). The list here is stale — the caller reconciles it from the server.
+   * The plan could not be chosen anymore (or is gone). The list here is
+   * stale — the caller reconciles it from the server.
    */
   onSelectionReconcile?: () => void;
 }
@@ -56,11 +56,12 @@ const MAX_VISIBLE_PLANS = 3;
  * new screen.
  *
  * CU17 asks for three things to be possible on a result: adjust it, discard
- * it, or say you're going to do it. That last one is CU22 — a reversible
- * intent toggle: "Lo voy a hacer" fires `PATCH /plans/:id/select` directly
- * (no modal — the state and the "Ya no lo voy a hacer" control are the safety
- * net); the card then reads "✓ Lo vas a hacer". The others stay exactly as
- * they were, because nothing was rejected — the user just plans to do one.
+ * it, or say you're going to do it. That last one is CU22: "Lo voy a hacer"
+ * adds the result to Mis salidas (`POST /users/me/outings`) once — the
+ * button is disabled while it saves, then the card reads "✓ Agregado a Mis
+ * salidas" with a link there (#130). There is no undo on the card: an
+ * outing is cancelled from Mis salidas. The other alternatives stay as they
+ * were and never become content of the person — only the chosen one does.
  */
 export function PlanResults({
   plans,
@@ -123,26 +124,21 @@ export function PlanResults({
     if (mobileView !== "list") setMobileView("list");
   }
 
-  async function toggleIntent(plan: PlanDetailResult, direction: "on" | "off") {
+  async function intend(plan: PlanDetailResult) {
     if (selection.status === "working" || workingId !== null) return;
     setStatusNote(null);
     setWorkingId(plan.id);
 
-    const outcome = await (direction === "on"
-      ? selection.select(plan.id)
-      : selection.deselect(plan.id));
+    const outcome = await selection.choose(plan.id);
 
     setWorkingId(null);
     if (!outcome) return;
 
     if (outcome.ok) {
-      onPlanSelected?.(outcome.result);
+      onPlanSelected?.(plan.id, outcome.result.outing.id);
       setStatusNote({
         tone: "ok",
-        text:
-          direction === "on"
-            ? PLAN_SELECTION.results.announceOn(plan.title)
-            : PLAN_SELECTION.results.announceOff(plan.title),
+        text: PLAN_SELECTION.announceAdded(plan.title),
       });
       selection.reset();
       return;
@@ -262,7 +258,7 @@ export function PlanResults({
                 onActivate={setActivePlanId}
                 onDeactivate={(id) => setActivePlanId((current) => (current === id ? null : current))}
                 onViewRoute={handleViewRoute}
-                onToggleIntent={(target, direction) => void toggleIntent(target, direction)}
+                onIntend={(target) => void intend(target)}
                 registerRef={registerCardRef}
               />
             );

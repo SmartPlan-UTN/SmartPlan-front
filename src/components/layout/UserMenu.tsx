@@ -126,7 +126,7 @@ function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
  *   the token resolves.
  * - `anonymous`: link to log in.
  * - `authenticated`: dropdown with Mi perfil, Preferencias, Seguridad, and
- *   Cerrar sesión. Below 900px it also carries Historial, the one main
+ *   Cerrar sesión. Below 900px it also carries Mis salidas, the one main
  *   destination the bottom bar has no tab for.
  *   The trigger is a circular avatar with the authenticated user's initials.
  *

@@ -7,7 +7,6 @@ import type {
   PlanDetailResult,
   PlanRequestProgressStage,
   PlanRequestStatus,
-  PlanSelectionResult,
   ResolvedPlanContext,
   RequestStatusKey,
 } from '@/types';
@@ -52,7 +51,8 @@ export interface UsePlanRequestPollingResult {
   retry: () => void;
   regenerate: () => void;
   lastSubmission: LastSubmission | null;
-  applySelectionChange: (result: PlanSelectionResult) => void;
+  /** "Lo voy a hacer" succeeded: mark that alternative as chosen, with its outing. */
+  applySelectionChange: (planId: number, outingId: number) => void;
   refresh: () => void;
 }
 
@@ -251,9 +251,9 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
     setPhase('idle');
   }, [clearTimers]);
 
-  const applySelectionChange = useCallback((result: PlanSelectionResult) => {
-    setPlans((current) => current?.map((plan) => plan.id === result.id
-      ? { ...plan, status: result.status, viewerPlanState: result.viewerPlanState ?? plan.viewerPlanState }
+  const applySelectionChange = useCallback((planId: number, outingId: number) => {
+    setPlans((current) => current?.map((plan) => plan.id === planId
+      ? { ...plan, viewerPlanState: 'selected' as const, activeOutingId: outingId }
       : plan) ?? current);
   }, []);
 

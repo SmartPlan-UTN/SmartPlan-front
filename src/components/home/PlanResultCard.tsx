@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { PLAN_SELECTION } from "@/components/plan/planSelectionContent";
 import { Badge, Button, Icon, Stars } from "@/components/ui";
-import { planDetailRoute } from "@/lib/routes";
+import { outingDetailRoute, planDetailRoute, ROUTES } from "@/lib/routes";
 import { formatArs, formatDuration, getPlanZone } from "@/lib/utils";
 import type { PlanDetailResult } from "@/types";
 
@@ -15,14 +15,15 @@ export interface PlanResultCardProps {
   index: number;
   accentColor: string;
   active: boolean;
+  /** The viewer already has an outing to do from this plan. */
   intended: boolean;
   busy: boolean;
-  /** Any plan's intent toggle is mid-flight — disables every card's CTA, not just the busy one. */
+  /** Any plan's "Lo voy a hacer" is mid-flight — disables every card's CTA, not just the busy one. */
   selectionWorking: boolean;
   onActivate: (id: number) => void;
   onDeactivate: (id: number) => void;
   onViewRoute: (id: number) => void;
-  onToggleIntent: (plan: PlanDetailResult, direction: "on" | "off") => void;
+  onIntend: (plan: PlanDetailResult) => void;
   registerRef: (id: number, el: HTMLElement | null) => void;
 }
 
@@ -30,8 +31,9 @@ export interface PlanResultCardProps {
  * A single result — a horizontal row next to the map, not a tile in a grid
  * (CU17). Three distinct, honest actions instead of one ambiguous
  * whole-card link: the title goes to the detail page, "Ver recorrido"
- * highlights and pans the map to this plan, "Lo voy a hacer" is the CU22
- * intent toggle. Hover/focus on the article itself (not a nested handler)
+ * highlights and pans the map to this plan, "Lo voy a hacer" (CU22) adds
+ * it to Mis salidas once — then the card reads "Agregado a Mis salidas" with
+ * a link there, and never offers an undo (#130). Hover/focus on the article itself (not a nested handler)
  * drives the map highlight, so keyboard Tab reaches the same state as a
  * mouse hover — the title link and the two buttons are the real tab stops.
  */
@@ -46,7 +48,7 @@ export function PlanResultCard({
   onActivate,
   onDeactivate,
   onViewRoute,
-  onToggleIntent,
+  onIntend,
   registerRef,
 }: PlanResultCardProps) {
   const zone = getPlanZone(plan);
@@ -133,31 +135,34 @@ export function PlanResultCard({
             <span className={styles.chosenGroup}>
               <span className={styles.resultChosen}>
                 <Icon name="circle-check" size={15} aria-hidden="true" />
-                {PLAN_SELECTION.results.intended}
+                {PLAN_SELECTION.added}
               </span>
-              <button
-                type="button"
-                className={styles.resultUndo}
-                disabled={selectionWorking}
-                onClick={() => onToggleIntent(plan, "off")}
+              <Link
+                className={styles.resultViewOuting}
+                href={
+                  plan.activeOutingId != null
+                    ? outingDetailRoute(plan.activeOutingId)
+                    : ROUTES.outings
+                }
               >
-                {busy ? "…" : PLAN_SELECTION.results.undo}
-              </button>
+                {PLAN_SELECTION.viewOuting}
+              </Link>
             </span>
           ) : (
             <Button
               variant="primary"
               size="sm"
               disabled={selectionWorking}
-              onClick={() => onToggleIntent(plan, "on")}
+              aria-busy={busy}
+              onClick={() => onIntend(plan)}
             >
               {busy ? (
                 <>
                   <Icon name="loader-circle" size={14} className={styles.resultSpinner} aria-hidden="true" />
-                  {PLAN_SELECTION.results.intend}
+                  {PLAN_SELECTION.intend}
                 </>
               ) : (
-                PLAN_SELECTION.results.intend
+                PLAN_SELECTION.intend
               )}
             </Button>
           )}

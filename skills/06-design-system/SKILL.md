@@ -276,13 +276,14 @@ navbar uses the fixed brand tone. Its dropdown is always light-card styled
 (`--surface-card` / `--hairline` / `--shadow-card`) regardless of the
 navbar's own background — same as in the prototype. "Cerrar sesión" opens a
 confirmation dialog instead of logging out immediately. On desktop,
-navigation includes Inicio, Explorar, Mis planes, Favoritos and Historial.
+navigation includes Inicio, Explorar, Mis planes, Mis salidas and Favoritos,
+plus the notification bell next to the account avatar.
 Administrators also see a "Panel de control" entry in the account
 dropdown; regular users never see that role-specific destination.
 Below 900px, the top bar keeps only the logo and session control; a fixed
-bottom bar exposes Inicio, Explorar, Crear plan, Mis planes and Favoritos as
+bottom bar exposes Inicio, Explorar, Planificar, Mis planes and Favoritos as
 persistent, thumb-reachable destinations (labels in `--fg-2`, not `--fg-3`,
-for AA contrast), and Historial moves into the account menu.
+for AA contrast), and Mis salidas moves into the account menu.
 
 **Carousel** — infinite carousel of categories: Gastronomía, Vinos &
 Bodegas, Cultura & Arte, Vida nocturna, Cócteles, Café & Brunch, and of

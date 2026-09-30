@@ -8,9 +8,9 @@ import { ConfirmationDialog, Icon, LoadingDots, Stars } from "@/components/ui";
 import {
   ApiError,
   deleteRating,
-  getOwnPlan,
+  getOuting,
   getOwnRating,
-  listOwnPlans,
+  listOutings,
 } from "@/lib/api";
 import { useSession } from "@/lib/auth";
 import { loginRoute } from "@/lib/routes";
@@ -35,11 +35,12 @@ export interface ActivityRatingSectionProps {
 type LoadStatus = "loading" | "loaded" | "error";
 
 /**
- * Finds a completed plan of the signed-in user's that included this
- * activity — `SmartPlan-back`'s `CreateRatingDto.planId` requirement
- * (`ratings.service.ts`'s `requireEligiblePlan`). All pages are checked so
- * an older eligible experience isn't hidden by the own-plans endpoint's
- * pagination.
+ * Finds an outing the signed-in user completed that included this activity
+ * — `SmartPlan-back`'s `CreateRatingDto.planId` requirement
+ * (`ratings.service.ts`'s `requireEligiblePlan`: an own, completed plan). A
+ * rating is about something the person did, so only "Mis salidas >
+ * Realizadas" qualifies (#130). All pages are checked so an older eligible
+ * experience isn't hidden by the endpoint's pagination.
  * Returns the first (most recent) match, not a list — CU44's form takes no
  * plan picker, matching the issue's own scope ("puntaje y comentario").
  */
@@ -47,18 +48,16 @@ async function findEligiblePlanId(activityId: number): Promise<number | null> {
   let page = 1;
 
   while (true) {
-    const result = await listOwnPlans({
+    const result = await listOutings({
+      status: "completed",
       page,
-      sortBy: "createdAt",
-      direction: "desc",
       limit: 100,
     });
 
-    for (const plan of result.data) {
-      if (plan.status.key !== "completed") continue;
-      const detail = await getOwnPlan(plan.id);
+    for (const outing of result.data) {
+      const detail = await getOuting(outing.id);
       if (detail.details.some((item) => item.activity.id === activityId)) {
-        return plan.id;
+        return outing.id;
       }
     }
 
@@ -85,7 +84,7 @@ function moderationNote(rating: OwnRating): string | null {
  * in order: whether there's a session (CU44's "Solo para usuarios
  * autenticados"), whether the user already rated this activity ("Impedir
  * valorar dos veces" — `GET .../ratings/me`), and, only if not, which of
- * their own completed plans is eligible to rate it with (see
+ * their own completed outings is eligible to rate it with (see
  * `findEligiblePlanId`). Renders exactly one of: a login prompt, a loading
  * state, the user's own rating with edit/delete actions (`EditRatingForm`,
  * `ConfirmationDialog`), `RatingForm`, or an explanation for why rating
@@ -285,9 +284,9 @@ export function ActivityRatingSection({ activityId, onChange }: ActivityRatingSe
       <div className={styles.ratingGate}>
         <Icon name="info" size={18} className={styles.ratingGateIcon} />
         <p className="sp-body">
-          Todavía no podés valorar esta actividad: necesitás haber completado un
-          plan que la incluya. Si ya lo hiciste, marcalo con «Lo hice» desde el
-          detalle del plan.
+          Todavía no podés valorar esta actividad: necesitás haber realizado una
+          salida que la incluya. Si ya la hiciste, marcala como realizada desde
+          Mis salidas.
         </p>
       </div>
     );
