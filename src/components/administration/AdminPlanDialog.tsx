@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 
 import { Button, Icon } from "@/components/ui";
+import { MediaGalleryManager } from "@/components/media";
 import type { AdminPlan, PlanStatusKey, UpdateAdminPlanInput } from "@/types";
 
 import styles from "./AdminManagement.module.css";
@@ -131,6 +132,7 @@ export function AdminPlanDialog({ plan, saving, error, onClose, onSave }: AdminP
             <Button type="submit" disabled={saving}>{saving ? "Guardando..." : "Guardar cambios"}</Button>
           </div>
         </form>
+        <MediaGalleryManager target="plan" resourceId={plan.id} resourceName={plan.title} />
       </div>
     </div>
   );

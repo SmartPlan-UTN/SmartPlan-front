@@ -13,6 +13,7 @@ import styles from "./AdminShell.module.css";
 const ADMIN_LINKS: Array<{ href: Route; label: string; icon: IconName }> = [
   { href: ROUTES.admin, label: "Inicio", icon: "layout-dashboard" },
   { href: ROUTES.adminActivities, label: "Actividades", icon: "sparkles" },
+  { href: ROUTES.adminPlaces, label: "Lugares", icon: "map-pin" },
   { href: ROUTES.adminPlans, label: "Planes", icon: "map" },
   { href: ROUTES.adminUsers, label: "Usuarios", icon: "users" },
   { href: ROUTES.adminRatings, label: "Valoraciones", icon: "star" },

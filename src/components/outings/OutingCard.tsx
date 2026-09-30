@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { FeedbackInvite, ratingLabel } from "@/components/feedback";
 import { Badge, Button, Icon, Stars } from "@/components/ui";
+import { AuthenticatedImage } from "@/components/media";
 import { outingDetailRoute } from "@/lib/routes";
 import { formatArs } from "@/lib/utils";
 import type { OutingSummary, PlanFeedback } from "@/types";
@@ -63,6 +64,15 @@ export function OutingCard({
         className={styles.cardMainLink}
         aria-label={`Ver ${outing.title}`}
       >
+        {outing.imageUrl ? (
+          <AuthenticatedImage
+            url={outing.imageUrl}
+            alt={`Portada de ${outing.title}`}
+            width={640}
+            height={240}
+            className={styles.cardImage}
+          />
+        ) : null}
         <div className={styles.cardMain}>
           <div className={styles.cardHead}>
             <p className={styles.date}>

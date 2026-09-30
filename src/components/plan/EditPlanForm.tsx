@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { Button, ConfirmationDialog, Icon, LoadingDots } from "@/components/ui";
+import { MediaGalleryManager } from "@/components/media";
 import { useDebouncedValue, useDetailFetch } from "@/hooks";
 import {
   getOwnPlan,
@@ -308,6 +309,7 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
 
   return (
     <div className={styles.container}>
+      <MediaGalleryManager target="plan" resourceId={plan.id} resourceName={title} />
       <ActivitySuggestionsPanel
         title={title}
         description={description}

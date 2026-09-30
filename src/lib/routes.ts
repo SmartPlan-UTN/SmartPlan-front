@@ -32,6 +32,7 @@ export const ROUTES = {
   resetPassword: "/reset-password",
   admin: "/admin",
   adminActivities: "/admin/activities",
+  adminPlaces: "/admin/places",
   adminPlans: "/admin/plans",
   adminRatings: "/admin/ratings",
   adminUsers: "/admin/users",

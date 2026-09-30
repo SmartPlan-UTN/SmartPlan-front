@@ -24,6 +24,10 @@ export { setSessionRefresher, refreshSessionOnce } from './session-refresher';
 export type { SessionRefresher } from './session-refresher';
 
 export { getApiBaseUrl } from './config';
+export {
+  mediaRequestPath, listMedia, uploadMedia, updateMedia, deleteMedia,
+  uploadAvatar, deleteAvatar, downloadMedia,
+} from './media';
 
 export { searchActivities, getActivity, getActivityMapMarkers } from './activities';
 export {

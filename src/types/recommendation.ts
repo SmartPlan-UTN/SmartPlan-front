@@ -171,6 +171,8 @@ export type FeedbackTag = (typeof FEEDBACK_TAGS)[number];
  * the plan; the user only reports `actualCost`.
  */
 export interface PlanFeedback {
+  images?: import('./media').MediaImage[];
+  id?: number;
   rating: number;
   tags: FeedbackTag[];
   comment: string | null;

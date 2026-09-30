@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { Badge, Button, ConfirmationDialog, Divider, FloatingBackLink, Icon, Stars } from "@/components/ui";
+import { MediaGallery } from "@/components/media";
 import { useFavorites } from "@/context";
 import { useDetailFetch, usePlanSelection } from "@/hooks";
 import { ApiError, cancelOwnPlan, getOwnPlan, getPlan } from "@/lib/api";
@@ -278,6 +279,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           </p>
         ) : null}
 
+        <MediaGallery target="plan" resourceId={plan.id} resourceName={plan.title} />
         <div className={styles.section}>
           <p className={activityStyles.sectionLabel}>itinerario</p>
           {plan.details.map((detail, index) => (
