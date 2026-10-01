@@ -195,6 +195,20 @@ List of plans by status, with a `DRAFT` badge for drafts and a `generating`
 status for the ones still being processed. Empty state: *"Tus planes
 guardados aparecerán acá"*.
 
+> **Shipped as "Mis salidas"** (`/outings`, #130), with Por hacer /
+> Realizadas tabs. Reworked in #134 after feedback that it looked careless:
+> each `OutingCard` leads with a visual tile on its left edge (the cover
+> photo, or `gradientFor(id)` with the `route` icon, same "no photo"
+> treatment as `PlanCard`) that becomes a 96px banner below 560px, so
+> outings are told apart at a glance. The date reads as a sentence with a
+> calendar icon (not an uppercase label); the activity sequence comes right
+> under the title; cost, duration, people and activity count sit in one
+> icon row. There is no "Realizada" pill: the tab already says it. A rated
+> outing shows the memory as a soft `--ember-04` panel — stars, real vs
+> estimated cost, and the person's own comment quoted in the serif face.
+> From 1024px the list is two columns, with actions pinned to the bottom of
+> each card so a row lines up.
+
 **Profile** — CU5, CU7 · PAN 14
 Personal data with inline validation. Includes the password section with
 the same rules as Security.

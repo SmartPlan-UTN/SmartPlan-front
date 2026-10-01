@@ -4,7 +4,7 @@ import { FeedbackInvite, ratingLabel } from "@/components/feedback";
 import { Badge, Button, Icon, Stars } from "@/components/ui";
 import { AuthenticatedImage } from "@/components/media";
 import { outingDetailRoute } from "@/lib/routes";
-import { formatArs } from "@/lib/utils";
+import { formatArs, formatDuration, gradientFor } from "@/lib/utils";
 import type { OutingSummary, PlanFeedback } from "@/types";
 
 import { OUTINGS_COPY } from "./outingsContent";
@@ -56,6 +56,7 @@ export function OutingCard({
     outing.feedbackState === "submitted" && outing.feedback
       ? outing.feedback
       : null;
+  const routeSummary = outing.activityNames.join(" → ");
 
   return (
     <article className={styles.card}>
@@ -64,32 +65,62 @@ export function OutingCard({
         className={styles.cardMainLink}
         aria-label={`Ver ${outing.title}`}
       >
-        {outing.imageUrl ? (
-          <AuthenticatedImage
-            url={outing.imageUrl}
-            alt={`Portada de ${outing.title}`}
-            width={640}
-            height={240}
-            className={styles.cardImage}
-          />
-        ) : null}
+        {/* Photo or a per-outing gradient, so each one is recognizable at a
+            glance instead of reading as another row of text (#134). */}
+        <div
+          className={styles.cardMedia}
+          style={{ background: gradientFor(outing.id) }}
+        >
+          {outing.imageUrl ? (
+            <AuthenticatedImage
+              url={outing.imageUrl}
+              alt={`Portada de ${outing.title}`}
+              width={480}
+              height={360}
+              className={styles.cardImage}
+            />
+          ) : (
+            <Icon
+              name="route"
+              size={36}
+              aria-hidden="true"
+              className={styles.cardMediaIcon}
+            />
+          )}
+        </div>
+
         <div className={styles.cardMain}>
           <div className={styles.cardHead}>
             <p className={styles.date}>
+              <Icon
+                name={done ? "calendar-check" : "calendar"}
+                size={14}
+                aria-hidden="true"
+              />
               {done ? OUTINGS_COPY.doneOn : OUTINGS_COPY.chosenOn}{" "}
               {dateFormatter.format(new Date(when))}
             </p>
             <h3 className={styles.cardTitle}>{outing.title}</h3>
           </div>
 
+          {outing.activityNames.length > 0 ? (
+            <p className={styles.route} title={routeSummary}>
+              {routeSummary}
+            </p>
+          ) : null}
+
           <div className={styles.meta}>
-            {done ? (
-              <span className={styles.statusPill}>
-                <Icon name="circle-check" size={12} aria-hidden="true" />
-                {OUTINGS_COPY.completedPill}
+            <Badge variant="cost">{formatArs(outing.estimatedTotalCost)}</Badge>
+            {outing.estimatedTotalDuration > 0 ? (
+              <span className={styles.metaItem}>
+                <Icon name="clock" size={13} aria-hidden="true" />
+                {formatDuration(outing.estimatedTotalDuration)}
               </span>
             ) : null}
-            <Badge variant="cost">{formatArs(outing.estimatedTotalCost)}</Badge>
+            <span className={styles.metaItem}>
+              <Icon name="users" size={13} aria-hidden="true" />
+              {OUTINGS_COPY.people(outing.peopleCount)}
+            </span>
             <span className={styles.metaItem}>
               <Icon name="route" size={13} aria-hidden="true" />
               {outing.activityCount}{" "}
@@ -102,10 +133,6 @@ export function OutingCard({
               </span>
             ) : null}
           </div>
-
-          {outing.activityNames.length > 0 ? (
-            <p className={styles.route}>{outing.activityNames.join(" → ")}</p>
-          ) : null}
 
           {rated ? (
             <RatedLine feedback={rated} estimated={outing.estimatedTotalCost} />
@@ -175,17 +202,23 @@ function RatedLine({
   estimated: number;
 }) {
   const hasRealCost = feedback.actualCost != null && feedback.actualCost > 0;
+  const comment = feedback.comment?.trim();
   return (
     <div className={styles.rated}>
-      <span className={styles.ratedScore}>
-        <Stars rating={feedback.rating} size={14} />
-        {ratingLabel(feedback.rating)}
-      </span>
-      {hasRealCost ? (
-        <span className={styles.ratedCost}>
-          <strong>{formatArs(feedback.actualCost as number)}</strong> gastados ·{" "}
-          {formatArs(estimated)} estimados
+      <div className={styles.ratedRow}>
+        <span className={styles.ratedScore}>
+          <Stars rating={feedback.rating} size={14} />
+          {ratingLabel(feedback.rating)}
         </span>
+        {hasRealCost ? (
+          <span className={styles.ratedCost}>
+            <strong>{formatArs(feedback.actualCost as number)}</strong> gastados ·{" "}
+            {formatArs(estimated)} estimados
+          </span>
+        ) : null}
+      </div>
+      {comment ? (
+        <blockquote className={styles.ratedComment}>“{comment}”</blockquote>
       ) : null}
     </div>
   );

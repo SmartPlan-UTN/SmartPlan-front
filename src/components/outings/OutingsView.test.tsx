@@ -239,6 +239,36 @@ describe("OutingsView — Mis salidas (#130, CU22, CU23)", () => {
     expect(screen.queryByText("Contanos tu experiencia")).not.toBeInTheDocument();
   });
 
+  it("brings back the comment left on a done outing (#134)", async () => {
+    serve({
+      to_do: [],
+      completed: [
+        done({
+          feedbackState: "submitted",
+          feedback: { ...FEEDBACK, comment: "  Una tarde hermosa  " },
+        }),
+      ],
+    });
+    render(<OutingsView initialTab="completed" />);
+
+    expect(await screen.findByText("“Una tarde hermosa”")).toBeInTheDocument();
+  });
+
+  it("summarizes when, how long and for how many at a glance (#134)", async () => {
+    serve({ to_do: [toDo({ peopleCount: 1 })], completed: [] });
+    render(<OutingsView />);
+
+    const card = (await screen.findByText("Tarde de vinos en Luján")).closest(
+      "article",
+    ) as HTMLElement;
+    expect(within(card).getByText(/^Elegida el/)).toBeInTheDocument();
+    expect(within(card).getByText("2h 30m")).toBeInTheDocument();
+    expect(within(card).getByText("1 persona")).toBeInTheDocument();
+    expect(
+      within(card).getByText("Bodega boutique → Almuerzo de campo"),
+    ).toBeInTheDocument();
+  });
+
   it("describes each empty tab and points to planning an outing", async () => {
     serve({ to_do: [], completed: [] });
     const user = userEvent.setup();

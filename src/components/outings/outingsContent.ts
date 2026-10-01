@@ -26,6 +26,7 @@ export const OUTINGS_COPY = {
   chosenOn: "Elegida el",
   doneOn: "Realizada el",
   completedPill: "Realizada",
+  people: (count: number) => (count === 1 ? "1 persona" : `${count} personas`),
   sourceUnavailable: "El plan original ya no está disponible",
   actions: {
     complete: "Marcar como realizada",
