@@ -142,7 +142,7 @@ export function Navbar() {
       <header className={cn(styles.navbar, scrolled && styles.navbarScrolled)}>
         <div className={styles.navbarInner}>
           <Link href={ROUTES.home} className={styles.brand}>
-            <Logo variant="ink" kind="full" height={22} priority />
+            <Logo variant="ember" kind="full" height={22} priority />
           </Link>
 
           <nav className={styles.nav} aria-label="Navegación principal">

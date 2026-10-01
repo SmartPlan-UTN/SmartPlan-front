@@ -195,8 +195,14 @@ input::placeholder { color: var(--fg-3); }
   max-width: 680px;
 }
 .sp-page-kicker {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
   margin: 0 0 var(--s-3);
   color: var(--ember);
+}
+.sp-page-kicker-mark {
+  flex: none;
 }
 .sp-page-title {
   margin: 0;

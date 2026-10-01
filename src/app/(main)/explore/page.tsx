@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { ExploreTabs } from "@/components/explore";
-import { Container } from "@/components/layout";
+import { Container, PageKicker } from "@/components/layout";
 
 import styles from "./explore.module.css";
 
@@ -15,7 +15,7 @@ export default function ExplorePage() {
       <Container>
         <div className={styles.page}>
           <header className="sp-page-intro">
-            <p className="sp-label sp-page-kicker">Explorá a tu manera</p>
+            <PageKicker>Explorá a tu manera</PageKicker>
             <h1 className={`sp-page-title ${styles.title}`}>
               Encontrá algo
               <span className={`sp-page-title-accent ${styles.titleAccent}`}>

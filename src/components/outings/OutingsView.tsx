@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useState } from "react";
 
 import { FeedbackDialog } from "@/components/feedback";
+import { PageKicker } from "@/components/layout";
 import { Button, ConfirmationDialog, Icon } from "@/components/ui";
 import { useOutings } from "@/hooks";
 import { cancelOuting, completeOuting, repeatOuting } from "@/lib/api";
@@ -162,7 +163,7 @@ export function OutingsView({ initialTab = "to-do" }: OutingsViewProps) {
   return (
     <div className={styles.screen}>
       <header className={styles.header}>
-        <p className="sp-label sp-page-kicker">{OUTINGS_COPY.kicker}</p>
+        <PageKicker>{OUTINGS_COPY.kicker}</PageKicker>
         <h1 id="outings-title" className="sp-page-title">
           {OUTINGS_COPY.title}{" "}
           <span className="sp-page-title-accent">

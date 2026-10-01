@@ -263,7 +263,7 @@ días"*).
 **Navbar** — 60px bar with `backdrop-filter: blur(18px)`, spanning the full
 window width with `48px` of side padding on desktop (`24px`/`--s-4` below
 900px) — **not** capped at `--max-w`, see the layout note above. Always the
-light variant: cream background, ink logo, `--fg-1`/`--fg-2` text. The
+light variant: cream background, ember logo (see Logos), `--fg-1`/`--fg-2` text. The
 `Navbar` component in `v2/Navbar.jsx` still has a `dark` prop, but the
 shipped `SmartPlan v3.html` hardcodes `navDark = false` ("Results is now
 light theme") — there's no dark-over-hero navbar in the current design, on
@@ -410,7 +410,7 @@ Rating from 0 to 5 with half-stars. Filled `#FFD166`, empty
 `rgba(255,209,102,0.22)`. Props: `rating`, `size` (12).
 
 ### Logo
-Props: `variant` (`white` | `ink`), `kind` (`full` | `mark`), `height` (26).
+Props: `variant` (`white` | `ink` | `ember`), `kind` (`full` | `mark`), `height` (26).
 Resolves the file by convention `logo-{kind}-{variant}.png`. When porting
 it, point it to `public/brand/` and use `<Image>` from `next/image`.
 
@@ -543,6 +543,18 @@ In [`public/brand/`](../../public/brand/):
 | `logo-full-white.png` | Full logo over a dark background (char) |
 | `logo-mark-ink.png` | Isotype only, over light |
 | `logo-mark-white.png` | Isotype only, over dark |
+| `logo-full-ember.png` | Brand lockup over light: ember isotype, ink wordmark |
+| `logo-mark-ember.png` | Ember isotype only, over light |
+
+> **Prefer `ember` over `ink` on light user-facing surfaces** (issue #135:
+> the brand read as generic with the all-ink logo). The navbar, the auth
+> screens' mobile header, and the 404 use the `ember` lockup, and every
+> editorial page heading signs its kicker with the ember isotype through
+> `PageKicker` (`src/components/layout/`) — use it instead of a bare
+> `<p className="sp-label sp-page-kicker">`. Administration keeps `ink`: it
+> has its own visual language. The ember files were generated from the ink
+> ones by recoloring the isotype pixels to `--ember` (`#E85D20`) and keeping
+> the alpha; regenerate them the same way if the ink artwork changes.
 
 All with a transparent background. Always serve them with `<Image>` from
 `next/image`.

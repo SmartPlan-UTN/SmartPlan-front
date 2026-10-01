@@ -8,6 +8,7 @@ export { AppShell, type AppShellProps } from "./AppShell";
 export { AppBackground } from "./AppBackground";
 export { Container, type ContainerProps } from "./Container";
 export { Screen, type ScreenProps } from "./Screen";
+export { PageKicker, type PageKickerProps } from "./PageKicker";
 export { NavLink, type NavLinkProps, type LinkVariant } from "./NavLink";
 export {
   MAIN_LINKS,

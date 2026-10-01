@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { PageKicker } from "@/components/layout";
 import { Icon } from "@/components/ui";
 import { ROUTES } from "@/lib/routes";
 
@@ -41,7 +42,7 @@ export function SecurityScreen() {
             <Icon name="arrow-left" size={20} />
           </Link>
           <div className="sp-page-intro">
-            <p className="sp-label sp-page-kicker">Tu cuenta</p>
+            <PageKicker>Tu cuenta</PageKicker>
             <h1 className="sp-page-title">
               Tu <span className="sp-page-title-accent">seguridad.</span>
             </h1>

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 
+import { PageKicker } from "@/components/layout";
 import { Button, Icon } from "@/components/ui";
 import {
   ApiError,
@@ -79,7 +80,7 @@ function samePlace(a: PreferredArea | null, b: PreferredArea | null): boolean {
 function PreferencesHeader() {
   return (
     <header className={`${styles.pageHeader} sp-page-intro`}>
-      <p className="sp-label sp-page-kicker">Para recomendarte mejor</p>
+      <PageKicker>Para recomendarte mejor</PageKicker>
       <h1 className="sp-page-title">
         Afiná los planes que <span className="sp-page-title-accent">smartplan</span>{" "}
         arma para vos.
