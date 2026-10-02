@@ -195,6 +195,36 @@ List of plans by status, with a `DRAFT` badge for drafts and a `generating`
 status for the ones still being processed. Empty state: *"Tus planes
 guardados aparecerán acá"*.
 
+> **Shipped as "Mis salidas"** (`/outings`, #130), with Por hacer /
+> Realizadas tabs. Reworked in #134 after feedback that it looked careless:
+> the page is filed by month like a diary (a serif "Septiembre 2026" heading
+> with a hairline and the count), and each `OutingCard` leads with a date
+> stamp — the day in the serif face over the short month, in `--ember` on
+> `--ember-04`, or in white over the cover photo when there is one. The
+> activity sequence comes right under the title; cost, duration and people
+> sit in one icon row. There is no "Realizada" pill: the tab already says it.
+> A rated outing shows the memory as a soft `--ember-04` panel — stars, real
+> vs estimated cost, and the person's own comment quoted in the serif face.
+> Actions sit in a footer behind a dashed hairline. Pages hold 6 outings
+> (two columns of three from 1024px) with numbered pagination and a
+> "Mostrando 1–6 de 9 salidas" range; below 560px the stamp shrinks and the
+> rating, invite and actions take the card's full width.
+>
+> Above the list, a search box (title or activity name) plus Desde / Hasta,
+> Ordenar and — in Realizadas — Experiencia (Todas / Contada / Sin contar).
+> They are API filters (`GET /users/me/outings?search&from&to&sort&rated`),
+> not client-side ones, so pagination stays right; below 760px everything
+> but the search folds behind a "Filtros" button with a count. Ordered by
+> cost, the month headings go away. With filters and no match the empty
+> state offers "Limpiar filtros".
+>
+> **Photos in the feedback flow.** After "Enviar opinión" the thanks stays a
+> moment and the dialog asks "¿Sumás fotos de la salida?" (the `plan`
+> gallery — the cover is the photo on the card), then offers rating the
+> activities; once rated, each activity can take its own photos (its
+> `rating` gallery). Every photo step is optional: "Ahora no" is always
+> there. The outing detail shows "Fotos de tu salida" only once it is done.
+
 **Profile** — CU5, CU7 · PAN 14
 Personal data with inline validation. Includes the password section with
 the same rules as Security.
@@ -263,7 +293,7 @@ días"*).
 **Navbar** — 60px bar with `backdrop-filter: blur(18px)`, spanning the full
 window width with `48px` of side padding on desktop (`24px`/`--s-4` below
 900px) — **not** capped at `--max-w`, see the layout note above. Always the
-light variant: cream background, ink logo, `--fg-1`/`--fg-2` text. The
+light variant: cream background, ember logo (see Logos), `--fg-1`/`--fg-2` text. The
 `Navbar` component in `v2/Navbar.jsx` still has a `dark` prop, but the
 shipped `SmartPlan v3.html` hardcodes `navDark = false` ("Results is now
 light theme") — there's no dark-over-hero navbar in the current design, on
@@ -410,7 +440,7 @@ Rating from 0 to 5 with half-stars. Filled `#FFD166`, empty
 `rgba(255,209,102,0.22)`. Props: `rating`, `size` (12).
 
 ### Logo
-Props: `variant` (`white` | `ink`), `kind` (`full` | `mark`), `height` (26).
+Props: `variant` (`white` | `ink` | `ember`), `kind` (`full` | `mark`), `height` (26).
 Resolves the file by convention `logo-{kind}-{variant}.png`. When porting
 it, point it to `public/brand/` and use `<Image>` from `next/image`.
 
@@ -510,6 +540,19 @@ dropdown). Reach for it any time a filter or form needs a closed set of
 options; reserve a native `<select>` for places where the browser's own
 mobile picker UX is actually wanted (there are none of those yet).
 
+### Media galleries
+`MediaGallery` (read-only) and `MediaGalleryManager` (add, order, cover,
+delete) in `src/components/media/`. Photos are optional everywhere, so a
+gallery never reports emptiness: read-only draws nothing, and the manager
+invites — a dashed `--ember-04` drop area, "Sumá fotos si querés", with
+drag and drop. Photos open full size in `MediaLightbox` (← → and Escape).
+Read-only comes as `mosaic` (cover 2×2 plus four) or `strip` (72px squares,
+under a rating). The manager comes as `section` (framed, with heading and
+"3 de 10"), `embedded` (no frame, inside a step that already asks) or
+`compact` (small squares, a row of a list). Tile actions — cover (star),
+move, delete — float over the photo on hover and are always visible on
+touch screens; deleting asks first, on the photo itself.
+
 ### FloatingBackLink
 
 Also added outside the original seven, for CU13/CU14's detail views and the
@@ -543,6 +586,18 @@ In [`public/brand/`](../../public/brand/):
 | `logo-full-white.png` | Full logo over a dark background (char) |
 | `logo-mark-ink.png` | Isotype only, over light |
 | `logo-mark-white.png` | Isotype only, over dark |
+| `logo-full-ember.png` | Brand lockup over light: ember isotype, ink wordmark |
+| `logo-mark-ember.png` | Ember isotype only, over light |
+
+> **Prefer `ember` over `ink` on light user-facing surfaces** (issue #135:
+> the brand read as generic with the all-ink logo). The navbar, the auth
+> screens' mobile header, and the 404 use the `ember` lockup, and every
+> editorial page heading signs its kicker with the ember isotype through
+> `PageKicker` (`src/components/layout/`) — use it instead of a bare
+> `<p className="sp-label sp-page-kicker">`. Administration keeps `ink`: it
+> has its own visual language. The ember files were generated from the ink
+> ones by recoloring the isotype pixels to `--ember` (`#E85D20`) and keeping
+> the alpha; regenerate them the same way if the ink artwork changes.
 
 All with a transparent background. Always serve them with `<Image>` from
 `next/image`.

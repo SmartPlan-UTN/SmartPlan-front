@@ -74,6 +74,14 @@ export const FEEDBACK_COPY = {
     title: "¡Gracias por tu opinión!",
     body: "Esto nos ayuda a mejorar tus próximos planes.",
   },
+  /** Right after the feedback: the photos of the whole outing (optional). */
+  photos: {
+    title: "¿Sumás fotos de la salida?",
+    body: "Quedan guardadas en Mis salidas. La que elijas de portada es la que se ve en la tarjeta.",
+    next: "Seguir",
+    done: "Listo",
+    skip: "Ahora no",
+  },
   experience: {
     heading: "Tu experiencia",
     costHeading: "Costo",
@@ -108,6 +116,9 @@ export const ACTIVITY_RATINGS_COPY = {
     body: "Tus valoraciones ayudan a otras personas a elegir.",
     rejectedBody:
       "Guardamos tus valoraciones, pero algún comentario no pasó la moderación y no se va a publicar. Podés editarlo desde la actividad.",
+    photosTitle: "¿Tenés fotos de alguna actividad?",
+    photosBody: "Es opcional. Se ven junto a tu valoración, en la página de cada actividad.",
+    finish: "Listo",
   },
   errors: {
     generic: "No pudimos guardarla. Intentá de nuevo.",

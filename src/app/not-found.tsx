@@ -21,7 +21,7 @@ export default function NotFoundPage() {
     <div className={styles.screen}>
       <div className={styles.content}>
         <Logo
-          variant="ink"
+          variant="ember"
           kind="full"
           height={28}
           priority

@@ -17,6 +17,7 @@ export interface FeedbackInviteProps {
   activityCount: number;
   onSubmitted: (feedback: PlanFeedback) => void;
   onReconcile?: () => void;
+  onMediaChanged?: () => void;
   /** "Ahora no" — the parent hides the invite for the session. Optional. */
   onDismiss?: () => void;
 }
@@ -34,6 +35,7 @@ export function FeedbackInvite({
   activityCount,
   onSubmitted,
   onReconcile,
+  onMediaChanged,
   onDismiss,
 }: FeedbackInviteProps) {
   // `null` closed; a number opens the dialog with that rating preselected.
@@ -85,6 +87,7 @@ export function FeedbackInvite({
         onDismiss={() => setOpenRating(null)}
         onSubmitted={handleSubmitted}
         onReconcile={onReconcile}
+        onMediaChanged={onMediaChanged}
       />
     </>
   );

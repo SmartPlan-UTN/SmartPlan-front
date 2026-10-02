@@ -79,7 +79,7 @@ export function AuthSplitShell({
           {backLabel}
         </Link>
         <div className={styles.mobileLogo}>
-          <Logo variant="ink" kind="full" height={28} />
+          <Logo variant="ember" kind="full" height={28} />
         </div>
 
         <div

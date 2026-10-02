@@ -15,6 +15,19 @@ const { submitFeedback, getOuting, getOwnRating, createRating, updateRating } = 
   updateRating: vi.fn(),
 }));
 
+const { listMedia, uploadMedia } = vi.hoisted(() => ({
+  listMedia: vi.fn(),
+  uploadMedia: vi.fn(),
+}));
+
+vi.mock("@/lib/api/media", () => ({
+  listMedia,
+  uploadMedia,
+  updateMedia: vi.fn(),
+  deleteMedia: vi.fn(),
+  downloadMedia: vi.fn().mockRejectedValue(new Error("not in tests")),
+}));
+
 vi.mock("@/lib/api", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/api")>()),
   submitFeedback,
@@ -50,6 +63,16 @@ function ownRating(activityId: number, score: number, moderationStatus = "approv
     moderationStatus,
     moderationReason: null,
   };
+}
+
+/** The photos step follows the thanks after a short pause. */
+async function photosStep() {
+  return screen.findByRole("heading", { name: /sumás fotos de la salida/i }, { timeout: 3000 });
+}
+
+async function skipPhotos() {
+  await photosStep();
+  await userEvent.click(screen.getByRole("button", { name: /^(seguir|listo)$/i }));
 }
 
 async function sendFeedback(star = 3) {
@@ -90,6 +113,22 @@ function setup(overrides: Partial<Parameters<typeof FeedbackDialog>[0]> = {}) {
 beforeEach(() => {
   vi.clearAllMocks();
   submitFeedback.mockResolvedValue(FEEDBACK);
+  listMedia.mockResolvedValue([]);
+  uploadMedia.mockResolvedValue({
+    id: 1,
+    url: "/api/media/plan/1",
+    isPrimary: true,
+    displayOrder: 0,
+    createdAt: "2026-10-02T00:00:00.000Z",
+  });
+  Object.defineProperty(URL, "createObjectURL", {
+    configurable: true,
+    value: vi.fn(() => "blob:feedback-photo"),
+  });
+  Object.defineProperty(URL, "revokeObjectURL", {
+    configurable: true,
+    value: vi.fn(),
+  });
   // The CU23-only tests don't need a follow-up activity step.
   getOuting.mockResolvedValue({ ...OUTING, details: [] });
   getOwnRating.mockImplementation((id: number) => Promise.resolve(ownRating(id, 4)));
@@ -172,9 +211,11 @@ describe("FeedbackDialog (CU23)", () => {
     expect(
       await screen.findByText(/¡gracias por tu opinión!/i)
     ).toBeInTheDocument();
-    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK), {
-      timeout: 2500,
-    });
+    // Nothing to rate here: the photos step closes it with "Listo".
+    await photosStep();
+    expect(onSubmitted).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "Listo" }));
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK));
   });
 
   it("includes chosen tags and a real cost in the payload", async () => {
@@ -355,33 +396,113 @@ describe("FeedbackDialog → rating the activities (CU23 → CU44)", () => {
   beforeEach(() => {
     getOuting.mockResolvedValue(OUTING);
     getOwnRating.mockResolvedValue(null);
+    listMedia.mockResolvedValue([]);
   });
 
   it("offers the activity step even when every activity is already rated", async () => {
     getOwnRating.mockImplementation((id: number) => Promise.resolve(ownRating(id, 5)));
     const { onSubmitted } = setup();
     await sendFeedback();
+    await skipPhotos();
 
     expect(await screen.findByText(/querés valorar las actividades/i)).toBeInTheDocument();
     expect(onSubmitted).not.toHaveBeenCalled();
   });
 
-  it("closes on its own when the activities can't be loaded", async () => {
+  it("ends after the photos when the activities can't be loaded", async () => {
     getOuting.mockRejectedValueOnce(new ApiError({ message: "x", type: "NETWORK" }));
     const { onSubmitted } = setup();
     await sendFeedback();
+    await photosStep();
 
-    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK), {
-      timeout: 2500,
-    });
+    await userEvent.click(screen.getByRole("button", { name: /ahora no/i }));
+
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK));
+    expect(screen.queryByText(/querés valorar las actividades/i)).not.toBeInTheDocument();
+  });
+
+  it("offers photos of the whole outing right after the feedback", async () => {
+    const { onSubmitted } = setup();
+    await sendFeedback();
+
+    await photosStep();
+    expect(screen.getByText(/gracias por tu opinión/i)).toBeInTheDocument();
+    expect(await screen.findByLabelText("Agregar fotos")).toBeInTheDocument();
+    expect(screen.getByText("Elegir fotos")).toBeInTheDocument();
+    expect(listMedia).toHaveBeenCalledWith("plan", 7);
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Seguir" })).toHaveFocus()
+    );
+    expect(onSubmitted).not.toHaveBeenCalled();
+  });
+
+  it("Escape on the photos step reports the saved feedback", async () => {
+    const { onSubmitted, onDismiss } = setup();
+    await sendFeedback();
+    await photosStep();
+
+    await userEvent.keyboard("{Escape}");
+
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK));
+    expect(onDismiss).not.toHaveBeenCalled();
+  });
+
+  it("closes only the photo lightbox when Escape is pressed inside it", async () => {
+    listMedia.mockResolvedValue([
+      {
+        id: 1,
+        url: "/api/media/plan/1",
+        isPrimary: true,
+        displayOrder: 0,
+        createdAt: "2026-10-02T00:00:00.000Z",
+      },
+    ]);
+    const { onSubmitted } = setup();
+    await sendFeedback();
+    await photosStep();
+    await userEvent.click(await screen.findByRole("button", { name: "Ver foto 1 de 1" }));
+
+    await userEvent.keyboard("{Escape}");
+
+    expect(
+      screen.queryByRole("dialog", { name: "Fotos de Tarde de vinos en Luján" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /sumás fotos de la salida/i })).toBeInTheDocument();
+    expect(onSubmitted).not.toHaveBeenCalled();
+  });
+
+  it("notifies the parent when an outing photo changes", async () => {
+    listMedia
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: 1,
+          url: "/api/media/plan/1",
+          isPrimary: true,
+          displayOrder: 0,
+          createdAt: "2026-10-02T00:00:00.000Z",
+        },
+      ]);
+    const onMediaChanged = vi.fn();
+    setup({ onMediaChanged });
+    await sendFeedback();
+    await photosStep();
+
+    await userEvent.upload(
+      await screen.findByLabelText("Agregar fotos"),
+      new File(["photo"], "salida.png", { type: "image/png" }),
+    );
+
+    await waitFor(() => expect(onMediaChanged).toHaveBeenCalledTimes(1));
+    expect(uploadMedia).toHaveBeenCalledWith("plan", 7, expect.any(File), expect.any(Function));
   });
 
   it("offers rating the activities after the feedback is saved", async () => {
     const { onSubmitted } = setup();
     await sendFeedback();
+    await skipPhotos();
 
     expect(await screen.findByText(/querés valorar las actividades/i)).toBeInTheDocument();
-    expect(screen.getByText(/gracias por tu opinión/i)).toBeInTheDocument();
     await waitFor(() =>
       expect(screen.getByRole("button", { name: /valorar actividades/i })).toHaveFocus()
     );
@@ -391,6 +512,7 @@ describe("FeedbackDialog → rating the activities (CU23 → CU44)", () => {
   it("declining the offer still reports the saved feedback", async () => {
     const { onSubmitted, onDismiss } = setup();
     await sendFeedback();
+    await skipPhotos();
 
     await userEvent.click(await screen.findByRole("button", { name: /ahora no/i }));
 
@@ -402,6 +524,7 @@ describe("FeedbackDialog → rating the activities (CU23 → CU44)", () => {
   it("Escape on the offer also reports the saved feedback", async () => {
     const { onSubmitted, onDismiss } = setup();
     await sendFeedback();
+    await skipPhotos();
     await screen.findByText(/querés valorar las actividades/i);
 
     await userEvent.keyboard("{Escape}");
@@ -413,6 +536,7 @@ describe("FeedbackDialog → rating the activities (CU23 → CU44)", () => {
   it("lists each activity once, in itinerary order, and sends only the rated ones", async () => {
     const { onSubmitted } = setup();
     await sendFeedback();
+    await skipPhotos();
     await userEvent.click(await screen.findByRole("button", { name: /valorar actividades/i }));
 
     const groups = screen.getAllByRole("radiogroup");
@@ -435,9 +559,14 @@ describe("FeedbackDialog → rating the activities (CU23 → CU44)", () => {
     expect(createRating).toHaveBeenCalledTimes(1);
     expect(createRating).toHaveBeenCalledWith(12, { planId: 7, score: 5, comment: "Muy buena" });
     expect(await screen.findByText(/gracias por valorar/i)).toBeInTheDocument();
-    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK), {
-      timeout: 2500,
-    });
+    // Each rated activity can take its own photos; the person closes it.
+    expect(
+      await screen.findByRole("region", { name: /fotos de tu valoración de cata en bodega/i })
+    ).toBeInTheDocument();
+    expect(listMedia).toHaveBeenCalledWith("rating", 1200);
+    expect(onSubmitted).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "Listo" }));
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK));
   });
 
   it("lets the person update an activity already rated", async () => {
@@ -446,6 +575,7 @@ describe("FeedbackDialog → rating the activities (CU23 → CU44)", () => {
     );
     setup();
     await sendFeedback();
+    await skipPhotos();
     await userEvent.click(await screen.findByRole("button", { name: /valorar actividades/i }));
 
     const [lunch] = screen.getAllByRole("radiogroup");
@@ -467,6 +597,7 @@ describe("FeedbackDialog → rating the activities (CU23 → CU44)", () => {
     );
     const { onSubmitted } = setup();
     await sendFeedback();
+    await skipPhotos();
     await userEvent.click(await screen.findByRole("button", { name: /valorar actividades/i }));
 
     const [lunch, tasting] = screen.getAllByRole("radiogroup");
@@ -501,6 +632,7 @@ describe("FeedbackDialog → rating the activities (CU23 → CU44)", () => {
     );
     setup();
     await sendFeedback();
+    await skipPhotos();
     await userEvent.click(await screen.findByRole("button", { name: /valorar actividades/i }));
 
     const [lunch] = screen.getAllByRole("radiogroup");
@@ -518,6 +650,7 @@ describe("FeedbackDialog → rating the activities (CU23 → CU44)", () => {
     );
     setup();
     await sendFeedback();
+    await skipPhotos();
     await userEvent.click(await screen.findByRole("button", { name: /valorar actividades/i }));
 
     const [lunch] = screen.getAllByRole("radiogroup");
@@ -530,6 +663,7 @@ describe("FeedbackDialog → rating the activities (CU23 → CU44)", () => {
   it("skipping the activities still reports the saved feedback", async () => {
     const { onSubmitted, onDismiss } = setup();
     await sendFeedback();
+    await skipPhotos();
     await userEvent.click(await screen.findByRole("button", { name: /valorar actividades/i }));
 
     await userEvent.click(screen.getByRole("button", { name: /omitir/i }));

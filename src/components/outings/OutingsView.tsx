@@ -1,24 +1,77 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import { FeedbackDialog } from "@/components/feedback";
+import { PageKicker } from "@/components/layout";
 import { Button, ConfirmationDialog, Icon } from "@/components/ui";
-import { useOutings } from "@/hooks";
+import { useDebouncedValue, useOutings } from "@/hooks";
 import { cancelOuting, completeOuting, repeatOuting } from "@/lib/api";
 import {
   outingsTabRoute,
   PLAN_COMPOSER_ROUTE,
   type OutingsTab,
 } from "@/lib/routes";
-import type { OutingDetail, OutingSummary, PlanFeedback } from "@/types";
+import type {
+  OutingDetail,
+  OutingFilters,
+  OutingSummary,
+  PlanFeedback,
+} from "@/types";
 
 import { OutingCard } from "./OutingCard";
+import { activeFilterCount, OutingsFilters } from "./OutingsFilters";
+import { OutingsPagination } from "./OutingsPagination";
 import { OUTINGS_COPY } from "./outingsContent";
 import styles from "./outings.module.css";
 
 const SKELETON_KEYS = ["a", "b", "c", "d"];
+const SEARCH_DEBOUNCE_MS = 300;
+
+const monthFormatter = new Intl.DateTimeFormat("es-AR", {
+  month: "long",
+  year: "numeric",
+});
+
+interface MonthGroup {
+  key: string;
+  label: string;
+  outings: OutingSummary[];
+}
+
+/** The date an outing is filed under: when it was done, else when chosen. */
+function outingDate(outing: OutingSummary): Date {
+  return new Date(
+    outing.status === "completed"
+      ? (outing.completedAt ?? outing.createdAt)
+      : outing.createdAt,
+  );
+}
+
+/**
+ * Splits a page into months, keeping the API's order, so the list reads like
+ * a diary ("Septiembre 2026") instead of an undifferentiated grid (#134).
+ */
+function groupByMonth(outings: OutingSummary[]): MonthGroup[] {
+  const groups: MonthGroup[] = [];
+  for (const outing of outings) {
+    const date = outingDate(outing);
+    const key = `${date.getFullYear()}-${date.getMonth()}`;
+    const last = groups.at(-1);
+    if (last?.key === key) {
+      last.outings.push(outing);
+    } else {
+      const label = monthFormatter.format(date).replace(" de ", " ");
+      groups.push({
+        key,
+        label: label.charAt(0).toUpperCase() + label.slice(1),
+        outings: [outing],
+      });
+    }
+  }
+  return groups;
+}
 
 const TABS: ReadonlyArray<{ id: OutingsTab; label: string }> = [
   { id: "to-do", label: OUTINGS_COPY.tabs.toDo },
@@ -53,6 +106,17 @@ export function OutingsView({ initialTab = "to-do" }: OutingsViewProps) {
     setLastInitialTab(initialTab);
     setTab(initialTab);
   }
+  const [searchText, setSearchText] = useState("");
+  const [filters, setFilters] = useState<OutingFilters>({});
+  const debouncedSearch = useDebouncedValue(searchText, SEARCH_DEBOUNCE_MS);
+  // Typing waits for a pause; emptying the box (or "Limpiar") applies at once.
+  const search = searchText.trim() === "" ? "" : debouncedSearch;
+  const filtering =
+    search.trim() !== "" || activeFilterCount(filters, tab === "completed") > 0;
+  const clearFilters = useCallback(() => {
+    setSearchText("");
+    setFilters({});
+  }, []);
   const {
     outings,
     status,
@@ -60,10 +124,40 @@ export function OutingsView({ initialTab = "to-do" }: OutingsViewProps) {
     hasResults,
     page,
     totalPages,
+    total,
+    pageSize,
     goToPage,
     retry,
     patchOuting,
-  } = useOutings(tab === "to-do" ? "to_do" : "completed");
+  } = useOutings(tab === "to-do" ? "to_do" : "completed", {
+    ...filters,
+    search,
+  });
+
+  // Filed by month only while the list runs by date; ordered by cost, a
+  // month heading would repeat out of order.
+  const byDate = !filters.sort || filters.sort === "recent" || filters.sort === "oldest";
+  const groups = useMemo(
+    () =>
+      byDate
+        ? groupByMonth(outings)
+        : [{ key: "all", label: "", outings }],
+    [byDate, outings],
+  );
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // Changing page brings the top of the list back into view; otherwise the
+  // new page appears below the fold, where the pagination was clicked.
+  const changePage = useCallback(
+    (next: number) => {
+      goToPage(next);
+      const panel = panelRef.current;
+      if (panel && panel.getBoundingClientRect().top < 0) {
+        panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    },
+    [goToPage],
+  );
 
   const [busyId, setBusyId] = useState<number | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -162,7 +256,7 @@ export function OutingsView({ initialTab = "to-do" }: OutingsViewProps) {
   return (
     <div className={styles.screen}>
       <header className={styles.header}>
-        <p className="sp-label sp-page-kicker">{OUTINGS_COPY.kicker}</p>
+        <PageKicker>{OUTINGS_COPY.kicker}</PageKicker>
         <h1 id="outings-title" className="sp-page-title">
           {OUTINGS_COPY.title}{" "}
           <span className="sp-page-title-accent">
@@ -193,6 +287,15 @@ export function OutingsView({ initialTab = "to-do" }: OutingsViewProps) {
             </button>
           ))}
         </div>
+
+        <OutingsFilters
+          searchText={searchText}
+          onSearchTextChange={setSearchText}
+          filters={filters}
+          onFiltersChange={setFilters}
+          showRated={tab === "completed"}
+          onClear={clearFilters}
+        />
       </header>
 
       <p
@@ -218,6 +321,8 @@ export function OutingsView({ initialTab = "to-do" }: OutingsViewProps) {
 
       <div
         id="outings-panel"
+        ref={panelRef}
+        className={styles.panel}
         role="tabpanel"
         aria-labelledby={`outings-${tab}-tab`}
       >
@@ -235,6 +340,14 @@ export function OutingsView({ initialTab = "to-do" }: OutingsViewProps) {
               {OUTINGS_COPY.retry}
             </Button>
           </div>
+        ) : !hasResults && filtering ? (
+          <div className={`${styles.state} ${styles.stateFiltered}`}>
+            <Icon name="search" size={30} className={styles.stateIcon} />
+            <p className="sp-body">{OUTINGS_COPY.filters.noResults}</p>
+            <Button variant="secondary" size="sm" onClick={clearFilters}>
+              {OUTINGS_COPY.filters.clear}
+            </Button>
+          </div>
         ) : !hasResults ? (
           <div className={styles.state}>
             <Icon name="calendar-check" size={30} className={styles.stateIcon} />
@@ -250,54 +363,49 @@ export function OutingsView({ initialTab = "to-do" }: OutingsViewProps) {
           </div>
         ) : (
           <>
-            <div className={styles.list}>
-              {outings.map((outing) => (
-                <OutingCard
-                  key={outing.id}
-                  outing={outing}
-                  busy={busyId === outing.id}
-                  inviteDismissed={dismissedInvites.has(outing.id)}
-                  onComplete={(target) => void handleComplete(target)}
-                  onCancel={(target) => {
-                    setCancelError(null);
-                    setPendingCancel(target);
-                  }}
-                  onRepeat={(target) => void handleRepeat(target)}
-                  onDismissInvite={() => dismissInvite(outing.id)}
-                  onSubmitted={handleSubmitted}
-                  onReconcile={retry}
-                />
-              ))}
-            </div>
-
-            {totalPages > 1 ? (
-              <nav
-                className={styles.pagination}
-                aria-label={OUTINGS_COPY.paginationLabel}
+            {groups.map((group) => (
+              <section
+                key={group.key}
+                className={styles.month}
+                aria-labelledby={group.label ? `outings-month-${group.key}` : undefined}
               >
-                <button
-                  type="button"
-                  className={styles.pageArrow}
-                  onClick={() => goToPage(page - 1)}
-                  disabled={page <= 1}
-                  aria-label="Página anterior"
-                >
-                  <Icon name="chevron-left" size={16} aria-hidden="true" />
-                </button>
-                <span className={styles.pageIndicator}>
-                  Página {page} de {totalPages}
-                </span>
-                <button
-                  type="button"
-                  className={styles.pageArrow}
-                  onClick={() => goToPage(page + 1)}
-                  disabled={page >= totalPages}
-                  aria-label="Página siguiente"
-                >
-                  <Icon name="chevron-right" size={16} aria-hidden="true" />
-                </button>
-              </nav>
-            ) : null}
+                {group.label ? (
+                  <h2 id={`outings-month-${group.key}`} className={styles.monthTitle}>
+                    {group.label}
+                    <span className={styles.monthCount}>
+                      {OUTINGS_COPY.monthCount(group.outings.length)}
+                    </span>
+                  </h2>
+                ) : null}
+                <div className={styles.list}>
+                  {group.outings.map((outing) => (
+                    <OutingCard
+                      key={outing.id}
+                      outing={outing}
+                      busy={busyId === outing.id}
+                      inviteDismissed={dismissedInvites.has(outing.id)}
+                      onComplete={(target) => void handleComplete(target)}
+                      onCancel={(target) => {
+                        setCancelError(null);
+                        setPendingCancel(target);
+                      }}
+                      onRepeat={(target) => void handleRepeat(target)}
+                      onDismissInvite={() => dismissInvite(outing.id)}
+                      onSubmitted={handleSubmitted}
+                      onReconcile={retry}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))}
+
+            <OutingsPagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={changePage}
+            />
           </>
         )}
       </div>
@@ -316,6 +424,7 @@ export function OutingsView({ initialTab = "to-do" }: OutingsViewProps) {
             setJustCompleted(null);
           }}
           onReconcile={retry}
+          onMediaChanged={retry}
         />
       ) : null}
 

@@ -146,7 +146,7 @@ export function RatingsList({ activityId, refreshToken, onSummaryChange }: Ratin
             <Stars rating={rating.score} size={11} />
           </div>
           {rating.comment ? <p className={styles.reviewText}>{rating.comment}</p> : null}
-          <MediaGallery target="rating" resourceId={rating.id} resourceName={`valoración de ${rating.authorAlias}`} />
+          <MediaGallery target="rating" resourceId={rating.id} resourceName={`valoración de ${rating.authorAlias}`} variant="strip" />
         </div>
       ))}
 

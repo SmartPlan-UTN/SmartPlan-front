@@ -1,8 +1,10 @@
 /* ================================================================
    Mis salidas (CU22, CU23 · #130) — formerly Historial
    A personal record: past plans should read as "things I did", not
-   as archived rows. The feedback layer (invite / rated) sits on top
-   of an ordinary finished-plan card.
+   as archived rows. The list is filed by month like a diary, each card
+   leads with a date stamp (the cover photo behind it when there is
+   one), and a rated outing shows the memory the person left on it
+   (#134).
    ================================================================ */
 
 .screen {
@@ -16,14 +18,65 @@
   flex-direction: column;
 }
 
-.list {
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  scroll-margin-top: calc(var(--navbar-h) + var(--s-4));
+}
+
+/* ── Month group ─────────────────────────────────────────────── */
+.month {
   display: flex;
   flex-direction: column;
   gap: var(--s-4);
 }
 
+.monthTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin: 0;
+  color: var(--fg-1);
+  font-family: var(--font-display-serif);
+  font-size: var(--t-body-lg);
+  font-weight: var(--w-heading);
+}
+
+/* A hairline runs from the label to the edge, like a diary divider. */
+.monthTitle::after {
+  flex: 1;
+  height: 1px;
+  background: var(--hairline);
+  content: "";
+}
+
+.monthCount {
+  color: var(--fg-3);
+  font-family: var(--font);
+  font-size: var(--t-label);
+  font-weight: var(--w-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s-4);
+}
+
+@media (min-width: 1024px) {
+  .list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* ── Card ────────────────────────────────────────────────────── */
 .card {
+  --stamp: 64px;
+  --stamp-gap: var(--s-4);
+
   position: relative;
   display: flex;
   flex-direction: column;
@@ -34,8 +87,8 @@
   background: var(--surface-card);
   box-shadow: var(--shadow-card);
   transition:
-    transform 200ms var(--ease-out),
-    box-shadow 200ms var(--ease-out),
+    transform 200ms ease-out,
+    box-shadow 200ms ease-out,
     border-color 150ms ease;
 }
 
@@ -48,28 +101,94 @@
 /* The summary is the navigation target; lifecycle and feedback controls
    remain separate interactive siblings. */
 .cardMainLink {
+  display: grid;
+  grid-template-columns: var(--stamp) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--stamp-gap);
   color: inherit;
   text-decoration: none;
-  border-radius: inherit;
+  border-radius: var(--r-card-sm);
 }
 .cardMainLink:focus-visible {
   outline: 2px solid var(--ember);
-  outline-offset: 2px;
+  outline-offset: 4px;
 }
 
-.cardHead {
+/* Everything under the summary lines up with the text, not the stamp. */
+.card > :not(.cardMainLink) {
+  margin-left: calc(var(--stamp) + var(--stamp-gap));
+}
+
+/* ── Date stamp ──────────────────────────────────────────────── */
+.stamp {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 72px;
+  overflow: hidden;
+  border: 1px solid var(--ember-15);
+  border-radius: var(--r-card-sm);
+  background: var(--ember-04);
+  color: var(--ember);
+  line-height: 1;
 }
 
-.date {
-  margin: 0;
-  color: var(--fg-3);
-  font-size: var(--t-label);
+.stampDay {
+  position: relative;
+  font-family: var(--font-display-serif);
+  font-size: 30px;
+  font-weight: var(--w-heading);
+  letter-spacing: -0.02em;
+}
+
+.stampMonth {
+  position: relative;
+  font-size: 11px;
   font-weight: var(--w-label);
   letter-spacing: var(--track-label);
   text-transform: uppercase;
+}
+
+/* With a cover photo the stamp becomes a thumbnail, the date over it. */
+.stampPhoto {
+  border-color: transparent;
+  color: var(--white);
+}
+
+.stampPhoto::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--char) 20%, transparent),
+    color-mix(in srgb, var(--char) 62%, transparent)
+  );
+  content: "";
+}
+
+.stampPhoto .stampDay,
+.stampPhoto .stampMonth {
+  z-index: 1;
+}
+
+.stampImage {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── Summary ─────────────────────────────────────────────────── */
+.cardMain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 0;
 }
 
 .cardTitle {
@@ -78,13 +197,7 @@
   font-size: var(--t-h4);
   font-weight: var(--w-heading);
   line-height: 1.25;
-}
-
-.cardImage {
-  display: block;
-  width: 100%;
-  height: 9rem;
-  object-fit: cover;
+  text-wrap: balance;
 }
 
 .meta {
@@ -92,7 +205,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--s-2) var(--s-3);
-  margin-top: var(--s-2);
+  margin-top: var(--s-1);
 }
 
 .metaItem {
@@ -101,34 +214,33 @@
   gap: 4px;
   color: var(--fg-2);
   font-size: var(--t-small);
+  white-space: nowrap;
 }
 
-.statusPill {
+.sourceNote {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 10px;
-  border-radius: var(--r-chip);
-  background: var(--success-15);
-  color: var(--success);
+  margin: 0;
+  color: var(--fg-3);
   font-size: var(--t-label);
-  font-weight: var(--w-label);
-  letter-spacing: 0.02em;
-}
-
-.statusPillMuted {
-  background: color-mix(in srgb, var(--fg-3) 16%, transparent);
-  color: var(--fg-2);
 }
 
 /* ── Rated line (feedbackState === 'submitted') ──────────────── */
 .rated {
   display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-card-sm);
+  background: var(--ember-04);
+}
+
+.ratedRow {
+  display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--s-2) var(--s-4);
-  padding-top: var(--s-3);
-  border-top: 1px solid var(--hairline);
+  gap: var(--s-1) var(--s-4);
 }
 
 .ratedScore {
@@ -147,6 +259,18 @@
 .ratedCost strong {
   color: var(--fg-1);
   font-weight: var(--w-heading);
+}
+
+.ratedComment {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--fg-1);
+  font-family: var(--font-display-serif);
+  font-size: var(--t-body);
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 /* ── States ─────────────────────────────────────────────────── */
@@ -180,7 +304,7 @@
 }
 
 .skeleton {
-  height: 132px;
+  height: 168px;
   border-radius: var(--r-card);
   border: 1.5px solid var(--hairline);
   background: linear-gradient(
@@ -198,45 +322,92 @@
   to { background-position: -120% 0; }
 }
 
+/* ── Pagination ─────────────────────────────────────────────── */
 .pagination {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
-  gap: var(--s-3);
-  margin-top: var(--s-2);
+  justify-content: space-between;
+  gap: var(--s-3) var(--s-4);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--hairline);
 }
 
-.pageArrow {
+.pageRange {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: var(--t-small);
+}
+
+.pageControls {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.pageList {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pageArrow,
+.pageNumber {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
+  min-width: 38px;
   height: 38px;
-  border: 1.5px solid var(--hairline);
+  padding: 0 var(--s-2);
+  border: 1.5px solid transparent;
   border-radius: var(--r-chip);
-  background: var(--surface-card);
+  background: none;
   color: var(--fg-1);
+  font-family: inherit;
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+  font-variant-numeric: tabular-nums;
   cursor: pointer;
   transition: border-color 150ms ease, background 150ms ease, color 150ms ease;
 }
-.pageArrow:hover:not(:disabled) {
-  border-color: var(--ember);
+
+.pageArrow {
+  border-color: var(--hairline);
+  background: var(--surface-card);
+}
+
+.pageArrow:hover:not(:disabled),
+.pageNumber:hover:not(.pageNumberActive) {
+  border-color: var(--ember-20);
   background: var(--ember-04);
   color: var(--ember);
 }
-.pageArrow:focus-visible {
+
+.pageArrow:focus-visible,
+.pageNumber:focus-visible {
   outline: none;
   border-color: var(--ember);
   box-shadow: var(--focus-ember);
 }
+
 .pageArrow:disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
 
-.pageIndicator {
-  color: var(--fg-2);
-  font-size: var(--t-small);
+.pageNumberActive {
+  background: var(--ember);
+  color: var(--white);
+  cursor: default;
+}
+
+.pageGap {
+  min-width: 24px;
+  color: var(--fg-3);
+  text-align: center;
 }
 
 @media (max-width: 560px) {
@@ -249,8 +420,37 @@
   }
 
   .card {
+    --stamp: 52px;
+    --stamp-gap: var(--s-3);
+
     gap: var(--s-3);
     padding: var(--s-4);
+  }
+
+  /* On a phone the extras take the card's full width under the stamp. */
+  .card > :not(.cardMainLink) {
+    margin-left: 0;
+  }
+
+  .stamp {
+    height: 60px;
+  }
+
+  .stampDay {
+    font-size: 24px;
+  }
+
+  .cardTitle {
+    font-size: var(--t-body-lg);
+  }
+
+  .pagination {
+    justify-content: center;
+  }
+
+  .pageRange {
+    width: 100%;
+    text-align: center;
   }
 
   .state {
@@ -262,7 +462,7 @@
   }
 
   .skeleton {
-    height: 116px;
+    height: 150px;
   }
 }
 
@@ -334,16 +534,32 @@
   color: var(--fg-2);
 }
 
-.route {
-  margin: var(--s-2) 0 0;
-  color: var(--fg-2);
-  font-size: var(--t-small);
+/* Kept in the DOM so screen readers hear it, but out of the column flow
+   while empty — otherwise it adds a second gap above the list. */
+.notice:empty {
+  position: absolute;
 }
 
+.route {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--fg-2);
+  font-size: var(--t-small);
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* Pinned to the bottom so cards sharing a row line up their actions. */
 .cardActions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--s-2);
+  margin-top: auto;
+  padding-top: var(--s-4);
+  border-top: 1px dashed var(--hairline);
 }
 
 .stateCta {
@@ -364,5 +580,264 @@
 
   .cardActions > * {
     flex: 1 1 auto;
+  }
+}
+
+/* ── Filters (#134) ─────────────────────────────────────────── */
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin-top: var(--s-5);
+}
+
+.filtersTop {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.searchField {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 44px;
+  padding: 0 var(--s-3) 0 var(--s-4);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-chip);
+  background: var(--surface-card);
+  color: var(--fg-3);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.searchField:focus-within {
+  border-color: var(--ember);
+  box-shadow: var(--focus-ember);
+}
+
+.searchField input {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  border: 0;
+  background: none;
+  color: var(--fg-1);
+  font: inherit;
+  font-size: var(--t-small);
+  outline: none;
+}
+
+.searchField input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.searchClear {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: var(--ember-04);
+  color: var(--fg-2);
+  cursor: pointer;
+}
+
+.searchClear:hover {
+  color: var(--ember);
+}
+
+.filtersToggle {
+  display: none;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 44px;
+  padding: 0 var(--s-4);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-chip);
+  background: var(--surface-card);
+  color: var(--fg-1);
+  font: inherit;
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+  cursor: pointer;
+}
+
+.filtersToggle[aria-expanded="true"] {
+  border-color: var(--ember);
+  color: var(--ember);
+}
+
+.filtersBadge {
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--r-chip);
+  background: var(--ember);
+  color: var(--white);
+  font-size: 11px;
+}
+
+.filtersPanel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s-3);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sortField {
+  min-width: 152px;
+}
+
+.fieldLabel {
+  color: var(--fg-3);
+  font-size: var(--t-label);
+  font-weight: var(--w-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.fieldControl {
+  min-width: 152px;
+  height: 40px;
+  padding: 0 var(--s-3);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-btn);
+  background: var(--surface-card);
+  color: var(--fg-1);
+  font: inherit;
+  font-size: var(--t-small);
+  color-scheme: light;
+}
+
+.fieldControl:focus-visible {
+  outline: none;
+  border-color: var(--ember);
+  box-shadow: var(--focus-ember);
+}
+
+.segmented {
+  display: inline-flex;
+  height: 40px;
+  padding: 3px;
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-chip);
+  background: var(--surface-card);
+}
+
+.segment {
+  padding: 0 var(--s-3);
+  border: 0;
+  border-radius: var(--r-chip);
+  background: none;
+  color: var(--fg-2);
+  font: inherit;
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.segment:hover {
+  color: var(--fg-1);
+}
+
+.segmentActive {
+  background: var(--ember-10);
+  color: var(--ember);
+}
+
+.segment:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 1px;
+}
+
+.filtersClear {
+  height: 40px;
+  margin-left: auto;
+  padding: 0 var(--s-2);
+  border: 0;
+  background: none;
+  color: var(--ember);
+  font: inherit;
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+  cursor: pointer;
+}
+
+.filtersClear:hover {
+  text-decoration: underline;
+}
+
+.state.stateFiltered::before {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .filtersToggle {
+    display: inline-flex;
+  }
+
+  .filtersPanel {
+    display: none;
+    padding: var(--s-4);
+    border: 1.5px solid var(--hairline);
+    border-radius: var(--r-card);
+    background: var(--surface-card);
+  }
+
+  .filtersPanelOpen {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .fieldControl {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .sortField {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Sort, feedback and "Limpiar" take a full row each. */
+  .filtersPanelOpen > :nth-child(n + 3) {
+    grid-column: 1 / -1;
+  }
+
+  .segmented {
+    display: flex;
+  }
+
+  .segment {
+    flex: 1;
+  }
+
+  .filtersClear {
+    margin-left: 0;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 560px) {
+  .filters {
+    margin-top: var(--s-4);
+  }
+
+  .filtersToggle {
+    padding: 0 var(--s-3);
   }
 }

@@ -287,7 +287,7 @@ export function AdminRatingsView() {
                 ) : (
                   <p className={styles.noComment}>Sin comentario: solo puntuación.</p>
                 )}
-                <MediaGallery target="rating" resourceId={rating.id} resourceName={`valoración de ${rating.author.name}`} />
+                <MediaGallery target="rating" resourceId={rating.id} resourceName={`valoración de ${rating.author.name}`} variant="strip" />
                 <MediaGalleryManager target="rating" resourceId={rating.id} resourceName={`valoración de ${rating.author.name}`} />
                 {rating.moderationReason ? (
                   <p className={styles.reason}>

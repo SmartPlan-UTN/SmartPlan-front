@@ -10,6 +10,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
+import { MediaGalleryManager } from "@/components/media";
 import { Button, Icon, RatingInput } from "@/components/ui";
 import { useFeedbackSubmit } from "@/hooks";
 import {
@@ -45,9 +46,13 @@ export interface FeedbackDialogProps {
   onDismiss: () => void;
   onSubmitted: (feedback: PlanFeedback) => void;
   onReconcile?: () => void;
+  /** Refresh surfaces that also show the outing's photos or cover. */
+  onMediaChanged?: () => void;
 }
 
 const SUCCESS_HOLD_MS = 1600;
+/** How long the thanks shows on its own before the photos step. */
+const PHOTOS_DELAY_MS = 1100;
 const NOTICE_HOLD_MS = 4200;
 const EXIT_MS = 240;
 const MAX_ACTUAL_COST = 99_999_999.99;
@@ -107,6 +112,7 @@ export function FeedbackDialog({
   onDismiss,
   onSubmitted,
   onReconcile,
+  onMediaChanged,
 }: FeedbackDialogProps) {
   const titleId = useId();
   const ratingLabelId = useId();
@@ -120,11 +126,12 @@ export function FeedbackDialog({
   const [costInputError, setCostInputError] = useState<string | null>(null);
   const [commentOpen, setCommentOpen] = useState(false);
   const [comment, setComment] = useState("");
-  // form → success, then either closes or offers rating the activities
-  // (offer → activities → ratingsDone). Past `form` the feedback is saved,
-  // so every way out reports it through `onSubmitted`.
+  // form → success → photos of the outing, then either closes or offers
+  // rating the activities (offer → activities → ratingsDone, where each rated
+  // activity can take photos too). Past `form` the feedback is saved, so
+  // every way out reports it through `onSubmitted`.
   const [phase, setPhase] = useState<
-    "form" | "success" | "offer" | "activities" | "ratingsDone"
+    "form" | "success" | "photos" | "offer" | "activities" | "ratingsDone"
   >("form");
   const [ratable, setRatable] = useState<RatableActivity[]>([]);
   const [ratingsBusy, setRatingsBusy] = useState(false);
@@ -144,7 +151,9 @@ export function FeedbackDialog({
     presence === "open" &&
     (phase === "form"
       ? !busy
-      : phase === "offer" || (phase === "activities" && !ratingsBusy));
+      : phase === "activities"
+        ? !ratingsBusy
+        : phase !== "success");
   const dismissActionRef = useRef(onDismiss);
   dismissActionRef.current = phase === "form" ? onDismiss : finishSubmitted;
 
@@ -240,10 +249,12 @@ export function FeedbackDialog({
 
   // Each later step takes focus where its next action is.
   useEffect(() => {
-    if (phase !== "offer" && phase !== "activities") return;
+    if (phase !== "photos" && phase !== "offer" && phase !== "activities") return;
     const frame = requestAnimationFrame(() => {
       const target =
-        phase === "offer"
+        phase === "photos"
+          ? dialogRef.current?.querySelector<HTMLElement>("[data-photos-next]")
+          : phase === "offer"
           ? dialogRef.current?.querySelector<HTMLElement>("[data-offer-accept]")
           : dialogRef.current?.querySelector<HTMLElement>('[role="radio"]:not(:disabled)');
       target?.focus();
@@ -309,25 +320,33 @@ export function FeedbackDialog({
     savedFeedback.current = outcome.feedback;
     setPhase("success");
 
-    // The offer only appears if there's something left to rate; otherwise
-    // (or if the lookup fails) the thanks closes on its own, as before.
+    // Photos of the outing come next, always (they're optional). The offer
+    // to rate activities follows only if there's something to rate.
     const startedAt = Date.now();
     const activities = await loadRatableActivities(planId).catch(
       (): RatableActivity[] => []
     );
     if (!activeRef.current) return;
-    if (activities.length > 0) {
-      setRatable(activities);
-      setPhase("offer");
-      return;
-    }
-    holdThenClose(Math.max(0, SUCCESS_HOLD_MS - (Date.now() - startedAt)));
+    setRatable(activities);
+    // Let the thanks land before the next question.
+    const wait = Math.max(0, PHOTOS_DELAY_MS - (Date.now() - startedAt));
+    successTimer.current = window.setTimeout(() => {
+      if (activeRef.current) setPhase("photos");
+    }, wait);
+  }
+
+  function continueAfterPhotos() {
+    if (ratable.length > 0) setPhase("offer");
+    else requestClose(finishSubmitted);
   }
 
   function handleRatingsSaved(result: ActivityRatingsResult) {
     setRatingsResult(result);
     setPhase("ratingsDone");
-    holdThenClose(result.rejectedComments > 0 ? NOTICE_HOLD_MS : SUCCESS_HOLD_MS);
+    // With ratings to attach photos to, the person closes it when done.
+    if (result.ratings.length === 0) {
+      holdThenClose(result.rejectedComments > 0 ? NOTICE_HOLD_MS : SUCCESS_HOLD_MS);
+    }
   }
 
   const shownRating = preview || rating;
@@ -366,31 +385,106 @@ export function FeedbackDialog({
             onSaved={handleRatingsSaved}
           />
         ) : phase === "ratingsDone" ? (
-          <div className={styles.success} role="status" aria-live="polite">
-            <span className={styles.successMark} aria-hidden="true">
-              <Icon name="check" size={28} />
-            </span>
-            <p id={titleId} className={styles.successTitle}>
-              {ACTIVITY_RATINGS_COPY.done.title}
-            </p>
-            <p className={styles.successBody}>
-              {ratingsResult && ratingsResult.rejectedComments > 0
-                ? ACTIVITY_RATINGS_COPY.done.rejectedBody
-                : ACTIVITY_RATINGS_COPY.done.body}
-            </p>
-          </div>
-        ) : phase === "success" || phase === "offer" ? (
-          <div className={styles.success}>
+          <div className={ratingsResult && ratingsResult.ratings.length > 0 ? styles.followUp : styles.success}>
             <div className={styles.successMessage} role="status" aria-live="polite">
               <span className={styles.successMark} aria-hidden="true">
                 <Icon name="check" size={28} />
               </span>
-              <p id={titleId} className={styles.successTitle}>{FEEDBACK_COPY.success.title}</p>
-              <p className={styles.successBody}>{FEEDBACK_COPY.success.body}</p>
+              <p id={titleId} className={styles.successTitle}>
+                {ACTIVITY_RATINGS_COPY.done.title}
+              </p>
+              <p className={styles.successBody}>
+                {ratingsResult && ratingsResult.rejectedComments > 0
+                  ? ACTIVITY_RATINGS_COPY.done.rejectedBody
+                  : ACTIVITY_RATINGS_COPY.done.body}
+              </p>
             </div>
+            {ratingsResult && ratingsResult.ratings.length > 0 ? (
+              <div className={styles.photoPanel}>
+                <p className={styles.offerQuestion}>{ACTIVITY_RATINGS_COPY.done.photosTitle}</p>
+                <p className={styles.offerBody}>{ACTIVITY_RATINGS_COPY.done.photosBody}</p>
+                <ul className={styles.photoActivities}>
+                  {ratingsResult.ratings.map((rated) => (
+                    <li key={rated.ratingId} className={styles.photoActivity}>
+                      <p className={styles.photoActivityName}>{rated.activityName}</p>
+                      <MediaGalleryManager
+                        target="rating"
+                        resourceId={rated.ratingId}
+                        resourceName={`tu valoración de ${rated.activityName}`}
+                        variant="compact"
+                      />
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="lg"
+                  className={styles.photoNext}
+                  onClick={() => requestClose(finishSubmitted)}
+                >
+                  {ACTIVITY_RATINGS_COPY.done.finish}
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        ) : phase === "photos" ? (
+          <div className={styles.followUp}>
+            <div className={styles.successInline} role="status" aria-live="polite">
+              <span className={styles.successMarkSmall} aria-hidden="true">
+                <Icon name="check" size={18} />
+              </span>
+              <span>{FEEDBACK_COPY.success.title}</span>
+            </div>
+            <div className={styles.photoPanel}>
+              <span className={styles.photoPanelIcon} aria-hidden="true">
+                <Icon name="camera" size={22} />
+              </span>
+              <h2 id={titleId} className={styles.photoTitle}>{FEEDBACK_COPY.photos.title}</h2>
+              <p className={styles.offerBody}>{FEEDBACK_COPY.photos.body}</p>
+              <div className={styles.photoManager}>
+                <MediaGalleryManager
+                  target="plan"
+                  resourceId={planId}
+                  resourceName={planTitle}
+                  variant="embedded"
+                  onChanged={onMediaChanged}
+                />
+              </div>
+              <div className={styles.offerActions}>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="lg"
+                  data-photos-next=""
+                  onClick={continueAfterPhotos}
+                >
+                  {ratable.length > 0 ? FEEDBACK_COPY.photos.next : FEEDBACK_COPY.photos.done}
+                </Button>
+                <button
+                  type="button"
+                  className={styles.dismissButton}
+                  onClick={continueAfterPhotos}
+                >
+                  {FEEDBACK_COPY.photos.skip}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : phase === "success" || phase === "offer" ? (
+          <div className={styles.success}>
+            {phase === "success" ? (
+              <div className={styles.successMessage} role="status" aria-live="polite">
+                <span className={styles.successMark} aria-hidden="true">
+                  <Icon name="check" size={28} />
+                </span>
+                <p id={titleId} className={styles.successTitle}>{FEEDBACK_COPY.success.title}</p>
+                <p className={styles.successBody}>{FEEDBACK_COPY.success.body}</p>
+              </div>
+            ) : null}
             {phase === "offer" ? (
               <div className={styles.offer}>
-                <p className={styles.offerQuestion}>{ACTIVITY_RATINGS_COPY.offer.question}</p>
+                <p id={titleId} className={styles.offerQuestion}>{ACTIVITY_RATINGS_COPY.offer.question}</p>
                 <p className={styles.offerBody}>{ACTIVITY_RATINGS_COPY.offer.body}</p>
                 <div className={styles.offerActions}>
                   <Button

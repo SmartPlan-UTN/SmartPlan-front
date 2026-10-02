@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { Screen } from "@/components/layout";
+import { PageKicker, Screen } from "@/components/layout";
 import { MyPlansPanel } from "@/components/plan";
 import { Icon } from "@/components/ui";
 import { ROUTES } from "@/lib/routes";
@@ -18,7 +18,7 @@ export default function MyPlansPage() {
       <header className={styles.header}>
         <div className={styles.headerRow}>
           <div className="sp-page-intro">
-            <p className="sp-label sp-page-kicker">Lo que creaste</p>
+            <PageKicker>Lo que creaste</PageKicker>
             <h1 id="my-plans-title" className="sp-page-title">
               Mis <span className="sp-page-title-accent">planes</span>
             </h1>

@@ -217,7 +217,21 @@ export interface OutingCreationResult {
   outing: OutingDetail;
 }
 
-export interface ListOutingsParams {
+/** Order of "Mis salidas"; `recent` is the default (#134). */
+export type OutingSort = "recent" | "oldest" | "cost_desc" | "cost_asc";
+
+/** What "Mis salidas" can be narrowed by (#134). Dates are `YYYY-MM-DD`. */
+export interface OutingFilters {
+  /** In the title or the name of any activity. */
+  search?: string;
+  from?: string;
+  to?: string;
+  sort?: OutingSort;
+  /** Only done outings with (`true`) or without (`false`) feedback. */
+  rated?: boolean;
+}
+
+export interface ListOutingsParams extends OutingFilters {
   status?: OutingStatus;
   page?: number;
   limit?: number;

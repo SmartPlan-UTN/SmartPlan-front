@@ -1,3 +1,5 @@
+import { PageKicker } from "@/components/layout";
+
 import { DangerZone } from "./DangerZone";
 import { ProfileForm } from "./ProfileForm";
 import styles from "./profile.module.css";
@@ -18,7 +20,7 @@ export function ProfileScreen() {
     <div className={styles.backdrop}>
       <div className={styles.wrapper}>
         <header className="sp-page-intro">
-          <p className="sp-label sp-page-kicker">Tu cuenta</p>
+          <PageKicker>Tu cuenta</PageKicker>
           <h1 className="sp-page-title">
             Mi <span className="sp-page-title-accent">perfil.</span>
           </h1>
