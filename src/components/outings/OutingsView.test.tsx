@@ -299,4 +299,104 @@ describe("OutingsView — Mis salidas (#130, CU22, CU23)", () => {
 
     expect(await screen.findByText("Tarde de vinos en Luján")).toBeInTheDocument();
   });
+  it("files the outings of a page under their month (#134)", async () => {
+    serve({
+      to_do: [
+        toDo({ id: 1, title: "Vinos", createdAt: "2026-09-20T15:00:00.000Z" }),
+        toDo({ id: 3, title: "Museos", createdAt: "2026-09-02T15:00:00.000Z" }),
+        toDo({ id: 4, title: "Picnic", createdAt: "2026-08-15T15:00:00.000Z" }),
+      ],
+      completed: [],
+    });
+    render(<OutingsView />);
+
+    const september = await screen.findByRole("region", {
+      name: /septiembre 2026/i,
+    });
+    expect(within(september).getAllByRole("article")).toHaveLength(2);
+    const august = screen.getByRole("region", { name: /agosto 2026/i });
+    expect(within(august).getByText("Picnic")).toBeInTheDocument();
+  });
+
+  it("pages through the outings with numbered pages (#134)", async () => {
+    listOutings.mockImplementation(({ page: current }: { page: number }) =>
+      Promise.resolve({
+        data: [toDo({ id: current, title: `Salida de la página ${current}` })],
+        pagination: { page: current, limit: 6, total: 9, totalPages: 2 },
+      }),
+    );
+    const user = userEvent.setup();
+    render(<OutingsView />);
+
+    const nav = await screen.findByRole("navigation", {
+      name: /paginación de tus salidas/i,
+    });
+    expect(within(nav).getByText("Mostrando 1–6 de 9 salidas")).toBeInTheDocument();
+    expect(within(nav).getByRole("button", { name: "Página 1" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+
+    await user.click(within(nav).getByRole("button", { name: "Página 2" }));
+
+    expect(
+      await screen.findByText("Salida de la página 2"),
+    ).toBeInTheDocument();
+    expect(listOutings).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 2, limit: 6 }),
+    );
+  });
+  it("searches and filters through the API, and clears back to everything (#134)", async () => {
+    serve({ to_do: [toDo()], completed: [done()] });
+    const user = userEvent.setup();
+    render(<OutingsView />);
+    await screen.findByText("Tarde de vinos en Luján");
+
+    listOutings.mockResolvedValue(page([]));
+    await user.type(
+      screen.getByRole("searchbox", { name: /buscar por nombre o actividad/i }),
+      "bodega",
+    );
+    await waitFor(() =>
+      expect(listOutings).toHaveBeenLastCalledWith(
+        expect.objectContaining({ status: "to_do", search: "bodega", page: 1 }),
+      ),
+    );
+    expect(
+      await screen.findByText("No encontramos salidas con esos filtros."),
+    ).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("Desde"), "2026-09-01");
+    await user.selectOptions(screen.getByLabelText("Ordenar"), "cost_desc");
+    await waitFor(() =>
+      expect(listOutings).toHaveBeenLastCalledWith(
+        expect.objectContaining({ from: "2026-09-01", sort: "cost_desc" }),
+      ),
+    );
+    // Feedback is a filter only for done outings.
+    expect(screen.queryByRole("radiogroup", { name: "Experiencia" })).not.toBeInTheDocument();
+
+    serve({ to_do: [toDo()], completed: [done()] });
+    await user.click(
+      within(screen.getByRole("tabpanel")).getByRole("button", { name: "Limpiar filtros" }),
+    );
+    expect(await screen.findByText("Tarde de vinos en Luján")).toBeInTheDocument();
+    expect(listOutings).toHaveBeenLastCalledWith({ status: "to_do", page: 1, limit: 6 });
+  });
+
+  it("filters done outings by whether their experience was told (#134)", async () => {
+    serve({ to_do: [], completed: [done()] });
+    const user = userEvent.setup();
+    render(<OutingsView initialTab="completed" />);
+    await screen.findByText("Cena en el centro");
+
+    const experience = screen.getByRole("radiogroup", { name: "Experiencia" });
+    await user.click(within(experience).getByRole("radio", { name: "Sin contar" }));
+
+    await waitFor(() =>
+      expect(listOutings).toHaveBeenLastCalledWith(
+        expect.objectContaining({ status: "completed", rated: false }),
+      ),
+    );
+  });
 });

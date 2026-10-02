@@ -4,7 +4,7 @@ import { FeedbackInvite, ratingLabel } from "@/components/feedback";
 import { Badge, Button, Icon, Stars } from "@/components/ui";
 import { AuthenticatedImage } from "@/components/media";
 import { outingDetailRoute } from "@/lib/routes";
-import { formatArs, formatDuration, gradientFor } from "@/lib/utils";
+import { formatArs, formatDuration } from "@/lib/utils";
 import type { OutingSummary, PlanFeedback } from "@/types";
 
 import { OUTINGS_COPY } from "./outingsContent";
@@ -26,9 +26,11 @@ export interface OutingCardProps {
 
 const dateFormatter = new Intl.DateTimeFormat("es-AR", {
   day: "numeric",
-  month: "short",
+  month: "long",
   year: "numeric",
 });
+
+const monthFormatter = new Intl.DateTimeFormat("es-AR", { month: "short" });
 
 /**
  * One outing of "Mis salidas" (#130). The whole card opens its detail; its
@@ -56,6 +58,7 @@ export function OutingCard({
     outing.feedbackState === "submitted" && outing.feedback
       ? outing.feedback
       : null;
+  const whenDate = new Date(when);
   const routeSummary = outing.activityNames.join(" → ");
 
   return (
@@ -65,43 +68,40 @@ export function OutingCard({
         className={styles.cardMainLink}
         aria-label={`Ver ${outing.title}`}
       >
-        {/* Photo or a per-outing gradient, so each one is recognizable at a
-            glance instead of reading as another row of text (#134). */}
-        <div
-          className={styles.cardMedia}
-          style={{ background: gradientFor(outing.id) }}
+        {/* A date stamp leads the card: the day an outing was chosen or done
+            is how people remember it, and it tells cards apart at a glance
+            (#134). A cover photo, when there is one, sits behind it. */}
+        <time
+          dateTime={whenDate.toISOString()}
+          className={
+            outing.imageUrl
+              ? `${styles.stamp} ${styles.stampPhoto}`
+              : styles.stamp
+          }
         >
           {outing.imageUrl ? (
             <AuthenticatedImage
               url={outing.imageUrl}
-              alt={`Portada de ${outing.title}`}
-              width={480}
-              height={360}
-              className={styles.cardImage}
+              alt=""
+              width={160}
+              height={160}
+              className={styles.stampImage}
             />
-          ) : (
-            <Icon
-              name="route"
-              size={36}
-              aria-hidden="true"
-              className={styles.cardMediaIcon}
-            />
-          )}
-        </div>
+          ) : null}
+          <span className={styles.stampDay} aria-hidden="true">
+            {whenDate.getDate()}
+          </span>
+          <span className={styles.stampMonth} aria-hidden="true">
+            {monthFormatter.format(whenDate).replace(".", "")}
+          </span>
+          <span className="sp-sr-only">
+            {done ? OUTINGS_COPY.doneOn : OUTINGS_COPY.chosenOn}{" "}
+            {dateFormatter.format(whenDate)}
+          </span>
+        </time>
 
         <div className={styles.cardMain}>
-          <div className={styles.cardHead}>
-            <p className={styles.date}>
-              <Icon
-                name={done ? "calendar-check" : "calendar"}
-                size={14}
-                aria-hidden="true"
-              />
-              {done ? OUTINGS_COPY.doneOn : OUTINGS_COPY.chosenOn}{" "}
-              {dateFormatter.format(new Date(when))}
-            </p>
-            <h3 className={styles.cardTitle}>{outing.title}</h3>
-          </div>
+          <h3 className={styles.cardTitle}>{outing.title}</h3>
 
           {outing.activityNames.length > 0 ? (
             <p className={styles.route} title={routeSummary}>
@@ -121,24 +121,20 @@ export function OutingCard({
               <Icon name="users" size={13} aria-hidden="true" />
               {OUTINGS_COPY.people(outing.peopleCount)}
             </span>
-            <span className={styles.metaItem}>
-              <Icon name="route" size={13} aria-hidden="true" />
-              {outing.activityCount}{" "}
-              {outing.activityCount === 1 ? "actividad" : "actividades"}
-            </span>
-            {outing.source && !outing.source.available ? (
-              <span className={styles.metaItem}>
-                <Icon name="info" size={13} aria-hidden="true" />
-                {OUTINGS_COPY.sourceUnavailable}
-              </span>
-            ) : null}
           </div>
 
-          {rated ? (
-            <RatedLine feedback={rated} estimated={outing.estimatedTotalCost} />
+          {outing.source && !outing.source.available ? (
+            <p className={styles.sourceNote}>
+              <Icon name="info" size={13} aria-hidden="true" />
+              {OUTINGS_COPY.sourceUnavailable}
+            </p>
           ) : null}
         </div>
       </Link>
+
+      {rated ? (
+        <RatedLine feedback={rated} estimated={outing.estimatedTotalCost} />
+      ) : null}
 
       {showInvite ? (
         <div className={styles.cardFeedback}>

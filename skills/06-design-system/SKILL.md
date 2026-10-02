@@ -197,17 +197,33 @@ guardados aparecerán acá"*.
 
 > **Shipped as "Mis salidas"** (`/outings`, #130), with Por hacer /
 > Realizadas tabs. Reworked in #134 after feedback that it looked careless:
-> each `OutingCard` leads with a visual tile on its left edge (the cover
-> photo, or `gradientFor(id)` with the `route` icon, same "no photo"
-> treatment as `PlanCard`) that becomes a 96px banner below 560px, so
-> outings are told apart at a glance. The date reads as a sentence with a
-> calendar icon (not an uppercase label); the activity sequence comes right
-> under the title; cost, duration, people and activity count sit in one
-> icon row. There is no "Realizada" pill: the tab already says it. A rated
-> outing shows the memory as a soft `--ember-04` panel — stars, real vs
-> estimated cost, and the person's own comment quoted in the serif face.
-> From 1024px the list is two columns, with actions pinned to the bottom of
-> each card so a row lines up.
+> the page is filed by month like a diary (a serif "Septiembre 2026" heading
+> with a hairline and the count), and each `OutingCard` leads with a date
+> stamp — the day in the serif face over the short month, in `--ember` on
+> `--ember-04`, or in white over the cover photo when there is one. The
+> activity sequence comes right under the title; cost, duration and people
+> sit in one icon row. There is no "Realizada" pill: the tab already says it.
+> A rated outing shows the memory as a soft `--ember-04` panel — stars, real
+> vs estimated cost, and the person's own comment quoted in the serif face.
+> Actions sit in a footer behind a dashed hairline. Pages hold 6 outings
+> (two columns of three from 1024px) with numbered pagination and a
+> "Mostrando 1–6 de 9 salidas" range; below 560px the stamp shrinks and the
+> rating, invite and actions take the card's full width.
+>
+> Above the list, a search box (title or activity name) plus Desde / Hasta,
+> Ordenar and — in Realizadas — Experiencia (Todas / Contada / Sin contar).
+> They are API filters (`GET /users/me/outings?search&from&to&sort&rated`),
+> not client-side ones, so pagination stays right; below 760px everything
+> but the search folds behind a "Filtros" button with a count. Ordered by
+> cost, the month headings go away. With filters and no match the empty
+> state offers "Limpiar filtros".
+>
+> **Photos in the feedback flow.** After "Enviar opinión" the thanks stays a
+> moment and the dialog asks "¿Sumás fotos de la salida?" (the `plan`
+> gallery — the cover is the photo on the card), then offers rating the
+> activities; once rated, each activity can take its own photos (its
+> `rating` gallery). Every photo step is optional: "Ahora no" is always
+> there. The outing detail shows "Fotos de tu salida" only once it is done.
 
 **Profile** — CU5, CU7 · PAN 14
 Personal data with inline validation. Includes the password section with
@@ -523,6 +539,19 @@ click, like the primitives' other small popovers (the user menu's
 dropdown). Reach for it any time a filter or form needs a closed set of
 options; reserve a native `<select>` for places where the browser's own
 mobile picker UX is actually wanted (there are none of those yet).
+
+### Media galleries
+`MediaGallery` (read-only) and `MediaGalleryManager` (add, order, cover,
+delete) in `src/components/media/`. Photos are optional everywhere, so a
+gallery never reports emptiness: read-only draws nothing, and the manager
+invites — a dashed `--ember-04` drop area, "Sumá fotos si querés", with
+drag and drop. Photos open full size in `MediaLightbox` (← → and Escape).
+Read-only comes as `mosaic` (cover 2×2 plus four) or `strip` (72px squares,
+under a rating). The manager comes as `section` (framed, with heading and
+"3 de 10"), `embedded` (no frame, inside a step that already asks) or
+`compact` (small squares, a row of a list). Tile actions — cover (star),
+move, delete — float over the photo on hover and are always visible on
+touch screens; deleting asks first, on the photo itself.
 
 ### FloatingBackLink
 
