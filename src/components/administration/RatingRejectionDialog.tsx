@@ -3,7 +3,6 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 
 import { Button, Icon } from "@/components/ui";
-import type { AdminRating } from "@/types";
 
 import styles from "./AdminRatings.module.css";
 import shared from "./AdminManagement.module.css";
@@ -12,7 +11,13 @@ import shared from "./AdminManagement.module.css";
 const MAX_REASON_LENGTH = 500;
 
 interface RatingRejectionDialogProps {
-  rating: AdminRating;
+  /** e.g. "Rechazar valoración". */
+  title: string;
+  /** Whose content and where, under the title. */
+  subtitle: string;
+  placeholder: string;
+  /** What rejecting does, said before confirming. */
+  note: string;
   saving: boolean;
   error: string | null;
   onClose: () => void;
@@ -20,7 +25,8 @@ interface RatingRejectionDialogProps {
 }
 
 /**
- * Asks for the reason a rating is rejected (CU55).
+ * Asks for the reason a rating (CU55) or a shared experience's comment or
+ * photo (#106) is rejected.
  *
  * `ConfirmationDialog` would cover the confirmation, but the backend requires
  * a non-empty reason on every rejection and that primitive takes no input, so
@@ -29,7 +35,10 @@ interface RatingRejectionDialogProps {
  * while a request is in flight, and focus handed back on close.
  */
 export function RatingRejectionDialog({
-  rating,
+  title,
+  subtitle,
+  placeholder,
+  note,
   saving,
   error,
   onClose,
@@ -106,11 +115,9 @@ export function RatingRejectionDialog({
         <header className={shared.dialogHeader}>
           <div>
             <h2 id={titleId} className="sp-h4">
-              Rechazar valoración
+              {title}
             </h2>
-            <p className="sp-small">
-              De {rating.author.name} {rating.author.lastName}, sobre {rating.activity.name}
-            </p>
+            <p className="sp-small">{subtitle}</p>
           </div>
           <button
             type="button"
@@ -129,14 +136,11 @@ export function RatingRejectionDialog({
               ref={reasonRef}
               value={reason}
               maxLength={MAX_REASON_LENGTH}
-              placeholder="Por qué este comentario no se publica."
+              placeholder={placeholder}
               onChange={(event) => setReason(event.target.value)}
             />
           </label>
-          <p className="sp-small">
-            La valoración deja de mostrarse públicamente y el promedio de la actividad se
-            recalcula sin ella. El registro se conserva.
-          </p>
+          <p className="sp-small">{note}</p>
           {validationError ?? error ? (
             <p className={shared.formError} role="alert">
               {validationError ?? error}

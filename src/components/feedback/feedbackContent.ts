@@ -82,6 +82,26 @@ export const FEEDBACK_COPY = {
     done: "Listo",
     skip: "Ahora no",
   },
+  /** Opting in to the plan's community section (#106). Never on by default. */
+  share: {
+    label: "Compartir mi experiencia con la comunidad",
+    hint: "Opcional",
+    body: "Se va a ver en el plan con tu nombre y apellido abreviado y tu foto de perfil: tus estrellas, lo que destacaste, tu comentario y las fotos de la salida. Lo que gastaste nunca se muestra.",
+    later: "Podés hacerla privada cuando quieras desde Mis salidas.",
+  },
+  /** Public or private later, from the outing (#106). */
+  sharing: {
+    switchLabel: "Compartir con la comunidad",
+    publicTitle: "Visible en la comunidad",
+    privateTitle: "Solo para vos",
+    publicBody: (plan: string) =>
+      `Tu experiencia y las fotos de la salida se ven en "${plan}".`,
+    privateBody:
+      "Compartila para que otras personas vean cómo te fue. No se muestra lo que gastaste.",
+    error: "No pudimos cambiarlo. Intentá de nuevo.",
+    commentHidden:
+      "Tu comentario no se muestra en la comunidad porque no cumple las normas de convivencia.",
+  },
   experience: {
     heading: "Tu experiencia",
     costHeading: "Costo",

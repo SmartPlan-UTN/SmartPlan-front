@@ -20,6 +20,8 @@ export interface FeedbackInviteProps {
   onMediaChanged?: () => void;
   /** "Ahora no" — the parent hides the invite for the session. Optional. */
   onDismiss?: () => void;
+  /** Offer sharing the experience with the plan's community (#106). */
+  canShare?: boolean;
 }
 
 /**
@@ -37,6 +39,7 @@ export function FeedbackInvite({
   onReconcile,
   onMediaChanged,
   onDismiss,
+  canShare = false,
 }: FeedbackInviteProps) {
   // `null` closed; a number opens the dialog with that rating preselected.
   const [openRating, setOpenRating] = useState<number | null>(null);
@@ -88,6 +91,7 @@ export function FeedbackInvite({
         onSubmitted={handleSubmitted}
         onReconcile={onReconcile}
         onMediaChanged={onMediaChanged}
+        canShare={canShare}
       />
     </>
   );

@@ -16,7 +16,7 @@ export function outingDetail(overrides: Partial<OutingDetail> = {}): OutingDetai
     completedAt: null,
     feedbackState: "not_available",
     feedback: null,
-    source: { id: 7, kind: "authored", title: "Día de viñedos", available: true },
+    source: { id: 7, kind: "authored", title: "Día de viñedos", available: true, hasCommunity: true },
     createdAt: "2026-09-30T12:00:00.000Z",
     travelDistanceMeters: null,
     travelDurationSeconds: null,

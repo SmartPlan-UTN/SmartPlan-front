@@ -418,6 +418,7 @@ export function OutingsView({ initialTab = "to-do" }: OutingsViewProps) {
           estimatedTotalCost={justCompleted.estimatedTotalCost}
           completedAt={justCompleted.completedAt}
           activityCount={justCompleted.activityCount}
+          canShare={justCompleted.source?.hasCommunity ?? false}
           onDismiss={() => setJustCompleted(null)}
           onSubmitted={(feedback) => {
             handleSubmitted(justCompleted.id, feedback);

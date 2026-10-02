@@ -42,6 +42,7 @@ const getPlan = vi.hoisted(() => vi.fn());
 const getOwnPlan = vi.hoisted(() => vi.fn());
 const createOuting = vi.hoisted(() => vi.fn());
 const setOwnPlanVisibility = vi.hoisted(() => vi.fn());
+const getPlanExperiences = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/api")>()),
@@ -49,6 +50,7 @@ vi.mock("@/lib/api", async (importActual) => ({
   getOwnPlan,
   createOuting,
   setOwnPlanVisibility,
+  getPlanExperiences,
 }));
 
 function ownPlan(overrides: Partial<OwnPlanDetail> = {}): OwnPlanDetail {
@@ -117,6 +119,11 @@ beforeEach(() => {
   useSession.mockReturnValue({ status: "authenticated", authenticated: true });
   getOwnPlan.mockResolvedValue(ownPlan());
   createOuting.mockResolvedValue(outingCreation({ id: 40 }));
+  getPlanExperiences.mockResolvedValue({
+    data: [],
+    pagination: { page: 1, limit: 6, total: 0, totalPages: 0 },
+    summary: { averageRating: 0, experienceCount: 0, photoCount: 0, photos: [] },
+  });
 });
 
 async function renderDetail(
@@ -295,5 +302,25 @@ describe("PlanDetailView — favorites (CU43 / CU42)", () => {
     });
     expect(saveBtn).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByText("Guardado")).toBeInTheDocument();
+  });
+});
+
+describe("PlanDetailView — community experiences (#106)", () => {
+  it("shows what people who did a published plan shared", async () => {
+    await renderDetail("selectable");
+
+    expect(
+      await screen.findByRole("region", { name: "Cómo les fue a quienes lo hicieron" }),
+    ).toBeInTheDocument();
+    expect(getPlanExperiences).toHaveBeenCalledWith(7, { page: 1, limit: 6 });
+  });
+
+  it("has no community section on a private plan", async () => {
+    await renderDetail("selectable", { visibility: "private", ownedByViewer: true });
+
+    expect(
+      screen.queryByRole("region", { name: "Cómo les fue a quienes lo hicieron" }),
+    ).not.toBeInTheDocument();
+    expect(getPlanExperiences).not.toHaveBeenCalled();
   });
 });

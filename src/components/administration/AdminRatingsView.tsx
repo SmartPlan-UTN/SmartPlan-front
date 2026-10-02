@@ -346,7 +346,10 @@ export function AdminRatingsView() {
 
       {rejecting ? (
         <RatingRejectionDialog
-          rating={rejecting}
+          title="Rechazar valoración"
+          subtitle={`De ${rejecting.author.name} ${rejecting.author.lastName}, sobre ${rejecting.activity.name}`}
+          placeholder="Por qué este comentario no se publica."
+          note="La valoración deja de mostrarse públicamente y el promedio de la actividad se recalcula sin ella. El registro se conserva."
           saving={saving}
           error={actionError}
           onClose={() => {

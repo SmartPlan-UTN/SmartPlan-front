@@ -1,0 +1,103 @@
+/* Community experiences moderation (#106). Builds on AdminRatings' card. */
+
+.privateBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--r-chip);
+  background: var(--ember-04);
+  color: var(--fg-2);
+  font-size: 11px;
+  font-weight: var(--w-label);
+}
+
+.item {
+  display: grid;
+  gap: var(--s-2);
+  padding-left: var(--s-3);
+  border-left: 3px solid var(--hairline);
+}
+
+.item[data-status="rejected"] {
+  border-left-color: var(--error);
+}
+
+.item[data-status="rejected"] > p:first-child {
+  color: var(--fg-3);
+  text-decoration: line-through;
+}
+
+.itemFooter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+
+.itemActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.status {
+  color: var(--fg-3);
+  font-size: 12px;
+  font-weight: var(--w-label);
+}
+
+.photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: var(--s-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.photoItem {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+}
+
+.photoButton {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--r-card-sm);
+  background: var(--ember-04);
+  cursor: zoom-in;
+}
+
+.photoButton:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photoItem[data-status="rejected"] .photo {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+
+.photoItem .itemActions button {
+  padding: 7px 10px;
+}
+
+.photoReason {
+  color: var(--error);
+  font-size: 12px;
+  line-height: 1.35;
+}

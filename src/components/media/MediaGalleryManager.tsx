@@ -288,6 +288,13 @@ export function MediaGalleryManager({
                 </span>
               ) : null}
 
+              {image.communityHidden ? (
+                <span className={styles.hiddenBadge} title="La moderación la quitó de la comunidad. Sigue guardada en tu salida.">
+                  <Icon name="eye-off" size={11} aria-hidden="true" />
+                  No visible en la comunidad
+                </span>
+              ) : null}
+
               {confirmingDelete === image.id ? (
                 <div className={styles.confirmDelete} role="group" aria-label="Confirmar eliminación">
                   <span>¿Eliminar esta foto?</span>
