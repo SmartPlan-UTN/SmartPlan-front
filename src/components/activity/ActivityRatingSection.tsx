@@ -261,7 +261,7 @@ export function ActivityRatingSection({ activityId, onChange }: ActivityRatingSe
           <p className={`sp-body ${styles.ownRatingComment}`}>{ownRating.comment}</p>
         ) : null}
         {note ? <p className={styles.ratingModerationNote}>{note}</p> : null}
-        <MediaGalleryManager target="rating" resourceId={ownRating.id} resourceName="tu valoración" onChanged={onChange} />
+        <MediaGalleryManager target="rating" resourceId={ownRating.id} resourceName="tu valoración" onChanged={onChange} variant="compact" />
 
         {confirmingDelete ? (
           <ConfirmationDialog

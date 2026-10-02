@@ -12,9 +12,17 @@ import styles from "./feedback.module.css";
 
 const MAX_COMMENT_LENGTH = 1000;
 
+export interface SavedActivityRating {
+  activityId: number;
+  activityName: string;
+  ratingId: number;
+}
+
 export interface ActivityRatingsResult {
   /** Ratings saved whose comment moderation rejected (CU55). */
   rejectedComments: number;
+  /** Every rating this step saved, in itinerary order — photos attach to them. */
+  ratings: SavedActivityRating[];
 }
 
 export interface ActivityRatingsStepProps {
@@ -88,6 +96,8 @@ export function ActivityRatingsStep({
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const rejectedComments = useRef(0);
+  // Rating ids saved so far, across retries of a partly failed submit.
+  const savedRatings = useRef(new Map<number, number>());
 
   useEffect(() => {
     onBusyChange(busy);
@@ -155,6 +165,7 @@ export function ActivityRatingsStep({
       const activityId = pending[index].id;
       if (result.status === "fulfilled") {
         saved.push(result.value);
+        savedRatings.current.set(activityId, result.value.id);
         next[activityId] = { ...next[activityId], status: "saved", error: null };
       } else {
         failed += 1;
@@ -177,6 +188,12 @@ export function ActivityRatingsStep({
     }
     onSaved({
       rejectedComments: rejectedComments.current,
+      ratings: activities.flatMap((activity) => {
+        const ratingId = savedRatings.current.get(activity.id);
+        return ratingId == null
+          ? []
+          : [{ activityId: activity.id, activityName: activity.name, ratingId }];
+      }),
     });
   }
 

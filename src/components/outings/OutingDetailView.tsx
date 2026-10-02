@@ -10,7 +10,7 @@ import {
   FeedbackInvite,
 } from "@/components/feedback";
 import { ItineraryStep } from "@/components/plan/ItineraryStep";
-import { MediaGallery, MediaGalleryManager } from "@/components/media";
+import { MediaGalleryManager } from "@/components/media";
 import planStyles from "@/components/plan/plan.module.css";
 import activityStyles from "@/components/activity/activity.module.css";
 import {
@@ -73,12 +73,10 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [feedbackJustSaved, setFeedbackJustSaved] = useState(false);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [liveMessage, setLiveMessage] = useState("");
-  const [galleryVersion, setGalleryVersion] = useState(0);
 
   if (status === "loading" && !outing) {
     return (
@@ -165,7 +163,6 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
 
   function applyFeedback(feedback: PlanFeedback) {
     setOverride({ ...current, feedbackState: "submitted", feedback });
-    setFeedbackJustSaved(true);
     setFeedbackOpen(false);
   }
 
@@ -173,8 +170,6 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
 
   return (
     <div>
-      <MediaGallery target="plan" resourceId={current.id} resourceName={current.title} refreshKey={galleryVersion} />
-      <MediaGalleryManager target="plan" resourceId={current.id} resourceName={current.title} onChanged={() => setGalleryVersion((value) => value + 1)} />
       <FloatingBackLink
         href={outingsTabRoute(done ? "completed" : "to-do")}
         label="Mis salidas"
@@ -285,18 +280,10 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
         </div>
 
         {current.feedback ? (
-          <>
-            <ExperienceSummary
-              feedback={current.feedback}
-              estimatedTotalCost={current.estimatedTotalCost}
-            />
-            {current.feedback.id ? (
-              <>
-                {feedbackJustSaved ? <p role="status">Guardamos tu experiencia. Ahora podés agregar hasta cinco fotos.</p> : null}
-                <MediaGalleryManager target="feedback" resourceId={current.feedback.id} resourceName={`feedback de ${current.title}`} />
-              </>
-            ) : null}
-          </>
+          <ExperienceSummary
+            feedback={current.feedback}
+            estimatedTotalCost={current.estimatedTotalCost}
+          />
         ) : current.feedbackState === "available" ? (
           <FeedbackInvite
             planId={current.id}
@@ -305,6 +292,16 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
             completedAt={current.completedAt}
             activityCount={current.activityCount}
             onSubmitted={applyFeedback}
+          />
+        ) : null}
+
+        {/* The photos of the whole outing — not of one activity, those go
+            with each activity's rating. The cover shows in Mis salidas. */}
+        {done ? (
+          <MediaGalleryManager
+            target="plan"
+            resourceId={current.id}
+            resourceName={current.title}
           />
         ) : null}
 
