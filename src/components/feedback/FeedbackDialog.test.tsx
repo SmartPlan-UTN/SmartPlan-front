@@ -15,11 +15,14 @@ const { submitFeedback, getOuting, getOwnRating, createRating, updateRating } = 
   updateRating: vi.fn(),
 }));
 
-const { listMedia } = vi.hoisted(() => ({ listMedia: vi.fn() }));
+const { listMedia, uploadMedia } = vi.hoisted(() => ({
+  listMedia: vi.fn(),
+  uploadMedia: vi.fn(),
+}));
 
 vi.mock("@/lib/api/media", () => ({
   listMedia,
-  uploadMedia: vi.fn(),
+  uploadMedia,
   updateMedia: vi.fn(),
   deleteMedia: vi.fn(),
   downloadMedia: vi.fn().mockRejectedValue(new Error("not in tests")),
@@ -111,6 +114,21 @@ beforeEach(() => {
   vi.clearAllMocks();
   submitFeedback.mockResolvedValue(FEEDBACK);
   listMedia.mockResolvedValue([]);
+  uploadMedia.mockResolvedValue({
+    id: 1,
+    url: "/api/media/plan/1",
+    isPrimary: true,
+    displayOrder: 0,
+    createdAt: "2026-10-02T00:00:00.000Z",
+  });
+  Object.defineProperty(URL, "createObjectURL", {
+    configurable: true,
+    value: vi.fn(() => "blob:feedback-photo"),
+  });
+  Object.defineProperty(URL, "revokeObjectURL", {
+    configurable: true,
+    value: vi.fn(),
+  });
   // The CU23-only tests don't need a follow-up activity step.
   getOuting.mockResolvedValue({ ...OUTING, details: [] });
   getOwnRating.mockImplementation((id: number) => Promise.resolve(ownRating(id, 4)));
@@ -427,6 +445,56 @@ describe("FeedbackDialog → rating the activities (CU23 → CU44)", () => {
 
     await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK));
     expect(onDismiss).not.toHaveBeenCalled();
+  });
+
+  it("closes only the photo lightbox when Escape is pressed inside it", async () => {
+    listMedia.mockResolvedValue([
+      {
+        id: 1,
+        url: "/api/media/plan/1",
+        isPrimary: true,
+        displayOrder: 0,
+        createdAt: "2026-10-02T00:00:00.000Z",
+      },
+    ]);
+    const { onSubmitted } = setup();
+    await sendFeedback();
+    await photosStep();
+    await userEvent.click(await screen.findByRole("button", { name: "Ver foto 1 de 1" }));
+
+    await userEvent.keyboard("{Escape}");
+
+    expect(
+      screen.queryByRole("dialog", { name: "Fotos de Tarde de vinos en Luján" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /sumás fotos de la salida/i })).toBeInTheDocument();
+    expect(onSubmitted).not.toHaveBeenCalled();
+  });
+
+  it("notifies the parent when an outing photo changes", async () => {
+    listMedia
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: 1,
+          url: "/api/media/plan/1",
+          isPrimary: true,
+          displayOrder: 0,
+          createdAt: "2026-10-02T00:00:00.000Z",
+        },
+      ]);
+    const onMediaChanged = vi.fn();
+    setup({ onMediaChanged });
+    await sendFeedback();
+    await photosStep();
+
+    await userEvent.upload(
+      await screen.findByLabelText("Agregar fotos"),
+      new File(["photo"], "salida.png", { type: "image/png" }),
+    );
+
+    await waitFor(() => expect(onMediaChanged).toHaveBeenCalledTimes(1));
+    expect(uploadMedia).toHaveBeenCalledWith("plan", 7, expect.any(File), expect.any(Function));
   });
 
   it("offers rating the activities after the feedback is saved", async () => {

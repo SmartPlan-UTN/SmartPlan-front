@@ -1,6 +1,9 @@
 import type { MediaImage } from '@/types';
 
-/** The order the person chose, then upload order for ties. */
-export function sortImages(images: MediaImage[]): MediaImage[] {
-  return [...images].sort((a, b) => a.displayOrder - b.displayOrder || a.id - b.id);
+/** Chosen order, optionally leading with the cover for read-only mosaics. */
+export function sortImages(images: MediaImage[], primaryFirst = false): MediaImage[] {
+  return [...images].sort((a, b) => {
+    if (primaryFirst && a.isPrimary !== b.isPrimary) return a.isPrimary ? -1 : 1;
+    return a.displayOrder - b.displayOrder || a.id - b.id;
+  });
 }

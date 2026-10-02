@@ -367,7 +367,8 @@ describe("OutingsView — Mis salidas (#130, CU22, CU23)", () => {
     ).toBeInTheDocument();
 
     await user.type(screen.getByLabelText("Desde"), "2026-09-01");
-    await user.selectOptions(screen.getByLabelText("Ordenar"), "cost_desc");
+    await user.click(screen.getByRole("button", { name: "Ordenar" }));
+    await user.click(screen.getByRole("option", { name: "Mayor costo" }));
     await waitFor(() =>
       expect(listOutings).toHaveBeenLastCalledWith(
         expect.objectContaining({ from: "2026-09-01", sort: "cost_desc" }),

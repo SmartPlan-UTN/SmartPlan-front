@@ -424,6 +424,7 @@ export function OutingsView({ initialTab = "to-do" }: OutingsViewProps) {
             setJustCompleted(null);
           }}
           onReconcile={retry}
+          onMediaChanged={retry}
         />
       ) : null}
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
+import { Button } from '@/components/ui';
 import { listMedia } from '@/lib/api/media';
 import type { MediaImage, MediaTarget } from '@/types';
 
@@ -33,13 +34,14 @@ export function MediaGallery({ target, resourceId, resourceName, refreshKey = 0,
   const [images, setImages] = useState<MediaImage[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [open, setOpen] = useState<number | null>(null);
+  const [retryToken, setRetryToken] = useState(0);
 
   useEffect(() => {
     let active = true;
     listMedia(target, resourceId)
       .then((data) => {
         if (!active) return;
-        setImages(sortImages(data));
+        setImages(sortImages(data, variant === 'mosaic'));
         setState('ready');
       })
       .catch(() => {
@@ -48,12 +50,29 @@ export function MediaGallery({ target, resourceId, resourceName, refreshKey = 0,
     return () => {
       active = false;
     };
-  }, [target, resourceId, refreshKey]);
+  }, [target, resourceId, refreshKey, retryToken, variant]);
 
   if (state === 'loading') {
     return <div className={variant === 'strip' ? styles.stripSkeleton : styles.mosaicSkeleton} role="status" aria-label="Cargando fotos" />;
   }
-  if (state === 'error' || images.length === 0) return null;
+  if (state === 'error') {
+    return (
+      <div className={styles.galleryError} role="alert">
+        <p>No pudimos cargar las fotos.</p>
+        <Button
+          variant="ghostLight"
+          size="sm"
+          onClick={() => {
+            setState('loading');
+            setRetryToken((token) => token + 1);
+          }}
+        >
+          Reintentar
+        </Button>
+      </div>
+    );
+  }
+  if (images.length === 0) return null;
 
   const limit = variant === 'strip' ? STRIP_VISIBLE : MOSAIC_VISIBLE;
   const visible = images.slice(0, limit);

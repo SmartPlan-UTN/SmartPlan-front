@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MediaGallery } from './MediaGallery';
 import { MediaGalleryManager } from './MediaGalleryManager';
+import { sortImages } from './sortImages';
 
 const listMedia = vi.hoisted(() => vi.fn());
 const uploadMedia = vi.hoisted(() => vi.fn());
@@ -81,6 +82,21 @@ describe('MediaGalleryManager', () => {
     expect(deleteMedia).toHaveBeenCalledWith('plan', 7, 2);
     await waitFor(() => expect(screen.getAllByRole('button', { name: /ver foto/i })).toHaveLength(1));
   });
+
+  it('reloads when another gallery changed the same resource', async () => {
+    listMedia.mockResolvedValueOnce([]).mockResolvedValueOnce([photo(1, true)]);
+    const { rerender } = render(
+      <MediaGalleryManager target="plan" resourceId={7} resourceName="Tarde de vinos" refreshKey={0} />,
+    );
+    await screen.findByText('Sumá fotos si querés');
+
+    rerender(
+      <MediaGalleryManager target="plan" resourceId={7} resourceName="Tarde de vinos" refreshKey={1} />,
+    );
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Ver foto 1 de 1' })).toBeInTheDocument());
+    expect(listMedia).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe('MediaGallery', () => {
@@ -109,5 +125,44 @@ describe('MediaGallery', () => {
 
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('shows a retryable error instead of making a failure look empty', async () => {
+    listMedia.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce([]);
+    const user = userEvent.setup();
+    const { container } = render(
+      <MediaGallery target="plan" resourceId={7} resourceName="Tarde de vinos" />,
+    );
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('No pudimos cargar las fotos.');
+    await user.click(within(alert).getByRole('button', { name: 'Reintentar' }));
+
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
+    expect(listMedia).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps keyboard focus inside the lightbox', async () => {
+    listMedia.mockResolvedValue([photo(1, true), photo(2)]);
+    const user = userEvent.setup();
+    render(<MediaGallery target="plan" resourceId={7} resourceName="Tarde de vinos" />);
+    await user.click(await screen.findByRole('button', { name: 'Ver foto 1 de 2' }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Fotos de Tarde de vinos' });
+    const close = within(dialog).getByRole('button', { name: 'Cerrar' });
+    const next = within(dialog).getByRole('button', { name: 'Foto siguiente' });
+    expect(close).toHaveFocus();
+
+    await user.tab({ shift: true });
+    expect(next).toHaveFocus();
+  });
+});
+
+describe('sortImages', () => {
+  it('puts the selected cover first only when the presentation requests it', () => {
+    const ordered = [photo(1), photo(2, true)];
+
+    expect(sortImages(ordered).map((image) => image.id)).toEqual([1, 2]);
+    expect(sortImages(ordered, true).map((image) => image.id)).toEqual([2, 1]);
   });
 });

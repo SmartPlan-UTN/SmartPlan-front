@@ -23,6 +23,7 @@ interface MediaLightboxProps {
  * that opened it.
  */
 export function MediaLightbox({ images, index, resourceName, onIndexChange, onClose }: MediaLightboxProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const total = images.length;
   const image = images[index] ?? images[0];
@@ -40,18 +41,45 @@ export function MediaLightbox({ images, index, resourceName, onIndexChange, onCl
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose();
-      if (total > 1 && event.key === 'ArrowLeft') onIndexChange((index + total - 1) % total);
-      if (total > 1 && event.key === 'ArrowRight') onIndexChange((index + 1) % total);
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        onClose();
+        return;
+      }
+      if (total > 1 && event.key === 'ArrowLeft') {
+        event.preventDefault();
+        event.stopPropagation();
+        onIndexChange((index + total - 1) % total);
+        return;
+      }
+      if (total > 1 && event.key === 'ArrowRight') {
+        event.preventDefault();
+        event.stopPropagation();
+        onIndexChange((index + 1) % total);
+        return;
+      }
+      if (event.key !== 'Tab' || !dialogRef.current) return;
+      const focusable = [...dialogRef.current.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')];
+      if (focusable.length === 0) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const current = focusable.indexOf(document.activeElement as HTMLButtonElement);
+      const next = event.shiftKey
+        ? (current <= 0 ? focusable.length - 1 : current - 1)
+        : (current + 1) % focusable.length;
+      focusable[next].focus();
     }
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    // Capture before a parent dialog's document listener sees Escape or Tab.
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
   }, [index, total, onClose, onIndexChange]);
 
   if (!image) return null;
 
   return createPortal(
     <div
+      ref={dialogRef}
       className={styles.lightbox}
       role="dialog"
       aria-modal="true"

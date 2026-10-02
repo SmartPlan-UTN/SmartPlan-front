@@ -141,6 +141,24 @@
   animation: media-shimmer 1.4s ease-in-out infinite;
 }
 
+.galleryError {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+}
+
+.galleryError p {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: var(--t-small);
+}
+
 .mosaicSkeleton {
   height: 248px;
 }

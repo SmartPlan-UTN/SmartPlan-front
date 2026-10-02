@@ -77,6 +77,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
   const [isCancelling, setIsCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [liveMessage, setLiveMessage] = useState("");
+  const [galleryVersion, setGalleryVersion] = useState(0);
 
   if (status === "loading" && !outing) {
     return (
@@ -164,6 +165,10 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
   function applyFeedback(feedback: PlanFeedback) {
     setOverride({ ...current, feedbackState: "submitted", feedback });
     setFeedbackOpen(false);
+  }
+
+  function refreshGallery() {
+    setGalleryVersion((version) => version + 1);
   }
 
   const routeSummary = current.activityNames.join(" → ");
@@ -292,6 +297,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
             completedAt={current.completedAt}
             activityCount={current.activityCount}
             onSubmitted={applyFeedback}
+            onMediaChanged={refreshGallery}
           />
         ) : null}
 
@@ -302,6 +308,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
             target="plan"
             resourceId={current.id}
             resourceName={current.title}
+            refreshKey={galleryVersion}
           />
         ) : null}
 
@@ -362,6 +369,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
           activityCount={current.activityCount}
           onDismiss={() => setFeedbackOpen(false)}
           onSubmitted={applyFeedback}
+          onMediaChanged={refreshGallery}
         />
       ) : null}
 

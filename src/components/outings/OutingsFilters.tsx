@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 
-import { Icon } from "@/components/ui";
+import { Icon, Select } from "@/components/ui";
 import type { OutingFilters, OutingSort } from "@/types";
 
 import { OUTINGS_COPY } from "./outingsContent";
@@ -140,22 +140,16 @@ export function OutingsFilters({
           />
         </div>
 
-        <div className={styles.field}>
-          <label htmlFor={ids.sort} className={styles.fieldLabel}>
+        <div className={`${styles.field} ${styles.sortField}`}>
+          <span id={ids.sort} className={styles.fieldLabel}>
             {OUTINGS_COPY.filters.sortLabel}
-          </label>
-          <select
-            id={ids.sort}
-            className={styles.fieldControl}
+          </span>
+          <Select
+            aria-labelledby={ids.sort}
             value={filters.sort ?? "recent"}
-            onChange={(event) => update({ sort: event.target.value as OutingSort })}
-          >
-            {SORTS.map((sort) => (
-              <option key={sort.value} value={sort.value}>
-                {sort.label}
-              </option>
-            ))}
-          </select>
+            options={SORTS}
+            onChange={(sort) => update({ sort })}
+          />
         </div>
 
         {showRated ? (

@@ -17,6 +17,8 @@ interface MediaGalleryManagerProps {
   resourceId: number;
   resourceName: string;
   onChanged?: () => void;
+  /** Reload photos when another manager changed the same resource. */
+  refreshKey?: number;
   /** Heading of the section; defaults to one that fits the target. */
   title?: string;
   /** One line under the heading; defaults to one that fits the target. */
@@ -67,6 +69,7 @@ export function MediaGalleryManager({
   resourceId,
   resourceName,
   onChanged,
+  refreshKey = 0,
   title,
   description,
   variant = 'section',
@@ -109,7 +112,7 @@ export function MediaGalleryManager({
     return () => {
       active = false;
     };
-  }, [target, resourceId]);
+  }, [target, resourceId, refreshKey]);
 
   async function addFiles(files: File[]) {
     if (files.length === 0 || busy) return;

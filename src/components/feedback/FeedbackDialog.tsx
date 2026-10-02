@@ -46,6 +46,8 @@ export interface FeedbackDialogProps {
   onDismiss: () => void;
   onSubmitted: (feedback: PlanFeedback) => void;
   onReconcile?: () => void;
+  /** Refresh surfaces that also show the outing's photos or cover. */
+  onMediaChanged?: () => void;
 }
 
 const SUCCESS_HOLD_MS = 1600;
@@ -110,6 +112,7 @@ export function FeedbackDialog({
   onDismiss,
   onSubmitted,
   onReconcile,
+  onMediaChanged,
 }: FeedbackDialogProps) {
   const titleId = useId();
   const ratingLabelId = useId();
@@ -445,6 +448,7 @@ export function FeedbackDialog({
                   resourceId={planId}
                   resourceName={planTitle}
                   variant="embedded"
+                  onChanged={onMediaChanged}
                 />
               </div>
               <div className={styles.offerActions}>

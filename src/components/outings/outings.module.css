@@ -695,6 +695,10 @@
   gap: 6px;
 }
 
+.sortField {
+  min-width: 152px;
+}
+
 .fieldLabel {
   color: var(--fg-3);
   font-size: var(--t-label);
@@ -800,6 +804,11 @@
   }
 
   .fieldControl {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .sortField {
     width: 100%;
     min-width: 0;
   }

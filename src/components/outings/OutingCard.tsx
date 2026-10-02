@@ -147,6 +147,7 @@ export function OutingCard({
             onDismiss={onDismissInvite}
             onSubmitted={(feedback) => onSubmitted(outing.id, feedback)}
             onReconcile={onReconcile}
+            onMediaChanged={onReconcile}
           />
         </div>
       ) : null}
