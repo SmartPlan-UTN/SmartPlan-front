@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 
 import {
   ExperienceSummary,
+  ExperienceSharing,
   FeedbackDialog,
   FeedbackInvite,
 } from "@/components/feedback";
@@ -288,6 +289,18 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
           <ExperienceSummary
             feedback={current.feedback}
             estimatedTotalCost={current.estimatedTotalCost}
+            footer={
+              current.source?.hasCommunity ? (
+                <ExperienceSharing
+                  outingId={current.id}
+                  planTitle={current.source.title}
+                  feedback={current.feedback}
+                  onChange={(feedback) =>
+                    setOverride({ ...current, feedback })
+                  }
+                />
+              ) : null
+            }
           />
         ) : current.feedbackState === "available" ? (
           <FeedbackInvite
@@ -296,6 +309,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
             estimatedTotalCost={current.estimatedTotalCost}
             completedAt={current.completedAt}
             activityCount={current.activityCount}
+            canShare={current.source?.hasCommunity ?? false}
             onSubmitted={applyFeedback}
             onMediaChanged={refreshGallery}
           />
@@ -367,6 +381,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
           estimatedTotalCost={current.estimatedTotalCost}
           completedAt={current.completedAt}
           activityCount={current.activityCount}
+          canShare={current.source?.hasCommunity ?? false}
           onDismiss={() => setFeedbackOpen(false)}
           onSubmitted={applyFeedback}
           onMediaChanged={refreshGallery}

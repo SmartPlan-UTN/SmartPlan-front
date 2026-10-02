@@ -17,6 +17,7 @@ const ADMIN_LINKS: Array<{ href: Route; label: string; icon: IconName }> = [
   { href: ROUTES.adminPlans, label: "Planes", icon: "map" },
   { href: ROUTES.adminUsers, label: "Usuarios", icon: "users" },
   { href: ROUTES.adminRatings, label: "Valoraciones", icon: "star" },
+  { href: ROUTES.adminExperiences, label: "Experiencias", icon: "camera" },
 ];
 
 export interface AdminShellProps {

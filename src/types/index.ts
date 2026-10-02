@@ -17,3 +17,4 @@ export * from './administration';
 export * from './auth';
 export * from './ratings';
 export * from './media';
+export * from './experiences';

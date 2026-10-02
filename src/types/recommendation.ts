@@ -178,6 +178,13 @@ export interface PlanFeedback {
   comment: string | null;
   actualCost: number | null;
   actualDuration: number | null;
+  /** Whether the owner shares it with the plan's community (#106). */
+  shared: boolean;
+  /**
+   * `true` only when moderation took the comment down from the community.
+   * The owner never sees any other moderation state.
+   */
+  commentHidden: boolean;
   createdAt: string;
 }
 
@@ -202,6 +209,8 @@ export interface CreateFeedbackPayload {
   comment?: string;
   actualCost?: number;
   actualDuration?: number;
+  /** Shares the experience with the community (#106); private when absent. */
+  shared?: boolean;
 }
 
 /**

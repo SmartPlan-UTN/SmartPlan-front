@@ -1,4 +1,6 @@
-import { Badge, Stars } from "@/components/ui";
+import type { ReactNode } from "react";
+
+import { Badge, Icon, Stars } from "@/components/ui";
 import { formatArs } from "@/lib/utils";
 import type { PlanFeedback } from "@/types";
 
@@ -15,6 +17,8 @@ export interface ExperienceSummaryProps {
   feedback: PlanFeedback;
   /** What SmartPlan estimated — shown next to the real spend for contrast. */
   estimatedTotalCost: number;
+  /** Closes the section, e.g. whether it is shared with the community. */
+  footer?: ReactNode;
 }
 
 /**
@@ -25,6 +29,7 @@ export interface ExperienceSummaryProps {
 export function ExperienceSummary({
   feedback,
   estimatedTotalCost,
+  footer,
 }: ExperienceSummaryProps) {
   const orderedTags = FEEDBACK_TAG_ORDER.filter((tag) =>
     feedback.tags.includes(tag)
@@ -81,6 +86,15 @@ export function ExperienceSummary({
       {feedback.comment ? (
         <p className={styles.expComment}>“{feedback.comment}”</p>
       ) : null}
+      {/* The only moderation trace the author ever sees (#106). */}
+      {feedback.comment && feedback.commentHidden ? (
+        <p className={styles.expHiddenNotice}>
+          <Icon name="eye-off" size={14} aria-hidden="true" />
+          {FEEDBACK_COPY.sharing.commentHidden}
+        </p>
+      ) : null}
+
+      {footer}
     </section>
   );
 }

@@ -6,6 +6,11 @@ export interface MediaImage {
   isPrimary: boolean;
   displayOrder: number;
   createdAt: string;
+  /**
+   * Only on the owner's own outing photos (#106): moderation took this one
+   * down from the community, so it is no longer shown there.
+   */
+  communityHidden?: true;
 }
 
 export interface AvatarImage {

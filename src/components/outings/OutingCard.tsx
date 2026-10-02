@@ -144,6 +144,7 @@ export function OutingCard({
             estimatedTotalCost={outing.estimatedTotalCost}
             completedAt={outing.completedAt}
             activityCount={outing.activityCount}
+            canShare={outing.source?.hasCommunity ?? false}
             onDismiss={onDismissInvite}
             onSubmitted={(feedback) => onSubmitted(outing.id, feedback)}
             onReconcile={onReconcile}

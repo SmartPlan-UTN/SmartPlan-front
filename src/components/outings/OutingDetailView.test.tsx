@@ -47,7 +47,7 @@ describe("OutingDetailView (#130, CU22, CU23)", () => {
   it("says when the original plan is no longer available", async () => {
     getOuting.mockResolvedValue(
       outingDetail({
-        source: { id: 7, kind: "authored", title: "x", available: false },
+        source: { id: 7, kind: "authored", title: "x", available: false, hasCommunity: false },
       }),
     );
     render(<OutingDetailView outingId={40} />);
@@ -109,6 +109,8 @@ describe("OutingDetailView (#130, CU22, CU23)", () => {
           comment: null,
           actualCost: null,
           actualDuration: null,
+          shared: false,
+          commentHidden: false,
           createdAt: "2026-09-30T13:00:00.000Z",
         },
       }),
