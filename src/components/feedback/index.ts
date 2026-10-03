@@ -1,4 +1,9 @@
 export { FeedbackDialog, type FeedbackDialogProps } from "./FeedbackDialog";
+export {
+  ActivityRatingsStep,
+  type ActivityRatingsResult,
+  type ActivityRatingsStepProps,
+} from "./ActivityRatingsStep";
 export { FeedbackInvite, type FeedbackInviteProps } from "./FeedbackInvite";
 export {
   ExperienceSummary,
@@ -11,4 +16,5 @@ export {
   ratingLabel,
   costDeltaLabel,
   FEEDBACK_COPY,
+  ACTIVITY_RATINGS_COPY,
 } from "./feedbackContent";

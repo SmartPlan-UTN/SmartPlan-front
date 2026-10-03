@@ -68,6 +68,7 @@ export interface PlanStatus extends CatalogEntity<PlanStatusKey> {
  */
 export interface PlanSearchResult {
   id: number;
+  imageUrl?: string | null;
   title: string;
   description: string | null;
   estimatedTotalCost: number;
@@ -80,6 +81,11 @@ export interface PlanSearchResult {
   activityNames: string[];
   status: { key: PlanStatusKey; name: string };
   viewerPlanState?: ViewerPlanState;
+  /**
+   * The viewer's outing still to do that was copied from this plan (CU22), so
+   * "Lo voy a hacer" becomes "Ver en Mis salidas"; `null` otherwise.
+   */
+  activeOutingId?: number | null;
 }
 
 /** Activity as embedded in a plan's itinerary (CU13). */
@@ -107,43 +113,47 @@ export interface PlanItineraryItem {
 
 /**
  * What a plan means for the current viewer (CU22, PAN 17). Computed
- * server-side; the frontend never infers it. Any authenticated viewer of a
- * non-`cancelled` plan is `selectable` (or `selected` once they hold an
- * intention) — ownership and visibility don't matter. An anonymous viewer is
- * always `view-only`.
+ * server-side; the frontend never infers it:
+ *  - `selectable`: the viewer may choose it ("Lo voy a hacer");
+ *  - `selected`: the viewer already has an outing to do from it;
+ *  - `view-only`: anonymous, cancelled, an outing, or not choosable.
  * Matches `ViewerPlanState` in `SmartPlan-back` (`src/plans/plan-selectability.ts`).
  */
 export type ViewerPlanState = "selectable" | "selected" | "view-only";
+
+/**
+ * What a plan row is (SmartPlan-back#98):
+ *  - `authored`: created by a person; lives in "Mis planes" and can be published;
+ *  - `generated`: one alternative of a "Planificar" request, private to it;
+ *  - `outing`: a person's frozen copy of a plan they chose ("Mis salidas").
+ */
+export type PlanKind = 'authored' | 'generated' | 'outing';
+
+/** Only an author publishes a plan; everything starts `private`. */
+export type PlanVisibility = 'private' | 'public';
 
 /**
  * Plan detail returned by `GET /plans/:id` (CU13): the search summary plus
  * its ordered itinerary.
  */
 export interface PlanDetailResult extends PlanSearchResult {
+  images?: import('./media').MediaImage[];
   details: PlanItineraryItem[];
   /** Selection affordance for the caller (CU22). */
   viewerPlanState: ViewerPlanState;
+  activeOutingId: number | null;
+  kind: PlanKind;
+  visibility: PlanVisibility;
+  /** The caller owns this plan, result, or outing. */
+  ownedByViewer: boolean;
 }
 
-/**
- * Result of `PATCH /plans/:id/select` (CU22). The plan always belongs to a
- * request on success, so `planRequestId` is never null.
- * Matches `PlanSelectionResponseDto` in `SmartPlan-back`.
- */
-export interface PlanSelectionResult {
-  id: number;
-  planRequestId: number | null;
-  status: { key: PlanStatusKey; name: string };
-  viewerPlanState?: ViewerPlanState;
-}
-
-/* ── CU23 · Plan history (PAN 13) ────────────────────────────────── */
+/* ── Mis planes (CU24-CU30) ─────────────────────────────────────── */
 
 /**
- * A plan in the signed-in user's own history, from `GET /users/me/plans`
- * (list) and `GET /users/me/plans/:id` (detail). Matches `OwnPlanSummaryDto`
- * in `SmartPlan-back`. Carries the CU23 feedback layer that the public
- * projections never expose.
+ * A plan the signed-in user authored, from `GET /users/me/plans` (list) and
+ * `GET /users/me/plans/:id` (detail). Matches `OwnPlanSummaryDto` in
+ * `SmartPlan-back`. Generated results and outings are never listed here.
  */
 export interface OwnPlanSummary {
   id: number;
@@ -156,12 +166,122 @@ export interface OwnPlanSummary {
   estimatedCostPerPerson: number;
   activityCount: number;
   status: { key: PlanStatusKey; name: string };
-  /** ISO date the plan was marked `completed`, or `null`. */
-  completedAt: string | null;
-  feedbackState: FeedbackState;
-  feedback: PlanFeedback | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/* ── Mis salidas (CU22, CU23) ───────────────────────────────────── */
+
+/** `to_do` until the person marks it done, then `completed`. */
+export type OutingStatus = 'to_do' | 'completed';
+
+/**
+ * The plan an outing was copied from. `available` is `false` once its author
+ * made it private or cancelled it; the outing itself never changes.
+ */
+export interface OutingSource {
+  id: number;
+  kind: PlanKind;
+  title: string;
+  available: boolean;
+}
+
+/** One entry of "Mis salidas" — `GET /users/me/outings`. */
+export interface OutingSummary {
+  id: number;
+  imageUrl?: string | null;
+  title: string;
+  description: string | null;
+  estimatedTotalCost: number;
+  estimatedTotalDuration: number;
+  peopleCount: number;
+  estimatedCostPerPerson: number;
+  activityCount: number;
+  activityNames: string[];
+  status: OutingStatus;
+  /** ISO date the outing was marked done, or `null` while to do. */
+  completedAt: string | null;
+  /** Opens as soon as the outing is done and never closes (CU23). */
+  feedbackState: FeedbackState;
+  feedback: PlanFeedback | null;
+  source: OutingSource | null;
+  createdAt: string;
+}
+
+/** `GET /users/me/outings/:id`: the frozen itinerary with its places. */
+export interface OutingDetail extends OutingSummary {
+  travelDistanceMeters: number | null;
+  travelDurationSeconds: number | null;
+  details: PlanItineraryItem[];
+}
+
+/**
+ * Result of "Lo voy a hacer" (`POST /users/me/outings`) and "Volver a hacer
+ * este plan" (`POST /users/me/outings/:id/repeat`). `created` is `false` when
+ * an outing to do already existed and was returned instead of a duplicate.
+ */
+export interface OutingCreationResult {
+  created: boolean;
+  outing: OutingDetail;
+}
+
+/** Order of "Mis salidas"; `recent` is the default (#134). */
+export type OutingSort = "recent" | "oldest" | "cost_desc" | "cost_asc";
+
+/** What "Mis salidas" can be narrowed by (#134). Dates are `YYYY-MM-DD`. */
+export interface OutingFilters {
+  /** In the title or the name of any activity. */
+  search?: string;
+  from?: string;
+  to?: string;
+  sort?: OutingSort;
+  /** Only done outings with (`true`) or without (`false`) feedback. */
+  rated?: boolean;
+}
+
+export interface ListOutingsParams extends OutingFilters {
+  status?: OutingStatus;
+  page?: number;
+  limit?: number;
+}
+
+/** One catalog activity suggested for the plan being edited (#98). */
+export interface ActivitySuggestion {
+  id: number;
+  name: string;
+  description: string;
+  estimatedCost: number;
+  estimatedDuration: number;
+  type: string | null;
+  categories: string[];
+}
+
+export interface ActivitySuggestionsParams {
+  title: string;
+  description?: string;
+  excludeActivityIds?: number[];
+}
+
+/* ── In-app notifications ───────────────────────────────────────── */
+
+/**
+ * A personal in-app notification. `resourceType: 'outing'` is the 24 h
+ * feedback reminder and `resourceId` the outing it opens (CU23).
+ */
+export interface AppNotification {
+  id: number;
+  title: string;
+  message: string;
+  resourceType: string | null;
+  resourceId: number | null;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface NotificationList {
+  data: AppNotification[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+  unreadCount: number;
 }
 
 /** Own plan plus its ordered itinerary — `GET /users/me/plans/:id`. */
@@ -215,8 +335,6 @@ export interface CreatePlanDto {
   description?: string | null;
   peopleCount: number;
 }
-
-export type PlanVisibility = "private" | "public";
 
 export interface PlanComposerStopDto {
   activityId: number;

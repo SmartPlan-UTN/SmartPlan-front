@@ -12,7 +12,9 @@ import type {
   OwnPlanSummary,
   Plan,
   PlanSuggestionDto,
-  PlanSelectionResult,
+  PlanVisibility,
+  ActivitySuggestion,
+  ActivitySuggestionsParams,
 } from "@/types";
 import { apiClient } from "./client";
 
@@ -72,14 +74,6 @@ export async function getOwnPlan(id: number): Promise<OwnPlanDetail> {
   return apiClient.get<OwnPlanDetail>(`/users/me/plans/${id}`);
 }
 
-export async function selectPlan(id: number): Promise<PlanSelectionResult> {
-  return apiClient.patch<PlanSelectionResult>(`/plans/${id}/select`);
-}
-
-export async function deselectPlan(id: number): Promise<PlanSelectionResult> {
-  return apiClient.delete<PlanSelectionResult>(`/plans/${id}/select`);
-}
-
 /**
  * Updates basic details of an owned plan (CU25).
  * Backend contract: `PATCH /users/me/plans/:id`.
@@ -89,6 +83,33 @@ export async function updateOwnPlan(
   dto: UpdatePlanDto,
 ): Promise<OwnPlanDetail> {
   return apiClient.patch<OwnPlanDetail>(`/users/me/plans/${id}`, dto);
+}
+
+/** Publishes an authored plan or makes it private again (#98). */
+export async function setOwnPlanVisibility(
+  id: number,
+  visibility: PlanVisibility,
+): Promise<OwnPlanDetail> {
+  return apiClient.patch<OwnPlanDetail>(`/users/me/plans/${id}/visibility`, {
+    visibility,
+  });
+}
+
+/** Recommends catalog activities for an authored plan (#98). */
+export async function suggestActivities({
+  title,
+  description,
+  excludeActivityIds = [],
+}: ActivitySuggestionsParams): Promise<{ data: ActivitySuggestion[] }> {
+  return apiClient.get<{ data: ActivitySuggestion[] }>("/activity-suggestions", {
+    params: {
+      title,
+      ...(description ? { description } : {}),
+      ...(excludeActivityIds.length > 0
+        ? { excludeActivityIds: excludeActivityIds.join(",") }
+        : {}),
+    },
+  });
 }
 
 /** Atomically updates plan metadata, visibility, and ordered stops. */

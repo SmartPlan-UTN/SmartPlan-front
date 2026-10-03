@@ -25,7 +25,8 @@ const GROUPS = [
     links: [
       { label: "Mi perfil", href: ROUTES.profile },
       { label: "Favoritos", href: ROUTES.favorites },
-      { label: "Historial", href: ROUTES.history },
+      { label: "Mis planes", href: ROUTES.plans },
+      { label: "Mis salidas", href: ROUTES.outings },
       { label: "Preferencias", href: ROUTES.preferences },
     ],
   },

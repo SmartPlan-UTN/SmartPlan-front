@@ -134,6 +134,7 @@ export interface UserProfile {
   name: string;
   lastName: string;
   email: string;
+  avatarUrl?: string | null;
   role: { key: RoleKey; name: string };
   status: { key: UserStatusKey; name: string };
 }

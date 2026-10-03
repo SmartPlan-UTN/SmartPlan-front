@@ -2,14 +2,24 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ApiError, cancelOwnPlan, listOwnPlans } from "@/lib/api";
+import {
+  ApiError,
+  cancelOwnPlan,
+  listOwnPlans,
+  setOwnPlanVisibility,
+} from "@/lib/api";
 import type { OwnPlanSummary } from "@/types";
 
 import { MyPlansPanel } from "./MyPlansPanel";
 
 vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
-  return { ...actual, listOwnPlans: vi.fn(), cancelOwnPlan: vi.fn() };
+  return {
+    ...actual,
+    listOwnPlans: vi.fn(),
+    cancelOwnPlan: vi.fn(),
+    setOwnPlanVisibility: vi.fn(),
+  };
 });
 
 function mockSummary(overrides: Partial<OwnPlanSummary> = {}): OwnPlanSummary {
@@ -24,9 +34,7 @@ function mockSummary(overrides: Partial<OwnPlanSummary> = {}): OwnPlanSummary {
     estimatedTotalDuration: 180,
     activityCount: 1,
     status: { key: "confirmed", name: "Confirmado" },
-    completedAt: null,
-    feedbackState: "not_available",
-    feedback: null,
+    visibility: "private",
     createdAt: "2026-08-25T12:00:00.000Z",
     updatedAt: "2026-08-25T12:00:00.000Z",
     ...overrides,
@@ -54,10 +62,10 @@ describe("MyPlansPanel (CU29)", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Cargando tus planes");
     // The empty state belongs to a finished, empty listing — not to one
     // that hasn't answered yet.
-    expect(screen.queryByText(/Todavía no armaste/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Todavía no creaste/)).not.toBeInTheDocument();
     // The create card stays reachable throughout.
     expect(
-      screen.getByRole("link", { name: /Crear un plan nuevo/ }),
+      screen.getByRole("link", { name: /^Crear un plan/ }),
     ).toBeInTheDocument();
   });
 
@@ -75,7 +83,7 @@ describe("MyPlansPanel (CU29)", () => {
     render(<MyPlansPanel />);
 
     const create = await screen.findByRole("link", {
-      name: /Crear un plan nuevo/,
+      name: /^Crear un plan/,
     });
     expect(create).toHaveAttribute("href", "/plans/create");
   });
@@ -85,7 +93,7 @@ describe("MyPlansPanel (CU29)", () => {
     render(<MyPlansPanel />);
 
     expect(
-      await screen.findByText(/Todavía no armaste ningún plan/),
+      await screen.findByText(/Todavía no creaste ningún plan/),
     ).toBeInTheDocument();
   });
 
@@ -150,12 +158,67 @@ describe("MyPlansPanel (CU29)", () => {
     expect(screen.queryByText("Domingo de bodegas")).not.toBeInTheDocument();
   });
 
-  it("sends the automatic plan card to the real AI composer on the Home page", async () => {
+  it("never offers generating a plan: planning an outing is Inicio's job (#130)", async () => {
     render(<MyPlansPanel />);
 
-    const link = screen.getByRole("link", { name: /Generar plan automático/i });
+    await screen.findByText("Domingo de bodegas");
+    expect(
+      screen.queryByRole("link", { name: /generar plan automático/i }),
+    ).not.toBeInTheDocument();
+  });
 
-    expect(link).toHaveAttribute("href", "/?startComposer=1");
-    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  it("says whether each plan is public or private (#130)", async () => {
+    resolveWith([
+      mockSummary({ id: 1, title: "Borrador", visibility: "private" }),
+      mockSummary({ id: 2, title: "Compartido", visibility: "public" }),
+    ]);
+    render(<MyPlansPanel />);
+
+    await screen.findByText("Compartido");
+    expect(screen.getByText("Privado")).toBeInTheDocument();
+    expect(screen.getByText("Público")).toBeInTheDocument();
+  });
+
+  it("publishes a plan after confirming, and reflects it (#130)", async () => {
+    vi.mocked(setOwnPlanVisibility).mockResolvedValue({
+      ...mockSummary({ visibility: "public" }),
+      details: [],
+    });
+    const user = userEvent.setup();
+    render(<MyPlansPanel />);
+
+    await user.click(
+      await screen.findByRole("button", { name: "Publicar Domingo de bodegas" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Sí, publicar" }));
+
+    expect(setOwnPlanVisibility).toHaveBeenCalledWith(12, "public");
+    expect(await screen.findByText("Público")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Hacer privado Domingo de bodegas" }),
+    ).toBeInTheDocument();
+  });
+
+  it("explains why an empty plan cannot be published (#130)", async () => {
+    vi.mocked(setOwnPlanVisibility).mockRejectedValue(
+      new ApiError({
+        message: "x",
+        type: "HTTP",
+        status: 409,
+        code: "PLAN_EMPTY",
+      }),
+    );
+    const user = userEvent.setup();
+    render(<MyPlansPanel />);
+
+    await user.click(
+      await screen.findByRole("button", { name: "Publicar Domingo de bodegas" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Sí, publicar" }));
+
+    expect(
+      await screen.findByText(/sumale al menos una actividad/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Privado")).toBeInTheDocument();
   });
 });

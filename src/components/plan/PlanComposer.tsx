@@ -416,6 +416,8 @@ export function PlanComposer({
       {step === 1 ? (
         <ActivitiesStep
           catalog={catalog}
+          planTitle={draft.title}
+          planDescription={draft.description}
           stops={draft.stops}
           totalCost={totals.cost}
           totalDuration={totals.duration}

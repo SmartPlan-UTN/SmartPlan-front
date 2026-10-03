@@ -15,6 +15,7 @@ export type RatingModerationStatus = 'pending' | 'approved' | 'rejected';
  * business. Matches `OwnRatingDto` in `SmartPlan-back`.
  */
 export interface OwnRating {
+  images?: import('./media').MediaImage[];
   id: number;
   score: number;
   comment: string | null;
@@ -59,6 +60,7 @@ export interface UpdateRatingInput {
  * ever returns approved ratings). Matches `PublicRatingDto`.
  */
 export interface PublicRating {
+  images?: import('./media').MediaImage[];
   id: number;
   score: number;
   comment: string | null;

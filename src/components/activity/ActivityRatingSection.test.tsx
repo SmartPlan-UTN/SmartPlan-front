@@ -2,10 +2,11 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { deleteRating, getOwnPlan, getOwnRating, listOwnPlans, updateRating } from "@/lib/api";
+import { deleteRating, getOuting, getOwnRating, listOutings, updateRating } from "@/lib/api";
 import { SessionProvider } from "@/lib/auth";
 import { refreshSession } from "@/lib/auth/api";
-import type { OwnPlanDetail, OwnPlanSummary, OwnRating } from "@/types";
+import { outingDetail } from "@/test/fixtures/outings";
+import type { OutingDetail, OutingSummary, OwnRating } from "@/types";
 
 import { ActivityRatingSection } from "./ActivityRatingSection";
 
@@ -14,8 +15,8 @@ vi.mock("@/lib/api", async (importOriginal) => {
   return {
     ...actual,
     getOwnRating: vi.fn(),
-    listOwnPlans: vi.fn(),
-    getOwnPlan: vi.fn(),
+    listOutings: vi.fn(),
+    getOuting: vi.fn(),
     createRating: vi.fn(),
     updateRating: vi.fn(),
     deleteRating: vi.fn(),
@@ -32,30 +33,21 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/explore/42",
 }));
 
-function planSummary(overrides: Partial<OwnPlanSummary> = {}): OwnPlanSummary {
-  return {
+function outingSummary(overrides: Partial<OutingSummary> = {}): OutingSummary {
+  return outingDetail({
     id: 10,
-    title: "Fin de semana en Mendoza",
-    description: null,
-    visibility: "private",
-    peopleCount: 2,
-    estimatedTotalCost: 20000,
-    estimatedCostPerPerson: 10000,
-    estimatedTotalDuration: 240,
-    activityCount: 1,
-    status: { key: "completed", name: "Completado" },
+    status: "completed",
     completedAt: "2026-08-20T12:00:00.000Z",
     feedbackState: "available",
-    feedback: null,
-    createdAt: "2026-08-20T12:00:00.000Z",
-    updatedAt: "2026-08-20T12:00:00.000Z",
     ...overrides,
-  };
+  });
 }
 
-function planDetail(activityId: number): OwnPlanDetail {
-  return {
-    ...planSummary(),
+function outingWith(activityId: number, id = 10): OutingDetail {
+  return outingDetail({
+    id,
+    status: "completed",
+    completedAt: "2026-08-20T12:00:00.000Z",
     details: [
       {
         id: 1,
@@ -69,10 +61,14 @@ function planDetail(activityId: number): OwnPlanDetail {
           estimatedCost: 5000,
           estimatedDuration: 120,
           type: "Gastronomía",
+          averageRating: 0,
+          ratingCount: 0,
+          categories: [],
+          locations: [],
         },
       },
     ],
-  };
+  });
 }
 
 function ownRating(overrides: Partial<OwnRating> = {}): OwnRating {
@@ -118,8 +114,8 @@ function mockAuthenticatedSession() {
 describe("ActivityRatingSection", () => {
   beforeEach(() => {
     vi.mocked(getOwnRating).mockReset();
-    vi.mocked(listOwnPlans).mockReset();
-    vi.mocked(getOwnPlan).mockReset();
+    vi.mocked(listOutings).mockReset();
+    vi.mocked(getOuting).mockReset();
     vi.mocked(refreshSession).mockReset();
     vi.mocked(updateRating).mockReset();
     vi.mocked(deleteRating).mockReset();
@@ -154,7 +150,7 @@ describe("ActivityRatingSection", () => {
 
     expect(await screen.findByText("Tu valoración")).toBeInTheDocument();
     expect(screen.getByText("Excelente")).toBeInTheDocument();
-    expect(listOwnPlans).not.toHaveBeenCalled();
+    expect(listOutings).not.toHaveBeenCalled();
     expect(screen.queryByText("Dejá tu valoración")).not.toBeInTheDocument();
   });
 
@@ -197,21 +193,21 @@ describe("ActivityRatingSection", () => {
       },
     });
     vi.mocked(getOwnRating).mockResolvedValueOnce(null);
-    vi.mocked(listOwnPlans).mockResolvedValueOnce({
-      data: [planSummary({ status: { key: "confirmed", name: "Confirmado" } })],
-      pagination: { page: 1, limit: 20, total: 1, totalPages: 1 },
+    vi.mocked(listOutings).mockResolvedValueOnce({
+      data: [],
+      pagination: { page: 1, limit: 100, total: 0, totalPages: 0 },
     });
     renderSection();
 
     expect(
       await screen.findByText(
-        "Todavía no podés valorar esta actividad: necesitás haber completado un plan que la incluya.",
+        "Todavía no podés valorar esta actividad: necesitás haber realizado una salida que la incluya. Si ya la hiciste, marcala como realizada desde Mis salidas.",
       ),
     ).toBeInTheDocument();
-    expect(getOwnPlan).not.toHaveBeenCalled();
+    expect(getOuting).not.toHaveBeenCalled();
   });
 
-  it("renders the rating form once a completed plan with this activity is found", async () => {
+  it("renders the rating form once a completed outing with this activity is found", async () => {
     vi.mocked(refreshSession).mockResolvedValue({
       accessToken: "t",
       tokenType: "Bearer",
@@ -226,52 +222,49 @@ describe("ActivityRatingSection", () => {
       },
     });
     vi.mocked(getOwnRating).mockResolvedValueOnce(null);
-    vi.mocked(listOwnPlans).mockResolvedValueOnce({
-      data: [planSummary()],
+    vi.mocked(listOutings).mockResolvedValueOnce({
+      data: [outingSummary()],
       pagination: { page: 1, limit: 20, total: 1, totalPages: 1 },
     });
-    vi.mocked(getOwnPlan).mockResolvedValueOnce(planDetail(42));
+    vi.mocked(getOuting).mockResolvedValueOnce(outingWith(42));
     renderSection();
 
     expect(await screen.findByText("Dejá tu valoración")).toBeInTheDocument();
     await waitFor(() => {
-      expect(getOwnPlan).toHaveBeenCalledWith(10);
+      expect(getOuting).toHaveBeenCalledWith(10);
     });
   });
 
-  it("checks later own-plan pages for an eligible completed plan", async () => {
+  it("checks later pages of completed outings for an eligible one", async () => {
     mockAuthenticatedSession();
     vi.mocked(getOwnRating).mockResolvedValueOnce(null);
-    vi.mocked(listOwnPlans)
+    vi.mocked(listOutings)
       .mockResolvedValueOnce({
-        data: [planSummary({ status: { key: "confirmed", name: "Confirmado" } })],
+        data: [outingSummary()],
         pagination: { page: 1, limit: 100, total: 2, totalPages: 2 },
       })
       .mockResolvedValueOnce({
-        data: [planSummary({ id: 11 })],
+        data: [outingSummary({ id: 11 })],
         pagination: { page: 2, limit: 100, total: 2, totalPages: 2 },
       });
-    vi.mocked(getOwnPlan).mockResolvedValueOnce({
-      ...planDetail(42),
-      id: 11,
-    });
+    vi.mocked(getOuting)
+      .mockResolvedValueOnce(outingWith(99))
+      .mockResolvedValueOnce(outingWith(42, 11));
 
     renderSection();
 
     expect(await screen.findByText("Dejá tu valoración")).toBeInTheDocument();
-    expect(listOwnPlans).toHaveBeenNthCalledWith(1, {
+    expect(listOutings).toHaveBeenNthCalledWith(1, {
+      status: "completed",
       page: 1,
-      sortBy: "createdAt",
-      direction: "desc",
       limit: 100,
     });
-    expect(listOwnPlans).toHaveBeenNthCalledWith(2, {
+    expect(listOutings).toHaveBeenNthCalledWith(2, {
+      status: "completed",
       page: 2,
-      sortBy: "createdAt",
-      direction: "desc",
       limit: 100,
     });
-    expect(getOwnPlan).toHaveBeenCalledWith(11);
+    expect(getOuting).toHaveBeenCalledWith(11);
   });
 
   it("switches to the edit form, saves, and reports the change (CU46)", async () => {

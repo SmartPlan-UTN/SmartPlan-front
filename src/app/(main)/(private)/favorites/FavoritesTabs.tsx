@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { CollectionsPanel } from "@/components/collection";
 import { SavedActivitiesPanel, SavedPlansPanel } from "@/components/favorites";
-import { Screen } from "@/components/layout";
+import { PageKicker, Screen } from "@/components/layout";
 
 import styles from "./favorites.module.css";
 
@@ -17,7 +17,7 @@ export function FavoritesTabs() {
     <Screen labelledBy="saved-title">
       <header className={styles.header}>
         <div className="sp-page-intro">
-          <p className="sp-label sp-page-kicker">Para volver</p>
+          <PageKicker>Para volver</PageKicker>
           <h1 id="saved-title" className="sp-page-title">
             Tus <span className="sp-page-title-accent">favoritos</span>
           </h1>

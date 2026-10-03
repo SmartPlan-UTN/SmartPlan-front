@@ -59,8 +59,10 @@ src/
 │   │   ├── layout.tsx      navbar + content container
 │   │   ├── page.tsx        home
 │   │   ├── explore/
-│   │   └── (private)/      what requires a session: favorites, history,
-│   │       └── layout.tsx  profile, preferences. The layout uses ProtectedRoute
+│   │   ├── (private)/      session routes with a Container: favorites, outings,
+│   │   │   └── layout.tsx  profile, preferences. Uses ProtectedRoute
+│   │   └── (private-full-bleed)/ session routes without a Container:
+│   │       └── layout.tsx  plan detail and generation results
 │   └── admin/              administration panel
 ├── components/
 │   ├── ui/                 design system primitives
@@ -94,6 +96,7 @@ instead of long relative paths.
 |---|---|---|
 | is public | `app/(main)/<route>/page.tsx` | navbar and container |
 | requires a session | `app/(main)/(private)/<route>/page.tsx` | navbar, container, and `ProtectedRoute` |
+| requires a session and full-bleed layout | `app/(main)/(private-full-bleed)/<route>/page.tsx` | navbar and `ProtectedRoute` |
 | is a session screen (login, signup...) | `app/(auth)/<route>/page.tsx` | dark surface, no navbar |
 | is an admin screen | `app/admin/<route>/page.tsx` | navbar and `ProtectedRoute` |
 
@@ -102,7 +105,9 @@ they organize folders without appearing in the URL. `(main)/(private)/favorites`
 is `/favorites`.
 
 **A screen is protected by where it lives, not by what it writes.** Creating
-it inside `(private)` is enough: the group's layout wraps it in `ProtectedRoute`.
+it inside `(private)` or `(private-full-bleed)` is enough: the group's layout
+wraps it in `ProtectedRoute`. Use the latter only when the screen owns a
+viewport-wide composition and must not inherit `Container`.
 
 ### Content width
 
@@ -137,13 +142,20 @@ constant breaks the build and the string breaks silently.
 
 `Navbar` (in `@/components/layout`) is the 60px bar (`--navbar-h`) with
 `backdrop-filter`, fixed at the top. On desktop it carries the main links
-(Inicio, Explorar, Mis planes, Favoritos, Historial), the Crear plan CTA,
-and the user menu. Below 900px the top bar keeps only identity and session,
-while a thumb-reachable bottom bar exposes Inicio, Explorar, Crear plan,
-Mis planes, and Favoritos without hiding primary destinations behind a
-hamburger. Historial has no sixth tab: below 900px it's an extra entry in
-the account menu. Both bars read their entries from `links.ts`, so a
-destination keeps one name across viewports.
+(Inicio, Explorar, Mis planes, Mis salidas, Favoritos), the notification
+bell, and the user menu — no create CTA: creating lives inside Mis planes.
+Below 900px the top bar keeps only identity, the bell, and session, while a
+thumb-reachable bottom bar exposes Explorar, Mis planes, Planificar (the
+centre tab: Inicio's composer, SmartPlan's main feature), Mis salidas, and
+Favoritos without hiding primary destinations behind a hamburger. Inicio
+stays reachable through the brand logo instead of duplicating Planificar in
+the bottom bar. Both bars read their entries from `links.ts`, so a destination
+keeps one name across viewports.
+
+The four private collections never mix (#130): **Mis planes** is what the
+person created (private or public), **Mis salidas** what they chose to do
+("Por hacer") and did ("Realizadas", with feedback), and **Favoritos** what
+they saved for later. `/history` only redirects to `/outings`.
 
 The shell publishes its spacing as tokens: `--page-pad-top` /
 `--page-pad-bottom` (`Container`'s vertical padding) and
@@ -162,7 +174,7 @@ Destinations come from `MAIN_LINKS` and `USER_LINKS`
 ([`links.ts`](../../src/components/layout/links.ts)): to add one, add the
 entry there, not a loose `<Link>` in the JSX.
 
-Favoritos and Historial are also shown without a session. Someone who enters
+The private destinations are also shown without a session. Someone who enters
 without being logged in lands on the route and the guard sends them to
 login: hiding the links would leave the application with no hints about
 what's behind the account.

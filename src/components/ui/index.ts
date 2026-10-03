@@ -19,7 +19,17 @@ export { LoadingDots, type LoadingDotsProps } from "./LoadingDots";
 export { Logo, type LogoKind, type LogoProps, type LogoVariant } from "./Logo";
 export { MoodBackground, type MoodBackgroundProps } from "./MoodBackground";
 export { PasswordStrength, type PasswordStrengthProps } from "./PasswordStrength";
+export {
+  PasswordRequirements,
+  type PasswordRequirementsProps,
+} from "./PasswordRequirements";
 export { RatingInput, type RatingInputProps } from "./RatingInput";
 export { Select, type SelectOption, type SelectProps } from "./Select";
 export { StarRatingInput, type StarRatingInputProps } from "./StarRatingInput";
 export { Stars, type StarsProps } from "./Stars";
+export {
+  UserAvatar,
+  type UserAvatarProps,
+  type UserAvatarSize,
+  type UserAvatarTone,
+} from "./UserAvatar";

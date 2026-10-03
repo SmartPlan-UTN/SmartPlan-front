@@ -14,8 +14,9 @@ export interface SelectOption<TValue extends string> {
 export interface SelectProps<TValue extends string> {
   value: TValue;
   onChange: (value: TValue) => void;
-  options: SelectOption<TValue>[];
+  options: ReadonlyArray<SelectOption<TValue>>;
   "aria-label"?: string;
+  "aria-labelledby"?: string;
   disabled?: boolean;
 }
 
@@ -31,6 +32,7 @@ export function Select<TValue extends string>({
   onChange,
   options,
   "aria-label": ariaLabel,
+  "aria-labelledby": ariaLabelledBy,
   disabled = false,
 }: SelectProps<TValue>) {
   const [open, setOpen] = useState(false);
@@ -70,8 +72,9 @@ export function Select<TValue extends string>({
         className={styles.trigger}
         disabled={disabled}
         aria-haspopup="listbox"
-        aria-expanded={open}
+        aria-expanded={open && !disabled}
         aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
         onClick={() => {
           setOpen((current) => !current);
         }}
@@ -86,7 +89,12 @@ export function Select<TValue extends string>({
       </button>
 
       {open && !disabled ? (
-        <ul className={styles.listbox} role="listbox" aria-label={ariaLabel}>
+        <ul
+          className={styles.listbox}
+          role="listbox"
+          aria-label={ariaLabel}
+          aria-labelledby={ariaLabelledBy}
+        >
           {options.map((option) => (
             <li key={option.value}>
               <button

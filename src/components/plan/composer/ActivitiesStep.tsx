@@ -8,6 +8,7 @@ import type { UseExplorationSearchResult } from "@/hooks";
 import { formatArs, formatDuration } from "@/lib/utils";
 import type { ActivitySearchParams, ActivitySearchResult } from "@/types";
 
+import { ActivitySuggestionsPanel } from "../ActivitySuggestionsPanel";
 import type { ComposerStop } from "./draft";
 import styles from "./ActivitiesStep.module.css";
 
@@ -16,6 +17,8 @@ type ActivitySortBy = NonNullable<ActivitySearchParams["sortBy"]>;
 
 interface ActivitiesStepProps {
   catalog: UseExplorationSearchResult<ActivitySearchResult>;
+  planTitle: string;
+  planDescription: string;
   stops: ComposerStop[];
   totalCost: number;
   totalDuration: number;
@@ -55,6 +58,8 @@ const SORT_OPTIONS = [
 
 export function ActivitiesStep({
   catalog,
+  planTitle,
+  planDescription,
   stops,
   totalCost,
   totalDuration,
@@ -262,6 +267,14 @@ export function ActivitiesStep({
             />
           </label>
         </div>
+
+        <ActivitySuggestionsPanel
+          title={planTitle}
+          description={planDescription}
+          excludeActivityIds={stops.map((stop) => stop.activity.id)}
+          disabled={isSaving}
+          onAdd={onAdd}
+        />
 
         {catalog.errorMessage ? (
           <div className={styles.catalogMessage} role="alert">

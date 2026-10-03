@@ -15,10 +15,9 @@
   }
 }
 
-.autoPlanBanner {
+.suggestionsPanel {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: var(--s-4);
   grid-column: 1 / -1;
   padding: var(--s-4) var(--s-5);
@@ -27,20 +26,61 @@
   background: color-mix(in srgb, var(--ember) 6%, transparent);
 }
 
-.autoPlanText strong {
+.suggestionsText strong {
   display: block;
   color: var(--fg-1);
   font-size: var(--t-body);
 }
 
-.autoPlanText p {
+.suggestionsText p {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: var(--t-small);
+}
+
+.suggestionsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+}
+
+.suggestionList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.suggestionList .activityCard {
+  gap: var(--s-2);
+}
+
+/* Suggestions sit in a narrower grid than the search results: the name may
+   wrap and the meta line wraps under it, so neither runs under the button. */
+.suggestionList .activityName {
+  white-space: normal;
+}
+
+.suggestionList .activityMeta {
+  flex-wrap: wrap;
+  gap: 2px var(--s-2);
+}
+
+.suggestionList .activityCard > button {
+  flex-shrink: 0;
+}
+
+.suggestionsEmpty {
   margin: 0;
   color: var(--fg-2);
   font-size: var(--t-small);
 }
 
 @media (max-width: 768px) {
-  .autoPlanBanner {
+  .suggestionsHeader {
     flex-direction: column;
     align-items: stretch;
     text-align: center;

@@ -4,29 +4,32 @@
  * Import only from `@/lib/api`.
  */
 
-export { apiClient } from "./client";
-export type { RequestConfig } from "./client";
+export { apiClient } from './client';
+export type { RequestConfig } from './client';
 
-export { ApiError, normalizeError } from "./errors";
+export { ApiError, normalizeError } from './errors';
 export type {
   ApiErrorType,
   ErrorResponseData,
   ApiErrorOptions,
-} from "./errors";
+} from './errors';
 
-export { getToken, setTokenGetter } from "./token-provider";
-export type { TokenGetter } from "./token-provider";
+export { getToken, setTokenGetter } from './token-provider';
+export type { TokenGetter } from './token-provider';
 
-export { onUnauthorized, notifyUnauthorized } from "./auth-events";
-export type { UnauthorizedListener } from "./auth-events";
+export { onUnauthorized, notifyUnauthorized } from './auth-events';
+export type { UnauthorizedListener } from './auth-events';
 
-export { getApiBaseUrl } from "./config";
+export { setSessionRefresher, refreshSessionOnce } from './session-refresher';
+export type { SessionRefresher } from './session-refresher';
 
+export { getApiBaseUrl } from './config';
 export {
-  searchActivities,
-  getActivity,
-  getActivityMapMarkers,
-} from "./activities";
+  mediaRequestPath, listMedia, uploadMedia, updateMedia, deleteMedia,
+  uploadAvatar, deleteAvatar, downloadMedia,
+} from './media';
+
+export { searchActivities, getActivity, getActivityMapMarkers } from './activities';
 export {
   searchPlans,
   getPlan,
@@ -35,27 +38,27 @@ export {
   createPlanFromComposer,
   addPlanActivity,
   getOwnPlan,
-  selectPlan,
-  deselectPlan,
   updateOwnPlan,
   updatePlanFromComposer,
   cancelOwnPlan,
+  setOwnPlanVisibility,
+  suggestActivities,
   removePlanActivity,
   generateSuggestedPlan,
-} from "./plans";
-export { listCategories } from "./categories";
-export { listCities, listDepartments, listPlaces, searchPlace } from "./places";
+} from './plans';
 export {
-  getProfile,
-  updateProfile,
-  changePassword,
-  deleteAccount,
-} from "./users";
-export type {
-  UpdateProfileData,
-  ChangePasswordData,
-  DeleteAccountData,
-} from "./users";
+  cancelOuting,
+  completeOuting,
+  createOuting,
+  getOuting,
+  listOutings,
+  repeatOuting,
+} from './outings';
+export { listNotifications, markNotificationAsRead } from './notifications';
+export { listCategories } from './categories';
+export { listCities, listDepartments, listPlaces, searchPlace } from './places';
+export { getProfile, updateProfile, changePassword, deleteAccount } from './users';
+export type { UpdateProfileData, ChangePasswordData, DeleteAccountData } from './users';
 export {
   changeAdminUserStatus,
   deleteAdminUser,
@@ -73,7 +76,7 @@ export {
   getAdminRatingCounts,
   listAdminRatings,
   moderateAdminRating,
-} from "./administration";
+} from './administration';
 export {
   addActivityToCollection,
   createCollection,
@@ -82,19 +85,13 @@ export {
   listCollections,
   removeActivityFromCollection,
   updateCollection,
-} from "./collections";
-export { submitFeedback } from "./feedback";
-export { getPreferences, updatePreferences } from "./users";
+} from './collections';
 export {
-  createPlanRequest,
-  createSurprisePlanRequest,
-  getPlanRequestStatus,
-} from "./plan-requests";
-export {
-  getRecommendations,
-  dismissRecommendation,
-  undoDismissRecommendation,
-} from "./plan-recommendations";
+  submitFeedback,
+} from './feedback';
+export { getPreferences, updatePreferences } from './users';
+export { createPlanRequest, createSurprisePlanRequest, getPlanRequestStatus } from './plan-requests';
+export { getRecommendations, dismissRecommendation, undoDismissRecommendation } from './plan-recommendations';
 export {
   listFavoriteActivities,
   removeFavoriteActivity,
@@ -102,11 +99,11 @@ export {
   listFavoritePlans,
   removeFavoritePlan,
   saveFavoritePlan,
-} from "./favorites";
+} from './favorites';
 export {
   createRating,
   deleteRating,
   getOwnRating,
   listRatings,
   updateRating,
-} from "./ratings";
+} from './ratings';

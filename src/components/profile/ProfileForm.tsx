@@ -3,7 +3,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 
 import { Button, Field, Icon } from "@/components/ui";
-import { ApiError, getProfile, updateProfile } from "@/lib/api";
+import { AuthenticatedImage } from "@/components/media";
+import { ApiError, deleteAvatar, getProfile, updateProfile, uploadAvatar } from "@/lib/api";
 import { REQUIRED_MESSAGE } from "@/lib/utils";
 import type { UserProfile } from "@/types";
 
@@ -115,6 +116,8 @@ export function ProfileForm() {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
   const [toastState, setToastState] = useState<"hidden" | "visible" | "leaving">(
     "hidden",
   );
@@ -236,14 +239,45 @@ export function ProfileForm() {
 
   const initials = `${profile.name[0] ?? ""}${profile.lastName[0] ?? ""}`.toUpperCase();
 
+  async function changeAvatar(file: File | undefined) {
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+      setAvatarError('Usá JPG, PNG o WebP de hasta 5 MB.');
+      return;
+    }
+    setAvatarBusy(true);
+    setAvatarError(null);
+    try {
+      await uploadAvatar(file);
+      setProfile(await getProfile());
+    } catch {
+      setAvatarError('No pudimos guardar tu foto. Intentá de nuevo.');
+    } finally {
+      setAvatarBusy(false);
+    }
+  }
+
+  async function removeAvatar() {
+    setAvatarBusy(true);
+    setAvatarError(null);
+    try {
+      await deleteAvatar();
+      setProfile(await getProfile());
+    } catch {
+      setAvatarError('No pudimos quitar tu foto. Intentá de nuevo.');
+    } finally {
+      setAvatarBusy(false);
+    }
+  }
+
   return (
     <>
       <div className={styles.card}>
         <div className={styles.cardHeader} />
 
         <div className={styles.identity}>
-          <div className={styles.avatar} aria-hidden="true">
-            {initials}
+          <div className={styles.avatar}>
+            {profile.avatarUrl ? <AuthenticatedImage url={profile.avatarUrl} alt={`Avatar de ${profile.name}`} width={72} height={72} /> : <span aria-hidden="true">{initials}</span>}
           </div>
           <div className={styles.identityText}>
             <p className={`sp-h3 ${styles.name}`}>
@@ -251,6 +285,12 @@ export function ProfileForm() {
             </p>
             <p className={`sp-small ${styles.email}`}>{profile.email}</p>
           </div>
+        </div>
+
+        <div className={styles.avatarActions}>
+          <label>Elegir foto <input type="file" accept="image/jpeg,image/png,image/webp" disabled={avatarBusy} onChange={(event) => { void changeAvatar(event.target.files?.[0]); event.target.value = ''; }} /></label>
+          {profile.avatarUrl ? <button type="button" disabled={avatarBusy} onClick={() => void removeAvatar()}>Quitar foto</button> : null}
+          {avatarError ? <p role="alert">{avatarError}</p> : null}
         </div>
 
         <form className={styles.form} onSubmit={handleSubmit} noValidate>

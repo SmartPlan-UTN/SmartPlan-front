@@ -10,7 +10,7 @@ import { parsePositiveIntId } from "@/lib/utils";
 import styles from "../plans.module.css";
 
 export const metadata: Metadata = {
-  title: "Crear plan",
+  title: "Crear un plan",
 };
 
 export default async function CreatePlanPage({

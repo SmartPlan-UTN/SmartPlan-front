@@ -2,11 +2,21 @@
 
 import { useState, type FormEvent } from "react";
 
-import { Button, Field, Icon, PasswordStrength } from "@/components/ui";
+import {
+  Button,
+  Field,
+  Icon,
+  PasswordRequirements,
+  PasswordStrength,
+} from "@/components/ui";
 import { useToggle } from "@/hooks";
 import { ApiError, changePassword } from "@/lib/api";
 import { useSession } from "@/lib/auth";
-import { MIN_PASSWORD_LENGTH, REQUIRED_MESSAGE } from "@/lib/utils";
+import {
+  MIN_PASSWORD_LENGTH,
+  newPasswordValidationMessage,
+  REQUIRED_MESSAGE,
+} from "@/lib/utils";
 
 import styles from "./security.module.css";
 
@@ -17,35 +27,6 @@ interface FieldErrors {
 }
 
 const EMPTY_FIELDS = { currentPassword: "", newPassword: "", confirmPassword: "" };
-
-const HAS_UPPERCASE = /[A-Z]/;
-const HAS_DIGIT = /[0-9]/;
-const HAS_SYMBOL = /[!@#$%^&*]/;
-
-interface PasswordRequirement {
-  label: string;
-  met: boolean;
-}
-
-/**
- * The three checklist rows from `Security.jsx`'s `PasswordRules`. All three
- * are real requirements (CU6): `validate()` below and `change-password.dto.ts`
- * both reject a `newPassword` missing any of them, so a row left unmet here
- * is exactly why "Guardar cambios" will fail.
- */
-function passwordRequirements(password: string): PasswordRequirement[] {
-  return [
-    {
-      label: `Mínimo ${MIN_PASSWORD_LENGTH} caracteres`,
-      met: password.length >= MIN_PASSWORD_LENGTH,
-    },
-    { label: "Al menos una mayúscula", met: HAS_UPPERCASE.test(password) },
-    {
-      label: "Incluir números y símbolos",
-      met: HAS_DIGIT.test(password) && HAS_SYMBOL.test(password),
-    },
-  ];
-}
 
 /**
  * Generic, user-facing message for each CU6 error code.
@@ -107,12 +88,11 @@ function validate(
 
   if (!newPassword) {
     errors.newPassword = REQUIRED_MESSAGE;
-  } else if (newPassword.length < MIN_PASSWORD_LENGTH) {
-    errors.newPassword = `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres`;
-  } else if (!HAS_UPPERCASE.test(newPassword)) {
-    errors.newPassword = "La contraseña debe incluir al menos una mayúscula";
-  } else if (!HAS_DIGIT.test(newPassword) || !HAS_SYMBOL.test(newPassword)) {
-    errors.newPassword = "La contraseña debe incluir números y símbolos";
+  } else {
+    const passwordError = newPasswordValidationMessage(newPassword);
+    if (passwordError) {
+      errors.newPassword = passwordError;
+    }
   }
 
   if (!confirmPassword) {
@@ -141,11 +121,9 @@ function validate(
  * and redirecting to Login: changing your own password from inside the app
  * you're currently using shouldn't also sign you out of it.
  *
- * Renders the prototype's full three-row password-requirements checklist
- * ("Mínimo N caracteres", "Al menos una mayúscula", "Incluir números y
- * símbolos" — see `passwordRequirements()`). All three are real, enforced
- * rules: `validate()` below rejects a `newPassword` missing any of them,
- * and `change-password.dto.ts` enforces the same on the backend.
+ * Renders the shared mandatory password-requirements checklist separately
+ * from the informational strength meter. The same policy is enforced by the
+ * registration and recovery flows and by their backend DTOs.
  */
 export function ChangePasswordForm() {
   const { applyAuthentication } = useSession();
@@ -307,23 +285,7 @@ export function ChangePasswordForm() {
                 }}
               />
               <PasswordStrength password={newPassword} />
-              <ul className={styles.requirements} aria-hidden="true">
-                {passwordRequirements(newPassword).map((requirement) => (
-                  <li
-                    key={requirement.label}
-                    className={
-                      requirement.met
-                        ? `${styles.requirement} ${styles.requirementMet}`
-                        : styles.requirement
-                    }
-                  >
-                    <span className={styles.requirementDot}>
-                      {requirement.met ? <Icon name="check" size={10} /> : null}
-                    </span>
-                    {requirement.label}
-                  </li>
-                ))}
-              </ul>
+              <PasswordRequirements password={newPassword} />
             </div>
 
             <Field

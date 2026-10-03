@@ -6,6 +6,7 @@ import {
   createPlanFromComposer,
   getActivity,
   searchActivities,
+  suggestActivities,
   updatePlanFromComposer,
 } from "@/lib/api";
 import { activityDetailRoute, ROUTES } from "@/lib/routes";
@@ -35,6 +36,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
     createPlanFromComposer: vi.fn(),
     updatePlanFromComposer: vi.fn(),
     searchActivities: vi.fn(),
+    suggestActivities: vi.fn(),
     getActivity: vi.fn(),
   };
 });
@@ -270,6 +272,37 @@ describe("PlanComposer creation flow", () => {
         }),
       ),
     );
+  });
+
+  it("adds a backend activity suggestion to the itinerary", async () => {
+    const user = userEvent.setup();
+    vi.mocked(suggestActivities).mockResolvedValueOnce({
+      data: [
+        {
+          id: 42,
+          name: "Degustación sugerida",
+          description: "Una experiencia entre viñas",
+          estimatedCost: 5000,
+          estimatedDuration: 90,
+          type: "Gastronomía",
+          categories: ["Bodegas"],
+        },
+      ],
+    });
+    render(<CreatePlanForm />);
+    await reachActivities(user);
+
+    await user.click(screen.getByRole("button", { name: "Recomendar actividades" }));
+    await screen.findByText("Degustación sugerida");
+    expect(suggestActivities).toHaveBeenCalledWith({
+      title: "Sábado entre viñas",
+      description: undefined,
+      excludeActivityIds: [],
+    });
+
+    await user.click(screen.getByRole("button", { name: "Agregar Degustación sugerida" }));
+    expect(screen.getByText("Degustación sugerida")).toBeInTheDocument();
+    expect(screen.getByText("1 parada")).toBeInTheDocument();
   });
 
   it("prevents duplicates, reorders stops, and recalculates totals as stops change", async () => {

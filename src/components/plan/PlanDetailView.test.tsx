@@ -1,20 +1,22 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@/lib/api";
+import { outingCreation } from "@/test/fixtures/outings";
 import type {
   OwnPlanDetail,
   PlanDetailResult,
-  PlanFeedback,
   PlanStatusKey,
   ViewerPlanState,
 } from "@/types";
 
 import { PlanDetailView } from "./PlanDetailView";
 
+const replace = vi.hoisted(() => vi.fn());
+
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), replace, refresh: vi.fn() }),
 }));
 
 const useSession = vi.hoisted(() => vi.fn());
@@ -38,17 +40,15 @@ vi.mock("@/context", () => ({
 
 const getPlan = vi.hoisted(() => vi.fn());
 const getOwnPlan = vi.hoisted(() => vi.fn());
-const selectPlan = vi.hoisted(() => vi.fn());
-const deselectPlan = vi.hoisted(() => vi.fn());
-const submitFeedback = vi.hoisted(() => vi.fn());
+const createOuting = vi.hoisted(() => vi.fn());
+const setOwnPlanVisibility = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/api")>()),
   getPlan,
   getOwnPlan,
-  selectPlan,
-  deselectPlan,
-  submitFeedback,
+  createOuting,
+  setOwnPlanVisibility,
 }));
 
 function ownPlan(overrides: Partial<OwnPlanDetail> = {}): OwnPlanDetail {
@@ -62,25 +62,14 @@ function ownPlan(overrides: Partial<OwnPlanDetail> = {}): OwnPlanDetail {
     peopleCount: 2,
     estimatedCostPerPerson: 4250,
     activityCount: 1,
-    status: { key: "completed", name: "Realizado" },
-    completedAt: "2026-08-12T00:00:00.000Z",
-    feedbackState: "not_available",
-    feedback: null,
+    status: { key: "confirmed", name: "Confirmado" },
+    visibility: "private",
     createdAt: "2026-08-01T00:00:00.000Z",
     updatedAt: "2026-08-12T00:00:00.000Z",
     details: [],
     ...overrides,
   };
 }
-
-const OWN_FEEDBACK: PlanFeedback = {
-  rating: 4,
-  tags: ["would_recommend"],
-  comment: "La segunda bodega quedaba lejos.",
-  actualCost: 9200,
-  actualDuration: null,
-  createdAt: "2026-08-14T00:00:00.000Z",
-};
 
 function plan(overrides: Partial<PlanDetailResult> = {}): PlanDetailResult {
   return {
@@ -94,8 +83,12 @@ function plan(overrides: Partial<PlanDetailResult> = {}): PlanDetailResult {
     distanceKm: null,
     categories: [{ id: 1, name: "Bodegas" }],
     activityNames: ["Bodega"],
-    status: { key: "generated", name: "Generado" },
+    status: { key: "confirmed", name: "Confirmado" },
     viewerPlanState: "selectable",
+    activeOutingId: null,
+    kind: "authored",
+    visibility: "public",
+    ownedByViewer: false,
     details: [
       {
         id: 1,
@@ -123,138 +116,86 @@ function plan(overrides: Partial<PlanDetailResult> = {}): PlanDetailResult {
 beforeEach(() => {
   vi.clearAllMocks();
   useSession.mockReturnValue({ status: "authenticated", authenticated: true });
-  // Default: caller is not the owner → no feedback section.
-  getOwnPlan.mockRejectedValue(
-    new ApiError({ message: "x", type: "HTTP", status: 403 }),
-  );
-  submitFeedback.mockResolvedValue(OWN_FEEDBACK);
-  selectPlan.mockResolvedValue({
-    id: 7,
-    planRequestId: 3,
-    status: { key: "selected", name: "Elegido" },
-  });
-  deselectPlan.mockResolvedValue({
-    id: 7,
-    planRequestId: 3,
-    status: { key: "generated", name: "Generado" },
-  });
+  getOwnPlan.mockResolvedValue(ownPlan());
+  createOuting.mockResolvedValue(outingCreation({ id: 40 }));
 });
 
 async function renderDetail(
   viewerPlanState: ViewerPlanState,
-  statusKey: PlanStatusKey = "generated",
+  overrides: Partial<PlanDetailResult> = {},
+  statusKey: PlanStatusKey = "confirmed",
 ) {
   getPlan.mockResolvedValue(
-    plan({ viewerPlanState, status: { key: statusKey, name: "x" } }),
+    plan({ viewerPlanState, status: { key: statusKey, name: "x" }, ...overrides }),
   );
   render(<PlanDetailView planId={7} />);
   await screen.findByRole("heading", { name: "Tarde de vinos", level: 1 });
 }
 
-// One toggle, one label in both states — `aria-pressed` tells them apart.
 const intendButton = { name: /^lo voy a hacer$/i } as const;
 
-describe("PlanDetailView — plan intent (CU22, PAN 17)", () => {
-  it("offers the intent toggle when the viewer can act, and shows no status pill", async () => {
+describe("PlanDetailView — Lo voy a hacer (CU22, PAN 17, #130)", () => {
+  it("offers 'Lo voy a hacer' when the viewer can choose the plan", async () => {
     await renderDetail("selectable");
 
-    expect(screen.getByRole("button", intendButton)).toBeInTheDocument();
-    // `generated`/`selected` carry no pill — a stranger must not see intent.
-    expect(screen.queryByText("Propuesta")).not.toBeInTheDocument();
-    expect(screen.queryByText("Elegido")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", intendButton)).toBeEnabled();
   });
 
-  it("keeps the label and marks the toggle pressed once resolved", async () => {
-    await renderDetail("selected", "selected");
+  it("adds the plan to Mis salidas once and links to the new outing", async () => {
+    const user = userEvent.setup();
+    await renderDetail("selectable");
 
-    const toggle = screen.getByRole("button", intendButton);
-    expect(toggle).toHaveAttribute("aria-pressed", "true");
-    expect(screen.queryByText(/tu plan elegido/i)).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", intendButton));
+
+    expect(await screen.findByText("Agregado a Mis salidas")).toBeInTheDocument();
+    expect(createOuting).toHaveBeenCalledOnce();
+    expect(createOuting).toHaveBeenCalledWith(7);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /ver en mis salidas/i }),
+    ).toHaveAttribute("href", "/outings/40");
+    expect(screen.queryByRole("button", intendButton)).not.toBeInTheDocument();
+  });
+
+  it("shows a plan already chosen as added, with no undo", async () => {
+    await renderDetail("selected", { activeOutingId: 55 });
+
+    expect(screen.getByText("Agregado a Mis salidas")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /ver en mis salidas/i }),
+    ).toHaveAttribute("href", "/outings/55");
+    expect(screen.queryByText(/ya no lo voy a hacer/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/lo hice/i)).not.toBeInTheDocument();
   });
 
   it("shows only the domain status for a view-only viewer — no CTA", async () => {
-    await renderDetail("view-only", "confirmed");
+    await renderDetail("view-only");
 
     expect(screen.getByText("Confirmado")).toBeInTheDocument();
     expect(screen.queryByRole("button", intendButton)).not.toBeInTheDocument();
   });
 
-  it("shows a personal record for a completed plan the viewer marked — no toggle", async () => {
-    await renderDetail("selected", "completed");
-
-    expect(screen.getByText("Hiciste este plan")).toBeInTheDocument();
-    expect(screen.queryByRole("button", intendButton)).not.toBeInTheDocument();
-  });
-
-  // The save control's own coverage lives in the two CU43 tests below: it
-  // is no longer a local useState toggle, so clicking it delegates to
-  // FavoritesContext instead of flipping its own label.
-
-  it("marks the plan with one direct PATCH — no modal", async () => {
-    const user = userEvent.setup();
-    await renderDetail("selectable");
-
-    await user.click(screen.getByRole("button", intendButton));
-
-    await waitFor(() =>
-      expect(screen.getByRole("button", intendButton)).toHaveAttribute(
-        "aria-pressed",
-        "true",
-      ),
-    );
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(selectPlan).toHaveBeenCalledOnce();
-    expect(selectPlan).toHaveBeenCalledWith(7);
-  });
-
-  it("un-marks the plan by clicking the toggle again — one direct DELETE", async () => {
-    const user = userEvent.setup();
-    await renderDetail("selected", "selected");
-
-    await user.click(screen.getByRole("button", intendButton));
-
-    await waitFor(() =>
-      expect(screen.getByRole("button", intendButton)).toHaveAttribute(
-        "aria-pressed",
-        "false",
-      ),
-    );
-    expect(deselectPlan).toHaveBeenCalledOnce();
-    expect(deselectPlan).toHaveBeenCalledWith(7);
-  });
-
-  it("reconciles from the server when the request already advanced (409)", async () => {
-    selectPlan.mockRejectedValue(
+  it("reconciles from the server when the plan cannot be chosen anymore (409)", async () => {
+    createOuting.mockRejectedValue(
       new ApiError({
         message: "x",
         type: "HTTP",
         status: 409,
-        code: "PLAN_REQUEST_ALREADY_ADVANCED",
+        code: "PLAN_NOT_ACTIONABLE",
       }),
     );
-    getPlan
-      .mockResolvedValueOnce(plan({ viewerPlanState: "selectable" }))
-      .mockResolvedValueOnce(
-        plan({
-          viewerPlanState: "view-only",
-          status: { key: "confirmed", name: "Confirmado" },
-        }),
-      );
     const user = userEvent.setup();
-    render(<PlanDetailView planId={7} />);
-    await screen.findByRole("button", intendButton);
+    await renderDetail("selectable");
+    getPlan.mockResolvedValue(plan({ viewerPlanState: "view-only" }));
 
     await user.click(screen.getByRole("button", intendButton));
 
-    await waitFor(() =>
-      expect(screen.getByText("Confirmado")).toBeInTheDocument(),
-    );
-    expect(screen.queryByRole("button", intendButton)).not.toBeInTheDocument();
-    expect(getPlan).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(getPlan).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText(/cambió de estado/i)).toBeInTheDocument();
   });
 
-  it("reports a network error and leaves the toggle as it was", async () => {
-    selectPlan.mockRejectedValue(
+  it("reports a network error and leaves the button as it was", async () => {
+    createOuting.mockRejectedValue(
       new ApiError({ message: "sin red", type: "NETWORK" }),
     );
     const user = userEvent.setup();
@@ -262,128 +203,81 @@ describe("PlanDetailView — plan intent (CU22, PAN 17)", () => {
 
     await user.click(screen.getByRole("button", intendButton));
 
-    await waitFor(() =>
-      expect(
-        screen.getByText(/no pudimos guardar el cambio/i),
-      ).toBeInTheDocument(),
-    );
-    expect(screen.getByRole("button", intendButton)).toBeInTheDocument();
-    expect(getPlan).toHaveBeenCalledTimes(1);
+    expect(
+      await screen.findByText(/no pudimos agregarlo a mis salidas/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", intendButton)).toBeEnabled();
+  });
+
+  it("sends the owner of an outing to its page in Mis salidas", async () => {
+    await renderDetail("view-only", {
+      kind: "outing",
+      ownedByViewer: true,
+      visibility: "private",
+    });
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/outings/7"));
   });
 });
 
-describe("PlanDetailView — feedback (CU23, PAN 17)", () => {
-  it("shows the feedback invite when the owner can rate a finished plan", async () => {
-    getPlan.mockResolvedValue(
-      plan({ status: { key: "completed", name: "Realizado" } }),
-    );
-    getOwnPlan.mockResolvedValue(ownPlan({ feedbackState: "available" }));
-    render(<PlanDetailView planId={7} />);
+describe("PlanDetailView — the author's plan (#130)", () => {
+  it("shows the author its visibility and lets it publish the plan", async () => {
+    setOwnPlanVisibility.mockResolvedValue(ownPlan({ visibility: "public" }));
+    const user = userEvent.setup();
+    await renderDetail("selectable", {
+      ownedByViewer: true,
+      visibility: "private",
+    });
 
-    expect(
-      await screen.findByText(/contanos tu experiencia/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Privado")).toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: "Publicar Tarde de vinos" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Sí, publicar" }));
+
+    expect(setOwnPlanVisibility).toHaveBeenCalledWith(7, "public");
+    expect(await screen.findByText("Público")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /editar plan/i })).toBeInTheDocument();
   });
 
-  it("renders the read-only experience once feedback exists", async () => {
-    getPlan.mockResolvedValue(
-      plan({ status: { key: "completed", name: "Realizado" } }),
-    );
-    getOwnPlan.mockResolvedValue(
-      ownPlan({ feedbackState: "submitted", feedback: OWN_FEEDBACK }),
-    );
-    render(<PlanDetailView planId={7} />);
+  it("shows the per-person cost from the author's own projection", async () => {
+    await renderDetail("selectable", { ownedByViewer: true });
 
-    expect(await screen.findByText(/tu experiencia/i)).toBeInTheDocument();
-    expect(screen.getByText(/muy bueno/i)).toBeInTheDocument();
+    expect(await screen.findByText(/costo por persona/i)).toBeInTheDocument();
+  });
+
+  it("never offers publishing to someone who did not author the plan", async () => {
+    await renderDetail("selectable");
+
+    expect(screen.queryByText("Público")).not.toBeInTheDocument();
     expect(
-      screen.getByText(/la segunda bodega quedaba lejos/i),
-    ).toBeInTheDocument();
+      screen.queryByRole("button", { name: /publicar|hacer privado/i }),
+    ).not.toBeInTheDocument();
+    expect(getOwnPlan).not.toHaveBeenCalled();
+  });
+
+  it("never offers publishing a generated result, not even to its requester", async () => {
+    await renderDetail("selectable", {
+      kind: "generated",
+      ownedByViewer: true,
+      visibility: "private",
+    });
+
     expect(
-      screen.queryByText(/contanos tu experiencia/i),
+      screen.queryByRole("button", { name: /publicar/i }),
     ).not.toBeInTheDocument();
   });
+});
 
-  it("shows nothing feedback-related when the plan is not yet available", async () => {
-    getPlan.mockResolvedValue(
-      plan({ status: { key: "completed", name: "Realizado" } }),
-    );
-    getOwnPlan.mockResolvedValue(ownPlan({ feedbackState: "not_available" }));
-    render(<PlanDetailView planId={7} />);
-
-    await screen.findByRole("heading", { name: "Tarde de vinos", level: 1 });
-    expect(
-      screen.queryByText(/contanos tu experiencia/i),
-    ).not.toBeInTheDocument();
-    expect(screen.queryByText(/tu experiencia/i)).not.toBeInTheDocument();
-  });
-
-  it("flips to the read-only experience after submitting", async () => {
-    getPlan.mockResolvedValue(
-      plan({ status: { key: "completed", name: "Realizado" } }),
-    );
-    getOwnPlan.mockResolvedValue(ownPlan({ feedbackState: "available" }));
-    const user = userEvent.setup();
-    render(<PlanDetailView planId={7} />);
-
-    const stars = await screen.findAllByRole("radio");
-    await user.click(stars[3]);
-    const dialog = await screen.findByRole("dialog");
-    await user.click(
-      within(dialog).getByRole("button", { name: /enviar opinión/i }),
-    );
-
-    await waitFor(
-      () => expect(screen.getByText(/tu experiencia/i)).toBeInTheDocument(),
-      { timeout: 2500 },
-    );
-    expect(submitFeedback).toHaveBeenCalledWith(7, { rating: 4 });
-  });
-
-  it("reconciles the owner surface when feedback already exists", async () => {
-    getPlan.mockResolvedValue(
-      plan({ status: { key: "completed", name: "Realizado" } }),
-    );
-    getOwnPlan
-      .mockResolvedValueOnce(ownPlan({ feedbackState: "available" }))
-      .mockResolvedValueOnce(
-        ownPlan({ feedbackState: "available" }),
-      )
-      .mockResolvedValueOnce(
-        ownPlan({ feedbackState: "submitted", feedback: OWN_FEEDBACK }),
-      );
-    submitFeedback.mockRejectedValue(
-      new ApiError({
-        message: "already submitted",
-        type: "HTTP",
-        status: 409,
-        code: "FEEDBACK_ALREADY_SUBMITTED",
-      }),
-    );
-    const user = userEvent.setup();
-    render(<PlanDetailView planId={7} />);
-
-    const stars = await screen.findAllByRole("radio");
-    await user.click(stars[3]);
-    await user.click(
-      within(await screen.findByRole("dialog")).getByRole("button", {
-        name: /enviar opini/i,
-      }),
-    );
-
-    await waitFor(() => expect(getOwnPlan).toHaveBeenCalledTimes(3));
-    expect(await screen.findByText(/tu experiencia/i)).toBeInTheDocument();
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  });
-
-  it("toggles favorite plan when clicking the save button (CU43 / CU42)", async () => {
+describe("PlanDetailView — favorites (CU43 / CU42)", () => {
+  it("toggles favorite plan when clicking the save button", async () => {
     mockIsPlanSaved.mockReturnValue(false);
     mockToggleSavePlan.mockResolvedValue(true);
+    getPlan.mockResolvedValue(plan({ id: 1 }));
 
     render(<PlanDetailView planId={1} />);
 
     const saveBtn = await screen.findByRole("button", { name: "Guardar plan" });
-    expect(saveBtn).toBeInTheDocument();
     expect(saveBtn).toHaveAttribute("aria-pressed", "false");
 
     fireEvent.click(saveBtn);
@@ -391,13 +285,15 @@ describe("PlanDetailView — feedback (CU23, PAN 17)", () => {
     expect(mockToggleSavePlan).toHaveBeenCalledWith(1);
   });
 
-  it("shows saved state when plan is saved (CU43)", async () => {
+  it("shows saved state when plan is saved", async () => {
     mockIsPlanSaved.mockReturnValue(true);
+    getPlan.mockResolvedValue(plan({ id: 1 }));
 
     render(<PlanDetailView planId={1} />);
 
-    const saveBtn = await screen.findByRole("button", { name: "Quitar de guardados" });
-    expect(saveBtn).toBeInTheDocument();
+    const saveBtn = await screen.findByRole("button", {
+      name: "Quitar de guardados",
+    });
     expect(saveBtn).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByText("Guardado")).toBeInTheDocument();
   });
