@@ -6,6 +6,10 @@ export {
 } from "./ActivityRatingsStep";
 export { FeedbackInvite, type FeedbackInviteProps } from "./FeedbackInvite";
 export {
+  ExperienceSharing,
+  type ExperienceSharingProps,
+} from "./ExperienceSharing";
+export {
   ExperienceSummary,
   type ExperienceSummaryProps,
 } from "./ExperienceSummary";

@@ -19,6 +19,7 @@ import type {
   ViewerPlanState,
 } from "@/types";
 
+import { CommunityExperiences } from "./CommunityExperiences";
 import { ItineraryStep } from "./ItineraryStep";
 import { PlanIntentionPanel } from "./PlanIntentionPanel";
 import {
@@ -323,6 +324,14 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
             </div>
           ) : null}
         </div>
+
+        {/* Experiences of people who did it (#106): only a published plan
+            that is still on has a community to show. */}
+        {plan.kind === "authored" &&
+        visibility === "public" &&
+        plan.status.key !== "cancelled" ? (
+          <CommunityExperiences planId={plan.id} planTitle={plan.title} />
+        ) : null}
 
         {isAuthor ? (
           <div className={styles.visibilityBox}>

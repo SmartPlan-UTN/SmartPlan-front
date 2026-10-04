@@ -48,6 +48,11 @@ export interface FeedbackDialogProps {
   onReconcile?: () => void;
   /** Refresh surfaces that also show the outing's photos or cover. */
   onMediaChanged?: () => void;
+  /**
+   * The outing comes from a published plan, so its experience can be
+   * shared with that plan's community (#106).
+   */
+  canShare?: boolean;
 }
 
 const SUCCESS_HOLD_MS = 1600;
@@ -113,6 +118,7 @@ export function FeedbackDialog({
   onSubmitted,
   onReconcile,
   onMediaChanged,
+  canShare = false,
 }: FeedbackDialogProps) {
   const titleId = useId();
   const ratingLabelId = useId();
@@ -126,6 +132,7 @@ export function FeedbackDialog({
   const [costInputError, setCostInputError] = useState<string | null>(null);
   const [commentOpen, setCommentOpen] = useState(false);
   const [comment, setComment] = useState("");
+  const [shared, setShared] = useState(false);
   // form → success → photos of the outing, then either closes or offers
   // rating the activities (offer → activities → ratingsDone, where each rated
   // activity can take photos too). Past `form` the feedback is saved, so
@@ -307,6 +314,7 @@ export function FeedbackDialog({
       rating,
       tags: tags.size > 0 ? [...tags] : undefined,
       comment: comment.trim() || undefined,
+      shared: canShare && shared ? true : undefined,
       actualCost:
         parsedCost && parsedCost > 0 && !Number.isNaN(parsedCost)
           ? Math.round(parsedCost * 100) / 100
@@ -675,6 +683,35 @@ export function FeedbackDialog({
                       ) : null}
                     </div>
                   </div>
+
+                  {canShare ? (
+                    <div className={`${styles.field} ${styles.shareField}`}>
+                      <label className={styles.shareChoice} htmlFor="feedback-share">
+                        <input
+                          id="feedback-share"
+                          type="checkbox"
+                          className={styles.shareInput}
+                          checked={shared}
+                          disabled={busy}
+                          aria-describedby="feedback-share-body"
+                          onChange={(event) => setShared(event.target.checked)}
+                        />
+                        <span className={styles.shareBox} aria-hidden="true">
+                          <Icon name="check" size={14} />
+                        </span>
+                        <span className={styles.shareText}>
+                          <span className={styles.shareLabel}>
+                            <Icon name="users" size={15} aria-hidden="true" />
+                            {FEEDBACK_COPY.share.label}
+                            <span className={styles.hint}>{FEEDBACK_COPY.share.hint}</span>
+                          </span>
+                          <span id="feedback-share-body" className={styles.shareBody}>
+                            {FEEDBACK_COPY.share.body} {FEEDBACK_COPY.share.later}
+                          </span>
+                        </span>
+                      </label>
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
 

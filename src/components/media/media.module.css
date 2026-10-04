@@ -286,6 +286,25 @@
   pointer-events: none;
 }
 
+/* Only on the owner's outing photos that moderation took down (#106):
+   the photo stays theirs, it just no longer shows in the community. */
+.hiddenBadge {
+  position: absolute;
+  top: var(--s-2);
+  right: var(--s-2);
+  max-width: calc(100% - var(--s-4));
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--r-chip);
+  background: var(--char);
+  color: var(--fg-on-dark);
+  font-size: 11px;
+  font-weight: var(--w-label);
+  pointer-events: none;
+}
+
 /* Actions float over the photo's bottom edge, shown on hover or focus —
    always on touch screens, where there is no hover. */
 .tileActions {

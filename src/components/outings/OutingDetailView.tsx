@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 
 import {
   ExperienceSummary,
+  ExperienceSharing,
   FeedbackDialog,
   FeedbackInvite,
 } from "@/components/feedback";
@@ -288,6 +289,21 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
           <ExperienceSummary
             feedback={current.feedback}
             estimatedTotalCost={current.estimatedTotalCost}
+            footer={
+              // A shared one keeps its switch after the plan is no longer
+              // published, so its author can still make it private.
+              current.source?.hasCommunity || current.feedback.shared ? (
+                <ExperienceSharing
+                  outingId={current.id}
+                  planTitle={current.source?.title ?? current.title}
+                  feedback={current.feedback}
+                  published={current.source?.hasCommunity ?? false}
+                  onChange={(feedback) =>
+                    setOverride({ ...current, feedback })
+                  }
+                />
+              ) : null
+            }
           />
         ) : current.feedbackState === "available" ? (
           <FeedbackInvite
@@ -296,6 +312,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
             estimatedTotalCost={current.estimatedTotalCost}
             completedAt={current.completedAt}
             activityCount={current.activityCount}
+            canShare={current.source?.hasCommunity ?? false}
             onSubmitted={applyFeedback}
             onMediaChanged={refreshGallery}
           />
@@ -367,6 +384,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
           estimatedTotalCost={current.estimatedTotalCost}
           completedAt={current.completedAt}
           activityCount={current.activityCount}
+          canShare={current.source?.hasCommunity ?? false}
           onDismiss={() => setFeedbackOpen(false)}
           onSubmitted={applyFeedback}
           onMediaChanged={refreshGallery}
