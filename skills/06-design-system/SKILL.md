@@ -272,8 +272,8 @@ feed. Range selector: Hoy / 7 días / 30 días / Este mes.
 
 **AdminUsers** — CU57 · PAN 19 / REP-02
 Header metrics (total, active today, new signups this week) and a user
-table with name, email, signup date, and status: Activo, Suspendido,
-Baneado. Per-row actions, including **Reactivar cuenta**. Filter by status.
+table with name, email, signup date, and status: Activo, Suspendido.
+Per-row actions, including **Reactivar cuenta**. Filter by status.
 
 **AdminActivities** — CU53 · PAN 21
 Catalog table with filters by category (Aventura, Cultura & Arte,

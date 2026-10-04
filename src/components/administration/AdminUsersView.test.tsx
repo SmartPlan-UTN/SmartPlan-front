@@ -31,7 +31,7 @@ function adminUser(status: UserStatusKey = "active"): AdminUser {
     role: { key: "user", name: "Usuario" },
     status: {
       key: status,
-      name: status === "active" ? "Activo" : status === "suspended" ? "Suspendido" : "Baneado",
+      name: status === "active" ? "Activo" : "Suspendido",
     },
     createdAt: "2026-08-20T12:00:00.000Z",
     updatedAt: "2026-08-20T12:00:00.000Z",

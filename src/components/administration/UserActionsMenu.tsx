@@ -92,17 +92,6 @@ export function UserActionsMenu({ user, onSelect }: UserActionsMenuProps) {
               Suspender cuenta
             </button>
           )}
-          {user.status.key !== "banned" ? (
-            <button
-              type="button"
-              role="menuitem"
-              className={styles.dangerAction}
-              onClick={() => select("banned")}
-            >
-              <Icon name="ban" size={16} />
-              Banear cuenta
-            </button>
-          ) : null}
         </div>,
         document.body,
       ) : null}
