@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import {
   useEffect,
   useId,
@@ -75,20 +76,32 @@ export function AvatarCropDialog({
   const [cropError, setCropError] = useState<string | null>(null);
   const [cropping, setCropping] = useState(false);
 
-  closeRef.current = onCancel;
   const working = busy || cropping;
-  busyRef.current = working;
+
+  useEffect(() => {
+    closeRef.current = onCancel;
+    busyRef.current = working;
+  }, [onCancel, working]);
 
   const baseScale = imageSize
     ? Math.max(viewportSize / imageSize.x, viewportSize / imageSize.y)
     : 1;
   const imageWidth = (imageSize?.x ?? viewportSize) * baseScale * zoom;
   const imageHeight = (imageSize?.y ?? viewportSize) * baseScale * zoom;
+  const clampedPan = clampPan(pan, imageWidth, imageHeight, viewportSize);
 
   useEffect(() => {
-    const url = URL.createObjectURL(file);
-    setSource(url);
-    return () => URL.revokeObjectURL(url);
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") setSource(reader.result);
+    };
+    reader.onerror = () => setCropError("No pudimos abrir esa imagen. Elegí otra foto.");
+    reader.readAsDataURL(file);
+    return () => {
+      reader.onload = null;
+      reader.onerror = null;
+      if (reader.readyState === FileReader.LOADING) reader.abort();
+    };
   }, [file]);
 
   useEffect(() => {
@@ -105,10 +118,6 @@ export function AvatarCropDialog({
     observer.observe(viewport);
     return () => observer.disconnect();
   }, []);
-
-  useEffect(() => {
-    setPan((current) => clampPan(current, imageWidth, imageHeight, viewportSize));
-  }, [imageHeight, imageWidth, viewportSize]);
 
   useEffect(() => {
     const previousFocus = document.activeElement instanceof HTMLElement
@@ -158,8 +167,8 @@ export function AvatarCropDialog({
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
-      panX: pan.x,
-      panY: pan.y,
+      panX: clampedPan.x,
+      panY: clampedPan.y,
     };
   }
 
@@ -194,8 +203,8 @@ export function AvatarCropDialog({
     const offset = offsets[event.key];
     if (!offset) return;
     event.preventDefault();
-    setPan((current) => clampPan(
-      { x: current.x + offset.x, y: current.y + offset.y },
+    setPan(clampPan(
+      { x: clampedPan.x + offset.x, y: clampedPan.y + offset.y },
       imageWidth,
       imageHeight,
       viewportSize,
@@ -204,8 +213,8 @@ export function AvatarCropDialog({
 
   function changeZoom(nextZoom: number) {
     setZoom(nextZoom);
-    setPan((current) => clampPan(
-      current,
+    setPan(clampPan(
+      clampedPan,
       (imageSize?.x ?? viewportSize) * baseScale * nextZoom,
       (imageSize?.y ?? viewportSize) * baseScale * nextZoom,
       viewportSize,
@@ -218,8 +227,8 @@ export function AvatarCropDialog({
 
     setCropping(true);
     setCropError(null);
-    const left = (viewportSize - imageWidth) / 2 + pan.x;
-    const top = (viewportSize - imageHeight) / 2 + pan.y;
+    const left = (viewportSize - imageWidth) / 2 + clampedPan.x;
+    const top = (viewportSize - imageHeight) / 2 + clampedPan.y;
     const sourceX = Math.max(0, -left / imageWidth * imageSize.x);
     const sourceY = Math.max(0, -top / imageHeight * imageSize.y);
     const sourceWidth = viewportSize / imageWidth * imageSize.x;
@@ -320,10 +329,13 @@ export function AvatarCropDialog({
             aria-label="Vista previa del recorte. Arrastrá para mover la foto."
           >
             {source ? (
-              <img
+              <Image
                 ref={imageRef}
                 src={source}
                 alt=""
+                unoptimized
+                width={imageSize?.x ?? viewportSize}
+                height={imageSize?.y ?? viewportSize}
                 className={styles.cropImage}
                 draggable={false}
                 onLoad={(event) => {
@@ -337,7 +349,7 @@ export function AvatarCropDialog({
                 style={{
                   width: imageWidth,
                   height: imageHeight,
-                  transform: `translate(-50%, -50%) translate(${pan.x}px, ${pan.y}px)`,
+                  transform: `translate(-50%, -50%) translate(${clampedPan.x}px, ${clampedPan.y}px)`,
                 }}
               />
             ) : null}
