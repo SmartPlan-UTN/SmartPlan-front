@@ -1,12 +1,12 @@
 /**
- * Limits for the plan composer. People are capped at 20 in this flow, while
- * the backend DTO permits up to 1000 for existing plans and other clients.
+ * Limits for the plan composer, the same the API enforces (plan-composer.dto
+ * in SmartPlan-back), so any existing plan can be edited and saved as it is.
  * There is deliberately no maximum number of stops: the backend has none.
  */
 export const TITLE_MAX = 150;
 export const DESCRIPTION_MAX = 2000;
 export const PEOPLE_MIN = 1;
-export const PEOPLE_MAX = 20;
+export const PEOPLE_MAX = 1000;
 /** `GET /activity-suggestions` rejects more excluded ids than this. */
 export const SUGGESTION_EXCLUDE_MAX = 100;
 

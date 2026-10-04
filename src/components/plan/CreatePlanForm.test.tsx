@@ -206,13 +206,13 @@ describe("PlanComposer creation flow", () => {
     await user.type(screen.getByLabelText(/Nombre del plan/), "Viaje");
     const peopleCount = screen.getByLabelText(/personas/);
     await user.clear(peopleCount);
-    await user.type(peopleCount, "21");
+    await user.type(peopleCount, "1001");
     await user.click(
       screen.getByRole("button", { name: /Elegir actividades/ }),
     );
 
     expect(
-      await screen.findByText(/debe estar entre 1 y 20/),
+      await screen.findByText(/debe estar entre 1 y 1\.000/),
     ).toBeInTheDocument();
     expect(searchActivities).not.toHaveBeenCalled();
   });
@@ -936,8 +936,8 @@ describe("PlanComposer boundaries and safety", () => {
   it.each([
     ["0", false],
     ["1", true],
-    ["20", true],
-    ["21", false],
+    ["1000", true],
+    ["1001", false],
     ["-2", false],
     ["2.5", false],
     ["", false],
@@ -958,7 +958,7 @@ describe("PlanComposer boundaries and safety", () => {
       ).toBeInTheDocument();
     } else {
       expect(
-        await screen.findByText(/debe estar entre 1 y 20/),
+        await screen.findByText(/debe estar entre 1 y 1\.000/),
       ).toBeInTheDocument();
       expect(searchActivities).not.toHaveBeenCalled();
     }

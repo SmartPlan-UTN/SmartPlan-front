@@ -134,7 +134,7 @@ traceability matrix (`skills/01-domain/`).
 | CU30 | Calculate plan cost | PAN 17 | `Not started` | | |
 | CU31 | Generate suggested plan | — | `In progress` | `feature/planificacion-cu24-cu25-cu26` | #103 |
 
-| #131 | Create/edit Plan Composer | `/plans/create`, `/plans/:id/edit` | `In progress` | `feature/plan-generation-ux-overhaul` | â€” |
+| #131 | Create/edit Plan Composer | `/plans/create`, `/plans/:id/edit` | `In progress` | `feature/plan-generation-ux-overhaul` | — |
 
 ### Collections
 

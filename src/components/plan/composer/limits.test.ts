@@ -14,15 +14,15 @@ import {
 describe("composer limits", () => {
   it("states the domain numbers once", () => {
     expect([TITLE_MAX, DESCRIPTION_MAX, PEOPLE_MIN, PEOPLE_MAX]).toEqual([
-      150, 2000, 1, 20,
+      150, 2000, 1, 1000,
     ]);
   });
 
   it("validates people at every boundary", () => {
     expect(validatePeople(0)).not.toBeNull();
     expect(validatePeople(1)).toBeNull();
-    expect(validatePeople(20)).toBeNull();
-    expect(validatePeople(21)).not.toBeNull();
+    expect(validatePeople(1000)).toBeNull();
+    expect(validatePeople(1001)).not.toBeNull();
     expect(validatePeople(-3)).not.toBeNull();
   });
 
