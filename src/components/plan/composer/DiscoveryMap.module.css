@@ -1,0 +1,373 @@
+/* The discovery map: a sheet of paper inside the cream column, framed like
+   the rest of the page (radius, hairline), with SmartPlan's own controls. */
+.root {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: var(--r-card);
+  background: #eee7db;
+  isolation: isolate;
+}
+
+/* The frame sits above the tiles so their edge never looks cut. */
+.root::after {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg-1) 10%, transparent);
+  content: "";
+  pointer-events: none;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+}
+
+/* ── Overlays ─────────────────────────────────────────────────────────── */
+.top {
+  position: absolute;
+  z-index: 5;
+  top: 12px;
+  right: 60px;
+  left: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.top > * {
+  pointer-events: auto;
+}
+
+.status {
+  display: inline-flex;
+  min-height: 34px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: var(--r-chip);
+  background: color-mix(in srgb, var(--surface-card) 94%, transparent);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--char) 10%, transparent);
+  color: var(--fg-2);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  backdrop-filter: blur(6px);
+}
+
+.status strong {
+  color: var(--fg-1);
+  font-weight: 700;
+}
+
+/* What the assistant understood, as the chips it applied. */
+.status b {
+  max-width: min(100%, 180px);
+  overflow: hidden;
+  padding: 2px 8px;
+  border-radius: var(--r-chip);
+  background: color-mix(in srgb, var(--ember) 12%, var(--cream));
+  color: var(--fg-1);
+  font-size: 12px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spark {
+  color: var(--ember);
+}
+
+.status button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ember);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--ember) 45%, transparent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.status button:focus-visible {
+  border-radius: 3px;
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+/* "Buscar en esta zona": the one action the camera can suggest. */
+.zoneButton {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 6px;
+  margin-inline: auto;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: var(--char);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--char) 28%, transparent);
+  color: var(--fg-on-dark);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  animation: zone-enter 200ms var(--ease-out, ease) both;
+}
+
+.zoneButton svg {
+  color: var(--gold);
+}
+
+.zoneButton:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--char) 88%, var(--ember));
+}
+
+.zoneButton:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.controls {
+  position: absolute;
+  z-index: 5;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--surface-card);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--char) 12%, transparent);
+}
+
+.controls button {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--fg-1);
+  cursor: pointer;
+}
+
+.controls button + button {
+  border-top: 1px solid var(--hairline);
+}
+
+.controls button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--fg-1) 6%, transparent);
+}
+
+.controls button:disabled {
+  color: var(--fg-3);
+  cursor: default;
+}
+
+.controls button:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: -2px;
+}
+
+.empty {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: min(300px, calc(100% - 48px));
+  justify-items: center;
+  gap: 4px;
+  padding: 16px 18px;
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--surface-card) 94%, transparent);
+  box-shadow: 0 6px 24px color-mix(in srgb, var(--char) 12%, transparent);
+  text-align: center;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.empty strong {
+  color: var(--fg-1);
+  font-size: 14px;
+}
+
+.empty span {
+  color: var(--fg-2);
+  font-size: 13px;
+}
+
+.failure {
+  display: grid;
+  height: 100%;
+  min-height: 280px;
+  place-content: center;
+  justify-items: center;
+  gap: 6px;
+  padding: var(--s-5);
+  border: 1px dashed var(--hairline);
+  border-radius: var(--r-card);
+  color: var(--fg-3);
+  text-align: center;
+}
+
+.failure strong {
+  color: var(--fg-1);
+  font-size: 15px;
+}
+
+.failure span {
+  max-width: 340px;
+  color: var(--fg-2);
+  font-size: 13px;
+}
+
+.failure button {
+  min-height: 40px;
+  margin-top: 6px;
+  padding: 0 16px;
+  border: 1px solid color-mix(in srgb, var(--fg-1) 18%, transparent);
+  border-radius: var(--r-btn);
+  background: transparent;
+  color: var(--fg-1);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.spin {
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes zone-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 680px) {
+  .root {
+    border-radius: 0;
+  }
+
+  .root::after {
+    box-shadow: none;
+  }
+
+  .top {
+    top: 10px;
+    right: 58px;
+    left: 10px;
+  }
+
+  .controls {
+    top: 10px;
+    right: 10px;
+  }
+
+  .controls button {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* The sheet covers the map's lower half: the empty note would sit under it. */
+  .root[data-preview="open"] .empty {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zoneButton,
+  .spin {
+    animation: none;
+  }
+}
+
+/* ── The Quick View on the map ─────────────────────────────────────────
+   The list's Quick View, resting on the map: a paper card in the corner
+   (desktop) or a sheet along its bottom edge (phone). Non-modal: the map
+   stays usable behind it. */
+.card {
+  position: absolute;
+  z-index: 6;
+  bottom: 16px;
+  left: 16px;
+  width: min(372px, calc(100% - 32px));
+  max-height: calc(100% - 76px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px 18px 16px;
+  border: 1px solid color-mix(in srgb, var(--fg-1) 8%, transparent);
+  border-radius: var(--r-card);
+  background: var(--cream);
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--char) 8%, transparent),
+    0 14px 36px color-mix(in srgb, var(--char) 16%, transparent);
+  color: var(--fg-1);
+  animation: card-enter 200ms var(--ease-out, ease) both;
+}
+
+.grip {
+  display: none;
+}
+
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 680px) {
+  .card {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    max-height: 62%;
+    padding: 8px 18px 16px;
+    border-width: 1px 0 0;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -10px 30px color-mix(in srgb, var(--char) 14%, transparent);
+  }
+
+  .grip {
+    display: block;
+    width: 36px;
+    height: 4px;
+    margin: 0 auto 10px;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--fg-1) 16%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    animation: none;
+  }
+}

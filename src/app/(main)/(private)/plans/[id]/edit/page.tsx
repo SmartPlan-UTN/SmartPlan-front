@@ -27,18 +27,15 @@ export default async function EditPlanPage({
 
   return (
     <Screen labelledBy="edit-plan-title">
-      <header className={styles.header}>
+      <header className={styles.composerHeader}>
         <Link href={ROUTES.plans} className={styles.backLink}>
           <Icon name="arrow-left" size={14} aria-hidden="true" />
           Mis planes
         </Link>
-        <p className={`sp-label ${styles.eyebrow}`}>Editar</p>
-        <h1 id="edit-plan-title" className="sp-h2">
+        <span aria-hidden="true">/</span>
+        <h1 id="edit-plan-title" className={styles.composerTitle}>
           Editar plan
         </h1>
-        <p className={`sp-body ${styles.lead}`}>
-          Cambiá la idea y el recorrido en un solo borrador. Guardamos todo junto cuando confirmes.
-        </p>
       </header>
 
       <EditPlanForm planId={planId} />

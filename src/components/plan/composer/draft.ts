@@ -4,11 +4,18 @@ import type {
   PlanVisibility,
 } from "@/types";
 
+import type { Coords } from "./routeDistance";
+
 export interface ComposerStop {
   activity: ActivitySearchResult;
   detailId?: number;
   estimatedCost: number;
   estimatedDuration: number;
+  /**
+   * Where the activity happens. Never stored in the draft: the route panel
+   * fills it in from `useStopInfo` lookups to measure legs.
+   */
+  coords?: Coords | null;
 }
 
 export interface ComposerDraft {

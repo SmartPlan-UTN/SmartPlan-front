@@ -1,0 +1,262 @@
+/* Map markers shared by every SmartPlan map (discovery, route): plain HTML
+   buttons drawn by lib/maps/htmlMarkerLayer, styled like the product. */
+.marker {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fg-1);
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.marker:focus-visible {
+  outline: none;
+}
+
+/* A result: a paper dot ringed in terracotta, 22px to hit, 11px to see. */
+.result {
+  z-index: 1;
+  margin: -11px 0 0 -11px;
+}
+
+.dot {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  place-items: center;
+}
+
+.dot::before {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--surface-card);
+  /* No blur at rest: hundreds of dots repaint cheaply. */
+  box-shadow:
+    0 0 0 2.5px var(--ember),
+    0 1.5px 0 2.5px color-mix(in srgb, var(--char) 14%, transparent);
+  content: "";
+  transition:
+    transform 160ms var(--ease-out, ease),
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+/* The name appears beside the dot on hover, focus or selection. */
+.label {
+  max-width: 0;
+  overflow: hidden;
+  padding: 5px 0;
+  border-radius: var(--r-chip);
+  background: var(--surface-card);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--char) 16%, transparent);
+  color: var(--fg-1);
+  font-size: 12.5px;
+  font-weight: 650;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+  opacity: 0;
+  text-overflow: ellipsis;
+  /* Hidden labels are not painted at all (there can be hundreds). */
+  visibility: hidden;
+  white-space: nowrap;
+  transition:
+    max-width 220ms var(--ease-out, ease),
+    padding 220ms var(--ease-out, ease),
+    opacity 140ms ease,
+    visibility 0s linear 220ms;
+}
+
+.marker:hover,
+.marker:focus-visible {
+  z-index: 6;
+}
+
+.marker:hover .label,
+.marker:focus-visible .label,
+.marker[data-highlighted] .label,
+.selected .label {
+  max-width: 220px;
+  padding: 5px 10px;
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.result:hover .dot::before,
+.result[data-highlighted] .dot::before {
+  transform: scale(1.25);
+}
+
+/* Pointed at from outside the map (a row, a stop in the route): it answers
+   the way a hovered marker does, and comes to the front. */
+.marker[data-highlighted] {
+  z-index: 8;
+}
+
+.stop[data-highlighted] .number {
+  box-shadow:
+    0 0 0 2px var(--surface-card),
+    0 0 0 5px var(--ember),
+    0 3px 10px color-mix(in srgb, var(--char) 35%, transparent);
+  transform: scale(1.12);
+}
+
+.marker:focus-visible .dot::before,
+.marker:focus-visible .number {
+  outline: 2px solid var(--ember);
+  outline-offset: 3px;
+}
+
+/* Selected: the dot fills with terracotta and the name turns into a small
+   piece of the dark route object. */
+.selected {
+  z-index: 7;
+}
+
+.selected .dot::before {
+  background: var(--ember);
+  box-shadow:
+    0 0 0 3px var(--surface-card),
+    0 0 0 8px color-mix(in srgb, var(--ember) 22%, transparent),
+    0 2px 8px color-mix(in srgb, var(--char) 30%, transparent);
+  transform: scale(1.2);
+}
+
+.selected .label {
+  background: var(--char);
+  color: var(--fg-on-dark);
+}
+
+/* A stop: the route's own numbered node, char on the cream. */
+.stop {
+  z-index: 3;
+  margin: -14px 0 0 -14px;
+}
+
+.number {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--char);
+  box-shadow:
+    0 0 0 2px var(--surface-card),
+    0 3px 10px color-mix(in srgb, var(--char) 35%, transparent);
+  color: var(--fg-on-dark);
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  transition:
+    box-shadow 160ms ease,
+    transform 160ms var(--ease-out, ease);
+}
+
+/* Small context maps: the route's stops as quiet nodes, never labelled. */
+.mini {
+  cursor: default;
+  pointer-events: none;
+}
+
+.stop.mini {
+  margin: -10px 0 0 -10px;
+}
+
+.mini .number {
+  width: 20px;
+  height: 20px;
+  font-size: 10px;
+  opacity: 0.88;
+}
+
+.mini .label {
+  display: none;
+}
+
+.stop.selected .number {
+  box-shadow:
+    0 0 0 2px var(--surface-card),
+    0 0 0 5px var(--ember),
+    0 3px 10px color-mix(in srgb, var(--char) 35%, transparent);
+}
+
+.stop.selected .label {
+  background: var(--surface-card);
+  color: var(--fg-1);
+}
+
+/* The device, when "Cerca mío" is on. */
+.me {
+  z-index: 2;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  background: var(--electric);
+  box-shadow:
+    0 0 0 3px var(--surface-card),
+    0 0 0 10px color-mix(in srgb, var(--electric) 16%, transparent);
+  pointer-events: none;
+}
+
+
+/* A stop that just joined the route: the dot becomes its number. */
+.arrived .number {
+  animation: marker-arrive 260ms var(--ease-out, ease) both;
+}
+
+/* Focused from outside the map (a stop picked in the itinerary): one ring,
+   once, so the eye finds it. */
+.pulse .number::after {
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 var(--ember);
+  content: "";
+  animation: marker-pulse 700ms var(--ease-out, ease) 1 both;
+  pointer-events: none;
+}
+
+.number {
+  position: relative;
+}
+
+@keyframes marker-arrive {
+  from {
+    opacity: 0.4;
+    transform: scale(0.45);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes marker-pulse {
+  from {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--ember) 55%, transparent);
+  }
+  to {
+    box-shadow: 0 0 0 16px color-mix(in srgb, var(--ember) 0%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot::before,
+  .label,
+  .number {
+    transition-duration: 0.01ms;
+  }
+
+  .arrived .number,
+  .pulse .number::after {
+    animation: none;
+  }
+}

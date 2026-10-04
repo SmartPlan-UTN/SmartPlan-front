@@ -10,6 +10,7 @@ import type {
   Activity,
   ActivityCategorySummary,
   ActivityLocationSummary,
+  ActivitySearchResult,
 } from "./activities";
 
 /**
@@ -254,6 +255,59 @@ export interface ActivitySuggestion {
   estimatedDuration: number;
   type: string | null;
   categories: string[];
+}
+
+/**
+ * The composer's assistant (`/users/me/plans/assistant/*`). Gemini judges
+ * meaning; every activity here is a real catalog row and every number
+ * (distance, minutes, cost) was computed by the API. Nothing in these
+ * answers changes a plan: the person accepts or ignores each proposal.
+ */
+export interface AssistantSearchResponse {
+  interpretation: { chips: string[]; nearName: string | null };
+  results: Array<{ activity: ActivitySearchResult; reason: string | null }>;
+}
+
+export interface AssistantSuggestResponse {
+  suggestions: Array<{
+    activity: ActivitySearchResult;
+    reason: string | null;
+  }>;
+  /** A kind of activity the route lacks, when one clearly does. */
+  gap: { categoryName: string; message: string } | null;
+}
+
+export interface AssistantProposalEffect {
+  minutes: number;
+  cost: number;
+  /** Change in straight-line km; null when any position is unknown. */
+  km: number | null;
+}
+
+export type AssistantProposal =
+  | {
+      kind: "reorder";
+      reason: string;
+      orderedActivityIds: number[];
+      effect: AssistantProposalEffect;
+    }
+  | {
+      kind: "add";
+      reason: string;
+      activity: ActivitySearchResult;
+      /** Zero-based slot in the route; null appends. */
+      position: number | null;
+      effect: AssistantProposalEffect;
+    }
+  | {
+      kind: "remove";
+      reason: string;
+      activityId: number;
+      effect: AssistantProposalEffect;
+    };
+
+export interface AssistantImproveResponse {
+  proposals: AssistantProposal[];
 }
 
 export interface ActivitySuggestionsParams {

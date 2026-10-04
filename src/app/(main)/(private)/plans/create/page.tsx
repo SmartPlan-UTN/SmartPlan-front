@@ -29,21 +29,15 @@ export default async function CreatePlanPage({
 
   return (
     <Screen labelledBy="create-plan-title">
-      <header className={styles.header}>
+      <header className={styles.composerHeader}>
         <Link href={backHref} className={styles.backLink}>
           <Icon name="arrow-left" size={14} aria-hidden="true" />
           {returnToActivity ? "Volver a la actividad" : "Mis planes"}
         </Link>
-        <p className={`sp-label ${styles.eyebrow}`}>
-          {returnToActivity ? "Desde una actividad" : "Nuevo plan"}
-        </p>
-        <h1 id="create-plan-title" className="sp-h2">
-          Diseñá tu próximo plan
+        <span aria-hidden="true">/</span>
+        <h1 id="create-plan-title" className={styles.composerTitle}>
+          Nuevo plan
         </h1>
-        <p className={`sp-body ${styles.lead}`}>
-          Una idea, un recorrido y una última mirada antes de guardar. Todo se
-          confirma junto al final.
-        </p>
       </header>
 
       <CreatePlanForm

@@ -1,0 +1,170 @@
+/* Round icon actions: 36px to see, 44px to hit on touch. One geometry for
+   every state; colour and fill carry the meaning. */
+.action {
+  position: relative;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  place-items: center;
+  padding: 0;
+  border: 1.5px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--fg-2);
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 120ms var(--ease-out, ease);
+}
+
+/* The hit area grows past the drawn circle on coarse pointers. */
+.action::before {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  content: "";
+}
+
+.action:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.action:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.action:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+/* ⓘ: ink only, a soft disc on hover. */
+.quiet:hover:not(:disabled),
+.quiet[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--fg-1) 7%, transparent);
+  color: var(--fg-1);
+}
+
+/* +: a terracotta ring that fills a little on hover. */
+.add {
+  border-color: color-mix(in srgb, var(--ember) 55%, transparent);
+  color: var(--ember);
+}
+
+.add:hover:not(:disabled) {
+  border-color: var(--ember);
+  background: color-mix(in srgb, var(--ember) 10%, transparent);
+}
+
+/* ✓: a piece of the dark route itself. */
+.added {
+  border-color: var(--char);
+  background: var(--char);
+  color: var(--fg-on-dark);
+}
+
+/* Set by the caller only on the press that made it ✓, never on mount. */
+.pop {
+  animation: added-ring 520ms var(--ease-out, ease) 1;
+}
+
+.added:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--char) 82%, var(--ember));
+  background: color-mix(in srgb, var(--char) 82%, var(--ember));
+}
+
+/* A toggle holds both glyphs, stacked; they cross-fade when it flips. */
+.glyph {
+  display: grid;
+  grid-area: 1 / 1;
+  place-items: center;
+  transition:
+    opacity 140ms ease,
+    transform 200ms var(--ease-out, ease);
+}
+
+.added .glyphOff,
+.action:not(.added) .glyphOn {
+  opacity: 0;
+  transform: scale(0.4) rotate(-60deg);
+}
+
+@keyframes added-ring {
+  from {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--ember) 55%, transparent);
+  }
+  to {
+    box-shadow: 0 0 0 10px color-mix(in srgb, var(--ember) 0%, transparent);
+  }
+}
+
+/* Tooltip: pointer devices only, after a short pause; immediately on
+   keyboard focus. Never on touch, where it would stick. */
+.action[data-tip]::after {
+  position: absolute;
+  z-index: 20;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: var(--char);
+  color: var(--fg-on-dark);
+  content: attr(data-tip);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1.2;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 3px);
+  visibility: hidden;
+  white-space: nowrap;
+  transition:
+    opacity 120ms ease,
+    transform 160ms var(--ease-out, ease),
+    visibility 0s linear 160ms;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .action[data-tip]:hover::after {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    visibility: visible;
+    transition-delay: 350ms, 350ms, 350ms;
+  }
+}
+
+.action[data-tip]:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+@media (pointer: coarse) {
+  .action::before {
+    inset: -5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .action,
+  .glyph,
+  .action[data-tip]::after {
+    transition-duration: 0.01ms;
+  }
+
+  .pop {
+    animation: none;
+  }
+
+  .action:active:not(:disabled) {
+    transform: none;
+  }
+}

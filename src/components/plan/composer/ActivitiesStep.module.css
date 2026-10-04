@@ -1,518 +1,53 @@
-.panelHeading,
-.totalTop,
-.totalLine,
-.grandTotal {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s-4);
-}
-
-.eyebrow {
-  display: block;
-  margin: 0 0 8px;
-  color: var(--ember);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  line-height: 1.3;
-}
-
-.searchBox:focus-within,
-.filtersRow input:focus,
-.sortField [aria-haspopup="listbox"]:focus-visible {
-  border-color: var(--ember);
-  outline: 0;
-  background: var(--surface-card);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ember) 15%, transparent);
-}
-
-.routeStep {
-  display: grid;
-  grid-template-columns: minmax(0, 1.16fr) minmax(340px, 0.84fr);
-  gap: clamp(20px, 3vw, 36px);
-  align-items: start;
-  animation: step-enter 200ms ease both;
-}
-
-.catalogPanel,
-.itineraryPanel {
+/* Discovery on the cream canvas; the route is the composer's dark object
+   beside it. No decoration behind any of it; the identity is the route, the
+   type, the motion and the terracotta. */
+.discover {
   min-width: 0;
-  padding: clamp(16px, 2.2vw, 26px);
-  border: 1px solid var(--composer-line);
-  border-radius: 20px;
-  background: var(--surface-card);
+  padding-bottom: var(--s-6);
+  animation: step-enter var(--d-fast, 200ms) var(--ease-out, ease) backwards;
 }
 
-.itineraryPanel {
-  position: sticky;
-  top: calc(var(--navbar-h) + var(--s-5));
-  background: var(--surface-card);
+/* Like the route, the search column pins and, when taller than the screen,
+   scrolls with the page until its end is visible (`useStickyOverflow`), so
+   neither side is ever left blank while the other moves. */
+@media (min-width: 900px) {
+  .discover {
+    position: sticky;
+    top: calc(var(--navbar-h) + var(--s-2) - var(--sticky-overflow, 0px));
+  }
 }
 
-.panelHeading {
-  align-items: flex-end;
-  margin-bottom: 18px;
-}
-
-.panelHeading h3 {
+.headline h2 {
+  width: fit-content;
+  max-width: 100%;
   margin: 0;
+  overflow-wrap: anywhere;
   color: var(--fg-1);
-  font-family: var(--font-display, inherit);
-  font-size: clamp(20px, 2vw, 25px);
-  letter-spacing: -0.035em;
-  line-height: 1.1;
+  font-family: var(--font-display-serif);
+  font-size: clamp(30px, 4.2vw, 48px);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
 }
 
-.countPill {
-  flex-shrink: 0;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--ember) 9%, white);
-  color: var(--ember);
-  font-size: 10px;
-  font-weight: 800;
+.headline h2:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--ember);
+  outline-offset: 4px;
 }
 
-.searchBox {
-  display: flex;
-  min-height: 48px;
-  align-items: center;
-  gap: 10px;
-  padding: 0 13px;
-  border: 1px solid color-mix(in srgb, var(--fg-1) 14%, transparent);
-  border-radius: 11px;
-  background: var(--surface-card);
-  color: var(--fg-3);
-  transition:
-    border-color 180ms ease,
-    box-shadow 180ms ease;
-}
-
-.searchBox input {
-  width: 100%;
-  min-width: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--fg-1);
-  font: inherit;
-  font-size: 13px;
-}
-
-.categoryRail {
-  overflow: hidden;
-  margin: 12px -2px 0;
-}
-
-.filtersRow {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  margin: 14px 0 10px;
-  color: var(--fg-3);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.filtersRow label {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  min-width: 0;
-}
-
-.filtersRow input,
-.sortField select {
-  width: 88px;
-  min-width: 0;
-  min-height: 40px;
-  padding: 0 8px;
-  border: 1px solid var(--composer-line);
-  border-radius: 8px;
-  background: var(--surface-card);
+.headline p {
+  margin: 8px 0 var(--s-4);
   color: var(--fg-2);
-  font: inherit;
-  font-size: 12px;
-}
-
-.filtersRow .sortField {
-  margin-left: auto;
-}
-
-.sortField > div {
-  width: 94px;
-}
-
-.sortField [aria-haspopup="listbox"] {
-  min-height: 40px;
-  padding-inline: 8px;
-  border-color: var(--composer-line);
-  border-radius: 8px;
-  background: var(--surface-card);
-  font-size: 12px;
-}
-
-.resultList {
-  display: grid;
-  gap: 8px;
-  min-height: 60px;
-  transition: opacity 180ms ease;
-}
-
-.resultList[aria-busy="true"] {
-  opacity: 0.58;
-}
-
-.resultCard {
-  display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 11px;
-  border: 1px solid color-mix(in srgb, var(--fg-1) 8%, transparent);
-  border-radius: 12px;
-  background: var(--surface-card);
-  animation: result-enter 200ms ease both;
-  transition:
-    transform 180ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease;
-}
-
-.resultCard:hover {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--ember) 30%, transparent);
-  box-shadow: 0 7px 18px color-mix(in srgb, var(--char) 6%, transparent);
-}
-
-.resultMark {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--ember) 9%, var(--cream));
-  color: var(--ember);
-}
-
-.resultCopy {
-  min-width: 0;
-}
-
-.resultCopy h4 {
-  overflow: hidden;
-  margin: 2px 0 3px;
-  color: var(--fg-1);
-  font-size: 13px;
-  font-weight: 750;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.resultCopy p {
-  margin: 0;
-  color: var(--fg-2);
-  font-size: 12px;
-}
-
-.resultCopy p b {
-  margin: 0 3px;
-  color: color-mix(in srgb, var(--fg-3) 55%, transparent);
-}
-
-.resultTags {
-  display: flex;
-  gap: 5px;
-  min-height: 12px;
-}
-
-.resultTags span {
-  color: var(--ember);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.moreButton {
-  width: 100%;
-  justify-content: center;
-  margin-top: 10px;
-}
-
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 15px;
-  color: var(--fg-3);
-  font-size: 11px;
-}
-
-.pagination strong {
-  color: var(--fg-1);
-}
-
-.catalogMessage,
-.inlineError {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin: 12px 0;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--error) 8%, white);
-  color: var(--error);
-  font-size: 12px;
-}
-
-.catalogMessage p,
-.inlineError {
-  margin: 0;
-}
-
-.catalogEmpty,
-.itineraryEmpty {
-  display: grid;
-  justify-items: center;
-  gap: 8px;
-  padding: 36px 18px;
-  color: var(--fg-3);
-  text-align: center;
-}
-
-.catalogEmpty strong,
-.itineraryEmpty strong {
-  color: var(--fg-2);
-  font-size: 13px;
-}
-
-.catalogEmpty span,
-.itineraryEmpty p {
-  max-width: 260px;
-  margin: 0;
-  color: var(--fg-2);
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.itineraryEmpty {
-  padding: 28px 18px 34px;
-}
-
-.emptyIcon {
-  display: grid;
-  width: 46px;
-  height: 46px;
-  place-items: center;
-  margin-bottom: 4px;
-  border: 1px dashed color-mix(in srgb, var(--ember) 42%, transparent);
-  border-radius: 50%;
-  color: var(--ember);
-}
-
-.itineraryEmpty button {
-  display: none;
-  align-items: center;
-  gap: 6px;
-  margin-top: 4px;
-  padding: 7px 0;
-  border: 0;
-  background: none;
-  color: var(--ember);
-  font: inherit;
-  font-size: 11px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.stopList {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.stopItem {
-  display: grid;
-  position: relative;
-  grid-template-columns: 30px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 9px;
-  padding: 11px 9px;
-  border: 1px solid color-mix(in srgb, var(--fg-1) 8%, transparent);
-  border-radius: 12px;
-  background: var(--surface-card);
-  cursor: grab;
-  transition:
-    opacity 160ms ease,
-    border-color 180ms ease,
-    transform 180ms ease;
-}
-
-.stopItem:active {
-  cursor: grabbing;
-}
-
-.stopItem:not(:last-child)::after {
-  position: absolute;
-  bottom: -9px;
-  left: 22px;
-  width: 1px;
-  height: 9px;
-  border-left: 1px dashed color-mix(in srgb, var(--ember) 55%, transparent);
-  content: "";
-}
-
-.stopDragging {
-  opacity: 0.45;
-  transform: scale(0.985);
-}
-
-.stopDropTarget {
-  border-color: color-mix(in srgb, var(--ember) 60%, transparent);
-  outline: 2px solid color-mix(in srgb, var(--ember) 24%, transparent);
-  outline-offset: 1px;
-}
-
-.stopNumber {
-  display: grid;
-  width: 28px;
-  height: 28px;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--char);
-  color: var(--fg-on-dark);
-  font-size: 10px;
-  font-weight: 800;
-}
-
-.stopText {
-  display: grid;
-  min-width: 0;
-  gap: 3px;
-}
-
-.stopText strong {
-  overflow: hidden;
-  color: var(--fg-1);
-  font-size: 13px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.stopText span {
-  overflow: hidden;
-  color: var(--fg-3);
-  font-size: 11px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.stopText b {
-  color: var(--ember);
-  font-size: 12px;
-}
-
-.stopActions {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.stopActions button {
-  display: grid;
-  width: 40px;
-  min-width: 40px;
-  height: 40px;
-  place-items: center;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--fg-3);
-  font: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    background 160ms ease,
-    color 160ms ease;
-}
-
-.stopActions button:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--ember) 9%, white);
-  color: var(--ember);
-}
-
-.stopActions button:last-child:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--error) 9%, white);
-  color: var(--error);
-}
-
-.stopActions .removeStop {
-  color: var(--fg-2);
-}
-
-.stopActions button:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-
-.totalCard {
-  display: grid;
-  gap: 10px;
-  margin-top: 17px;
-  padding: 17px;
-  border-radius: 14px;
-  background: var(--char);
-  color: var(--fg-on-dark);
-}
-
-.totalTop {
-  padding-bottom: 9px;
-  border-bottom: 1px solid color-mix(in srgb, white 15%, transparent);
-  color: color-mix(in srgb, white 70%, transparent);
-  font-size: 10px;
-  font-weight: 750;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.totalLine {
-  color: color-mix(in srgb, white 68%, transparent);
-  font-size: 12px;
-}
-
-.totalLine strong {
-  color: var(--fg-on-dark);
-  font-size: 12px;
-}
-
-.grandTotal {
-  padding-top: 10px;
-  border-top: 1px solid color-mix(in srgb, white 15%, transparent);
-  color: var(--fg-on-dark);
-  font-size: 12px;
-  font-weight: 750;
-}
-
-.grandTotal strong {
-  color: color-mix(in srgb, white 94%, var(--ember));
   font-size: 16px;
 }
 
-.mobileTabs {
+.tabs {
   display: none;
 }
 
-.loadingLine {
-  margin: 10px 0;
-  color: var(--fg-3);
-  font-size: 11px;
+.mobileBar {
+  display: none;
 }
 
 .srOnly {
@@ -523,21 +58,6 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   clip-path: inset(50%);
-}
-
-.spin {
-  animation: spin 900ms linear infinite;
-}
-
-@keyframes result-enter {
-  from {
-    opacity: 0;
-    transform: translateY(5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 @keyframes step-enter {
@@ -551,183 +71,184 @@
   }
 }
 
-@keyframes spin {
+@keyframes badge-pulse {
+  from {
+    transform: scale(1.35);
+  }
   to {
-    transform: rotate(360deg);
+    transform: scale(1);
   }
 }
 
-@media (max-width: 1023px) {
-  .routeStep {
-    grid-template-columns: minmax(0, 1fr);
+@keyframes bar-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
-
-  .itineraryPanel {
-    position: static;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@media (max-width: 680px) {
-  .mobileTabs {
+/* Tablet and phone: one pane at a time. The tab bar is the single pinned
+   layer, sitting flush under the navbar on an opaque background; the bar of
+   totals floats above the bottom navigation as a finished object. */
+@media (max-width: 899px) {
+  /* Headline, tabs and catalog join the page flow directly, so the tab bar
+     stays pinned for the whole page (a sticky element only pins within its
+     parent, and this wrapper is only as tall as the catalog). */
+  .discover {
+    display: contents;
+  }
+
+  .headline p {
+    display: none;
+  }
+
+  .headline h2 {
+    margin-bottom: var(--s-3);
+  }
+
+  .tabs {
+    position: sticky;
+    top: var(--navbar-h);
+    z-index: 5;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 4px;
-    margin-bottom: 12px;
-    padding: 4px;
-    border: 1px solid var(--composer-line);
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--fg-1) 4%, transparent);
+    margin: 0 -4px var(--s-2);
+    padding: var(--s-2) 4px;
+    background: var(--cream);
+    box-shadow: 0 1px 0 var(--hairline);
   }
 
-  .mobileTabs button {
+  .tabs button {
     min-height: 44px;
     border: 0;
-    border-radius: 8px;
+    border-radius: var(--r-btn);
     background: transparent;
-    color: var(--fg-3);
+    color: var(--fg-2);
     font: inherit;
-    font-size: 11px;
-    font-weight: 750;
+    font-size: 14px;
+    font-weight: 650;
+    cursor: pointer;
+    transition:
+      background-color 160ms ease,
+      color 160ms ease;
   }
 
-  .mobileTabs button[aria-selected="true"] {
-    background: var(--surface-card);
-    color: var(--fg-1);
-    border: 1px solid var(--composer-line);
+  .tabs button[aria-selected="true"] {
+    background: var(--char);
+    color: var(--fg-on-dark);
   }
 
-  .mobileTabs span {
+  .tabs button:focus-visible {
+    outline: 2px solid var(--ember);
+    outline-offset: -2px;
+  }
+
+  .tabs span {
     display: inline-grid;
-    min-width: 18px;
-    height: 18px;
+    min-width: 20px;
+    height: 20px;
     place-items: center;
     margin-left: 4px;
     border-radius: 999px;
     background: var(--ember);
-    color: white;
-    font-size: 9px;
+    color: var(--white);
+    font-size: 11px;
+    font-weight: 700;
+    animation: badge-pulse 240ms ease-out;
   }
 
-  .catalogPanel,
-  .itineraryPanel {
-    display: none;
-    max-height: clamp(280px, 62dvh, 620px);
-    overflow: auto;
-    overscroll-behavior: contain;
-    padding: 15px 12px;
-    border-radius: 16px;
-  }
-
-  .catalogPanel.mobileVisible,
-  .itineraryPanel.mobileVisible {
-    display: block;
-    animation: result-enter 180ms ease both;
-  }
-
-  .itineraryPanel .stopList {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .itineraryEmpty button {
-    display: inline-flex;
-  }
-
-  .panelHeading {
+  .mobileBar {
+    position: sticky;
+    bottom: calc(
+      var(--mobile-nav-h) + var(--s-2) + var(--s-2) + env(safe-area-inset-bottom)
+    );
+    z-index: 5;
+    display: flex;
     align-items: center;
-    gap: 7px;
+    justify-content: space-between;
+    gap: var(--s-3);
+    margin-top: var(--s-4);
+    padding: 10px 10px 10px 18px;
+    border-radius: var(--r-card);
+    background: var(--char);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--char) 30%, transparent);
+    color: var(--fg-on-dark);
+    animation: bar-enter 200ms ease both;
   }
 
-  .panelHeading h3 {
-    font-size: 19px;
+  .mobileBar div {
+    display: grid;
+    min-width: 0;
+    gap: 2px;
   }
 
-  .countPill {
-    max-width: 100px;
-    font-size: 10px;
-    text-align: center;
+  .mobileBar strong {
+    font-size: 14px;
   }
 
-  .filtersRow {
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-
-  .filtersRow input {
-    width: 73px;
-  }
-
-  .sortField > div {
-    width: 112px;
-  }
-
-  .sortField [aria-haspopup="listbox"] {
-    min-height: 44px;
-  }
-
-  .filtersRow .sortField {
-    margin-left: 0;
-  }
-
-  .resultCard {
-    grid-template-columns: 30px minmax(0, 1fr) auto;
-    gap: 7px;
-    padding: 10px 8px;
-  }
-
-  .resultMark {
-    width: 30px;
-    height: 30px;
-  }
-
-  .resultCopy h4 {
-    max-width: 170px;
+  .mobileBar span {
+    overflow: hidden;
+    color: color-mix(in srgb, var(--fg-on-dark) 72%, var(--char));
     font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .resultCard > button {
-    min-width: 72px;
+  .mobileBar span.long {
+    color: var(--gold);
+    font-weight: 650;
+  }
+
+  .mobileBar span.beyondDay {
+    color: #ff9a8a;
+    font-weight: 700;
+  }
+
+  .mobileBar button {
+    display: inline-flex;
     min-height: 44px;
-    padding-inline: 7px;
-  }
-
-  .stopItem {
-    grid-template-columns: 27px minmax(0, 1fr) auto;
+    flex-shrink: 0;
+    align-items: center;
     gap: 6px;
-    padding-inline: 7px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: var(--r-btn);
+    background: var(--ember);
+    color: var(--white);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
   }
 
-  .stopActions {
-    gap: 0;
+  .mobileBar button:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
   }
 
-  .stopActions button {
-    width: 40px;
-    min-width: 40px;
-    height: 40px;
-  }
-
-  .moreButton,
-  .pagination button,
-  .itineraryEmpty button {
-    min-height: 44px;
+  /* Over the map the bar floats in the same place but takes no room, so the
+     map fills the screen exactly and the page has nothing to scroll. */
+  .mobileBarOverMap {
+    position: fixed;
+    right: var(--s-4);
+    left: var(--s-4);
+    margin-top: 0;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .resultCard,
-  .stopItem,
-  .stopActions button {
+  .discover,
+  .tabs span,
+  .mobileBar {
+    animation: none;
+  }
+
+  .tabs button {
     transition-duration: 0.01ms;
-  }
-
-  .resultCard,
-  .routeStep,
-  .catalogPanel.mobileVisible,
-  .itineraryPanel.mobileVisible {
-    animation: none;
-  }
-
-  .spin {
-    animation: none;
   }
 }

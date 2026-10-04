@@ -15,6 +15,9 @@ import type {
   PlanVisibility,
   ActivitySuggestion,
   ActivitySuggestionsParams,
+  AssistantImproveResponse,
+  AssistantSearchResponse,
+  AssistantSuggestResponse,
 } from "@/types";
 import { apiClient } from "./client";
 
@@ -110,6 +113,46 @@ export async function suggestActivities({
         : {}),
     },
   });
+}
+
+/**
+ * Natural-language search over the real catalog ("algo para comer cerca del
+ * museo, barato y tranquilo"). Answers 503 `ASSISTANT_UNAVAILABLE` when the
+ * model is slow or down: callers fall back to the regular search.
+ */
+export async function assistantSearch(
+  params: { query: string; stopActivityIds: number[] },
+  options: { signal?: AbortSignal } = {},
+): Promise<AssistantSearchResponse> {
+  return apiClient.post<AssistantSearchResponse>(
+    "/users/me/plans/assistant/search",
+    params,
+    { signal: options.signal },
+  );
+}
+
+/** Activities that complement the route, and the kind it lacks, if any. */
+export async function assistantSuggest(
+  params: { title: string; description?: string; stopActivityIds: number[] },
+  options: { signal?: AbortSignal } = {},
+): Promise<AssistantSuggestResponse> {
+  return apiClient.post<AssistantSuggestResponse>(
+    "/users/me/plans/assistant/suggest",
+    params,
+    { signal: options.signal },
+  );
+}
+
+/** At most three proposed improvements to an ordered route. */
+export async function assistantImprove(
+  params: { title: string; stopActivityIds: number[] },
+  options: { signal?: AbortSignal } = {},
+): Promise<AssistantImproveResponse> {
+  return apiClient.post<AssistantImproveResponse>(
+    "/users/me/plans/assistant/improve",
+    params,
+    { signal: options.signal },
+  );
 }
 
 /** Atomically updates plan metadata, visibility, and ordered stops. */

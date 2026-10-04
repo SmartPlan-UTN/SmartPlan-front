@@ -1,0 +1,115 @@
+.toast {
+  position: fixed;
+  bottom: calc(var(--s-5) + env(safe-area-inset-bottom));
+  left: 50%;
+  z-index: 40;
+  display: flex;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  align-items: center;
+  gap: var(--s-2);
+  padding: 6px 6px 6px 16px;
+  border-radius: var(--r-card-sm);
+  background: var(--char);
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--char) 28%, transparent);
+  color: var(--fg-on-dark);
+  font-size: 14px;
+  transform: translateX(-50%);
+  animation: toast-in var(--d-fast, 180ms) var(--ease-out, ease) both;
+}
+
+.message {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.undo,
+.close {
+  display: inline-flex;
+  min-height: 40px;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.undo {
+  padding: 0 12px;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.close {
+  width: 40px;
+  justify-content: center;
+  opacity: 0.7;
+}
+
+.undo:hover,
+.close:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.undo:focus-visible,
+.close:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+}
+
+@keyframes toast-in-wide {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* On a wide screen it sits under the route column, where the change was
+   made, instead of over the catalog's pagination. */
+@media (min-width: 900px) {
+  .toast {
+    right: max(
+      var(--s-5),
+      calc((100vw - var(--max-w)) / 2 + var(--s-5))
+    );
+    left: auto;
+    transform: none;
+    animation-name: toast-in-wide;
+  }
+}
+
+/* Above the floating totals bar and the mobile navigation. */
+@media (max-width: 899px) {
+  .toast {
+    bottom: calc(
+      var(--mobile-nav-h) + 96px + var(--s-2) + env(safe-area-inset-bottom)
+    );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}

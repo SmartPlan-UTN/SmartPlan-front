@@ -43,6 +43,9 @@ export {
   cancelOwnPlan,
   setOwnPlanVisibility,
   suggestActivities,
+  assistantSearch,
+  assistantSuggest,
+  assistantImprove,
   removePlanActivity,
   generateSuggestedPlan,
 } from './plans';

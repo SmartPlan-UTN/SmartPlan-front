@@ -1,0 +1,699 @@
+/* The route is the heart of the screen: one dark ticket (char, with cream ink
+   and the terracotta line) set against the cream canvas. It carries the
+   totals and the way forward. No scrollbar of its own: on desktop it pins
+   beside the search, and `--sticky-overflow` (useStickyOverflow) lets a route
+   taller than the screen scroll with the page until its end is visible. */
+.panel {
+  --route-ink: var(--fg-on-dark);
+  --route-ink-2: color-mix(in srgb, var(--fg-on-dark) 72%, var(--char));
+  --route-line: color-mix(in srgb, var(--ember) 70%, var(--char));
+  --route-node-bg: var(--cream);
+  --route-node-ink: var(--char);
+  --route-surface: var(--char);
+  --route-linked: color-mix(in srgb, var(--fg-on-dark) 9%, var(--char));
+
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: var(--s-5) var(--s-5) 0;
+  border-radius: 24px;
+  background: var(--char);
+  color: var(--route-ink);
+  outline: none;
+}
+
+.panel:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 4px;
+}
+
+/* Title and its one action on the first row (always as tall as the action,
+   so nothing below moves when the action comes and goes), and the summary on
+   its own full-width row. */
+.heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: 36px auto;
+  align-items: center;
+  column-gap: var(--s-4);
+  margin-bottom: var(--s-4);
+}
+
+.heading .summary {
+  grid-column: 1 / -1;
+}
+
+.heading h3 {
+  margin: 0;
+  color: var(--route-ink);
+  font-family: var(--font-display-serif);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+/* "14 paradas · 9h 30m · $ 4.500 por persona" */
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 2px 0 0;
+  color: var(--route-ink-2);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary > span + span::before {
+  margin: 0 7px;
+  content: "·";
+}
+
+.summary .long {
+  color: var(--gold);
+  font-weight: 650;
+}
+
+.summary .beyondDay {
+  color: #ff9a8a;
+  font-weight: 700;
+}
+
+.improve {
+  display: inline-flex;
+  min-height: 36px;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  border: 1px solid color-mix(in srgb, var(--route-ink) 28%, transparent);
+  border-radius: var(--r-chip);
+  background: transparent;
+  color: var(--route-ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background-color var(--d-fast, 160ms) ease;
+}
+
+.improve:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--route-ink) 10%, transparent);
+}
+
+.improve:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.improve:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.spin {
+  animation: spin 900ms linear infinite;
+}
+
+/* The route's health: the one message that dominates the panel. Opaque and
+   tinted by severity instead of shouting. */
+.health {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0 0 var(--s-4);
+  padding: 14px 16px;
+  border-radius: var(--r-card-sm);
+}
+
+.health svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.health strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.health p {
+  margin: 2px 0 0;
+  color: var(--route-ink);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.health.long {
+  background: color-mix(in srgb, var(--warning) 24%, var(--char));
+  color: var(--gold);
+}
+
+.health.beyondDay {
+  background: color-mix(in srgb, var(--error) 30%, var(--char));
+  color: #ffb4a8;
+}
+
+.error {
+  margin: 0 0 var(--s-3);
+  padding: 10px 12px;
+  border-radius: var(--r-btn);
+  background: color-mix(in srgb, var(--error) 30%, var(--char));
+  color: #ffb4a8;
+  font-size: 13px;
+}
+
+/* "Mejorar": a small number of proposals, shown before anything changes. The
+   wrapper is what opens and closes (its height animates), so it carries no
+   spacing of its own that would jump. */
+.proposalsWrap {
+  overflow: hidden;
+}
+
+.proposals {
+  margin: 0 0 var(--s-4);
+  padding: 14px;
+  border-radius: var(--r-card-sm);
+  background: color-mix(in srgb, var(--route-ink) 9%, var(--char));
+}
+
+.proposalsHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-bottom: 10px;
+}
+
+.proposalsHead h4 {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--route-ink);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.proposalsHead button {
+  min-height: 32px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--route-ink-2);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.proposalNote {
+  margin: 0;
+  color: var(--route-ink);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.proposals ul {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.proposals li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+}
+
+.proposalIcon {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ember) 30%, var(--char));
+  color: var(--gold);
+}
+
+.proposals li p {
+  margin: 0;
+  color: var(--route-ink);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.proposals li strong {
+  font-weight: 700;
+}
+
+.proposals .effect {
+  margin-top: 2px;
+  color: var(--route-ink-2);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.proposals li button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--r-btn);
+  background: var(--ember);
+  color: var(--white);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.proposals li button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.proposals button:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* The route before it exists: the same nodes and line, drawn dashed. The
+   first node waits for its stop. */
+.empty {
+  display: grid;
+  gap: var(--s-4);
+  padding: var(--s-2) 0 var(--s-5);
+}
+
+.ghost {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ghost li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0 16px;
+}
+
+.ghost li:not(:last-child)::after {
+  position: absolute;
+  top: 38px;
+  bottom: -8px;
+  left: 13px;
+  border-left: 2px dashed color-mix(in srgb, var(--ember) 55%, var(--char));
+  content: "";
+}
+
+.ghostNode {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  place-items: center;
+  border: 2px dashed color-mix(in srgb, var(--route-ink) 30%, transparent);
+  border-radius: 50%;
+  background: var(--char);
+  color: var(--gold);
+}
+
+.ghostFirst .ghostNode {
+  border-color: var(--ember);
+  animation: node-wait 2s var(--ease-inout, ease-in-out) infinite;
+}
+
+.ghostBar {
+  width: 62%;
+  max-width: 220px;
+  height: 10px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--route-ink) 12%, var(--char));
+}
+
+.ghost li:nth-child(2) .ghostBar {
+  width: 48%;
+}
+
+.ghost li:nth-child(3) .ghostBar {
+  width: 56%;
+  opacity: 0.6;
+}
+
+.emptyCopy strong {
+  display: block;
+  color: var(--route-ink);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.emptyCopy p {
+  max-width: 30ch;
+  margin: 4px 0 0;
+  color: var(--route-ink-2);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* The draft is a quiet preview; the full route keeps its normal layout. */
+.planStage .heading {
+  margin-bottom: var(--s-2);
+}
+
+.planStage .empty {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 0 0 var(--s-4);
+}
+
+.planStage .ghost {
+  width: 70px;
+  flex: none;
+}
+
+.planStage .ghost li {
+  gap: 8px;
+  padding: 0;
+}
+
+.planStage .ghost li:not(:first-child),
+.planStage .ghost li::after {
+  display: none;
+}
+
+.planStage .ghostNode {
+  width: 24px;
+  height: 24px;
+}
+
+.planStage .ghostBar {
+  height: 6px;
+}
+
+.planStage .emptyCopy strong {
+  color: var(--route-ink-2);
+  font-size: var(--t-label);
+  font-weight: 500;
+}
+
+/* Only useful when the catalog is a different tab. */
+.exploreLink {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin-top: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--gold);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.insights {
+  display: grid;
+  gap: 8px;
+  margin: var(--s-3) 0 0;
+  padding: var(--s-3) 0 0;
+  border-top: 1px solid color-mix(in srgb, var(--route-ink) 16%, transparent);
+  list-style: none;
+}
+
+.insights li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--route-ink-2);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.insights svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--route-ink-2);
+}
+
+.insightAction {
+  display: inline;
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--gold);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.insightAction:focus-visible {
+  border-radius: 3px;
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* The way forward stays in view however long the route is: it sticks to the
+   bottom of the screen while the panel passes, then rests at the panel's end. */
+.footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  display: grid;
+  gap: var(--s-3);
+  margin: var(--s-4) calc(var(--s-5) * -1) 0;
+  padding: var(--s-4) var(--s-5);
+  border-radius: 0 0 24px 24px;
+  background: var(--char);
+  box-shadow: 0 -1px 0 color-mix(in srgb, var(--route-ink) 14%, transparent);
+}
+
+.footerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+}
+
+.saveError {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--r-btn);
+  background: color-mix(in srgb, var(--error) 30%, var(--char));
+  color: #ffb4a8;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.saveError svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.total {
+  display: grid;
+  margin: 0;
+}
+
+.total span {
+  color: var(--route-ink-2);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.total small {
+  margin-top: 2px;
+  white-space: nowrap;
+  color: var(--route-ink-2);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.total strong {
+  color: var(--route-ink);
+  font-size: 22px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.cta {
+  display: inline-flex;
+  min-height: 48px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: var(--r-btn);
+  background: var(--ember);
+  color: var(--white);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color var(--d-fast, 160ms) ease,
+    transform var(--d-micro, 120ms) ease;
+}
+
+.cta:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.cta:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ember) 88%, var(--white));
+}
+
+.cta:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.cta:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+/* A route longer than a day: still allowed (it may be a trip), but the button
+   no longer pretends everything is normal. */
+.cta.caution {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--gold);
+  color: var(--gold);
+}
+
+.cta.caution:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--gold) 14%, transparent);
+}
+
+@keyframes node-wait {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+@keyframes panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (min-width: 900px) {
+  .panel {
+    position: sticky;
+    top: calc(var(--navbar-h) + var(--s-4) - var(--sticky-overflow, 0px));
+  }
+}
+
+@media (max-width: 899px) {
+  .panel {
+    display: none;
+    padding: var(--s-4) var(--s-4) 0;
+  }
+
+  .visibleOnMobile,
+  .shownOnMobile {
+    display: flex;
+  }
+
+  /* Drafting a plan on a tablet: the empty route still waits below the name,
+     so the object the next step fills is already on the page. A phone keeps
+     that first screen to the name and the button. */
+  @media (min-width: 600px) {
+    .planStage {
+      display: flex;
+    }
+  }
+
+  .visibleOnMobile {
+    animation: panel-enter 180ms var(--ease-out, ease) both;
+  }
+
+  .exploreLink {
+    display: inline-flex;
+  }
+
+  /* In the review the route sits below the plan's story, often below the
+     fold, so the way forward floats above the navigation on its own from the
+     first paint; the route keeps room for it at its end. */
+  .shownOnMobile {
+    margin-bottom: 96px;
+  }
+
+  .shownOnMobile .footer {
+    position: fixed;
+    right: var(--s-4);
+    left: var(--s-4);
+    margin: 0;
+    padding: 10px 10px 10px 18px;
+    border-radius: var(--r-card);
+    /* A cream rim keeps it a separate, floating piece when it passes over
+       the route, which is the same dark. */
+    box-shadow:
+      0 0 0 3px var(--cream),
+      0 10px 28px color-mix(in srgb, var(--char) 34%, transparent);
+  }
+
+  .shownOnMobile .total strong {
+    font-size: 20px;
+  }
+
+  /* The footer rests above the bottom navigation, as one floating object. */
+  .footer {
+    bottom: calc(
+      var(--mobile-nav-h) + var(--s-2) + var(--s-2) + env(safe-area-inset-bottom)
+    );
+    margin-inline: calc(var(--s-4) * -1);
+    padding-inline: var(--s-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .visibleOnMobile,
+  .ghostFirst .ghostNode,
+  .spin {
+    animation: none;
+  }
+
+  .cta,
+  .improve {
+    transition-duration: 0.01ms;
+  }
+}

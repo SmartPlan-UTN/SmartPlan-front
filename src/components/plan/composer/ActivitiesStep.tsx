@@ -1,40 +1,57 @@
 "use client";
 
-import { useMemo, useState, type DragEvent, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  type KeyboardEvent,
+  type Ref,
+} from "react";
 
-import { CategoryChips } from "@/components/explore";
-import { Button, Icon, Select, type SelectOption } from "@/components/ui";
+import { Icon } from "@/components/ui";
 import type { UseExplorationSearchResult } from "@/hooks";
 import { formatArs, formatDuration } from "@/lib/utils";
 import type { ActivitySearchParams, ActivitySearchResult } from "@/types";
 
-import { ActivitySuggestionsPanel } from "../ActivitySuggestionsPanel";
+import {
+  CatalogPanel,
+  type CatalogAssistant,
+  type CatalogMapInput,
+  type DiscoveryView,
+} from "./CatalogPanel";
 import type { ComposerStop } from "./draft";
+import type { DurationHealth } from "./planDuration";
+import type { CatalogLocation } from "./useCatalogLocation";
+import { useStickyOverflow } from "./useStickyTop";
 import styles from "./ActivitiesStep.module.css";
 
 export type ComposerPane = "catalog" | "itinerary";
 type ActivitySortBy = NonNullable<ActivitySearchParams["sortBy"]>;
 
 interface ActivitiesStepProps {
+  title: string;
+  headingRef: Ref<HTMLHeadingElement>;
+  health: DurationHealth;
   catalog: UseExplorationSearchResult<ActivitySearchResult>;
-  planTitle: string;
-  planDescription: string;
+  location: CatalogLocation;
+  assistant: CatalogAssistant;
   stops: ComposerStop[];
   totalCost: number;
   totalDuration: number;
-  costPerPerson: number;
   search: string;
   minPrice: string;
   maxPrice: string;
+  priceRangeError: string | null;
   categoryIds: number[];
   sortBy: ActivitySortBy;
-  expanded: boolean;
+  defaultSort: ActivitySortBy;
   mobilePane: ComposerPane;
+  view: DiscoveryView;
+  map: CatalogMapInput;
   isSearchTermTooShort: boolean;
   isSearchSettling: boolean;
   prefillLoading: boolean;
   prefillError: string | null;
-  itineraryError: string | null;
   isSaving: boolean;
   announcement: string;
   onSearchChange: (value: string) => void;
@@ -42,40 +59,46 @@ interface ActivitiesStepProps {
   onMaxPriceChange: (value: string) => void;
   onToggleCategory: (categoryId: number) => void;
   onSortChange: (value: ActivitySortBy) => void;
-  onExpand: () => void;
   onPaneChange: (pane: ComposerPane) => void;
+  onViewChange: (view: DiscoveryView) => void;
   onAdd: (activity: ActivitySearchResult) => void;
   onRemove: (activityId: number) => void;
-  onMove: (activityId: number, direction: -1 | 1) => void;
-  onReorder: (sourceActivityId: number, targetActivityId: number) => void;
+  /** The activity pointed at anywhere in the composer. */
+  focusedActivityId: number | null;
+  onPoint: (activityId: number | null) => void;
 }
 
-const SORT_OPTIONS = [
-  { value: "relevance", label: "Relevancia" },
-  { value: "price", label: "Precio" },
-  { value: "rating", label: "Valoración" },
-] satisfies SelectOption<ActivitySortBy>[];
-
+/**
+ * The discovery half of the route step: what the person is making (its name,
+ * the search that feeds it) on the cream canvas. The route they are drawing is
+ * the composer's own dark object beside it. From 900px both are visible at
+ * once; below that they are two tabs of the same page (these tabs control the
+ * route too) and each keeps its own state while the other is shown.
+ */
 export function ActivitiesStep({
+  title,
+  headingRef,
+  health,
   catalog,
-  planTitle,
-  planDescription,
+  location,
+  assistant,
   stops,
   totalCost,
   totalDuration,
-  costPerPerson,
   search,
   minPrice,
   maxPrice,
+  priceRangeError,
   categoryIds,
   sortBy,
-  expanded,
+  defaultSort,
   mobilePane,
+  view,
+  map,
   isSearchTermTooShort,
   isSearchSettling,
   prefillLoading,
   prefillError,
-  itineraryError,
   isSaving,
   announcement,
   onSearchChange,
@@ -83,34 +106,69 @@ export function ActivitiesStep({
   onMaxPriceChange,
   onToggleCategory,
   onSortChange,
-  onExpand,
   onPaneChange,
+  onViewChange,
   onAdd,
   onRemove,
-  onMove,
-  onReorder,
+  focusedActivityId,
+  onPoint,
 }: ActivitiesStepProps) {
-  const [draggedActivityId, setDraggedActivityId] = useState<number | null>(
-    null,
-  );
-  const [dropTargetId, setDropTargetId] = useState<number | null>(null);
-  const activeActivityIds = useMemo(
-    () => new Set(stops.map((stop) => stop.activity.id)),
+  // Numbered like the route: a row's ✓ and its marker carry the same number.
+  const stopNumbers = useMemo(
+    () => new Map(stops.map((stop, index) => [stop.activity.id, index + 1])),
     [stops],
   );
-  const visibleActivities = expanded
-    ? catalog.items
-    : catalog.items.slice(0, 5);
-  const resultTotal = catalog.pagination?.total ?? catalog.items.length;
-  const isLoading = catalog.status === "loading" || isSearchSettling;
+  const discoverRef = useRef<HTMLDivElement>(null);
+  useStickyOverflow(discoverRef);
+  const catalogScrollRef = useRef(0);
+  const previousPaneRef = useRef(mobilePane);
+
+  // The panes share one page, so switching must not strand the reader at the
+  // old scroll depth: the route opens at its top, and the catalog comes back
+  // exactly where it was left.
+  useEffect(() => {
+    const previous = previousPaneRef.current;
+    if (previous === mobilePane) return;
+    previousPaneRef.current = mobilePane;
+    if (mobilePane === "itinerary") window.scrollTo({ top: 0 });
+    else window.scrollTo({ top: catalogScrollRef.current });
+  }, [mobilePane]);
 
   function changePane(nextPane: ComposerPane) {
+    if (nextPane === mobilePane) return;
+    if (mobilePane === "catalog") catalogScrollRef.current = window.scrollY;
     onPaneChange(nextPane);
+  }
+
+  // The map is sized to fill the screen when the page is at its end: opening
+  // it brings the page there, so the map is exactly in view and nothing is
+  // left to scroll (on a phone, panning never competes with the page). The
+  // list comes back at the depth it was left, like the catalog tab does.
+  const listScrollRef = useRef(0);
+  const previousViewRef = useRef(view);
+  useEffect(() => {
+    const previous = previousViewRef.current;
+    previousViewRef.current = view;
+    if (previous === view) return;
+    window.scrollTo({
+      top:
+        view === "map"
+          ? document.documentElement.scrollHeight
+          : listScrollRef.current,
+    });
+  }, [view]);
+
+  function changeView(nextView: DiscoveryView) {
+    if (nextView === view) return;
+    if (view === "list") listScrollRef.current = window.scrollY;
+    onViewChange(nextView);
+  }
+
+  function focusPaneTab(pane: ComposerPane) {
+    changePane(pane);
     document
       .getElementById(
-        nextPane === "catalog"
-          ? "composer-tab-catalog"
-          : "composer-tab-itinerary",
+        pane === "catalog" ? "composer-tab-catalog" : "composer-tab-itinerary",
       )
       ?.focus();
   }
@@ -121,421 +179,124 @@ export function ActivitiesStep({
   ) {
     if (event.key === "ArrowRight" && currentPane === "catalog") {
       event.preventDefault();
-      changePane("itinerary");
+      focusPaneTab("itinerary");
     } else if (event.key === "ArrowLeft" && currentPane === "itinerary") {
       event.preventDefault();
-      changePane("catalog");
+      focusPaneTab("catalog");
     } else if (event.key === "Home") {
       event.preventDefault();
-      changePane("catalog");
+      focusPaneTab("catalog");
     } else if (event.key === "End") {
       event.preventDefault();
-      changePane("itinerary");
+      focusPaneTab("itinerary");
     }
   }
 
-  function startDragging(event: DragEvent<HTMLLIElement>, activityId: number) {
-    setDraggedActivityId(activityId);
-    setDropTargetId(null);
-    event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/plain", String(activityId));
-  }
-
-  function dropOn(targetActivityId: number) {
-    if (draggedActivityId !== null && draggedActivityId !== targetActivityId) {
-      onReorder(draggedActivityId, targetActivityId);
-    }
-    setDraggedActivityId(null);
-    setDropTargetId(null);
-  }
-
+  // Fragments on purpose: the discovery column, the phone's summary bar and
+  // the live region are direct children of the composer's stage, beside the
+  // route, so the pinned tab bar and floating bar span the whole page.
   return (
-    <div className={styles.routeStep}>
-      <div
-        className={styles.mobileTabs}
-        role="tablist"
-        aria-label="Catálogo y recorrido"
-      >
-        <button
-          id="composer-tab-catalog"
-          type="button"
-          role="tab"
-          aria-controls="composer-panel-catalog"
-          aria-selected={mobilePane === "catalog"}
-          tabIndex={mobilePane === "catalog" ? 0 : -1}
-          disabled={isSaving}
-          onClick={() => onPaneChange("catalog")}
-          onKeyDown={(event) => handleTabKeyDown(event, "catalog")}
-        >
-          Catálogo
-        </button>
-        <button
-          id="composer-tab-itinerary"
-          type="button"
-          role="tab"
-          aria-controls="composer-panel-itinerary"
-          aria-selected={mobilePane === "itinerary"}
-          tabIndex={mobilePane === "itinerary" ? 0 : -1}
-          disabled={isSaving}
-          onClick={() => onPaneChange("itinerary")}
-          onKeyDown={(event) => handleTabKeyDown(event, "itinerary")}
-        >
-          Recorrido <span>{stops.length}</span>
-        </button>
-      </div>
+    <>
+      <div ref={discoverRef} className={styles.discover}>
+        <header className={styles.headline}>
+          <h2 ref={headingRef} tabIndex={-1}>
+            {title.trim() || "Tu recorrido"}
+          </h2>
+          <p>Sumá lo que quieras: vos armás el recorrido.</p>
+        </header>
 
-      <div
-        id="composer-panel-catalog"
-        role="tabpanel"
-        tabIndex={0}
-        aria-labelledby="composer-tab-catalog"
-        className={`${styles.catalogPanel} ${mobilePane === "catalog" ? styles.mobileVisible : ""}`}
-      >
-        <div className={styles.panelHeading}>
-          <div>
-            <span className={styles.eyebrow}>02 / DESCUBRÍ</span>
-            <h3>Encontrá tu próxima parada</h3>
-          </div>
-          <span className={styles.countPill}>
-            {isSearchTermTooShort || isSearchSettling
-              ? "Buscando"
-              : `${resultTotal} actividades`}
-          </span>
-        </div>
-
-        <label className={styles.searchBox}>
-          <Icon name="search" size={18} aria-hidden="true" />
-          <span className={styles.srOnly}>Buscar actividades</span>
-          <input
-            type="search"
-            placeholder="Bodega, trekking, cocina..."
-            value={search}
-            onChange={(event) => onSearchChange(event.target.value)}
+        <div
+          className={styles.tabs}
+          role="tablist"
+          aria-label="Catálogo y recorrido"
+        >
+          <button
+            id="composer-tab-catalog"
+            type="button"
+            role="tab"
+            aria-controls="composer-panel-catalog"
+            aria-selected={mobilePane === "catalog"}
+            tabIndex={mobilePane === "catalog" ? 0 : -1}
             disabled={isSaving}
-          />
-          {isLoading ? (
-            <>
-              <Icon
-                name="loader-circle"
-                size={17}
-                className={styles.spin}
-                aria-hidden="true"
-              />
-              <span className={styles.srOnly} role="status">
-                Buscando actividades
-              </span>
-            </>
-          ) : null}
-        </label>
-
-        <div className={styles.categoryRail} inert={isSaving}>
-          <CategoryChips
-            selectedIds={categoryIds}
-            onToggle={onToggleCategory}
-          />
+            onClick={() => changePane("catalog")}
+            onKeyDown={(event) => handleTabKeyDown(event, "catalog")}
+          >
+            Catálogo
+          </button>
+          <button
+            id="composer-tab-itinerary"
+            type="button"
+            role="tab"
+            aria-controls="composer-panel-itinerary"
+            aria-selected={mobilePane === "itinerary"}
+            tabIndex={mobilePane === "itinerary" ? 0 : -1}
+            disabled={isSaving}
+            onClick={() => changePane("itinerary")}
+            onKeyDown={(event) => handleTabKeyDown(event, "itinerary")}
+          >
+            Recorrido <span key={stops.length}>{stops.length}</span>
+          </button>
         </div>
 
-        <div className={styles.filtersRow}>
-          <label>
-            Desde <span className={styles.srOnly}>Precio mínimo</span>
-            <input
-              inputMode="numeric"
-              placeholder="$ mín."
-              value={minPrice}
-              onChange={(event) => onMinPriceChange(event.target.value)}
-              disabled={isSaving}
-            />
-          </label>
-          <label>
-            Hasta <span className={styles.srOnly}>Precio máximo</span>
-            <input
-              inputMode="numeric"
-              placeholder="$ máx."
-              value={maxPrice}
-              onChange={(event) => onMaxPriceChange(event.target.value)}
-              disabled={isSaving}
-            />
-          </label>
-          <label className={styles.sortField}>
-            <span>Ordenar</span>
-            <Select
-              value={sortBy}
-              options={SORT_OPTIONS}
-              aria-label="Ordenar actividades"
-              onChange={onSortChange}
-              disabled={isSaving}
-            />
-          </label>
-        </div>
-
-        <ActivitySuggestionsPanel
-          title={planTitle}
-          description={planDescription}
-          excludeActivityIds={stops.map((stop) => stop.activity.id)}
-          disabled={isSaving}
+        <CatalogPanel
+          catalog={catalog}
+          stopNumbers={stopNumbers}
+          search={search}
+          categoryIds={categoryIds}
+          minPrice={minPrice}
+          maxPrice={maxPrice}
+          priceRangeError={priceRangeError}
+          sortBy={sortBy}
+          defaultSort={defaultSort}
+          location={location}
+          assistant={assistant}
+          isSearchTermTooShort={isSearchTermTooShort}
+          isSearchSettling={isSearchSettling}
+          prefillLoading={prefillLoading}
+          prefillError={prefillError}
+          isSaving={isSaving}
+          visibleOnMobile={mobilePane === "catalog"}
+          view={view}
+          map={map}
+          onViewChange={changeView}
+          onSearchChange={onSearchChange}
+          onToggleCategory={onToggleCategory}
+          onMinPriceChange={onMinPriceChange}
+          onMaxPriceChange={onMaxPriceChange}
+          onSortChange={onSortChange}
           onAdd={onAdd}
+          onRemove={onRemove}
+          focusedActivityId={focusedActivityId}
+          onPoint={onPoint}
         />
-
-        {catalog.errorMessage ? (
-          <div className={styles.catalogMessage} role="alert">
-            <p>{catalog.errorMessage}</p>
-            <Button variant="ghostLight" size="sm" onClick={catalog.retry}>
-              Reintentar
-            </Button>
-          </div>
-        ) : null}
-        {prefillError ? (
-          <p className={styles.inlineError} role="alert">
-            {prefillError}
-          </p>
-        ) : null}
-        {prefillLoading ? (
-          <p className={styles.loadingLine} role="status">
-            Cargando la actividad elegida…
-          </p>
-        ) : null}
-
-        {isSearchTermTooShort ? (
-          <div className={styles.catalogEmpty} role="status">
-            <Icon name="search" size={24} aria-hidden="true" />
-            <strong>La búsqueda empieza con dos letras</strong>
-            <span>Escribí un poco más para encontrar actividades.</span>
-          </div>
-        ) : null}
-        {!isSearchTermTooShort &&
-        !isLoading &&
-        !catalog.hasResults &&
-        catalog.status === "idle" ? (
-          <div className={styles.catalogEmpty}>
-            <Icon name="search" size={24} aria-hidden="true" />
-            <strong>No encontramos actividades con esos criterios</strong>
-            <span>Probá con otra búsqueda o quitá algún filtro.</span>
-          </div>
-        ) : null}
-
-        {!isSearchTermTooShort ? (
-          <div className={styles.resultList} aria-busy={isLoading}>
-            {visibleActivities.map((activity) => {
-              const alreadyAdded = activeActivityIds.has(activity.id);
-              return (
-                <article className={styles.resultCard} key={activity.id}>
-                  <div className={styles.resultMark} aria-hidden="true">
-                    <Icon name="map-pin" size={17} />
-                  </div>
-                  <div className={styles.resultCopy}>
-                    <div className={styles.resultTags}>
-                      {activity.categories.slice(0, 2).map((category) => (
-                        <span key={category.id}>{category.name}</span>
-                      ))}
-                    </div>
-                    <h4>{activity.name}</h4>
-                    <p>
-                      {formatArs(activity.estimatedCost)} <b>·</b>{" "}
-                      {formatDuration(activity.estimatedDuration)}
-                    </p>
-                  </div>
-                  <Button
-                    variant={alreadyAdded ? "secondary" : "ghostEmber"}
-                    size="sm"
-                    aria-pressed={alreadyAdded}
-                    onClick={() => onAdd(activity)}
-                    disabled={isSaving}
-                    aria-label={
-                      alreadyAdded
-                        ? `${activity.name} ya está en el recorrido`
-                        : `Agregar ${activity.name}`
-                    }
-                  >
-                    {alreadyAdded ? (
-                      <>
-                        <Icon name="check" size={14} aria-hidden="true" /> En el
-                        recorrido
-                      </>
-                    ) : (
-                      <>
-                        <Icon name="plus" size={15} aria-hidden="true" /> Sumar
-                      </>
-                    )}
-                  </Button>
-                </article>
-              );
-            })}
-          </div>
-        ) : null}
-
-        {!isSearchTermTooShort && !isLoading && !expanded && resultTotal > 5 ? (
-          <Button
-            variant="secondary"
-            className={styles.moreButton}
-            onClick={onExpand}
-            disabled={isSaving}
-          >
-            Ver más resultados{" "}
-            <Icon name="arrow-right" size={15} aria-hidden="true" />
-          </Button>
-        ) : null}
-        {!isSearchTermTooShort &&
-        !isLoading &&
-        expanded &&
-        catalog.pagination &&
-        catalog.pagination.totalPages > 1 ? (
-          <nav
-            className={styles.pagination}
-            aria-label="Páginas de actividades"
-          >
-            <Button
-              variant="ghostLight"
-              size="sm"
-              disabled={catalog.page <= 1 || isLoading || isSaving}
-              onClick={() => catalog.goToPage(catalog.page - 1)}
-            >
-              Anterior
-            </Button>
-            <span>
-              Página <strong>{catalog.page}</strong> de{" "}
-              {catalog.pagination.totalPages}
-            </span>
-            <Button
-              variant="ghostLight"
-              size="sm"
-              disabled={
-                catalog.page >= catalog.pagination.totalPages ||
-                isLoading ||
-                isSaving
-              }
-              onClick={() => catalog.goToPage(catalog.page + 1)}
-            >
-              Siguiente
-            </Button>
-          </nav>
-        ) : null}
       </div>
 
-      <aside
-        id="composer-panel-itinerary"
-        role="tabpanel"
-        tabIndex={0}
-        aria-labelledby="composer-tab-itinerary"
-        className={`${styles.itineraryPanel} ${mobilePane === "itinerary" ? styles.mobileVisible : ""}`}
-      >
-        <div className={styles.panelHeading}>
-          <div>
-            <span className={styles.eyebrow}>TU PLAN, EN TIEMPO REAL</span>
-            <h3>El recorrido</h3>
-          </div>
-          <span className={styles.countPill}>
-            {stops.length} {stops.length === 1 ? "parada" : "paradas"}
-          </span>
-        </div>
-
-        {itineraryError ? (
-          <p className={styles.inlineError} role="alert">
-            {itineraryError}
-          </p>
-        ) : null}
-        {stops.length === 0 ? (
-          <div className={styles.itineraryEmpty}>
-            <span className={styles.emptyIcon}>
-              <Icon name="route" size={21} aria-hidden="true" />
-            </span>
-            <strong>El mapa todavía está en blanco</strong>
-            <p>
-              Sumá actividades del catálogo y acá vas a ver cómo toma forma el
-              día.
-            </p>
-            <button type="button" onClick={() => changePane("catalog")}>
-              Explorar actividades{" "}
-              <Icon name="arrow-right" size={14} aria-hidden="true" />
-            </button>
-          </div>
-        ) : (
-          <ol className={styles.stopList} aria-label="Paradas en orden">
-            {stops.map((stop, index) => {
-              const activityId = stop.activity.id;
-              return (
-                <li
-                  key={stop.detailId ?? `new-${activityId}`}
-                  className={`${styles.stopItem} ${draggedActivityId === activityId ? styles.stopDragging : ""} ${dropTargetId === activityId && draggedActivityId !== activityId ? styles.stopDropTarget : ""}`}
-                  draggable={!isSaving}
-                  onDragStart={(event) => startDragging(event, activityId)}
-                  onDragEnter={() => setDropTargetId(activityId)}
-                  onDragOver={(event) => {
-                    event.preventDefault();
-                    event.dataTransfer.dropEffect = "move";
-                  }}
-                  onDrop={() => dropOn(activityId)}
-                  onDragEnd={() => {
-                    setDraggedActivityId(null);
-                    setDropTargetId(null);
-                  }}
-                >
-                  <span className={styles.stopNumber} aria-hidden="true">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <div className={styles.stopText}>
-                    <strong>{stop.activity.name}</strong>
-                    <span>
-                      {stop.activity.type ??
-                        stop.activity.categories[0]?.name ??
-                        "Experiencia"}{" "}
-                      · {formatDuration(stop.estimatedDuration)}
-                    </span>
-                    <b>{formatArs(stop.estimatedCost)}</b>
-                  </div>
-                  <div className={styles.stopActions}>
-                    <button
-                      type="button"
-                      aria-label={`Mover ${stop.activity.name} arriba`}
-                      onClick={() => onMove(activityId, -1)}
-                      disabled={isSaving || index === 0}
-                    >
-                      <Icon name="arrow-up" size={16} aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
-                      aria-label={`Mover ${stop.activity.name} abajo`}
-                      onClick={() => onMove(activityId, 1)}
-                      disabled={isSaving || index === stops.length - 1}
-                    >
-                      <Icon name="arrow-down" size={16} aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.removeStop}
-                      aria-label={`Quitar ${stop.activity.name}`}
-                      onClick={() => onRemove(activityId)}
-                      disabled={isSaving}
-                    >
-                      <Icon name="x" size={16} aria-hidden="true" />
-                    </button>
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
-        )}
-
-        <div className={styles.totalCard} aria-label="Estimación del recorrido">
-          <div className={styles.totalTop}>
-            <span>Estimación del recorrido</span>
-            <span>
-              {stops.length} {stops.length === 1 ? "actividad" : "actividades"}
+      {mobilePane === "catalog" && stops.length > 0 ? (
+        <div
+          className={`${styles.mobileBar} ${view === "map" ? styles.mobileBarOverMap : ""}`}
+        >
+          <div aria-label="Resumen del recorrido">
+            <strong>
+              {stops.length} {stops.length === 1 ? "parada" : "paradas"}
+            </strong>
+            <span
+              className={
+                health.level === "normal" ? undefined : styles[health.level]
+              }
+            >
+              {formatDuration(totalDuration)} · {formatArs(totalCost)}
             </span>
           </div>
-          <div className={styles.totalLine}>
-            <span>Duración</span>
-            <strong>{formatDuration(totalDuration)}</strong>
-          </div>
-          <div className={styles.totalLine}>
-            <span>Por persona</span>
-            <strong>{formatArs(costPerPerson)}</strong>
-          </div>
-          <div className={styles.grandTotal}>
-            <span>Costo estimado</span>
-            <strong>{formatArs(totalCost)}</strong>
-          </div>
+          <button
+            type="button"
+            onClick={() => changePane("itinerary")}
+            disabled={isSaving}
+          >
+            Ver recorrido
+            <Icon name="arrow-right" size={15} aria-hidden="true" />
+          </button>
         </div>
-      </aside>
+      ) : null}
 
       <p
         className={styles.srOnly}
@@ -545,6 +306,6 @@ export function ActivitiesStep({
       >
         {announcement}
       </p>
-    </div>
+    </>
   );
 }

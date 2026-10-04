@@ -2,16 +2,34 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getOwnPlan, searchActivities } from "@/lib/api";
+import {
+  assistantImprove,
+  assistantSearch,
+  assistantSuggest,
+  getActivity,
+  getOwnPlan,
+  listCategories,
+  searchActivities,
+  suggestActivities,
+} from "@/lib/api";
 import type { OwnPlanDetail } from "@/types";
 
 import { EditPlanForm } from "./EditPlanForm";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
-vi.mock("@/components/explore", () => ({ CategoryChips: () => null }));
 vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
-  return { ...actual, getOwnPlan: vi.fn(), searchActivities: vi.fn() };
+  return {
+    ...actual,
+    getOwnPlan: vi.fn(),
+    getActivity: vi.fn(),
+    assistantSearch: vi.fn(),
+    assistantSuggest: vi.fn(),
+    assistantImprove: vi.fn(),
+    searchActivities: vi.fn(),
+    listCategories: vi.fn(),
+    suggestActivities: vi.fn(),
+  };
 });
 
 const plan: OwnPlanDetail = {
@@ -43,16 +61,23 @@ describe("EditPlanForm entry point", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getOwnPlan).mockResolvedValue(plan);
-    vi.mocked(searchActivities).mockResolvedValue({ data: [], pagination: { page: 1, limit: 12, total: 0, totalPages: 0 } });
+    vi.mocked(getActivity).mockRejectedValue(new Error("offline"));
+    vi.mocked(assistantSearch).mockRejectedValue(new Error("off"));
+    vi.mocked(assistantSuggest).mockRejectedValue(new Error("off"));
+    vi.mocked(assistantImprove).mockRejectedValue(new Error("off"));
+    vi.mocked(searchActivities).mockResolvedValue({ data: [], pagination: { page: 1, limit: 8, total: 0, totalPages: 0 } });
+    vi.mocked(listCategories).mockResolvedValue({ data: [], pagination: { page: 1, limit: 50, total: 0, totalPages: 0 } });
+    vi.mocked(suggestActivities).mockResolvedValue({ data: [] });
   });
 
   it("loads existing metadata, visibility, and snapshot values into the shared composer", async () => {
     const user = userEvent.setup();
     render(<EditPlanForm planId={12} />);
     expect(await screen.findByLabelText(/Nombre del plan/)).toHaveValue("Domingo entre viñas");
-    expect(screen.getByLabelText("Público")).toBeChecked();
     await user.click(screen.getByRole("button", { name: /Elegir actividades/ }));
-    expect(screen.getByText("Bodega")).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Paradas en orden" })).toHaveTextContent("Bodega");
+    await user.click(screen.getByRole("button", { name: /Revisar plan/ }));
+    expect(screen.getByLabelText("Público")).toBeChecked();
     expect(getOwnPlan).toHaveBeenCalledWith(12);
   });
 
