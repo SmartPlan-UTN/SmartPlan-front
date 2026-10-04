@@ -13,6 +13,11 @@ export interface ExperienceSharingProps {
   outingId: number;
   planTitle: string;
   feedback: PlanFeedback;
+  /**
+   * Whether the plan is still published. When it is not, a shared
+   * experience is hidden but can come back, so it can only be made private.
+   */
+  published?: boolean;
   onChange: (feedback: PlanFeedback) => void;
 }
 
@@ -25,12 +30,14 @@ export function ExperienceSharing({
   outingId,
   planTitle,
   feedback,
+  published = true,
   onChange,
 }: ExperienceSharingProps) {
   const descriptionId = useId();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const copy = FEEDBACK_COPY.sharing;
+  const dormant = feedback.shared && !published;
 
   async function toggle() {
     setBusy(true);
@@ -49,11 +56,23 @@ export function ExperienceSharing({
       <div className={styles.sharingRow}>
         <div className={styles.sharingText}>
           <span className={styles.sharingTitle}>
-            <Icon name={feedback.shared ? "users" : "lock"} size={15} aria-hidden="true" />
-            {feedback.shared ? copy.publicTitle : copy.privateTitle}
+            <Icon
+              name={dormant ? "eye-off" : feedback.shared ? "users" : "lock"}
+              size={15}
+              aria-hidden="true"
+            />
+            {dormant
+              ? copy.unpublishedTitle
+              : feedback.shared
+                ? copy.publicTitle
+                : copy.privateTitle}
           </span>
           <span id={descriptionId} className={styles.sharingBody}>
-            {feedback.shared ? copy.publicBody(planTitle) : copy.privateBody}
+            {dormant
+              ? copy.unpublishedBody(planTitle)
+              : feedback.shared
+                ? copy.publicBody(planTitle)
+                : copy.privateBody}
           </span>
         </div>
         <button

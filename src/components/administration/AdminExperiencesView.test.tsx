@@ -104,6 +104,35 @@ describe("AdminExperiencesView (#106)", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 
+  it("stays on its page while the experience is still in the queue, and steps back once it empties", async () => {
+    const user = userEvent.setup();
+    const onPage = (page: number, data: AdminExperience[], totalPages: number) => ({
+      data,
+      pagination: { page, limit: 20, total: 20 * (totalPages - 1) + data.length, totalPages },
+    });
+    vi.mocked(listAdminExperiences)
+      .mockResolvedValueOnce(onPage(1, [experience({ id: 1 })], 2))
+      .mockResolvedValueOnce(onPage(2, [experience()], 2))
+      // Its comment is confirmed, but its photo is still unreviewed.
+      .mockResolvedValueOnce(onPage(2, [experience({ commentStatus: "approved" })], 2))
+      .mockResolvedValueOnce(onPage(2, [], 1))
+      .mockResolvedValue(onPage(1, [experience({ id: 1 })], 1));
+    render(<AdminExperiencesView />);
+
+    await user.click(await screen.findByRole("button", { name: "Página siguiente" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Confirmar el comentario de Martina García" }),
+    );
+    await waitFor(() => expect(listAdminExperiences).toHaveBeenCalledTimes(3));
+    expect(await screen.findByText("Publicado · revisado")).toBeInTheDocument();
+    expect(listAdminExperiences).toHaveBeenLastCalledWith({ status: "unreviewed", page: 2, limit: 20 });
+
+    await user.click(screen.getByRole("button", { name: "Confirmar la foto 1 de Martina García" }));
+    await waitFor(() =>
+      expect(listAdminExperiences).toHaveBeenLastCalledWith({ status: "unreviewed", page: 1, limit: 20 }),
+    );
+  });
+
   it("can publish again what was taken down", async () => {
     const user = userEvent.setup();
     vi.mocked(listAdminExperiences).mockResolvedValue(

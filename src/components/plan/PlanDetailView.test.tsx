@@ -323,4 +323,13 @@ describe("PlanDetailView — community experiences (#106)", () => {
     ).not.toBeInTheDocument();
     expect(getPlanExperiences).not.toHaveBeenCalled();
   });
+
+  it("has no community section on a cancelled plan", async () => {
+    await renderDetail("view-only", {}, "cancelled");
+
+    expect(
+      screen.queryByRole("region", { name: "Cómo les fue a quienes lo hicieron" }),
+    ).not.toBeInTheDocument();
+    expect(getPlanExperiences).not.toHaveBeenCalled();
+  });
 });

@@ -96,6 +96,9 @@ export const FEEDBACK_COPY = {
     privateTitle: "Solo para vos",
     publicBody: (plan: string) =>
       `Tu experiencia y las fotos de la salida se ven en "${plan}".`,
+    unpublishedTitle: "No se ve ahora",
+    unpublishedBody: (plan: string) =>
+      `"${plan}" ya no está publicado. Si vuelve a publicarse, tu experiencia se va a ver otra vez: hacela privada si no querés.`,
     privateBody:
       "Compartila para que otras personas vean cómo te fue. No se muestra lo que gastaste.",
     error: "No pudimos cambiarlo. Intentá de nuevo.",

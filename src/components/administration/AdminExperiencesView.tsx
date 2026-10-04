@@ -98,7 +98,13 @@ export function AdminExperiencesView() {
     setLoadState({ key, phase: "loading" });
     listAdminExperiences({ status, page, limit: PAGE_SIZE })
       .then((data) => {
-        if (!cancelled) setLoadState({ key, phase: "success", result: data });
+        if (cancelled) return;
+        // Moderating the last item of a page can empty it; step back.
+        if (data.data.length === 0 && page > 1) {
+          setPage(Math.max(1, Math.min(page - 1, data.pagination.totalPages)));
+          return;
+        }
+        setLoadState({ key, phase: "success", result: data });
       })
       .catch((error: unknown) => {
         if (!cancelled) {
@@ -148,8 +154,6 @@ export function AdminExperiencesView() {
       } else {
         await moderateAdminExperiencePhoto(target.experience.id, target.photo.id, input);
       }
-      // A moderated item may leave the current queue with its experience.
-      if (result?.data.length === 1 && page > 1) setPage((current) => current - 1);
       setReloadSequence((current) => current + 1);
       return true;
     } catch (error) {

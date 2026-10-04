@@ -63,6 +63,16 @@ function page(
 describe("CommunityExperiences (#106)", () => {
   beforeEach(() => vi.clearAllMocks());
 
+  it("draws a compound first name's initials from the last-name initial", async () => {
+    getPlanExperiences.mockResolvedValue(
+      page([experience({ author: { alias: "María José P.", avatarUrl: null } })]),
+    );
+    render(<CommunityExperiences planId={7} planTitle="Bodegas de Maipú" />);
+
+    const card = await screen.findByRole("article", { name: "Experiencia de María José P." });
+    expect(within(card).getByText("MP")).toBeInTheDocument();
+  });
+
   it("leads with the summary and the photos, then each person's story", async () => {
     getPlanExperiences.mockResolvedValue(page([experience()]));
     render(<CommunityExperiences planId={7} planTitle="Bodegas de Maipú" />);

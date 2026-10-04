@@ -326,8 +326,10 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
         </div>
 
         {/* Experiences of people who did it (#106): only a published plan
-            has a community to show. */}
-        {plan.kind === "authored" && visibility === "public" ? (
+            that is still on has a community to show. */}
+        {plan.kind === "authored" &&
+        visibility === "public" &&
+        plan.status.key !== "cancelled" ? (
           <CommunityExperiences planId={plan.id} planTitle={plan.title} />
         ) : null}
 

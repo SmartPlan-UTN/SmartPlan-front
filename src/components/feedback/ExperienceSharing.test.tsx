@@ -66,6 +66,25 @@ describe("ExperienceSharing (#106)", () => {
     expect(setFeedbackSharing).toHaveBeenCalledWith(9, false);
   });
 
+  it("still lets a shared experience go private once the plan is unpublished", async () => {
+    const user = userEvent.setup();
+    setFeedbackSharing.mockResolvedValue(feedback({ shared: false }));
+    render(
+      <ExperienceSharing
+        outingId={9}
+        planTitle="Bodegas"
+        feedback={feedback({ shared: true })}
+        published={false}
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("No se ve ahora")).toBeInTheDocument();
+    expect(screen.getByText(/ya no está publicado/)).toBeInTheDocument();
+    await user.click(screen.getByRole("switch"));
+    expect(setFeedbackSharing).toHaveBeenCalledWith(9, false);
+  });
+
   it("keeps the state and explains when the change fails", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();

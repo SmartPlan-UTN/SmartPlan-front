@@ -290,11 +290,14 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
             feedback={current.feedback}
             estimatedTotalCost={current.estimatedTotalCost}
             footer={
-              current.source?.hasCommunity ? (
+              // A shared one keeps its switch after the plan is no longer
+              // published, so its author can still make it private.
+              current.source?.hasCommunity || current.feedback.shared ? (
                 <ExperienceSharing
                   outingId={current.id}
-                  planTitle={current.source.title}
+                  planTitle={current.source?.title ?? current.title}
                   feedback={current.feedback}
+                  published={current.source?.hasCommunity ?? false}
                   onChange={(feedback) =>
                     setOverride({ ...current, feedback })
                   }

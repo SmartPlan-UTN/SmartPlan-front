@@ -127,6 +127,53 @@ describe("OutingDetailView (#130, CU22, CU23)", () => {
     expect(push).toHaveBeenCalledWith("/outings/41");
   });
 
+  it("keeps the sharing switch of a shared experience once the plan is unpublished", async () => {
+    const feedback = {
+      id: 3,
+      rating: 4,
+      tags: [],
+      comment: null,
+      actualCost: null,
+      actualDuration: null,
+      shared: true,
+      commentHidden: false,
+      images: [],
+      createdAt: "2026-09-30T12:00:00.000Z",
+    };
+    const unpublished = { id: 7, kind: "authored" as const, title: "Día de viñedos", available: false, hasCommunity: false };
+    getOuting.mockResolvedValue(
+      outingDetail({
+        status: "completed",
+        completedAt: "2026-09-30T12:00:00.000Z",
+        feedbackState: "submitted",
+        feedback,
+        source: unpublished,
+      }),
+    );
+    const { unmount } = render(<OutingDetailView outingId={40} />);
+
+    expect(await screen.findByRole("switch", { name: "Compartir con la comunidad" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    expect(screen.getByText("No se ve ahora")).toBeInTheDocument();
+    unmount();
+
+    // A private one has nothing left to share it with.
+    getOuting.mockResolvedValue(
+      outingDetail({
+        status: "completed",
+        completedAt: "2026-09-30T12:00:00.000Z",
+        feedbackState: "submitted",
+        feedback: { ...feedback, shared: false },
+        source: unpublished,
+      }),
+    );
+    render(<OutingDetailView outingId={40} />);
+    expect(await screen.findByText("Tu experiencia")).toBeInTheDocument();
+    expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+  });
+
   it("explains a missing outing", async () => {
     const { ApiError } = await import("@/lib/api");
     getOuting.mockRejectedValue(

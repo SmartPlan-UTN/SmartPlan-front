@@ -236,6 +236,16 @@ export function CommunityExperiences({ planId, planTitle }: CommunityExperiences
   );
 }
 
+/**
+ * A stable number for the avatar color. The community never sees an
+ * author's id, so the same alias keeps one color across cards.
+ */
+function aliasHash(alias: string): number {
+  let hash = 0;
+  for (const char of alias) hash = (hash * 31 + char.charCodeAt(0)) | 0;
+  return hash;
+}
+
 function ExperienceCard({
   experience,
   onOpenPhoto,
@@ -243,7 +253,11 @@ function ExperienceCard({
   experience: CommunityExperience;
   onOpenPhoto: (index: number) => void;
 }) {
-  const [name, initial = ""] = experience.author.alias.split(" ");
+  // "María José P.": the first name and the last-name initial, whatever
+  // comes between them.
+  const words = experience.author.alias.split(" ");
+  const name = words[0];
+  const initial = words.length > 1 ? words[words.length - 1] : "";
   const tags = FEEDBACK_TAG_ORDER.filter((tag) => experience.tags.includes(tag));
   const photos = experience.photos.slice(0, CARD_PHOTOS_VISIBLE);
   const hiddenPhotos = experience.photos.length - photos.length;
@@ -254,7 +268,7 @@ function ExperienceCard({
         <UserAvatar
           name={name}
           lastName={initial}
-          userId={experience.id}
+          userId={aliasHash(experience.author.alias)}
           avatarUrl={experience.author.avatarUrl}
         />
         <div className={styles.cardAuthor}>
