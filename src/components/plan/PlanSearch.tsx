@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 
 import {
-  CategoryChips,
+  ExploreLayout,
   FiltersPanel,
   Pagination,
+  SortControl,
   type SortOption,
 } from "@/components/explore";
 import { Button, Icon, LoadingDots } from "@/components/ui";
@@ -52,14 +53,13 @@ function toNumber(value: string): number | undefined {
  * Actividades/Planes tabs never triggers it. This screen's own first-load
  * state stays the same small `LoadingDots` every other list uses.
  */
-export function PlanSearch() {
+export function PlanSearch({ head }: { head?: ReactNode }) {
   const { status: sessionStatus } = useSession();
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, DEBOUNCE_MS);
   const [manualQuery, setManualQuery] = useState<string | null>(null);
   const effectiveQuery = manualQuery ?? debouncedQuery;
 
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const {
     categoryIds,
     minPrice,
@@ -131,64 +131,17 @@ export function PlanSearch() {
   // is what caused the flash on every click.
   const isRefetching = status === "loading" && hasResults;
 
+  // Shown on the narrow-screen "Filtros" toggle, so a folded sidebar never
+  // filters silently.
+  const activeFilters =
+    categoryIds.length +
+    [minPrice, maxPrice, minRating].filter((value) => value.trim() !== "").length;
+
   return (
-    <div className={exploreStyles.searchScreen}>
-      <div className={activityStyles.searchField}>
-        <Icon
-          name="search"
-          size={18}
-          className={activityStyles.searchIcon}
-          aria-hidden="true"
-        />
-        <input
-          type="search"
-          className={activityStyles.searchInput}
-          placeholder="Buscá un plan, tema o experiencia"
-          aria-label="Buscar planes"
-          value={query}
-          onChange={(event) => {
-            handleQueryChange(event.target.value);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              searchNow();
-            }
-          }}
-        />
-        <Button variant="primary" size="sm" onClick={searchNow}>
-          Buscar
-        </Button>
-      </div>
-
-      <CategoryChips selectedIds={categoryIds} onToggle={toggleCategory} />
-
-      {pagination != null ? (
-        <div className={exploreStyles.toolbar}>
-          {hasResults ? (
-            <p className={`sp-body ${activityStyles.resultsLabel}`}>
-              <strong>{pagination.total}</strong> {resultsCountLabel} cerca tuyo
-            </p>
-          ) : (
-            <span />
-          )}
-
-          <div className={exploreStyles.toolbarActions}>
-            <Button
-              variant="ghostLight"
-              size="sm"
-              aria-expanded={filtersOpen}
-              onClick={() => {
-                setFiltersOpen((open) => !open);
-              }}
-            >
-              <Icon name="sliders-horizontal" size={14} aria-hidden="true" />
-              Filtros
-            </Button>
-          </div>
-        </div>
-      ) : null}
-
-      {filtersOpen ? (
+    <ExploreLayout
+      head={head}
+      activeFilters={activeFilters}
+      filters={
         <FiltersPanel
           minPrice={minPrice}
           onMinPriceChange={setMinPrice}
@@ -196,73 +149,116 @@ export function PlanSearch() {
           onMaxPriceChange={setMaxPrice}
           minRating={minRating}
           onMinRatingChange={setMinRating}
-          sortBy={sortBy}
-          onSortByChange={setSortBy}
-          sortOptions={SORT_OPTIONS}
-          direction={direction}
-          onDirectionChange={setDirection}
+          categoryIds={categoryIds}
+          onToggleCategory={toggleCategory}
           onClear={clearFilters}
         />
-      ) : null}
-
-      {status === "loading" && !hasResults ? (
-        <div className={activityStyles.stateBlock}>
-          <LoadingDots label="Armando los mejores planes..." />
-        </div>
-      ) : null}
-
-      {status === "error" && !hasResults ? (
-        <div className={activityStyles.stateBlock} role="alert">
+      }
+    >
+      <div className={exploreStyles.searchScreen}>
+        <div className={activityStyles.searchField}>
           <Icon
-            name="triangle-alert"
-            size={32}
-            className={activityStyles.errorIcon}
+            name="search"
+            size={18}
+            className={activityStyles.searchIcon}
+            aria-hidden="true"
           />
-          <h2 className="sp-h3">Algo salió mal</h2>
-          <p className="sp-body">{errorMessage}</p>
-          <Button variant="ghostEmber" onClick={retry}>
-            Reintentar
+          <input
+            type="search"
+            className={activityStyles.searchInput}
+            placeholder="Buscá un plan, tema o experiencia"
+            aria-label="Buscar planes"
+            value={query}
+            onChange={(event) => {
+              handleQueryChange(event.target.value);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                searchNow();
+              }
+            }}
+          />
+          <Button variant="primary" size="sm" onClick={searchNow}>
+            Buscar
           </Button>
         </div>
-      ) : null}
 
-      {status === "idle" && !hasResults ? (
-        <div className={activityStyles.stateBlock}>
-          <Icon name="inbox" size={32} className={activityStyles.stateIcon} />
-          <h2 className="sp-h3">Sin resultados</h2>
-          <p className="sp-body">
-            No encontramos planes para tu búsqueda. Probá con otras palabras o
-            ajustando los filtros.
-          </p>
-        </div>
-      ) : null}
-
-      {hasResults ? (
-        <div
-          className={`${exploreStyles.resultsFade} ${isRefetching ? exploreStyles.resultsFadeLoading : ""}`}
-        >
-          <div className={exploreStyles.grid}>
-            {items.map((plan) => (
-              <PlanCard plan={plan} key={plan.id} />
-            ))}
-          </div>
-
-          {pagination ? (
-            <Pagination
-              page={page}
-              totalPages={pagination.totalPages}
-              onPageChange={goToPage}
-              disabled={isRefetching}
-            />
-          ) : null}
-
-          {status === "error" ? (
-            <p className={`sp-small ${activityStyles.errorIcon}`} role="alert">
-              {errorMessage}
+        <div className={exploreStyles.toolbar}>
+          {pagination != null && hasResults ? (
+            <p className={`sp-body ${activityStyles.resultsLabel}`}>
+              <strong>{pagination.total}</strong> {resultsCountLabel} cerca tuyo
             </p>
-          ) : null}
+          ) : (
+            <span />
+          )}
+          <SortControl
+            sortBy={sortBy}
+            onSortByChange={setSortBy}
+            sortOptions={SORT_OPTIONS}
+            direction={direction}
+            onDirectionChange={setDirection}
+          />
         </div>
-      ) : null}
-    </div>
+
+        {status === "loading" && !hasResults ? (
+          <div className={activityStyles.stateBlock}>
+            <LoadingDots label="Armando los mejores planes..." />
+          </div>
+        ) : null}
+
+        {status === "error" && !hasResults ? (
+          <div className={activityStyles.stateBlock} role="alert">
+            <Icon
+              name="triangle-alert"
+              size={32}
+              className={activityStyles.errorIcon}
+            />
+            <h2 className="sp-h3">Algo salió mal</h2>
+            <p className="sp-body">{errorMessage}</p>
+            <Button variant="ghostEmber" onClick={retry}>
+              Reintentar
+            </Button>
+          </div>
+        ) : null}
+
+        {status === "idle" && !hasResults ? (
+          <div className={activityStyles.stateBlock}>
+            <Icon name="inbox" size={32} className={activityStyles.stateIcon} />
+            <h2 className="sp-h3">Sin resultados</h2>
+            <p className="sp-body">
+              No encontramos planes para tu búsqueda. Probá con otras palabras o
+              ajustando los filtros.
+            </p>
+          </div>
+        ) : null}
+
+        {hasResults ? (
+          <div
+            className={`${exploreStyles.resultsFade} ${isRefetching ? exploreStyles.resultsFadeLoading : ""}`}
+          >
+            <div className={exploreStyles.grid}>
+              {items.map((plan) => (
+                <PlanCard plan={plan} key={plan.id} />
+              ))}
+            </div>
+
+            {pagination ? (
+              <Pagination
+                page={page}
+                totalPages={pagination.totalPages}
+                onPageChange={goToPage}
+                disabled={isRefetching}
+              />
+            ) : null}
+
+            {status === "error" ? (
+              <p className={`sp-small ${activityStyles.errorIcon}`} role="alert">
+                {errorMessage}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    </ExploreLayout>
   );
 }

@@ -4,34 +4,14 @@ import { useEffect, useState } from "react";
 
 import { Chip } from "@/components/ui";
 import { useMarqueeScroll } from "@/hooks";
-import { listCategories } from "@/lib/api";
 import type { CategoryOption } from "@/types";
 
+import { getCategoriesOnce } from "./categoryCatalog";
 import styles from "./explore.module.css";
 
 export interface CategoryChipsProps {
   selectedIds: number[];
   onToggle: (categoryId: number) => void;
-}
-
-// The category catalog is near-static and every caller asks for the same
-// page (`{ limit: 50 }`), so the first successful fetch is cached for the
-// lifetime of the tab/session instead of re-fetched every time this
-// component mounts — e.g. switching between the Actividades/Planes tabs in
-// `ExploreTabs` unmounts and remounts it. Cleared on failure so a later
-// mount can genuinely retry instead of replaying the same rejection.
-let categoriesPromise: Promise<CategoryOption[]> | null = null;
-
-function getCategoriesOnce(): Promise<CategoryOption[]> {
-  if (!categoriesPromise) {
-    categoriesPromise = listCategories({ limit: 50 })
-      .then((result) => result.data)
-      .catch((error: unknown) => {
-        categoriesPromise = null;
-        throw error;
-      });
-  }
-  return categoriesPromise;
 }
 
 /**
