@@ -359,13 +359,12 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           {sessionStatus === "authenticated" && isAuthor && plan.status.key !== "cancelled" ? (
             <>
               <Link href={planEditRoute(planId)} className={styles.ownerActionLink}>
-                <Button variant="ghostLight" className={styles.ownerActionButton}>
-                  <Icon name="pencil" size={16} aria-hidden="true" />
-                  Editar plan
-                </Button>
+                <Icon name="pencil" size={16} aria-hidden="true" />
+                Editar plan
               </Link>
               <Button
                 variant="ghostLight"
+                size="sm"
                 className={styles.ownerActionButton}
                 onClick={() => setShowCancelModal(true)}
               >

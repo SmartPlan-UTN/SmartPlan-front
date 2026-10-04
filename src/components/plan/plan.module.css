@@ -429,24 +429,18 @@
   letter-spacing: -0.02em;
 }
 
-/* ── Action row (not sticky — normal document flow) ───────────────
-   Three peer controls at one fixed height. Every control reserves the
-   width of its widest label and centres its content, so a state swap
-   (icon, text, colour, border, fill) only repaints inside the box —
-   nothing here ever changes width, height or position. */
+/* ── Action row (not sticky — normal document flow) ─────────────── */
 .actionBar {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: stretch;
   gap: var(--s-3);
 }
 
-/* Guardar + Compartir — grouped, secondary weight. The tighter inner
-   gap sets them apart from the intent toggle without a divider. */
 .actionSecondary {
   display: flex;
   flex: 0 1 auto;
-  gap: var(--s-2);
+  gap: var(--s-3);
 }
 
 .editLink {
@@ -466,27 +460,41 @@
   color: var(--fg-1);
 }
 
+.ownerActionLink,
+.ownerActionButton,
 .saveButton,
 .shareButton {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  gap: var(--s-2);
+  width: 8rem;
   min-height: 44px;
+  box-sizing: border-box;
+  padding: 0 var(--s-2);
+  border: 1px solid var(--hairline);
   border-radius: var(--r-btn);
+  background: transparent;
+  color: var(--fg-1);
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  line-height: 1;
+  text-decoration: none;
   white-space: nowrap;
 }
 
-.saveButton {
-  min-width: 9rem;
-}
-
-.shareButton {
-  min-width: 7.25rem;
-}
-
+.ownerActionLink:hover,
+.ownerActionButton:hover:not(:disabled),
 .saveButton:hover:not(:disabled),
 .shareButton:hover:not(:disabled) {
   background: color-mix(in srgb, var(--char) 4%, transparent);
-  border-color: var(--ember-20);
   filter: none;
+}
+
+.ownerActionLink:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+  box-shadow: var(--focus-ember);
 }
 
 /* The bookmark fills the instant it is saved — a short settle, no
@@ -524,7 +532,7 @@
   min-width: 10.5rem;
   min-height: 44px;
   padding: var(--s-2) var(--s-4);
-  border: 1px solid transparent;
+  border: 1px solid var(--hairline);
   border-radius: var(--r-btn);
   background: var(--ember-15);
   color: var(--ember);
@@ -697,6 +705,11 @@
     min-width: 0;
   }
 
+  .ownerActionLink,
+  .ownerActionButton {
+    width: 100%;
+  }
+
   .statePanel {
     width: 100%;
   }
@@ -739,14 +752,9 @@
 }
 
 .ownerActionLink {
-  display: flex;
-  flex: 1;
-  text-decoration: none;
-}
-
-.ownerActionButton {
-  width: 100%;
-  flex: 1;
+  transition:
+    background-color var(--d-fast) var(--ease-inout),
+    border-color var(--d-fast) var(--ease-inout);
 }
 
 .costPerPersonRow {

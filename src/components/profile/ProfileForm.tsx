@@ -288,9 +288,43 @@ export function ProfileForm() {
         </div>
 
         <div className={styles.avatarActions}>
-          <label>Elegir foto <input type="file" accept="image/jpeg,image/png,image/webp" disabled={avatarBusy} onChange={(event) => { void changeAvatar(event.target.files?.[0]); event.target.value = ''; }} /></label>
-          {profile.avatarUrl ? <button type="button" disabled={avatarBusy} onClick={() => void removeAvatar()}>Quitar foto</button> : null}
-          {avatarError ? <p role="alert">{avatarError}</p> : null}
+          <label
+            className={`${styles.avatarUpload} ${avatarBusy ? styles.avatarUploadDisabled : ""}`}
+          >
+            <Icon name="image-plus" size={16} aria-hidden="true" />
+            <span>{avatarBusy ? "Procesando foto..." : "Elegir foto"}</span>
+            <input
+              className={styles.avatarFileInput}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              aria-describedby="avatar-upload-help"
+              disabled={avatarBusy}
+              onChange={(event) => {
+                void changeAvatar(event.target.files?.[0]);
+                event.target.value = "";
+              }}
+            />
+          </label>
+          <span id="avatar-upload-help" className={styles.avatarHint}>
+            JPG, PNG o WebP · Hasta 5 MB
+          </span>
+          {profile.avatarUrl ? (
+            <Button
+              type="button"
+              variant="ghostEmber"
+              size="sm"
+              disabled={avatarBusy}
+              onClick={() => void removeAvatar()}
+            >
+              <Icon name="trash-2" size={14} aria-hidden="true" />
+              Quitar foto
+            </Button>
+          ) : null}
+          {avatarError ? (
+            <p className={styles.avatarError} role="alert">
+              {avatarError}
+            </p>
+          ) : null}
         </div>
 
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
