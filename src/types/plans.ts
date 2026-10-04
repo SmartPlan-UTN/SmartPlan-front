@@ -445,17 +445,3 @@ export interface OwnPlanDetailItem {
     type: string | null;
   };
 }
-
-/**
- * Payload for requesting a suggested plan (CU31).
- * Backend contract: `POST /api/plan-suggestions`.
- */
-export interface PlanSuggestionDto {
-  budget: number;
-  latitude: number;
-  longitude: number;
-  peopleCount: number;
-  availableDurationMinutes: number;
-  preferences?: string[];
-  notes?: string;
-}

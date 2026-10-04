@@ -10,8 +10,6 @@ import type {
   UpdatePlanComposerDto,
   OwnPlanDetail,
   OwnPlanSummary,
-  Plan,
-  PlanSuggestionDto,
   PlanVisibility,
   ActivitySuggestion,
   ActivitySuggestionsParams,
@@ -202,16 +200,4 @@ export async function removePlanActivity(
   return apiClient.delete<void>(
     `/users/me/plans/${planId}/details/${detailId}`,
   );
-}
-
-/**
- * Requests a suggested plan (CU31).
- * Backend contract: `POST /plan-suggestions`.
- * Note: The backend endpoint is currently provisional and answers 501 PLAN_GENERATION_NOT_AVAILABLE
- * until AI recommendation engine integration (CU17-CU23) is completed in SmartPlan-back.
- */
-export async function generateSuggestedPlan(
-  dto: PlanSuggestionDto,
-): Promise<Plan> {
-  return apiClient.post<Plan>("/plan-suggestions", dto);
 }

@@ -47,7 +47,6 @@ export {
   assistantSuggest,
   assistantImprove,
   removePlanActivity,
-  generateSuggestedPlan,
 } from './plans';
 export {
   cancelOuting,
