@@ -432,15 +432,10 @@
 /* ── Action row (not sticky — normal document flow) ─────────────── */
 .actionBar {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: stretch;
-  gap: var(--s-3);
-}
-
-.actionSecondary {
-  display: flex;
-  flex: 0 1 auto;
-  gap: var(--s-3);
+  gap: var(--s-2);
+  width: min(100%, 760px);
 }
 
 .editLink {
@@ -465,10 +460,13 @@
 .saveButton,
 .shareButton {
   display: inline-flex;
+  flex: 1 1 8rem;
   align-items: center;
   justify-content: center;
   gap: var(--s-2);
-  width: 8rem;
+  width: auto;
+  max-width: 10rem;
+  min-width: 0;
   min-height: 44px;
   box-sizing: border-box;
   padding: 0 var(--s-2);
@@ -520,8 +518,9 @@
    the same box, so the swap never moves anything around it. */
 .statePanel {
   display: flex;
-  flex: 0 1 auto;
+  flex: 1 1 8rem;
   min-width: 0;
+  max-width: 10rem;
 }
 
 .stateToggle {
@@ -529,9 +528,11 @@
   align-items: center;
   justify-content: center;
   gap: var(--s-2);
-  min-width: 10.5rem;
+  width: 100%;
+  min-width: 0;
   min-height: 44px;
-  padding: var(--s-2) var(--s-4);
+  box-sizing: border-box;
+  padding: 0 var(--s-2);
   border: 1px solid var(--hairline);
   border-radius: var(--r-btn);
   background: var(--ember-15);
@@ -688,30 +689,25 @@
   to { transform: rotate(360deg); }
 }
 
-/* Mobile — intent toggle on top, Guardar/Compartir a full-width pair
-   below. State changes still never move anything. */
-@media (max-width: 640px) {
+/* Mobile — keep the five actions full-width and stacked. */
+@media (max-width: 720px) {
   .actionBar {
     flex-direction: column-reverse;
-    align-items: stretch;
-  }
-
-  .actionSecondary {
-    width: 100%;
-  }
-
-  .actionSecondary > * {
-    flex: 1;
-    min-width: 0;
   }
 
   .ownerActionLink,
-  .ownerActionButton {
+  .ownerActionButton,
+  .saveButton,
+  .shareButton {
+    flex: 0 0 auto;
+    max-width: none;
     width: 100%;
   }
 
   .statePanel {
+    flex: 0 0 auto;
     width: 100%;
+    max-width: none;
   }
 
   .stateToggle,

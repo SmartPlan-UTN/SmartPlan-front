@@ -8,6 +8,7 @@ import { ApiError, deleteAvatar, getProfile, updateProfile, uploadAvatar } from 
 import { REQUIRED_MESSAGE } from "@/lib/utils";
 import type { UserProfile } from "@/types";
 
+import { AvatarCropDialog } from "./AvatarCropDialog";
 import styles from "./profile.module.css";
 
 interface FieldErrors {
@@ -118,6 +119,7 @@ export function ProfileForm() {
   const [saving, setSaving] = useState(false);
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [avatarDraft, setAvatarDraft] = useState<File | null>(null);
   const [toastState, setToastState] = useState<"hidden" | "visible" | "leaving">(
     "hidden",
   );
@@ -239,17 +241,29 @@ export function ProfileForm() {
 
   const initials = `${profile.name[0] ?? ""}${profile.lastName[0] ?? ""}`.toUpperCase();
 
-  async function changeAvatar(file: File | undefined) {
+  function selectAvatar(file: File | undefined) {
     if (!file) return;
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
       setAvatarError('Usá JPG, PNG o WebP de hasta 5 MB.');
       return;
     }
+    setAvatarError(null);
+    setAvatarDraft(file);
+  }
+
+  function cancelAvatarCrop() {
+    if (avatarBusy) return;
+    setAvatarDraft(null);
+    setAvatarError(null);
+  }
+
+  async function saveAvatar(file: File) {
     setAvatarBusy(true);
     setAvatarError(null);
     try {
       await uploadAvatar(file);
       setProfile(await getProfile());
+      setAvatarDraft(null);
     } catch {
       setAvatarError('No pudimos guardar tu foto. Intentá de nuevo.');
     } finally {
@@ -300,7 +314,7 @@ export function ProfileForm() {
               aria-describedby="avatar-upload-help"
               disabled={avatarBusy}
               onChange={(event) => {
-                void changeAvatar(event.target.files?.[0]);
+                selectAvatar(event.target.files?.[0]);
                 event.target.value = "";
               }}
             />
@@ -408,6 +422,15 @@ export function ProfileForm() {
           <Icon name="circle-check" size={16} />
           Cambios guardados correctamente
         </div>
+      ) : null}
+      {avatarDraft ? (
+        <AvatarCropDialog
+          file={avatarDraft}
+          busy={avatarBusy}
+          error={avatarError}
+          onCancel={cancelAvatarCrop}
+          onConfirm={saveAvatar}
+        />
       ) : null}
     </>
   );

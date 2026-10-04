@@ -45,6 +45,7 @@ describe('MediaGalleryManager', () => {
     uploadMedia.mockRejectedValueOnce(new Error('S3 unavailable')).mockResolvedValueOnce({ id: 3 });
     render(<MediaGalleryManager target="feedback" resourceId={7} resourceName="experiencia" />);
 
+    await screen.findByText('Sumá fotos si querés');
     const input = await screen.findByLabelText('Agregar fotos');
     await userEvent.upload(input, [
       new File(['first'], 'fallo.png', { type: 'image/png' }),
@@ -64,6 +65,22 @@ describe('MediaGalleryManager', () => {
     expect(await screen.findByText('5 de 5')).toBeInTheDocument();
     expect(screen.queryByLabelText('Agregar fotos')).not.toBeInTheDocument();
     expect(screen.getByText('Llegaste al máximo de 5 fotos.')).toBeInTheDocument();
+  });
+
+  it('offers a retry without claiming photos were saved when every upload fails', async () => {
+    listMedia.mockResolvedValue([]);
+    uploadMedia.mockRejectedValueOnce(new Error('Upload failed'));
+    render(<MediaGalleryManager target="activity" resourceId={3} resourceName="Actividad" />);
+    await screen.findByText('Sumá fotos si querés');
+
+    await userEvent.upload(screen.getByLabelText('Agregar fotos'),
+      new File(['photo'], 'fallo.png', { type: 'image/png' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('fallo.png');
+    expect(alert).toHaveTextContent('Intentá de nuevo.');
+    expect(alert).not.toHaveTextContent('quedaron guardadas');
+    expect(screen.getByLabelText('Agregar fotos')).toBeEnabled();
   });
 
   it('marks the cover and asks before deleting a photo', async () => {

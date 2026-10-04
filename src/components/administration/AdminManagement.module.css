@@ -436,6 +436,10 @@
   padding-top: var(--s-2);
 }
 
+.gallerySection {
+  margin-top: var(--s-5);
+}
+
 @media (max-width: 720px) {
   .headerRow,
   .paginationArea {
