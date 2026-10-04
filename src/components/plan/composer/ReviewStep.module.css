@@ -133,7 +133,7 @@
 }
 
 .facts .beyondDay {
-  color: var(--error-ink, #b42318);
+  color: var(--error-ink);
 }
 
 .health {
@@ -151,7 +151,7 @@
 
 .health.beyondDay {
   background: color-mix(in srgb, var(--error) 12%, var(--cream));
-  color: var(--error-ink, #b42318);
+  color: var(--error-ink);
 }
 
 .health svg {
@@ -256,7 +256,7 @@
 .platePending {
   height: 100%;
   border-radius: var(--r-card);
-  background: #eee7db;
+  background: var(--map-paper);
 }
 
 .plate figcaption {

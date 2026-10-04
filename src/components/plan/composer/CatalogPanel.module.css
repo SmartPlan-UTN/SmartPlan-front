@@ -861,7 +861,7 @@
       color-mix(in srgb, var(--fg-1) 4%, transparent),
       transparent
     )
-    #eee7db;
+    var(--map-paper);
   background-size: 200% 100%;
   animation: shimmer 1.4s linear infinite;
 }

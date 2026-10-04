@@ -160,7 +160,7 @@
 .mapPending {
   height: 148px;
   border-radius: 14px;
-  background: #eee7db;
+  background: var(--map-paper);
 }
 
 .note {

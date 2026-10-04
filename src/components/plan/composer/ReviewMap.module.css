@@ -5,7 +5,7 @@
   min-height: 0;
   overflow: hidden;
   border-radius: var(--r-card);
-  background: #eee7db;
+  background: var(--map-paper);
   isolation: isolate;
 }
 

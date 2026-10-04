@@ -205,7 +205,7 @@
   }
 
   .mobileBar span.beyondDay {
-    color: #ff9a8a;
+    color: var(--error-on-dark-vivid);
     font-weight: 700;
   }
 
