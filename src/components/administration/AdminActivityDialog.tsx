@@ -221,7 +221,11 @@ export function AdminActivityDialog({
             <Button type="submit" disabled={saving}>{saving ? "Guardando..." : "Guardar actividad"}</Button>
           </div>
         </form>
-        {activity ? <MediaGalleryManager target="activity" resourceId={activity.id} resourceName={activity.name} /> : null}
+        {activity ? (
+          <div className={styles.gallerySection}>
+            <MediaGalleryManager target="activity" resourceId={activity.id} resourceName={activity.name} />
+          </div>
+        ) : null}
       </div>
     </div>
   );

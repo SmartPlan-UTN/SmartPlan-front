@@ -78,6 +78,10 @@ export {
   getAdminRatingCounts,
   listAdminRatings,
   moderateAdminRating,
+  getAdminExperienceCounts,
+  listAdminExperiences,
+  moderateAdminExperienceComment,
+  moderateAdminExperiencePhoto,
 } from './administration';
 export {
   addActivityToCollection,
@@ -89,8 +93,10 @@ export {
   updateCollection,
 } from './collections';
 export {
+  setFeedbackSharing,
   submitFeedback,
 } from './feedback';
+export { getPlanExperiences } from './experiences';
 export { getPreferences, updatePreferences } from './users';
 export { createPlanRequest, createSurprisePlanRequest, getPlanRequestStatus } from './plan-requests';
 export { getRecommendations, dismissRecommendation, undoDismissRecommendation } from './plan-recommendations';

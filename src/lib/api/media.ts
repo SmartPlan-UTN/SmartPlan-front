@@ -2,6 +2,14 @@ import type { AvatarImage, MediaImage, MediaTarget } from '@/types';
 import { apiClient } from './client';
 import { getApiBaseUrl } from './config';
 
+const UPLOAD_RESOURCES: Record<MediaTarget, string> = {
+  activity: 'activities',
+  place: 'places',
+  plan: 'plans',
+  rating: 'ratings',
+  feedback: 'feedback',
+};
+
 /** API responses include /api; the configured base URL already ends there. */
 export function mediaRequestPath(url: string): string {
   const base = new URL(getApiBaseUrl());
@@ -24,7 +32,7 @@ export function uploadMedia(
 ): Promise<MediaImage> {
   const form = new FormData();
   form.append('file', file);
-  const resource = target === 'feedback' ? 'feedback' : `${target}s`;
+  const resource = UPLOAD_RESOURCES[target];
   return apiClient.post<MediaImage>(`/${resource}/${resourceId}/images`, form, {
     headers: { 'Content-Type': undefined },
     onUploadProgress: (event) => {

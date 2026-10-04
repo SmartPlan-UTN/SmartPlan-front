@@ -64,6 +64,8 @@ const FEEDBACK: PlanFeedback = {
   comment: null,
   actualCost: null,
   actualDuration: null,
+  shared: false,
+  commentHidden: false,
   createdAt: "2026-08-14T00:00:00.000Z",
 };
 

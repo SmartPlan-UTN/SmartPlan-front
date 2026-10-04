@@ -18,8 +18,8 @@
  *     are scrubbed. The composer replica is centred by CSS and only
  *     transformed.
  *
- *  2. **One continuous object.** The composer does not disappear between
- *     beats — it is written into, annotated, then shrinks to make room. The
+ *  2. **One continuous sequence.** The composer is written into, annotated,
+ *     then shrinks and fades as options arrive. The
  *     chosen option does not disappear either — it grows into the featured
  *     card of the section that follows.
  *
@@ -55,14 +55,14 @@ export interface HowOptionSlot {
  * centre of the stage and scales toward the featured card waiting below.
  */
 export const HOW_OPTION_SLOTS: HowOptionSlot[] = [
-  { frame: { x: 5, y: 52, w: 25, h: 30 }, from: { x: -8, y: 7 }, delay: 0 },
+  { frame: { x: 5, y: 37, w: 25, h: 36 }, from: { x: -8, y: 7 }, delay: 0 },
   {
-    frame: { x: 32, y: 45, w: 36, h: 36 },
+    frame: { x: 32, y: 30, w: 36, h: 44 },
     from: { x: 0, y: 8 },
     delay: 0.16,
     chosen: true,
   },
-  { frame: { x: 70, y: 52, w: 25, h: 30 }, from: { x: 8, y: 7 }, delay: 0.32 },
+  { frame: { x: 70, y: 37, w: 25, h: 36 }, from: { x: 8, y: 7 }, delay: 0.32 },
 ];
 
 /** The bottom-left corner the step marker holds for the whole scene. Nothing
@@ -78,6 +78,8 @@ export interface HowBeats {
   type: number;
   /** The three context annotations rising out of the phrase and retracting. */
   signals: number;
+  /** The connector drawing through the three interpreted fragments. */
+  connections: number;
   /** The composer stepping back to make room for the options. */
   shrink: number;
   /** The options arriving. Per-card timing via `optionProgress`. */
@@ -107,7 +109,7 @@ const ease = (value: number) => value * value * (3 - 2 * value);
  *
  * ── `signals`, and why it goes back down ────────────────────────────
  *
- * It rises between 0.26 and 0.46 and is gone again by 0.6. Interpretation is
+ * It opens at 0.24, connects the fragments through 0.46, and closes by 0.56. Interpretation is
  * a step, not a place the product stays — leaving the annotations on screen
  * would turn "smartplan entiende" into a permanent HUD. Same reasoning, and
  * same shape, as `warm` in `getStoryBeats`.
@@ -117,9 +119,10 @@ export function getHowBeats(enter: number, t: number): HowBeats {
     headline: ease(span(enter, 0.34, 0.7)) * (1 - ease(span(t, 0.44, 0.6))),
     emphasis: ease(span(t, 0.02, 0.34)),
     type: ease(span(t, 0.06, 0.24)),
-    signals: clamp01(ease(span(t, 0.26, 0.46)) - ease(span(t, 0.48, 0.6))),
+    signals: clamp01(ease(span(t, 0.24, 0.28)) - ease(span(t, 0.48, 0.56))),
+    connections: span(t, 0.26, 0.46),
     shrink: ease(span(t, 0.46, 0.62)),
-    options: span(t, 0.5, 0.84),
+    options: span(t, 0.58, 0.84),
     choose: ease(span(t, 0.8, 0.92)),
     expand: ease(span(t, 0.9, 1)),
   };
@@ -141,7 +144,7 @@ export function optionProgress(options: number, delay: number): number {
  */
 export function activeStep(t: number): 0 | 1 | 2 | 3 {
   if (t < 0.24) return 0;
-  if (t < 0.5) return 1;
+  if (t < 0.58) return 1;
   if (t < 0.8) return 2;
   return 3;
 }

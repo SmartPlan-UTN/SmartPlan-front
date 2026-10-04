@@ -65,59 +65,62 @@ export function PlanResultCard({
         .join(" ")}
       style={{ animationDelay: `${index * 60}ms` }}
     >
-      <div className={styles.media} aria-hidden="true">
-        <span className={styles.indexBadge} style={{ background: accentColor }}>
-          {index + 1}
-        </span>
-      </div>
+      <span className={styles.accentBar} style={{ background: accentColor }} aria-hidden="true" />
       <div className={styles.body}>
-        <h3 className={styles.title}>
-          <Link href={planDetailRoute(plan.id)} className={styles.titleLink}>
-            {plan.title}
-          </Link>
-        </h3>
+        <div className={styles.header}>
+          <span className={styles.indexBadge} style={{ background: accentColor }} aria-hidden="true">
+            {index + 1}
+          </span>
+          <h3 className={styles.title}>
+            <Link href={planDetailRoute(plan.id)} className={styles.titleLink}>
+              {plan.title}
+            </Link>
+          </h3>
+        </div>
 
         {plan.description ? <p className={styles.description}>{plan.description}</p> : null}
 
+        <div className={styles.summary}>
+          <Badge variant="cost">{formatArs(plan.estimatedTotalCost)}</Badge>
+          <span className={styles.summaryItem}>
+            <Icon name="clock" size={14} aria-hidden="true" />
+            {formatDuration(plan.estimatedTotalDuration)}
+          </span>
+          <span className={styles.summaryItem}>
+            <Icon name="route" size={14} aria-hidden="true" />
+            {plan.activityCount} {plan.activityCount === 1 ? "parada" : "paradas"}
+          </span>
+        </div>
+
         {itinerary.length > 0 ? (
           <ol className={styles.itinerary} aria-label="Itinerario del plan">
-            {itinerary.slice(0, 3).map((stop, stopIndex) => (
-              <li key={stop.id}>
-                <span className={styles.itineraryNumber}>{stopIndex + 1}</span>
-                <span className={styles.itineraryName}>{stop.activity.name}</span>
-              </li>
+            {itinerary.slice(0, 3).map((stop) => (
+              <li key={stop.id}>{stop.activity.name}</li>
             ))}
-            {itinerary.length > 3 ? <li className={styles.moreStops}>+{itinerary.length - 3} paradas más</li> : null}
+            {itinerary.length > 3 ? <li className={styles.moreStops}>+{itinerary.length - 3} más</li> : null}
           </ol>
         ) : null}
 
-        <div className={styles.metaRow}>
-          <span className={styles.metaItem}>
-            <Icon name="clock" size={12} />
-            {formatDuration(plan.estimatedTotalDuration)}
-          </span>
-          <Badge variant="cost">{formatArs(plan.estimatedTotalCost)}</Badge>
-          <span className={styles.metaItem}>
-            <Icon name="route" size={12} />
-            {plan.activityCount} {plan.activityCount === 1 ? "parada" : "paradas"}
-          </span>
-          {zone ? (
-            <span className={styles.metaItem}>
-              <Icon name="map-pin" size={12} />
-              {zone}
-            </span>
-          ) : null}
-          {plan.averageRating > 0 ? (
-            <span className={styles.metaItem}>
-              <Stars rating={plan.averageRating} size={11} />
-              {plan.averageRating.toFixed(1)}
-            </span>
-          ) : null}
-        </div>
+        {zone || plan.averageRating > 0 ? (
+          <div className={styles.metaRow}>
+            {zone ? (
+              <span className={styles.metaItem}>
+                <Icon name="map-pin" size={12} aria-hidden="true" />
+                {zone}
+              </span>
+            ) : null}
+            {plan.averageRating > 0 ? (
+              <span className={styles.metaItem}>
+                <Stars rating={plan.averageRating} size={11} />
+                {plan.averageRating.toFixed(1)}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
 
         {plan.categories.length > 0 ? (
           <div className={styles.tagRow}>
-            {plan.categories.slice(0, 3).map((category) => (
+            {plan.categories.slice(0, 2).map((category) => (
               <Badge variant="tag" key={category.id}>
                 {category.name}
               </Badge>

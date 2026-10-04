@@ -132,7 +132,9 @@ export function AdminPlanDialog({ plan, saving, error, onClose, onSave }: AdminP
             <Button type="submit" disabled={saving}>{saving ? "Guardando..." : "Guardar cambios"}</Button>
           </div>
         </form>
-        <MediaGalleryManager target="plan" resourceId={plan.id} resourceName={plan.title} />
+        <div className={styles.gallerySection}>
+          <MediaGalleryManager target="plan" resourceId={plan.id} resourceName={plan.title} />
+        </div>
       </div>
     </div>
   );

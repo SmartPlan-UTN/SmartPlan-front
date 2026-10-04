@@ -173,6 +173,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--s-4);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   padding: var(--s-5);
   border: 1.5px solid var(--hairline);
   border-radius: var(--r-card);
@@ -200,9 +203,19 @@
 
 .managerHeader {
   display: flex;
-  align-items: flex-start;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
   gap: var(--s-3);
+}
+
+.managerHeaderActions {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--s-2);
 }
 
 .managerTitle {
@@ -215,6 +228,10 @@
   font-weight: var(--w-heading);
 }
 
+.managerHeader > div:first-child {
+  min-width: 0;
+}
+
 .managerTitle svg {
   color: var(--ember);
 }
@@ -223,6 +240,7 @@
   margin: var(--s-1) 0 0;
   color: var(--fg-2);
   font-size: var(--t-small);
+  overflow-wrap: anywhere;
 }
 
 .managerCount {
@@ -238,7 +256,7 @@
 
 .managerGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 132px), 1fr));
   gap: var(--s-3);
   margin: 0;
   padding: 0;
@@ -246,7 +264,7 @@
 }
 
 .managerCompact .managerGrid {
-  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 76px), 1fr));
   gap: var(--s-2);
 }
 
@@ -281,6 +299,25 @@
   border-radius: var(--r-chip);
   background: var(--ember);
   color: var(--white);
+  font-size: 11px;
+  font-weight: var(--w-label);
+  pointer-events: none;
+}
+
+/* Only on the owner's outing photos that moderation took down (#106):
+   the photo stays theirs, it just no longer shows in the community. */
+.hiddenBadge {
+  position: absolute;
+  top: var(--s-2);
+  right: var(--s-2);
+  max-width: calc(100% - var(--s-4));
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--r-chip);
+  background: var(--char);
+  color: var(--fg-on-dark);
   font-size: 11px;
   font-weight: var(--w-label);
   pointer-events: none;
@@ -427,6 +464,42 @@
   white-space: nowrap;
 }
 
+.headerAdd {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: 40px;
+  padding: 0 var(--s-3);
+  border: 1px solid var(--ember-20);
+  border-radius: var(--r-btn);
+  background: var(--ember-04);
+  color: var(--ember);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.headerAdd:hover,
+.headerAdd:focus-within {
+  border-color: var(--ember);
+  background: var(--ember-10);
+}
+
+.headerAdd[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.headerAdd:focus-within {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
 .addTile {
   display: flex;
   flex-direction: column;
@@ -469,6 +542,7 @@
 }
 
 .emptyDrop {
+  min-width: 0;
   padding: var(--s-5);
 }
 
@@ -511,8 +585,10 @@
 
 .emptyDropText {
   display: flex;
+  min-width: 0;
   flex-direction: column;
   gap: 2px;
+  overflow-wrap: anywhere;
 }
 
 .emptyDropTitle {
@@ -537,6 +613,7 @@
 
 .managerError {
   display: flex;
+  min-width: 0;
   align-items: flex-start;
   gap: var(--s-2);
   margin: 0;
@@ -545,12 +622,18 @@
   background: color-mix(in srgb, var(--error) 8%, transparent);
   color: var(--fg-1);
   font-size: var(--t-small);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .managerError svg {
   flex: none;
   margin-top: 2px;
   color: var(--error);
+}
+
+.managerError > span {
+  min-width: 0;
 }
 
 .managerFull {
@@ -660,8 +743,17 @@
     padding: 0;
   }
 
+  .managerHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .managerHeaderActions {
+    justify-content: flex-start;
+  }
+
   .managerGrid {
-    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 96px), 1fr));
     gap: var(--s-2);
   }
 

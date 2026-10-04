@@ -86,6 +86,8 @@ const FEEDBACK: PlanFeedback = {
   comment: null,
   actualCost: null,
   actualDuration: null,
+  shared: false,
+  commentHidden: false,
   createdAt: "2026-08-20T00:00:00.000Z",
 };
 
@@ -671,5 +673,39 @@ describe("FeedbackDialog → rating the activities (CU23 → CU44)", () => {
     await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK));
     expect(onDismiss).not.toHaveBeenCalled();
     expect(createRating).not.toHaveBeenCalled();
+  });
+});
+
+describe("FeedbackDialog sharing with the community (#106)", () => {
+  it("never offers sharing for an outing without a published plan", async () => {
+    setup();
+    await userEvent.click(screen.getAllByRole("radio")[3]);
+
+    expect(
+      screen.queryByRole("checkbox", { name: /compartir mi experiencia/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the experience private unless the person opts in", async () => {
+    setup({ canShare: true });
+    await userEvent.click(screen.getAllByRole("radio")[3]);
+
+    const share = screen.getByRole("checkbox", { name: /compartir mi experiencia/i });
+    expect(share).not.toBeChecked();
+    expect(share).toHaveAccessibleDescription(/lo que gastaste nunca se muestra/i);
+
+    await userEvent.click(screen.getByRole("button", { name: /enviar opinión/i }));
+    expect(submitFeedback).toHaveBeenCalledWith(7, { rating: 4 });
+  });
+
+  it("sends the opt-in with the feedback", async () => {
+    setup({ canShare: true });
+    await userEvent.click(screen.getAllByRole("radio")[4]);
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: /compartir mi experiencia/i })
+    );
+    await userEvent.click(screen.getByRole("button", { name: /enviar opinión/i }));
+
+    expect(submitFeedback).toHaveBeenCalledWith(7, { rating: 5, shared: true });
   });
 });
