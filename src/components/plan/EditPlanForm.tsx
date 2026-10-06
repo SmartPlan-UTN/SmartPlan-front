@@ -16,7 +16,7 @@ import {
   ApiError,
 } from "@/lib/api";
 import { planDetailRoute, ROUTES } from "@/lib/routes";
-import { formatArs, formatDuration } from "@/lib/utils";
+import { categoryLabel, formatArs, formatDuration } from "@/lib/utils";
 import type {
   ActivitySearchResult,
   OwnPlanDetail,
@@ -522,7 +522,7 @@ function LoadedEditPlanForm({ plan }: { plan: OwnPlanDetail }) {
                   <div>
                     <p className={styles.itineraryName}>{item.activity.name}</p>
                     <div className={styles.itineraryMeta}>
-                      <span>{item.activity.type || "Actividad"}</span>
+                      <span>{item.activity.type ? categoryLabel(item.activity.type) : "Actividad"}</span>
                       <span>•</span>
                       <span>{formatDuration(item.estimatedDuration)}</span>
                     </div>

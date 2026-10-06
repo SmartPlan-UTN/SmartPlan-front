@@ -7,7 +7,7 @@ import { Button, ConfirmationDialog, Icon } from "@/components/ui";
 import { useDebouncedValue } from "@/hooks";
 import { searchActivities, createPlan, addPlanActivity, ApiError } from "@/lib/api";
 import { ROUTES } from "@/lib/routes";
-import { formatArs, formatDuration } from "@/lib/utils";
+import { categoryLabel, formatArs, formatDuration } from "@/lib/utils";
 import type { ActivitySearchResult } from "@/types";
 
 import { ActivitySuggestionsPanel } from "./ActivitySuggestionsPanel";
@@ -396,7 +396,7 @@ export function CreatePlanForm() {
                   <div>
                     <p className={styles.itineraryName}>{act.name}</p>
                     <div className={styles.itineraryMeta}>
-                      <span>{act.type || "Actividad"}</span>
+                      <span>{act.type ? categoryLabel(act.type) : "Actividad"}</span>
                       <span>•</span>
                       <span>{formatDuration(act.estimatedDuration)}</span>
                     </div>
