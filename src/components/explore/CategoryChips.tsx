@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Chip } from "@/components/ui";
 import { useMarqueeScroll } from "@/hooks";
 import { listCategories } from "@/lib/api";
+import { categoryLabel } from "@/lib/utils";
 import type { CategoryOption } from "@/types";
 
 import styles from "./explore.module.css";
@@ -85,7 +86,7 @@ export function CategoryChips({ selectedIds, onToggle }: CategoryChipsProps) {
         }}
         {...(decorative ? { "aria-hidden": true, tabIndex: -1 } : null)}
       >
-        {category.name}
+        {categoryLabel(category.name)}
       </Chip>
     );
   }

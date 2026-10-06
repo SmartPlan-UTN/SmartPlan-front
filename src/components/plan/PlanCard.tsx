@@ -4,7 +4,7 @@ import { Badge, Icon, Stars } from "@/components/ui";
 import { AuthenticatedImage } from "@/components/media";
 import { useFavorites } from "@/context";
 import { planDetailRoute } from "@/lib/routes";
-import { formatArs, formatDuration, gradientFor } from "@/lib/utils";
+import { categoryLabel, formatArs, formatDuration, gradientFor } from "@/lib/utils";
 import type { PlanSearchResult } from "@/types";
 
 import styles from "./plan.module.css";
@@ -91,7 +91,7 @@ export function PlanCard({
         <div className={exploreStyles.tagRow}>
           {visibleCategories.map((category) => (
             <Badge variant="tag" key={category.id}>
-              {category.name}
+              {categoryLabel(category.name)}
             </Badge>
           ))}
         </div>
