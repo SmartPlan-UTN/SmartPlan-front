@@ -6,6 +6,7 @@ import Link from "next/link";
 import { AddToCollectionDialog } from "@/components/collection";
 import { LocationPreview } from "@/components/explore";
 import { AddToPlanDialog } from "@/components/plan";
+import { MediaGallery } from "@/components/media";
 import {
   Badge,
   Button,
@@ -148,6 +149,7 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
         </button>
       </div>
 
+      <MediaGallery target="activity" resourceId={activity.id} resourceName={activity.name} />
       <div className={styles.titleBlock}>
         <div className={styles.badgeRow}>
           {categoryLabel ? (

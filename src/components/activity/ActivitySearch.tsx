@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 
 import {
-  CategoryChips,
+  ExploreLayout,
   FiltersPanel,
   Pagination,
+  SortControl,
   type SortOption,
 } from "@/components/explore";
 import { Button, Icon, LoadingDots } from "@/components/ui";
@@ -44,7 +45,7 @@ function toNumber(value: string): number | undefined {
  * Debounces the query, renders loading/empty/error states, and paginates
  * page by page (not infinite scroll).
  */
-export function ActivitySearch() {
+export function ActivitySearch({ head }: { head?: ReactNode }) {
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, DEBOUNCE_MS);
   // Set by the "Buscar" button or Enter, to search immediately instead of
@@ -53,7 +54,6 @@ export function ActivitySearch() {
   const [manualQuery, setManualQuery] = useState<string | null>(null);
   const effectiveQuery = manualQuery ?? debouncedQuery;
 
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const {
     categoryIds,
     minPrice,
@@ -203,68 +203,19 @@ export function ActivitySearch() {
   // is what caused the flash on every click.
   const isRefetching = status === "loading" && hasResults;
 
+  // Shown on the narrow-screen "Filtros" toggle, so a folded sidebar never
+  // filters silently.
+  const activeFilters =
+    categoryIds.length +
+    [minPrice, maxPrice, minRating].filter((value) => value.trim() !== "").length +
+    (cityId !== null ? 1 : 0) +
+    (departmentId !== null ? 1 : 0);
+
   return (
-    <div className={exploreStyles.searchScreen}>
-      <div className={styles.searchField}>
-        <Icon
-          name="search"
-          size={18}
-          className={styles.searchIcon}
-          aria-hidden="true"
-        />
-        <input
-          type="search"
-          className={styles.searchInput}
-          placeholder="Buscá una actividad, lugar o experiencia"
-          aria-label="Buscar actividades"
-          value={query}
-          onChange={(event) => {
-            handleQueryChange(event.target.value);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              searchNow();
-            }
-          }}
-        />
-        <Button variant="primary" size="sm" onClick={searchNow}>
-          Buscar
-        </Button>
-      </div>
-
-      <CategoryChips selectedIds={categoryIds} onToggle={toggleCategory} />
-
-      {pagination != null ? (
-        <div className={exploreStyles.toolbar}>
-          {hasResults ? (
-            <p className={`sp-body ${styles.resultsLabel}`}>
-              <strong>{pagination.total}</strong> {resultsCountLabel} cerca tuyo
-            </p>
-          ) : (
-            <span />
-          )}
-
-          <div className={exploreStyles.toolbarActions}>
-            <Link href={mapFiltersQuery} className={exploreStyles.toolbarLink}>
-              <Icon name="map" size={14} aria-hidden="true" />
-              Ver mapa
-            </Link>
-            <Button
-              variant="ghostLight"
-              size="sm"
-              aria-expanded={filtersOpen}
-              onClick={() => {
-                setFiltersOpen((open) => !open);
-              }}
-            >
-              <Icon name="sliders-horizontal" size={14} aria-hidden="true" />
-              Filtros
-            </Button>
-          </div>
-        </div>
-      ) : null}
-
-      {filtersOpen ? (
+    <ExploreLayout
+      head={head}
+      activeFilters={activeFilters}
+      filters={
         <FiltersPanel
           minPrice={minPrice}
           onMinPriceChange={setMinPrice}
@@ -272,11 +223,8 @@ export function ActivitySearch() {
           onMaxPriceChange={setMaxPrice}
           minRating={minRating}
           onMinRatingChange={setMinRating}
-          sortBy={sortBy}
-          onSortByChange={setSortBy}
-          sortOptions={SORT_OPTIONS}
-          direction={direction}
-          onDirectionChange={setDirection}
+          categoryIds={categoryIds}
+          onToggleCategory={toggleCategory}
           onClear={() => {
             clearFilters();
             handleCityIdChange(null);
@@ -291,66 +239,118 @@ export function ActivitySearch() {
             departmentsLoading,
           }}
         />
-      ) : null}
-
-      {status === "loading" && !hasResults ? (
-        <div className={styles.stateBlock}>
-          <LoadingDots label="Buscando lo mejor cerca tuyo..." />
-        </div>
-      ) : null}
-
-      {status === "error" && !hasResults ? (
-        <div className={styles.stateBlock} role="alert">
-          <Icon
-            name="triangle-alert"
-            size={32}
-            className={styles.errorIcon}
-          />
-          <h2 className="sp-h3">Algo salió mal</h2>
-          <p className="sp-body">{errorMessage}</p>
-          <Button variant="ghostEmber" onClick={retry}>
-            Reintentar
-          </Button>
-        </div>
-      ) : null}
-
-      {status === "idle" && !hasResults ? (
-        <div className={styles.stateBlock}>
-          <Icon name="inbox" size={32} className={styles.stateIcon} />
-          <h2 className="sp-h3">Sin resultados</h2>
-          <p className="sp-body">
-            No encontramos actividades para tu búsqueda. Probá con otras
-            palabras o ajustando los filtros.
-          </p>
-        </div>
-      ) : null}
-
-      {hasResults ? (
-        <div
-          className={`${exploreStyles.resultsFade} ${isRefetching ? exploreStyles.resultsFadeLoading : ""}`}
-        >
-          <div className={exploreStyles.grid}>
-            {items.map((activity) => (
-              <ActivityCard activity={activity} key={activity.id} />
-            ))}
-          </div>
-
-          {pagination ? (
-            <Pagination
-              page={page}
-              totalPages={pagination.totalPages}
-              onPageChange={goToPage}
-              disabled={isRefetching}
+      }
+    >
+      <div className={exploreStyles.searchScreen}>
+        <div className={exploreStyles.searchRow}>
+          <div className={styles.searchField}>
+            <Icon
+              name="search"
+              size={18}
+              className={styles.searchIcon}
+              aria-hidden="true"
             />
-          ) : null}
-
-          {status === "error" ? (
-            <p className={`sp-small ${styles.errorIcon}`} role="alert">
-              {errorMessage}
-            </p>
-          ) : null}
+            <input
+              type="search"
+              className={styles.searchInput}
+              placeholder="Buscá una actividad, lugar o experiencia"
+              aria-label="Buscar actividades"
+              value={query}
+              onChange={(event) => {
+                handleQueryChange(event.target.value);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  searchNow();
+                }
+              }}
+            />
+            <Button variant="primary" size="sm" onClick={searchNow}>
+              Buscar
+            </Button>
+          </div>
+          <Link href={mapFiltersQuery} className={exploreStyles.searchMapLink}>
+            <Icon name="map" size={16} aria-hidden="true" />
+            Ver mapa
+          </Link>
         </div>
-      ) : null}
-    </div>
+
+        <div className={exploreStyles.toolbar}>
+          {pagination != null && hasResults ? (
+            <p className={`sp-body ${styles.resultsLabel}`}>
+              <strong>{pagination.total}</strong> {resultsCountLabel} cerca tuyo
+            </p>
+          ) : (
+            <span />
+          )}
+          <SortControl
+            sortBy={sortBy}
+            onSortByChange={setSortBy}
+            sortOptions={SORT_OPTIONS}
+            direction={direction}
+            onDirectionChange={setDirection}
+          />
+        </div>
+
+        {status === "loading" && !hasResults ? (
+          <div className={styles.stateBlock}>
+            <LoadingDots label="Buscando lo mejor cerca tuyo..." />
+          </div>
+        ) : null}
+
+        {status === "error" && !hasResults ? (
+          <div className={styles.stateBlock} role="alert">
+            <Icon
+              name="triangle-alert"
+              size={32}
+              className={styles.errorIcon}
+            />
+            <h2 className="sp-h3">Algo salió mal</h2>
+            <p className="sp-body">{errorMessage}</p>
+            <Button variant="ghostEmber" onClick={retry}>
+              Reintentar
+            </Button>
+          </div>
+        ) : null}
+
+        {status === "idle" && !hasResults ? (
+          <div className={styles.stateBlock}>
+            <Icon name="inbox" size={32} className={styles.stateIcon} />
+            <h2 className="sp-h3">Sin resultados</h2>
+            <p className="sp-body">
+              No encontramos actividades para tu búsqueda. Probá con otras
+              palabras o ajustando los filtros.
+            </p>
+          </div>
+        ) : null}
+
+        {hasResults ? (
+          <div
+            className={`${exploreStyles.resultsFade} ${isRefetching ? exploreStyles.resultsFadeLoading : ""}`}
+          >
+            <div className={exploreStyles.grid}>
+              {items.map((activity) => (
+                <ActivityCard activity={activity} key={activity.id} />
+              ))}
+            </div>
+
+            {pagination ? (
+              <Pagination
+                page={page}
+                totalPages={pagination.totalPages}
+                onPageChange={goToPage}
+                disabled={isRefetching}
+              />
+            ) : null}
+
+            {status === "error" ? (
+              <p className={`sp-small ${styles.errorIcon}`} role="alert">
+                {errorMessage}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    </ExploreLayout>
   );
 }

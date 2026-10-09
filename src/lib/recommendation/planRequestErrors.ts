@@ -1,34 +1,18 @@
 import { ApiError } from "@/lib/api";
 
 /**
- * How a surprise plan request can fail before or during generation (CU19 ·
- * PAN 09). Each case gets its own copy and its own set of offered actions —
- * a denied location is a different situation from a provider outage, and the
- * spec writes distinct messages for them.
+ * How a surprise plan request can fail during generation (CU19 · PAN 09).
+ * Resolving a location on the client is never an error any more — the
+ * backend generates a plan even without one (falls back to a sensible
+ * department) — so only genuine backend/provider failures are covered here.
  */
-export type SurpriseLocationErrorKind =
-  | "denied-no-fallback"
-  | "unavailable-no-fallback"
-  | "unsupported"
-  | "no-location";
-
-export type SurpriseErrorAction =
-  | "retry"
-  | "keep-waiting"
-  | "go-back"
-  | "go-preferences";
+export type SurpriseErrorAction = "retry" | "keep-waiting" | "go-back";
 
 export interface SurpriseErrorCopy {
   title: string;
   body: string;
   actions: SurpriseErrorAction[];
 }
-
-const NEEDS_LOCATION: SurpriseErrorCopy = {
-  title: "Necesitamos tu ubicación para sorprenderte.",
-  body: "Activá el GPS o configurá una ubicación en tus preferencias.",
-  actions: ["go-preferences", "retry"],
-};
 
 const NOT_ENOUGH_ACTIVITIES: SurpriseErrorCopy = {
   title: "No encontramos suficientes actividades cerca de tu ubicación.",
@@ -43,28 +27,6 @@ const GENERATION_ERROR: SurpriseErrorCopy = {
 };
 
 /**
- * Copy for a location problem raised on the client, before any request was
- * created. `denied` / `unavailable` only reach here when there is also no
- * usable preferred area to fall back to.
- */
-export function surpriseLocationErrorCopy(
-  kind: SurpriseLocationErrorKind,
-): SurpriseErrorCopy {
-  switch (kind) {
-    case "unsupported":
-      return {
-        title: "Tu navegador no permite compartir la ubicación.",
-        body: "Configurá una ubicación en tus preferencias para usar Sorpréndeme.",
-        actions: ["go-preferences"],
-      };
-    case "denied-no-fallback":
-    case "unavailable-no-fallback":
-    case "no-location":
-      return NEEDS_LOCATION;
-  }
-}
-
-/**
  * Copy for a failure that came back from the API — either synchronously from
  * the `POST /plan-requests/surprise` call, or as a terminal `failed` status
  * during polling (`failureCode`). Internal provider details (Gemini, Maps)
@@ -77,8 +39,6 @@ export function surpriseGenerationErrorCopy(input: {
   const code = input.code ?? input.error?.code ?? null;
 
   switch (code) {
-    case "NO_LOCATION_AVAILABLE":
-      return NOT_ENOUGH_ACTIVITIES;
     case "NO_VALID_COMBINATIONS":
       return NOT_ENOUGH_ACTIVITIES;
     case "TOO_MANY_ACTIVE_REQUESTS":

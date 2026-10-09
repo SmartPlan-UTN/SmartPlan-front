@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { Screen } from "@/components/layout";
+import { PageKicker, Screen } from "@/components/layout";
 import { MyPlansPanel } from "@/components/plan";
 import { Icon } from "@/components/ui";
 import { ROUTES } from "@/lib/routes";
@@ -17,21 +17,21 @@ export default function MyPlansPage() {
     <Screen labelledBy="my-plans-title">
       <header className={styles.header}>
         <div className={styles.headerRow}>
-          <div>
-            <p className={`sp-label ${styles.eyebrow}`}>Para vos</p>
-            <h1 id="my-plans-title" className="sp-h2">
-              Mis planes
+          <div className="sp-page-intro">
+            <PageKicker>Lo que creaste</PageKicker>
+            <h1 id="my-plans-title" className="sp-page-title">
+              Mis <span className="sp-page-title-accent">planes</span>
             </h1>
+            <p className="sp-page-lead">
+              Los planes que creaste vos, privados o públicos. Los que elegiste
+              hacer están en Mis salidas.
+            </p>
           </div>
           <Link href={ROUTES.createPlan} className={styles.createButton}>
             <Icon name="plus" size={16} aria-hidden="true" />
-            Crear plan
+            Crear un plan
           </Link>
         </div>
-        <p className={`sp-body ${styles.lead}`}>
-          Los planes que armaste, con su itinerario, su duración y lo que
-          sale cada uno.
-        </p>
       </header>
 
       <MyPlansPanel />

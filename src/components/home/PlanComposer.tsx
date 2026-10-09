@@ -239,7 +239,7 @@ export function PlanComposer({
           className={styles.submit}
           onClick={submit}
           disabled={submitting}
-          aria-label="Planificar"
+          aria-label="Planificar una salida"
         >
           {submitting ? (
             <span className={styles.submitDots} aria-hidden="true">

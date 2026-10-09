@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Badge, Icon, Stars } from "@/components/ui";
+import { AuthenticatedImage } from "@/components/media";
 import { useFavorites } from "@/context";
 import { planDetailRoute } from "@/lib/routes";
 import { formatArs, formatDuration, gradientFor } from "@/lib/utils";
@@ -51,7 +52,7 @@ export function PlanCard({
           className={exploreStyles.imageWrapper}
           style={{ background: gradientFor(plan.id) }}
         >
-          <Icon name="route" size={40} className={exploreStyles.imagePlaceholder} />
+          {plan.imageUrl ? <AuthenticatedImage url={plan.imageUrl} alt={plan.title} width={320} height={180} /> : <Icon name="route" size={40} className={exploreStyles.imagePlaceholder} />}
         </div>
 
       <div className={exploreStyles.body}>

@@ -4,19 +4,20 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   addPlanActivity,
-  createPlan,
   listOwnPlans,
 } from "@/lib/api";
 import type { OwnPlanSummary } from "@/types";
 
 import { AddToPlanDialog } from "./AddToPlanDialog";
 
+const push = vi.hoisted(() => vi.fn());
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+
 vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
   return {
     ...actual,
     listOwnPlans: vi.fn(),
-    createPlan: vi.fn(),
     addPlanActivity: vi.fn(),
   };
 });
@@ -28,15 +29,14 @@ function mockPlanSummary(
     id: 10,
     title: "Fin de semana en Mendoza",
     description: "Visita a bodegas",
+    visibility: "private",
     peopleCount: 2,
     estimatedTotalCost: 20000,
     estimatedCostPerPerson: 10000,
     estimatedTotalDuration: 240,
     activityCount: 2,
     status: { key: "confirmed", name: "Confirmado" },
-    completedAt: null,
-    feedbackState: "not_available",
-    feedback: null,
+    visibility: "private",
     createdAt: "2026-08-25T12:00:00.000Z",
     updatedAt: "2026-08-25T12:00:00.000Z",
     ...overrides,
@@ -46,6 +46,7 @@ function mockPlanSummary(
 describe("AddToPlanDialog (CU27)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    push.mockReset();
     vi.mocked(listOwnPlans).mockResolvedValue({
       data: [mockPlanSummary()],
       pagination: { page: 1, limit: 100, total: 1, totalPages: 1 },
@@ -80,33 +81,21 @@ describe("AddToPlanDialog (CU27)", () => {
     ).toBeInTheDocument();
   });
 
-  it("allows creating a new plan and adding the activity to it", async () => {
-    const createdPlan = {
-      ...mockPlanSummary({ id: 20, title: "Nuevo Plan" }),
-      details: [],
-    };
-    vi.mocked(createPlan).mockResolvedValue(createdPlan);
-    vi.mocked(addPlanActivity).mockResolvedValue({} as never);
+  it("opens the shared composer with the activity preselected for a new plan", async () => {
     const user = userEvent.setup();
+    const onClose = vi.fn();
 
     render(
       <AddToPlanDialog
         activityId={42}
         activityName="Degustación de vinos"
-        onClose={vi.fn()}
+        onClose={onClose}
       />,
     );
 
-    await user.click(await screen.findByRole("button", { name: "Crear nuevo plan" }));
-    await user.type(screen.getByLabelText("Título del plan"), "Nuevo Plan");
-    await user.click(screen.getByRole("button", { name: "Crear y agregar" }));
-
-    await waitFor(() => {
-      expect(createPlan).toHaveBeenCalledWith({ title: "Nuevo Plan", peopleCount: 2 });
-      expect(addPlanActivity).toHaveBeenCalledWith(20, 42);
-    });
-    expect(
-      screen.getByText("Agregamos la actividad a “Nuevo Plan”."),
-    ).toBeInTheDocument();
+    await user.click(await screen.findByRole("button", { name: /Crear un plan nuevo con esta actividad/ }));
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(push).toHaveBeenCalledWith("/plans/create?activityId=42&source=activity");
+    expect(addPlanActivity).not.toHaveBeenCalled();
   });
 });

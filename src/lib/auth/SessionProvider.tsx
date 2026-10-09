@@ -11,7 +11,12 @@ import {
   type ReactNode,
 } from "react";
 
-import { onUnauthorized, setTokenGetter } from "@/lib/api";
+import {
+  onUnauthorized,
+  refreshSessionOnce,
+  setSessionRefresher,
+  setTokenGetter,
+} from "@/lib/api";
 
 import {
   login as requestLogin,
@@ -93,10 +98,10 @@ export interface SessionProviderProps {
  * 2. Tells the `@/lib/api` client where to get the token from, via
  *    `setTokenGetter`, reading it from a ref so the interceptor always sees
  *    the latest value without resubscribing.
- * 3. Closes the session when the API responds with 401 on some other
- *    request, using the event bus exposed by `onUnauthorized`. There is no
- *    automatic silent-refresh-and-retry: a 401 mid-session logs the user
- *    out, same as an expired session would.
+ * 3. Registers a refresher via `setSessionRefresher`, so the HTTP client can
+ *    silently renew an expired access token and replay the failed request.
+ *    Only when that renewal fails does the client fire `onUnauthorized`, and
+ *    the session closes.
  */
 export function SessionProvider({ children }: SessionProviderProps) {
   const [status, setStatus] = useState<SessionStatus>("loading");
@@ -120,19 +125,24 @@ export function SessionProvider({ children }: SessionProviderProps) {
 
     setTokenGetter(() => tokenRef.current);
 
-    refreshSession()
-      .then((response) => {
-        if (!cancelled) {
-          applyAuthenticated(response);
-        }
-      })
-      .catch(() => {
-        // No valid refresh cookie (never logged in, expired, or revoked):
-        // this is the normal anonymous case, not an error to surface.
-        if (!cancelled) {
-          applyAnonymous();
-        }
-      });
+    setSessionRefresher(async () => {
+      const response = await refreshSession();
+      if (!cancelled) {
+        applyAuthenticated(response);
+      }
+    });
+
+    // Startup rehydration goes through the same single-flight as the
+    // interceptor's mid-session renewal, so a request firing while this one
+    // is still in the air can't rotate the refresh cookie twice and trip the
+    // backend's `REFRESH_TOKEN_REUSED` revocation.
+    void refreshSessionOnce().then((renewed) => {
+      // No valid refresh cookie (never logged in, expired, or revoked):
+      // this is the normal anonymous case, not an error to surface.
+      if (!cancelled && !renewed) {
+        applyAnonymous();
+      }
+    });
 
     const unsubscribeUnauthorized = onUnauthorized(() => {
       applyAnonymous();
@@ -142,6 +152,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
       cancelled = true;
       unsubscribeUnauthorized();
       setTokenGetter(null);
+      setSessionRefresher(null);
     };
   }, [applyAuthenticated, applyAnonymous]);
 

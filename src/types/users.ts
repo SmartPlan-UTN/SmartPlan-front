@@ -50,7 +50,7 @@ export interface RolePermission extends BaseEntity {
  * Expected keys for a user's account status (CU2, CU7, CU57).
  * Values match exactly what's seeded in SmartPlan-back.
  */
-export type UserStatusKey = "active" | "suspended" | "banned";
+export type UserStatusKey = "active" | "suspended";
 
 /**
  * Status of a user's account (CU2, CU7, CU57).
@@ -134,6 +134,7 @@ export interface UserProfile {
   name: string;
   lastName: string;
   email: string;
+  avatarUrl?: string | null;
   role: { key: RoleKey; name: string };
   status: { key: UserStatusKey; name: string };
 }

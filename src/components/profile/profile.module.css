@@ -1,34 +1,22 @@
 /* CU5/CU6/CU7 - Edit profile (PAN 14), per the v2 "EMBER" system design's
-   `Profile.jsx`. The prototype's avatar upload was left out: there's no
-   backing field for it in the backend contract (`GET/PATCH /users/me`).
-   Phone was in the same situation until it got its own backend support
-   (see the doc comment on `ProfileForm`); it's back in the form now. */
+   `Profile.jsx`. Avatar images use the media API; the phone field uses its
+   dedicated backend support (see the doc comment on `ProfileForm`). */
 
-/* Breaks out of the `(private)` layout's `Container`, which caps this
-   screen at `--max-w` and pads it `--section-v` top/bottom, `--s-4`
-   left/right — so `MoodBackground`, which only paints its own nearest
-   positioned ancestor, would otherwise stop short of the container's real
-   edges on every side (cancelling just `Container`'s padding, a first pass
-   at this fix, still left a plain cream margin on any viewport wider than
-   `--max-w` plus its padding — most of them). `width: 100vw` plus the
-   negative `margin-inline` is the standard full-bleed-inside-a-centered-
-   container trick: it re-centers a 100%-viewport-wide box regardless of
-   where `Container` itself stops. `padding-inline` puts `--s-4` of it back
-   on the inside, so `.wrapper`'s content keeps the same edge breathing
-   room it had before, while the absolutely-positioned `MoodBackground`
-   (`inset: 0` against `.backdrop`'s padding edge) still reaches every
-   corner of the full-bleed box. `margin-block`/`padding-block` do the same
-   cancel-and-restore for the vertical padding, and `min-height` grows by
-   the same two `--section-v` to keep covering a full screen on a short
-   page. Same fix as `security.module.css`'s `.backdrop` — both screens
-   share this layout. */
+/* Full-bleed box (`100vw` plus negative margins cancelling `Container`'s
+   padding) that fills at least one screen. It paints nothing: the waves
+   come from the root layout's `AppBackground`, and this screen never mounts
+   its own canvas. Same box as `security.module.css`'s `.backdrop`. */
 .backdrop {
   position: relative;
-  min-height: calc(100dvh - var(--navbar-h) + var(--section-v) * 2);
+  /* Exactly the viewport left between the navbar and the mobile bar's
+     reserved space: the negative margins cancel `Container`'s padding and
+     this box takes it back as its own, so the padding is already inside
+     this height. */
+  min-height: calc(100dvh - var(--navbar-h) - var(--bottom-nav-space));
   width: 100vw;
   margin-inline: calc(50% - 50vw);
-  margin-block: calc(var(--section-v) * -1);
-  padding-block: var(--section-v);
+  margin-block: calc(var(--page-pad-top) * -1) calc(var(--page-pad-bottom) * -1);
+  padding-block: var(--page-pad-top) var(--page-pad-bottom);
   padding-inline: var(--s-4);
 }
 
@@ -40,10 +28,6 @@
   gap: var(--s-6);
   max-width: 680px;
   margin-inline: auto;
-}
-
-.heading {
-  color: var(--fg-1);
 }
 
 /* Literal radius/shadow, not --r-card/--shadow-card: the prototype's
@@ -97,6 +81,80 @@
   font-weight: var(--w-display);
   box-shadow: 0 4px 20px color-mix(in srgb, var(--ember) 32%, transparent);
   user-select: none;
+}
+
+.avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.avatarActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  margin: 0 var(--s-6) var(--s-5);
+}
+
+.avatarUpload {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: 40px;
+  padding: 0 var(--s-4);
+  border: 1px solid var(--ember-20);
+  border-radius: var(--r-btn);
+  background: var(--ember-10);
+  color: var(--ember);
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.avatarUpload:hover:not(.avatarUploadDisabled) {
+  background: var(--ember-15);
+}
+
+.avatarUpload:focus-within {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+  box-shadow: var(--focus-ember);
+}
+
+.avatarUploadDisabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.avatarFileInput {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.avatarHint {
+  flex: 1 1 12rem;
+  color: var(--fg-3);
+  font-size: var(--t-small);
+}
+
+.avatarError {
+  flex: 0 0 100%;
+  margin: 0;
+  color: var(--error);
+  font-size: var(--t-small);
 }
 
 .identityText {
@@ -218,7 +276,8 @@
    more, with a wider and less opaque shadow than the standard dark card. */
 .toast {
   position: fixed;
-  bottom: var(--s-6);
+  /* Clears the mobile bottom bar wherever it's shown (0 above 900px). */
+  bottom: calc(var(--s-6) + var(--bottom-nav-space));
   left: 50%;
   z-index: 9999;
   display: flex;
@@ -294,4 +353,76 @@
 .dangerButton:focus-visible {
   outline: 2px solid #d94b2b;
   outline-offset: 2px;
+}
+
+@media (max-width: 767px) {
+  .wrapper {
+    gap: var(--s-5);
+  }
+
+  .identity {
+    padding-inline: var(--s-5);
+    padding-bottom: var(--s-5);
+  }
+
+  .form {
+    gap: var(--s-4);
+    padding: 0 var(--s-5) var(--s-5);
+  }
+
+  .divider {
+    margin-inline: calc(var(--s-5) * -1);
+  }
+
+  .actions > * {
+    flex: 1;
+    min-height: 46px;
+  }
+
+  .dangerZone {
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--s-4);
+  }
+
+  .dangerButton {
+    min-height: 44px;
+  }
+
+  /* Full-width instead of centred on `left: 50%`, so the slide keyframes
+     must not carry the base toast's `translateX(-50%)` — with `both` fill
+     it would stay applied and push half the toast off-screen. */
+  .toast {
+    right: var(--s-4);
+    left: var(--s-4);
+    justify-content: center;
+    white-space: normal;
+    animation-name: profileToastInFull;
+  }
+
+  .toastOut {
+    animation-name: profileToastOutFull;
+  }
+}
+
+@keyframes profileToastInFull {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes profileToastOutFull {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
 }

@@ -18,18 +18,14 @@ describe("toPlanSelectionError (CU22)", () => {
     });
   });
 
-  it("maps 403 to an ownership error", () => {
-    expect(toPlanSelectionError(httpError(403, "ACCESS_DENIED"))).toMatchObject({
-      kind: "not-yours",
+  it("maps PLAN_NOT_ACTIONABLE to a reconcilable state change", () => {
+    expect(
+      toPlanSelectionError(httpError(409, "PLAN_NOT_ACTIONABLE")),
+    ).toMatchObject({
+      kind: "not-actionable",
       reconcile: true,
       recoverable: false,
     });
-  });
-
-  it("maps PLAN_REQUEST_ALREADY_ADVANCED to a reconcilable state change", () => {
-    expect(
-      toPlanSelectionError(httpError(409, "PLAN_REQUEST_ALREADY_ADVANCED")),
-    ).toMatchObject({ kind: "request-advanced", reconcile: true });
   });
 
   it("maps a network error to a retryable failure", () => {

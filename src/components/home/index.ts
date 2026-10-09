@@ -14,6 +14,7 @@ export {
   type ComposerVariant,
 } from "./PlanComposer";
 export { ContextChips, type ContextChipsProps } from "./ContextChips";
+export { PreferencesHint } from "./PreferencesHint";
 export {
   SurpriseButton,
   type SurpriseButtonProps,
@@ -36,4 +37,3 @@ export {
   RecommendedPlans,
   type RecommendedPlansProps,
 } from "./RecommendedPlans";
-export { detectMood } from "./moodDetection";

@@ -5,14 +5,19 @@ import type {
   PlanSearchParams,
   PlanSearchResult,
   CreatePlanDto,
+  CreatePlanComposerDto,
   UpdatePlanDto,
+  UpdatePlanComposerDto,
   OwnPlanDetail,
   OwnPlanSummary,
-  Plan,
-  PlanSuggestionDto,
-  PlanSelectionResult,
-} from '@/types';
-import { apiClient } from './client';
+  PlanVisibility,
+  ActivitySuggestion,
+  ActivitySuggestionsParams,
+  AssistantImproveResponse,
+  AssistantSearchResponse,
+  AssistantSuggestResponse,
+} from "@/types";
+import { apiClient } from "./client";
 
 /**
  * Searches, filters, sorts, and paginates plans (CU12).
@@ -20,9 +25,9 @@ import { apiClient } from './client';
  * `SmartPlan-back`.
  */
 export async function searchPlans(
-  params: PlanSearchParams
+  params: PlanSearchParams,
 ): Promise<PaginatedResult<PlanSearchResult>> {
-  return apiClient.get<PaginatedResult<PlanSearchResult>>('/plans', {
+  return apiClient.get<PaginatedResult<PlanSearchResult>>("/plans", {
     params,
   });
 }
@@ -40,7 +45,14 @@ export async function getPlan(id: number): Promise<PlanDetailResult> {
  * Backend contract: `POST /users/me/plans`.
  */
 export async function createPlan(dto: CreatePlanDto): Promise<OwnPlanDetail> {
-  return apiClient.post<OwnPlanDetail>('/users/me/plans', dto);
+  return apiClient.post<OwnPlanDetail>("/users/me/plans", dto);
+}
+
+/** Atomically creates a plan and its ordered itinerary from the composer. */
+export async function createPlanFromComposer(
+  dto: CreatePlanComposerDto,
+): Promise<OwnPlanDetail> {
+  return apiClient.post<OwnPlanDetail>("/users/me/plans/composer", dto);
 }
 
 /**
@@ -48,9 +60,9 @@ export async function createPlan(dto: CreatePlanDto): Promise<OwnPlanDetail> {
  * Backend contract: `GET /users/me/plans`.
  */
 export async function listOwnPlans(
-  params: ListOwnPlansParams = {}
+  params: ListOwnPlansParams = {},
 ): Promise<PaginatedResult<OwnPlanSummary>> {
-  return apiClient.get<PaginatedResult<OwnPlanSummary>>('/users/me/plans', {
+  return apiClient.get<PaginatedResult<OwnPlanSummary>>("/users/me/plans", {
     params,
   });
 }
@@ -63,23 +75,90 @@ export async function getOwnPlan(id: number): Promise<OwnPlanDetail> {
   return apiClient.get<OwnPlanDetail>(`/users/me/plans/${id}`);
 }
 
-export async function selectPlan(id: number): Promise<PlanSelectionResult> {
-  return apiClient.patch<PlanSelectionResult>(`/plans/${id}/select`);
-}
-
-export async function deselectPlan(id: number): Promise<PlanSelectionResult> {
-  return apiClient.delete<PlanSelectionResult>(`/plans/${id}/select`);
-}
-
 /**
  * Updates basic details of an owned plan (CU25).
  * Backend contract: `PATCH /users/me/plans/:id`.
  */
 export async function updateOwnPlan(
   id: number,
-  dto: UpdatePlanDto
+  dto: UpdatePlanDto,
 ): Promise<OwnPlanDetail> {
   return apiClient.patch<OwnPlanDetail>(`/users/me/plans/${id}`, dto);
+}
+
+/** Publishes an authored plan or makes it private again (#98). */
+export async function setOwnPlanVisibility(
+  id: number,
+  visibility: PlanVisibility,
+): Promise<OwnPlanDetail> {
+  return apiClient.patch<OwnPlanDetail>(`/users/me/plans/${id}/visibility`, {
+    visibility,
+  });
+}
+
+/** Recommends catalog activities for an authored plan (#98). */
+export async function suggestActivities({
+  title,
+  description,
+  excludeActivityIds = [],
+}: ActivitySuggestionsParams): Promise<{ data: ActivitySuggestion[] }> {
+  return apiClient.get<{ data: ActivitySuggestion[] }>("/activity-suggestions", {
+    params: {
+      title,
+      ...(description ? { description } : {}),
+      ...(excludeActivityIds.length > 0
+        ? { excludeActivityIds: excludeActivityIds.join(",") }
+        : {}),
+    },
+  });
+}
+
+/**
+ * Natural-language search over the real catalog ("algo para comer cerca del
+ * museo, barato y tranquilo"). Answers 503 `ASSISTANT_UNAVAILABLE` when the
+ * model is slow or down: callers fall back to the regular search.
+ */
+export async function assistantSearch(
+  params: { query: string; stopActivityIds: number[] },
+  options: { signal?: AbortSignal } = {},
+): Promise<AssistantSearchResponse> {
+  return apiClient.post<AssistantSearchResponse>(
+    "/users/me/plans/assistant/search",
+    params,
+    { signal: options.signal },
+  );
+}
+
+/** Activities that complement the route, and the kind it lacks, if any. */
+export async function assistantSuggest(
+  params: { title: string; description?: string; stopActivityIds: number[] },
+  options: { signal?: AbortSignal } = {},
+): Promise<AssistantSuggestResponse> {
+  return apiClient.post<AssistantSuggestResponse>(
+    "/users/me/plans/assistant/suggest",
+    params,
+    { signal: options.signal },
+  );
+}
+
+/** At most three proposed improvements to an ordered route. */
+export async function assistantImprove(
+  params: { title: string; stopActivityIds: number[] },
+  options: { signal?: AbortSignal } = {},
+): Promise<AssistantImproveResponse> {
+  return apiClient.post<AssistantImproveResponse>(
+    "/users/me/plans/assistant/improve",
+    params,
+    { signal: options.signal },
+  );
+}
+
+/** Atomically updates plan metadata, visibility, and ordered stops. */
+export async function updatePlanFromComposer(
+  id: number,
+  dto: UpdatePlanComposerDto,
+): Promise<OwnPlanDetail> {
+  return apiClient.put<OwnPlanDetail>(`/users/me/plans/${id}/composer`, dto);
 }
 
 /**
@@ -103,7 +182,7 @@ export async function cancelOwnPlan(id: number): Promise<void> {
  */
 export async function addPlanActivity(
   planId: number,
-  activityId: number
+  activityId: number,
 ): Promise<OwnPlanDetail> {
   return apiClient.post<OwnPlanDetail>(`/users/me/plans/${planId}/details`, {
     activityId,
@@ -116,19 +195,9 @@ export async function addPlanActivity(
  */
 export async function removePlanActivity(
   planId: number,
-  detailId: number
+  detailId: number,
 ): Promise<void> {
-  return apiClient.delete<void>(`/users/me/plans/${planId}/details/${detailId}`);
-}
-
-/**
- * Requests a suggested plan (CU31).
- * Backend contract: `POST /plan-suggestions`.
- * Note: The backend endpoint is currently provisional and answers 501 PLAN_GENERATION_NOT_AVAILABLE
- * until AI recommendation engine integration (CU17-CU23) is completed in SmartPlan-back.
- */
-export async function generateSuggestedPlan(
-  dto: PlanSuggestionDto
-): Promise<Plan> {
-  return apiClient.post<Plan>('/plan-suggestions', dto);
+  return apiClient.delete<void>(
+    `/users/me/plans/${planId}/details/${detailId}`,
+  );
 }

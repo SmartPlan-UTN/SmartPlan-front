@@ -20,7 +20,14 @@ export type { TokenGetter } from './token-provider';
 export { onUnauthorized, notifyUnauthorized } from './auth-events';
 export type { UnauthorizedListener } from './auth-events';
 
+export { setSessionRefresher, refreshSessionOnce } from './session-refresher';
+export type { SessionRefresher } from './session-refresher';
+
 export { getApiBaseUrl } from './config';
+export {
+  mediaRequestPath, listMedia, uploadMedia, updateMedia, deleteMedia,
+  uploadAvatar, deleteAvatar, downloadMedia,
+} from './media';
 
 export { searchActivities, getActivity, getActivityMapMarkers } from './activities';
 export {
@@ -28,15 +35,28 @@ export {
   getPlan,
   listOwnPlans,
   createPlan,
+  createPlanFromComposer,
   addPlanActivity,
   getOwnPlan,
-  selectPlan,
-  deselectPlan,
   updateOwnPlan,
+  updatePlanFromComposer,
   cancelOwnPlan,
+  setOwnPlanVisibility,
+  suggestActivities,
+  assistantSearch,
+  assistantSuggest,
+  assistantImprove,
   removePlanActivity,
-  generateSuggestedPlan,
 } from './plans';
+export {
+  cancelOuting,
+  completeOuting,
+  createOuting,
+  getOuting,
+  listOutings,
+  repeatOuting,
+} from './outings';
+export { listNotifications, markNotificationAsRead } from './notifications';
 export { listCategories } from './categories';
 export { listCities, listDepartments, listPlaces, searchPlace } from './places';
 export { getProfile, updateProfile, changePassword, deleteAccount } from './users';
@@ -58,6 +78,10 @@ export {
   getAdminRatingCounts,
   listAdminRatings,
   moderateAdminRating,
+  getAdminExperienceCounts,
+  listAdminExperiences,
+  moderateAdminExperienceComment,
+  moderateAdminExperiencePhoto,
 } from './administration';
 export {
   addActivityToCollection,
@@ -69,8 +93,10 @@ export {
   updateCollection,
 } from './collections';
 export {
+  setFeedbackSharing,
   submitFeedback,
 } from './feedback';
+export { getPlanExperiences } from './experiences';
 export { getPreferences, updatePreferences } from './users';
 export { createPlanRequest, createSurprisePlanRequest, getPlanRequestStatus } from './plan-requests';
 export { getRecommendations, dismissRecommendation, undoDismissRecommendation } from './plan-recommendations';

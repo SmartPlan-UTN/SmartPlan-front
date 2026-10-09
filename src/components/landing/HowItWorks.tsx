@@ -136,6 +136,7 @@ function useSceneClock(
 
     let frame = 0;
     let viewportHeight = window.innerHeight;
+    let navbarHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--navbar-h")) || 0;
     let lastStep = -1;
 
     function write() {
@@ -145,14 +146,15 @@ function useSceneClock(
       const rect = node.getBoundingClientRect();
 
       const enter = clamp01(1 - rect.top / Math.max(viewportHeight, 1));
-      const travel = Math.max(rect.height - viewportHeight, 1);
-      const t = clamp01(-rect.top / travel);
+      const travel = Math.max(rect.height - (viewportHeight - navbarHeight), 1);
+      const t = clamp01((navbarHeight - rect.top) / travel);
 
       const beats = getHowBeats(enter, t);
       node.style.setProperty("--headline", beats.headline.toFixed(3));
       node.style.setProperty("--emphasis", beats.emphasis.toFixed(3));
       node.style.setProperty("--type", beats.type.toFixed(3));
       node.style.setProperty("--signals", beats.signals.toFixed(3));
+      node.style.setProperty("--connections", beats.connections.toFixed(3));
       node.style.setProperty("--shrink", beats.shrink.toFixed(3));
       node.style.setProperty("--options", beats.options.toFixed(3));
       node.style.setProperty("--choose", beats.choose.toFixed(3));
@@ -176,6 +178,7 @@ function useSceneClock(
     }
     function onResize() {
       viewportHeight = window.innerHeight;
+      navbarHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--navbar-h")) || 0;
       schedule();
     }
 
@@ -285,6 +288,10 @@ function FauxComposer() {
 function Signals() {
   return (
     <div className={styles.signals} aria-hidden="true">
+      <svg className={styles.signalPath} viewBox="0 0 100 100" preserveAspectRatio="none">
+        <path className={styles.signalFeed} d="M 76 0 V 25 H 16 V 60" />
+        <path className={styles.signalRail} d="M 16 60 H 84" />
+      </svg>
       {HOW.signals.map((signal, index) => (
         <span key={signal} className={styles.signal} data-slot={index}>
           {signal}
@@ -410,14 +417,8 @@ function StaticHow() {
 
       <ol className={styles.staticOptions}>
         {OPTIONS.map((option, index) => (
-          <li
-            key={option.id}
-            className={cn(
-              styles.optionItem,
-              HOW_OPTION_SLOTS[index].chosen ? styles.chosenItem : undefined,
-            )}
-          >
-            <Reveal delay={index * 70}>
+          <li key={option.id} className={styles.optionItem}>
+            <Reveal className={styles.optionReveal} delay={index * 70}>
               <article
                 className={styles.staticOption}
                 data-tone={option.tone}

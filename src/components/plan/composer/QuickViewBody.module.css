@@ -1,0 +1,292 @@
+/* A glance at an activity: name and facts, a few lines of what it is,
+   where it is, and one decision. The container (a row opening in place,
+   a card on the map, a phone's sheet) supplies the frame. */
+.body {
+  display: grid;
+  min-width: 0;
+  gap: 10px;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.thumb {
+  display: block;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--fg-1) 6%, transparent);
+}
+
+.thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.titleBlock {
+  display: grid;
+  min-width: 0;
+  flex: 1 1 auto;
+  gap: 4px;
+}
+
+.title {
+  margin: 0;
+  color: var(--fg-1);
+  font-family: var(--font-display-serif);
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.18;
+  overflow-wrap: anywhere;
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.45;
+}
+
+.facts > span + span::before {
+  margin: 0 7px;
+  color: var(--fg-3);
+  content: "·";
+}
+
+.pending {
+  color: var(--fg-3);
+}
+
+.rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--rating-ink);
+}
+
+.rating svg {
+  flex-shrink: 0;
+}
+
+.description {
+  display: -webkit-box;
+  max-width: 62ch;
+  margin: 0;
+  overflow: hidden;
+  color: var(--fg-1);
+  font-size: 14.5px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  animation: settle 200ms ease both;
+}
+
+/* Two placeholder lines while the description is on its way. */
+.loading {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0;
+}
+
+.loading span {
+  height: 10px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--fg-1) 7%, transparent);
+}
+
+.loading span:last-child {
+  width: 62%;
+}
+
+.where {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.where svg {
+  flex-shrink: 0;
+  color: var(--ember);
+}
+
+.where strong {
+  flex-shrink: 0;
+  max-width: 60%;
+  overflow: hidden;
+  color: var(--fg-1);
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.where span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.where span::before {
+  margin-right: 6px;
+  color: var(--fg-3);
+  content: "·";
+}
+
+.mapFigure {
+  display: grid;
+  gap: 6px;
+  margin: 2px 0 0;
+}
+
+.mapPending {
+  height: 148px;
+  border-radius: 14px;
+  background: var(--map-paper);
+}
+
+.note {
+  margin: 0;
+  color: var(--fg-3);
+  font-size: 12.5px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-top: 2px;
+}
+
+.add {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--r-btn);
+  background: var(--ember);
+  color: var(--white);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    transform 120ms ease;
+}
+
+.add:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ember) 88%, var(--char));
+}
+
+.add:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.add:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+/* In the route: a statement in the route's own ink, not a button. */
+.inRoute {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  padding: 0 14px 0 12px;
+  border-radius: var(--r-btn);
+  background: var(--char);
+  color: var(--fg-on-dark);
+  font-size: 14px;
+  font-weight: 700;
+  animation: settle 200ms var(--ease-out, ease) both;
+}
+
+.remove {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid color-mix(in srgb, var(--fg-1) 16%, transparent);
+  border-radius: var(--r-btn);
+  background: transparent;
+  color: var(--fg-1);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 650;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.remove:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--fg-1) 32%, transparent);
+  background: color-mix(in srgb, var(--fg-1) 5%, transparent);
+}
+
+.add:focus-visible,
+.remove:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+/* The detail link goes last, quiet, on the far side. */
+.actions > a {
+  margin-left: auto;
+}
+
+@keyframes settle {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 680px) {
+  .add,
+  .inRoute,
+  .remove {
+    min-height: 48px;
+  }
+
+  .add {
+    flex: 1 1 auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .description,
+  .inRoute {
+    animation: none;
+  }
+
+  .add,
+  .remove {
+    transition-duration: 0.01ms;
+  }
+}

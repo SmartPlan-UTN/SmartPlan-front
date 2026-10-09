@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { usePathname, useRouter } from "next/navigation";
 
 import { MotionConfig } from "motion/react";
 
@@ -12,7 +13,12 @@ import type {
 import { SiteFooter } from "@/components/layout";
 import { usePlanRequestPolling } from "@/hooks";
 import { useSession } from "@/lib/auth";
-import { loginRoute } from "@/lib/routes";
+import {
+  loginRoute,
+  planRequestRoute,
+  START_COMPOSER_EVENT,
+  START_COMPOSER_PARAM,
+} from "@/lib/routes";
 import type { PlanRequestContext } from "@/types";
 
 import { RecommendedPlans } from "@/components/home";
@@ -67,6 +73,43 @@ export function LandingScreen() {
   const sessionLoading = status === "loading";
   const [prefill, setPrefill] = useState<string | null>(null);
   const [surpriseNote, setSurpriseNote] = useState<string | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // "Planificar" pressed while Inicio is already on screen (see Navbar).
+  useEffect(() => {
+    const onStart = () => handleStartPlan();
+    window.addEventListener(START_COMPOSER_EVENT, onStart);
+    return () => window.removeEventListener(START_COMPOSER_EVENT, onStart);
+  }, []);
+
+  /**
+   * Other entry points (the mobile bar's "Planificar" tab, the empty states
+   * of Mis salidas) land here with `?startComposer=1`
+   * instead of a dead "under construction" dialog — this puts the visitor
+   * straight into the real composer, focused, the same way the empty-state
+   * CTA does. Read directly off `window.location` (not `useSearchParams`)
+   * so this page keeps rendering statically for crawlers rather than
+   * opting the whole route into client-only rendering. The param is
+   * stripped right after so a back/forward navigation doesn't refocus
+   * the field.
+   */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (new URLSearchParams(window.location.search).get(START_COMPOSER_PARAM) !== "1") {
+      return;
+    }
+    if (planning.phase !== "idle") return;
+
+    handleStartPlan();
+    router.replace(pathname);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [planning.phase]);
+
+  useEffect(() => {
+    if (planning.planRequestId == null || planning.phase === "idle") return;
+    router.push(planRequestRoute(planning.planRequestId));
+  }, [planning.planRequestId, planning.phase, router]);
 
   /**
    * Generation needs a session. Sending someone to log in with a
@@ -103,10 +146,13 @@ export function LandingScreen() {
     scrollToHero();
   }
 
-  function handleSurprise(coords: SurpriseCoords, meta: SurpriseResolvedMeta) {
+  function handleSurprise(
+    coords: SurpriseCoords | null,
+    meta: SurpriseResolvedMeta,
+  ) {
     if (!requireSession()) return;
     setSurpriseNote(surpriseNoteFor(meta));
-    planning.submitSurprise(coords);
+    planning.submitSurprise(coords ?? {});
     scrollToHero();
   }
 
@@ -170,6 +216,9 @@ export function LandingScreen() {
  * preferences.
  */
 function surpriseNoteFor(meta: SurpriseResolvedMeta): string | null {
+  if (meta.source === "default") {
+    return "No pudimos usar tu ubicación — te mostramos algo igual.";
+  }
   if (meta.hasCategoryPreferences === false) {
     return "Aún no tenés preferencias guardadas, así que te sorprendemos con algo completamente nuevo.";
   }

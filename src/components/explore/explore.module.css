@@ -16,7 +16,146 @@
 .tabRow {
   display: flex;
   gap: var(--s-2);
-  margin-bottom: var(--s-4);
+}
+
+/* ── Layout: title on top, filters sidebar left, results right ── */
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+}
+
+/* The title block and the tab switch share one row; the tabs drop below
+   the title when there is no room beside it. */
+.layoutHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-4) var(--s-6);
+}
+
+.layoutBody {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--s-6);
+}
+
+/* Sticky so the filters stay at hand while scrolling the results; capped
+   to the viewport with its own scroll so a long category list never hides
+   the bottom of the sidebar. The scrollbar is hidden: it read as a stray
+   grey bar beside the filters, and wheel, touch and keyboard still scroll. */
+.layoutSidebar {
+  position: sticky;
+  top: calc(var(--navbar-h, 64px) + var(--s-4));
+  max-height: calc(100dvh - var(--navbar-h, 64px) - var(--s-6));
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.layoutSidebar::-webkit-scrollbar {
+  display: none;
+}
+
+.layoutMain {
+  min-width: 0;
+}
+
+/* Narrow screens only (below). */
+.filtersToggle {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .layoutBody {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-4);
+  }
+
+  .filtersToggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s-2);
+    min-height: 48px;
+    padding: 0 var(--s-5);
+    border: 1.5px solid var(--hairline);
+    border-radius: var(--r-pill);
+    background: var(--surface-card);
+    color: var(--fg-1);
+    font: inherit;
+    font-size: var(--t-small);
+    font-weight: var(--w-label);
+    cursor: pointer;
+  }
+
+  .filtersToggle[aria-expanded="true"] {
+    border-color: var(--ember);
+  }
+
+  .filtersToggleIconOpen {
+    transform: rotate(180deg);
+  }
+
+  .layoutSidebar {
+    position: static;
+    display: none;
+    max-height: none;
+    overflow: visible;
+    padding: var(--s-4) var(--s-5);
+    border: 1.5px solid var(--hairline);
+    border-radius: var(--r-card);
+    background: var(--surface-card);
+  }
+
+  .layoutSidebarOpen {
+    display: block;
+  }
+}
+
+/* The search bar and "Ver mapa" on one line. */
+.searchRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.searchRow > :first-child {
+  flex: 1 1 320px;
+}
+
+/* Link shaped like a pill button the height of the search bar: a
+   `<button>` can't nest inside an `<a>`, so it can't wrap `Button`. */
+.searchMapLink {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 52px;
+  padding: 0 var(--s-5);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-pill);
+  background: var(--surface-card);
+  box-shadow: 0 2px 8px rgba(26, 17, 9, 0.04);
+  color: var(--fg-1);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+  text-decoration: none;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.searchMapLink:hover {
+  border-color: color-mix(in srgb, var(--fg-1) 25%, var(--hairline));
+}
+
+.searchMapLink:focus-visible {
+  outline: none;
+  border-color: var(--ember);
+  box-shadow: var(--focus-ember);
 }
 
 /* ── Category chip row ──────────────────────────────────────────
@@ -63,49 +202,142 @@
   gap: var(--s-3);
 }
 
-.toolbarActions {
-  display: flex;
-  gap: var(--s-2);
-}
-
-/* Link styled like `Button variant="ghost"`: a `<button>` can't nest
-   inside an `<a>` (invalid interactive-in-interactive content), so "Ver
-   mapa" needs its own link-shaped style instead of wrapping `Button`. */
-.toolbarLink {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  padding: 7px 14px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-btn);
-  color: var(--fg-1);
-  font-size: 12px;
-  font-weight: var(--w-heading);
-  text-decoration: none;
-  transition: background 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.toolbarLink:hover {
-  background: color-mix(in srgb, var(--char) 4%, transparent);
-}
-
-/* ── Filters panel ───────────────────────────────────────────── */
-.panel {
+/* ── Filters sidebar ─────────────────────────────────────────── */
+.sidebar {
   display: flex;
   flex-direction: column;
-  gap: var(--s-4);
-  padding: var(--s-5);
-  border: 1.5px solid var(--hairline);
-  border-radius: var(--r-card);
-  background: var(--surface-card);
-  box-shadow: 0 8px 24px rgba(26, 17, 9, 0.06);
-  animation: fadeUp 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-.panelGrid {
+.sidebarHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--s-3);
+}
+
+.sidebarTitle {
+  margin: 0;
+  font-size: var(--t-h4);
+  font-weight: var(--w-display);
+}
+
+/* Text-weight action ("Limpiar", "Ver todas"): ember, underlined on hover,
+   with a 36px hit area. */
+.sidebarLink {
+  align-self: flex-start;
+  min-height: 36px;
+  padding: 0 var(--s-1);
+  border: 0;
+  border-radius: var(--r-btn);
+  background: transparent;
+  color: var(--ember);
+  font: inherit;
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+  cursor: pointer;
+}
+
+.sidebarLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.sidebarLink:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+/* One section per filter, separated by a hairline. */
+.filterSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 0;
+  padding: var(--s-4) 0;
+  border-top: 1px solid var(--hairline);
+}
+
+/* A fieldset draws its border through the legend, so the separator lives
+   on the wrapping `.filterSection` and the fieldset itself is bare. */
+.fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.filterHeading {
+  margin: 0 0 var(--s-1);
+  padding: 0;
+  color: var(--fg-1);
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+}
+
+.priceRow {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: var(--s-4);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-2);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 32px;
+  color: var(--fg-1);
+  font-size: var(--t-small);
+  cursor: pointer;
+}
+
+.radio,
+.checkbox {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex: 0 0 18px;
+  accent-color: var(--ember);
+  cursor: pointer;
+}
+
+.radio:focus-visible,
+.checkbox:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+/* ── Sort control (results toolbar) ──────────────────────────── */
+.sortControl {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.sortLabel {
+  color: var(--fg-2);
+  font-size: var(--t-small);
+}
+
+/* `Select` fills its container by default; here each one keeps a fixed
+   width so the label and both selects sit on one line. */
+.sortControl > :not(.sortLabel) {
+  flex: 0 0 170px;
+  width: 170px;
+}
+
+@media (max-width: 560px) {
+  .sortControl {
+    width: 100%;
+  }
+
+  .sortControl > :not(.sortLabel) {
+    flex: 1 1 140px;
+    width: auto;
+  }
 }
 
 .field {
@@ -147,14 +379,6 @@
   outline: none;
   border-color: var(--ember);
   box-shadow: var(--focus-ember);
-}
-
-.panelActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--s-2);
-  padding-top: var(--s-2);
-  border-top: 1px solid var(--hairline);
 }
 
 /* ── Pagination ─────────────────────────────────────────────────
@@ -475,4 +699,61 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--s-4);
+}
+
+@media (max-width: 560px) {
+  .searchScreen {
+    gap: var(--s-4);
+  }
+
+  .toolbar {
+    align-items: flex-start;
+  }
+
+  .searchMapLink {
+    flex: 1 1 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  /* Search results only: one column of horizontal cards. Scoped under
+     `.grid` because the card shell is shared — the home results, the
+     landing rail and Favoritos keep the vertical card.
+
+     The grid also publishes the card overlays' placement as custom
+     properties (read by `.cardBookmark` / `.viewPlanButton` in the
+     activity and plan modules), so the bookmark follows the media column
+     instead of hard-coding its width a second time. */
+  .grid {
+    --card-media-w: 112px;
+    --card-bookmark-inset: var(--s-2);
+    --card-bookmark-left: calc(
+      var(--card-media-w) - 44px - var(--card-bookmark-inset)
+    );
+    --card-bookmark-right: auto;
+    --card-cta-display: none;
+
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-3);
+  }
+
+  .grid .cardContent {
+    display: grid;
+    grid-template-columns: var(--card-media-w) minmax(0, 1fr);
+  }
+
+  .grid .imageWrapper {
+    height: 100%;
+    min-height: 156px;
+  }
+
+  .grid .body {
+    min-width: 0;
+    padding: var(--s-3);
+  }
+
+  .grid .tagRow {
+    max-height: 24px;
+    overflow: hidden;
+  }
 }

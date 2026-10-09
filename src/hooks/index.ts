@@ -44,7 +44,15 @@ export {
   type PlanSelectionOutcome,
   type UsePlanSelectionResult,
 } from "./usePlanSelection";
-export { useMyPlans, type UseMyPlansResult } from "./useMyPlans";
+export {
+  useNotifications,
+  NOTIFICATIONS_POLL_MS,
+  type UseNotificationsResult,
+} from "./useNotifications";
+export {
+  useOutings,
+  type UseOutingsResult,
+} from "./useOutings";
 export {
   useFeedbackSubmit,
   type FeedbackSubmitStatus,

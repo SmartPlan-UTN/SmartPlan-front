@@ -5,7 +5,6 @@ import styles from "./administration.module.css";
 const STATUS_LABELS: Record<UserStatusKey, string> = {
   active: "Activo",
   suspended: "Suspendido",
-  banned: "Baneado",
 };
 
 export interface UserStatusBadgeProps {

@@ -1,0 +1,138 @@
+.page {
+  width: min(100%, 1480px);
+  min-height: calc(100svh - var(--navbar-h));
+  margin-inline: auto;
+  padding: var(--navbar-h) clamp(var(--s-3), 2vw, var(--s-6)) var(--s-6);
+}
+
+.searchBar {
+  position: sticky;
+  z-index: 8;
+  top: var(--navbar-h);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--s-4);
+  width: min(100%, 1320px);
+  margin: 0 auto var(--s-3);
+  padding: var(--s-2) 0;
+  border: 0;
+  background: transparent;
+}
+
+.backLink {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: var(--s-1);
+  padding: 0 var(--s-2);
+  border: 0;
+  border-radius: var(--r-btn);
+  background: transparent;
+  color: var(--fg-2);
+  font: inherit;
+  cursor: pointer;
+}
+
+.backLink:hover {
+  color: var(--fg-1);
+  background: var(--surface-card);
+}
+
+.searchForm {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: min(100%, 820px);
+  min-height: 52px;
+  justify-self: start;
+  padding: 5px 6px 5px var(--s-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.searchForm:focus-within {
+  border-color: var(--ember-20);
+  box-shadow: 0 0 0 3px var(--ember-15), var(--shadow-card);
+}
+
+.searchIcon {
+  flex: 0 0 auto;
+  color: var(--ember);
+}
+
+.searchForm input {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--fg-1);
+  font: inherit;
+  font-size: var(--t-small);
+}
+
+.searchForm input::placeholder {
+  color: var(--fg-3);
+}
+
+.searchForm button {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding-inline: var(--s-3);
+}
+
+.resultsContent {
+  width: 100%;
+}
+
+.waitContent {
+  width: 100%;
+}
+
+.accepting {
+  margin: var(--s-7) auto;
+  color: var(--fg-2);
+  text-align: center;
+}
+
+@media (max-width: 680px) {
+  .page {
+    min-height: calc(100svh - var(--navbar-h));
+    padding-inline: var(--s-2);
+    padding-bottom: calc(var(--mobile-nav-h) + var(--s-4) + env(safe-area-inset-bottom));
+  }
+
+  .searchBar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+    margin-inline: 0;
+    padding: var(--s-1) 0;
+  }
+
+  .backLink {
+    width: max-content;
+    min-height: 36px;
+    padding-inline: var(--s-1);
+  }
+
+  .searchForm {
+    min-height: 48px;
+    width: 100%;
+  }
+
+  .searchForm button {
+    padding-inline: var(--s-2);
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .searchForm {
+    transition: none;
+  }
+}

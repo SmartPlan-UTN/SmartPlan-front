@@ -11,17 +11,6 @@
   flex-wrap: wrap;
 }
 
-.eyebrow {
-  margin-bottom: var(--s-2);
-  color: var(--ember);
-}
-
-.lead {
-  max-width: 56ch;
-  margin-top: var(--s-3);
-  color: var(--fg-2);
-}
-
 .createButton {
   display: inline-flex;
   align-items: center;
@@ -68,14 +57,17 @@
   border-radius: var(--r-btn);
 }
 
+/* Below 900px Crear plan is the bottom bar's centre tab (and the create
+   cards right under this header), so a third copy here is just noise. */
+@media (max-width: 899px) {
+  .createButton {
+    display: none;
+  }
+}
+
 @media (max-width: 560px) {
   .header {
     padding-bottom: var(--s-3);
-  }
-
-  .lead {
-    max-width: none;
-    margin-top: var(--s-2);
   }
 
   /* A tap target you can actually hit: the inline link was 18px tall. */
@@ -83,4 +75,28 @@
     min-height: 44px;
     margin-bottom: var(--s-2);
   }
+}
+
+/* Create/edit: the page title is a breadcrumb, not a second headline. The
+   composer's own headline carries the screen. */
+.composerHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 44px;
+}
+
+.composerHeader .backLink {
+  margin-bottom: 0;
+}
+
+.composerHeader > span {
+  color: var(--fg-3);
+}
+
+.composerTitle {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
 }

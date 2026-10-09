@@ -1,0 +1,83 @@
+/* The composer is not a card. It is the page: a progress line and the step,
+   each of which carries its own headline. Structure comes from spacing and
+   type, not from frames. */
+.composer {
+  width: 100%;
+  margin: var(--s-4) auto 0;
+  color: var(--fg-1);
+}
+
+.navbarCap {
+  position: fixed;
+  z-index: 49;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: var(--navbar-h);
+  background: var(--cream);
+  pointer-events: none;
+}
+
+.topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding-bottom: var(--s-4);
+}
+
+/* The stage: the step's own content on the cream, and the route object beside
+   it. One column width, one gap and one top edge for all three steps, so the
+   route is the same object as the plan is drafted, built and confirmed. */
+.stage {
+  --route-col: clamp(360px, 32vw, 420px);
+}
+
+@media (min-width: 900px) {
+  .stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--route-col);
+    column-gap: clamp(32px, 4.5vw, 64px);
+    align-items: start;
+  }
+
+  .stage > :not(.route) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .route {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
+/* Below 900px there is one column: the step, then (where it belongs) the
+   route. While building, the route is a tab of its own instead. */
+@media (max-width: 899px) {
+  .planStage .route,
+  .reviewStage .route {
+    margin-top: var(--s-2);
+  }
+
+  /* The tab bar pins under the navbar for the whole step. */
+  .buildStage {
+    position: relative;
+  }
+}
+
+@media (max-width: 680px) {
+  .composer {
+    margin-top: var(--s-2);
+  }
+
+  .topline {
+    gap: var(--s-2);
+  }
+
+  .topline > button {
+    min-width: 60px;
+    min-height: 44px;
+    padding-inline: 10px;
+  }
+}

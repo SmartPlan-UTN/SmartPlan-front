@@ -12,17 +12,14 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/components/ui", () => ({
   MoodBackground: ({
     active,
-    mood,
     tideKey,
   }: {
     active: boolean;
-    mood: string;
     tideKey: string;
   }) => (
     <div
       data-testid="mood-background"
       data-active={String(active)}
-      data-mood={mood}
       data-tide-key={tideKey}
     />
   ),
@@ -39,25 +36,57 @@ describe("AppBackground", () => {
     expect(screen.queryByTestId("mood-background")).not.toBeInTheDocument();
   });
 
-  it("keeps one user canvas configured across route changes", () => {
+  it.each(["/plans/create", "/plans/12/edit"])(
+    "keeps the waves out of the plan composer on %s",
+    (route) => {
+      pathname = route;
+      render(<AppBackground />);
+
+      expect(screen.queryByTestId("mood-background")).not.toBeInTheDocument();
+    },
+  );
+
+  it("still draws the waves on the plan detail, which is not the composer", () => {
+    pathname = "/plans/12";
+    render(<AppBackground />);
+
+    expect(screen.getByTestId("mood-background")).toBeInTheDocument();
+  });
+
+  it("keeps one canvas across route changes and breaks a wave per route", () => {
     pathname = "/plans";
     const { rerender } = render(<AppBackground />);
     const canvas = screen.getByTestId("mood-background");
 
     expect(canvas).toHaveAttribute("data-active", "true");
-    expect(canvas).toHaveAttribute("data-mood", "gastronomia");
-    expect(canvas.parentElement).toHaveClass(
-      styles.appBackgroundBelowNavbar,
-    );
+    expect(canvas).toHaveAttribute("data-tide-key", "/plans");
 
-    pathname = "/login";
+    pathname = "/favorites";
     rerender(<AppBackground />);
 
     expect(screen.getByTestId("mood-background")).toBe(canvas);
-    expect(canvas).toHaveAttribute("data-mood", "romantica");
-    expect(canvas.parentElement).not.toHaveClass(
-      styles.appBackgroundBelowNavbar,
-    );
+    expect(canvas).toHaveAttribute("data-tide-key", "/favorites");
+  });
+
+  it.each(["/login", "/signup", "/recover-password", "/reset-password"])(
+    "crops the horizon to the form panel on %s",
+    (route) => {
+      pathname = route;
+      render(<AppBackground />);
+
+      expect(screen.getByTestId("mood-background").parentElement).toHaveClass(
+        styles.appBackgroundAuthHorizon,
+      );
+    },
+  );
+
+  it("does not crop the horizon outside the auth screens", () => {
+    pathname = "/history";
+    render(<AppBackground />);
+
+    expect(
+      screen.getByTestId("mood-background").parentElement,
+    ).not.toHaveClass(styles.appBackgroundAuthHorizon);
   });
 
   it("hides and pauses the user canvas in administration", () => {

@@ -10,7 +10,17 @@
   position: relative;
   overflow: hidden;
   padding-top: clamp(52px, 8vh, 84px);
+  /* The footer closes `<main>`, which reserves `--bottom-nav-space` below
+     its content for the floating mobile bar — that strip would show as a
+     cream band under the dark footer. Pull the footer over it and paint
+     it with a same-colour border: a border, not padding, because
+     `overflow: hidden` clips at the padding edge, so the wordmark stays cut
+     where the design cuts it and the dark strip sits below, under the bar.
+     Both are 0 above 900px. */
+  margin-bottom: calc(var(--bottom-nav-space) * -1);
+  border-bottom: var(--bottom-nav-space) solid var(--char);
   background: var(--char);
+  background-clip: padding-box;
   color: var(--fg-on-dark);
   /* Warms the top edge so the cream section above descends into this
      instead of hitting a hard black band. */

@@ -31,6 +31,12 @@ function status(overrides: Partial<PlanRequestStatus> = {}): PlanRequestStatus {
     statusKey: "pending",
     mode: "automatic",
     requestedAt: new Date().toISOString(),
+    resolvedContext: {
+      budget: null,
+      partySize: null,
+      departmentName: null,
+      categories: [],
+    },
     ...overrides,
   };
 }
@@ -53,6 +59,38 @@ describe("usePlanRequestPolling", () => {
     expect(result.current.planRequestId).toBeNull();
   });
 
+  it("resumes an existing ID and exposes backend-confirmed stage and ETA", async () => {
+    getPlanRequestStatus.mockResolvedValue(status({
+      id: 91,
+      statusKey: "processing",
+      query: "una cena cerca del centro",
+      progressStage: "composing",
+      progressStageAt: "2026-09-15T12:00:00.000Z",
+      estimatedRemainingSeconds: 37,
+    }));
+
+    const { result } = renderHook(() => usePlanRequestPolling(91));
+
+    await waitFor(() => expect(result.current.phase).toBe("processing"));
+    expect(getPlanRequestStatus).toHaveBeenCalledWith(91);
+    expect(result.current.planRequestId).toBe(91);
+    expect(result.current.query).toBe("una cena cerca del centro");
+    expect(result.current.progressStage).toBe("composing");
+    expect(result.current.progressStageAt).toBe("2026-09-15T12:00:00.000Z");
+    expect(result.current.estimatedRemainingSeconds).toBe(37);
+  });
+
+  it("keeps the submitted query when an older status response omits it", async () => {
+    createPlanRequest.mockResolvedValue(accepted());
+    getPlanRequestStatus.mockResolvedValue(status({ statusKey: "processing" }));
+    const { result } = renderHook(() => usePlanRequestPolling());
+
+    act(() => result.current.submit({ query: "coffee downtown" }));
+
+    await waitFor(() => expect(result.current.phase).toBe("processing"));
+    expect(result.current.query).toBe("coffee downtown");
+  });
+
   it("submits, polls, and reaches generated with the returned plans", async () => {
     createPlanRequest.mockResolvedValue(accepted());
     getPlanRequestStatus
@@ -73,6 +111,8 @@ describe("usePlanRequestPolling", () => {
               categories: [],
               activityNames: ["Degustación", "Almuerzo", "Paseo"],
               status: { key: "generated", name: "Generated" },
+              viewerPlanState: "selectable",
+              details: [],
             },
           ],
         }),

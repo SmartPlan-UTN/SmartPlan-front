@@ -7,13 +7,7 @@
  * same renderer, so the water looks identical either way.
  */
 
-import {
-  WAVE_PALETTES,
-  type Mood,
-  type WavePalette,
-} from "@/styles/wave-palettes";
-
-export type { Mood, WavePalette } from "@/styles/wave-palettes";
+import { WAVE_PALETTE, type WavePalette } from "@/styles/wave-palettes";
 
 interface WaveLayer {
   amplitude: number;
@@ -38,8 +32,6 @@ const TIDE_STRENGTH = 0.9;
 /** How far the water level itself rises under a swell, as a fraction of
  * the height. */
 const TIDE_RISE = 0.04;
-/** How long the fills take to cross-fade when the mood changes. */
-const MOOD_MS = 1400;
 /** Viewport height the `WAVE_LAYERS` amplitudes were drawn against. */
 const REFERENCE_HEIGHT = 800;
 /** Below this width the waves get a stronger swell — see `motionScale`. */
@@ -180,56 +172,6 @@ export function boundedSwellStrength(rawStrength: number): number {
   );
 }
 
-type Rgba = [number, number, number, number];
-
-/** Parses the `rgba(r,g,b,a)` literals above. Not a general CSS color
- * parser — it only has to read the palettes in this file, and the worker
- * has no DOM to borrow one from. */
-function parseRgba(color: string): Rgba {
-  const parts = color.match(/[\d.]+/g);
-  if (!parts || parts.length < 3) return [0, 0, 0, 0];
-  return [
-    Number(parts[0]),
-    Number(parts[1]),
-    Number(parts[2]),
-    parts.length > 3 ? Number(parts[3]) : 1,
-  ];
-}
-
-function parsedColors(palette: WavePalette): Rgba[] {
-  return WAVE_LAYERS.map((layer) => parseRgba(palette[layer.fillKey]));
-}
-
-function fillStrings(palette: WavePalette): string[] {
-  return WAVE_LAYERS.map((layer) => palette[layer.fillKey]);
-}
-
-const PARSED_PALETTES = Object.fromEntries(
-  Object.entries(WAVE_PALETTES).map(([mood, palette]) => [
-    mood,
-    parsedColors(palette),
-  ]),
-) as Record<Mood, Rgba[]>;
-
-const PALETTE_STRINGS = Object.fromEntries(
-  Object.entries(WAVE_PALETTES).map(([mood, palette]) => [
-    mood,
-    fillStrings(palette),
-  ]),
-) as Record<Mood, string[]>;
-
-function mixRgba(from: Rgba, to: Rgba, t: number): string {
-  const r = Math.round(from[0] + (to[0] - from[0]) * t);
-  const g = Math.round(from[1] + (to[1] - from[1]) * t);
-  const b = Math.round(from[2] + (to[2] - from[2]) * t);
-  const a = from[3] + (to[3] - from[3]) * t;
-  return `rgba(${r},${g},${b},${a.toFixed(4)})`;
-}
-
-function clamp01(value: number): number {
-  return value < 0 ? 0 : value > 1 ? 1 : value;
-}
-
 const TWO_PI = Math.PI * 2;
 
 /** Anything we can draw into: the worker hands us an `OffscreenCanvas`
@@ -239,7 +181,6 @@ type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 export interface WaveScene {
   /** CSS pixel size of the box plus the backing-store ratio to draw at. */
   resize(width: number, height: number, dpr: number): void;
-  setMood(mood: Mood, now: number, animate?: boolean): void;
   /** Breaks a wave: sends one more swell across the water. */
   tide(now: number): void;
   /** Draws the frame for `now` (a `performance.now()`-style timestamp). */
@@ -250,46 +191,18 @@ export interface WaveScene {
  * Builds a renderer bound to one canvas context.
  *
  * Every moving part is a closed-form function of the timestamp handed to
- * `draw` — the drift of the water, the swell packets, the mood fade — so
- * a late frame lands where the water *should* be by then rather than one
- * step further along, and a hitch never shifts anything. That is what
- * lets the loop live on a worker's timer instead of a vsync signal.
+ * `draw` — the drift of the water and the swell packets — so a late frame
+ * lands where the water *should* be by then rather than one step further
+ * along, and a hitch never shifts anything. That is what lets the loop
+ * live on a worker's timer instead of a vsync signal.
  */
-export function createWaveScene(
-  ctx: Ctx,
-  initialMood: Mood = "idle",
-): WaveScene {
+export function createWaveScene(ctx: Ctx): WaveScene {
   const startTime = Date.now();
   let width = 0;
   let height = 0;
   let dpr = 1;
 
   const swells: Swell[] = [];
-
-  // `-Infinity` reads as a fade that finished long ago, so the first frame
-  // is painted in the mood it was built with rather than fading up to it.
-  let mood = initialMood;
-  let moodStart = -Infinity;
-  // The fade's starting colors are a *snapshot*, not a palette. Changing
-  // mood again mid-fade has to continue from the color actually on screen;
-  // reading it back off the previous mood's palette would jump to a color
-  // the waves had already left behind.
-  let fadeFrom: Rgba[] = PARSED_PALETTES[initialMood];
-
-  function colorsAt(now: number): Rgba[] {
-    const t = clamp01((now - moodStart) / MOOD_MS);
-    if (t >= 1) return PARSED_PALETTES[mood];
-    const to = PARSED_PALETTES[mood];
-    return fadeFrom.map(
-      (from, index) =>
-        [
-          from[0] + (to[index][0] - from[0]) * t,
-          from[1] + (to[index][1] - from[1]) * t,
-          from[2] + (to[index][2] - from[2]) * t,
-          from[3] + (to[index][3] - from[3]) * t,
-        ] as Rgba,
-    );
-  }
 
   /** Drops spent packets and returns the live ones as flat arrays — one
    * pass per frame instead of per sampled point, which matters because
@@ -315,13 +228,6 @@ export function createWaveScene(
       dpr = nextDpr;
       ctx.canvas.width = Math.max(1, Math.round(width * dpr));
       ctx.canvas.height = Math.max(1, Math.round(height * dpr));
-    },
-
-    setMood(nextMood, now, animate = true) {
-      if (nextMood === mood) return;
-      fadeFrom = colorsAt(now);
-      mood = nextMood;
-      moodStart = animate ? now : -Infinity;
     },
 
     tide(now) {
@@ -355,11 +261,6 @@ export function createWaveScene(
       const scale = motionScale(width, height);
       const { strengths, centers } = livePackets(now);
       const packetCount = strengths.length;
-
-      const moodT = clamp01((now - moodStart) / MOOD_MS);
-      const settled = moodT >= 1;
-      const to = PARSED_PALETTES[mood];
-      const settledFills = PALETTE_STRINGS[mood];
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, width, height);
@@ -427,9 +328,7 @@ export function createWaveScene(
 
         ctx.lineTo(spanStart + span, height);
         ctx.closePath();
-        ctx.fillStyle = settled
-          ? settledFills[index]
-          : mixRgba(fadeFrom[index], to[index], moodT);
+        ctx.fillStyle = WAVE_PALETTE[layer.fillKey];
         ctx.fill();
       }
     },

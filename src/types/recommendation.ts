@@ -1,7 +1,7 @@
 import { BaseEntity, CatalogEntity } from './common';
 import type { PaginationMetadata } from './common';
 import type { ActivityCategorySummary } from './activities';
-import type { PlanStatusKey } from './plans';
+import type { PlanDetailResult, PlanStatusKey } from './plans';
 
 /**
  * Expected keys for a plan request's status (CU17, CU19).
@@ -36,12 +36,15 @@ export interface CreatePlanRequestPayload {
 }
 
 /**
- * Body accepted by `POST /plan-requests/surprise` (CU19).
+ * Body accepted by `POST /plan-requests/surprise` (CU19). Both fields are
+ * optional: without them the backend falls back to the user's saved
+ * preferred area and, failing that, a sensible default department — a
+ * missing location is never a reason to withhold the request.
  * Matches `CreateSurprisePlanRequestDto` in `SmartPlan-back`.
  */
 export interface CreateSurprisePlanRequestPayload {
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
 }
 
 /**
@@ -77,21 +80,54 @@ export interface PlanRequestPlanSummary {
 }
 
 /**
+ * What the system understood from a plan request — explicit context, free
+ * text interpreted by Gemini, or the user's stored preference profile,
+ * whichever resolved it. Null fields mean that piece was never resolved
+ * (e.g. no budget could be inferred) — render "no badge for it", not a
+ * placeholder. Matches `ResolvedPlanContextDto` in `SmartPlan-back`.
+ */
+export interface ResolvedPlanContext {
+  budget: number | null;
+  partySize: number | null;
+  departmentName: string | null;
+  categories: ActivityCategorySummary[];
+}
+
+/**
  * Response returned by `GET /plan-requests/:id` (CU17, CU19). `plans` is
- * only populated once `statusKey === 'generated'`; `failedAt`/`failureCode`/
- * `failureDetail` are only populated once `statusKey === 'failed'`. Matches
- * `PlanRequestStatusDto` in `SmartPlan-back`.
+ * only populated once `statusKey === 'generated'` — and, once it is, each
+ * entry is the full plan detail shape (title/cost/duration plus the ordered
+ * `details[]` itinerary with per-activity coordinates), not just the
+ * summary fields; `failedAt`/`failureCode`/`failureDetail` are only
+ * populated once `statusKey === 'failed'`. Matches `PlanRequestStatusDto`
+ * in `SmartPlan-back`.
  */
 export interface PlanRequestStatus {
   id: number;
   statusKey: RequestStatusKey;
-  mode: string;
+  mode: 'automatic' | 'surprise';
   requestedAt: string;
-  plans?: PlanRequestPlanSummary[];
+  /** Persisted raw query; null for surprise requests and older rows. */
+  query?: string | null;
+  progressStage?: PlanRequestProgressStage | null;
+  progressStageAt?: string | null;
+  /** Only present when there is enough same-mode production history. */
+  estimatedRemainingSeconds?: number | null;
+  plans?: PlanDetailResult[];
+  resolvedContext: ResolvedPlanContext;
   failedAt?: string | null;
   failureCode?: string | null;
   failureDetail?: Record<string, unknown> | null;
 }
+
+export type PlanRequestProgressStage =
+  | 'queued'
+  | 'interpreting'
+  | 'locating'
+  | 'searching'
+  | 'composing'
+  | 'routing'
+  | 'finalizing';
 
 /**
  * Domain entity backing a plan request, as embedded in `Plan.request`
@@ -135,21 +171,30 @@ export type FeedbackTag = (typeof FEEDBACK_TAGS)[number];
  * the plan; the user only reports `actualCost`.
  */
 export interface PlanFeedback {
+  images?: import('./media').MediaImage[];
+  id?: number;
   rating: number;
   tags: FeedbackTag[];
   comment: string | null;
   actualCost: number | null;
   actualDuration: number | null;
+  /** Whether the owner shares it with the plan's community (#106). */
+  shared: boolean;
+  /**
+   * `true` only when moderation took the comment down from the community.
+   * The owner never sees any other moderation state.
+   */
+  commentHidden: boolean;
   createdAt: string;
 }
 
 /**
- * Where a plan sits in the CU23 feedback lifecycle, derived server-side.
+ * Where an outing sits in the CU23 feedback lifecycle, derived server-side.
  * There is no `expired`: US18 defines no closing window. Matches
  * `FeedbackState` in `SmartPlan-back`.
  *
- *  - `not_available` → not `completed`, or completed < 24 h ago with no reminder.
- *  - `available`     → window open (reminder sent, or 24 h elapsed) and no feedback.
+ *  - `not_available` → the outing is still to do.
+ *  - `available`     → marked as done and no feedback yet (opens immediately).
  *  - `submitted`     → feedback already recorded.
  */
 export type FeedbackState = 'not_available' | 'available' | 'submitted';
@@ -164,6 +209,8 @@ export interface CreateFeedbackPayload {
   comment?: string;
   actualCost?: number;
   actualDuration?: number;
+  /** Shares the experience with the community (#106); private when absent. */
+  shared?: boolean;
 }
 
 /**

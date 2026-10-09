@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -7,12 +7,78 @@ import type { PlanFeedback } from "@/types";
 
 import { FeedbackDialog } from "./FeedbackDialog";
 
-const submitFeedback = vi.hoisted(() => vi.fn());
+const { submitFeedback, getOuting, getOwnRating, createRating, updateRating } = vi.hoisted(() => ({
+  submitFeedback: vi.fn(),
+  getOuting: vi.fn(),
+  getOwnRating: vi.fn(),
+  createRating: vi.fn(),
+  updateRating: vi.fn(),
+}));
+
+const { listMedia, uploadMedia } = vi.hoisted(() => ({
+  listMedia: vi.fn(),
+  uploadMedia: vi.fn(),
+}));
+
+vi.mock("@/lib/api/media", () => ({
+  listMedia,
+  uploadMedia,
+  updateMedia: vi.fn(),
+  deleteMedia: vi.fn(),
+  downloadMedia: vi.fn().mockRejectedValue(new Error("not in tests")),
+}));
 
 vi.mock("@/lib/api", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/api")>()),
   submitFeedback,
+  getOuting,
+  getOwnRating,
+  createRating,
+  updateRating,
 }));
+
+function detail(order: number, id: number, name: string) {
+  return { id: order * 10, order, estimatedCost: 0, estimatedDuration: 60, activity: { id, name } };
+}
+
+const OUTING = {
+  id: 7,
+  details: [
+    detail(2, 12, "Cata en bodega"),
+    detail(1, 11, "Almuerzo en finca"),
+    detail(3, 11, "Almuerzo en finca"),
+  ],
+};
+
+function ownRating(activityId: number, score: number, moderationStatus = "approved") {
+  return {
+    id: activityId * 100,
+    score,
+    comment: null,
+    authorAlias: "Tute",
+    createdAt: "2026-08-29T00:00:00.000Z",
+    updatedAt: "2026-08-29T00:00:00.000Z",
+    activityId,
+    planId: 7,
+    moderationStatus,
+    moderationReason: null,
+  };
+}
+
+/** The photos step follows the thanks after a short pause. */
+async function photosStep() {
+  return screen.findByRole("heading", { name: /sumás fotos de la salida/i }, { timeout: 3000 });
+}
+
+async function skipPhotos() {
+  await photosStep();
+  await userEvent.click(screen.getByRole("button", { name: /^(seguir|listo)$/i }));
+}
+
+async function sendFeedback(star = 3) {
+  await userEvent.click(screen.getAllByRole("radio")[star]);
+  await userEvent.click(screen.getByRole("button", { name: /enviar opinión/i }));
+}
 
 const FEEDBACK: PlanFeedback = {
   rating: 4,
@@ -20,6 +86,8 @@ const FEEDBACK: PlanFeedback = {
   comment: null,
   actualCost: null,
   actualDuration: null,
+  shared: false,
+  commentHidden: false,
   createdAt: "2026-08-20T00:00:00.000Z",
 };
 
@@ -47,6 +115,31 @@ function setup(overrides: Partial<Parameters<typeof FeedbackDialog>[0]> = {}) {
 beforeEach(() => {
   vi.clearAllMocks();
   submitFeedback.mockResolvedValue(FEEDBACK);
+  listMedia.mockResolvedValue([]);
+  uploadMedia.mockResolvedValue({
+    id: 1,
+    url: "/api/media/plan/1",
+    isPrimary: true,
+    displayOrder: 0,
+    createdAt: "2026-10-02T00:00:00.000Z",
+  });
+  Object.defineProperty(URL, "createObjectURL", {
+    configurable: true,
+    value: vi.fn(() => "blob:feedback-photo"),
+  });
+  Object.defineProperty(URL, "revokeObjectURL", {
+    configurable: true,
+    value: vi.fn(),
+  });
+  // The CU23-only tests don't need a follow-up activity step.
+  getOuting.mockResolvedValue({ ...OUTING, details: [] });
+  getOwnRating.mockImplementation((id: number) => Promise.resolve(ownRating(id, 4)));
+  createRating.mockImplementation((id: number, input: { score: number }) =>
+    Promise.resolve(ownRating(id, input.score))
+  );
+  updateRating.mockImplementation((id: number, input: { score: number }) =>
+    Promise.resolve(ownRating(id / 100, input.score))
+  );
 });
 
 describe("FeedbackDialog (CU23)", () => {
@@ -120,9 +213,11 @@ describe("FeedbackDialog (CU23)", () => {
     expect(
       await screen.findByText(/¡gracias por tu opinión!/i)
     ).toBeInTheDocument();
-    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK), {
-      timeout: 2500,
-    });
+    // Nothing to rate here: the photos step closes it with "Listo".
+    await photosStep();
+    expect(onSubmitted).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "Listo" }));
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK));
   });
 
   it("includes chosen tags and a real cost in the payload", async () => {
@@ -296,5 +391,321 @@ describe("FeedbackDialog (CU23)", () => {
     );
 
     await waitFor(() => expect(onReconcile).toHaveBeenCalledTimes(1));
+  });
+});
+
+describe("FeedbackDialog → rating the activities (CU23 → CU44)", () => {
+  beforeEach(() => {
+    getOuting.mockResolvedValue(OUTING);
+    getOwnRating.mockResolvedValue(null);
+    listMedia.mockResolvedValue([]);
+  });
+
+  it("offers the activity step even when every activity is already rated", async () => {
+    getOwnRating.mockImplementation((id: number) => Promise.resolve(ownRating(id, 5)));
+    const { onSubmitted } = setup();
+    await sendFeedback();
+    await skipPhotos();
+
+    expect(await screen.findByText(/querés valorar las actividades/i)).toBeInTheDocument();
+    expect(onSubmitted).not.toHaveBeenCalled();
+  });
+
+  it("ends after the photos when the activities can't be loaded", async () => {
+    getOuting.mockRejectedValueOnce(new ApiError({ message: "x", type: "NETWORK" }));
+    const { onSubmitted } = setup();
+    await sendFeedback();
+    await photosStep();
+
+    await userEvent.click(screen.getByRole("button", { name: /ahora no/i }));
+
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK));
+    expect(screen.queryByText(/querés valorar las actividades/i)).not.toBeInTheDocument();
+  });
+
+  it("offers photos of the whole outing right after the feedback", async () => {
+    const { onSubmitted } = setup();
+    await sendFeedback();
+
+    await photosStep();
+    expect(screen.getByText(/gracias por tu opinión/i)).toBeInTheDocument();
+    expect(await screen.findByLabelText("Agregar fotos")).toBeInTheDocument();
+    expect(screen.getByText("Elegir fotos")).toBeInTheDocument();
+    expect(listMedia).toHaveBeenCalledWith("plan", 7);
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Seguir" })).toHaveFocus()
+    );
+    expect(onSubmitted).not.toHaveBeenCalled();
+  });
+
+  it("Escape on the photos step reports the saved feedback", async () => {
+    const { onSubmitted, onDismiss } = setup();
+    await sendFeedback();
+    await photosStep();
+
+    await userEvent.keyboard("{Escape}");
+
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK));
+    expect(onDismiss).not.toHaveBeenCalled();
+  });
+
+  it("closes only the photo lightbox when Escape is pressed inside it", async () => {
+    listMedia.mockResolvedValue([
+      {
+        id: 1,
+        url: "/api/media/plan/1",
+        isPrimary: true,
+        displayOrder: 0,
+        createdAt: "2026-10-02T00:00:00.000Z",
+      },
+    ]);
+    const { onSubmitted } = setup();
+    await sendFeedback();
+    await photosStep();
+    await userEvent.click(await screen.findByRole("button", { name: "Ver foto 1 de 1" }));
+
+    await userEvent.keyboard("{Escape}");
+
+    expect(
+      screen.queryByRole("dialog", { name: "Fotos de Tarde de vinos en Luján" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /sumás fotos de la salida/i })).toBeInTheDocument();
+    expect(onSubmitted).not.toHaveBeenCalled();
+  });
+
+  it("notifies the parent when an outing photo changes", async () => {
+    listMedia
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: 1,
+          url: "/api/media/plan/1",
+          isPrimary: true,
+          displayOrder: 0,
+          createdAt: "2026-10-02T00:00:00.000Z",
+        },
+      ]);
+    const onMediaChanged = vi.fn();
+    setup({ onMediaChanged });
+    await sendFeedback();
+    await photosStep();
+
+    await userEvent.upload(
+      await screen.findByLabelText("Agregar fotos"),
+      new File(["photo"], "salida.png", { type: "image/png" }),
+    );
+
+    await waitFor(() => expect(onMediaChanged).toHaveBeenCalledTimes(1));
+    expect(uploadMedia).toHaveBeenCalledWith("plan", 7, expect.any(File), expect.any(Function));
+  });
+
+  it("offers rating the activities after the feedback is saved", async () => {
+    const { onSubmitted } = setup();
+    await sendFeedback();
+    await skipPhotos();
+
+    expect(await screen.findByText(/querés valorar las actividades/i)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /valorar actividades/i })).toHaveFocus()
+    );
+    expect(onSubmitted).not.toHaveBeenCalled();
+  });
+
+  it("declining the offer still reports the saved feedback", async () => {
+    const { onSubmitted, onDismiss } = setup();
+    await sendFeedback();
+    await skipPhotos();
+
+    await userEvent.click(await screen.findByRole("button", { name: /ahora no/i }));
+
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK));
+    expect(onDismiss).not.toHaveBeenCalled();
+    expect(createRating).not.toHaveBeenCalled();
+  });
+
+  it("Escape on the offer also reports the saved feedback", async () => {
+    const { onSubmitted, onDismiss } = setup();
+    await sendFeedback();
+    await skipPhotos();
+    await screen.findByText(/querés valorar las actividades/i);
+
+    await userEvent.keyboard("{Escape}");
+
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK));
+    expect(onDismiss).not.toHaveBeenCalled();
+  });
+
+  it("lists each activity once, in itinerary order, and sends only the rated ones", async () => {
+    const { onSubmitted } = setup();
+    await sendFeedback();
+    await skipPhotos();
+    await userEvent.click(await screen.findByRole("button", { name: /valorar actividades/i }));
+
+    const groups = screen.getAllByRole("radiogroup");
+    expect(groups).toHaveLength(2);
+    expect(groups[0]).toHaveAccessibleName("Almuerzo en finca");
+    expect(groups[1]).toHaveAccessibleName("Cata en bodega");
+    expect(groups[0]).toHaveAttribute("aria-required", "false");
+
+    const save = screen.getByRole("button", { name: /guardar valoraciones/i });
+    expect(save).toBeDisabled();
+
+    await userEvent.click(within(groups[1]).getByRole("radio", { name: /5 estrellas/i }));
+    await userEvent.click(screen.getByRole("button", { name: /agregar un comentario/i }));
+    await userEvent.type(
+      screen.getByLabelText(/tu comentario sobre cata en bodega/i),
+      "  Muy buena  "
+    );
+    await userEvent.click(save);
+
+    expect(createRating).toHaveBeenCalledTimes(1);
+    expect(createRating).toHaveBeenCalledWith(12, { planId: 7, score: 5, comment: "Muy buena" });
+    expect(await screen.findByText(/gracias por valorar/i)).toBeInTheDocument();
+    // Each rated activity can take its own photos; the person closes it.
+    expect(
+      await screen.findByRole("region", { name: /fotos de tu valoración de cata en bodega/i })
+    ).toBeInTheDocument();
+    expect(listMedia).toHaveBeenCalledWith("rating", 1200);
+    expect(onSubmitted).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "Listo" }));
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK));
+  });
+
+  it("lets the person update an activity already rated", async () => {
+    getOwnRating.mockImplementation((id: number) =>
+      Promise.resolve(id === 11 ? ownRating(11, 3) : null)
+    );
+    setup();
+    await sendFeedback();
+    await skipPhotos();
+    await userEvent.click(await screen.findByRole("button", { name: /valorar actividades/i }));
+
+    const [lunch] = screen.getAllByRole("radiogroup");
+    expect(screen.getAllByRole("radiogroup")).toHaveLength(2);
+    expect(screen.getByText(/tu valoración actual/i)).toBeInTheDocument();
+
+    await userEvent.click(within(lunch).getByRole("radio", { name: /5 estrellas/i }));
+    await userEvent.click(screen.getByRole("button", { name: /guardar valoraciones/i }));
+
+    expect(updateRating).toHaveBeenCalledWith(1100, { score: 5, comment: null });
+    expect(createRating).not.toHaveBeenCalled();
+  });
+
+  it("keeps a failed rating open and the saved one read-only", async () => {
+    createRating.mockImplementation((id: number, input: { score: number }) =>
+      id === 11
+        ? Promise.reject(new ApiError({ message: "Se cortó la conexión.", type: "NETWORK" }))
+        : Promise.resolve(ownRating(id, input.score, "rejected"))
+    );
+    const { onSubmitted } = setup();
+    await sendFeedback();
+    await skipPhotos();
+    await userEvent.click(await screen.findByRole("button", { name: /valorar actividades/i }));
+
+    const [lunch, tasting] = screen.getAllByRole("radiogroup");
+    await userEvent.click(within(lunch).getByRole("radio", { name: /4 estrellas/i }));
+    await userEvent.click(within(tasting).getByRole("radio", { name: /5 estrellas/i }));
+    await userEvent.click(screen.getByRole("button", { name: /guardar valoraciones/i }));
+
+    expect(await screen.findByText(/no pudimos guardar una valoración/i)).toBeInTheDocument();
+    expect(screen.getByText(/se cortó la conexión/i)).toBeInTheDocument();
+    expect(screen.getByText("Guardada")).toBeInTheDocument();
+    expect(screen.getAllByRole("radiogroup")).toHaveLength(1);
+    expect(onSubmitted).not.toHaveBeenCalled();
+
+    createRating.mockClear();
+    createRating.mockImplementation((id: number, input: { score: number }) =>
+      Promise.resolve(ownRating(id, input.score))
+    );
+    await userEvent.click(screen.getByRole("button", { name: /guardar valoraciones/i }));
+    expect(createRating).toHaveBeenCalledTimes(1);
+    expect(createRating).toHaveBeenCalledWith(11, { planId: 7, score: 4, comment: undefined });
+    expect(await screen.findByText(/no pasó la moderación/i)).toBeInTheDocument();
+  });
+
+  it("updates a rating created elsewhere meanwhile", async () => {
+    createRating.mockRejectedValue(
+      new ApiError({
+        message: "Ya existe.",
+        type: "HTTP",
+        status: 409,
+        code: "RATING_ALREADY_EXISTS",
+      })
+    );
+    setup();
+    await sendFeedback();
+    await skipPhotos();
+    await userEvent.click(await screen.findByRole("button", { name: /valorar actividades/i }));
+
+    const [lunch] = screen.getAllByRole("radiogroup");
+    getOwnRating.mockResolvedValue(ownRating(11, 3));
+    await userEvent.click(within(lunch).getByRole("radio", { name: /2 estrellas/i }));
+    await userEvent.click(screen.getByRole("button", { name: /guardar valoraciones/i }));
+
+    expect(updateRating).toHaveBeenCalledWith(1100, { score: 2, comment: null });
+    expect(await screen.findByText(/gracias por valorar/i)).toBeInTheDocument();
+  });
+
+  it("warns when a comment didn't pass moderation", async () => {
+    createRating.mockImplementation((id: number, input: { score: number }) =>
+      Promise.resolve(ownRating(id, input.score, "rejected"))
+    );
+    setup();
+    await sendFeedback();
+    await skipPhotos();
+    await userEvent.click(await screen.findByRole("button", { name: /valorar actividades/i }));
+
+    const [lunch] = screen.getAllByRole("radiogroup");
+    await userEvent.click(within(lunch).getByRole("radio", { name: /1 estrella/i }));
+    await userEvent.click(screen.getByRole("button", { name: /guardar valoraciones/i }));
+
+    expect(await screen.findByText(/no pasó la moderación/i)).toBeInTheDocument();
+  });
+
+  it("skipping the activities still reports the saved feedback", async () => {
+    const { onSubmitted, onDismiss } = setup();
+    await sendFeedback();
+    await skipPhotos();
+    await userEvent.click(await screen.findByRole("button", { name: /valorar actividades/i }));
+
+    await userEvent.click(screen.getByRole("button", { name: /omitir/i }));
+
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(FEEDBACK));
+    expect(onDismiss).not.toHaveBeenCalled();
+    expect(createRating).not.toHaveBeenCalled();
+  });
+});
+
+describe("FeedbackDialog sharing with the community (#106)", () => {
+  it("never offers sharing for an outing without a published plan", async () => {
+    setup();
+    await userEvent.click(screen.getAllByRole("radio")[3]);
+
+    expect(
+      screen.queryByRole("checkbox", { name: /compartir mi experiencia/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the experience private unless the person opts in", async () => {
+    setup({ canShare: true });
+    await userEvent.click(screen.getAllByRole("radio")[3]);
+
+    const share = screen.getByRole("checkbox", { name: /compartir mi experiencia/i });
+    expect(share).not.toBeChecked();
+    expect(share).toHaveAccessibleDescription(/lo que gastaste nunca se muestra/i);
+
+    await userEvent.click(screen.getByRole("button", { name: /enviar opinión/i }));
+    expect(submitFeedback).toHaveBeenCalledWith(7, { rating: 4 });
+  });
+
+  it("sends the opt-in with the feedback", async () => {
+    setup({ canShare: true });
+    await userEvent.click(screen.getAllByRole("radio")[4]);
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: /compartir mi experiencia/i })
+    );
+    await userEvent.click(screen.getByRole("button", { name: /enviar opinión/i }));
+
+    expect(submitFeedback).toHaveBeenCalledWith(7, { rating: 5, shared: true });
   });
 });

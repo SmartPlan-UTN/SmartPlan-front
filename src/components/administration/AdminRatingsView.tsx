@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { Pagination } from "@/components/explore";
-import { Button, Icon, Stars } from "@/components/ui";
+import { Button, Icon, Stars, UserAvatar } from "@/components/ui";
+import { MediaGallery, MediaGalleryManager } from "@/components/media";
 import {
   ApiError,
   getAdminRatingCounts,
@@ -21,7 +22,6 @@ import type {
 } from "@/types";
 
 import { RatingRejectionDialog } from "./RatingRejectionDialog";
-import { UserAvatar } from "./UserAvatar";
 import styles from "./AdminRatings.module.css";
 import shared from "./AdminManagement.module.css";
 
@@ -287,6 +287,8 @@ export function AdminRatingsView() {
                 ) : (
                   <p className={styles.noComment}>Sin comentario: solo puntuación.</p>
                 )}
+                <MediaGallery target="rating" resourceId={rating.id} resourceName={`valoración de ${rating.author.name}`} variant="strip" />
+                <MediaGalleryManager target="rating" resourceId={rating.id} resourceName={`valoración de ${rating.author.name}`} />
                 {rating.moderationReason ? (
                   <p className={styles.reason}>
                     <Icon name="triangle-alert" size={16} />
@@ -344,7 +346,10 @@ export function AdminRatingsView() {
 
       {rejecting ? (
         <RatingRejectionDialog
-          rating={rejecting}
+          title="Rechazar valoración"
+          subtitle={`De ${rejecting.author.name} ${rejecting.author.lastName}, sobre ${rejecting.activity.name}`}
+          placeholder="Por qué este comentario no se publica."
+          note="La valoración deja de mostrarse públicamente y el promedio de la actividad se recalcula sin ella. El registro se conserva."
           saving={saving}
           error={actionError}
           onClose={() => {

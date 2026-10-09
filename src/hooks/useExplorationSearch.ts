@@ -29,6 +29,9 @@ export interface UseExplorationSearchResult<TResult> {
  * (compared by value, via `JSON.stringify`, since the shape varies by
  * caller) and owns page tracking, in-flight status, and error handling.
  *
+ * With `abortable`, `fetcher` also receives `{ signal }` and a request that
+ * is superseded or abandoned is cancelled on the wire, not just ignored.
+ *
  * `fetcher` and `params` are read through refs so the fetch effect can
  * depend on the serialized `params` alone instead of re-running whenever
  * the caller passes a new function/object identity.
@@ -36,10 +39,12 @@ export interface UseExplorationSearchResult<TResult> {
 export function useExplorationSearch<TParams extends object, TResult>(
   fetcher: (
     params: TParams & { page: number; limit: number },
+    options?: { signal?: AbortSignal },
   ) => Promise<PaginatedResult<TResult>>,
   params: TParams,
   pageSize = 20,
   enabled = true,
+  { abortable = false }: { abortable?: boolean } = {},
 ): UseExplorationSearchResult<TResult> {
   const [items, setItems] = useState<TResult[]>([]);
   const [pagination, setPagination] = useState<PaginationMetadata | null>(
@@ -77,23 +82,31 @@ export function useExplorationSearch<TParams extends object, TResult>(
     if (!enabled) return;
 
     const currentRequestId = ++requestId.current;
+    // A superseded or abandoned request is cancelled on the wire too, not
+    // just ignored when it lands: typing quickly never queues stale searches.
+    const controller = new AbortController();
 
     async function run() {
       setStatus("loading");
       setErrorMessage(null);
 
       try {
-        const result = await fetcherRef.current({
+        const request = {
           ...paramsRef.current,
           page,
           limit: pageSize,
-        });
+        };
+        const result = await (abortable
+          ? fetcherRef.current(request, { signal: controller.signal })
+          : fetcherRef.current(request));
         if (currentRequestId !== requestId.current) return;
         setItems(result.data);
         setPagination(result.pagination);
         setStatus("idle");
       } catch (error) {
-        if (currentRequestId !== requestId.current) return;
+        if (controller.signal.aborted || currentRequestId !== requestId.current) {
+          return;
+        }
         // Deliberately doesn't clear `items`/`pagination`: a failed refetch
         // (page change, new filter) shouldn't wipe a grid that was already
         // showing valid results — only the very first load has nothing to
@@ -106,7 +119,8 @@ export function useExplorationSearch<TParams extends object, TResult>(
     }
 
     void run();
-  }, [paramsKey, pageSize, retryToken, page, enabled]);
+    return () => controller.abort();
+  }, [paramsKey, pageSize, retryToken, page, enabled, abortable]);
 
   const goToPage = useCallback((nextPage: number) => {
     setPage(nextPage);
@@ -121,7 +135,9 @@ export function useExplorationSearch<TParams extends object, TResult>(
   return {
     items,
     pagination,
-    status,
+    // A request cancelled because the search was paused never reports back:
+    // paused means not loading.
+    status: !enabled && status === "loading" ? "idle" : status,
     errorMessage,
     hasResults,
     page,

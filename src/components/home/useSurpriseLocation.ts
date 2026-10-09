@@ -3,7 +3,6 @@
 import { useCallback, useRef, useState } from "react";
 
 import { getPreferences } from "@/lib/api";
-import type { SurpriseLocationErrorKind } from "@/lib/recommendation/planRequestErrors";
 import type { UserPreferencesResponse } from "@/types";
 
 export interface SurpriseCoords {
@@ -11,14 +10,24 @@ export interface SurpriseCoords {
   longitude: number;
 }
 
-export type SurpriseLocationSource = "device" | "preferred-area";
+/**
+ * `default` covers every case where neither device GPS nor a saved
+ * preferred area could be resolved. The backend never needs coordinates —
+ * `POST /plan-requests/surprise` falls back to a sensible department on its
+ * own — so this is never an error state, only a note about which signal
+ * was actually used (CU19).
+ */
+export type SurpriseLocationSource = "device" | "preferred-area" | "default";
 
 export type SurpriseLocationState =
   | { status: "idle" }
   | { status: "locating" }
   | { status: "loading-fallback" }
-  | { status: "resolved"; coords: SurpriseCoords; source: SurpriseLocationSource }
-  | { status: "error"; kind: SurpriseLocationErrorKind };
+  | {
+      status: "resolved";
+      coords: SurpriseCoords | null;
+      source: SurpriseLocationSource;
+    };
 
 export interface UseSurpriseLocationResult {
   state: SurpriseLocationState;
@@ -55,8 +64,10 @@ function getCurrentPosition(): Promise<GeolocationPosition> {
  * 09). Device GPS first; if the user denies it or it is unavailable, the
  * profile's preferred area is the fallback — its coordinates are already
  * resolved server-side when preferences are saved, so no extra geocoding
- * happens here. With neither, the caller gets an actionable error, never a
- * dead end.
+ * happens here. With neither available, this still resolves (`coords:
+ * null`, `source: "default"`): the request is submitted anyway and the
+ * backend picks a sensible department on its own, so a missing location
+ * is never a dead end.
  *
  * Permission is only ever requested from `request()` — an explicit user
  * action — never on mount. Preferences are fetched once per request, in
@@ -89,9 +100,7 @@ export function useSurpriseLocation(): UseSurpriseLocationResult {
         })
         .catch(() => null);
 
-    const resolveFromPreferredArea = async (
-      onMissing: SurpriseLocationErrorKind,
-    ): Promise<void> => {
+    const resolveFromPreferredArea = async (): Promise<void> => {
       setState({ status: "loading-fallback" });
       const preferences = await preferencesPromise;
       if (runId.current !== thisRun) return;
@@ -105,14 +114,11 @@ export function useSurpriseLocation(): UseSurpriseLocationResult {
         });
         return;
       }
-      setState({
-        status: "error",
-        kind: preferences ? "no-location" : onMissing,
-      });
+      setState({ status: "resolved", coords: null, source: "default" });
     };
 
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
-      void resolveFromPreferredArea("unsupported");
+      void resolveFromPreferredArea();
       return;
     }
 
@@ -128,13 +134,9 @@ export function useSurpriseLocation(): UseSurpriseLocationResult {
           source: "device",
         });
       },
-      (error: GeolocationPositionError) => {
+      () => {
         if (runId.current !== thisRun) return;
-        void resolveFromPreferredArea(
-          error.code === error.PERMISSION_DENIED
-            ? "denied-no-fallback"
-            : "unavailable-no-fallback",
-        );
+        void resolveFromPreferredArea();
       },
     );
   }, []);

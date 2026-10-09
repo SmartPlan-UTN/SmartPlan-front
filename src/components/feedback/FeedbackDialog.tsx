@@ -10,12 +10,22 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
+import { MediaGalleryManager } from "@/components/media";
 import { Button, Icon, RatingInput } from "@/components/ui";
 import { useFeedbackSubmit } from "@/hooks";
+import {
+  loadRatableActivities,
+  type RatableActivity,
+} from "@/lib/plans/ratableActivities";
 import { formatArs } from "@/lib/utils";
 import type { FeedbackTag, PlanFeedback } from "@/types";
 
 import {
+  ActivityRatingsStep,
+  type ActivityRatingsResult,
+} from "./ActivityRatingsStep";
+import {
+  ACTIVITY_RATINGS_COPY,
   costDeltaLabel,
   FEEDBACK_COPY,
   FEEDBACK_TAG_LABELS,
@@ -36,9 +46,19 @@ export interface FeedbackDialogProps {
   onDismiss: () => void;
   onSubmitted: (feedback: PlanFeedback) => void;
   onReconcile?: () => void;
+  /** Refresh surfaces that also show the outing's photos or cover. */
+  onMediaChanged?: () => void;
+  /**
+   * The outing comes from a published plan, so its experience can be
+   * shared with that plan's community (#106).
+   */
+  canShare?: boolean;
 }
 
 const SUCCESS_HOLD_MS = 1600;
+/** How long the thanks shows on its own before the photos step. */
+const PHOTOS_DELAY_MS = 1100;
+const NOTICE_HOLD_MS = 4200;
 const EXIT_MS = 240;
 const MAX_ACTUAL_COST = 99_999_999.99;
 const MAX_COST_INPUT_LENGTH = 16;
@@ -97,6 +117,8 @@ export function FeedbackDialog({
   onDismiss,
   onSubmitted,
   onReconcile,
+  onMediaChanged,
+  canShare = false,
 }: FeedbackDialogProps) {
   const titleId = useId();
   const ratingLabelId = useId();
@@ -110,7 +132,19 @@ export function FeedbackDialog({
   const [costInputError, setCostInputError] = useState<string | null>(null);
   const [commentOpen, setCommentOpen] = useState(false);
   const [comment, setComment] = useState("");
-  const [phase, setPhase] = useState<"form" | "success">("form");
+  const [shared, setShared] = useState(false);
+  // form → success → photos of the outing, then either closes or offers
+  // rating the activities (offer → activities → ratingsDone, where each rated
+  // activity can take photos too). Past `form` the feedback is saved, so
+  // every way out reports it through `onSubmitted`.
+  const [phase, setPhase] = useState<
+    "form" | "success" | "photos" | "offer" | "activities" | "ratingsDone"
+  >("form");
+  const [ratable, setRatable] = useState<RatableActivity[]>([]);
+  const [ratingsBusy, setRatingsBusy] = useState(false);
+  const [ratingsResult, setRatingsResult] = useState<ActivityRatingsResult | null>(null);
+  const savedFeedback = useRef<PlanFeedback | null>(null);
+  const activeRef = useRef(false);
   const [presence, setPresence] = useState<"open" | "closing">("open");
   const dialogRef = useRef<HTMLDivElement>(null);
   const commentRef = useRef<HTMLTextAreaElement>(null);
@@ -120,12 +154,32 @@ export function FeedbackDialog({
   const commentFocusFrame = useRef<number | null>(null);
   const busy = submission.status === "working";
   const dismissableRef = useRef(true);
-  dismissableRef.current = !busy && phase === "form" && presence === "open";
+  dismissableRef.current =
+    presence === "open" &&
+    (phase === "form"
+      ? !busy
+      : phase === "activities"
+        ? !ratingsBusy
+        : phase !== "success");
+  const dismissActionRef = useRef(onDismiss);
+  dismissActionRef.current = phase === "form" ? onDismiss : finishSubmitted;
 
   function requestClose(callback: () => void) {
     if (presence === "closing") return;
     setPresence("closing");
     closeTimer.current = window.setTimeout(callback, EXIT_MS);
+  }
+
+  function finishSubmitted() {
+    const feedback = savedFeedback.current;
+    if (feedback) onSubmitted(feedback);
+  }
+
+  function holdThenClose(ms: number) {
+    if (!activeRef.current) return;
+    successTimer.current = window.setTimeout(() => {
+      requestClose(finishSubmitted);
+    }, ms);
   }
 
   useEffect(() => {
@@ -138,6 +192,11 @@ export function FeedbackDialog({
     setCommentOpen(false);
     setComment("");
     setPhase("form");
+    setRatable([]);
+    setRatingsBusy(false);
+    setRatingsResult(null);
+    savedFeedback.current = null;
+    activeRef.current = true;
     setPresence("open");
     submission.reset();
     previouslyFocused.current = document.activeElement as HTMLElement | null;
@@ -162,7 +221,7 @@ export function FeedbackDialog({
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape" && dismissableRef.current) {
         event.preventDefault();
-        requestClose(onDismiss);
+        requestClose(dismissActionRef.current);
         return;
       }
       if (event.key !== "Tab" || !dialogRef.current) return;
@@ -181,6 +240,7 @@ export function FeedbackDialog({
 
     document.addEventListener("keydown", onKeyDown);
     return () => {
+      activeRef.current = false;
       cancelAnimationFrame(raf);
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
@@ -193,6 +253,21 @@ export function FeedbackDialog({
     // Opening intentionally snapshots the rating and focus origin.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  // Each later step takes focus where its next action is.
+  useEffect(() => {
+    if (phase !== "photos" && phase !== "offer" && phase !== "activities") return;
+    const frame = requestAnimationFrame(() => {
+      const target =
+        phase === "photos"
+          ? dialogRef.current?.querySelector<HTMLElement>("[data-photos-next]")
+          : phase === "offer"
+          ? dialogRef.current?.querySelector<HTMLElement>("[data-offer-accept]")
+          : dialogRef.current?.querySelector<HTMLElement>('[role="radio"]:not(:disabled)');
+      target?.focus();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [phase]);
 
   const parsedCost = useMemo(() => parseAmount(costRaw), [costRaw]);
   const costError =
@@ -239,6 +314,7 @@ export function FeedbackDialog({
       rating,
       tags: tags.size > 0 ? [...tags] : undefined,
       comment: comment.trim() || undefined,
+      shared: canShare && shared ? true : undefined,
       actualCost:
         parsedCost && parsedCost > 0 && !Number.isNaN(parsedCost)
           ? Math.round(parsedCost * 100) / 100
@@ -249,10 +325,36 @@ export function FeedbackDialog({
       if (outcome.error.reconcile) onReconcile?.();
       return;
     }
+    savedFeedback.current = outcome.feedback;
     setPhase("success");
+
+    // Photos of the outing come next, always (they're optional). The offer
+    // to rate activities follows only if there's something to rate.
+    const startedAt = Date.now();
+    const activities = await loadRatableActivities(planId).catch(
+      (): RatableActivity[] => []
+    );
+    if (!activeRef.current) return;
+    setRatable(activities);
+    // Let the thanks land before the next question.
+    const wait = Math.max(0, PHOTOS_DELAY_MS - (Date.now() - startedAt));
     successTimer.current = window.setTimeout(() => {
-      requestClose(() => onSubmitted(outcome.feedback));
-    }, SUCCESS_HOLD_MS);
+      if (activeRef.current) setPhase("photos");
+    }, wait);
+  }
+
+  function continueAfterPhotos() {
+    if (ratable.length > 0) setPhase("offer");
+    else requestClose(finishSubmitted);
+  }
+
+  function handleRatingsSaved(result: ActivityRatingsResult) {
+    setRatingsResult(result);
+    setPhase("ratingsDone");
+    // With ratings to attach photos to, the person closes it when done.
+    if (result.ratings.length === 0) {
+      holdThenClose(result.rejectedComments > 0 ? NOTICE_HOLD_MS : SUCCESS_HOLD_MS);
+    }
   }
 
   const shownRating = preview || rating;
@@ -268,7 +370,7 @@ export function FeedbackDialog({
       data-state={presence}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && dismissableRef.current) {
-          requestClose(onDismiss);
+          requestClose(dismissActionRef.current);
         }
       }}
     >
@@ -280,13 +382,139 @@ export function FeedbackDialog({
         aria-modal="true"
         aria-labelledby={titleId}
       >
-        {phase === "success" ? (
-          <div className={styles.success} role="status" aria-live="polite">
-            <span className={styles.successMark} aria-hidden="true">
-              <Icon name="check" size={28} />
-            </span>
-            <p className={styles.successTitle}>{FEEDBACK_COPY.success.title}</p>
-            <p className={styles.successBody}>{FEEDBACK_COPY.success.body}</p>
+        {phase === "activities" ? (
+          <ActivityRatingsStep
+            planId={planId}
+            planTitle={planTitle}
+            activities={ratable}
+            titleId={titleId}
+            onBusyChange={setRatingsBusy}
+            onSkip={() => requestClose(finishSubmitted)}
+            onSaved={handleRatingsSaved}
+          />
+        ) : phase === "ratingsDone" ? (
+          <div className={ratingsResult && ratingsResult.ratings.length > 0 ? styles.followUp : styles.success}>
+            <div className={styles.successMessage} role="status" aria-live="polite">
+              <span className={styles.successMark} aria-hidden="true">
+                <Icon name="check" size={28} />
+              </span>
+              <p id={titleId} className={styles.successTitle}>
+                {ACTIVITY_RATINGS_COPY.done.title}
+              </p>
+              <p className={styles.successBody}>
+                {ratingsResult && ratingsResult.rejectedComments > 0
+                  ? ACTIVITY_RATINGS_COPY.done.rejectedBody
+                  : ACTIVITY_RATINGS_COPY.done.body}
+              </p>
+            </div>
+            {ratingsResult && ratingsResult.ratings.length > 0 ? (
+              <div className={styles.photoPanel}>
+                <p className={styles.offerQuestion}>{ACTIVITY_RATINGS_COPY.done.photosTitle}</p>
+                <p className={styles.offerBody}>{ACTIVITY_RATINGS_COPY.done.photosBody}</p>
+                <ul className={styles.photoActivities}>
+                  {ratingsResult.ratings.map((rated) => (
+                    <li key={rated.ratingId} className={styles.photoActivity}>
+                      <p className={styles.photoActivityName}>{rated.activityName}</p>
+                      <MediaGalleryManager
+                        target="rating"
+                        resourceId={rated.ratingId}
+                        resourceName={`tu valoración de ${rated.activityName}`}
+                        variant="compact"
+                      />
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="lg"
+                  className={styles.photoNext}
+                  onClick={() => requestClose(finishSubmitted)}
+                >
+                  {ACTIVITY_RATINGS_COPY.done.finish}
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        ) : phase === "photos" ? (
+          <div className={styles.followUp}>
+            <div className={styles.successInline} role="status" aria-live="polite">
+              <span className={styles.successMarkSmall} aria-hidden="true">
+                <Icon name="check" size={18} />
+              </span>
+              <span>{FEEDBACK_COPY.success.title}</span>
+            </div>
+            <div className={styles.photoPanel}>
+              <span className={styles.photoPanelIcon} aria-hidden="true">
+                <Icon name="camera" size={22} />
+              </span>
+              <h2 id={titleId} className={styles.photoTitle}>{FEEDBACK_COPY.photos.title}</h2>
+              <p className={styles.offerBody}>{FEEDBACK_COPY.photos.body}</p>
+              <div className={styles.photoManager}>
+                <MediaGalleryManager
+                  target="plan"
+                  resourceId={planId}
+                  resourceName={planTitle}
+                  variant="embedded"
+                  onChanged={onMediaChanged}
+                />
+              </div>
+              <div className={styles.offerActions}>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="lg"
+                  data-photos-next=""
+                  onClick={continueAfterPhotos}
+                >
+                  {ratable.length > 0 ? FEEDBACK_COPY.photos.next : FEEDBACK_COPY.photos.done}
+                </Button>
+                <button
+                  type="button"
+                  className={styles.dismissButton}
+                  onClick={continueAfterPhotos}
+                >
+                  {FEEDBACK_COPY.photos.skip}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : phase === "success" || phase === "offer" ? (
+          <div className={styles.success}>
+            {phase === "success" ? (
+              <div className={styles.successMessage} role="status" aria-live="polite">
+                <span className={styles.successMark} aria-hidden="true">
+                  <Icon name="check" size={28} />
+                </span>
+                <p id={titleId} className={styles.successTitle}>{FEEDBACK_COPY.success.title}</p>
+                <p className={styles.successBody}>{FEEDBACK_COPY.success.body}</p>
+              </div>
+            ) : null}
+            {phase === "offer" ? (
+              <div className={styles.offer}>
+                <p id={titleId} className={styles.offerQuestion}>{ACTIVITY_RATINGS_COPY.offer.question}</p>
+                <p className={styles.offerBody}>{ACTIVITY_RATINGS_COPY.offer.body}</p>
+                <div className={styles.offerActions}>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="lg"
+                    data-offer-accept=""
+                    onClick={() => setPhase("activities")}
+                  >
+                    <Icon name="star" size={17} aria-hidden="true" />
+                    {ACTIVITY_RATINGS_COPY.offer.accept}
+                  </Button>
+                  <button
+                    type="button"
+                    className={styles.dismissButton}
+                    onClick={() => requestClose(finishSubmitted)}
+                  >
+                    {ACTIVITY_RATINGS_COPY.offer.decline}
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </div>
         ) : (
           <form className={styles.form} onSubmit={(event) => void handleSubmit(event)} noValidate>
@@ -455,6 +683,35 @@ export function FeedbackDialog({
                       ) : null}
                     </div>
                   </div>
+
+                  {canShare ? (
+                    <div className={`${styles.field} ${styles.shareField}`}>
+                      <label className={styles.shareChoice} htmlFor="feedback-share">
+                        <input
+                          id="feedback-share"
+                          type="checkbox"
+                          className={styles.shareInput}
+                          checked={shared}
+                          disabled={busy}
+                          aria-describedby="feedback-share-body"
+                          onChange={(event) => setShared(event.target.checked)}
+                        />
+                        <span className={styles.shareBox} aria-hidden="true">
+                          <Icon name="check" size={14} />
+                        </span>
+                        <span className={styles.shareText}>
+                          <span className={styles.shareLabel}>
+                            <Icon name="users" size={15} aria-hidden="true" />
+                            {FEEDBACK_COPY.share.label}
+                            <span className={styles.hint}>{FEEDBACK_COPY.share.hint}</span>
+                          </span>
+                          <span id="feedback-share-body" className={styles.shareBody}>
+                            {FEEDBACK_COPY.share.body} {FEEDBACK_COPY.share.later}
+                          </span>
+                        </span>
+                      </label>
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
 
