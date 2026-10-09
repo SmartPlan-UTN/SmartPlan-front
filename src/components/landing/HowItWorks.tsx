@@ -417,14 +417,8 @@ function StaticHow() {
 
       <ol className={styles.staticOptions}>
         {OPTIONS.map((option, index) => (
-          <li
-            key={option.id}
-            className={cn(
-              styles.optionItem,
-              HOW_OPTION_SLOTS[index].chosen ? styles.chosenItem : undefined,
-            )}
-          >
-            <Reveal delay={index * 70}>
+          <li key={option.id} className={styles.optionItem}>
+            <Reveal className={styles.optionReveal} delay={index * 70}>
               <article
                 className={styles.staticOption}
                 data-tone={option.tone}

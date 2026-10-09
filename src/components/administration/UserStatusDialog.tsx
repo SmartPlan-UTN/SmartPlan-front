@@ -18,11 +18,6 @@ const COPY: Record<UserStatusKey, { title: string; confirm: string; progress: st
     confirm: "Suspender",
     progress: "Suspendiendo...",
   },
-  banned: {
-    title: "Banear cuenta",
-    confirm: "Banear",
-    progress: "Baneando...",
-  },
 };
 
 export interface UserStatusDialogProps {

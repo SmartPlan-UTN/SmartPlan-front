@@ -123,7 +123,7 @@ export const INSPIRATION = {
 export const STORY = {
   kicker: "smartplan ordena la salida",
   title: ["Las ganas no vienen ordenadas.", "El plan sí."],
-  lead: "Decís lo que te pinta. smartplan encuentra la forma de hacerlo cerrar.",
+  lead: "Contás qué querés hacer. smartplan encuentra la mejor forma de organizarlo.",
   /**
    * The scene's accessible equivalent, rendered visually hidden. A scrubbed
    * composition of words and photographs says nothing to a screen reader, so
@@ -182,7 +182,7 @@ export const HOW = {
   summary:
     "Escribís una frase suelta, por ejemplo «algo tranqui hoy a la noche con amigos», y smartplan la entiende, te devuelve recorridos completos y te quedás con el que más te cierra. El único paso tuyo es el primero.",
   steps: [
-    { n: "01", label: "Contás qué te pinta" },
+    { n: "01", label: "Contás qué querés hacer" },
     { n: "02", label: "smartplan entiende" },
     { n: "03", label: "Recibís opciones" },
     { n: "04", label: "Elegís y salís" },
@@ -193,7 +193,7 @@ export const HOW = {
   options: [
     {
       id: "feria-noche",
-      title: "Feria de noche y algo rápido para comer",
+      title: "Feria nocturna y cena al paso",
       duration: "3 h",
       budget: 1,
       tone: "electric",
@@ -201,11 +201,11 @@ export const HOW = {
     },
     {
       id: "patio-birra",
-      title: "Birra en un patio y sobremesa larga",
+      title: "Cena en una bodega y sobremesa sin apuro",
       duration: "5 h",
       budget: 2,
       tone: "gold",
-      media: "patioCerveza",
+      media: "bodegaParral",
     },
   ] satisfies HowOption[],
 } as const;
@@ -241,18 +241,18 @@ export const SHOWCASE = {
        * just watched win is the same object they now read in full.
        */
       id: "noche-amigos",
-      title: "Noche tranqui con amigos, sin gastar de más",
+      title: "Cena tranquila con amigos, a buen precio",
       duration: "4 h",
       budget: 1,
-      tags: ["Noche", "Con amigos", "Barato"],
+      tags: ["Noche", "Con amigos", "Económico"],
       moments: [
-        { time: "21:00", label: "Algo para picar en el medio de la mesa" },
-        { time: "23:00", label: "Barra con música baja, para charlar" },
-        { time: "00:30", label: "Vuelta a pie, todo cerca" },
+        { time: "21:00", label: "Cena para compartir en una mesa larga" },
+        { time: "23:00", label: "Un bar con música tranquila para conversar" },
+        { time: "00:30", label: "Regreso a pie, todo a pocas cuadras" },
       ],
-      icon: "pizza",
+      icon: "utensils",
       tone: "char",
-      media: "amigosCerveza",
+      media: "mesaNoche",
     },
     {
       id: "cafe-tarde",

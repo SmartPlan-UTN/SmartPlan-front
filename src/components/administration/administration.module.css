@@ -322,7 +322,6 @@
 
 .status_active { background: var(--success-15); color: var(--success); }
 .status_suspended { background: var(--warning-15); color: var(--warning-ink); }
-.status_banned { background: color-mix(in srgb, var(--error) 12%, transparent); color: var(--error); }
 
 .actionsHeading {
   position: sticky;
@@ -410,14 +409,6 @@
 
 .actionsPopover button:hover {
   background: color-mix(in srgb, var(--char) 5%, transparent);
-}
-
-.actionsPopover .dangerAction {
-  color: var(--error);
-}
-
-.actionsPopover .dangerAction:hover {
-  background: color-mix(in srgb, var(--error) 8%, transparent);
 }
 
 .state {
