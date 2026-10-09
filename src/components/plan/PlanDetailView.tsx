@@ -359,13 +359,12 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           {sessionStatus === "authenticated" && isAuthor && plan.status.key !== "cancelled" ? (
             <>
               <Link href={planEditRoute(planId)} className={styles.ownerActionLink}>
-                <Button variant="ghostLight" className={styles.ownerActionButton}>
-                  <Icon name="pencil" size={16} aria-hidden="true" />
-                  Editar plan
-                </Button>
+                <Icon name="pencil" size={16} aria-hidden="true" />
+                Editar plan
               </Link>
               <Button
                 variant="ghostLight"
+                size="sm"
                 className={styles.ownerActionButton}
                 onClick={() => setShowCancelModal(true)}
               >
@@ -376,38 +375,36 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           ) : null}
           {/* Guardar + Compartir — secondary. Each control reserves its
               widest label so a state swap never changes its box. */}
-          <div className={styles.actionSecondary}>
-            <Button
-              variant="ghostLight"
-              size="sm"
-              className={styles.saveButton}
-              aria-pressed={saved}
-              aria-label={saved ? "Quitar de guardados" : "Guardar plan"}
-              onClick={() => {
-                // Optimistic rollback is handled inside FavoritesContext (CU43).
-                void toggleSavePlan(planId);
-              }}
-            >
-              <Icon
-                name="bookmark"
-                size={16}
-                aria-hidden="true"
-                className={saved ? styles.saveIconOn : undefined}
-              />
-              {saved ? "Guardado" : "Guardar plan"}
-            </Button>
-            <Button
-              variant="ghostLight"
-              size="sm"
-              className={styles.shareButton}
-              onClick={() => {
-                void handleShare();
-              }}
-            >
-              <Icon name="share-2" size={16} aria-hidden="true" />
-              {copied ? "¡Copiado!" : "Compartir"}
-            </Button>
-          </div>
+          <Button
+            variant="ghostLight"
+            size="sm"
+            className={styles.saveButton}
+            aria-pressed={saved}
+            aria-label={saved ? "Quitar de guardados" : "Guardar plan"}
+            onClick={() => {
+              // Optimistic rollback is handled inside FavoritesContext (CU43).
+              void toggleSavePlan(planId);
+            }}
+          >
+            <Icon
+              name="bookmark"
+              size={16}
+              aria-hidden="true"
+              className={saved ? styles.saveIconOn : undefined}
+            />
+            {saved ? "Guardado" : "Guardar plan"}
+          </Button>
+          <Button
+            variant="ghostLight"
+            size="sm"
+            className={styles.shareButton}
+            onClick={() => {
+              void handleShare();
+            }}
+          >
+            <Icon name="share-2" size={16} aria-hidden="true" />
+            {copied ? "¡Copiado!" : "Compartir"}
+          </Button>
 
           {/* Personal state on the plan (CU22) — carries the visual weight. */}
           <PlanIntentionPanel

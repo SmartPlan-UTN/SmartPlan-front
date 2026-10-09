@@ -160,7 +160,7 @@
   grid-column: 3;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--s-3);
+  gap: var(--s-2);
   min-width: 0;
 }
 
@@ -306,9 +306,8 @@
   }
 }
 
-/* Every session state reserves the same horizontal footprint, so the navbar
-   doesn't jump when the session resolves. The actual avatar remains aligned
-   to the right edge of that footprint on desktop. */
+/* Loading and sign-in controls reserve room for the desktop label.
+   The authenticated menu uses only the avatar width to keep the bell close. */
 .sessionControl {
   display: inline-flex;
   justify-content: flex-end;
@@ -480,6 +479,10 @@
 @media (min-width: 900px) {
   .sessionControl {
     width: 128px;
+  }
+
+  .userMenu.sessionControl {
+    width: 44px;
   }
 }
 

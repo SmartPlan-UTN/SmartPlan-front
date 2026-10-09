@@ -118,19 +118,19 @@
 
 /* Structure comes from `composer.module.css` (`field`, `fieldIcon`,
    `inputArea`, `submit`, `glow`); this only places and transforms it.
-   It shrinks up and to the left to make room, then fades as the choice is
-   made — it is an anchor, not a thing that gets discarded. */
+   It shrinks upward within the right column, then fades as options arrive
+   so the cards become the scene's sole focus. */
 .composer {
   position: absolute;
-  left: 50%;
-  top: 40%;
-  width: min(560px, 82%);
-  opacity: clamp(0, calc(1 - var(--choose, 0) * 1.6), 1);
+  left: 74%;
+  top: 26%;
+  width: min(560px, 44%);
+  opacity: clamp(0, calc(1 - var(--options, 0) * 2.5), 1);
   transform:
     translate(-50%, -50%)
     translate3d(
-      calc(var(--shrink, 0) * -16cqw),
-      calc(var(--shrink, 0) * -15cqh),
+      0,
+      calc(var(--shrink, 0) * -10cqh),
       0
     )
     scale(calc(1 - var(--shrink, 0) * 0.22));
@@ -146,6 +146,10 @@
   cursor: default;
 }
 
+.composer .submit {
+  padding-inline: var(--s-3);
+}
+
 /* The phrase, revealed left to right by a width clip driven by `--type`.
    Not a real per-character loop: "typing" is a texture here, not the point,
    and this keeps it on the compositor. */
@@ -155,7 +159,7 @@
   margin: 0;
   overflow: hidden;
   color: var(--fg-1);
-  font-size: 17px;
+  font-size: clamp(14px, 1.2vw, 17px);
   font-weight: 500;
   line-height: 26px;
   white-space: nowrap;
@@ -196,62 +200,81 @@
 
 /* ── Signals ────────────────────────────────────────────────────────── */
 
-/* Centred on the composer, height 0 so its children hang off the field's
-   edges. The whole group fades in and back out with `--signals`. */
+/* Interpretation fills the open space below the title and composer.
+   One scroll-driven path connects the fragments before options arrive. */
 .signals {
   position: absolute;
-  left: 50%;
-  top: 40%;
-  width: min(560px, 82%);
-  height: 0;
-  transform: translate(-50%, -50%);
+  left: 4%;
+  top: calc(26% + 80px);
+  width: 92%;
+  height: 26%;
   opacity: var(--signals, 0);
   pointer-events: none;
 }
 
-.signal {
+.signalPath {
   position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: var(--ember);
+  stroke-width: 1.5px;
+}
+
+.signalPath path {
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.signalFeed {
+  opacity: clamp(0, calc(var(--connections, 0) * 3), 1);
+}
+
+.signalRail {
+  clip-path: inset(0 calc((1 - var(--connections, 0)) * 84%) 0 0);
+}
+
+.signal {
+  --arrival: clamp(0, calc(var(--connections, 0) * 3 - var(--slot)), 1);
+  position: absolute;
+  top: 60%;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: var(--s-4);
   color: var(--ember);
-  font-size: 12px;
+  font-size: clamp(14px, 1.4vw, 18px);
   font-weight: var(--w-label);
-  letter-spacing: 0.01em;
   white-space: nowrap;
-  transform: translate3d(0, calc((1 - var(--signals, 0)) * 6px), 0);
+  opacity: var(--arrival);
+  transform: translate(-50%, -4px) translateY(calc((1 - var(--arrival)) * 12px));
 }
 
 .signal::before {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-chip);
   background: var(--ember);
-  content: "";
-}
-
-.signal::after {
-  width: 34px;
-  height: 1px;
-  background: color-mix(in srgb, var(--ember) 58%, transparent);
+  box-shadow: 0 0 0 5px var(--cream), 0 0 0 6px var(--ember-20);
   content: "";
 }
 
 .signal[data-slot="0"] {
-  left: 1%;
-  top: -38px;
-  flex-direction: row-reverse;
+  --slot: 0;
+  left: 16%;
 }
 
 .signal[data-slot="1"] {
-  left: 42%;
-  top: -38px;
+  --slot: 1;
+  left: 50%;
 }
 
 .signal[data-slot="2"] {
-  right: 1%;
-  top: 34px;
-  flex-direction: row-reverse;
+  --slot: 2;
+  left: 84%;
 }
 
 /* ── Option cards ───────────────────────────────────────────────────── */
@@ -702,6 +725,13 @@
 }
 
 /* ── Short viewports ────────────────────────────────────────────────── */
+
+@media (min-width: 901px) and (max-width: 1100px) {
+  .phrase,
+  .phraseText {
+    white-space: normal;
+  }
+}
 
 @media (max-height: 820px) and (min-width: 901px) {
   .track {

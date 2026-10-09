@@ -142,7 +142,7 @@ export function MediaGalleryManager({
       }
       await refresh();
       if (failures.length > 0) {
-        setError(`No se pudieron subir: ${failures.join(', ')}. Las demás quedaron guardadas.`);
+        setError(`No se pudieron subir: ${failures.join(', ')}.${uploaded > 0 ? ' Las demás quedaron guardadas.' : ' Intentá de nuevo.'}`);
       }
     } catch {
       setError('No pudimos actualizar las fotos.');
@@ -184,13 +184,13 @@ export function MediaGalleryManager({
   function onDrop(event: DragEvent<HTMLElement>) {
     event.preventDefault();
     setDragging(false);
-    if (full || busy) return;
+    if (full || busy || loading) return;
     void addFiles(Array.from(event.dataTransfer.files));
   }
 
   const dropHandlers = {
     onDragOver: (event: DragEvent<HTMLElement>) => {
-      if (full || busy) return;
+      if (full || busy || loading) return;
       event.preventDefault();
       setDragging(true);
     },
@@ -207,7 +207,7 @@ export function MediaGalleryManager({
       type="file"
       accept={ACCEPT_ATTRIBUTE}
       multiple
-      disabled={busy || full}
+      disabled={busy || full || loading}
       aria-label="Agregar fotos"
       onChange={(event) => {
         const files = Array.from(event.target.files ?? []);
@@ -242,9 +242,18 @@ export function MediaGalleryManager({
             </h3>
             <p className={styles.managerDescription}>{description ?? copy.description}</p>
           </div>
-          {images.length > 0 ? (
-            <span className={styles.managerCount}>{images.length} de {limit}</span>
-          ) : null}
+          <div className={styles.managerHeaderActions}>
+            {images.length > 0 ? (
+              <span className={styles.managerCount}>{images.length} de {limit}</span>
+            ) : null}
+            {!full ? (
+              <label htmlFor={inputId} className={styles.headerAdd} aria-disabled={busy || loading || undefined}>
+                {fileInput}
+                <Icon name="image-plus" size={16} aria-hidden="true" />
+                Agregar imágenes
+              </label>
+            ) : null}
+          </div>
         </header>
       ) : null}
 
@@ -255,7 +264,7 @@ export function MediaGalleryManager({
         </div>
       ) : isEmpty ? (
         <label htmlFor={inputId} className={compact ? styles.emptyDropCompact : styles.emptyDrop}>
-          {fileInput}
+          {!headed ? fileInput : null}
           <span className={styles.emptyDropIcon} aria-hidden="true">
             <Icon name="image-plus" size={compact ? 18 : 24} />
           </span>
@@ -342,7 +351,7 @@ export function MediaGalleryManager({
             </li>
           ))}
 
-          {!full ? (
+          {!full && !headed ? (
             <li className={styles.addTileItem}>
               <label htmlFor={inputId} className={styles.addTile} aria-disabled={busy || undefined}>
                 {fileInput}
@@ -360,7 +369,7 @@ export function MediaGalleryManager({
       {error ? (
         <p className={styles.managerError} role="alert">
           <Icon name="circle-alert" size={15} aria-hidden="true" />
-          {error}
+          <span>{error}</span>
         </p>
       ) : null}
       {full && headed ? <p className={styles.managerFull}>Llegaste al máximo de {limit} fotos.</p> : null}
