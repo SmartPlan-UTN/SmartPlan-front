@@ -36,6 +36,23 @@ describe("AppBackground", () => {
     expect(screen.queryByTestId("mood-background")).not.toBeInTheDocument();
   });
 
+  it.each(["/plans/create", "/plans/12/edit"])(
+    "keeps the waves out of the plan composer on %s",
+    (route) => {
+      pathname = route;
+      render(<AppBackground />);
+
+      expect(screen.queryByTestId("mood-background")).not.toBeInTheDocument();
+    },
+  );
+
+  it("still draws the waves on the plan detail, which is not the composer", () => {
+    pathname = "/plans/12";
+    render(<AppBackground />);
+
+    expect(screen.getByTestId("mood-background")).toBeInTheDocument();
+  });
+
   it("keeps one canvas across route changes and breaks a wave per route", () => {
     pathname = "/plans";
     const { rerender } = render(<AppBackground />);

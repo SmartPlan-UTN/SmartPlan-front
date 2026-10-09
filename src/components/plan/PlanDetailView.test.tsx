@@ -58,6 +58,7 @@ function ownPlan(overrides: Partial<OwnPlanDetail> = {}): OwnPlanDetail {
     id: 7,
     title: "Tarde de vinos",
     description: null,
+    visibility: "private",
     estimatedTotalCost: 8500,
     estimatedTotalDuration: 240,
     peopleCount: 2,

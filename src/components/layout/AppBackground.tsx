@@ -7,6 +7,14 @@ import { ROUTES, isActiveRoute } from "@/lib/routes";
 
 import styles from "./layout.module.css";
 
+/** `/plans/create` and `/plans/:id/edit`: the plan composer, a clean canvas. */
+function isComposerRoute(pathname: string): boolean {
+  return (
+    pathname === ROUTES.createPlan ||
+    /^\/plans\/\d+\/edit\/?$/.test(pathname)
+  );
+}
+
 const AUTH_ROUTES = [
   ROUTES.login,
   ROUTES.signup,
@@ -30,6 +38,10 @@ export function AppBackground() {
   const isLanding = pathname === ROUTES.home;
   const isAdmin = isActiveRoute(pathname, ROUTES.admin);
   const isAuth = AUTH_ROUTES.some((route) => pathname === route);
+  // The composer is a working surface: dense, interactive, and read for long
+  // stretches. The waves stay out of it entirely; its identity comes from the
+  // route itself, type, motion and the terracotta accents.
+  if (isComposerRoute(pathname)) return null;
 
   // The landing owns its own quiet cream-to-sand surface. Keeping the shared
   // canvas out of this route preserves the composer hierarchy and avoids

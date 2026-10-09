@@ -1,0 +1,404 @@
+/* Step 1 keeps the plan name expressive while presenting it as an input. */
+.form {
+  display: grid;
+  min-width: 0;
+  padding-bottom: var(--s-6);
+  animation: step-enter var(--d-fast, 200ms) var(--ease-out, ease) backwards;
+}
+
+.copy {
+  display: grid;
+  max-width: 640px;
+  align-content: start;
+  gap: var(--s-5);
+  min-width: 0;
+}
+
+.nameField {
+  display: grid;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.nameLabel {
+  color: var(--fg-2);
+  font-size: var(--t-label);
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.nameInput {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 14px;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-btn);
+  background: color-mix(in srgb, var(--surface-card) 55%, var(--cream));
+  color: var(--fg-1);
+  font-family: var(--font-display-serif);
+  font-size: clamp(26px, 2.8vw, 34px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  field-sizing: content;
+  resize: none;
+  transition: border-color var(--d-fast, 160ms) ease;
+}
+
+.nameInput:placeholder-shown {
+  padding-block: 14px;
+  font-family: var(--font);
+  font-size: var(--t-body);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.5;
+}
+
+.nameInput::placeholder {
+  color: var(--fg-2);
+  opacity: 1;
+}
+
+.nameInput:focus {
+  border-color: var(--ember);
+  outline: 0;
+}
+
+.nameInput[aria-invalid="true"] {
+  border-color: var(--error);
+}
+
+.nameInput[aria-invalid="true"]:focus {
+  border-color: var(--error);
+}
+
+.starters {
+  color: var(--fg-2);
+}
+
+.starters summary {
+  width: fit-content;
+  cursor: pointer;
+  font-size: var(--t-label);
+  line-height: 1.4;
+}
+
+.starters summary:hover {
+  color: var(--fg-1);
+}
+
+.starters summary:focus-visible {
+  border-radius: 2px;
+  outline: 2px solid var(--ember);
+  outline-offset: 3px;
+}
+
+.starterList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px var(--s-3);
+  margin-top: var(--s-1);
+}
+
+.starter {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--fg-2);
+  font: inherit;
+  font-size: var(--t-label);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    color var(--d-fast, 160ms) ease;
+}
+
+.starter svg {
+  color: var(--fg-3);
+}
+
+.starter:hover:not(:disabled) {
+  color: var(--ember);
+}
+
+.starter:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.starter:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.nameField small,
+.note small,
+.error {
+  color: var(--error);
+  font-size: 13px;
+}
+
+.counter {
+  justify-self: end;
+  color: var(--fg-2);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* "Somos − 2 + personas": a sentence, not a form field. */
+.people {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  color: var(--fg-1);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border: 1px solid color-mix(in srgb, var(--fg-1) 16%, transparent);
+  border-radius: var(--r-card-sm);
+  background: var(--surface-card);
+  transition:
+    border-color var(--d-fast, 160ms) ease,
+    box-shadow var(--d-fast, 160ms) ease;
+}
+
+.stepper:focus-within {
+  border-color: var(--ember);
+  box-shadow: var(--focus-ember);
+}
+
+.stepper button {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg-1);
+  cursor: pointer;
+  transition: background-color var(--d-fast, 160ms) ease;
+}
+
+.stepper button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--fg-1) 7%, transparent);
+}
+
+.stepper button:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: -2px;
+}
+
+.stepper button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.stepper input {
+  width: 68px;
+  min-height: 44px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--fg-1);
+  font: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.stepper input::-webkit-outer-spin-button,
+.stepper input::-webkit-inner-spin-button {
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.stepper input[aria-invalid="true"] {
+  color: var(--error);
+}
+
+.addNote {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 44px;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fg-2);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.addNote:hover:not(:disabled) {
+  color: var(--ember);
+}
+
+.addNote:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.note {
+  display: grid;
+  gap: 8px;
+  animation: reveal var(--d-fast, 180ms) var(--ease-out, ease) both;
+}
+
+.note label {
+  color: var(--fg-1);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.note em {
+  margin-left: 4px;
+  color: var(--fg-2);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 500;
+}
+
+.note textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--fg-1) 16%, transparent);
+  border-radius: var(--r-card-sm);
+  background: var(--surface-card);
+  color: var(--fg-1);
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.5;
+  resize: vertical;
+  transition:
+    border-color var(--d-fast, 160ms) ease,
+    box-shadow var(--d-fast, 160ms) ease;
+}
+
+.note textarea::placeholder {
+  color: var(--fg-3);
+}
+
+.note textarea:focus {
+  border-color: var(--ember);
+  outline: 0;
+  box-shadow: var(--focus-ember);
+}
+
+.note textarea[aria-invalid="true"] {
+  border-color: var(--error);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-4);
+  padding-top: var(--s-3);
+}
+
+.actions p {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 13px;
+}
+
+.actions button:disabled {
+  border-color: var(--hairline);
+  background: var(--hairline);
+  color: var(--fg-2);
+  opacity: 1;
+}
+
+@keyframes step-enter {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 680px) {
+  .nameInput {
+    font-size: clamp(24px, 6vw, 30px);
+  }
+
+  .starterList { gap: 6px; }
+
+  .starter {
+    min-height: 40px;
+    font-size: 12px;
+  }
+
+  .people {
+    font-size: 18px;
+  }
+
+  .actions {
+    display: grid;
+    gap: var(--s-3);
+  }
+
+  .actions button {
+    width: 100%;
+    min-height: 52px;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .form,
+  .note {
+    animation: none;
+  }
+
+  .nameInput,
+  .stepper,
+  .stepper button,
+  .note textarea {
+    transition-duration: 0.01ms;
+  }
+
+  .starter,
+  .starter svg {
+    transition-duration: 0.01ms;
+  }
+}
