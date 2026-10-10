@@ -11,7 +11,7 @@ import { useDetailFetch, usePlanSelection } from "@/hooks";
 import { ApiError, cancelOwnPlan, getOwnPlan, getPlan } from "@/lib/api";
 import { useSession } from "@/lib/auth";
 import { outingDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
-import { formatArs, formatDuration } from "@/lib/utils";
+import { formatDuration, formatPrice, formatPlanTotal, formatPerPerson } from "@/lib/utils";
 import type {
   OwnPlanDetail,
   PlanDetailResult,
@@ -238,7 +238,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
       <div className={styles.hero} ref={heroRef}>
         <Icon name="route" size={110} className={styles.heroIcon} />
         <Badge variant="cost" className={styles.heroCostBadge}>
-          {formatArs(plan.estimatedTotalCost)}
+          {formatPlanTotal(plan)}
         </Badge>
 
         <div className={styles.heroTitleBlock}>
@@ -300,7 +300,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
               <div className={styles.costRow} key={detail.id}>
                 <span className={styles.costRowLabel}>{detail.activity.name}</span>
                 <span className={styles.costRowValue}>
-                  {formatArs(detail.estimatedCost)}
+                  {formatPrice(detail)}
                 </span>
               </div>
             ))}
@@ -309,7 +309,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           <div className={styles.costTotalRow}>
             <span className={styles.costRowLabel}>Total</span>
             <span className={styles.costTotalValue}>
-              {formatArs(plan.estimatedTotalCost)}
+              {formatPlanTotal(plan)}
             </span>
           </div>
           {ownPlan && ownPlan.peopleCount > 0 ? (
@@ -319,7 +319,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
                 {ownPlan.peopleCount === 1 ? "persona" : "personas"})
               </span>
               <span className={styles.costRowValue}>
-                {formatArs(ownPlan.estimatedCostPerPerson)}
+                {formatPerPerson(ownPlan.estimatedCostPerPerson)}
               </span>
             </div>
           ) : null}

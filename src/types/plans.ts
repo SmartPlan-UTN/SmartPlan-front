@@ -1,3 +1,4 @@
+import type { Price, PriceCompleteness } from './pricing';
 import { BaseEntity, CatalogEntity } from "./common";
 import type { ExplorationQueryParams, SortDirection } from "./common";
 import type { User } from "./users";
@@ -22,7 +23,10 @@ export interface Plan extends BaseEntity {
   idUser: number;
   idPlanRequest: number | null;
   idPlanStatus: number;
-  estimatedTotalCost: number;
+  estimatedTotalCost: number | null;
+  estimatedTotalCostMax?: number | null;
+  unpricedCount?: number;
+  priceCompleteness?: PriceCompleteness;
   estimatedTotalDuration: number;
   user?: User;
   request?: PlanRequest | null;
@@ -36,7 +40,8 @@ export interface PlanDetail extends BaseEntity {
   idPlan: number;
   idActivity: number;
   order: number;
-  estimatedCost: number;
+  estimatedCost: number | null;
+  price?: Price | null;
   estimatedDuration: number;
   note: string | null;
   plan?: Plan;
@@ -72,7 +77,10 @@ export interface PlanSearchResult {
   imageUrl?: string | null;
   title: string;
   description: string | null;
-  estimatedTotalCost: number;
+  estimatedTotalCost: number | null;
+  estimatedTotalCostMax?: number | null;
+  unpricedCount?: number;
+  priceCompleteness?: PriceCompleteness;
   estimatedTotalDuration: number;
   activityCount: number;
   averageRating: number;
@@ -94,7 +102,8 @@ export interface PlanItineraryActivity {
   id: number;
   name: string;
   description: string;
-  estimatedCost: number;
+  estimatedCost: number | null;
+  price?: Price | null;
   estimatedDuration: number;
   type: string | null;
   averageRating: number;
@@ -107,7 +116,8 @@ export interface PlanItineraryActivity {
 export interface PlanItineraryItem {
   id: number;
   order: number;
-  estimatedCost: number;
+  estimatedCost: number | null;
+  price?: Price | null;
   estimatedDuration: number;
   activity: PlanItineraryActivity;
 }
@@ -161,10 +171,13 @@ export interface OwnPlanSummary {
   title: string;
   description: string | null;
   visibility: PlanVisibility;
-  estimatedTotalCost: number;
+  estimatedTotalCost: number | null;
+  estimatedTotalCostMax?: number | null;
+  unpricedCount?: number;
+  priceCompleteness?: PriceCompleteness;
   estimatedTotalDuration: number;
   peopleCount: number;
-  estimatedCostPerPerson: number;
+  estimatedCostPerPerson: number | null;
   activityCount: number;
   status: { key: PlanStatusKey; name: string };
   createdAt: string;
@@ -198,10 +211,13 @@ export interface OutingSummary {
   imageUrl?: string | null;
   title: string;
   description: string | null;
-  estimatedTotalCost: number;
+  estimatedTotalCost: number | null;
+  estimatedTotalCostMax?: number | null;
+  unpricedCount?: number;
+  priceCompleteness?: PriceCompleteness;
   estimatedTotalDuration: number;
   peopleCount: number;
-  estimatedCostPerPerson: number;
+  estimatedCostPerPerson: number | null;
   activityCount: number;
   activityNames: string[];
   status: OutingStatus;
@@ -256,7 +272,8 @@ export interface ActivitySuggestion {
   id: number;
   name: string;
   description: string;
-  estimatedCost: number;
+  estimatedCost: number | null;
+  price?: Price | null;
   estimatedDuration: number;
   type: string | null;
   categories: string[];
@@ -284,7 +301,8 @@ export interface AssistantSuggestResponse {
 
 export interface AssistantProposalEffect {
   minutes: number;
-  cost: number;
+  /** Known cost change; `null` when the activity's price is unknown. */
+  cost: number | null;
   /** Change in straight-line km; null when any position is unknown. */
   km: number | null;
 }
@@ -348,13 +366,15 @@ export interface OwnPlanDetail extends OwnPlanSummary {
   details: {
     id: number;
     order: number;
-    estimatedCost: number;
+    estimatedCost: number | null;
+    price?: Price | null;
     estimatedDuration: number;
     activity: {
       id: number;
       name: string;
       description: string;
-      estimatedCost: number;
+      estimatedCost: number | null;
+      price?: Price | null;
       estimatedDuration: number;
       type: string | null;
     };
@@ -430,22 +450,27 @@ export interface AddPlanDetailDto {
 }
 
 export interface OwnPlanCostSummary {
-  estimatedTotalCost: number;
+  estimatedTotalCost: number | null;
+  estimatedTotalCostMax?: number | null;
+  unpricedCount?: number;
+  priceCompleteness?: PriceCompleteness;
   peopleCount: number;
-  estimatedCostPerPerson: number;
+  estimatedCostPerPerson: number | null;
   estimatedTotalDuration: number;
 }
 
 export interface OwnPlanDetailItem {
   id: number;
   order: number;
-  estimatedCost: number;
+  estimatedCost: number | null;
+  price?: Price | null;
   estimatedDuration: number;
   activity: {
     id: number;
     name: string;
     description: string;
-    estimatedCost: number;
+    estimatedCost: number | null;
+    price?: Price | null;
     estimatedDuration: number;
     type: string | null;
   };

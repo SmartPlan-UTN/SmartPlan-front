@@ -6,7 +6,7 @@ import { Pagination } from "@/components/explore";
 import { Button, ConfirmationDialog, Icon, Select } from "@/components/ui";
 import { useDebouncedValue } from "@/hooks";
 import { ApiError, deleteAdminPlan, listAdminPlans, updateAdminPlan } from "@/lib/api";
-import { formatArs, formatDuration } from "@/lib/utils";
+import { formatDuration, formatPlanTotal } from "@/lib/utils";
 import type { AdminPlan, AdminPlansResult, PlanStatusKey, UpdateAdminPlanInput } from "@/types";
 
 import { AdminPlanDialog, PLAN_STATUS_OPTIONS } from "./AdminPlanDialog";
@@ -111,7 +111,7 @@ export function AdminPlansView() {
         : <><div className={`${styles.tableScroll} ${loading ? styles.tableLoading : ""}`}><table className={styles.table}><thead><tr><th>Plan</th><th>Propietario</th><th>Estado</th><th>Personas</th><th>Actividades</th><th>Costo / duración</th><th>Acciones</th></tr></thead><tbody>{plans.map((plan) => <tr key={plan.id}>
           <td><span className={styles.entityName}>{plan.title}</span><span className={styles.secondary}>#{plan.id}</span></td>
           <td><span className={styles.entityName}>{plan.owner.name} {plan.owner.lastName}</span><span className={styles.secondary}>{plan.owner.email}</span></td>
-          <td><span className={styles.status}>{plan.status.name}</span></td><td>{plan.peopleCount}</td><td>{plan.activityCount}</td><td>{formatArs(plan.estimatedTotalCost)}<span className={styles.secondary}>{formatDuration(plan.estimatedTotalDuration)}</span></td>
+          <td><span className={styles.status}>{plan.status.name}</span></td><td>{plan.peopleCount}</td><td>{plan.activityCount}</td><td>{formatPlanTotal(plan)}<span className={styles.secondary}>{formatDuration(plan.estimatedTotalDuration)}</span></td>
           <td><span className={styles.actions}><button className={styles.iconButton} type="button" aria-label={`Editar ${plan.title}`} onClick={() => { setActionError(null); setEditing(plan); }}><Icon name="pencil" size={16} /></button><button className={`${styles.iconButton} ${styles.dangerButton}`} type="button" aria-label={`Eliminar ${plan.title}`} onClick={() => { setActionError(null); setDeleting(plan); }}><Icon name="trash-2" size={16} /></button></span></td>
         </tr>)}</tbody></table></div></>}
       </div>

@@ -1,3 +1,4 @@
+import type { Price, PriceCompleteness, PriceInput } from './pricing';
 import { BaseEntity } from './common';
 import type { PaginatedResult, SortDirection } from './common';
 import type { User } from './users';
@@ -152,7 +153,8 @@ export interface AdminActivity {
   id: number;
   name: string;
   description: string;
-  estimatedCost: number;
+  estimatedCost: number | null;
+  price?: Price | null;
   estimatedDuration: number;
   type: string | null;
   categories: Array<{ id: number; name: string }>;
@@ -174,7 +176,8 @@ export interface AdminActivitiesQuery {
 export interface AdminActivityInput {
   name: string;
   description: string;
-  estimatedCost: number;
+  /** Structured price. Omitted means UNKNOWN: never send 0 for "no price". */
+  price?: PriceInput;
   estimatedDuration: number;
   type?: string | null;
   categoryIds: number[];
@@ -189,7 +192,10 @@ export interface AdminPlan {
   id: number;
   title: string;
   description: string | null;
-  estimatedTotalCost: number;
+  estimatedTotalCost: number | null;
+  estimatedTotalCostMax?: number | null;
+  unpricedCount?: number;
+  priceCompleteness?: PriceCompleteness;
   estimatedTotalDuration: number;
   peopleCount: number;
   activityCount: number;

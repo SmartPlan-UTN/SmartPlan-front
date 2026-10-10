@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { Badge, Icon, Stars } from "@/components/ui";
 import { activityDetailRoute } from "@/lib/routes";
-import { formatArs, formatDuration, googleMapsUrl } from "@/lib/utils";
+import { formatDuration, googleMapsUrl, formatPrice } from "@/lib/utils";
 import type { PlanItineraryItem } from "@/types";
 
 import styles from "./plan.module.css";
@@ -77,7 +77,7 @@ export function ItineraryStep({
         </div>
 
         <div className={styles.stepActions}>
-          <p className={styles.stepCost}>{formatArs(detail.estimatedCost)}</p>
+          <p className={styles.stepCost}>{formatPrice(detail)}</p>
 
           <div className={styles.stepLinks}>
             {location ? (

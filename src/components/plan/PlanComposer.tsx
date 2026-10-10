@@ -12,6 +12,7 @@ import {
   searchActivities,
   updatePlanFromComposer,
 } from "@/lib/api";
+import { computeDraftTotals, formatArs, formatPlanTotal } from "@/lib/utils";
 import { activityDetailRoute, planDetailRoute, ROUTES } from "@/lib/routes";
 import type {
   ActivitySearchParams,
@@ -242,23 +243,36 @@ export function PlanComposer({
     !location.active &&
     catalog.page === 1;
 
-  const totals = useMemo(
-    () =>
-      draft.stops.reduce(
-        (sum, stop) => ({
-          cost: sum.cost + stop.estimatedCost,
-          duration: sum.duration + stop.estimatedDuration,
-        }),
-        { cost: 0, duration: 0 },
-      ),
-    [draft.stops],
+  // Prices are summed from the stops' price snapshots with the party size,
+  // and an unknown price never counts as zero (see `computeDraftTotals`).
+  const priceTotals = useMemo(
+    () => computeDraftTotals(draft.stops, draft.peopleCount),
+    [draft.stops, draft.peopleCount],
   );
+  const totals = useMemo(
+    () => ({
+      cost: priceTotals.estimatedTotalCost ?? 0,
+      duration: draft.stops.reduce(
+        (sum, stop) => sum + stop.estimatedDuration,
+        0,
+      ),
+    }),
+    [draft.stops, priceTotals],
+  );
+  const totalCostLabel = formatPlanTotal(priceTotals);
   const health = useMemo(
     () => getDurationHealth(totals.duration),
     [totals.duration],
   );
   const costPerPerson =
     draft.peopleCount > 0 ? totals.cost / draft.peopleCount : 0;
+  const costPerPersonLabel =
+    priceTotals.estimatedTotalCost === null
+      ? "—"
+      : priceTotals.priceCompleteness === "EXACT" ||
+          priceTotals.priceCompleteness === "RANGE"
+        ? formatArs(costPerPerson)
+        : `Desde ${formatArs(costPerPerson)}`;
   useEffect(() => {
     stopsRef.current = draft.stops;
   }, [draft.stops]);
@@ -315,6 +329,7 @@ export function PlanComposer({
                   {
                     activity,
                     estimatedCost: activity.estimatedCost,
+                    price: activity.price ?? null,
                     estimatedDuration: activity.estimatedDuration,
                   },
                 ],
@@ -409,6 +424,7 @@ export function PlanComposer({
               {
                 activity,
                 estimatedCost: activity.estimatedCost,
+                price: activity.price ?? null,
                 estimatedDuration: activity.estimatedDuration,
               },
             ],
@@ -535,6 +551,7 @@ export function PlanComposer({
     next.splice(slot, 0, {
       activity,
       estimatedCost: activity.estimatedCost,
+      price: activity.price ?? null,
       estimatedDuration: activity.estimatedDuration,
     });
     updateDraft("stops", next);
@@ -690,6 +707,7 @@ export function PlanComposer({
             }}
             stops={draft.stops}
             totalCost={totals.cost}
+            totalCostLabel={totalCostLabel}
             totalDuration={totals.duration}
             search={search}
             minPrice={minPrice}
@@ -749,6 +767,7 @@ export function PlanComposer({
             stopInfo={stopInfo}
             totalDuration={totals.duration}
             costPerPerson={costPerPerson}
+            costPerPersonLabel={costPerPersonLabel}
             isSaving={isSaving}
             focusedActivityId={linkedActivityId}
             onPoint={setFocusedActivityId}
@@ -770,8 +789,10 @@ export function PlanComposer({
           stopInfo={stopInfo}
           health={health}
           totalCost={totals.cost}
+          totalCostLabel={totalCostLabel}
           totalDuration={totals.duration}
           costPerPerson={costPerPerson}
+          costPerPersonLabel={costPerPersonLabel}
           highlightedActivityId={highlightedActivityId}
           itineraryError={itineraryError}
           isSaving={isSaving}

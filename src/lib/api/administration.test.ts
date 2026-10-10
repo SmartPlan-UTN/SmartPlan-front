@@ -89,7 +89,7 @@ describe("administration user API", () => {
     const input: AdminActivityInput = {
       name: "Tarde de juegos",
       description: "Actividad sin ubicación física obligatoria.",
-      estimatedCost: 0,
+      price: { kind: "UNKNOWN" },
       estimatedDuration: 90,
       type: null,
       categoryIds: [2],

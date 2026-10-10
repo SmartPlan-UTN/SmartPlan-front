@@ -1,3 +1,4 @@
+import type { PriceCompleteness } from './pricing';
 import { BaseEntity, CatalogEntity } from './common';
 import type { PaginationMetadata } from './common';
 import type { ActivityCategorySummary } from './activities';
@@ -67,7 +68,10 @@ export interface PlanRequestPlanSummary {
   id: number;
   title: string;
   description: string | null;
-  estimatedTotalCost: number;
+  estimatedTotalCost: number | null;
+  estimatedTotalCostMax?: number | null;
+  unpricedCount?: number;
+  priceCompleteness?: PriceCompleteness;
   estimatedTotalDuration: number;
   activityCount: number;
   averageRating: number;

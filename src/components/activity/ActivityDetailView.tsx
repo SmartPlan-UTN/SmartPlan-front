@@ -19,7 +19,7 @@ import { useFavorites } from "@/context";
 import { useDetailFetch } from "@/hooks";
 import { getActivity } from "@/lib/api";
 import { ROUTES } from "@/lib/routes";
-import { formatArs, formatDuration } from "@/lib/utils";
+import { formatDuration, formatPrice, isPriceUnknown, priceCaveat } from "@/lib/utils";
 import type { ActivityDetailResult, RatingSummary } from "@/types";
 
 import { ActivityRatingSection } from "./ActivityRatingSection";
@@ -217,8 +217,14 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
                 <Icon name="wallet" size={15} className={styles.infoIcon} />
                 <div>
                   <p className={styles.infoLabel}>Costo</p>
-                  <p className={styles.costValue}>{formatArs(activity.estimatedCost)}</p>
-                  <p className={styles.costNote}>Precio estimado por persona · ARS</p>
+                  <p className={styles.costValue}>
+                    {formatPrice(activity, { withUnit: true })}
+                  </p>
+                  <p className={styles.costNote}>
+                    {isPriceUnknown(activity)
+                      ? "Todavía no tenemos un precio confirmado para esta actividad."
+                      : (priceCaveat(activity) ?? "Precio en pesos argentinos (ARS)")}
+                  </p>
                 </div>
               </div>
 

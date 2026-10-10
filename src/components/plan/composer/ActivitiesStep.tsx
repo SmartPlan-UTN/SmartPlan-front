@@ -37,6 +37,7 @@ interface ActivitiesStepProps {
   assistant: CatalogAssistant;
   stops: ComposerStop[];
   totalCost: number;
+  totalCostLabel?: string;
   totalDuration: number;
   search: string;
   minPrice: string;
@@ -84,6 +85,7 @@ export function ActivitiesStep({
   assistant,
   stops,
   totalCost,
+  totalCostLabel,
   totalDuration,
   search,
   minPrice,
@@ -284,7 +286,7 @@ export function ActivitiesStep({
                 health.level === "normal" ? undefined : styles[health.level]
               }
             >
-              {formatDuration(totalDuration)} · {formatArs(totalCost)}
+              {formatDuration(totalDuration)} · {totalCostLabel ?? formatArs(totalCost)}
             </span>
           </div>
           <button

@@ -139,7 +139,7 @@ export function PlaceMiniMap({
           renderResultMarker(element, {
             name,
             categoryName: null,
-            estimatedCost: 0,
+            estimatedCost: null,
             selected: true,
             mini: true,
           });

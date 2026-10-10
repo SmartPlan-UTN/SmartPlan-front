@@ -5,7 +5,7 @@ import Link from "next/link";
 import { PLAN_SELECTION } from "@/components/plan/planSelectionContent";
 import { Badge, Button, Icon, Stars } from "@/components/ui";
 import { outingDetailRoute, planDetailRoute, ROUTES } from "@/lib/routes";
-import { formatArs, formatDuration, getPlanZone } from "@/lib/utils";
+import { formatDuration, getPlanZone, formatPlanTotal } from "@/lib/utils";
 import type { PlanDetailResult } from "@/types";
 
 import styles from "./plan-result-card.module.css";
@@ -81,7 +81,7 @@ export function PlanResultCard({
         {plan.description ? <p className={styles.description}>{plan.description}</p> : null}
 
         <div className={styles.summary}>
-          <Badge variant="cost">{formatArs(plan.estimatedTotalCost)}</Badge>
+          <Badge variant="cost">{formatPlanTotal(plan)}</Badge>
           <span className={styles.summaryItem}>
             <Icon name="clock" size={14} aria-hidden="true" />
             {formatDuration(plan.estimatedTotalDuration)}

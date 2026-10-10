@@ -40,6 +40,57 @@ describe("ActivityCard", () => {
     mockIsActivitySaved.mockReturnValue(false);
   });
 
+  it("shows an unknown price as unavailable, never as $0", () => {
+    render(
+      <ActivityCard
+        activity={{
+          ...baseActivity,
+          estimatedCost: null,
+          price: {
+            kind: "UNKNOWN",
+            min: null,
+            max: null,
+            unit: null,
+            currency: "ARS",
+            source: null,
+            sourceRef: null,
+            verifiedAt: null,
+            confidence: "NONE",
+            stale: false,
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Precio no disponible")).toBeInTheDocument();
+    expect(screen.queryByText(/$s?0/)).not.toBeInTheDocument();
+  });
+
+  it("shows a free activity only when its price kind is FREE", () => {
+    render(
+      <ActivityCard
+        activity={{
+          ...baseActivity,
+          estimatedCost: 0,
+          price: {
+            kind: "FREE",
+            min: 0,
+            max: 0,
+            unit: "PER_PERSON",
+            currency: "ARS",
+            source: "OFFICIAL",
+            sourceRef: null,
+            verifiedAt: null,
+            confidence: "HIGH",
+            stale: false,
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Gratis")).toBeInTheDocument();
+  });
+
   it("renders the activity's name, description, cost, and categories", () => {
     render(<ActivityCard activity={baseActivity} />);
 

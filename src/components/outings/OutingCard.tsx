@@ -4,7 +4,7 @@ import { FeedbackInvite, ratingLabel } from "@/components/feedback";
 import { Badge, Button, Icon, Stars } from "@/components/ui";
 import { AuthenticatedImage } from "@/components/media";
 import { outingDetailRoute } from "@/lib/routes";
-import { formatArs, formatDuration } from "@/lib/utils";
+import { formatArs, formatDuration, formatPlanTotal } from "@/lib/utils";
 import type { OutingSummary, PlanFeedback } from "@/types";
 
 import { OUTINGS_COPY } from "./outingsContent";
@@ -110,7 +110,7 @@ export function OutingCard({
           ) : null}
 
           <div className={styles.meta}>
-            <Badge variant="cost">{formatArs(outing.estimatedTotalCost)}</Badge>
+            <Badge variant="cost">{formatPlanTotal(outing)}</Badge>
             {outing.estimatedTotalDuration > 0 ? (
               <span className={styles.metaItem}>
                 <Icon name="clock" size={13} aria-hidden="true" />
@@ -197,7 +197,7 @@ function RatedLine({
   estimated,
 }: {
   feedback: PlanFeedback;
-  estimated: number;
+  estimated: number | null;
 }) {
   const hasRealCost = feedback.actualCost != null && feedback.actualCost > 0;
   const comment = feedback.comment?.trim();
@@ -210,8 +210,8 @@ function RatedLine({
         </span>
         {hasRealCost ? (
           <span className={styles.ratedCost}>
-            <strong>{formatArs(feedback.actualCost as number)}</strong> gastados ·{" "}
-            {formatArs(estimated)} estimados
+            <strong>{formatArs(feedback.actualCost as number)}</strong> gastados
+            {estimated === null ? null : <> · {formatArs(estimated)} estimados</>}
           </span>
         ) : null}
       </div>

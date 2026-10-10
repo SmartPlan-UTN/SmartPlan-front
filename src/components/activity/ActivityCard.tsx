@@ -6,7 +6,7 @@ import { Badge, Icon, Stars } from "@/components/ui";
 import { AuthenticatedImage } from "@/components/media";
 import { useFavorites } from "@/context";
 import { activityDetailRoute } from "@/lib/routes";
-import { formatArs, formatDuration, gradientFor } from "@/lib/utils";
+import { formatDuration, gradientFor, formatPrice } from "@/lib/utils";
 import type { ActivitySearchResult } from "@/types";
 
 import styles from "./activity.module.css";
@@ -70,7 +70,7 @@ export function ActivityCard({
             <Icon name="clock" size={12} />
             {formatDuration(activity.estimatedDuration)}
           </span>
-          <Badge variant="cost">{formatArs(activity.estimatedCost)}</Badge>
+          <Badge variant="cost">{formatPrice(activity)}</Badge>
           {activity.averageRating != null ? (
             <span className={exploreStyles.metaItem}>
               <Stars rating={activity.averageRating} size={11} />

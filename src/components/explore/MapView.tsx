@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 
 import { activityDetailRoute } from "@/lib/routes";
 import { getActivityMapMarkers } from "@/lib/api";
-import { formatArs } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 import { useGoogleMap } from "@/lib/maps/useGoogleMap";
 import type { ActivityMapMarker, ActivitySearchParams } from "@/types";
 
@@ -33,7 +33,7 @@ function buildMarkerInfoContent(markerData: ActivityMapMarker): HTMLElement {
   place.style.margin = "4px 0";
 
   const meta = document.createElement("p");
-  meta.textContent = `${formatArs(markerData.estimatedCost)} · ${markerData.averageRating.toFixed(1)}★`;
+  meta.textContent = `${formatPrice(markerData)} · ${markerData.averageRating.toFixed(1)}★`;
   meta.style.margin = "0 0 4px";
 
   const link = document.createElement("a");

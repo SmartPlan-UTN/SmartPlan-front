@@ -4,6 +4,7 @@ import type {
   ActivityMapMarker,
   ActivitySearchResult,
 } from "@/types";
+import type { Price } from "@/types/pricing";
 
 /**
  * One marker on the discovery map. An activity can happen at several places
@@ -18,7 +19,8 @@ export interface MapCandidate {
   placeName: string | null;
   latitude: number;
   longitude: number;
-  estimatedCost: number;
+  estimatedCost: number | null;
+  price?: Price | null;
   averageRating: number;
   /** Measured by the server from the search's location, when there is one. */
   distanceKm: number | null;
@@ -45,6 +47,7 @@ export function candidatesFromMarkers(
     latitude: marker.latitude,
     longitude: marker.longitude,
     estimatedCost: marker.estimatedCost,
+    price: marker.price ?? null,
     averageRating: marker.averageRating,
     distanceKm: marker.distanceKm,
     categories: marker.categories,
@@ -74,6 +77,7 @@ export function candidatesFromAssistant(
         latitude: location.latitude,
         longitude: location.longitude,
         estimatedCost: activity.estimatedCost,
+        price: activity.price ?? null,
         averageRating: activity.averageRating,
         distanceKm: activity.distanceKm,
         categories: activity.categories,
@@ -117,6 +121,7 @@ export function summaryFromDetail(
     name: detail.name,
     description: detail.description,
     estimatedCost: detail.estimatedCost,
+    price: detail.price ?? null,
     estimatedDuration: detail.estimatedDuration,
     type: detail.type,
     averageRating: detail.averageRating,

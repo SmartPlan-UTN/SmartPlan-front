@@ -1,3 +1,4 @@
+import type { Price } from './pricing';
 import { BaseEntity } from './common';
 import type { ExplorationQueryParams } from './common';
 import type { Place } from './places';
@@ -9,7 +10,8 @@ import type { Category } from './categories';
 export interface Activity extends BaseEntity {
   name: string;
   description: string;
-  estimatedCost: number;
+  estimatedCost: number | null;
+  price?: Price | null;
   estimatedDuration: number;
   categories?: ActivityCategory[];
   places?: ActivityPlace[];
@@ -55,7 +57,8 @@ export interface ActivitySearchResult {
   imageUrl?: string | null;
   name: string;
   description: string;
-  estimatedCost: number;
+  estimatedCost: number | null;
+  price?: Price | null;
   estimatedDuration: number;
   type: string | null;
   averageRating: number;
@@ -135,7 +138,8 @@ export interface ActivityMapMarker {
   name: string;
   placeName: string;
   address: string;
-  estimatedCost: number;
+  estimatedCost: number | null;
+  price?: Price | null;
   type: string | null;
   averageRating: number;
   latitude: number;

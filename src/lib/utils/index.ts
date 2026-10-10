@@ -5,6 +5,18 @@
 export { cn } from "./cn";
 export { formatAbsoluteDateTime } from "./absolute-date-time";
 export { formatArs } from "./currency";
+export {
+  computeDraftTotals,
+  formatPerPerson,
+  formatPlanTotal,
+  formatPrice,
+  isPlanTotalExact,
+  isPriceUnknown,
+  NO_PRICE_TOTAL_LABEL,
+  priceCaveat,
+  UNKNOWN_PRICE_LABEL,
+  type PricedLike,
+} from "./pricing";
 export { formatDuration } from "./duration";
 export { googleMapsUrl } from "./googleMaps";
 export { gradientFor } from "./gradient";

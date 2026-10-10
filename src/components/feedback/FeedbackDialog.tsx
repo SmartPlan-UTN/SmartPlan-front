@@ -17,7 +17,7 @@ import {
   loadRatableActivities,
   type RatableActivity,
 } from "@/lib/plans/ratableActivities";
-import { formatArs } from "@/lib/utils";
+import { formatArs, NO_PRICE_TOTAL_LABEL } from "@/lib/utils";
 import type { FeedbackTag, PlanFeedback } from "@/types";
 
 import {
@@ -39,7 +39,7 @@ export interface FeedbackDialogProps {
   open: boolean;
   planId: number;
   planTitle: string;
-  estimatedTotalCost: number;
+  estimatedTotalCost: number | null;
   completedAt: string | null;
   activityCount: number;
   initialRating?: number;
@@ -280,7 +280,10 @@ export function FeedbackDialog({
         : null);
   const costFilledButInvalid = costError != null;
   const deltaLabel =
-    parsedCost && parsedCost > 0 && !Number.isNaN(parsedCost)
+    estimatedTotalCost !== null &&
+    parsedCost &&
+    parsedCost > 0 &&
+    !Number.isNaN(parsedCost)
       ? costDeltaLabel(estimatedTotalCost, parsedCost)
       : null;
 
@@ -594,7 +597,11 @@ export function FeedbackDialog({
                     </div>
                     <div className={styles.estimated}>
                       <span className={styles.estimatedLabel}>{FEEDBACK_COPY.dialog.estimatedLabel}</span>
-                      <span className={styles.estimatedValue}>{formatArs(estimatedTotalCost)}</span>
+                      <span className={styles.estimatedValue}>
+                        {estimatedTotalCost === null
+                          ? NO_PRICE_TOTAL_LABEL
+                          : formatArs(estimatedTotalCost)}
+                      </span>
                     </div>
                     <label className={styles.realCostLabel} htmlFor="feedback-cost">
                       {FEEDBACK_COPY.dialog.costLabel}

@@ -8,7 +8,7 @@ import { Button, Icon } from "@/components/ui";
 import { usePlanSelection, useReducedMotion } from "@/hooks";
 import { planDetailRoute } from "@/lib/routes";
 import { buildPlanPins } from "@/lib/maps/buildPlanPins";
-import { formatArs, formatDuration } from "@/lib/utils";
+import { formatDuration, formatPlanTotal } from "@/lib/utils";
 import type { PlanDetailResult, ResolvedPlanContext } from "@/types";
 
 import { PlanResultCard } from "./PlanResultCard";
@@ -355,7 +355,7 @@ function MobilePlanSheet({
       {plan.description ? <p className={layoutStyles.sheetDescription}>{plan.description}</p> : null}
       <div className={layoutStyles.sheetMeta}>
         <span><Icon name="clock" size={13} />{formatDuration(plan.estimatedTotalDuration)}</span>
-        <span><Icon name="wallet" size={13} />{formatArs(plan.estimatedTotalCost)}</span>
+        <span><Icon name="wallet" size={13} />{formatPlanTotal(plan)}</span>
         <span><Icon name="map-pin" size={13} />{plan.activityCount} paradas</span>
         <Link href={planDetailRoute(plan.id)}>Ver plan</Link>
       </div>
