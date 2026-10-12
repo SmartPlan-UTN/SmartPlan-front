@@ -92,7 +92,7 @@ traceability matrix (`skills/01-domain/`).
 
 | Ticket | Status | Branch | PR |
 | --- | --- | --- | --- |
-| #163 / back #111 | `In progress` | `fix/163-password-dot` | Pending publication |
+| #163 / back #111 | `In review` | `fix/163-password-dot` | [#172](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/172) |
 
 Accept dot in shared validation and checklist across registration, recovery and change (CU2/CU3/CU6). Issue #163 was closed without this change in develop.
 
