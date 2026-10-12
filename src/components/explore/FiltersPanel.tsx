@@ -5,6 +5,7 @@ import { useEffect, useId, useState } from "react";
 import { Select } from "@/components/ui";
 import type { CategoryOption, LocationOption } from "@/types";
 
+import { priceRangeError } from "./searchState";
 import { getCategoriesOnce } from "./categoryCatalog";
 import styles from "./explore.module.css";
 
@@ -68,6 +69,8 @@ export function FiltersPanel({
   location,
 }: FiltersPanelProps) {
   const ratingName = useId();
+  const rangeError = priceRangeError(minPrice, maxPrice);
+  const priceErrorId = `${ratingName}-price-error`;
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [showAllCategories, setShowAllCategories] = useState(false);
 
@@ -156,6 +159,8 @@ export function FiltersPanel({
               type="number"
               inputMode="decimal"
               min={0}
+              aria-invalid={rangeError !== null}
+              aria-describedby={rangeError ? priceErrorId : undefined}
               placeholder="$0"
               className={styles.input}
               value={minPrice}
@@ -170,6 +175,8 @@ export function FiltersPanel({
               type="number"
               inputMode="decimal"
               min={0}
+              aria-invalid={rangeError !== null}
+              aria-describedby={rangeError ? priceErrorId : undefined}
               placeholder="Sin límite"
               className={styles.input}
               value={maxPrice}
@@ -179,6 +186,11 @@ export function FiltersPanel({
             />
           </label>
         </div>
+        {rangeError ? (
+          <p id={priceErrorId} role="alert" className={styles.filterError}>
+            {rangeError}
+          </p>
+        ) : null}
       </section>
 
       <div className={styles.filterSection}>

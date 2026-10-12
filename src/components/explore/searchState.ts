@@ -1,0 +1,70 @@
+import type { SortDirection } from "@/types";
+
+export type ExplorationSearchParams = Record<string, string | string[] | undefined>;
+
+export interface ExplorationSearchState {
+  search: string;
+  categoryIds: number[];
+  minPrice: string;
+  maxPrice: string;
+  minRating: string;
+  cityId: number | null;
+  departmentId: number | null;
+  sortBy: "relevance" | "price" | "rating";
+  direction: SortDirection;
+  page: number;
+}
+
+/** Only supported search fields are carried between the list and map. */
+export function readExplorationState(params: ExplorationSearchParams = {}): ExplorationSearchState {
+  const value = (key: string) => typeof params[key] === "string" ? params[key] : "";
+  const positiveId = (raw: string) => {
+    const id = Number(raw);
+    return Number.isSafeInteger(id) && id > 0 ? id : null;
+  };
+  const price = (key: string) => {
+    const raw = value(key);
+    return raw.trim() !== "" && Number.isFinite(Number(raw)) && Number(raw) >= 0 ? raw : "";
+  };
+  const cityId = positiveId(value("cityId"));
+  const sortBy = value("sortBy");
+  const rating = value("minRating");
+  return {
+    search: value("search"),
+    categoryIds: [...new Set(value("categoryIds").split(",").map(positiveId).filter((id): id is number => id !== null))],
+    minPrice: price("minPrice"),
+    maxPrice: price("maxPrice"),
+    minRating: ["3", "4", "4.5"].includes(rating) ? rating : "",
+    cityId,
+    departmentId: cityId === null ? null : positiveId(value("departmentId")),
+    sortBy: sortBy === "price" || sortBy === "rating" ? sortBy : "relevance",
+    direction: value("direction") === "desc" ? "desc" : "asc",
+    page: positiveId(value("page")) ?? 1,
+  };
+}
+
+export function explorationQuery(state: ExplorationSearchState): string {
+  const params = new URLSearchParams();
+  if (state.search) params.set("search", state.search);
+  if (state.categoryIds.length) params.set("categoryIds", state.categoryIds.join(","));
+  for (const key of ["minPrice", "maxPrice", "minRating"] as const) {
+    if (state[key] !== "") params.set(key, state[key]);
+  }
+  if (state.cityId !== null) params.set("cityId", String(state.cityId));
+  if (state.departmentId !== null) params.set("departmentId", String(state.departmentId));
+  params.set("sortBy", state.sortBy);
+  params.set("direction", state.direction);
+  params.set("page", String(state.page));
+  return params.toString();
+}
+
+export function priceRangeError(minPrice: string, maxPrice: string): string | null {
+  for (const price of [minPrice, maxPrice]) {
+    if (price.trim() !== "" && (!Number.isFinite(Number(price)) || Number(price) < 0)) {
+      return "Ingresá precios válidos mayores o iguales a cero.";
+    }
+  }
+  return minPrice.trim() !== "" && maxPrice.trim() !== "" && Number(minPrice) > Number(maxPrice)
+    ? "El precio mínimo no puede superar al máximo."
+    : null;
+}

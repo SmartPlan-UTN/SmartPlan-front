@@ -6,3 +6,5 @@ export { MapView } from "./MapView";
 export { Pagination, type PaginationProps } from "./Pagination";
 export { FiltersPanel, type FiltersPanelProps } from "./FiltersPanel";
 export { SortControl, type SortControlProps, type SortOption } from "./SortControl";
+
+export { explorationQuery, priceRangeError, readExplorationState, type ExplorationSearchParams, type ExplorationSearchState } from "./searchState";

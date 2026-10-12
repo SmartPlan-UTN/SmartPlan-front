@@ -757,3 +757,9 @@
     overflow: hidden;
   }
 }
+
+.filterError {
+  margin: var(--s-2) 0 0;
+  color: var(--error);
+  font-size: var(--t-small);
+}

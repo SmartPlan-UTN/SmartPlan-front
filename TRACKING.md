@@ -256,6 +256,12 @@ being re-discussed twice.
 
 ---
 
+## UX fixes in review
+
+| Issue | Status | Date | Branch | PR | Notes |
+|---|---|---|---|---|---|
+| #140 — Predictable exploration filters (CU9–CU12, CU16) | In review | 2026-10-12 | `SMART-140-preserve-explore-filters` | Pending PR link | Restore search, filters, sort and page on return from the map; reject contradictory or negative prices before fetching. |
+
 ## Known Pending Items
 
 Things that have been spotted but don't have an owner yet:
@@ -385,3 +391,5 @@ Things that have been spotted but don't have an owner yet:
 | 2026-10-04 | Issue #164, follow-up to user visual review. Moved the interpreted fragments into a three-point composition in the open space below the headline and composer. A scroll-driven SVG connector and staggered labels progressively connect the points, then clear before option cards arrive. Kept the interpretation step marker until the options phase and corrected progress calculation for the sticky navbar offset. Added a choreography regression test for connecting fragments before options appear. Visually checked progressive connections and the card transition at 1250px and 1000px. Mobile and reduced-motion retain the existing static layout. Lint, build, and tests remain with the user. |
 | 2026-10-04 | Issue #164, options-phase spacing follow-up. The composer now fades during option arrival instead of lingering until selection. Raised the middle card from 45% to 30% of the stage and the outer cards from 52% to 37%, increasing their heights to keep the group balanced around the viewport center. Visually checked the options phase at 1600x1000 and 1000x720. Lint, build, and tests remain with the user. |
 | 2026-10-04 | Branch `fix/bugs`: corrected avatar crop lint failures by synchronizing cancel/busy refs in an effect, reading local files through FileReader callbacks, deriving clamped crop coordinates, and using an unoptimized Next Image preview. Added keyboard/export regression coverage. Validation passed: `pnpm lint`, `pnpm test` (104 files, 694 tests), `pnpm build`, and `git diff --check`. In review: PR #167 targeting `develop`. |
+
+| 2026-10-12 | Issue #140 (`SMART-140-preserve-explore-filters`): preserve supported search parameters through list/map navigation and initialize the list from the return URL. Price errors are announced beside both inputs; activity and plan requests pause until the range is valid. Cancelled searches cannot overwrite results. Regression tests cover restoration and invalid-range recovery. |
