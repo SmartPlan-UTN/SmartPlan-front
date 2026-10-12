@@ -126,7 +126,7 @@ traceability matrix (`skills/01-domain/`).
 
 | Ticket | Status | Branch | PR |
 | --- | --- | --- | --- |
-| back #103 / front #20/#30 | `In progress` | `fix/103-generation-preferences` | Pending publication |
+| back #103 / front #20/#30 | `In review` | `fix/103-generation-preferences` | [#173](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/173) |
 
 Respect useDeviceLocation before requesting GPS; fallback to saved area; display only the radius actually applied by the backend (CU8/CU18/CU19).
 
