@@ -6,7 +6,7 @@ import Link from "next/link";
 import { AddToCollectionDialog } from "@/components/collection";
 import { LocationPreview } from "@/components/explore";
 import { AddToPlanDialog } from "@/components/plan";
-import { MediaGallery } from "@/components/media";
+import { GooglePlacePhoto, MediaGallery } from "@/components/media";
 import {
   Badge,
   Button,
@@ -124,6 +124,9 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
       ? activity.categories.map((category) => category.name).join(" · ")
       : null;
   const firstLocation = activity.locations[0] ?? null;
+  const googlePlaceId =
+    activity.locations.find((location) => location.googlePlaceId)
+      ?.googlePlaceId ?? null;
   const displayRatingSummary: RatingSummary =
     ratingSummary ?? {
       averageRating: activity.averageRating,
@@ -150,6 +153,9 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
       </div>
 
       <MediaGallery target="activity" resourceId={activity.id} resourceName={activity.name} />
+      {googlePlaceId && (!activity.images || activity.images.length === 0) ? (
+        <GooglePlacePhoto placeId={googlePlaceId} alt={`Foto de ${activity.name}`} />
+      ) : null}
       <div className={styles.titleBlock}>
         <div className={styles.badgeRow}>
           {categoryLabel ? (

@@ -100,6 +100,8 @@ export interface ActivityLocationSummary {
   latitude: number | null;
   longitude: number | null;
   notes: string | null;
+  /** Google Place ID (identity link): lets the UI request a live photo. */
+  googlePlaceId?: string | null;
   place: {
     id: number;
     name: string;
