@@ -22,7 +22,7 @@ function preferences(
     usualBudget: null,
     usualPeopleCount: null,
     preferredArea: null,
-    useDeviceLocation: false,
+    useDeviceLocation: true,
     maxDistanceKm: null,
     ...overrides,
   };
@@ -153,4 +153,36 @@ describe("useSurpriseLocation", () => {
       expect(result.current.hasCategoryPreferences).toBe(true),
     );
   });
+  it("uses the saved area without prompting GPS when device location is disabled", async () => {
+    getPreferences.mockResolvedValue(preferences({ useDeviceLocation: false,
+      preferredArea: { label: "Ciudad", placeId: "saved", latitude: -32.89, longitude: -68.85 } }));
+    mockGeolocation(() => { throw new Error("GPS must not be requested"); });
+    const { result } = renderHook(() => useSurpriseLocation());
+    act(() => result.current.request());
+    await waitFor(() => expect(result.current.state).toMatchObject({ status: "resolved", source: "preferred-area" }));
+    expect(navigator.geolocation.getCurrentPosition).not.toHaveBeenCalled();
+  });
+
+  it("does not prompt GPS when preferences cannot be loaded", async () => {
+    getPreferences.mockRejectedValue(new Error("Unavailable"));
+    mockGeolocation(() => { throw new Error("GPS must not be requested"); });
+    const { result } = renderHook(() => useSurpriseLocation());
+    act(() => result.current.request());
+    await waitFor(() => expect(result.current.state).toEqual({ status: "resolved", source: "default", coords: null }));
+    expect(navigator.geolocation.getCurrentPosition).not.toHaveBeenCalled();
+    expect(result.current.hasCategoryPreferences).toBeNull();
+  });
+
+  it("ignores a preferences response after reset", async () => {
+    let resolvePreferences!: (value: UserPreferencesResponse) => void;
+    getPreferences.mockReturnValue(new Promise<UserPreferencesResponse>((resolve) => { resolvePreferences = resolve; }));
+    mockGeolocation(() => { throw new Error("GPS must not be requested"); });
+    const { result } = renderHook(() => useSurpriseLocation());
+    act(() => result.current.request());
+    act(() => result.current.reset());
+    await act(async () => { resolvePreferences(preferences()); });
+    expect(result.current.state).toEqual({ status: "idle" });
+    expect(navigator.geolocation.getCurrentPosition).not.toHaveBeenCalled();
+  });
+
 });
