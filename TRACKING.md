@@ -134,6 +134,18 @@ Verification: `pnpm lint`, `pnpm test --maxWorkers=4` (864 passed), `pnpm build`
 | CU22 | Select plan | PAN 11, PAN 17 | `In review` | `feature/130-mis-planes-mis-salidas` | #148 |
 | CU23 | Submit plan feedback | PAN 13, PAN 17 | `In review` | `feature/130-mis-planes-mis-salidas` | #148 |
 
+### Ticket fix — 2026-10-12
+
+| Ticket | Status | Branch | PR |
+| --- | --- | --- | --- |
+| back #103 / front #20/#30 | `In review` | `fix/103-generation-preferences` | [#173](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/173) |
+
+Respect useDeviceLocation before requesting GPS; fallback to saved area; display only the radius actually applied by the backend (CU8/CU18/CU19).
+
+
+Verification: `pnpm lint`, `pnpm test --maxWorkers=1` (862 passed), `pnpm build`. A parallel full run hit existing timeouts in CreatePlanForm and CollectionDetailView; the complete serial run passed. GPS disabled/enabled/denied, failed preferences, cancellation and applied-radius rendering are covered.
+
+
 ### Planning
 
 | CU | Feature | Screen | Status | Branch | PR |
@@ -269,6 +281,8 @@ being re-discussed twice.
 | 2026-08-25 | `AuthField`'s sibling `PasswordStrength`, and the auth-only `validation.ts` constants (`EMAIL_PATTERN`, `MIN_PASSWORD_LENGTH`, `REQUIRED_MESSAGE`), promoted from `components/auth/` to `components/ui/` and `lib/utils/` respectively | Same reasoning as `Field`'s promotion for CU5: CU6's password form needed the exact same strength meter and validation constants CU2's signup form already had. `LoginForm`/`RegisterForm` updated to import from the new locations, no behavior change |
 
 ---
+
+2026-10-12 — Respect useDeviceLocation before requesting GPS; fallback to saved area; display only the radius actually applied by the backend (CU8/CU18/CU19).
 
 ## UX fixes in review
 
@@ -409,3 +423,5 @@ Things that have been spotted but don't have an owner yet:
 | 2026-10-04 | Branch `fix/bugs`: corrected avatar crop lint failures by synchronizing cancel/busy refs in an effect, reading local files through FileReader callbacks, deriving clamped crop coordinates, and using an unoptimized Next Image preview. Added keyboard/export regression coverage. Validation passed: `pnpm lint`, `pnpm test` (104 files, 694 tests), `pnpm build`, and `git diff --check`. In review: PR #167 targeting `develop`. |
 
 | 2026-10-12 | Issue #140 (`SMART-140-preserve-explore-filters`): preserve supported search parameters through list/map navigation and initialize the list from the return URL. Price errors are announced beside both inputs; activity and plan requests pause until the range is valid. Cancelled searches cannot overwrite results. Regression tests cover restoration and invalid-range recovery. |
+
+2026-10-12 — `fix/103-generation-preferences` implements back #103 / front #20/#30 in an isolated worktree from `origin/develop`. Verification and PR links are recorded in the ticket table above. Staging data and concurrent photo work are untouched.
