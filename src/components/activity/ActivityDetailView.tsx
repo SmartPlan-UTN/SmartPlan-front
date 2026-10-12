@@ -6,7 +6,8 @@ import Link from "next/link";
 import { AddToCollectionDialog } from "@/components/collection";
 import { LocationPreview } from "@/components/explore";
 import { AddToPlanDialog } from "@/components/plan";
-import { GooglePlacePhoto, MediaGallery } from "@/components/media";
+import { categoryPresentation } from "@/components/preferences/categoryPresentation";
+import { GooglePlaceContext, GooglePlacePhoto, MediaGallery } from "@/components/media";
 import {
   Badge,
   Button,
@@ -121,7 +122,16 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
 
   const categoryLabel =
     activity.categories.length > 0
-      ? activity.categories.map((category) => category.name).join(" · ")
+      ? activity.categories
+          .map(
+            (category) =>
+              categoryPresentation({
+                id: category.id,
+                name: category.name,
+                description: null,
+              }).label,
+          )
+          .join(" · ")
       : null;
   const firstLocation = activity.locations[0] ?? null;
   const googlePlaceId =
@@ -177,6 +187,10 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
         </div>
 
         <h1 className={styles.title}>{activity.name}</h1>
+        <GooglePlaceContext
+          rating={firstLocation?.externalRating}
+          price={firstLocation?.externalPrice}
+        />
 
         <div className={styles.addressRow}>
           <Icon name="map-pin" size={14} className={styles.addressIcon} />

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Badge, Icon, Stars } from "@/components/ui";
 import { AuthenticatedImage } from "@/components/media";
 import { useFavorites } from "@/context";
+import { categoryPresentation } from "@/components/preferences/categoryPresentation";
 import { activityDetailRoute } from "@/lib/routes";
 import { formatDuration, gradientFor, formatPrice } from "@/lib/utils";
 import type { ActivitySearchResult } from "@/types";
@@ -93,7 +94,13 @@ export function ActivityCard({
         <div className={exploreStyles.tagRow}>
           {visibleCategories.map((category) => (
             <Badge variant="tag" key={category.id}>
-              {category.name}
+              {
+                categoryPresentation({
+                  id: category.id,
+                  name: category.name,
+                  description: null,
+                }).label
+              }
             </Badge>
           ))}
         </div>

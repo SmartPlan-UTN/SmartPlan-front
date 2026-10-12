@@ -831,3 +831,23 @@
   color: inherit;
   text-decoration: underline;
 }
+
+.googleContext {
+  display: grid;
+  gap: 4px;
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-surface, #fff) 70%, transparent);
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #5f5a53);
+}
+
+.googleContext p {
+  margin: 0;
+}
+
+.googleContextNote {
+  font-size: 0.8125rem;
+  opacity: 0.85;
+}

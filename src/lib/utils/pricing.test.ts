@@ -83,6 +83,12 @@ describe("priceCaveat", () => {
     expect(priceCaveat({ estimatedCost: 1, price: price({ source: "LEGACY", confidence: "LOW" }) })).toMatch(/sin verificar/);
     expect(priceCaveat({ estimatedCost: 1, price: price({}) })).toBeNull();
     expect(priceCaveat({ estimatedCost: 1, price: price({ stale: true }) })).toMatch(/hace tiempo/);
+    expect(
+      priceCaveat({
+        estimatedCost: 1,
+        price: price({ stale: true, verifiedAt: "2026-02-15T00:00:00.000Z" }),
+      }),
+    ).toMatch(/Precio de referencia de febrero de 2026/);
   });
 });
 

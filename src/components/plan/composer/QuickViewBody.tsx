@@ -9,7 +9,7 @@ import {
   PlaceLeg,
   PlaceReason,
 } from "@/components/activity/inspect/PlaceParts";
-import { AuthenticatedImage } from "@/components/media";
+import { AuthenticatedImage, GooglePlaceContext } from "@/components/media";
 import { Icon } from "@/components/ui";
 import { formatDuration, formatPrice, priceCaveat } from "@/lib/utils";
 import { categoryLabel } from "@/lib/utils/catalogLabels";
@@ -230,6 +230,10 @@ export function QuickViewBody({
         </header>
       )}
 
+      {!inline && facts && priceCaveat(facts) ? (
+        <p className={styles.priceNote}>{priceCaveat(facts)}</p>
+      ) : null}
+
       <PlaceReason reason={subject.reason} />
 
       {description ? (
@@ -249,6 +253,13 @@ export function QuickViewBody({
           <strong>{placeName}</strong>
           {address ? <span>{address}</span> : null}
         </p>
+      ) : null}
+
+      {!inline ? (
+        <GooglePlaceContext
+          rating={location?.externalRating}
+          price={location?.externalPrice}
+        />
       ) : null}
 
       {showMiniMap && place ? (

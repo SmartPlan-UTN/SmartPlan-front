@@ -102,6 +102,20 @@ export interface ActivityLocationSummary {
   notes: string | null;
   /** Google Place ID (identity link): lets the UI request a live photo. */
   googlePlaceId?: string | null;
+  /** Temporary Google rating of the place: attribute it to Google Maps. */
+  externalRating?: {
+    rating: number;
+    ratingCount: number;
+    source: "google";
+  } | null;
+  /** Temporary place-level Google price reference (not the activity price). */
+  externalPrice?: {
+    min: number | null;
+    max: number | null;
+    currency: string | null;
+    level: string | null;
+    source: "google";
+  } | null;
   place: {
     id: number;
     name: string;

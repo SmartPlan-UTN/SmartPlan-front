@@ -212,6 +212,11 @@ export interface CreateFeedbackPayload {
   tags?: FeedbackTag[];
   comment?: string;
   actualCost?: number;
+  /**
+   * What was paid for individual activities (whole party). Stored apart from
+   * `actualCost`, which is never split across activities.
+   */
+  activityCosts?: Array<{ activityId: number; amount: number }>;
   actualDuration?: number;
   /** Shares the experience with the community (#106); private when absent. */
   shared?: boolean;

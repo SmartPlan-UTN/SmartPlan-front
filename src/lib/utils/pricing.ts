@@ -74,6 +74,17 @@ export function formatPrice(
   }
 }
 
+function referenceMonth(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat("es-AR", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+}
+
 /** Short qualifier explaining how much to trust the price, or `null`. */
 export function priceCaveat(priced: PricedLike): string | null {
   const price = priced.price;
@@ -84,7 +95,12 @@ export function priceCaveat(priced: PricedLike): string | null {
   if (price.confidence === "MEDIUM") {
     return "Precio estimado a partir de gastos reportados";
   }
-  if (price.stale) return "Precio sin verificar hace tiempo";
+  if (price.stale) {
+    const when = referenceMonth(price.verifiedAt);
+    return when
+      ? `Precio de referencia de ${when}: confirmalo antes de ir`
+      : "Precio sin verificar hace tiempo";
+  }
   return null;
 }
 
