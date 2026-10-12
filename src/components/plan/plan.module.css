@@ -102,6 +102,13 @@
   color: rgba(255, 255, 255, 0.18);
 }
 
+/* A photo fills the hero under the title's own dark gradient. */
+.heroMedia {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
 .heroCostBadge {
   position: absolute;
   top: var(--s-3);

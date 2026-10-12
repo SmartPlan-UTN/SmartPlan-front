@@ -70,6 +70,8 @@ export interface PlanStatus extends CatalogEntity<PlanStatusKey> {
 export interface PlanSearchResult {
   id: number;
   imageUrl?: string | null;
+  /** `google_maps` when `imageUrl` is a Google Places photo (SmartPlan-back#102). */
+  imageSource?: import('./media').ImageSource | null;
   title: string;
   description: string | null;
   estimatedTotalCost: number;
@@ -196,6 +198,8 @@ export interface OutingSource {
 export interface OutingSummary {
   id: number;
   imageUrl?: string | null;
+  /** `google_maps` when `imageUrl` is a Google Places photo (SmartPlan-back#102). */
+  imageSource?: import('./media').ImageSource | null;
   title: string;
   description: string | null;
   estimatedTotalCost: number;

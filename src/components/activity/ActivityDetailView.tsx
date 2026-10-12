@@ -6,7 +6,7 @@ import Link from "next/link";
 import { AddToCollectionDialog } from "@/components/collection";
 import { LocationPreview } from "@/components/explore";
 import { AddToPlanDialog } from "@/components/plan";
-import { MediaGallery } from "@/components/media";
+import { AuthenticatedImage, MediaGallery } from "@/components/media";
 import {
   Badge,
   Button,
@@ -136,8 +136,23 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
       <FloatingBackLink href={ROUTES.explore} label="Volver" heroRef={heroRef} />
 
       <div className={styles.hero} ref={heroRef}>
-        <Icon name="route" size={90} className={styles.heroIcon} />
-        <span className={styles.heroBadge}>Sin imagen disponible</span>
+        {activity.imageUrl ? (
+          // An uploaded photo, or the place's Google Places photo with its
+          // full credit (SmartPlan-back#102); the hero art if it fails.
+          <div className={styles.heroMedia}>
+            <AuthenticatedImage
+              url={activity.imageUrl}
+              alt={activity.name}
+              width={960}
+              height={240}
+              attribution="full"
+              attributionPlacement="top"
+              fallback={<HeroArt />}
+            />
+          </div>
+        ) : (
+          <HeroArt />
+        )}
         <button
           type="button"
           className={styles.heroBookmark}
@@ -336,5 +351,15 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
         />
       ) : null}
     </div>
+  );
+}
+
+/** The hero's art while an activity has no photo to show. */
+function HeroArt() {
+  return (
+    <>
+      <Icon name="route" size={90} className={styles.heroIcon} />
+      <span className={styles.heroBadge}>Sin imagen disponible</span>
+    </>
   );
 }

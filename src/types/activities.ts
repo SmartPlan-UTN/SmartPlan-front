@@ -53,6 +53,8 @@ export interface ActivityCategorySummary {
 export interface ActivitySearchResult {
   id: number;
   imageUrl?: string | null;
+  /** `google_maps` when `imageUrl` is a Google Places photo (SmartPlan-back#102). */
+  imageSource?: import('./media').ImageSource | null;
   name: string;
   description: string;
   estimatedCost: number;
@@ -94,6 +96,8 @@ export interface ActivitySearchParams extends ExplorationQueryParams {
  */
 export interface ActivityLocationSummary {
   id: number;
+  /** This place's Google Places photo; `null` when it is not linked to Google. */
+  photoUrl?: string | null;
   latitude: number | null;
   longitude: number | null;
   notes: string | null;

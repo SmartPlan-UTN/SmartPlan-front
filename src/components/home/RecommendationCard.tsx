@@ -1,7 +1,7 @@
 import type { MouseEvent } from "react";
-import Image from "next/image";
 import Link from "next/link";
 
+import { AuthenticatedImage } from "@/components/media";
 import { Badge, Icon, Stars } from "@/components/ui";
 import { RECOMMENDATIONS } from "@/components/landing/landingContent";
 import { planDetailRoute } from "@/lib/routes";
@@ -27,9 +27,10 @@ export interface RecommendationCardProps {
  * the plan (CU13). Selecting/saving is CU22/CU43 and lives on the detail
  * screen, so there is no button here.
  *
- * Image strategy is progressive: `plan.imageUrl` when the backend ever
- * provides one, otherwise an editorial fallback (a deterministic gradient
- * plus the activity sequence as the graphic). No stock photos, nothing that
+ * Image strategy is progressive: `plan.imageUrl` (an uploaded photo or the
+ * real place's Google Places photo, SmartPlan-back#102), otherwise — or when
+ * it cannot be loaded — an editorial fallback (a deterministic gradient plus
+ * the activity sequence as the graphic). No stock photos, nothing that
  * pretends to be the real place.
  */
 export function RecommendationCard({
@@ -120,23 +121,7 @@ function CardMedia({
   planId: number;
   sequence: string;
 }) {
-  if (imageUrl) {
-    return (
-      <div className={styles.media}>
-        <Image
-          src={imageUrl}
-          alt=""
-          fill
-          sizes="(max-width: 760px) 82vw, 320px"
-          className={styles.mediaPhoto}
-          loading="lazy"
-        />
-        <span className={styles.sheen} aria-hidden="true" />
-      </div>
-    );
-  }
-
-  return (
+  const editorial = (
     <div
       className={styles.media}
       style={{ background: gradientFor(planId) }}
@@ -147,6 +132,24 @@ function CardMedia({
           <span className={styles.mediaSequenceText}>{sequence}</span>
         </p>
       ) : null}
+      <span className={styles.sheen} aria-hidden="true" />
+    </div>
+  );
+
+  if (!imageUrl) return editorial;
+
+  return (
+    <div className={styles.media}>
+      <span className={styles.mediaFill}>
+        <AuthenticatedImage
+          url={imageUrl}
+          alt=""
+          width={320}
+          height={200}
+          className={styles.mediaPhoto}
+          fallback={editorial}
+        />
+      </span>
       <span className={styles.sheen} aria-hidden="true" />
     </div>
   );

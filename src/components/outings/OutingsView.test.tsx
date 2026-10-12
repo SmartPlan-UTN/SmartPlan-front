@@ -29,6 +29,12 @@ vi.mock("@/lib/api", async (importActual) => ({
   submitFeedback,
 }));
 
+// The stamp's photo never loads here; only its credit matters (#102).
+vi.mock("@/lib/api/media", async (importActual) => ({
+  ...(await importActual<typeof import("@/lib/api/media")>()),
+  downloadMedia: vi.fn().mockRejectedValue(new Error("not in tests")),
+}));
+
 function toDo(overrides: Partial<OutingSummary> = {}): OutingSummary {
   return outingDetail({ id: 1, title: "Tarde de vinos en Luján", ...overrides });
 }
@@ -269,6 +275,22 @@ describe("OutingsView — Mis salidas (#130, CU22, CU23)", () => {
     expect(
       within(card).getByText("Bodega boutique → Almuerzo de campo"),
     ).toBeInTheDocument();
+  });
+
+  it("credits Google Maps beside a place photo too small to hold it (SmartPlan-back#102)", async () => {
+    serve({
+      to_do: [
+        toDo({ imageUrl: "/api/activity-places/4/photo", imageSource: "google_maps" }),
+      ],
+      completed: [done({ imageUrl: "/api/media/plan/9", imageSource: "uploaded" })],
+    });
+    render(<OutingsView />);
+
+    const card = (await screen.findByText("Tarde de vinos en Luján")).closest(
+      "article",
+    ) as HTMLElement;
+    expect(within(card).getByText("Google Maps")).toHaveAttribute("translate", "no");
+    expect(within(card).getByText(/^Foto:/)).toBeInTheDocument();
   });
 
   it("describes each empty tab and points to planning an outing", async () => {

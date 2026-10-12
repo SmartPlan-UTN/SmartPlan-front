@@ -186,6 +186,16 @@
   color: color-mix(in srgb, var(--char) 20%, transparent);
 }
 
+/* A photo covers the hero; the bookmark, later in the markup, stays on top. */
+.heroMedia {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .heroBadge {
   position: absolute;
   top: var(--s-3);
