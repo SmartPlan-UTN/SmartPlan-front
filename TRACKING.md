@@ -88,6 +88,18 @@ traceability matrix (`skills/01-domain/`).
 | CU3 | Recover password | — | `Not started` | | |
 | CU4 | Log out | — | `In progress` | `SMART-16-cu4-cerrar-sesion` | |
 
+### Ticket fix — 2026-10-12
+
+| Ticket | Status | Branch | PR |
+| --- | --- | --- | --- |
+| #163 / back #111 | `In review` | `fix/163-password-dot` | [#172](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/172) |
+
+Accept dot in shared validation and checklist across registration, recovery and change (CU2/CU3/CU6). Issue #163 was closed without this change in develop.
+
+
+Verification: `pnpm lint`, `pnpm test --maxWorkers=4` (864 passed), `pnpm build`. Registration, reset and change form success fixtures use dot as their only symbol.
+
+
 ### User management
 
 | CU | Feature | Screen | Status | Branch | PR |
@@ -212,6 +224,7 @@ Verification: `pnpm lint`, `pnpm test --maxWorkers=1` (862 passed), `pnpm build`
 
 ## Decisions
 
+2026-10-12 — Accept dot in shared validation and checklist across registration, recovery and change (CU2/CU3/CU6). Issue #163 was closed without this change in develop.
 
 Technical decisions made and their reasoning. Keeps the same thing from
 being re-discussed twice.
@@ -329,6 +342,7 @@ Things that have been spotted but don't have an owner yet:
 
 ## Log
 
+2026-10-12 — `fix/163-password-dot` implements #163 / back #111 in an isolated worktree from `origin/develop`. Verification and PR links are recorded in the ticket table above. Staging data and concurrent photo work are untouched.
 
 2026-09-30 — `feature/image-galleries`: gallery UI and authenticated image loading in progress. Added avatar management, reusable gallery viewer/editor, cards and details, rating/feedback photos, and the minimal administration place gallery. Integrated the latest `origin/develop`; lint, 639 unit tests, and production build pass locally. End-to-end verification with a private test bucket and the backend database remains pending.
 

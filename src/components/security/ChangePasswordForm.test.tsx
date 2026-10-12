@@ -24,7 +24,7 @@ vi.mock("@/lib/api", async () => {
 /** Satisfies all mandatory requirements (length, uppercase, digit and symbol) so
  * a success path doesn't accidentally get blocked by the same validation
  * the failure-path tests exercise on purpose. */
-const VALID_NEW_PASSWORD = "Passw0rd!123";
+const VALID_NEW_PASSWORD = "Passw0rd.123";
 
 function reissuedAuthentication() {
   return {
@@ -222,7 +222,7 @@ describe("ChangePasswordForm", () => {
     const uppercaseRow = screen.getByText("Al menos una mayúscula").closest("li");
     const digitRow = screen.getByText("Al menos un número").closest("li");
     const symbolRow = screen
-      .getByText("Al menos un símbolo (!@#$%^&*)")
+      .getByText("Al menos un símbolo (!@#$%^&*.)")
       .closest("li");
 
     await user.type(screen.getByLabelText("Contraseña nueva"), "lowercase-only-password");

@@ -12,8 +12,8 @@ vi.mock("@/lib/auth/api", () => ({
 }));
 
 async function fillMatchingPasswords(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByLabelText("Contraseña nueva"), "Abcdef1!");
-  await user.type(screen.getByLabelText("Confirmar contraseña"), "Abcdef1!");
+  await user.type(screen.getByLabelText("Contraseña nueva"), "Abcdef1.");
+  await user.type(screen.getByLabelText("Confirmar contraseña"), "Abcdef1.");
 }
 
 describe("ResetPasswordForm", () => {
@@ -53,7 +53,7 @@ describe("ResetPasswordForm", () => {
     const user = userEvent.setup();
     render(<ResetPasswordForm token="a-recovery-token" />);
 
-    await user.type(screen.getByLabelText("Contraseña nueva"), "Abcdef1!");
+    await user.type(screen.getByLabelText("Contraseña nueva"), "Abcdef1.");
     await user.type(screen.getByLabelText("Confirmar contraseña"), "Another2@");
     await user.click(
       screen.getByRole("button", { name: "Actualizar contraseña" }),
@@ -80,7 +80,7 @@ describe("ResetPasswordForm", () => {
     ).toBeInTheDocument();
     expect(resetPassword).toHaveBeenCalledWith({
       token: "a-recovery-token",
-      newPassword: "Abcdef1!",
+      newPassword: "Abcdef1.",
     });
     expect(screen.getByRole("link", { name: "Iniciar sesión" })).toHaveAttribute(
       "href",
@@ -93,8 +93,8 @@ describe("ResetPasswordForm", () => {
     const user = userEvent.setup();
     render(<ResetPasswordForm token="a-recovery-token" />);
 
-    await user.type(screen.getByLabelText("Contraseña nueva"), "Abcdef1!");
-    await user.type(screen.getByLabelText("Confirmar contraseña"), "Abcdef1!");
+    await user.type(screen.getByLabelText("Contraseña nueva"), "Abcdef1.");
+    await user.type(screen.getByLabelText("Confirmar contraseña"), "Abcdef1.");
     await user.click(
       screen.getByRole("button", { name: "Actualizar contraseña" }),
     );
@@ -102,7 +102,7 @@ describe("ResetPasswordForm", () => {
     expect(await screen.findByText("¡Contraseña actualizada!")).toBeInTheDocument();
     expect(resetPassword).toHaveBeenCalledWith({
       token: "a-recovery-token",
-      newPassword: "Abcdef1!",
+      newPassword: "Abcdef1.",
     });
   });
 
