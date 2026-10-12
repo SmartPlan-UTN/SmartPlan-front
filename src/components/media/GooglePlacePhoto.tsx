@@ -13,6 +13,16 @@ interface PhotoAttribution {
   provider: "Google Maps";
 }
 
+/** Author links come from the provider: only ever render http(s) ones. */
+function isHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
 interface GooglePlacePhotoProps {
   /** Google Place ID of the place (an identity link SmartPlan may store). */
   placeId: string;
@@ -86,7 +96,7 @@ export function GooglePlacePhoto({
             {attribution.authors.map((author, index) => (
               <span key={`${author.displayName}-${index}`}>
                 {index > 0 ? ", " : ""}
-                {author.uri ? (
+                {author.uri && isHttpUrl(author.uri) ? (
                   <a href={author.uri} target="_blank" rel="noopener noreferrer">
                     {author.displayName}
                   </a>

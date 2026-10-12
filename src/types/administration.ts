@@ -157,6 +157,14 @@ export interface AdminActivity {
   price?: Price | null;
   estimatedDuration: number;
   type: string | null;
+  /** Where the activity may appear, and why not (catalog eligibility). */
+  eligibility?: {
+    status: 'draft' | 'in_review' | 'published' | 'archived';
+    discoverable: boolean;
+    planEligible: boolean;
+    autoRecommendEligible: boolean;
+    reasons: string[];
+  };
   categories: Array<{ id: number; name: string }>;
   places: Array<{ id: number; name: string; address: string }>;
   createdAt: string;

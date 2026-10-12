@@ -179,6 +179,12 @@ export function FiltersPanel({
             />
           </label>
         </div>
+        {minPrice.trim() !== "" || maxPrice.trim() !== "" ? (
+          <p className={styles.fieldLabel}>
+            Las actividades sin precio confirmado no aparecen al filtrar por
+            precio.
+          </p>
+        ) : null}
       </section>
 
       <div className={styles.filterSection}>

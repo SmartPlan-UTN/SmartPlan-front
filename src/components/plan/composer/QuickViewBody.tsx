@@ -11,7 +11,7 @@ import {
 } from "@/components/activity/inspect/PlaceParts";
 import { AuthenticatedImage } from "@/components/media";
 import { Icon } from "@/components/ui";
-import { formatDuration, formatPrice } from "@/lib/utils";
+import { formatDuration, formatPrice, priceCaveat } from "@/lib/utils";
 import { categoryLabel } from "@/lib/utils/catalogLabels";
 import type { ActivityDetailResult, ActivitySearchResult } from "@/types";
 import type { Price } from "@/types/pricing";
@@ -213,7 +213,9 @@ export function QuickViewBody({
               <span className={facts ? undefined : styles.pending}>
                 {facts ? formatDuration(facts.estimatedDuration) : "—"}
               </span>
-              <span>{formatPrice(facts ?? subject)}</span>
+              <span title={priceCaveat(facts ?? subject) ?? undefined}>
+                {formatPrice(facts ?? subject)}
+              </span>
               {rating !== null ? (
                 <span className={styles.rating}>
                   <Icon name="star" size={12} aria-hidden="true" />
