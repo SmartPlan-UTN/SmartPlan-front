@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { explorationQuery, readExplorationState, type ExplorationSearchParams } from "@/components/explore";
 import { ExploreTabs } from "@/components/explore";
 import { Container, PageKicker } from "@/components/layout";
 
@@ -9,12 +10,15 @@ export const metadata: Metadata = {
   title: "Explorar",
 };
 
-export default function ExplorePage() {
+export default async function ExplorePage({ searchParams }: { searchParams: Promise<ExplorationSearchParams> }) {
+  const initialState = readExplorationState(await searchParams);
   return (
     <div className={styles.backdrop}>
       <Container>
         <div className={styles.page}>
           <ExploreTabs
+            key={explorationQuery(initialState)}
+            initialState={initialState}
             intro={
               <header className="sp-page-intro">
                 <PageKicker>Explorá a tu manera</PageKicker>

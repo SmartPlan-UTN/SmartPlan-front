@@ -10,6 +10,7 @@ import {
   SortControl,
   type SortOption,
 } from "@/components/explore";
+import { priceRangeError, explorationQuery, readExplorationState, type ExplorationSearchState } from "@/components/explore";
 import { Button, Icon, LoadingDots } from "@/components/ui";
 import { useDebouncedValue, useExplorationFilters, useExplorationSearch } from "@/hooks";
 import { listCities, listDepartments, searchActivities } from "@/lib/api";
@@ -45,8 +46,14 @@ function toNumber(value: string): number | undefined {
  * Debounces the query, renders loading/empty/error states, and paginates
  * page by page (not infinite scroll).
  */
-export function ActivitySearch({ head }: { head?: ReactNode }) {
-  const [query, setQuery] = useState("");
+export function ActivitySearch({
+  head,
+  initialState = readExplorationState(),
+}: {
+  head?: ReactNode;
+  initialState?: ExplorationSearchState;
+}) {
+  const [query, setQuery] = useState(initialState.search);
   const debouncedQuery = useDebouncedValue(query, DEBOUNCE_MS);
   // Set by the "Buscar" button or Enter, to search immediately instead of
   // waiting out the debounce. Cleared on the next keystroke so debounce
@@ -68,14 +75,14 @@ export function ActivitySearch({ head }: { head?: ReactNode }) {
     setDirection,
     toggleCategory,
     clear: clearFilters,
-  } = useExplorationFilters<ActivitySortField>("relevance");
+  } = useExplorationFilters<ActivitySortField>("relevance", initialState);
 
   // "Provincia"/"Localidad" (CU10): kept outside `useExplorationFilters`
   // since it's shared with `PlanSearch`, which has no location to filter by.
   const [cities, setCities] = useState<LocationOption[]>([]);
-  const [cityId, setCityId] = useState<number | null>(null);
+  const [cityId, setCityId] = useState<number | null>(initialState.cityId);
   const [departments, setDepartments] = useState<LocationOption[]>([]);
-  const [departmentId, setDepartmentId] = useState<number | null>(null);
+  const [departmentId, setDepartmentId] = useState<number | null>(initialState.departmentId);
   const [departmentsLoading, setDepartmentsLoading] = useState(false);
 
   useEffect(() => {
@@ -172,25 +179,23 @@ export function ActivitySearch({ head }: { head?: ReactNode }) {
     ],
   );
 
-  const mapFiltersQuery = useMemo(() => {
-    const searchParams = new URLSearchParams();
-    if (params.search) searchParams.set("search", params.search);
-    if (params.categoryIds && params.categoryIds.length > 0) {
-      searchParams.set("categoryIds", params.categoryIds.join(","));
-    }
-    if (params.minPrice != null) searchParams.set("minPrice", String(params.minPrice));
-    if (params.maxPrice != null) searchParams.set("maxPrice", String(params.maxPrice));
-    if (params.minRating != null) searchParams.set("minRating", String(params.minRating));
-    if (params.cityId != null) searchParams.set("cityId", String(params.cityId));
-    if (params.departmentId != null) {
-      searchParams.set("departmentId", String(params.departmentId));
-    }
-    const query = searchParams.toString();
-    return query ? `${ROUTES.exploreMap}?${query}` : ROUTES.exploreMap;
-  }, [params]);
-
+  const rangeError = priceRangeError(minPrice, maxPrice);
+  const canSearch =
+    rangeError === null &&
+    priceRangeError(debouncedMinPrice, debouncedMaxPrice) === null;
   const { items, pagination, status, errorMessage, hasResults, page, goToPage, retry } =
-    useExplorationSearch(searchActivities, params, PAGE_SIZE);
+    useExplorationSearch(searchActivities, params, PAGE_SIZE, canSearch, {
+      initialPage: initialState.page,
+    });
+  // Carry the current controls, including edits still waiting for debounce.
+  const mapFiltersQuery = `${ROUTES.exploreMap}?${explorationQuery({
+    search: query, categoryIds, minPrice, maxPrice, minRating,
+    cityId, departmentId,
+    sortBy: sortBy === "distance" ? "relevance" : sortBy,
+    direction,
+    page: query !== effectiveQuery || minPrice !== debouncedMinPrice ||
+      maxPrice !== debouncedMaxPrice || minRating !== debouncedMinRating ? 1 : page,
+  })}`;
 
   const resultsCountLabel =
     pagination != null
@@ -201,7 +206,7 @@ export function ActivitySearch({ head }: { head?: ReactNode }) {
   // Once there's a grid on screen, a refetch (chip, filter, page) dims it
   // in place instead of swapping it for the big loading state — that swap
   // is what caused the flash on every click.
-  const isRefetching = status === "loading" && hasResults;
+  const isRefetching = status === "loading" && hasResults && canSearch;
 
   // Shown on the narrow-screen "Filtros" toggle, so a folded sidebar never
   // filters silently.
@@ -269,7 +274,14 @@ export function ActivitySearch({ head }: { head?: ReactNode }) {
               Buscar
             </Button>
           </div>
-          <Link href={mapFiltersQuery} className={exploreStyles.searchMapLink}>
+          <Link
+            href={mapFiltersQuery}
+            aria-disabled={!canSearch}
+            onClick={(event) => {
+              if (!canSearch) event.preventDefault();
+            }}
+            className={exploreStyles.searchMapLink}
+          >
             <Icon name="map" size={16} aria-hidden="true" />
             Ver mapa
           </Link>
@@ -313,7 +325,7 @@ export function ActivitySearch({ head }: { head?: ReactNode }) {
           </div>
         ) : null}
 
-        {status === "idle" && !hasResults ? (
+        {status === "idle" && !hasResults && canSearch ? (
           <div className={styles.stateBlock}>
             <Icon name="inbox" size={32} className={styles.stateIcon} />
             <h2 className="sp-h3">Sin resultados</h2>
@@ -339,7 +351,7 @@ export function ActivitySearch({ head }: { head?: ReactNode }) {
                 page={page}
                 totalPages={pagination.totalPages}
                 onPageChange={goToPage}
-                disabled={isRefetching}
+                disabled={isRefetching || !canSearch}
               />
             ) : null}
 
