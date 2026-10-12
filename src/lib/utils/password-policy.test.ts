@@ -7,9 +7,10 @@ import {
 } from "./password-policy";
 
 describe("new password policy", () => {
-  it("accepts a password that satisfies every requirement", () => {
-    expect(newPasswordValidationMessage("Abcdef1!")).toBeUndefined();
-    expect(passwordRequirements("Abcdef1!").every(({ met }) => met)).toBe(true);
+  it.each([..."!@#$%^&*."])("accepts %s as the only required symbol", (symbol) => {
+    const password = `Abcdef1${symbol}`;
+    expect(newPasswordValidationMessage(password)).toBeUndefined();
+    expect(passwordRequirements(password).every(({ met }) => met)).toBe(true);
   });
 
   it("counts Unicode surrogate pairs as one character, matching the backend", () => {
@@ -44,14 +45,14 @@ describe("new password policy", () => {
     ],
     ["abcdef1!", "La contraseña debe incluir al menos una mayúscula"],
     ["Abcdefgh!", "La contraseña debe incluir al menos un número"],
-    ["Abcdefg1", "La contraseña debe incluir al menos un símbolo (!@#$%^&*)"],
+    ["Abcdefg1", "La contraseña debe incluir al menos un símbolo (!@#$%^&*.)"],
   ])("rejects an unmet requirement for %s", (password, message) => {
     expect(newPasswordValidationMessage(password)).toBe(message);
   });
 
   it("only accepts the explicitly allowed symbols", () => {
     expect(newPasswordValidationMessage("Abcdef1?")).toBe(
-      "La contraseña debe incluir al menos un símbolo (!@#$%^&*)",
+      "La contraseña debe incluir al menos un símbolo (!@#$%^&*.)",
     );
   });
 });
