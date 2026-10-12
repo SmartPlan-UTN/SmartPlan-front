@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 
 import { ActivitySearch } from "@/components/activity";
 import { PlanSearch } from "@/components/plan";
+import { readExplorationState, type ExplorationSearchState } from "./searchState";
 import { Chip } from "@/components/ui";
 
 import styles from "./explore.module.css";
@@ -18,7 +19,7 @@ type Tab = "activities" | "plans";
  * `intro` is the page's title block. It is handed down to the active search
  * so the search can lay the title and its filters side by side.
  */
-export function ExploreTabs({ intro }: { intro?: ReactNode }) {
+export function ExploreTabs({ intro, initialState = readExplorationState() }: { intro?: ReactNode; initialState?: ExplorationSearchState }) {
   const [tab, setTab] = useState<Tab>("activities");
 
   const head = (
@@ -49,5 +50,5 @@ export function ExploreTabs({ intro }: { intro?: ReactNode }) {
     </>
   );
 
-  return tab === "activities" ? <ActivitySearch head={head} /> : <PlanSearch head={head} />;
+  return tab === "activities" ? <ActivitySearch head={head} initialState={initialState} /> : <PlanSearch head={head} />;
 }

@@ -44,7 +44,7 @@ export function useExplorationSearch<TParams extends object, TResult>(
   params: TParams,
   pageSize = 20,
   enabled = true,
-  { abortable = false }: { abortable?: boolean } = {},
+  { abortable = false, initialPage = 1 }: { abortable?: boolean; initialPage?: number } = {},
 ): UseExplorationSearchResult<TResult> {
   const [items, setItems] = useState<TResult[]>([]);
   const [pagination, setPagination] = useState<PaginationMetadata | null>(
@@ -53,7 +53,7 @@ export function useExplorationSearch<TParams extends object, TResult>(
   const [status, setStatus] = useState<ExplorationStatus>("loading");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [retryToken, setRetryToken] = useState(0);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(initialPage);
   const requestId = useRef(0);
   const fetcherRef = useRef(fetcher);
   const paramsRef = useRef(params);
@@ -99,7 +99,7 @@ export function useExplorationSearch<TParams extends object, TResult>(
         const result = await (abortable
           ? fetcherRef.current(request, { signal: controller.signal })
           : fetcherRef.current(request));
-        if (currentRequestId !== requestId.current) return;
+        if (controller.signal.aborted || currentRequestId !== requestId.current) return;
         setItems(result.data);
         setPagination(result.pagination);
         setStatus("idle");

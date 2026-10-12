@@ -26,13 +26,14 @@ export interface UseExplorationFiltersResult<TSortField extends string> {
  */
 export function useExplorationFilters<TSortField extends string>(
   defaultSort: TSortField,
+  initial: Partial<Pick<UseExplorationFiltersResult<TSortField>, "categoryIds" | "minPrice" | "maxPrice" | "minRating" | "sortBy" | "direction">> = {},
 ): UseExplorationFiltersResult<TSortField> {
-  const [categoryIds, setCategoryIds] = useState<number[]>([]);
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-  const [minRating, setMinRating] = useState("");
-  const [sortBy, setSortBy] = useState<TSortField>(defaultSort);
-  const [direction, setDirection] = useState<SortDirection>("asc");
+  const [categoryIds, setCategoryIds] = useState<number[]>(initial.categoryIds ?? []);
+  const [minPrice, setMinPrice] = useState(initial.minPrice ?? "");
+  const [maxPrice, setMaxPrice] = useState(initial.maxPrice ?? "");
+  const [minRating, setMinRating] = useState(initial.minRating ?? "");
+  const [sortBy, setSortBy] = useState<TSortField>(initial.sortBy ?? defaultSort);
+  const [direction, setDirection] = useState<SortDirection>(initial.direction ?? "asc");
 
   const toggleCategory = useCallback((categoryId: number) => {
     setCategoryIds((current) =>
