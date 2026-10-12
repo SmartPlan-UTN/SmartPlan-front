@@ -260,7 +260,7 @@ being re-discussed twice.
 
 | Issue | Status | Date | Branch | PR | Notes |
 |---|---|---|---|---|---|
-| #140 — Predictable exploration filters (CU9–CU12, CU16) | In review | 2026-10-12 | `SMART-140-preserve-explore-filters` | Pending PR link | Restore search, filters, sort and page on return from the map; reject contradictory or negative prices before fetching. |
+| #140 — Predictable exploration filters (CU9–CU12, CU16) | In review | 2026-10-12 | `SMART-140-preserve-explore-filters` | [#170](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/170) | Restore search, filters, sort and page on return from the map; reject contradictory or negative prices before fetching. |
 
 ## Known Pending Items
 
