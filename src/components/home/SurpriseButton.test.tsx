@@ -17,7 +17,7 @@ const EMPTY_PREFERENCES: UserPreferencesResponse = {
   usualBudget: null,
   usualPeopleCount: null,
   preferredArea: null,
-  useDeviceLocation: false,
+  useDeviceLocation: true,
   maxDistanceKm: null,
 };
 

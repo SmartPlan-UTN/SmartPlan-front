@@ -87,6 +87,8 @@ export interface PlanRequestPlanSummary {
  * placeholder. Matches `ResolvedPlanContextDto` in `SmartPlan-back`.
  */
 export interface ResolvedPlanContext {
+  /** Only present when the backend actually applied a distance filter. */
+  appliedMaxDistanceKm?: number | null;
   budget: number | null;
   partySize: number | null;
   departmentName: string | null;
