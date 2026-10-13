@@ -1,16 +1,25 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { listRatings } from "@/lib/api";
+import { ApiError, listRatings, reportContent } from "@/lib/api";
 import type { PublicRating } from "@/types";
 
 import { RatingsList } from "./RatingsList";
 
 vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
-  return { ...actual, listRatings: vi.fn() };
+  return { ...actual, listRatings: vi.fn(), reportContent: vi.fn() };
 });
+
+const useSession = vi.hoisted(() => vi.fn());
+
+vi.mock("@/lib/auth", async (importActual) => ({
+  ...(await importActual<typeof import("@/lib/auth")>()),
+  useSession,
+}));
+
+vi.mock("next/navigation", () => ({ usePathname: () => "/explore/42" }));
 
 function mockRating(overrides: Partial<PublicRating> = {}): PublicRating {
   return {
@@ -20,6 +29,7 @@ function mockRating(overrides: Partial<PublicRating> = {}): PublicRating {
     authorAlias: "Ana P.",
     createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
     updatedAt: new Date().toISOString(),
+    isOwn: false,
     ...overrides,
   };
 }
@@ -27,6 +37,8 @@ function mockRating(overrides: Partial<PublicRating> = {}): PublicRating {
 describe("RatingsList", () => {
   beforeEach(() => {
     vi.mocked(listRatings).mockReset();
+    vi.mocked(reportContent).mockReset();
+    useSession.mockReturnValue({ status: "authenticated" });
   });
 
   it("renders the empty state when there are no ratings", async () => {
@@ -135,5 +147,143 @@ describe("RatingsList", () => {
       expect(listRatings).toHaveBeenCalledWith(42, { page: 1 });
     });
     expect(await screen.findByText("Ana P.")).toBeInTheDocument();
+  });
+
+  describe("reporting a rating (#156)", () => {
+    const loaded = {
+      pagination: { page: 1, limit: 20, total: 2, totalPages: 1 },
+      summary: { averageRating: 3, ratingCount: 2 },
+    };
+
+    it("hides the reported rating and thanks the reporter", async () => {
+      vi.mocked(listRatings)
+        .mockResolvedValueOnce({
+          ...loaded,
+          data: [mockRating({ id: 1 }), mockRating({ id: 2, authorAlias: "Diego R." })],
+        })
+        .mockResolvedValueOnce({
+          data: [mockRating({ id: 2, authorAlias: "Diego R." })],
+          pagination: { page: 1, limit: 20, total: 1, totalPages: 1 },
+          summary: { averageRating: 1, ratingCount: 1 },
+        });
+      vi.mocked(reportContent).mockResolvedValueOnce(undefined);
+      const onSummaryChange = vi.fn();
+      const user = userEvent.setup();
+      render(<RatingsList activityId={42} onSummaryChange={onSummaryChange} />);
+
+      await user.click(
+        await screen.findByRole("button", { name: "Denunciar valoración de Ana P." }),
+      );
+      const dialog = screen.getByRole("dialog", { name: "Denunciar valoración" });
+      await user.click(within(dialog).getByRole("radio", { name: "Acoso o insulto" }));
+      await user.click(within(dialog).getByRole("button", { name: "Denunciar" }));
+
+      expect(reportContent).toHaveBeenCalledWith({
+        contentType: "rating",
+        contentId: 1,
+        reason: "harassment",
+      });
+      expect(await screen.findByText("Gracias, lo vamos a revisar.")).toBeInTheDocument();
+      expect(screen.queryByText("Ana P.")).not.toBeInTheDocument();
+      // The page is fetched again: the reported rating no longer counts.
+      await waitFor(() =>
+        expect(onSummaryChange).toHaveBeenLastCalledWith({ averageRating: 1, ratingCount: 1 }),
+      );
+    });
+
+    it("requires a detail for the reason Otro", async () => {
+      vi.mocked(listRatings).mockResolvedValueOnce({ ...loaded, data: [mockRating()] });
+      const user = userEvent.setup();
+      render(<RatingsList activityId={42} />);
+
+      await user.click(
+        await screen.findByRole("button", { name: "Denunciar valoración de Ana P." }),
+      );
+      const dialog = screen.getByRole("dialog", { name: "Denunciar valoración" });
+      await user.click(within(dialog).getByRole("button", { name: "Denunciar" }));
+      expect(within(dialog).getByRole("alert")).toHaveTextContent("Elegí un motivo.");
+
+      await user.click(within(dialog).getByRole("radio", { name: "Otro" }));
+      await user.click(within(dialog).getByRole("button", { name: "Denunciar" }));
+      expect(within(dialog).getByRole("alert")).toHaveTextContent(
+        "Contanos qué pasa con este contenido.",
+      );
+      expect(reportContent).not.toHaveBeenCalled();
+
+      await user.type(within(dialog).getByRole("textbox", { name: /detalle/i }), "Es publicidad.");
+      await user.click(within(dialog).getByRole("button", { name: "Denunciar" }));
+      expect(reportContent).toHaveBeenCalledWith({
+        contentType: "rating",
+        contentId: 1,
+        reason: "other",
+        detail: "Es publicidad.",
+      });
+    });
+
+    it("tells the reporter they already reported it", async () => {
+      vi.mocked(listRatings).mockResolvedValue({ ...loaded, data: [mockRating()] });
+      vi.mocked(reportContent).mockRejectedValueOnce(
+        new ApiError({
+          message: "Duplicated",
+          type: "HTTP",
+          status: 409,
+          code: "CONTENT_REPORT_DUPLICATE",
+        }),
+      );
+      const user = userEvent.setup();
+      render(<RatingsList activityId={42} />);
+
+      await user.click(
+        await screen.findByRole("button", { name: "Denunciar valoración de Ana P." }),
+      );
+      const dialog = screen.getByRole("dialog", { name: "Denunciar valoración" });
+      await user.click(within(dialog).getByRole("radio", { name: "Spam o publicidad" }));
+      await user.click(within(dialog).getByRole("button", { name: "Denunciar" }));
+
+      expect(await screen.findByText("Ya denunciaste este contenido.")).toBeInTheDocument();
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    it("keeps the dialog open to retry when the connection fails", async () => {
+      vi.mocked(listRatings).mockResolvedValueOnce({ ...loaded, data: [mockRating()] });
+      vi.mocked(reportContent).mockRejectedValueOnce(
+        new ApiError({ message: "offline", type: "NETWORK" }),
+      );
+      const user = userEvent.setup();
+      render(<RatingsList activityId={42} />);
+
+      await user.click(
+        await screen.findByRole("button", { name: "Denunciar valoración de Ana P." }),
+      );
+      const dialog = screen.getByRole("dialog", { name: "Denunciar valoración" });
+      await user.click(within(dialog).getByRole("radio", { name: "Discurso de odio" }));
+      await user.click(within(dialog).getByRole("button", { name: "Denunciar" }));
+
+      expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+        "Se cortó la conexión. Probá de nuevo.",
+      );
+      expect(screen.getByText("Ana P.")).toBeInTheDocument();
+    });
+
+    it("offers no report on the viewer's own rating", async () => {
+      vi.mocked(listRatings).mockResolvedValueOnce({
+        ...loaded,
+        data: [mockRating({ isOwn: true })],
+      });
+      render(<RatingsList activityId={42} />);
+
+      await screen.findByText("Ana P.");
+      expect(screen.queryByRole("button", { name: /denunciar/i })).not.toBeInTheDocument();
+    });
+
+    it("sends an anonymous visitor to the login instead", async () => {
+      useSession.mockReturnValue({ status: "anonymous" });
+      vi.mocked(listRatings).mockResolvedValueOnce({ ...loaded, data: [mockRating()] });
+      render(<RatingsList activityId={42} />);
+
+      expect(
+        await screen.findByRole("link", { name: "Denunciar valoración de Ana P.: iniciá sesión" }),
+      ).toHaveAttribute("href", "/login?redirect=%2Fexplore%2F42");
+    });
   });
 });

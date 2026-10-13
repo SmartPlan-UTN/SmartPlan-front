@@ -75,14 +75,14 @@ export {
   listAdminPlans,
   updateAdminActivity,
   updateAdminPlan,
-  getAdminRatingCounts,
-  listAdminRatings,
-  moderateAdminRating,
-  getAdminExperienceCounts,
-  listAdminExperiences,
-  moderateAdminExperienceComment,
-  moderateAdminExperiencePhoto,
 } from './administration';
+export {
+  getContentReport,
+  getContentReportCounts,
+  listContentReports,
+  reportContent,
+  resolveContentReport,
+} from './contentReports';
 export {
   addActivityToCollection,
   createCollection,

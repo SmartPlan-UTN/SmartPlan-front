@@ -19,8 +19,6 @@ export interface SavedActivityRating {
 }
 
 export interface ActivityRatingsResult {
-  /** Ratings saved whose comment moderation rejected (CU55). */
-  rejectedComments: number;
   /** Every rating this step saved, in itinerary order — photos attach to them. */
   ratings: SavedActivityRating[];
 }
@@ -95,7 +93,6 @@ export function ActivityRatingsStep({
   const [rows, setRows] = useState(() => initialRows(activities));
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const rejectedComments = useRef(0);
   // Rating ids saved so far, across retries of a partly failed submit.
   const savedRatings = useRef(new Map<number, number>());
 
@@ -159,12 +156,10 @@ export function ActivityRatingsStep({
     const results = await Promise.allSettled(pending.map(save));
 
     const next = { ...rows };
-    const saved: OwnRating[] = [];
     let failed = 0;
     results.forEach((result, index) => {
       const activityId = pending[index].id;
       if (result.status === "fulfilled") {
-        saved.push(result.value);
         savedRatings.current.set(activityId, result.value.id);
         next[activityId] = { ...next[activityId], status: "saved", error: null };
       } else {
@@ -178,16 +173,12 @@ export function ActivityRatingsStep({
     });
     setRows(next);
     setBusy(false);
-    rejectedComments.current += saved.filter(
-      (rating) => rating.moderationStatus === "rejected"
-    ).length;
 
     if (failed > 0) {
       setFormError(ACTIVITY_RATINGS_COPY.errors.partial(failed, pending.length));
       return;
     }
     onSaved({
-      rejectedComments: rejectedComments.current,
       ratings: activities.flatMap((activity) => {
         const ratingId = savedRatings.current.get(activity.id);
         return ratingId == null

@@ -1,7 +1,7 @@
 /**
  * Spanish copy for the community experiences section (#106). Tone: people
- * telling how it went, as proof the plan is worth it — never a review site,
- * never moderation vocabulary.
+ * telling how it went, as proof the plan is worth it — never a review site.
+ * Reporting (#156) only ever shows as a discreet flag.
  */
 export const COMMUNITY_COPY = {
   kicker: "experiencias de la comunidad",
@@ -23,6 +23,8 @@ export const COMMUNITY_COPY = {
   cardLabel: (author: string) => `Experiencia de ${author}`,
   photosBy: (author: string) => `Fotos de ${author}`,
   viewPhoto: (position: number, total: number) => `Ver foto ${position} de ${total}`,
+  reportPhoto: (position: number) => `Denunciar foto ${position}`,
+  reportComment: (author: string) => `Denunciar comentario de ${author}`,
   doneIn: (month: string) => `Lo hizo en ${month}`,
   loadMore: "Ver más experiencias",
   loadingMore: "Cargando…",

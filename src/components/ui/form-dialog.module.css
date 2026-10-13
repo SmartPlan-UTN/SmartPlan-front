@@ -1,0 +1,92 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: var(--s-4);
+  background: color-mix(in srgb, var(--char) 58%, transparent);
+  backdrop-filter: blur(4px);
+}
+
+.dialog {
+  width: min(100%, 560px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: var(--s-6);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-bottom: var(--s-5);
+}
+
+.header h2,
+.header p {
+  margin: 0;
+}
+
+.header p {
+  margin-top: var(--s-1);
+  color: var(--fg-2);
+}
+
+.close {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--hairline);
+  border-radius: 9px;
+  background: var(--surface-card);
+  color: var(--fg-2);
+  cursor: pointer;
+}
+
+.close:hover {
+  border-color: var(--ember);
+  color: var(--ember);
+}
+
+.close:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-3);
+}
+
+.error {
+  margin: 0;
+  color: var(--error);
+  font-size: var(--t-small);
+}
+
+@media (max-width: 520px) {
+  .dialog {
+    padding: var(--s-5);
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+  }
+}

@@ -2,31 +2,55 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { CommunityExperience, CommunityExperiencesPage, MediaImage } from "@/types";
+import type { CommunityExperience, CommunityExperiencesPage, CommunityPhoto } from "@/types";
 
 import { CommunityExperiences } from "./CommunityExperiences";
 
 const getPlanExperiences = vi.hoisted(() => vi.fn());
+const reportContent = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/api")>()),
   getPlanExperiences,
+  reportContent,
 }));
+
+const useSession = vi.hoisted(() => vi.fn());
+
+vi.mock("@/lib/auth", async (importActual) => ({
+  ...(await importActual<typeof import("@/lib/auth")>()),
+  useSession,
+}));
+
+vi.mock("next/navigation", () => ({ usePathname: () => "/plans/7" }));
 
 vi.mock("@/components/media", () => ({
   AuthenticatedImage: () => <span data-testid="photo" />,
-  MediaLightbox: ({ resourceName }: { resourceName: string }) => (
-    <div role="dialog" aria-label={resourceName} />
+  MediaLightbox: ({
+    resourceName,
+    images,
+    index,
+    renderActions,
+  }: {
+    resourceName: string;
+    images: CommunityPhoto[];
+    index: number;
+    renderActions?: (image: CommunityPhoto) => React.ReactNode;
+  }) => (
+    <div role="dialog" aria-label={resourceName}>
+      {renderActions?.(images[index])}
+    </div>
   ),
 }));
 
-function photo(id: number): MediaImage {
+function photo(id: number, isOwn = false): CommunityPhoto {
   return {
     id,
     url: `/api/media/plan/${id}`,
     isPrimary: id === 1,
     displayOrder: id,
     createdAt: "2026-09-20T12:00:00.000Z",
+    isOwn,
   };
 }
 
@@ -39,6 +63,7 @@ function experience(overrides: Partial<CommunityExperience> = {}): CommunityExpe
     completedAt: "2026-09-14T18:00:00.000Z",
     author: { alias: "Lucía M.", avatarUrl: null },
     photos: [photo(1), photo(2)],
+    isOwn: false,
     ...overrides,
   };
 }
@@ -61,7 +86,10 @@ function page(
 }
 
 describe("CommunityExperiences (#106)", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useSession.mockReturnValue({ status: "authenticated" });
+  });
 
   it("draws a compound first name's initials from the last-name initial", async () => {
     getPlanExperiences.mockResolvedValue(
@@ -149,5 +177,88 @@ describe("CommunityExperiences (#106)", () => {
 
     await user.click(await screen.findByRole("button", { name: "Reintentar" }));
     expect(await screen.findByRole("article", { name: "Experiencia de Lucía M." })).toBeInTheDocument();
+  });
+
+  describe("reporting (#156)", () => {
+    async function report(user: ReturnType<typeof userEvent.setup>, button: HTMLElement) {
+      await user.click(button);
+      const dialog = screen.getByRole("dialog", { name: /denunciar/i });
+      await user.click(within(dialog).getByRole("radio", { name: "Contenido sexual" }));
+      await user.click(within(dialog).getByRole("button", { name: "Denunciar" }));
+    }
+
+    it("hides only the reported comment, keeping the experience", async () => {
+      const user = userEvent.setup();
+      reportContent.mockResolvedValue(undefined);
+      getPlanExperiences.mockResolvedValue(page([experience()]));
+      render(<CommunityExperiences planId={7} planTitle="Bodegas" />);
+
+      const card = await screen.findByRole("article", { name: "Experiencia de Lucía M." });
+      await report(
+        user,
+        within(card).getByRole("button", { name: "Denunciar comentario de Lucía M." }),
+      );
+
+      expect(reportContent).toHaveBeenCalledWith({
+        contentType: "experience_comment",
+        contentId: 1,
+        reason: "sexual_content",
+      });
+      expect(await screen.findByText("Gracias, lo vamos a revisar.")).toBeInTheDocument();
+      expect(within(card).queryByText("“Imperdible al atardecer”")).not.toBeInTheDocument();
+      expect(within(card).getAllByTestId("photo")).toHaveLength(2);
+    });
+
+    it("hides a reported photo from the wall and the card", async () => {
+      const user = userEvent.setup();
+      reportContent.mockResolvedValue(undefined);
+      getPlanExperiences.mockResolvedValue(page([experience()]));
+      render(<CommunityExperiences planId={7} planTitle="Bodegas" />);
+
+      const wall = await screen.findByRole("list", { name: "Fotos de la comunidad en Bodegas" });
+      await report(user, within(wall).getByRole("button", { name: "Denunciar foto 2" }));
+
+      expect(reportContent).toHaveBeenCalledWith({
+        contentType: "experience_photo",
+        contentId: 2,
+        reason: "sexual_content",
+      });
+      expect(await screen.findByText("1 experiencia · 1 foto")).toBeInTheDocument();
+      const card = screen.getByRole("article", { name: "Experiencia de Lucía M." });
+      expect(within(card).getAllByTestId("photo")).toHaveLength(1);
+    });
+
+    it("reports a photo from the full-size view", async () => {
+      const user = userEvent.setup();
+      reportContent.mockResolvedValue(undefined);
+      getPlanExperiences.mockResolvedValue(page([experience()]));
+      render(<CommunityExperiences planId={7} planTitle="Bodegas" />);
+
+      const card = await screen.findByRole("article", { name: "Experiencia de Lucía M." });
+      await user.click(within(card).getByRole("button", { name: "Ver foto 1 de 2" }));
+      const lightbox = screen.getByRole("dialog", { name: "Fotos de Lucía M." });
+      await report(user, within(lightbox).getByRole("button", { name: "Denunciar foto 1" }));
+
+      expect(reportContent).toHaveBeenCalledWith(
+        expect.objectContaining({ contentType: "experience_photo", contentId: 1 }),
+      );
+    });
+
+    it("offers no report on the viewer's own experience and photos", async () => {
+      getPlanExperiences.mockResolvedValue(
+        page([experience({ isOwn: true })], {
+          summary: {
+            averageRating: 5,
+            experienceCount: 1,
+            photoCount: 2,
+            photos: [photo(1, true), photo(2, true)],
+          },
+        }),
+      );
+      render(<CommunityExperiences planId={7} planTitle="Bodegas" />);
+
+      await screen.findByRole("article", { name: "Experiencia de Lucía M." });
+      expect(screen.queryByRole("button", { name: /denunciar/i })).not.toBeInTheDocument();
+    });
   });
 });

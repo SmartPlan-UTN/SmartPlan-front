@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 
 import { FEEDBACK_TAG_LABELS, FEEDBACK_TAG_ORDER, ratingLabel } from "@/components/feedback";
 import { AuthenticatedImage, MediaLightbox } from "@/components/media";
+import { ReportButton, useContentReporter, type ReportTarget } from "@/components/reports";
 import { Badge, Button, Icon, Stars, UserAvatar } from "@/components/ui";
 import { getPlanExperiences } from "@/lib/api";
 import type { CommunityExperience, CommunityExperiencesSummary, MediaImage } from "@/types";
@@ -34,13 +35,22 @@ interface Lightbox {
   images: MediaImage[];
   index: number;
   name: string;
+  /** Whether the viewer took this photo, so it cannot be reported. */
+  isOwn: (image: MediaImage) => boolean;
 }
+
+/** How the report dialog names a photo of the community. */
+const PHOTO_REPORT_TITLE = "Denunciar foto";
 
 /**
  * "Experiencias de la comunidad" (#106): what people who actually did the
  * plan shared — stars, highlights, a comment and, above all, their photos,
  * as social proof to decide whether the plan is worth it. Only shared
- * experiences ever reach this section; moderation stays invisible here.
+ * experiences ever reach this section.
+ *
+ * Anyone but its author can report a comment or a photo (#156): it leaves
+ * the view at once, the comment alone or the photo alone, while the rest of
+ * the experience and its score stay.
  */
 export function CommunityExperiences({ planId, planTitle }: CommunityExperiencesProps) {
   const headingId = useId();
@@ -53,6 +63,29 @@ export function CommunityExperiences({ planId, planTitle }: CommunityExperiences
   const [moreError, setMoreError] = useState(false);
   const [retryToken, setRetryToken] = useState(0);
   const [lightbox, setLightbox] = useState<Lightbox | null>(null);
+
+  const hideReported = useCallback(({ contentType, contentId }: ReportTarget) => {
+    if (contentType === "experience_comment") {
+      setItems((current) =>
+        current.map((item) => (item.id === contentId ? { ...item, comment: null } : item)),
+      );
+      return;
+    }
+    const withoutPhoto = <T extends MediaImage>(photos: T[]) =>
+      photos.filter((photo) => photo.id !== contentId);
+    setItems((current) => current.map((item) => ({ ...item, photos: withoutPhoto(item.photos) })));
+    setSummary((current) =>
+      current && current.photos.some((photo) => photo.id === contentId)
+        ? { ...current, photos: withoutPhoto(current.photos), photoCount: current.photoCount - 1 }
+        : current,
+    );
+  }, []);
+  const reporter = useContentReporter(hideReported);
+
+  function reportPhoto(photoId: number) {
+    setLightbox(null);
+    reporter.request({ contentType: "experience_photo", contentId: photoId, title: PHOTO_REPORT_TITLE });
+  }
 
   useEffect(() => {
     let active = true;
@@ -171,7 +204,13 @@ export function CommunityExperiences({ planId, planTitle }: CommunityExperiences
                 type="button"
                 className={styles.photoButton}
                 onClick={() =>
-                  setLightbox({ images: summary.photos, index, name: COMMUNITY_COPY.wallLabel(planTitle) })
+                  setLightbox({
+                    images: summary.photos,
+                    index,
+                    name: COMMUNITY_COPY.wallLabel(planTitle),
+                    isOwn: (image) =>
+                      summary.photos.find((photo) => photo.id === image.id)?.isOwn ?? true,
+                  })
                 }
                 aria-label={COMMUNITY_COPY.viewPhoto(index + 1, summary.photos.length)}
               >
@@ -188,6 +227,14 @@ export function CommunityExperiences({ planId, planTitle }: CommunityExperiences
                   </span>
                 ) : null}
               </button>
+              <span className={styles.photoReport}>
+                <ReportButton
+                  tone="overlay"
+                  isOwn={photo.isOwn}
+                  label={COMMUNITY_COPY.reportPhoto(index + 1)}
+                  onRequest={() => reportPhoto(photo.id)}
+                />
+              </span>
             </li>
           ))}
         </ul>
@@ -203,8 +250,17 @@ export function CommunityExperiences({ planId, planTitle }: CommunityExperiences
                   images: experience.photos,
                   index,
                   name: COMMUNITY_COPY.photosBy(experience.author.alias),
+                  isOwn: () => experience.isOwn,
                 })
               }
+              onReportComment={() =>
+                reporter.request({
+                  contentType: "experience_comment",
+                  contentId: experience.id,
+                  title: "Denunciar comentario",
+                })
+              }
+              onReportPhoto={reportPhoto}
             />
           </li>
         ))}
@@ -230,8 +286,17 @@ export function CommunityExperiences({ planId, planTitle }: CommunityExperiences
           resourceName={lightbox.name}
           onIndexChange={(index) => setLightbox({ ...lightbox, index })}
           onClose={() => setLightbox(null)}
+          renderActions={(image) => (
+            <ReportButton
+              tone="overlay"
+              isOwn={lightbox.isOwn(image)}
+              label={COMMUNITY_COPY.reportPhoto(lightbox.index + 1)}
+              onRequest={() => reportPhoto(image.id)}
+            />
+          )}
         />
       ) : null}
+      {reporter.element}
     </section>
   );
 }
@@ -249,9 +314,13 @@ function aliasHash(alias: string): number {
 function ExperienceCard({
   experience,
   onOpenPhoto,
+  onReportComment,
+  onReportPhoto,
 }: {
   experience: CommunityExperience;
   onOpenPhoto: (index: number) => void;
+  onReportComment: () => void;
+  onReportPhoto: (photoId: number) => void;
 }) {
   // "María José P.": the first name and the last-name initial, whatever
   // comes between them.
@@ -296,7 +365,16 @@ function ExperienceCard({
         </div>
       ) : null}
 
-      {experience.comment ? <p className={styles.cardComment}>“{experience.comment}”</p> : null}
+      {experience.comment ? (
+        <div className={styles.cardCommentRow}>
+          <p className={styles.cardComment}>“{experience.comment}”</p>
+          <ReportButton
+            isOwn={experience.isOwn}
+            label={COMMUNITY_COPY.reportComment(experience.author.alias)}
+            onRequest={onReportComment}
+          />
+        </div>
+      ) : null}
 
       {photos.length > 0 ? (
         <ul className={styles.cardPhotos} aria-label={COMMUNITY_COPY.photosBy(experience.author.alias)}>
@@ -315,6 +393,14 @@ function ExperienceCard({
                   </span>
                 ) : null}
               </button>
+              <span className={styles.photoReport}>
+                <ReportButton
+                  tone="overlay"
+                  isOwn={experience.isOwn}
+                  label={COMMUNITY_COPY.reportPhoto(index + 1)}
+                  onRequest={() => onReportPhoto(photo.id)}
+                />
+              </span>
             </li>
           ))}
         </ul>

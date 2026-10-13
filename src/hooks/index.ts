@@ -59,3 +59,10 @@ export {
   type FeedbackSubmitOutcome,
   type UseFeedbackSubmitResult,
 } from "./useFeedbackSubmit";
+export {
+  useReportContent,
+  REPORT_THANKS,
+  type ReportOutcome,
+  type UseReportContentResult,
+} from "./useReportContent";
+export { useToast, type UseToastResult } from "./useToast";

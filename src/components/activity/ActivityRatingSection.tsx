@@ -70,14 +70,14 @@ async function findEligiblePlanId(activityId: number): Promise<number | null> {
   }
 }
 
+/**
+ * The only trace moderation leaves for the author (#156): a rating an
+ * administrator removed after a report. One under review shows nothing.
+ */
 function moderationNote(rating: OwnRating): string | null {
-  if (rating.moderationStatus === "pending") {
-    return "Tu comentario está en revisión y todavía no es público.";
-  }
-  if (rating.moderationStatus === "rejected") {
-    return "Tu comentario no fue aprobado y no es público.";
-  }
-  return null;
+  return rating.removed
+    ? "Un administrador eliminó tu valoración por una denuncia: ya no se muestra a otros usuarios."
+    : null;
 }
 
 /**

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Pagination } from "@/components/explore";
 import { MediaGallery } from "@/components/media";
+import { ReportButton, useContentReporter, type ReportTarget } from "@/components/reports";
 import { Icon, LoadingDots, Stars } from "@/components/ui";
 import { listRatings } from "@/lib/api";
 import { formatRelativeTime } from "@/lib/utils";
@@ -56,13 +57,23 @@ type LoadStatus = "loading" | "loaded" | "error";
  * promedio": `SmartPlan-back` is the only source of truth for the
  * average, so a refresh here just re-fetches rather than adjusting the
  * count/average client-side.
+ *
+ * Every rating but the viewer's own can be reported (#156). A reported one
+ * leaves the list at once and the page is fetched again, since it no
+ * longer counts towards the average either.
  */
 export function RatingsList({ activityId, refreshToken, onSummaryChange }: RatingsListProps) {
   const [status, setStatus] = useState<LoadStatus>("loading");
   const [ratings, setRatings] = useState<PublicRating[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [reloadKey, setReloadKey] = useState(0);
   const lastRefreshToken = useRef(refreshToken);
+  const hideReported = useCallback(({ contentId }: ReportTarget) => {
+    setRatings((current) => current.filter((rating) => rating.id !== contentId));
+    setReloadKey((key) => key + 1);
+  }, []);
+  const reporter = useContentReporter(hideReported);
 
   useEffect(() => {
     let ignore = false;
@@ -101,61 +112,83 @@ export function RatingsList({ activityId, refreshToken, onSummaryChange }: Ratin
       ignore = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `onSummaryChange` excluded: `ActivityDetailView` passes a fresh closure each render, and it isn't part of "what to fetch".
-  }, [activityId, page, refreshToken]);
+  }, [activityId, page, refreshToken, reloadKey]);
 
-  if (status === "loading" && ratings.length === 0) {
-    return (
-      <div className={styles.reviewsEmptyState}>
-        <LoadingDots label="Cargando reseñas..." />
-      </div>
-    );
-  }
-
-  if (status === "error") {
-    return (
-      <div className={styles.reviewsEmptyState} role="alert">
-        <Icon name="triangle-alert" size={32} className={styles.errorIcon} />
-        <p className="sp-body">No pudimos cargar las reseñas. Intentá de nuevo.</p>
-      </div>
-    );
-  }
-
-  if (ratings.length === 0) {
-    return (
-      <div className={styles.reviewsEmptyState}>
-        <Icon name="message-circle" size={32} className={styles.stateIcon} />
-        <p className="sp-body">Todavía no hay reseñas para mostrar en detalle.</p>
-      </div>
-    );
-  }
-
+  // The report dialog and its thanks outlive every state below: reporting
+  // the last rating of a page empties the list while it is fetched again.
   return (
-    <div className={styles.section}>
-      <p className={styles.sectionLabel}>reseñas de smartplan</p>
-
-      {ratings.map((rating) => (
-        <div className={styles.reviewCard} key={rating.id}>
-          <div className={styles.reviewHeader}>
-            <span className={styles.reviewAvatar} aria-hidden="true">
-              {rating.authorAlias[0]?.toUpperCase()}
-            </span>
-            <div className={styles.reviewIdentity}>
-              <p className={styles.reviewAuthor}>{rating.authorAlias}</p>
-              <p className={styles.reviewDate}>{formatRelativeTime(rating.createdAt)}</p>
-            </div>
-            <Stars rating={rating.score} size={11} />
-          </div>
-          {rating.comment ? <p className={styles.reviewText}>{rating.comment}</p> : null}
-          <MediaGallery target="rating" resourceId={rating.id} resourceName={`valoración de ${rating.authorAlias}`} variant="strip" />
-        </div>
-      ))}
-
-      <Pagination
-        page={page}
-        totalPages={totalPages}
-        onPageChange={setPage}
-        disabled={status === "loading"}
-      />
-    </div>
+    <>
+      {renderBody()}
+      {reporter.element}
+    </>
   );
+
+  function renderBody() {
+    if (status === "loading" && ratings.length === 0) {
+      return (
+        <div className={styles.reviewsEmptyState}>
+          <LoadingDots label="Cargando reseñas..." />
+        </div>
+      );
+    }
+
+    if (status === "error") {
+      return (
+        <div className={styles.reviewsEmptyState} role="alert">
+          <Icon name="triangle-alert" size={32} className={styles.errorIcon} />
+          <p className="sp-body">No pudimos cargar las reseñas. Intentá de nuevo.</p>
+        </div>
+      );
+    }
+
+    if (ratings.length === 0) {
+      return (
+        <div className={styles.reviewsEmptyState}>
+          <Icon name="message-circle" size={32} className={styles.stateIcon} />
+          <p className="sp-body">Todavía no hay reseñas para mostrar en detalle.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className={styles.section}>
+        <p className={styles.sectionLabel}>reseñas de smartplan</p>
+
+        {ratings.map((rating) => (
+          <div className={styles.reviewCard} key={rating.id}>
+            <div className={styles.reviewHeader}>
+              <span className={styles.reviewAvatar} aria-hidden="true">
+                {rating.authorAlias[0]?.toUpperCase()}
+              </span>
+              <div className={styles.reviewIdentity}>
+                <p className={styles.reviewAuthor}>{rating.authorAlias}</p>
+                <p className={styles.reviewDate}>{formatRelativeTime(rating.createdAt)}</p>
+              </div>
+              <Stars rating={rating.score} size={11} />
+              <ReportButton
+                isOwn={rating.isOwn}
+                label={`Denunciar valoración de ${rating.authorAlias}`}
+                onRequest={() =>
+                  reporter.request({
+                    contentType: "rating",
+                    contentId: rating.id,
+                    title: "Denunciar valoración",
+                  })
+                }
+              />
+            </div>
+            {rating.comment ? <p className={styles.reviewText}>{rating.comment}</p> : null}
+            <MediaGallery target="rating" resourceId={rating.id} resourceName={`valoración de ${rating.authorAlias}`} variant="strip" />
+          </div>
+        ))}
+
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          disabled={status === "loading"}
+        />
+      </div>
+    );
+  }
 }

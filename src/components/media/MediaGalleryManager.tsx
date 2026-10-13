@@ -298,7 +298,7 @@ export function MediaGalleryManager({
               ) : null}
 
               {image.communityHidden ? (
-                <span className={styles.hiddenBadge} title="La moderación la quitó de la comunidad. Sigue guardada en tu salida.">
+                <span className={styles.hiddenBadge} title="Un administrador la eliminó de la comunidad por una denuncia. Sigue guardada en tu salida.">
                   <Icon name="eye-off" size={11} aria-hidden="true" />
                   No visible en la comunidad
                 </span>

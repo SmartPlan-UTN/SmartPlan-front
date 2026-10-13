@@ -81,8 +81,8 @@ function ownRating(overrides: Partial<OwnRating> = {}): OwnRating {
     updatedAt: "2026-08-25T12:00:00.000Z",
     activityId: 42,
     planId: 10,
-    moderationStatus: "approved",
-    moderationReason: null,
+    isOwn: true,
+    removed: false,
     ...overrides,
   };
 }
@@ -154,7 +154,7 @@ describe("ActivityRatingSection", () => {
     expect(screen.queryByText("Dejá tu valoración")).not.toBeInTheDocument();
   });
 
-  it("shows a moderation note for a pending comment", async () => {
+  it("tells the author an administrator removed their rating (#156)", async () => {
     vi.mocked(refreshSession).mockResolvedValue({
       accessToken: "t",
       tokenType: "Bearer",
@@ -169,12 +169,12 @@ describe("ActivityRatingSection", () => {
       },
     });
     vi.mocked(getOwnRating).mockResolvedValueOnce(
-      ownRating({ moderationStatus: "pending" }),
+      ownRating({ removed: true }),
     );
     renderSection();
 
     expect(
-      await screen.findByText("Tu comentario está en revisión y todavía no es público."),
+      await screen.findByText(/un administrador eliminó tu valoración por una denuncia/i),
     ).toBeInTheDocument();
   });
 
