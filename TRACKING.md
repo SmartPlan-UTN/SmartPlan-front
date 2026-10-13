@@ -347,7 +347,7 @@ Things that have been spotted but don't have an owner yet:
 
 ## Log
 
-- 2026-10-13 — In progress on `fix/continuous-generation-wait`, based on the current `develop`, PR pending. CU17/CU19: accepted requests retain their pending/processing screen while polling, including requests older than the display threshold and transient connection/408/429/5xx status errors. No new POST or user click is required to receive a result. Preserve the existing submission-delay notice, terminal errors, and generation guards against stale responses and duplicate submissions. Validation: lint, 924 unit tests, and production build passed.
+- 2026-10-13 — In review on `fix/continuous-generation-wait`, based on the current `develop`, [PR #183](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/183) targeting `develop`. CU17/CU19: accepted requests retain their pending/processing screen while polling, including requests older than the display threshold and transient connection/408/429/5xx status errors. No new POST or user click is required to receive a result. Preserve the existing submission-delay notice, terminal errors, and generation guards against stale responses and duplicate submissions. Validation: lint, 924 unit tests, and production build passed.
 
 2026-10-12 — `fix/163-password-dot` implements #163 / back #111 in an isolated worktree from `origin/develop`. Verification and PR links are recorded in the ticket table above. Staging data and concurrent photo work are untouched.
 
