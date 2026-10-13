@@ -103,7 +103,7 @@ export const FEEDBACK_COPY = {
       "Compartila para que otras personas vean cómo te fue. No se muestra lo que gastaste.",
     error: "No pudimos cambiarlo. Intentá de nuevo.",
     commentHidden:
-      "Tu comentario no se muestra en la comunidad porque no cumple las normas de convivencia.",
+      "Un administrador eliminó tu comentario de la comunidad por una denuncia: no cumple las normas de convivencia.",
   },
   experience: {
     heading: "Tu experiencia",
@@ -137,8 +137,6 @@ export const ACTIVITY_RATINGS_COPY = {
   done: {
     title: "¡Gracias por valorar!",
     body: "Tus valoraciones ayudan a otras personas a elegir.",
-    rejectedBody:
-      "Guardamos tus valoraciones, pero algún comentario no pasó la moderación y no se va a publicar. Podés editarlo desde la actividad.",
     photosTitle: "¿Tenés fotos de alguna actividad?",
     photosBody: "Es opcional. Se ven junto a tu valoración, en la página de cada actividad.",
     finish: "Listo",

@@ -99,12 +99,12 @@ describe("ExperienceSharing (#106)", () => {
   });
 });
 
-describe("ExperienceSummary moderation trace (#106)", () => {
-  it("tells the author only when their comment was taken down", () => {
+describe("ExperienceSummary moderation trace (#156)", () => {
+  it("tells the author only when an administrator removed their comment", () => {
     const { rerender } = render(
       <ExperienceSummary feedback={feedback({ shared: true })} estimatedTotalCost={1000} />,
     );
-    expect(screen.queryByText(/no se muestra en la comunidad/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/eliminó tu comentario de la comunidad/)).not.toBeInTheDocument();
 
     rerender(
       <ExperienceSummary
@@ -112,6 +112,6 @@ describe("ExperienceSummary moderation trace (#106)", () => {
         estimatedTotalCost={1000}
       />,
     );
-    expect(screen.getByText(/no se muestra en la comunidad/)).toBeInTheDocument();
+    expect(screen.getByText(/eliminó tu comentario de la comunidad/)).toBeInTheDocument();
   });
 });

@@ -58,7 +58,6 @@ export interface FeedbackDialogProps {
 const SUCCESS_HOLD_MS = 1600;
 /** How long the thanks shows on its own before the photos step. */
 const PHOTOS_DELAY_MS = 1100;
-const NOTICE_HOLD_MS = 4200;
 const EXIT_MS = 240;
 const MAX_ACTUAL_COST = 99_999_999.99;
 const MAX_COST_INPUT_LENGTH = 16;
@@ -353,7 +352,7 @@ export function FeedbackDialog({
     setPhase("ratingsDone");
     // With ratings to attach photos to, the person closes it when done.
     if (result.ratings.length === 0) {
-      holdThenClose(result.rejectedComments > 0 ? NOTICE_HOLD_MS : SUCCESS_HOLD_MS);
+      holdThenClose(SUCCESS_HOLD_MS);
     }
   }
 
@@ -402,9 +401,7 @@ export function FeedbackDialog({
                 {ACTIVITY_RATINGS_COPY.done.title}
               </p>
               <p className={styles.successBody}>
-                {ratingsResult && ratingsResult.rejectedComments > 0
-                  ? ACTIVITY_RATINGS_COPY.done.rejectedBody
-                  : ACTIVITY_RATINGS_COPY.done.body}
+                {ACTIVITY_RATINGS_COPY.done.body}
               </p>
             </div>
             {ratingsResult && ratingsResult.ratings.length > 0 ? (

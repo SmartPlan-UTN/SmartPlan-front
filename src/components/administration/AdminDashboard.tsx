@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Badge, Button, Icon, type IconName } from "@/components/ui";
 import { useSession } from "@/lib/auth";
-import { getDashboardMetrics } from "@/lib/api";
+import { downloadDashboardMetrics, getDashboardMetrics } from "@/lib/api";
 import { formatRelativeTime } from "@/lib/utils";
 import type {
   AuditAction,
@@ -85,6 +85,7 @@ const ACTION_LABELS: Record<AuditAction, string> = {
   delete: "eliminado",
   start_session: "inició sesión",
   end_session: "cerró sesión",
+  export: "descargó el reporte de métricas",
 };
 
 const integerFormatter = new Intl.NumberFormat("es-AR");
@@ -98,15 +99,18 @@ function greeting(now: Date): string {
 
 function entryTitle(entry: DashboardRecentEntry): string {
   if (entry.label) return entry.label;
-  const entityLabel = ENTITY_LABELS[entry.affectedEntity] ?? entry.affectedEntity;
+  const entityLabel =
+    ENTITY_LABELS[entry.affectedEntity] ?? entry.affectedEntity;
   return `${entityLabel} #${entry.affectedEntityId}`;
 }
 
 function entryMeta(entry: DashboardRecentEntry): string {
+  if (entry.action === "export") return "Reporte de métricas descargado";
   if (entry.action === "start_session") return "Inicio de sesión";
   if (entry.action === "end_session") return "Cierre de sesión";
 
-  const entityLabel = ENTITY_LABELS[entry.affectedEntity] ?? entry.affectedEntity;
+  const entityLabel =
+    ENTITY_LABELS[entry.affectedEntity] ?? entry.affectedEntity;
   return `${entityLabel} ${ACTION_LABELS[entry.action]}`;
 }
 
@@ -171,10 +175,7 @@ function KpiCard({
       style={topBorder ? { borderTop: `3px solid ${accent}` } : undefined}
     >
       <div className={styles.kpiTop}>
-        <span
-          className={styles.kpiIcon}
-          style={{ background: `${accent}18` }}
-        >
+        <span className={styles.kpiIcon} style={{ background: `${accent}18` }}>
           <Icon name={icon} size={20} color={accent} />
         </span>
         {note ? (
@@ -204,6 +205,44 @@ export function AdminDashboard() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [status, setStatus] = useState<LoadStatus>("loading");
   const [reloadSequence, setReloadSequence] = useState(0);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState(false);
+  const downloadInFlight = useRef(false);
+  const canDownload = user?.permissions.includes("metric.view") ?? false;
+
+  useEffect(() => {
+    if (!downloadError) return;
+    const timer = window.setTimeout(() => setDownloadError(false), 6000);
+    return () => window.clearTimeout(timer);
+  }, [downloadError]);
+
+  async function downloadReport() {
+    if (!canDownload || downloadInFlight.current) return;
+    downloadInFlight.current = true;
+    setDownloading(true);
+    setDownloadError(false);
+    const selectedRange = range;
+    try {
+      const { blob, filename } = await downloadDashboardMetrics(selectedRange);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      try {
+        link.href = url;
+        link.download = filename;
+        document.body.append(link);
+        link.click();
+      } finally {
+        link.remove();
+        // Give the browser a task to start reading the file before revoking it.
+        window.setTimeout(() => URL.revokeObjectURL(url), 0);
+      }
+    } catch (_error) {
+      setDownloadError(true);
+    } finally {
+      downloadInFlight.current = false;
+      setDownloading(false);
+    }
+  }
 
   useEffect(() => {
     let ignore = false;
@@ -253,7 +292,10 @@ export function AdminDashboard() {
 
   if (!metrics) return null;
 
-  const moodMax = Math.max(1, ...metrics.distributions.moods.map((m) => m.count));
+  const moodMax = Math.max(
+    1,
+    ...metrics.distributions.moods.map((m) => m.count),
+  );
   const groupMax = Math.max(
     1,
     ...metrics.distributions.groupSizes.map((g) => g.count),
@@ -276,24 +318,59 @@ export function AdminDashboard() {
           </p>
         </div>
 
-        <div
-          className={styles.rangeGroup}
-          role="group"
-          aria-label="Rango de fechas"
-        >
-          {RANGE_OPTIONS.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              className={`${styles.rangeBtn} ${range === option.id ? styles.rangeBtnActive : ""}`}
-              aria-pressed={range === option.id}
-              onClick={() => setRange(option.id)}
+        <div className={styles.headerActions}>
+          <div
+            className={styles.rangeGroup}
+            role="group"
+            aria-label="Rango de fechas"
+          >
+            {RANGE_OPTIONS.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                className={`${styles.rangeBtn} ${range === option.id ? styles.rangeBtnActive : ""}`}
+                aria-pressed={range === option.id}
+                onClick={() => setRange(option.id)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          {canDownload ? (
+            <Button
+              variant="ghostLight"
+              size="sm"
+              disabled={downloading}
+              aria-busy={downloading}
+              onClick={() => {
+                void downloadReport();
+              }}
             >
-              {option.label}
-            </button>
-          ))}
+              <Icon
+                name={downloading ? "loader-circle" : "download"}
+                size={16}
+                className={downloading ? "sp-spin" : undefined}
+              />
+              {downloading ? "Descargando…" : "Descargar reporte"}
+            </Button>
+          ) : null}
         </div>
       </header>
+
+      {downloadError ? (
+        <div className={styles.downloadToast} role="alert">
+          <Icon name="triangle-alert" size={18} />
+          <span>No pudimos generar el reporte. Probá de nuevo.</span>
+          <Button
+            variant="ghostLight"
+            size="sm"
+            aria-label="Cerrar aviso"
+            onClick={() => setDownloadError(false)}
+          >
+            <Icon name="x" size={16} />
+          </Button>
+        </div>
+      ) : null}
 
       <p className={`sp-label ${styles.sectionLabel}`}>Estado general</p>
       <div className={styles.kpiGrid}>
@@ -316,12 +393,12 @@ export function AdminDashboard() {
           label="Actividades en Catálogo"
         />
         <KpiCard
-          icon="star"
+          icon="flag"
           accent="#C98A00"
-          value={integerFormatter.format(metrics.kpis.pendingRatings)}
-          label="Valoraciones Pendientes"
+          value={integerFormatter.format(metrics.kpis.openReports)}
+          label="Denuncias Abiertas"
           note={
-            metrics.kpis.pendingRatings > 0
+            metrics.kpis.openReports > 0
               ? { text: "Requiere atención", tone: "warning" }
               : { text: "Al día", tone: "neutral" }
           }
@@ -373,11 +450,15 @@ export function AdminDashboard() {
                 label={entry.name}
                 entry={entry}
                 max={moodMax}
-                color={DISTRIBUTION_PALETTE[index % DISTRIBUTION_PALETTE.length]}
+                color={
+                  DISTRIBUTION_PALETTE[index % DISTRIBUTION_PALETTE.length]
+                }
               />
             ))
           ) : (
-            <p className={styles.emptyRow}>Sin planes generados en el período.</p>
+            <p className={styles.emptyRow}>
+              Sin planes generados en el período.
+            </p>
           )}
         </div>
 
@@ -415,7 +496,9 @@ export function AdminDashboard() {
                       flex: entry.percentage || 0.001,
                       background:
                         GROUP_SIZE_COLORS[entry.key] ??
-                        DISTRIBUTION_PALETTE[index % DISTRIBUTION_PALETTE.length],
+                        DISTRIBUTION_PALETTE[
+                          index % DISTRIBUTION_PALETTE.length
+                        ],
                     }}
                     title={`${GROUP_SIZE_LABELS[entry.key]?.name ?? entry.name} ${entry.percentage}%`}
                   />
@@ -423,13 +506,18 @@ export function AdminDashboard() {
               </div>
             </>
           ) : (
-            <p className={styles.emptyRow}>Sin planes generados en el período.</p>
+            <p className={styles.emptyRow}>
+              Sin planes generados en el período.
+            </p>
           )}
         </div>
 
         <div className={styles.panel}>
           <div className={styles.panelHeader}>
-            <span className={styles.panelIcon} style={{ background: "var(--gold-22)" }}>
+            <span
+              className={styles.panelIcon}
+              style={{ background: "var(--gold-22)" }}
+            >
               <Icon name="trophy" size={18} color="var(--rating-ink)" />
             </span>
             <div>
@@ -459,7 +547,9 @@ export function AdminDashboard() {
                 </div>
               ))
           ) : (
-            <p className={styles.emptyRow}>Sin actividades registradas en el período.</p>
+            <p className={styles.emptyRow}>
+              Sin actividades registradas en el período.
+            </p>
           )}
         </div>
       </div>
