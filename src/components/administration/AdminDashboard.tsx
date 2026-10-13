@@ -393,12 +393,12 @@ export function AdminDashboard() {
           label="Actividades en Catálogo"
         />
         <KpiCard
-          icon="star"
+          icon="flag"
           accent="#C98A00"
-          value={integerFormatter.format(metrics.kpis.pendingRatings)}
-          label="Valoraciones Pendientes"
+          value={integerFormatter.format(metrics.kpis.openReports)}
+          label="Denuncias Abiertas"
           note={
-            metrics.kpis.pendingRatings > 0
+            metrics.kpis.openReports > 0
               ? { text: "Requiere atención", tone: "warning" }
               : { text: "Al día", tone: "neutral" }
           }

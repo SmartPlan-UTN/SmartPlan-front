@@ -16,18 +16,8 @@ import type {
   AdminPlansResult,
   AdminPlan,
   UpdateAdminPlanInput,
-  AdminRatingCounts,
-  AdminRatingsQuery,
-  AdminRatingsResult,
-  AdminRating,
-  ModerateRatingInput,
-  AdminExperience,
-  AdminExperienceCounts,
-  AdminExperiencesQuery,
-  AdminExperiencesResult,
-  ModerateExperienceContentInput,
-} from "@/types";
-import { apiClient } from "./client";
+} from '@/types';
+import { apiClient } from './client';
 
 /** Loads the REP-01 dashboard metrics for the selected range (CU58). */
 export async function getDashboardMetrics(
@@ -158,91 +148,6 @@ export async function updateAdminPlan(
 
 export async function deleteAdminPlan(id: number): Promise<void> {
   return apiClient.delete<void>(`/admin/plans/${id}`);
-}
-
-/** Lists ratings awaiting or past moderation for PAN 20 (CU55). */
-export async function listAdminRatings(
-  params: AdminRatingsQuery = {},
-): Promise<AdminRatingsResult> {
-  return apiClient.get<AdminRatingsResult>("/admin/ratings", { params });
-}
-
-/**
- * Approves or rejects one rating (CU55). A rejection carries the reason the
- * backend requires; the input type makes sending one without it impossible.
- * Answers with the moderated row, already in its new state.
- */
-export async function moderateAdminRating(
-  id: number,
-  input: ModerateRatingInput,
-): Promise<AdminRating> {
-  return apiClient.patch<AdminRating>(`/admin/ratings/${id}/moderation`, input);
-}
-
-/**
- * Counts the ratings in each moderation state, for PAN 20's tab badges.
- *
- * There's no counters endpoint, so this reads `pagination.total` from three
- * one-row listings — the same way `getAdminUserMetrics` builds REP-02's
- * header out of the listing contract. `limit: 1` because only the total is
- * wanted; the rows themselves are thrown away.
- */
-export async function getAdminRatingCounts(): Promise<AdminRatingCounts> {
-  const [pending, approved, rejected] = await Promise.all([
-    listAdminRatings({ status: "pending", page: 1, limit: 1 }),
-    listAdminRatings({ status: "approved", page: 1, limit: 1 }),
-    listAdminRatings({ status: "rejected", page: 1, limit: 1 }),
-  ]);
-
-  return {
-    pending: pending.pagination.total,
-    approved: approved.pagination.total,
-    rejected: rejected.pagination.total,
-  };
-}
-
-/** Lists shared experiences in a moderation queue (#106). */
-export async function listAdminExperiences(
-  params: AdminExperiencesQuery = {},
-): Promise<AdminExperiencesResult> {
-  return apiClient.get<AdminExperiencesResult>("/admin/experiences", {
-    params,
-  });
-}
-
-/** Keeps or takes down an experience's comment; answers the updated row (#106). */
-export async function moderateAdminExperienceComment(
-  id: number,
-  input: ModerateExperienceContentInput,
-): Promise<AdminExperience> {
-  return apiClient.patch<AdminExperience>(
-    `/admin/experiences/${id}/comment`,
-    input,
-  );
-}
-
-/** Keeps or takes down one of an experience's photos (#106). */
-export async function moderateAdminExperiencePhoto(
-  id: number,
-  imageId: number,
-  input: ModerateExperienceContentInput,
-): Promise<AdminExperience> {
-  return apiClient.patch<AdminExperience>(
-    `/admin/experiences/${id}/photos/${imageId}`,
-    input,
-  );
-}
-
-/** Tab badges for the experiences queues, read from one-row listings. */
-export async function getAdminExperienceCounts(): Promise<AdminExperienceCounts> {
-  const [unreviewed, rejected] = await Promise.all([
-    listAdminExperiences({ status: "unreviewed", page: 1, limit: 1 }),
-    listAdminExperiences({ status: "rejected", page: 1, limit: 1 }),
-  ]);
-  return {
-    unreviewed: unreviewed.pagination.total,
-    rejected: rejected.pagination.total,
-  };
 }
 
 /**

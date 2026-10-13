@@ -70,14 +70,14 @@ async function findEligiblePlanId(activityId: number): Promise<number | null> {
   }
 }
 
+/**
+ * The only trace moderation leaves for the author (#156): a rating an
+ * administrator removed after a report. One under review shows nothing.
+ */
 function moderationNote(rating: OwnRating): string | null {
-  if (rating.moderationStatus === "pending") {
-    return "Tu comentario está en revisión y todavía no es público.";
-  }
-  if (rating.moderationStatus === "rejected") {
-    return "Tu comentario no fue aprobado y no es público.";
-  }
-  return null;
+  return rating.removed
+    ? "Un administrador eliminó tu valoración por una denuncia: ya no se muestra a otros usuarios."
+    : null;
 }
 
 /**
@@ -235,14 +235,18 @@ export function ActivityRatingSection({ activityId, onChange }: ActivityRatingSe
         <div className={styles.ownRatingHeader}>
           <p className={styles.ratingFormTitle}>Tu valoración</p>
           <div className={styles.ownRatingActions}>
-            <button
-              type="button"
-              className={styles.iconButton}
-              onClick={() => setEditing(true)}
-              aria-label="Editar tu valoración"
-            >
-              <Icon name="pencil" size={15} />
-            </button>
+            {/* A removed rating stays removed whatever its author changes,
+                so editing it or adding photos would go nowhere. */}
+            {ownRating.removed ? null : (
+              <button
+                type="button"
+                className={styles.iconButton}
+                onClick={() => setEditing(true)}
+                aria-label="Editar tu valoración"
+              >
+                <Icon name="pencil" size={15} />
+              </button>
+            )}
             <button
               type="button"
               className={`${styles.iconButton} ${styles.iconButtonDanger}`}
@@ -261,7 +265,9 @@ export function ActivityRatingSection({ activityId, onChange }: ActivityRatingSe
           <p className={`sp-body ${styles.ownRatingComment}`}>{ownRating.comment}</p>
         ) : null}
         {note ? <p className={styles.ratingModerationNote}>{note}</p> : null}
-        <MediaGalleryManager target="rating" resourceId={ownRating.id} resourceName="tu valoración" onChanged={onChange} variant="compact" />
+        {ownRating.removed ? null : (
+          <MediaGalleryManager target="rating" resourceId={ownRating.id} resourceName="tu valoración" onChanged={onChange} variant="compact" />
+        )}
 
         {confirmingDelete ? (
           <ConfirmationDialog

@@ -53,7 +53,7 @@ function metrics(overrides: Partial<DashboardMetrics> = {}): DashboardMetrics {
       totalUsers: 2847,
       activePlans: 58,
       catalogActivities: 124,
-      pendingRatings: 4,
+      openReports: 4,
     },
     acceptanceRate: 73,
     averageRating: 4.8,

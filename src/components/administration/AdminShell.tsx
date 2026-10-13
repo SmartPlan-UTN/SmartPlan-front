@@ -16,8 +16,7 @@ const ADMIN_LINKS: Array<{ href: Route; label: string; icon: IconName }> = [
   { href: ROUTES.adminPlaces, label: "Lugares", icon: "map-pin" },
   { href: ROUTES.adminPlans, label: "Planes", icon: "map" },
   { href: ROUTES.adminUsers, label: "Usuarios", icon: "users" },
-  { href: ROUTES.adminRatings, label: "Valoraciones", icon: "star" },
-  { href: ROUTES.adminExperiences, label: "Experiencias", icon: "camera" },
+  { href: ROUTES.adminReports, label: "Denuncias", icon: "flag" },
 ];
 
 export interface AdminShellProps {
