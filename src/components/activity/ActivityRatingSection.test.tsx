@@ -176,6 +176,9 @@ describe("ActivityRatingSection", () => {
     expect(
       await screen.findByText(/un administrador eliminó tu valoración por una denuncia/i),
     ).toBeInTheDocument();
+    // Editing would not bring it back, so only deleting it is offered.
+    expect(screen.queryByRole("button", { name: "Editar tu valoración" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Eliminar tu valoración" })).toBeInTheDocument();
   });
 
   it("explains why rating isn't available when there's no eligible completed plan", async () => {

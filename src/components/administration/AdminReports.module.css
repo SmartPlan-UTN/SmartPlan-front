@@ -314,6 +314,18 @@
 }
 
 @media (max-width: 720px) {
+  /* Four tabs don't fit a phone in one row: a 2x2 grid keeps every
+     count in sight instead of hiding the last tabs behind a scroll. */
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-self: stretch;
+  }
+
+  .tab {
+    justify-content: center;
+  }
+
   .card {
     flex-direction: column;
   }

@@ -330,6 +330,7 @@ export function AdminReportsView() {
         <ConfirmationDialog
           title={keeping.content ? "Dejar publicado" : "Cerrar denuncias"}
           confirmLabel={keeping.content ? "Dejar" : "Cerrar"}
+          confirmVariant="primary"
           confirmingLabel="Guardando..."
           isConfirming={saving}
           error={actionError}

@@ -23,7 +23,9 @@ export const COMMUNITY_COPY = {
   cardLabel: (author: string) => `Experiencia de ${author}`,
   photosBy: (author: string) => `Fotos de ${author}`,
   viewPhoto: (position: number, total: number) => `Ver foto ${position} de ${total}`,
-  reportPhoto: (position: number) => `Denunciar foto ${position}`,
+  /** Names whose photo it is, so the flags of the wall and every card differ. */
+  reportPhoto: (position: number, owner: string) => `Denunciar foto ${position} de ${owner}`,
+  wallOwner: "la comunidad",
   reportComment: (author: string) => `Denunciar comentario de ${author}`,
   doneIn: (month: string) => `Lo hizo en ${month}`,
   loadMore: "Ver más experiencias",

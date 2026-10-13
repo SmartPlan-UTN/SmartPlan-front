@@ -35,6 +35,8 @@ interface Lightbox {
   images: MediaImage[];
   index: number;
   name: string;
+  /** Whose photos they are, for the report flag's name. */
+  owner: string;
   /** Whether the viewer took this photo, so it cannot be reported. */
   isOwn: (image: MediaImage) => boolean;
 }
@@ -208,6 +210,7 @@ export function CommunityExperiences({ planId, planTitle }: CommunityExperiences
                     images: summary.photos,
                     index,
                     name: COMMUNITY_COPY.wallLabel(planTitle),
+                    owner: COMMUNITY_COPY.wallOwner,
                     isOwn: (image) =>
                       summary.photos.find((photo) => photo.id === image.id)?.isOwn ?? true,
                   })
@@ -231,7 +234,7 @@ export function CommunityExperiences({ planId, planTitle }: CommunityExperiences
                 <ReportButton
                   tone="overlay"
                   isOwn={photo.isOwn}
-                  label={COMMUNITY_COPY.reportPhoto(index + 1)}
+                  label={COMMUNITY_COPY.reportPhoto(index + 1, COMMUNITY_COPY.wallOwner)}
                   onRequest={() => reportPhoto(photo.id)}
                 />
               </span>
@@ -250,6 +253,7 @@ export function CommunityExperiences({ planId, planTitle }: CommunityExperiences
                   images: experience.photos,
                   index,
                   name: COMMUNITY_COPY.photosBy(experience.author.alias),
+                  owner: experience.author.alias,
                   isOwn: () => experience.isOwn,
                 })
               }
@@ -290,7 +294,7 @@ export function CommunityExperiences({ planId, planTitle }: CommunityExperiences
             <ReportButton
               tone="overlay"
               isOwn={lightbox.isOwn(image)}
-              label={COMMUNITY_COPY.reportPhoto(lightbox.index + 1)}
+              label={COMMUNITY_COPY.reportPhoto(lightbox.index + 1, lightbox.owner)}
               onRequest={() => reportPhoto(image.id)}
             />
           )}
@@ -397,7 +401,7 @@ function ExperienceCard({
                 <ReportButton
                   tone="overlay"
                   isOwn={experience.isOwn}
-                  label={COMMUNITY_COPY.reportPhoto(index + 1)}
+                  label={COMMUNITY_COPY.reportPhoto(index + 1, experience.author.alias)}
                   onRequest={() => onReportPhoto(photo.id)}
                 />
               </span>

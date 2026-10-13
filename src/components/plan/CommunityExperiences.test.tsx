@@ -216,7 +216,7 @@ describe("CommunityExperiences (#106)", () => {
       render(<CommunityExperiences planId={7} planTitle="Bodegas" />);
 
       const wall = await screen.findByRole("list", { name: "Fotos de la comunidad en Bodegas" });
-      await report(user, within(wall).getByRole("button", { name: "Denunciar foto 2" }));
+      await report(user, within(wall).getByRole("button", { name: "Denunciar foto 2 de la comunidad" }));
 
       expect(reportContent).toHaveBeenCalledWith({
         contentType: "experience_photo",
@@ -237,7 +237,7 @@ describe("CommunityExperiences (#106)", () => {
       const card = await screen.findByRole("article", { name: "Experiencia de Lucía M." });
       await user.click(within(card).getByRole("button", { name: "Ver foto 1 de 2" }));
       const lightbox = screen.getByRole("dialog", { name: "Fotos de Lucía M." });
-      await report(user, within(lightbox).getByRole("button", { name: "Denunciar foto 1" }));
+      await report(user, within(lightbox).getByRole("button", { name: "Denunciar foto 1 de Lucía M." }));
 
       expect(reportContent).toHaveBeenCalledWith(
         expect.objectContaining({ contentType: "experience_photo", contentId: 1 }),

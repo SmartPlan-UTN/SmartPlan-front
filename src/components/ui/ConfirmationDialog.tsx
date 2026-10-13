@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
-import { Button } from "./Button";
+import { Button, type ButtonVariant } from "./Button";
 import { Icon } from "./Icon";
 
 import styles from "./confirmation-dialog.module.css";
@@ -20,6 +20,11 @@ export interface ConfirmationDialogProps {
    */
   hideCancel?: boolean;
   confirmLabel: string;
+  /**
+   * `danger` by default. A confirmation that changes nothing for the worse
+   * (keeping reported content published, say) passes `primary`.
+   */
+  confirmVariant?: ButtonVariant;
   confirmingLabel?: string;
   isConfirming?: boolean;
   error?: string | null;
@@ -45,6 +50,7 @@ export function ConfirmationDialog({
   cancelLabel = "Cancelar",
   hideCancel = false,
   confirmLabel,
+  confirmVariant = "danger",
   confirmingLabel = "Procesando...",
   isConfirming = false,
   error,
@@ -144,7 +150,7 @@ export function ConfirmationDialog({
           )}
           <Button
             ref={confirmRef}
-            variant="danger"
+            variant={confirmVariant}
             onClick={onConfirm}
             disabled={isConfirming}
           >
