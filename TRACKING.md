@@ -428,7 +428,7 @@ Things that have been spotted but don't have an owner yet:
 
 ## 2026-10-12 — Generation waiting experience (#146)
 
-- **In progress** · branch `fix/146-generation-wait` · PR: not opened. CU17/CU19.
+- **In review** · branch `fix/146-generation-wait` · PR: [#175](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/175) targeting `develop`. CU17/CU19.
 - Always show indeterminate activity and only the current backend-confirmed stage; remove elapsed/stage/estimated timing from the visible wait.
 - At 15 s, offer keep-waiting/back while polling the same request. Connection failures preserve that request; `GENERATION_TIMEOUT` shows a terminal error. Stale POST/poll responses are ignored after navigation or replacement.
 - Validation: 873 frontend tests, lint and production build passed. Playwright desktop/mobile checks use simulated responses (no provider calls), including a 390 px viewport, animated progress, no horizontal overflow and the terminal timeout message.
