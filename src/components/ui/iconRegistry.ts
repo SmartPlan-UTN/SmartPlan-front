@@ -24,6 +24,7 @@ import {
   Clock,
   Coffee,
   Drama,
+  Download,
   Dumbbell,
   ExternalLink,
   Ellipsis,
@@ -132,6 +133,7 @@ export const iconRegistry = {
   "circle-help": CircleHelp,
   clock: Clock,
   coffee: Coffee,
+  download: Download,
   drama: Drama,
   dumbbell: Dumbbell,
   ellipsis: Ellipsis,
@@ -151,6 +153,7 @@ export const iconRegistry = {
   info: Info,
   "layout-dashboard": LayoutDashboard,
   list: List,
+
   "loader-circle": LoaderCircle,
   "locate-fixed": LocateFixed,
   lock: Lock,

@@ -215,6 +215,7 @@ Verification: `pnpm lint`, `pnpm test --maxWorkers=1` (862 passed), `pnpm build`
 | CU56 | Delete content | — | `Not started` | | |
 | CU57 | Manage users | PAN 19 | `In review` | `SMART-62-cu58-panel-de-control` | #99 |
 | CU58 | View system metrics | REP-01 | `In review` | `SMART-62-cu58-panel-de-control` | #99 |
+| #174 / CU58 | Download the complete dashboard CSV report | REP-01 | `In review` | `SMART-174-download-dashboard-report` | [#176](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/176) |
 | CU59 | Review user suggestion | — | `Not started` | | |
 | CU60 | Manage plans | PAN 22 | `In review` | `SMART-59-63-cu53-cu60-admin-management` | #109 |
 | CU61 | Manage permissions | — | `Not started` | | |
@@ -223,6 +224,9 @@ Verification: `pnpm lint`, `pnpm test --maxWorkers=1` (862 passed), `pnpm build`
 ---
 
 ## Decisions
+
+2026-10-12 — CU58 downloads a Blob through apiClient.request to preserve session handling and Content-Disposition. The clicked range is captured while period navigation remains available; an immediate ref blocks duplicate downloads. The report includes the complete visible dashboard.
+
 
 2026-10-12 — Accept dot in shared validation and checklist across registration, recovery and change (CU2/CU3/CU6). Issue #163 was closed without this change in develop.
 
@@ -428,4 +432,9 @@ Things that have been spotted but don't have an owner yet:
 
 2026-10-12 — `fix/103-generation-preferences` implements back #103 / front #20/#30 in an isolated worktree from `origin/develop`. Verification and PR links are recorded in the ticket table above. Staging data and concurrent photo work are untouched.
 
+2026-10-12 — Issue #174 (CU58), branch `SMART-174-download-dashboard-report`: added permission-gated report download beside the period selector, spinner, duplicate-request guard, server/fallback filenames, browser resource cleanup and a dismissible six-second error toast. Added the export audit label. Validation: pnpm lint, pnpm test --maxWorkers=2 (124 files, 893 tests passed), pnpm build. Per user request, manual responsive/dark-theme and end-to-end download checks remain with the user. Review at /admin with metric.view; requires companion SmartPlan-back#120 and its migration. ROADMAP.md is absent locally and at the documented develop URL; no sprint or estimate was invented. [#176](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/176).
+Companion backend PR: https://github.com/SmartPlan-UTN/SmartPlan-back/pull/122.
+
 | 2026-10-13 | PR #177 (`feature/156-moderacion-por-denuncias`), review fixes for #156: keep reported ratings hidden across list refreshes for the current viewer and activity, recover the last valid page after a report shrinks the list, and retain pagination when all ratings on a page are locally hidden. Added regression coverage for successful and duplicate reports, summary preservation, pagination recovery, and account changes. Lint, build, and all 17 rating-list tests passed; the catalog-suggestions test passed in isolation after an intermittent failure in the full run. |
+
+2026-10-13 — PR #176 readiness review (CU58): integrated current `develop`, resolving API/test and tracking conflicts while retaining the report download and the new report-based moderation flow. Removed obsolete moderation API imports, functions and tests as required by `develop`; preserved both tracking entries. Validation: pnpm lint, pnpm test --maxWorkers=2, pnpm build and git diff --check. Paired backend PR #122 now exports the current open-report KPI and passes its 14 administration HTTP tests. Manual responsive/dark-theme and spreadsheet acceptance and required GitHub approvals remain pending.
