@@ -215,7 +215,7 @@ Verification: `pnpm lint`, `pnpm test --maxWorkers=1` (862 passed), `pnpm build`
 | CU56 | Delete content | — | `Not started` | | |
 | CU57 | Manage users | PAN 19 | `In review` | `SMART-62-cu58-panel-de-control` | #99 |
 | CU58 | View system metrics | REP-01 | `In review` | `SMART-62-cu58-panel-de-control` | #99 |
-| #174 / CU58 | Download the complete dashboard CSV report | REP-01 | `In review` | `SMART-174-download-dashboard-report` | PR pending |
+| #174 / CU58 | Download the complete dashboard CSV report | REP-01 | `In review` | `SMART-174-download-dashboard-report` | [#176](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/176) |
 | CU59 | Review user suggestion | — | `Not started` | | |
 | CU60 | Manage plans | PAN 22 | `In review` | `SMART-59-63-cu53-cu60-admin-management` | #109 |
 | CU61 | Manage permissions | — | `Not started` | | |
@@ -430,4 +430,5 @@ Things that have been spotted but don't have an owner yet:
 
 2026-10-12 — `fix/103-generation-preferences` implements back #103 / front #20/#30 in an isolated worktree from `origin/develop`. Verification and PR links are recorded in the ticket table above. Staging data and concurrent photo work are untouched.
 
-2026-10-12 — Issue #174 (CU58), branch `SMART-174-download-dashboard-report`: added permission-gated report download beside the period selector, spinner, duplicate-request guard, server/fallback filenames, browser resource cleanup and a dismissible six-second error toast. Added the export audit label. Validation: pnpm lint, pnpm test --maxWorkers=2 (124 files, 893 tests passed), pnpm build. Per user request, manual responsive/dark-theme and end-to-end download checks remain with the user. Review at /admin with metric.view; requires companion SmartPlan-back#120 and its migration. ROADMAP.md is absent locally and at the documented develop URL; no sprint or estimate was invented. PR pending.
+2026-10-12 — Issue #174 (CU58), branch `SMART-174-download-dashboard-report`: added permission-gated report download beside the period selector, spinner, duplicate-request guard, server/fallback filenames, browser resource cleanup and a dismissible six-second error toast. Added the export audit label. Validation: pnpm lint, pnpm test --maxWorkers=2 (124 files, 893 tests passed), pnpm build. Per user request, manual responsive/dark-theme and end-to-end download checks remain with the user. Review at /admin with metric.view; requires companion SmartPlan-back#120 and its migration. ROADMAP.md is absent locally and at the documented develop URL; no sprint or estimate was invented. [#176](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/176).
+Companion backend PR: https://github.com/SmartPlan-UTN/SmartPlan-back/pull/122.
