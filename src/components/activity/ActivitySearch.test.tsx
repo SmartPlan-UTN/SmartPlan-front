@@ -248,6 +248,7 @@ describe("exploration filter continuity (CU10/CU16)", () => {
     searchActivities.mockReset();
     searchActivities.mockResolvedValue(page([makeActivity()], { page: 3, totalPages: 4 }));
     listCategories.mockResolvedValue({ data: [], pagination: { total: 0 } });
+    listDepartments.mockResolvedValue({ data: [{ id: 2, name: "Godoy Cruz" }] });
     const initialState = readExplorationState({
       search: "vino & cena", categoryIds: "2,4", minPrice: "0", maxPrice: "20000",
       minRating: "4", cityId: "1", departmentId: "2", sortBy: "price", direction: "desc", page: "3",
@@ -320,6 +321,52 @@ describe("exploration filter continuity (CU10/CU16)", () => {
       );
     });
     expect(screen.getByLabelText("Localidad")).toBeDisabled();
+  });
+
+  it("keeps a restored locality only while its province offers it (#181)", async () => {
+    searchActivities.mockResolvedValue(page([makeActivity()]));
+    listDepartments.mockResolvedValue({ data: [{ id: 10, name: "Godoy Cruz" }] });
+    const { unmount } = render(
+      <ActivitySearch initialState={readExplorationState({ cityId: "1", departmentId: "10" })} />,
+    );
+    await vi.waitFor(() => {
+      expect(screen.getByLabelText("Localidad")).toHaveTextContent("Godoy Cruz");
+    });
+    expect(searchActivities).toHaveBeenLastCalledWith(
+      expect.objectContaining({ cityId: 1, departmentId: 10 }),
+    );
+    unmount();
+
+    // A locality from another province can't be shown, so it can't filter.
+    searchActivities.mockClear();
+    render(
+      <ActivitySearch initialState={readExplorationState({ cityId: "1", departmentId: "99" })} />,
+    );
+    await vi.waitFor(() => {
+      expect(searchActivities).toHaveBeenLastCalledWith(
+        expect.objectContaining({ cityId: 1, departmentId: undefined }),
+      );
+    });
+    expect(screen.getByLabelText("Localidad")).toHaveTextContent("Cualquier localidad");
+    expect(screen.getByLabelText("Localidad")).toBeEnabled();
+  });
+
+  it("drops a restored locality it can't show when the lookup fails (#181)", async () => {
+    searchActivities.mockResolvedValue(page([makeActivity()]));
+    listDepartments.mockRejectedValue(new Error("boom"));
+    render(
+      <ActivitySearch initialState={readExplorationState({ cityId: "1", departmentId: "10" })} />,
+    );
+
+    expect(
+      await screen.findByText("No pudimos cargar las localidades.", { exact: false }),
+    ).toBeInTheDocument();
+    await vi.waitFor(() => {
+      expect(searchActivities).toHaveBeenLastCalledWith(
+        expect.objectContaining({ cityId: 1, departmentId: undefined }),
+      );
+    });
+    expect(screen.getByLabelText("Localidad")).toHaveTextContent("Cualquier localidad");
   });
 
   it("reports a failed localities lookup and retries it on demand", async () => {

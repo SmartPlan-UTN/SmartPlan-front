@@ -121,10 +121,22 @@ export function ActivitySearch({
       setDepartmentsError(false);
       try {
         const result = await listDepartments(selectedCityId);
-        if (active) setDepartments(result.data);
+        if (active) {
+          setDepartments(result.data);
+          // A locality restored from the URL that this province doesn't
+          // offer would keep filtering with no option to show or clear it.
+          setDepartmentId((current) =>
+            current !== null && !result.data.some((department) => department.id === current)
+              ? null
+              : current,
+          );
+        }
       } catch {
         if (active) {
           setDepartments([]);
+          // Same reason: without the list, "Localidad" can't show which one
+          // is applied, so the results shouldn't stay filtered by it.
+          setDepartmentId(null);
           setDepartmentsError(true);
         }
       } finally {

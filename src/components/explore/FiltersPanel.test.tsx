@@ -145,9 +145,61 @@ describe("FiltersPanel", () => {
     rerender(<FiltersPanel {...props({ location: { ...location, departmentsError: true } })} />);
     expect(screen.getByLabelText("Localidad")).toBeDisabled();
     expect(screen.getByRole("alert")).toHaveTextContent("No pudimos cargar las localidades.");
+    expect(screen.getByLabelText("Localidad")).toHaveAccessibleDescription(
+      /No pudimos cargar las localidades\./,
+    );
 
     await user.click(screen.getByRole("button", { name: "Reintentar" }));
     expect(onRetryDepartments).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the keyboard focus through a retry and hands it to Localidad once it loads", async () => {
+    const user = userEvent.setup();
+    const location = {
+      cities: [{ id: 1, name: "Mendoza" }],
+      cityId: 1,
+      onCityIdChange: vi.fn(),
+      departments: [],
+      departmentId: null,
+      onDepartmentIdChange: vi.fn(),
+      onRetryDepartments: vi.fn(),
+    };
+    const { rerender } = render(
+      <FiltersPanel {...props({ location: { ...location, departmentsError: true } })} />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Reintentar" }));
+    rerender(<FiltersPanel {...props({ location: { ...location, departmentsLoading: true } })} />);
+    expect(document.activeElement).toHaveTextContent("Cargando localidades...");
+
+    rerender(
+      <FiltersPanel
+        {...props({ location: { ...location, departments: [{ id: 7, name: "Godoy Cruz" }] } })}
+      />,
+    );
+    expect(screen.getByLabelText("Localidad")).toHaveFocus();
+  });
+
+  it("returns the focus to Reintentar when the retry fails again", async () => {
+    const user = userEvent.setup();
+    const location = {
+      cities: [{ id: 1, name: "Mendoza" }],
+      cityId: 1,
+      onCityIdChange: vi.fn(),
+      departments: [],
+      departmentId: null,
+      onDepartmentIdChange: vi.fn(),
+      onRetryDepartments: vi.fn(),
+    };
+    const { rerender } = render(
+      <FiltersPanel {...props({ location: { ...location, departmentsError: true } })} />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Reintentar" }));
+    rerender(<FiltersPanel {...props({ location: { ...location, departmentsLoading: true } })} />);
+    rerender(<FiltersPanel {...props({ location: { ...location, departmentsError: true } })} />);
+
+    expect(screen.getByRole("button", { name: "Reintentar" })).toHaveFocus();
   });
 
   it("leaves out the location section when there is nothing to locate (plans)", () => {

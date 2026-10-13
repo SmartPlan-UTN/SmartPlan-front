@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import { Select } from "@/components/ui";
 import { categoryLabel } from "@/lib/utils";
@@ -114,6 +114,23 @@ export function FiltersPanel({
   const departmentStatus = location ? departmentFilterStatus(location) : "ready";
   const departmentHintId = `${ratingName}-department-hint`;
   const departmentHint = DEPARTMENT_HINTS[departmentStatus];
+  const departmentFieldRef = useRef<HTMLDivElement>(null);
+  const departmentHintRef = useRef<HTMLParagraphElement>(null);
+  const retryDepartmentsRef = useRef<HTMLButtonElement>(null);
+  const retryFocusPending = useRef(false);
+
+  // After "Reintentar", hand the focus on to what's usable next: the
+  // localities once they load, or the button again if it failed. An empty
+  // province leaves it on the hint that says so.
+  useEffect(() => {
+    if (!retryFocusPending.current || departmentStatus === "loading") return;
+    retryFocusPending.current = false;
+    if (departmentStatus === "ready") {
+      departmentFieldRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    } else if (departmentStatus === "error") {
+      retryDepartmentsRef.current?.focus();
+    }
+  }, [departmentStatus]);
 
   const visibleCategories = showAllCategories
     ? categories
@@ -152,7 +169,7 @@ export function FiltersPanel({
               aria-labelledby={`${ratingName}-city`}
             />
           </div>
-          <div className={styles.field}>
+          <div ref={departmentFieldRef} className={styles.field}>
             <span id={`${ratingName}-department`} className={styles.fieldLabel}>
               Localidad
             </span>
@@ -175,24 +192,41 @@ export function FiltersPanel({
               ]}
               disabled={departmentStatus !== "ready"}
               aria-labelledby={`${ratingName}-department`}
-              aria-describedby={departmentHint ? departmentHintId : undefined}
+              aria-describedby={departmentStatus === "ready" ? undefined : departmentHintId}
             />
-            {departmentStatus === "error" ? (
-              <p id={departmentHintId} role="alert" className={styles.filterError}>
-                No pudimos cargar las localidades.{" "}
-                <button
-                  type="button"
-                  className={styles.sidebarLink}
-                  onClick={location.onRetryDepartments}
-                >
-                  Reintentar
-                </button>
-              </p>
-            ) : (
-              <p id={departmentHintId} aria-live="polite" className={styles.filterHint}>
-                {departmentHint}
-              </p>
-            )}
+            {/* One `<p>` for every status, so it's the same node from the
+                error through the retry: focus parked on it isn't lost. */}
+            <p
+              ref={departmentHintRef}
+              id={departmentHintId}
+              tabIndex={-1}
+              {...(departmentStatus === "error"
+                ? { role: "alert" }
+                : { "aria-live": "polite" as const })}
+              className={departmentStatus === "error" ? styles.filterError : styles.filterHint}
+            >
+              {departmentStatus === "error" ? (
+                <>
+                  No pudimos cargar las localidades.{" "}
+                  <button
+                    ref={retryDepartmentsRef}
+                    type="button"
+                    className={styles.sidebarLink}
+                    onClick={() => {
+                      // The button unmounts while the retry loads: keep the
+                      // keyboard focus on the hint instead of the page body.
+                      departmentHintRef.current?.focus();
+                      retryFocusPending.current = true;
+                      location.onRetryDepartments?.();
+                    }}
+                  >
+                    Reintentar
+                  </button>
+                </>
+              ) : (
+                departmentHint
+              )}
+            </p>
           </div>
         </section>
       ) : null}
