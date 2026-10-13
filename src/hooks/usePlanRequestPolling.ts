@@ -133,7 +133,7 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
       setFailure({ code: status.failureCode ?? null, message: GENERIC_ERROR });
     }
     if (status.statusKey !== 'failed') setFailure(null);
-    setPhase(delayedRef.current && ['pending', 'processing'].includes(status.statusKey) ? 'timedOut' : phaseForStatus(status));
+    setPhase(phaseForStatus(status));
   }, []);
 
   const startPolling = useCallback((id: number, startedAt = Date.now(), noticeDismissed = false) => {
@@ -144,19 +144,10 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
     activeRequestId.current = id;
     pollStartedAt.current = startedAt;
 
-    if (!noticeDismissed) displayTimeoutRef.current = setTimeout(() => {
-      if (generation.current !== epoch || activeRequestId.current !== id) return;
-      delayedRef.current = true;
-      setPhase('timedOut');
-    }, Math.max(0, DISPLAY_TIMEOUT_MS - (Date.now() - startedAt)));
-
-    let firstPoll = true;
     const poll = async () => {
       try {
         const status = await getPlanRequestStatus(id);
         if (generation.current !== epoch || activeRequestId.current !== id) return;
-        if (firstPoll && !delayNoticeDismissedRef.current && Date.now() - new Date(status.requestedAt).getTime() >= DISPLAY_TIMEOUT_MS) delayedRef.current = true;
-        firstPoll = false;
         applyStatus(status);
 
         if (status.statusKey === 'generated' || status.statusKey === 'failed') {
@@ -175,8 +166,6 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
           setPhase('failed');
           return;
         }
-        setFailure({ code: 'STATUS_UNAVAILABLE', message: 'No podemos consultar el estado de tu pedido.' });
-        setPhase('timedOut');
         pollTimeoutRef.current = setTimeout(() => void poll(), 3_500);
       }
     };

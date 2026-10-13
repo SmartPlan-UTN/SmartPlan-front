@@ -185,7 +185,7 @@ describe("usePlanRequestPolling", () => {
     expect(getPlanRequestStatus).not.toHaveBeenCalled();
   });
 
-  it("on display timeout, keeps the same planRequestId and never issues a new POST; keepWaiting resumes polling the same request", async () => {
+  it("keeps polling beyond 90 seconds and receives the result without a new POST or user intervention", async () => {
     createPlanRequest.mockResolvedValue(accepted());
     getPlanRequestStatus.mockResolvedValue(status({ statusKey: "processing" }));
 
@@ -198,10 +198,10 @@ describe("usePlanRequestPolling", () => {
     expect(requestId).toBe(42);
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(15000);
+      await vi.advanceTimersByTimeAsync(90000);
     });
 
-    expect(result.current.phase).toBe("timedOut");
+    expect(result.current.phase).toBe("processing");
     expect(result.current.planRequestId).toBe(requestId);
     expect(createPlanRequest).toHaveBeenCalledTimes(1);
 
@@ -213,8 +213,7 @@ describe("usePlanRequestPolling", () => {
     );
 
     await act(async () => {
-      result.current.keepWaiting();
-      await vi.advanceTimersByTimeAsync(2200);
+      await vi.advanceTimersByTimeAsync(3500);
     });
 
     expect(createPlanRequest).toHaveBeenCalledTimes(1);
@@ -419,13 +418,13 @@ describe("generation polling races", () => {
     expect(getPlanRequestStatus).not.toHaveBeenCalled();
   });
 
-  it("keeps polling after the delay notice and accepts a terminal result without a click", async () => {
+  it("keeps polling without a delay notice and accepts a terminal result without a click", async () => {
     createPlanRequest.mockResolvedValue(accepted());
     getPlanRequestStatus.mockResolvedValue(status());
     const { result } = renderHook(() => usePlanRequestPolling());
     await act(async () => result.current.submit({ query: "coffee" }));
     await act(async () => vi.advanceTimersByTimeAsync(15000));
-    expect(result.current.phase).toBe("timedOut");
+    expect(result.current.phase).toBe("pending");
     getPlanRequestStatus.mockResolvedValue(status({ statusKey: "failed", failureCode: "GENERATION_TIMEOUT" }));
     await act(async () => vi.advanceTimersByTimeAsync(2500));
     expect(result.current.failure?.code).toBe("GENERATION_TIMEOUT");
@@ -449,13 +448,13 @@ describe("generation polling races", () => {
     getPlanRequestStatus.mockResolvedValue(status({ statusKey: "processing" }));
     const { result } = renderHook(() => usePlanRequestPolling(42));
     await act(async () => {});
-    expect(result.current.failure?.code).toBe("STATUS_UNAVAILABLE");
+    expect(result.current.failure).toBeNull();
     await act(async () => vi.advanceTimersByTimeAsync(3500));
     expect(result.current.phase).toBe("processing");
     expect(result.current.failure).toBeNull();
     expect(createPlanRequest).not.toHaveBeenCalled();
     await act(async () => vi.advanceTimersByTimeAsync(11500));
-    expect(result.current.phase).toBe("timedOut");
+    expect(result.current.phase).toBe("processing");
   });
 
   it("recovers a connection before the delay threshold without showing a delay notice", async () => {
@@ -463,7 +462,7 @@ describe("generation polling races", () => {
     getPlanRequestStatus.mockResolvedValue(status({ statusKey: "pending" }));
     const { result } = renderHook(() => usePlanRequestPolling(42));
     await act(async () => {});
-    expect(result.current.phase).toBe("timedOut");
+    expect(result.current.phase).toBe("pending");
     await act(async () => vi.advanceTimersByTimeAsync(3500));
     expect(result.current.phase).toBe("pending");
     expect(result.current.failure).toBeNull();
@@ -474,8 +473,8 @@ describe("generation polling races", () => {
     getPlanRequestStatus.mockRejectedValue(new Error("offline"));
     const { result } = renderHook(() => usePlanRequestPolling());
     await act(async () => result.current.submit({ query: "coffee" }));
-    expect(result.current.phase).toBe("timedOut");
-    expect(result.current.failure?.code).toBe("STATUS_UNAVAILABLE");
+    expect(result.current.phase).toBe("pending");
+    expect(result.current.failure).toBeNull();
     getPlanRequestStatus.mockResolvedValue(status({ statusKey: "generated", plans: [] }));
     await act(async () => vi.advanceTimersByTimeAsync(3500));
     expect(result.current.phase).toBe("generated");
