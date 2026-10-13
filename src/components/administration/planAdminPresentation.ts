@@ -1,7 +1,7 @@
 import type { AdminPlan, PlanKind, PlanStatusKey, PlanVisibility } from "@/types";
 
 /**
- * How PAN 19 (Administración de Planes) explains a plan (#160): its
+ * How PAN 22 (Administración de Planes) explains a plan (#160): its
  * operational status, where it comes from, and whether Explorar shows it.
  *
  * Status and visibility are independent on purpose. A plan's status tracks
