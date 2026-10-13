@@ -11,7 +11,7 @@ import {
   EXPLORE_HIDDEN_REASON,
   PLAN_STATUS_COPY,
   PLAN_STATUS_OPTIONS,
-  exploreHiddenCause,
+  exploreHiddenCauseAfter,
   planKindCopy,
   planStatusCopy,
   planVisibilityLabel,
@@ -160,8 +160,8 @@ const STATUS_DOES_NOT_PUBLISH = "Cambiar el estado no lo publica: la visibilidad
 function PlanVisibilityNote({ plan, status }: { plan: AdminPlan; status: PlanStatusKey }) {
   const kind = planKindCopy(plan.kind);
   const visibility = planVisibilityLabel(plan.visibility);
-  const before = exploreHiddenCause(plan.kind, plan.visibility, plan.status.key);
-  const after = exploreHiddenCause(plan.kind, plan.visibility, status);
+  const before = plan.exploreHiddenCause;
+  const after = exploreHiddenCauseAfter(plan, status);
   if (!kind || !visibility || before === undefined || after === undefined) return null;
 
   let presence: string;

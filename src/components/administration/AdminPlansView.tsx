@@ -17,7 +17,6 @@ import {
   PLAN_STATUS_COPY,
   PLAN_STATUS_OPTIONS,
   PLAN_VISIBILITY_OPTIONS,
-  exploreHiddenCause,
   planKindCopy,
   planStatusCopy,
   planVisibilityLabel,
@@ -170,7 +169,7 @@ function PlanStatusCell({ status }: { status: AdminPlan["status"] }) {
 function PlanVisibilityCell({ plan }: { plan: AdminPlan }) {
   const kind = planKindCopy(plan.kind);
   const visibility = planVisibilityLabel(plan.visibility);
-  const hiddenCause = exploreHiddenCause(plan.kind, plan.visibility, plan.status.key);
+  const hiddenCause = plan.exploreHiddenCause;
   if (!kind || !visibility || hiddenCause === undefined) {
     return <span className={styles.secondary}>Sin datos de origen</span>;
   }

@@ -184,6 +184,9 @@ export interface AdminActivityInput {
 export type UpdateAdminActivityInput = Partial<AdminActivityInput>;
 export type AdminActivitiesResult = PaginatedResult<AdminActivity>;
 
+/** Why Explorar leaves a plan out. Matches `ExploreHiddenCause` in SmartPlan-back. */
+export type ExploreHiddenCause = 'generated' | 'outing' | 'private' | 'cancelled';
+
 /** Plan projection used by PAN 22 (CU60). */
 export interface AdminPlan {
   id: number;
@@ -199,6 +202,10 @@ export interface AdminPlan {
    */
   kind?: PlanKind;
   visibility?: PlanVisibility;
+  /** Whether Explorar > Planes lists it right now, as SmartPlan-back decides. */
+  listedInExplore?: boolean;
+  /** Why Explorar leaves it out; `null` when listed. */
+  exploreHiddenCause?: ExploreHiddenCause | null;
   owner: { id: number; name: string; lastName: string; email: string };
   status: { key: PlanStatusKey; name: string };
   createdAt: string;
@@ -210,6 +217,10 @@ export interface AdminPlansQuery {
   status?: PlanStatusKey;
   kind?: PlanKind;
   visibility?: PlanVisibility;
+  /** Whether Explorar > Planes lists it right now, as SmartPlan-back decides. */
+  listedInExplore?: boolean;
+  /** Why Explorar leaves it out; `null` when listed. */
+  exploreHiddenCause?: ExploreHiddenCause | null;
   page?: number;
   limit?: number;
   sortBy?: 'createdAt' | 'title' | 'status' | 'cost';

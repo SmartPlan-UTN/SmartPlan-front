@@ -1,5 +1,11 @@
 import { VISIBILITY_COPY } from "@/components/plan/visibilityContent";
-import type { AdminPlan, PlanKind, PlanStatusKey, PlanVisibility } from "@/types";
+import type {
+  AdminPlan,
+  ExploreHiddenCause,
+  PlanKind,
+  PlanStatusKey,
+  PlanVisibility,
+} from "@/types";
 
 /**
  * How PAN 22 (Administración de Planes) explains a plan (#160): its
@@ -7,9 +13,10 @@ import type { AdminPlan, PlanKind, PlanStatusKey, PlanVisibility } from "@/types
  *
  * Status and visibility are independent on purpose. A plan's status tracks
  * what happened to it (generated → completed); its visibility is the author's
- * decision to publish it. Explorar lists only `authored` + `public` plans
- * that aren't `cancelled` — the same rule `createSearchBuilder` applies in
- * `SmartPlan-back` — so a `completed` plan alone never makes it public.
+ * decision to publish it, so a `completed` plan alone never makes it public.
+ * Whether Explorar lists a plan comes from `SmartPlan-back`
+ * (`listedInExplore`, `exploreHiddenCause`), which derives it from the same
+ * rule its search filters with; this module only puts it into words.
  */
 
 interface Copy {
@@ -88,9 +95,6 @@ export function planVisibilityLabel(visibility: AdminPlan["visibility"]): string
   return visibility ? (VISIBILITY_COPY.label as Partial<Record<string, string>>)[visibility] ?? null : null;
 }
 
-/** Why Explorar hides a plan; `null` reason means it's listed. */
-export type ExploreHiddenCause = "generated" | "outing" | "private" | "cancelled";
-
 export const EXPLORE_HIDDEN_REASON: Record<ExploreHiddenCause, string> = {
   generated: "Los resultados generados no se publican.",
   outing: "Las salidas son personales.",
@@ -99,19 +103,19 @@ export const EXPLORE_HIDDEN_REASON: Record<ExploreHiddenCause, string> = {
 };
 
 /**
- * Whether Explorar > Planes lists a plan with this origin, visibility and
- * status: `null` when it does, the cause when it doesn't, or `undefined`
- * when the back didn't send `kind`/`visibility` and we can't tell.
+ * Why Explorar would leave the plan out once saved with `nextStatus`, from
+ * what the back says about it today: `null` when listed, `undefined` when
+ * the back didn't say. Cancelling is the only status change that moves a
+ * plan in or out — the back reports `cancelled` only for a plan that would
+ * otherwise be listed.
  */
-export function exploreHiddenCause(
-  kind: AdminPlan["kind"],
-  visibility: AdminPlan["visibility"],
-  statusKey: string,
+export function exploreHiddenCauseAfter(
+  plan: Pick<AdminPlan, "exploreHiddenCause" | "status">,
+  nextStatus: string,
 ): ExploreHiddenCause | null | undefined {
-  if (!kind || !visibility) return undefined;
-  if (kind === "generated") return "generated";
-  if (kind === "outing") return "outing";
-  if (visibility === "private") return "private";
-  if (statusKey === "cancelled") return "cancelled";
-  return null;
+  const current = plan.exploreHiddenCause;
+  if (current === undefined || nextStatus === plan.status.key) return current;
+  if (current === null && nextStatus === "cancelled") return "cancelled";
+  if (current === "cancelled" && nextStatus !== "cancelled") return null;
+  return current;
 }

@@ -25,6 +25,8 @@ function plan(overrides: Partial<AdminPlan> = {}): AdminPlan {
     activityCount: 3,
     kind: "authored",
     visibility: "private",
+    listedInExplore: false,
+    exploreHiddenCause: "private",
     owner: { id: 8, name: "Ana", lastName: "Pérez", email: "ana@example.com" },
     status: { key: "confirmed", name: "Confirmado" },
     createdAt: "2026-08-30T10:00:00.000Z",
@@ -100,8 +102,8 @@ describe("AdminPlansView", () => {
 
   it("shows statuses in Spanish and explains why a plan is not in Explorar (#160)", async () => {
     vi.mocked(listAdminPlans).mockResolvedValue(result([
-      plan({ status: { key: "completed", name: "Completed" }, kind: "outing" }),
-      plan({ id: 13, title: "Ruta del vino", status: { key: "completed", name: "Completed" }, visibility: "public" }),
+      plan({ status: { key: "completed", name: "Completed" }, kind: "outing", exploreHiddenCause: "outing" }),
+      plan({ id: 13, title: "Ruta del vino", status: { key: "completed", name: "Completed" }, visibility: "public", listedInExplore: true, exploreHiddenCause: null }),
     ]));
     render(<AdminPlansView />);
 
@@ -142,7 +144,7 @@ describe("AdminPlansView", () => {
   });
 
   it("warns that cancelling a public plan removes it from Explorar (#160)", async () => {
-    vi.mocked(listAdminPlans).mockResolvedValue(result([plan({ visibility: "public" })]));
+    vi.mocked(listAdminPlans).mockResolvedValue(result([plan({ visibility: "public", listedInExplore: true, exploreHiddenCause: null })]));
     const user = userEvent.setup();
     render(<AdminPlansView />);
     await screen.findByText("Sábado en Mendoza");
@@ -159,6 +161,8 @@ describe("AdminPlansView", () => {
     const legacy = plan({ status: { key: "archived" as AdminPlan["status"]["key"], name: "Archivado" } });
     delete legacy.kind;
     delete legacy.visibility;
+    delete legacy.listedInExplore;
+    delete legacy.exploreHiddenCause;
     vi.mocked(listAdminPlans).mockResolvedValue(result([legacy]));
     const user = userEvent.setup();
     render(<AdminPlansView />);
