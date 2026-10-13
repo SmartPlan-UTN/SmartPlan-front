@@ -433,6 +433,28 @@ Things that have been spotted but don't have an owner yet:
 
 2026-10-12 — `fix/103-generation-preferences` implements back #103 / front #20/#30 in an isolated worktree from `origin/develop`. Verification and PR links are recorded in the ticket table above. Staging data and concurrent photo work are untouched.
 
+## 2026-10-12 — Generation waiting experience (#146)
+
+- **In review** · branch `fix/146-generation-wait` · PR: [#175](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/175) targeting `develop`. CU17/CU19.
+- Always show indeterminate activity and only the current backend-confirmed stage; remove elapsed/stage/estimated timing from the visible wait.
+- At 15 s, offer keep-waiting/back while polling the same request. Connection failures preserve that request; `GENERATION_TIMEOUT` shows a terminal error. Stale POST/poll responses are ignored after navigation or replacement.
+- Validation: 873 frontend tests, lint and production build passed. Playwright desktop/mobile checks use simulated responses (no provider calls), including a 390 px viewport, animated progress, no horizontal overflow and the terminal timeout message.
+- Backend #119 provides the absolute 30 s deadline. Staging validation remains pending by agreement; this task changes local code only.
+
+## 2026-10-13 — Generation waiting review fixes (#146)
+
+- **In review** · `fix/146-generation-wait` · [PR #175](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/175), CU17/CU19.
+- Timeout recovery copy matches the available action: retry when the original submission exists, otherwise return to the search form. Historical result routes do not persist original submissions.
+- HTTP 408/429 and connection errors keep polling the same request; connection recovery before 15 seconds restores the normal waiting state. Delayed queued requests keep their accepted heading.
+- Removed unused generation props and reviewed CSS selectors; added regression coverage for transient status failures and recovery copy. Staging acceptance remains pending.
+- Validation: lint and production build passed; 880 tests passed in both complete runs (31 focused tests also passed). The reported intermittent frontend failure was not reproduced.
+
+## 2026-10-13 — Keep waiting during delayed submission (#146)
+
+- **In review** · `fix/146-generation-wait` · [PR #175](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/175), CU17/CU19.
+- A delayed POST retains the sending heading until the backend accepts it. Keep waiting dismisses the notice without an ID, resending or cancelling; the choice survives acceptance and polling continues on the same request.
+- New submissions clear the previous ID, and surprise regeneration cannot replace an in-flight delayed request. Tests cover automatic/surprise submission, acceptance after dismissal and discarding a delayed response.
+- Validation: lint and production build passed; the final complete run passed 886 tests. One initial run hit the existing intermittent suggestion timeout in the unchanged `CreatePlanForm` test; its focused repeat (62 tests) and the full repeat passed. Staging acceptance remains pending.
 2026-10-12 — Issue #174 (CU58), branch `SMART-174-download-dashboard-report`: added permission-gated report download beside the period selector, spinner, duplicate-request guard, server/fallback filenames, browser resource cleanup and a dismissible six-second error toast. Added the export audit label. Validation: pnpm lint, pnpm test --maxWorkers=2 (124 files, 893 tests passed), pnpm build. Per user request, manual responsive/dark-theme and end-to-end download checks remain with the user. Review at /admin with metric.view; requires companion SmartPlan-back#120 and its migration. ROADMAP.md is absent locally and at the documented develop URL; no sprint or estimate was invented. [#176](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/176).
 Companion backend PR: https://github.com/SmartPlan-UTN/SmartPlan-back/pull/122.
 

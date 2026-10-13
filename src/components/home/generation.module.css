@@ -133,31 +133,13 @@
   transition: color 220ms ease;
 }
 
-.stepDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--hairline);
-  flex-shrink: 0;
-  transition: background 220ms ease, box-shadow 220ms ease;
-}
-
 .stepItem[data-state="past"] {
   color: var(--fg-2);
-}
-
-.stepItem[data-state="past"] .stepDot {
-  background: var(--fg-3);
 }
 
 .stepItem[data-state="current"] {
   color: var(--electric);
   font-weight: var(--w-label);
-}
-
-.stepItem[data-state="current"] .stepDot {
-  background: var(--electric);
-  box-shadow: 0 0 0 4px var(--electric-15);
 }
 
 .generatingLabel {
@@ -287,7 +269,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .stepItem, .stepDot {
+  .stepItem {
     transition: none;
   }
 }
@@ -484,63 +466,7 @@
   font-size: var(--t-small);
 }
 
-.progressSteps {
-  display: grid;
-  gap: var(--s-2);
-  margin: var(--s-4) 0 var(--s-3);
-  padding: 0;
-  list-style: none;
-}
-
-.progressStep {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  min-height: 24px;
-  color: var(--fg-3);
-  font-size: var(--t-small);
-}
-
-.progressStep[data-active="true"] {
-  color: var(--fg-1);
-  font-weight: var(--w-label);
-}
-
-.progressStep[data-confirmed="true"] {
-  color: var(--fg-2);
-}
-
-.stepMark {
-  display: grid;
-  width: 18px;
-  height: 18px;
-  flex: 0 0 18px;
-  place-items: center;
-  border: 1px solid var(--hairline);
-  border-radius: 50%;
-  color: var(--ember);
-}
-
-.progressStep[data-active="true"] .stepMark {
-  border-color: var(--ember);
-  box-shadow: 0 0 0 4px var(--ember-15);
-}
-
-.progressStep[data-confirmed="true"] .stepMark {
-  border-color: var(--ember-20);
-  background: var(--ember-15);
-}
-
-.stepDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--ember);
-  animation: stage-dot 1.7s ease-in-out infinite;
-}
-
 .activeStage,
-.generationTiming,
 .progressPending {
   margin-bottom: var(--s-1);
   color: var(--fg-2);
@@ -549,10 +475,6 @@
 
 .activeStage {
   color: var(--ember);
-}
-
-.generationTiming {
-  font-variant-numeric: tabular-nums;
 }
 
 .generationActions {
@@ -574,8 +496,7 @@
 }
 
 .generationVisual[data-reduced-motion="true"] .mapRoute,
-.generationVisual[data-reduced-motion="true"] .mapPulse,
-.generationVisual[data-reduced-motion="true"] .stepDot {
+.generationVisual[data-reduced-motion="true"] .mapPulse {
   animation: none;
 }
 
@@ -627,9 +548,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .generationMap *,
-  .progressStep,
-  .stepDot {
+  .generationMap * {
     animation: none !important;
     transition: none !important;
   }
@@ -699,50 +618,8 @@
 }
 
 .generationNote,
-.activeStage,
-.generationTiming {
+.activeStage {
   text-align: center;
-}
-
-.progressSteps {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  margin: var(--s-4) auto var(--s-3);
-}
-
-.progressStep {
-  min-height: 40px;
-  padding: 7px 12px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-pill);
-  background: var(--surface);
-  color: var(--fg-2);
-  font-size: var(--t-label);
-}
-
-.progressStep[data-active="true"] {
-  border-color: var(--ember-20);
-  background: color-mix(in srgb, var(--ember) 7%, var(--surface-card));
-  color: var(--fg-1);
-}
-
-.progressStep[data-confirmed="true"] {
-  border-color: var(--ember-20);
-  background: var(--ember-10);
-}
-
-.stepMark {
-  width: 19px;
-  height: 19px;
-  flex-basis: 19px;
-  border: 0;
-  background: var(--surface-card);
-}
-
-.progressStep[data-active="true"] .stepMark {
-  box-shadow: none;
 }
 
 .waitingProgress {
@@ -763,7 +640,6 @@
   animation: wait-sweep 1.7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
-.generationTiming,
 .activeStage {
   margin: var(--s-1) 0 0;
   font-variant-numeric: tabular-nums;
@@ -795,18 +671,6 @@
     padding: var(--s-4);
   }
 
-  .progressSteps {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--s-2);
-  }
-
-  .progressStep {
-    justify-content: flex-start;
-    min-width: 0;
-    padding-inline: var(--s-2);
-  }
-
   .generationActions {
     flex-direction: row;
   }
@@ -817,8 +681,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .indeterminateTrack,
-  .stepDot {
+  .indeterminateTrack {
     animation: none;
   }
 }
