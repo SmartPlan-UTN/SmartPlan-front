@@ -14,6 +14,7 @@ export type AuditAction =
   | 'create'
   | 'update'
   | 'delete'
+  | 'export'
   | 'start_session'
   | 'end_session';
 
