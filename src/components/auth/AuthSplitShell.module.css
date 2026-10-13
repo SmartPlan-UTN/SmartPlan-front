@@ -135,8 +135,10 @@
 }
 
 @media (min-width: 768px) {
+  /* The top padding clears the absolutely positioned back link, so a card
+     pushed up by content under it (login highlights) never overlaps it. */
   .rightPanel {
-    padding: var(--s-7) var(--s-8);
+    padding: 72px var(--s-8) var(--s-7);
   }
 }
 

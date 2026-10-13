@@ -10,13 +10,15 @@ import { ActivitySearch } from "./ActivitySearch";
 
 const searchActivities = vi.hoisted(() => vi.fn());
 const listCategories = vi.hoisted(() => vi.fn());
+const listCities = vi.hoisted(() => vi.fn());
+const listDepartments = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api", async () => {
   const actual =
     await vi.importActual<typeof import("@/lib/api")>("@/lib/api");
   return { ...actual, searchActivities, listCategories,
-    listCities: vi.fn().mockResolvedValue({ data: [] }),
-    listDepartments: vi.fn().mockResolvedValue({ data: [] }),
+    listCities,
+    listDepartments,
   };
 });
 
@@ -53,6 +55,14 @@ function page(
     },
   };
 }
+
+// Top level: the location lookups run in every describe below.
+beforeEach(() => {
+  listCities.mockReset();
+  listCities.mockResolvedValue({ data: [] });
+  listDepartments.mockReset();
+  listDepartments.mockResolvedValue({ data: [] });
+});
 
 describe("ActivitySearch", () => {
   beforeEach(() => {
@@ -238,6 +248,7 @@ describe("exploration filter continuity (CU10/CU16)", () => {
     searchActivities.mockReset();
     searchActivities.mockResolvedValue(page([makeActivity()], { page: 3, totalPages: 4 }));
     listCategories.mockResolvedValue({ data: [], pagination: { total: 0 } });
+    listDepartments.mockResolvedValue({ data: [{ id: 2, name: "Godoy Cruz" }] });
     const initialState = readExplorationState({
       search: "vino & cena", categoryIds: "2,4", minPrice: "0", maxPrice: "20000",
       minRating: "4", cityId: "1", departmentId: "2", sortBy: "price", direction: "desc", page: "3",
@@ -257,6 +268,127 @@ describe("exploration filter continuity (CU10/CU16)", () => {
     expect(searchActivities).toHaveBeenLastCalledWith(expect.objectContaining({ page: 3, categoryIds: [2, 4], search: "vino & cena" }));
     expect(screen.getByLabelText("Mínimo")).toHaveValue(0);
     expect(screen.getByLabelText("Máximo")).toHaveValue(20000);
+  });
+
+  it("loads only the chosen province's localities and drops the locality when the province changes (#181)", async () => {
+    searchActivities.mockResolvedValue(page([makeActivity()]));
+    listCities.mockResolvedValue({
+      data: [
+        { id: 1, name: "Mendoza" },
+        { id: 2, name: "San Juan" },
+      ],
+    });
+    listDepartments.mockImplementation((cityId: number) =>
+      Promise.resolve({
+        data: cityId === 1 ? [{ id: 10, name: "Godoy Cruz" }] : [{ id: 20, name: "Rivadavia" }],
+      }),
+    );
+    const user = userEvent.setup();
+    render(<ActivitySearch />);
+    await screen.findByRole("heading", { name: "Ruta del vino" });
+
+    expect(screen.getByLabelText("Localidad")).toBeDisabled();
+
+    await user.click(screen.getByLabelText("Provincia"));
+    await user.click(await screen.findByRole("option", { name: "Mendoza" }));
+    expect(listDepartments).toHaveBeenLastCalledWith(1);
+    await vi.waitFor(() => {
+      expect(screen.getByLabelText("Localidad")).toBeEnabled();
+    });
+
+    await user.click(screen.getByLabelText("Localidad"));
+    expect(screen.queryByRole("option", { name: "Rivadavia" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("option", { name: "Godoy Cruz" }));
+    await vi.waitFor(() => {
+      expect(searchActivities).toHaveBeenLastCalledWith(
+        expect.objectContaining({ cityId: 1, departmentId: 10 }),
+      );
+    });
+
+    await user.click(screen.getByLabelText("Provincia"));
+    await user.click(screen.getByRole("option", { name: "San Juan" }));
+    await vi.waitFor(() => {
+      expect(searchActivities).toHaveBeenLastCalledWith(
+        expect.objectContaining({ cityId: 2, departmentId: undefined }),
+      );
+    });
+    expect(screen.getByLabelText("Localidad")).toHaveTextContent("Cualquier localidad");
+
+    await user.click(screen.getByRole("button", { name: "Limpiar" }));
+    await vi.waitFor(() => {
+      expect(searchActivities).toHaveBeenLastCalledWith(
+        expect.objectContaining({ cityId: undefined, departmentId: undefined }),
+      );
+    });
+    expect(screen.getByLabelText("Localidad")).toBeDisabled();
+  });
+
+  it("keeps a restored locality only while its province offers it (#181)", async () => {
+    searchActivities.mockResolvedValue(page([makeActivity()]));
+    listDepartments.mockResolvedValue({ data: [{ id: 10, name: "Godoy Cruz" }] });
+    const { unmount } = render(
+      <ActivitySearch initialState={readExplorationState({ cityId: "1", departmentId: "10" })} />,
+    );
+    await vi.waitFor(() => {
+      expect(screen.getByLabelText("Localidad")).toHaveTextContent("Godoy Cruz");
+    });
+    expect(searchActivities).toHaveBeenLastCalledWith(
+      expect.objectContaining({ cityId: 1, departmentId: 10 }),
+    );
+    unmount();
+
+    // A locality from another province can't be shown, so it can't filter.
+    searchActivities.mockClear();
+    render(
+      <ActivitySearch initialState={readExplorationState({ cityId: "1", departmentId: "99" })} />,
+    );
+    await vi.waitFor(() => {
+      expect(searchActivities).toHaveBeenLastCalledWith(
+        expect.objectContaining({ cityId: 1, departmentId: undefined }),
+      );
+    });
+    expect(screen.getByLabelText("Localidad")).toHaveTextContent("Cualquier localidad");
+    expect(screen.getByLabelText("Localidad")).toBeEnabled();
+  });
+
+  it("drops a restored locality it can't show when the lookup fails (#181)", async () => {
+    searchActivities.mockResolvedValue(page([makeActivity()]));
+    listDepartments.mockRejectedValue(new Error("boom"));
+    render(
+      <ActivitySearch initialState={readExplorationState({ cityId: "1", departmentId: "10" })} />,
+    );
+
+    expect(
+      await screen.findByText("No pudimos cargar las localidades.", { exact: false }),
+    ).toBeInTheDocument();
+    await vi.waitFor(() => {
+      expect(searchActivities).toHaveBeenLastCalledWith(
+        expect.objectContaining({ cityId: 1, departmentId: undefined }),
+      );
+    });
+    expect(screen.getByLabelText("Localidad")).toHaveTextContent("Cualquier localidad");
+  });
+
+  it("reports a failed localities lookup and retries it on demand", async () => {
+    searchActivities.mockResolvedValue(page([makeActivity()]));
+    listCities.mockResolvedValue({ data: [{ id: 1, name: "Mendoza" }] });
+    listDepartments.mockRejectedValueOnce(new Error("boom"));
+    listDepartments.mockResolvedValueOnce({ data: [{ id: 10, name: "Godoy Cruz" }] });
+    const user = userEvent.setup();
+    render(<ActivitySearch />);
+    await screen.findByRole("heading", { name: "Ruta del vino" });
+
+    await user.click(screen.getByLabelText("Provincia"));
+    await user.click(await screen.findByRole("option", { name: "Mendoza" }));
+
+    expect(await screen.findByText("No pudimos cargar las localidades.", { exact: false })).toBeInTheDocument();
+    expect(screen.getByLabelText("Localidad")).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: "Reintentar" }));
+    await vi.waitFor(() => {
+      expect(screen.getByLabelText("Localidad")).toBeEnabled();
+    });
+    expect(listDepartments).toHaveBeenCalledTimes(2);
   });
 
   it("blocks contradictory prices and resumes after correcting them", async () => {

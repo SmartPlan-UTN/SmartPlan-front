@@ -6,7 +6,7 @@ import { Badge, Icon, Stars } from "@/components/ui";
 import { AuthenticatedImage } from "@/components/media";
 import { useFavorites } from "@/context";
 import { activityDetailRoute } from "@/lib/routes";
-import { formatArs, formatDuration, gradientFor } from "@/lib/utils";
+import { categoryLabel, formatArs, formatDuration, gradientFor } from "@/lib/utils";
 import type { ActivitySearchResult } from "@/types";
 
 import styles from "./activity.module.css";
@@ -93,7 +93,7 @@ export function ActivityCard({
         <div className={exploreStyles.tagRow}>
           {visibleCategories.map((category) => (
             <Badge variant="tag" key={category.id}>
-              {category.name}
+              {categoryLabel(category.name)}
             </Badge>
           ))}
         </div>

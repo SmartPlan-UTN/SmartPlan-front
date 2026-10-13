@@ -83,7 +83,11 @@ export function ActivitySearch({
   const [cityId, setCityId] = useState<number | null>(initialState.cityId);
   const [departments, setDepartments] = useState<LocationOption[]>([]);
   const [departmentId, setDepartmentId] = useState<number | null>(initialState.departmentId);
-  const [departmentsLoading, setDepartmentsLoading] = useState(false);
+  // Starts loading when the URL already brings a province, so "Localidad"
+  // doesn't flash "no hay localidades" before the first fetch.
+  const [departmentsLoading, setDepartmentsLoading] = useState(initialState.cityId !== null);
+  const [departmentsError, setDepartmentsError] = useState(false);
+  const [departmentsAttempt, setDepartmentsAttempt] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -114,11 +118,27 @@ export function ActivitySearch({
 
     async function run() {
       setDepartmentsLoading(true);
+      setDepartmentsError(false);
       try {
         const result = await listDepartments(selectedCityId);
-        if (active) setDepartments(result.data);
+        if (active) {
+          setDepartments(result.data);
+          // A locality restored from the URL that this province doesn't
+          // offer would keep filtering with no option to show or clear it.
+          setDepartmentId((current) =>
+            current !== null && !result.data.some((department) => department.id === current)
+              ? null
+              : current,
+          );
+        }
       } catch {
-        if (active) setDepartments([]);
+        if (active) {
+          setDepartments([]);
+          // Same reason: without the list, "Localidad" can't show which one
+          // is applied, so the results shouldn't stay filtered by it.
+          setDepartmentId(null);
+          setDepartmentsError(true);
+        }
       } finally {
         if (active) setDepartmentsLoading(false);
       }
@@ -128,15 +148,26 @@ export function ActivitySearch({
     return () => {
       active = false;
     };
-  }, [cityId]);
+  }, [cityId, departmentsAttempt]);
 
   const handleCityIdChange = useCallback((value: number | null) => {
+    // Picking the province already selected changes nothing: resetting below
+    // would clear its localities without the effect ever fetching them again.
+    if (value !== null && value === cityId) return;
     setCityId(value);
     // A department only makes sense within its own city: switching
     // "Provincia" without resetting it would silently keep filtering by a
     // locality that isn't even offered as an option anymore.
     setDepartmentId(null);
     setDepartments([]);
+    setDepartmentsError(false);
+    // Same render as the new province, so "Localidad" goes straight to
+    // "cargando" instead of passing through "no hay localidades" first.
+    setDepartmentsLoading(value !== null);
+  }, [cityId]);
+
+  const retryDepartments = useCallback(() => {
+    setDepartmentsAttempt((attempt) => attempt + 1);
   }, []);
 
   const handleQueryChange = useCallback((value: string) => {
@@ -242,6 +273,8 @@ export function ActivitySearch({
             departmentId,
             onDepartmentIdChange: setDepartmentId,
             departmentsLoading,
+            departmentsError,
+            onRetryDepartments: retryDepartments,
           }}
         />
       }

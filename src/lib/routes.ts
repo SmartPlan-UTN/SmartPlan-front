@@ -23,6 +23,8 @@ export const ROUTES = {
   profile: "/profile",
   preferences: "/preferences",
   security: "/security",
+  /** Help and support: user manual, FAQs, and contact. */
+  help: "/help",
   login: "/login",
   signup: "/signup",
   recoverPassword: "/recover-password",
@@ -34,8 +36,7 @@ export const ROUTES = {
   adminActivities: "/admin/activities",
   adminPlaces: "/admin/places",
   adminPlans: "/admin/plans",
-  adminRatings: "/admin/ratings",
-  adminExperiences: "/admin/experiences",
+  adminReports: "/admin/reports",
   adminUsers: "/admin/users",
 } as const;
 
@@ -54,6 +55,14 @@ export function planDetailRoute(id: number): string {
 /** `/plan-requests/:id` — durable generation and results route (CU17, CU19). */
 export function planRequestRoute(id: number): string {
   return `${ROUTES.planRequests}/${id}`;
+}
+
+/** The sections of `/help`, reachable as `#<id>` anchors. */
+export type HelpSection = "manual" | "faq" | "contact";
+
+/** `/help#faq` — a given section of the help page. */
+export function helpSectionRoute(section: HelpSection): string {
+  return `${ROUTES.help}#${section}`;
 }
 
 /** `/outings/:id` — one outing of "Mis salidas" (CU22, CU23). */

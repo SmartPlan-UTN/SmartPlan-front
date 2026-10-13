@@ -72,8 +72,17 @@
 }
 
 .wallItem {
+  position: relative;
   overflow: hidden;
   border-radius: var(--r-card-sm);
+}
+
+/* The report flag of a photo (#156), over its top corner. */
+.photoReport {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1;
 }
 
 /* The latest photo leads, 2×2; with few photos, the wall stays full. */
@@ -222,6 +231,13 @@
   gap: var(--s-2);
 }
 
+.cardCommentRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+
 .cardComment {
   margin: 0;
   color: var(--fg-1);
@@ -240,6 +256,7 @@
 }
 
 .cardPhoto {
+  position: relative;
   aspect-ratio: 1;
   overflow: hidden;
   border-radius: 8px;
