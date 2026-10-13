@@ -19,7 +19,7 @@ import { useFavorites } from "@/context";
 import { useDetailFetch } from "@/hooks";
 import { getActivity } from "@/lib/api";
 import { ROUTES } from "@/lib/routes";
-import { formatArs, formatDuration } from "@/lib/utils";
+import { categoryLabel, formatArs, formatDuration } from "@/lib/utils";
 import type { ActivityDetailResult, RatingSummary } from "@/types";
 
 import { ActivityRatingSection } from "./ActivityRatingSection";
@@ -119,9 +119,9 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
     );
   }
 
-  const categoryLabel =
+  const categoriesText =
     activity.categories.length > 0
-      ? activity.categories.map((category) => category.name).join(" · ")
+      ? activity.categories.map((category) => categoryLabel(category.name)).join(" · ")
       : null;
   const firstLocation = activity.locations[0] ?? null;
   const displayRatingSummary: RatingSummary =
@@ -152,8 +152,8 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
       <MediaGallery target="activity" resourceId={activity.id} resourceName={activity.name} />
       <div className={styles.titleBlock}>
         <div className={styles.badgeRow}>
-          {categoryLabel ? (
-            <Badge variant="tag">{categoryLabel}</Badge>
+          {categoriesText ? (
+            <Badge variant="tag">{categoriesText}</Badge>
           ) : (
             <Badge variant="tag">
               <em>Sin categoría</em>
@@ -244,8 +244,8 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
                 <Icon name="tag" size={15} className={styles.infoIcon} />
                 <div>
                   <p className={styles.infoLabel}>Categoría</p>
-                  {categoryLabel ? (
-                    <p className={styles.infoValue}>{categoryLabel}</p>
+                  {categoriesText ? (
+                    <p className={styles.infoValue}>{categoriesText}</p>
                   ) : (
                     <p className={styles.missing}>Sin información disponible</p>
                   )}

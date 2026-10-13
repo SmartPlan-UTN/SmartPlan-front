@@ -85,7 +85,7 @@
 
 .nav {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: clamp(20px, 3vw, 40px);
 }
 
@@ -183,6 +183,14 @@
 }
 
 /* ── Responsive ────────────────────────────────────────────────── */
+
+/* Four link columns only fit beside the brand column on wide screens;
+   below that they would wrap every label onto two lines. */
+@media (max-width: 1080px) {
+  .nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 
 @media (max-width: 860px) {
   .grid {

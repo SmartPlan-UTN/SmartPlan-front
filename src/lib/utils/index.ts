@@ -8,6 +8,7 @@ export { formatArs } from "./currency";
 export { formatDuration } from "./duration";
 export { googleMapsUrl } from "./googleMaps";
 export { gradientFor } from "./gradient";
+export { categoryLabel, localizeCatalogText } from "./catalogLabels";
 export { getPlanZone } from "./planZone";
 export { parsePositiveIntId } from "./routeParams";
 export {

@@ -86,7 +86,7 @@ export function ExperienceSummary({
       {feedback.comment ? (
         <p className={styles.expComment}>“{feedback.comment}”</p>
       ) : null}
-      {/* The only moderation trace the author ever sees (#106). */}
+      {/* The only moderation trace the author ever sees: a removal (#156). */}
       {feedback.comment && feedback.commentHidden ? (
         <p className={styles.expHiddenNotice}>
           <Icon name="eye-off" size={14} aria-hidden="true" />

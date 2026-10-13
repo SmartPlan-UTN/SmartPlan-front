@@ -45,7 +45,7 @@ describe("FiltersPanel", () => {
     expect(screen.getByLabelText("Mínimo")).toBeInTheDocument();
     expect(screen.getByLabelText("Máximo")).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: "Cualquiera" })).toBeChecked();
-    expect(await screen.findByRole("checkbox", { name: "Culture" })).toBeInTheDocument();
+    expect(await screen.findByRole("checkbox", { name: "Cultura" })).toBeInTheDocument();
   });
 
   it("sets the minimum rating from its radio option", async () => {
@@ -63,14 +63,14 @@ describe("FiltersPanel", () => {
     const onToggleCategory = vi.fn();
     render(<FiltersPanel {...props({ categoryIds: [3], onToggleCategory })} />);
 
-    expect(await screen.findByRole("checkbox", { name: "Gastronomy" })).toBeChecked();
-    expect(screen.queryByRole("checkbox", { name: "Sports" })).not.toBeInTheDocument();
+    expect(await screen.findByRole("checkbox", { name: "Gastronomía" })).toBeChecked();
+    expect(screen.queryByRole("checkbox", { name: "Deportes" })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("checkbox", { name: "Culture" }));
+    await user.click(screen.getByRole("checkbox", { name: "Cultura" }));
     expect(onToggleCategory).toHaveBeenCalledWith(1);
 
     await user.click(screen.getByRole("button", { name: "Ver todas (7)" }));
-    expect(screen.getByRole("checkbox", { name: "Sports" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Deportes" })).toBeInTheDocument();
   });
 
   it("leaves out the location section when there is nothing to locate (plans)", () => {

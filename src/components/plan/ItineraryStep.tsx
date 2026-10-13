@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { Badge, Icon, Stars } from "@/components/ui";
 import { activityDetailRoute } from "@/lib/routes";
-import { formatArs, formatDuration, googleMapsUrl } from "@/lib/utils";
+import { categoryLabel, formatArs, formatDuration, googleMapsUrl } from "@/lib/utils";
 import type { PlanItineraryItem } from "@/types";
 
 import styles from "./plan.module.css";
@@ -22,9 +22,9 @@ export function ItineraryStep({
 }) {
   const { activity } = detail;
   const location = activity.locations[0] ?? null;
-  const categoryLabel =
+  const categoriesText =
     activity.categories.length > 0
-      ? activity.categories.map((category) => category.name).join(" · ")
+      ? activity.categories.map((category) => categoryLabel(category.name)).join(" · ")
       : null;
 
   return (
@@ -53,7 +53,7 @@ export function ItineraryStep({
 
         <div>
           <div className={styles.stepBadgeRow}>
-            {categoryLabel ? <Badge variant="tag">{categoryLabel}</Badge> : null}
+            {categoriesText ? <Badge variant="tag">{categoriesText}</Badge> : null}
             <span className={styles.stepRating}>
               <Stars rating={activity.averageRating} size={11} />
               <span>{activity.averageRating.toFixed(1)}</span>

@@ -183,8 +183,8 @@ export interface PlanFeedback {
   /** Whether the owner shares it with the plan's community (#106). */
   shared: boolean;
   /**
-   * `true` only when moderation took the comment down from the community.
-   * The owner never sees any other moderation state.
+   * `true` only when an administrator removed the comment after a report
+   * (#156). The owner never sees any other moderation state.
    */
   commentHidden: boolean;
   createdAt: string;

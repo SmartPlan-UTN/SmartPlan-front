@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
-
-import { Icon } from "@/components/ui";
+import { Toast } from "@/components/ui";
 
 import styles from "./UndoToast.module.css";
 
@@ -12,8 +10,6 @@ export interface UndoNotice {
   message: string;
   onUndo: () => void;
 }
-
-const VISIBLE_MS = 7000;
 
 /**
  * Confirms a change the person just made and offers to take it back. It is
@@ -27,38 +23,17 @@ export function UndoToast({
   notice: UndoNotice | null;
   onDismiss: () => void;
 }) {
-  const noticeId = notice?.id;
-
-  useEffect(() => {
-    if (noticeId === undefined) return;
-    const timer = window.setTimeout(onDismiss, VISIBLE_MS);
-    return () => window.clearTimeout(timer);
-  }, [noticeId, onDismiss]);
-
-  if (!notice) return null;
-
   return (
-    <div className={styles.toast} role="status" aria-live="polite">
-      <span className={styles.message}>{notice.message}</span>
-      <button
-        type="button"
-        className={styles.undo}
-        onClick={() => {
-          notice.onUndo();
-          onDismiss();
-        }}
-      >
-        <Icon name="undo-2" size={15} aria-hidden="true" />
-        Deshacer
-      </button>
-      <button
-        type="button"
-        className={styles.close}
-        aria-label="Cerrar aviso"
-        onClick={onDismiss}
-      >
-        <Icon name="x" size={15} aria-hidden="true" />
-      </button>
-    </div>
+    <Toast
+      className={styles.placement}
+      onDismiss={onDismiss}
+      notice={
+        notice && {
+          id: notice.id,
+          message: notice.message,
+          action: { label: "Deshacer", icon: "undo-2", onClick: notice.onUndo },
+        }
+      }
+    />
   );
 }
