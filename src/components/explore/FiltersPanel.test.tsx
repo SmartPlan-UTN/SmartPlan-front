@@ -73,6 +73,83 @@ describe("FiltersPanel", () => {
     expect(screen.getByRole("checkbox", { name: "Deportes" })).toBeInTheDocument();
   });
 
+  it("labels both location levels visibly and keeps Localidad locked until a Provincia is picked", () => {
+    render(<FiltersPanel {...props()} />);
+
+    expect(screen.getByText("Provincia")).toBeVisible();
+    expect(screen.getByText("Localidad")).toBeVisible();
+    expect(screen.getByLabelText("Provincia")).toHaveTextContent("Cualquier provincia");
+    const department = screen.getByLabelText("Localidad");
+    expect(department).toHaveTextContent("Cualquier localidad");
+    expect(department).not.toHaveTextContent(/provincia/i);
+    expect(department).toBeDisabled();
+    expect(department).toHaveAccessibleDescription(
+      "Elegí primero una provincia para ver sus localidades.",
+    );
+  });
+
+  it("offers the localities of the chosen Provincia and reports the pick", async () => {
+    const user = userEvent.setup();
+    const onDepartmentIdChange = vi.fn();
+    render(
+      <FiltersPanel
+        {...props({
+          location: {
+            cities: [{ id: 1, name: "Mendoza" }],
+            cityId: 1,
+            onCityIdChange: vi.fn(),
+            departments: [{ id: 7, name: "Godoy Cruz" }],
+            departmentId: null,
+            onDepartmentIdChange,
+          },
+        })}
+      />,
+    );
+
+    const department = screen.getByLabelText("Localidad");
+    expect(department).toBeEnabled();
+    expect(department).not.toHaveAccessibleDescription();
+
+    await user.click(department);
+    await user.click(screen.getByRole("option", { name: "Godoy Cruz" }));
+
+    expect(onDepartmentIdChange).toHaveBeenCalledWith(7);
+  });
+
+  it("tells loading, empty and failed localities apart from the options", async () => {
+    const user = userEvent.setup();
+    const onRetryDepartments = vi.fn();
+    const location = {
+      cities: [{ id: 1, name: "Mendoza" }],
+      cityId: 1,
+      onCityIdChange: vi.fn(),
+      departments: [],
+      departmentId: null,
+      onDepartmentIdChange: vi.fn(),
+      onRetryDepartments,
+    };
+    const { rerender } = render(
+      <FiltersPanel {...props({ location: { ...location, departmentsLoading: true } })} />,
+    );
+
+    expect(screen.getByLabelText("Localidad")).toBeDisabled();
+    expect(screen.getByLabelText("Localidad")).toHaveAccessibleDescription(
+      "Cargando localidades...",
+    );
+
+    rerender(<FiltersPanel {...props({ location })} />);
+    expect(screen.getByLabelText("Localidad")).toHaveAccessibleDescription(
+      "No hay localidades disponibles en esta provincia.",
+    );
+
+    rerender(<FiltersPanel {...props({ location: { ...location, departmentsError: true } })} />);
+    expect(screen.getByLabelText("Localidad")).toBeDisabled();
+    expect(screen.getByRole("alert")).toHaveTextContent("No pudimos cargar las localidades.");
+
+    await user.click(screen.getByRole("button", { name: "Reintentar" }));
+    expect(onRetryDepartments).toHaveBeenCalledTimes(1);
+  });
+
   it("leaves out the location section when there is nothing to locate (plans)", () => {
     render(<FiltersPanel {...props({ location: undefined })} />);
 

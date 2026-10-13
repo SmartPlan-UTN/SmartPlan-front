@@ -36,6 +36,27 @@ export interface LocationFilterProps {
   departmentId: number | null;
   onDepartmentIdChange: (value: number | null) => void;
   departmentsLoading?: boolean;
+  departmentsError?: boolean;
+  onRetryDepartments?: () => void;
+}
+
+type DepartmentFilterStatus = "needsCity" | "loading" | "error" | "empty" | "ready";
+
+/** Why "Localidad" can't be used yet, told apart from its options. */
+const DEPARTMENT_HINTS: Record<DepartmentFilterStatus, string> = {
+  needsCity: "Elegí primero una provincia para ver sus localidades.",
+  loading: "Cargando localidades...",
+  error: "",
+  empty: "No hay localidades disponibles en esta provincia.",
+  ready: "",
+};
+
+function departmentFilterStatus(location: LocationFilterProps): DepartmentFilterStatus {
+  if (location.cityId === null) return "needsCity";
+  if (location.departmentsLoading) return "loading";
+  if (location.departmentsError) return "error";
+  if (location.departments.length === 0) return "empty";
+  return "ready";
 }
 
 export interface FiltersPanelProps {
@@ -90,6 +111,10 @@ export function FiltersPanel({
     };
   }, []);
 
+  const departmentStatus = location ? departmentFilterStatus(location) : "ready";
+  const departmentHintId = `${ratingName}-department-hint`;
+  const departmentHint = DEPARTMENT_HINTS[departmentStatus];
+
   const visibleCategories = showAllCategories
     ? categories
     : categories.slice(0, VISIBLE_CATEGORIES);
@@ -108,44 +133,67 @@ export function FiltersPanel({
           <h3 id={`${ratingName}-location`} className={styles.filterHeading}>
             Ubicación
           </h3>
-          <Select
-            value={location.cityId === null ? ANY_LOCATION : String(location.cityId)}
-            onChange={(value) => {
-              location.onCityIdChange(value === ANY_LOCATION ? null : Number(value));
-            }}
-            options={[
-              { value: ANY_LOCATION, label: "Cualquier provincia" },
-              ...location.cities.map((city) => ({
-                value: String(city.id),
-                label: city.name,
-              })),
-            ]}
-            aria-label="Provincia"
-          />
-          <Select
-            value={
-              location.departmentId === null ? ANY_LOCATION : String(location.departmentId)
-            }
-            onChange={(value) => {
-              location.onDepartmentIdChange(value === ANY_LOCATION ? null : Number(value));
-            }}
-            options={[
-              {
-                value: ANY_LOCATION,
-                label:
-                  location.cityId === null
-                    ? "Elegí una provincia"
-                    : location.departmentsLoading
-                      ? "Cargando..."
-                      : "Cualquier localidad",
-              },
-              ...location.departments.map((department) => ({
-                value: String(department.id),
-                label: department.name,
-              })),
-            ]}
-            aria-label="Localidad"
-          />
+          <div className={styles.field}>
+            <span id={`${ratingName}-city`} className={styles.fieldLabel}>
+              Provincia
+            </span>
+            <Select
+              value={location.cityId === null ? ANY_LOCATION : String(location.cityId)}
+              onChange={(value) => {
+                location.onCityIdChange(value === ANY_LOCATION ? null : Number(value));
+              }}
+              options={[
+                { value: ANY_LOCATION, label: "Cualquier provincia" },
+                ...location.cities.map((city) => ({
+                  value: String(city.id),
+                  label: city.name,
+                })),
+              ]}
+              aria-labelledby={`${ratingName}-city`}
+            />
+          </div>
+          <div className={styles.field}>
+            <span id={`${ratingName}-department`} className={styles.fieldLabel}>
+              Localidad
+            </span>
+            <Select
+              value={
+                location.departmentId === null ? ANY_LOCATION : String(location.departmentId)
+              }
+              onChange={(value) => {
+                location.onDepartmentIdChange(value === ANY_LOCATION ? null : Number(value));
+              }}
+              // Always "Cualquier localidad": the placeholder used to read
+              // "Elegí una provincia", which made this look like a second
+              // province picker (#181). Why it's disabled goes in the hint.
+              options={[
+                { value: ANY_LOCATION, label: "Cualquier localidad" },
+                ...location.departments.map((department) => ({
+                  value: String(department.id),
+                  label: department.name,
+                })),
+              ]}
+              disabled={departmentStatus !== "ready"}
+              aria-labelledby={`${ratingName}-department`}
+              aria-describedby={departmentHint ? departmentHintId : undefined}
+            />
+            {departmentStatus === "error" ? (
+              <p id={departmentHintId} role="alert" className={styles.filterError}>
+                No pudimos cargar las localidades.{" "}
+                <button
+                  type="button"
+                  className={styles.sidebarLink}
+                  onClick={location.onRetryDepartments}
+                >
+                  Reintentar
+                </button>
+              </p>
+            ) : (
+              <p id={departmentHintId} aria-live="polite" className={styles.filterHint}>
+                {departmentHint}
+              </p>
+            )}
+          </div>
         </section>
       ) : null}
 

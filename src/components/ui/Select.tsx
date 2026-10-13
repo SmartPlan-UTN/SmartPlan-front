@@ -17,6 +17,7 @@ export interface SelectProps<TValue extends string> {
   options: ReadonlyArray<SelectOption<TValue>>;
   "aria-label"?: string;
   "aria-labelledby"?: string;
+  "aria-describedby"?: string;
   disabled?: boolean;
 }
 
@@ -33,6 +34,7 @@ export function Select<TValue extends string>({
   options,
   "aria-label": ariaLabel,
   "aria-labelledby": ariaLabelledBy,
+  "aria-describedby": ariaDescribedBy,
   disabled = false,
 }: SelectProps<TValue>) {
   const [open, setOpen] = useState(false);
@@ -75,6 +77,7 @@ export function Select<TValue extends string>({
         aria-expanded={open && !disabled}
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
         onClick={() => {
           setOpen((current) => !current);
         }}
