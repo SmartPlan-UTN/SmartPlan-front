@@ -71,6 +71,7 @@ rereading the entire git history.
 | Mobile-first responsive navigation and screen layouts | `In review` | `feature/mobile-first-responsive` | [#124](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/124) | Depends on visual-refresh PR #123. Adds a persistent bottom navigation below 900px, safe-area-aware shell spacing, and responsive refinements across user-facing screens without changing the landing content layout. |
 | [F06] Continuous integration: lint and tests on every PR | `In review` | `SMART-f06-integracion-continua-lint-y-tests-en-prs` | [#84](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/84) | Ref [`SmartPlan-back#28`](https://github.com/SmartPlan-UTN/SmartPlan-back/issues/28). F20's `ci.yml` already covered lint/test/build on push and PR against develop/main; this ticket aligns the job id to `ci` (was `quality`) and the setup to `pnpm/action-setup` + `actions/setup-node` with `node-version-file: '.nvmrc'` (was the composite `pnpm/setup`), matching `SmartPlan-back`. The branch-protection row above says `Completed`, but there was no evidence the check was configured as a required status check — F06 confirms and configures it. The manual GitHub step is still pending (exact check name after the first run) |
 | [#144] Ordenar la pantalla de resultados de generación (CU17, CU19) | `In review` | `SMART-144-ordenar-resultados-generacion` | [#155](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/155) | `PlanResultCard` loses its empty 84px media block for an accent bar in the plan's pin colour, a comparable summary strip (cost, duration, stops), a readable "A → B → C" itinerary, at most 2 tags, and actions split by a hairline. More air between cards and in the header. Dead CSS removed. Refines the current list + map layout, no redesign |
+| [#160] Aclarar estados y visibilidad de los planes entre Administración y Explorar | `In review` | `SMART-160-estados-visibilidad-planes` | PR_FRONT | PAN 19 shows statuses in Spanish with a short meaning, a new "Origen y visibilidad" column saying whether Explorar lists the plan and why not, origin/visibility filters, and a collapsible legend. The edit dialog explains that changing the status does not publish. Explorar's empty state explains that only published plans appear. Needs back [#124](https://github.com/SmartPlan-UTN/SmartPlan-back/pull/124) (`kind` and `visibility` in `/admin/plans`) |
 
 ---
 
@@ -341,6 +342,8 @@ Things that have been spotted but don't have an owner yet:
 ---
 
 ## Log
+
+2026-10-13 — `SMART-160-estados-visibilidad-planes` implements #160 with back [#124](https://github.com/SmartPlan-UTN/SmartPlan-back/pull/124). Explorar's filter (authored + public + not cancelled) was already correct; the "Completed" plans missing from Explorar are outings, generated results, or private plans. `pnpm lint` and `pnpm build` pass; `pnpm test` 873/874 with the known unrelated `CreatePlanForm.test.tsx` flake that passes on its own. Not checked in a browser: the local database was missing the latest backend migrations.
 
 2026-10-12 — `fix/163-password-dot` implements #163 / back #111 in an isolated worktree from `origin/develop`. Verification and PR links are recorded in the ticket table above. Staging data and concurrent photo work are untouched.
 

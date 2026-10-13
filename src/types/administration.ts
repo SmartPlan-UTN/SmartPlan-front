@@ -2,7 +2,7 @@ import { BaseEntity } from './common';
 import type { PaginatedResult, SortDirection } from './common';
 import type { User } from './users';
 import type { RoleKey, UserStatusKey } from './users';
-import type { PlanStatusKey } from './plans';
+import type { PlanKind, PlanStatusKey, PlanVisibility } from './plans';
 import type { RatingModerationStatus } from './ratings';
 
 /**
@@ -193,6 +193,9 @@ export interface AdminPlan {
   estimatedTotalDuration: number;
   peopleCount: number;
   activityCount: number;
+  /** Where the plan comes from; only `authored` plans can reach Explorar (#160). */
+  kind: PlanKind;
+  visibility: PlanVisibility;
   owner: { id: number; name: string; lastName: string; email: string };
   status: { key: PlanStatusKey; name: string };
   createdAt: string;
@@ -202,6 +205,8 @@ export interface AdminPlan {
 export interface AdminPlansQuery {
   search?: string;
   status?: PlanStatusKey;
+  kind?: PlanKind;
+  visibility?: PlanVisibility;
   page?: number;
   limit?: number;
   sortBy?: 'createdAt' | 'title' | 'status' | 'cost';

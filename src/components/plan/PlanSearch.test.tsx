@@ -28,3 +28,13 @@ describe("plan price filters (CU12)", () => {
     }
   });
 });
+
+describe("plan search empty state (#160)", () => {
+  it("explains that only published plans reach Explorar", async () => {
+    searchPlans.mockResolvedValue({ data: [], pagination: { page: 1, total: 0, totalPages: 0, limit: 12 } });
+    render(<PlanSearch />);
+
+    expect(await screen.findByRole("heading", { name: "Todavía no hay planes publicados" })).toBeInTheDocument();
+    expect(screen.getByText(/solo aparecen los planes que sus autores publicaron/)).toBeInTheDocument();
+  });
+});

@@ -7,14 +7,13 @@ import { MediaGalleryManager } from "@/components/media";
 import type { AdminPlan, PlanStatusKey, UpdateAdminPlanInput } from "@/types";
 
 import styles from "./AdminManagement.module.css";
-
-export const PLAN_STATUS_OPTIONS: Array<{ value: PlanStatusKey; label: string }> = [
-  { value: "generated", label: "Generado" },
-  { value: "selected", label: "Seleccionado" },
-  { value: "confirmed", label: "Confirmado" },
-  { value: "completed", label: "Completado" },
-  { value: "cancelled", label: "Cancelado" },
-];
+import {
+  PLAN_KIND_COPY,
+  PLAN_STATUS_COPY,
+  PLAN_STATUS_OPTIONS,
+  PLAN_VISIBILITY_LABEL,
+  explorePresence,
+} from "./planAdminPresentation";
 
 interface AdminPlanDialogProps {
   plan: AdminPlan;
@@ -35,6 +34,8 @@ export function AdminPlanDialog({ plan, saving, error, onClose, onSave }: AdminP
   const [peopleCount, setPeopleCount] = useState(String(plan.peopleCount));
   const [status, setStatus] = useState<PlanStatusKey>(plan.status.key);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const statusHintId = useId();
+  const presence = explorePresence({ kind: plan.kind, visibility: plan.visibility, status: { key: status, name: "" } });
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -119,12 +120,19 @@ export function AdminPlanDialog({ plan, saving, error, onClose, onSave }: AdminP
               Cantidad de personas
               <input type="number" min="1" max="1000" step="1" value={peopleCount} onChange={(event) => setPeopleCount(event.target.value)} />
             </label>
-            <label className={styles.field}>
-              Estado
-              <select value={status} onChange={(event) => setStatus(event.target.value as PlanStatusKey)}>
-                {PLAN_STATUS_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-              </select>
-            </label>
+            <div className={styles.field}>
+              <label className={styles.field}>
+                Estado
+                <select value={status} aria-describedby={statusHintId} onChange={(event) => setStatus(event.target.value as PlanStatusKey)}>
+                  {PLAN_STATUS_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+              </label>
+              <span id={statusHintId} className={styles.fieldHint}>{PLAN_STATUS_COPY[status].description}</span>
+            </div>
+          </div>
+          <div className={styles.visibilityNote}>
+            <p><strong>Origen:</strong> {PLAN_KIND_COPY[plan.kind].label} · <strong>Visibilidad:</strong> {PLAN_VISIBILITY_LABEL[plan.visibility]}</p>
+            <p>{presence.visible ? "Este plan aparece en Explorar." : `No aparece en Explorar: ${presence.reason.charAt(0).toLowerCase()}${presence.reason.slice(1)}`} Cambiar el estado no lo publica: la visibilidad la decide su autor desde Mis planes.</p>
           </div>
           {validationError || error ? <p className={styles.formError} role="alert">{validationError ?? error}</p> : null}
           <div className={styles.dialogActions}>
