@@ -3,6 +3,7 @@
 import { useEffect, useId, useState } from "react";
 
 import { Select } from "@/components/ui";
+import { categoryLabel } from "@/lib/utils";
 import type { CategoryOption, LocationOption } from "@/types";
 
 import { priceRangeError } from "./searchState";
@@ -227,7 +228,7 @@ export function FiltersPanel({
                     onToggleCategory(category.id);
                   }}
                 />
-                {category.name}
+                {categoryLabel(category.name)}
               </label>
             ))}
             {categories.length > VISIBLE_CATEGORIES ? (

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Badge, Icon, Stars } from "@/components/ui";
 import { RECOMMENDATIONS } from "@/components/landing/landingContent";
 import { planDetailRoute } from "@/lib/routes";
-import { formatArs, formatDuration, gradientFor } from "@/lib/utils";
+import { categoryLabel, formatArs, formatDuration, gradientFor } from "@/lib/utils";
 import type { PlanRecommendation } from "@/types";
 
 import styles from "./recommendation-card.module.css";
@@ -85,7 +85,7 @@ export function RecommendationCard({
           <div className={styles.tags}>
             {plan.categories.slice(0, 2).map((category) => (
               <Badge variant="tag" key={category.id}>
-                {category.name}
+                {categoryLabel(category.name)}
               </Badge>
             ))}
           </div>
