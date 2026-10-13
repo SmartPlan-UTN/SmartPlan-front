@@ -155,6 +155,107 @@ describe("RatingsList", () => {
       summary: { averageRating: 3, ratingCount: 2 },
     };
 
+    it.each(["success", "duplicate"])(
+      "keeps publicly visible reported ratings hidden after a %s response and refresh",
+      async (outcome) => {
+        vi.mocked(listRatings).mockResolvedValue({ ...loaded, data: [mockRating()] });
+        if (outcome === "duplicate") {
+          vi.mocked(reportContent).mockRejectedValueOnce(
+            new ApiError({ message: "Duplicated", type: "HTTP", status: 409, code: "CONTENT_REPORT_DUPLICATE" }),
+          );
+        } else {
+          vi.mocked(reportContent).mockResolvedValueOnce(undefined);
+        }
+        const onSummaryChange = vi.fn();
+        const user = userEvent.setup();
+        const { rerender } = render(
+          <RatingsList activityId={42} refreshToken={0} onSummaryChange={onSummaryChange} />,
+        );
+        await user.click(await screen.findByRole("button", { name: "Denunciar valoración de Ana P." }));
+        const dialog = screen.getByRole("dialog");
+        await user.click(within(dialog).getByRole("radio", { name: "Acoso o insulto" }));
+        await user.click(within(dialog).getByRole("button", { name: "Denunciar" }));
+
+        await waitFor(() => expect(onSummaryChange).toHaveBeenCalledTimes(2));
+        expect(screen.queryByText("Ana P.")).not.toBeInTheDocument();
+        expect(onSummaryChange).toHaveBeenLastCalledWith(loaded.summary);
+        expect(screen.getByText(outcome === "duplicate" ? "Ya denunciaste este contenido." : "Gracias, lo vamos a revisar.")).toBeInTheDocument();
+
+        rerender(<RatingsList activityId={42} refreshToken={1} onSummaryChange={onSummaryChange} />);
+        await waitFor(() => expect(onSummaryChange).toHaveBeenCalledTimes(3));
+        expect(screen.queryByText("Ana P.")).not.toBeInTheDocument();
+      },
+    );
+
+    it("returns to the last valid page after reporting its only rating", async () => {
+      vi.mocked(listRatings).mockImplementation(async (_activityId, query) => ({
+        data: [mockRating(query?.page === 2 ? {} : { id: 2, authorAlias: "Diego R." })],
+        pagination: { page: query?.page ?? 1, limit: 20, total: 21, totalPages: 2 },
+        summary: { averageRating: 5, ratingCount: 21 },
+      }));
+      vi.mocked(reportContent).mockResolvedValueOnce(undefined);
+      const user = userEvent.setup();
+      render(<RatingsList activityId={42} />);
+      await screen.findByText("Diego R.");
+      await user.click(screen.getByRole("button", { name: "Página siguiente" }));
+      await user.click(await screen.findByRole("button", { name: "Denunciar valoración de Ana P." }));
+      const dialog = screen.getByRole("dialog");
+      await user.click(within(dialog).getByRole("radio", { name: "Acoso o insulto" }));
+
+      vi.mocked(listRatings).mockImplementation(async (_activityId, query) => ({
+        data: query?.page === 2 ? [] : [mockRating({ id: 2, authorAlias: "Diego R." })],
+        pagination: { page: query?.page ?? 1, limit: 20, total: 20, totalPages: 1 },
+        summary: { averageRating: 5, ratingCount: 20 },
+      }));
+      await user.click(within(dialog).getByRole("button", { name: "Denunciar" }));
+
+      expect(await screen.findByText("Diego R.")).toBeInTheDocument();
+      expect(listRatings).toHaveBeenLastCalledWith(42, { page: 1 });
+      expect(screen.queryByText("Todavía no hay reseñas para mostrar en detalle.")).not.toBeInTheDocument();
+      expect(screen.getByText("Gracias, lo vamos a revisar.")).toBeInTheDocument();
+    });
+
+    it("allows pagination past a page containing only locally hidden ratings", async () => {
+      vi.mocked(listRatings).mockImplementation(async (_activityId, query) => ({
+        data: [mockRating(query?.page === 2 ? { id: 2, authorAlias: "Diego R." } : {})],
+        pagination: { page: query?.page ?? 1, limit: 20, total: 21, totalPages: 2 },
+        summary: { averageRating: 5, ratingCount: 21 },
+      }));
+      vi.mocked(reportContent).mockResolvedValueOnce(undefined);
+      const user = userEvent.setup();
+      render(<RatingsList activityId={42} />);
+      await user.click(await screen.findByRole("button", { name: "Denunciar valoración de Ana P." }));
+      const dialog = screen.getByRole("dialog");
+      await user.click(within(dialog).getByRole("radio", { name: "Acoso o insulto" }));
+      await user.click(within(dialog).getByRole("button", { name: "Denunciar" }));
+      await screen.findByText("Todavía no hay reseñas para mostrar en detalle.");
+      await waitFor(() => expect(screen.getByRole("button", { name: "Página siguiente" })).toBeEnabled());
+      await user.click(screen.getByRole("button", { name: "Página siguiente" }));
+      expect(await screen.findByText("Diego R.")).toBeInTheDocument();
+    });
+
+    it("does not hide a reported rating from another signed-in user", async () => {
+      useSession.mockReturnValue({ status: "authenticated", user: { id: 7 } });
+      vi.mocked(listRatings).mockResolvedValue({ ...loaded, data: [mockRating()] });
+      vi.mocked(reportContent).mockResolvedValueOnce(undefined);
+      const onSummaryChange = vi.fn();
+      const user = userEvent.setup();
+      const { rerender } = render(
+        <RatingsList activityId={42} onSummaryChange={onSummaryChange} />,
+      );
+      await user.click(await screen.findByRole("button", { name: "Denunciar valoración de Ana P." }));
+      const dialog = screen.getByRole("dialog");
+      await user.click(within(dialog).getByRole("radio", { name: "Acoso o insulto" }));
+      await user.click(within(dialog).getByRole("button", { name: "Denunciar" }));
+      await waitFor(() => expect(onSummaryChange).toHaveBeenCalledTimes(2));
+      expect(screen.queryByText("Ana P.")).not.toBeInTheDocument();
+
+      useSession.mockReturnValue({ status: "authenticated", user: { id: 8 } });
+      rerender(<RatingsList activityId={42} onSummaryChange={onSummaryChange} />);
+      expect(await screen.findByText("Ana P.")).toBeInTheDocument();
+      expect(onSummaryChange).toHaveBeenCalledTimes(3);
+    });
+
     it("hides the reported rating and thanks the reporter", async () => {
       vi.mocked(listRatings)
         .mockResolvedValueOnce({
