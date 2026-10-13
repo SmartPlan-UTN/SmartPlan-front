@@ -96,9 +96,6 @@ function PlanRequestBody({ requestId }: { requestId: number }) {
             mode={planning.mode === "surprise" ? "surprise" : "auto"}
             query={planning.query}
             progressStage={planning.progressStage}
-            progressStageAt={planning.progressStageAt}
-            requestedAt={planning.requestedAt}
-            estimatedRemainingSeconds={planning.estimatedRemainingSeconds}
           />
         </div>
       )}

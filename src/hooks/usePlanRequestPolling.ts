@@ -130,8 +130,8 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
     } else if (status.statusKey === 'failed') {
       setFailure({ code: status.failureCode ?? null, message: GENERIC_ERROR });
     }
-    if (status.statusKey !== "failed") setFailure(null);
-    setPhase(delayedRef.current && ["pending", "processing"].includes(status.statusKey) ? "timedOut" : phaseForStatus(status));
+    if (status.statusKey !== 'failed') setFailure(null);
+    setPhase(delayedRef.current && ['pending', 'processing'].includes(status.statusKey) ? 'timedOut' : phaseForStatus(status));
   }, []);
 
   const startPolling = useCallback((id: number, startedAt = Date.now()) => {
@@ -166,13 +166,12 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
         pollTimeoutRef.current = setTimeout(() => void poll(), delay);
       } catch (error) {
         if (generation.current !== epoch || activeRequestId.current !== id) return;
-        if (error instanceof ApiError && !error.isNetworkError && error.status !== null && error.status < 500) {
+        if (error instanceof ApiError && !error.isNetworkError && error.status !== null && error.status < 500 && error.status !== 408 && error.status !== 429) {
           clearTimers();
           setFailure(toFailure(error));
           setPhase('failed');
           return;
         }
-        delayedRef.current = true;
         setFailure({ code: 'STATUS_UNAVAILABLE', message: 'No podemos consultar el estado de tu pedido.' });
         setPhase('timedOut');
         pollTimeoutRef.current = setTimeout(() => void poll(), 3_500);

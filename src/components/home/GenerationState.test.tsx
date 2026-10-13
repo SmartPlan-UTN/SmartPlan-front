@@ -36,8 +36,6 @@ describe("GenerationState (CU17)", () => {
         phase="processing"
         failure={null}
         progressStage="searching"
-        requestedAt={new Date().toISOString()}
-        progressStageAt={new Date().toISOString()}
         onKeepWaiting={vi.fn()}
         onRetry={vi.fn()}
         onDiscard={vi.fn()}
@@ -76,6 +74,18 @@ describe("GenerationState (CU17)", () => {
 
     expect(onKeepWaiting).toHaveBeenCalledOnce();
     expect(onDiscard).not.toHaveBeenCalled();
+  });
+
+  it("keeps the queued heading when the delay notice appears", () => {
+    renderState("timedOut");
+    expect(screen.getByRole("heading", { name: "Ya recibimos tu búsqueda" })).toBeInTheDocument();
+  });
+
+  it.each([true, false])("offers timeout recovery matching retry availability (%s)", (canRetry) => {
+    render(<GenerationState phase="failed" failure={{ code: "GENERATION_TIMEOUT", message: "ignored" }}
+      canRetry={canRetry} onKeepWaiting={vi.fn()} onRetry={vi.fn()} onDiscard={vi.fn()} />);
+    expect(screen.getByRole("alert")).toHaveTextContent(canRetry ? "Podés volver a intentarlo" : "Volvé al buscador para hacer una nueva búsqueda");
+    expect(Boolean(screen.queryByRole("button", { name: "Reintentar" }))).toBe(canRetry);
   });
 
   it("surfaces the service failure and retries the same request", async () => {

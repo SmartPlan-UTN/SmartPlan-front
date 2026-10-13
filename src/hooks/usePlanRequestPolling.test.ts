@@ -112,10 +112,10 @@ describe("usePlanRequestPolling", () => {
               activityNames: ["Degustación", "Almuerzo", "Paseo"],
               status: { key: "generated", name: "Generated" },
               viewerPlanState: "selectable",
-            activeOutingId: null,
-            kind: "generated",
-            visibility: "private",
-            ownedByViewer: true,
+              activeOutingId: null,
+              kind: "generated",
+              visibility: "private",
+              ownedByViewer: true,
               details: [],
             },
           ],
@@ -399,6 +399,31 @@ describe("generation polling races", () => {
     await act(async () => resolve(accepted()));
     expect(result.current.phase).toBe("idle");
     expect(getPlanRequestStatus).not.toHaveBeenCalled();
+  });
+
+  it.each([408, 429, 503])("keeps the request alive after a transient HTTP %i", async (httpStatus) => {
+    getPlanRequestStatus.mockRejectedValueOnce(new ApiError({ message: "Temporary", type: "HTTP", status: httpStatus }));
+    getPlanRequestStatus.mockResolvedValue(status({ statusKey: "processing" }));
+    const { result } = renderHook(() => usePlanRequestPolling(42));
+    await act(async () => {});
+    expect(result.current.failure?.code).toBe("STATUS_UNAVAILABLE");
+    await act(async () => vi.advanceTimersByTimeAsync(3500));
+    expect(result.current.phase).toBe("processing");
+    expect(result.current.failure).toBeNull();
+    expect(createPlanRequest).not.toHaveBeenCalled();
+    await act(async () => vi.advanceTimersByTimeAsync(11500));
+    expect(result.current.phase).toBe("timedOut");
+  });
+
+  it("recovers a connection before the delay threshold without showing a delay notice", async () => {
+    getPlanRequestStatus.mockRejectedValueOnce(new Error("offline"));
+    getPlanRequestStatus.mockResolvedValue(status({ statusKey: "pending" }));
+    const { result } = renderHook(() => usePlanRequestPolling(42));
+    await act(async () => {});
+    expect(result.current.phase).toBe("timedOut");
+    await act(async () => vi.advanceTimersByTimeAsync(3500));
+    expect(result.current.phase).toBe("pending");
+    expect(result.current.failure).toBeNull();
   });
 
   it("reports a lost connection without declaring the server request failed", async () => {

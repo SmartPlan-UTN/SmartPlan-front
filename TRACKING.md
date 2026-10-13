@@ -433,3 +433,11 @@ Things that have been spotted but don't have an owner yet:
 - At 15 s, offer keep-waiting/back while polling the same request. Connection failures preserve that request; `GENERATION_TIMEOUT` shows a terminal error. Stale POST/poll responses are ignored after navigation or replacement.
 - Validation: 873 frontend tests, lint and production build passed. Playwright desktop/mobile checks use simulated responses (no provider calls), including a 390 px viewport, animated progress, no horizontal overflow and the terminal timeout message.
 - Backend #119 provides the absolute 30 s deadline. Staging validation remains pending by agreement; this task changes local code only.
+
+## 2026-10-13 — Generation waiting review fixes (#146)
+
+- **In review** · `fix/146-generation-wait` · [PR #175](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/175), CU17/CU19.
+- Timeout recovery copy matches the available action: retry when the original submission exists, otherwise return to the search form. Historical result routes do not persist original submissions.
+- HTTP 408/429 and connection errors keep polling the same request; connection recovery before 15 seconds restores the normal waiting state. Delayed queued requests keep their accepted heading.
+- Removed unused generation props and reviewed CSS selectors; added regression coverage for transient status failures and recovery copy. Staging acceptance remains pending.
+- Validation: lint and production build passed; 880 tests passed in both complete runs (31 focused tests also passed). The reported intermittent frontend failure was not reproduced.

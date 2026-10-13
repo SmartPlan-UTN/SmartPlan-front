@@ -20,9 +20,6 @@ export interface GenerationStateProps {
   note?: string | null;
   query?: string | null;
   progressStage?: PlanRequestProgressStage | null;
-  progressStageAt?: string | null;
-  requestedAt?: string | null;
-  estimatedRemainingSeconds?: number | null;
 }
 
 type Step = { id: PlanRequestProgressStage; label: string };
@@ -77,7 +74,12 @@ export function GenerationState({
 
   if (phase === "failed") {
     const timeoutCopy = failure?.code === "GENERATION_TIMEOUT"
-      ? { title: "Tu pedido superó el tiempo de espera", body: "No pudimos completar el plan a tiempo. Podés volver a intentarlo." }
+      ? {
+        title: "Tu pedido superó el tiempo de espera",
+        body: canRetry
+          ? "No pudimos completar el plan a tiempo. Podés volver a intentarlo."
+          : "No pudimos completar el plan a tiempo. Volvé al buscador para hacer una nueva búsqueda.",
+      }
       : null;
     const surpriseCopy = timeoutCopy ?? (mode === "surprise" && failure
       ? surpriseGenerationErrorCopy({ code: failure.code })
@@ -102,7 +104,7 @@ export function GenerationState({
     ? mode === "surprise" ? "Preparando tu sorpresa" : "Enviando tu búsqueda"
     : activeStep && activeStep.id !== "queued"
       ? activeStep.label
-      : phase === "pending"
+      : (phase === "pending" || phase === "timedOut")
         ? mode === "surprise" ? WAITING_LABEL[mode].queued : "Ya recibimos tu búsqueda"
         : phase === "processing"
           ? WAITING_LABEL[mode].working

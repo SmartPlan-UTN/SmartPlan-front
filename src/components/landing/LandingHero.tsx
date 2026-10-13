@@ -108,10 +108,7 @@ export function LandingHero({
     resolvedContext,
     failure,
     query,
-    requestedAt,
     progressStage,
-    progressStageAt,
-    estimatedRemainingSeconds,
     keepWaiting,
     discard,
     retry,
@@ -267,10 +264,7 @@ export function LandingHero({
                 mode={generationMode}
                 note={generationMode === "surprise" ? surpriseNote : null}
                 query={query ?? submittedQuery}
-                requestedAt={requestedAt}
                 progressStage={progressStage}
-                progressStageAt={progressStageAt}
-                estimatedRemainingSeconds={estimatedRemainingSeconds}
               />
             </motion.div>
           ) : showResults ? (

@@ -94,11 +94,6 @@
   width: 100%;
 }
 
-.accepting {
-  margin: var(--s-7) auto;
-  color: var(--fg-2);
-  text-align: center;
-}
 
 @media (max-width: 680px) {
   .page {
