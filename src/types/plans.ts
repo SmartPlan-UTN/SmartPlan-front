@@ -1,8 +1,17 @@
-import { BaseEntity, CatalogEntity } from './common';
-import type { ExplorationQueryParams, SortDirection } from './common';
-import type { User } from './users';
-import type { FeedbackState, PlanFeedback, PlanRequest } from './recommendation';
-import type { Activity, ActivityCategorySummary, ActivityLocationSummary } from './activities';
+import { BaseEntity, CatalogEntity } from "./common";
+import type { ExplorationQueryParams, SortDirection } from "./common";
+import type { User } from "./users";
+import type {
+  FeedbackState,
+  PlanFeedback,
+  PlanRequest,
+} from "./recommendation";
+import type {
+  Activity,
+  ActivityCategorySummary,
+  ActivityLocationSummary,
+  ActivitySearchResult,
+} from "./activities";
 
 /**
  * Plan made up of activities (CU12, CU13, CU17, CU24-CU31, CU60).
@@ -40,11 +49,11 @@ export interface PlanDetail extends BaseEntity {
  * (`src/database/seeds/definitions.ts`).
  */
 export type PlanStatusKey =
-  | 'generated'
-  | 'selected'
-  | 'confirmed'
-  | 'completed'
-  | 'cancelled';
+  | "generated"
+  | "selected"
+  | "confirmed"
+  | "completed"
+  | "cancelled";
 
 /**
  * Status of a plan (CU22, CU26, CU60).
@@ -111,7 +120,7 @@ export interface PlanItineraryItem {
  *  - `view-only`: anonymous, cancelled, an outing, or not choosable.
  * Matches `ViewerPlanState` in `SmartPlan-back` (`src/plans/plan-selectability.ts`).
  */
-export type ViewerPlanState = 'selectable' | 'selected' | 'view-only';
+export type ViewerPlanState = "selectable" | "selected" | "view-only";
 
 /**
  * What a plan row is (SmartPlan-back#98):
@@ -151,13 +160,13 @@ export interface OwnPlanSummary {
   id: number;
   title: string;
   description: string | null;
+  visibility: PlanVisibility;
   estimatedTotalCost: number;
   estimatedTotalDuration: number;
   peopleCount: number;
   estimatedCostPerPerson: number;
   activityCount: number;
   status: { key: PlanStatusKey; name: string };
-  visibility: PlanVisibility;
   createdAt: string;
   updatedAt: string;
 }
@@ -253,6 +262,59 @@ export interface ActivitySuggestion {
   categories: string[];
 }
 
+/**
+ * The composer's assistant (`/users/me/plans/assistant/*`). Gemini judges
+ * meaning; every activity here is a real catalog row and every number
+ * (distance, minutes, cost) was computed by the API. Nothing in these
+ * answers changes a plan: the person accepts or ignores each proposal.
+ */
+export interface AssistantSearchResponse {
+  interpretation: { chips: string[]; nearName: string | null };
+  results: Array<{ activity: ActivitySearchResult; reason: string | null }>;
+}
+
+export interface AssistantSuggestResponse {
+  suggestions: Array<{
+    activity: ActivitySearchResult;
+    reason: string | null;
+  }>;
+  /** A kind of activity the route lacks, when one clearly does. */
+  gap: { categoryName: string; message: string } | null;
+}
+
+export interface AssistantProposalEffect {
+  minutes: number;
+  cost: number;
+  /** Change in straight-line km; null when any position is unknown. */
+  km: number | null;
+}
+
+export type AssistantProposal =
+  | {
+      kind: "reorder";
+      reason: string;
+      orderedActivityIds: number[];
+      effect: AssistantProposalEffect;
+    }
+  | {
+      kind: "add";
+      reason: string;
+      activity: ActivitySearchResult;
+      /** Zero-based slot in the route; null appends. */
+      position: number | null;
+      effect: AssistantProposalEffect;
+    }
+  | {
+      kind: "remove";
+      reason: string;
+      activityId: number;
+      effect: AssistantProposalEffect;
+    };
+
+export interface AssistantImproveResponse {
+  proposals: AssistantProposal[];
+}
+
 export interface ActivitySuggestionsParams {
   title: string;
   description?: string;
@@ -307,7 +369,7 @@ export interface MyPlansParams {
 }
 
 /** Sortable fields accepted by `GET /plans`. */
-export type PlanSortField = 'relevance' | 'price' | 'rating' | 'distance';
+export type PlanSortField = "relevance" | "price" | "rating" | "distance";
 
 /**
  * Query params accepted by `GET /plans` (CU12's search box only sends
@@ -323,7 +385,7 @@ export interface PlanSearchParams extends ExplorationQueryParams {
 export interface ListOwnPlansParams {
   page?: number;
   limit?: number;
-  sortBy?: 'createdAt';
+  sortBy?: "createdAt";
   direction?: SortDirection;
 }
 
@@ -331,6 +393,30 @@ export interface CreatePlanDto {
   title: string;
   description?: string | null;
   peopleCount: number;
+}
+
+export interface PlanComposerStopDto {
+  activityId: number;
+  /** Sent only for a stop retained from the plan being edited. */
+  detailId?: number;
+}
+
+export interface CreatePlanComposerDto {
+  requestId: string;
+  title: string;
+  description: string | null;
+  peopleCount: number;
+  visibility: PlanVisibility;
+  stops: PlanComposerStopDto[];
+}
+
+export interface UpdatePlanComposerDto {
+  requestId: string;
+  title: string;
+  description: string | null;
+  peopleCount: number;
+  visibility: PlanVisibility;
+  stops: PlanComposerStopDto[];
 }
 
 export interface UpdatePlanDto {
@@ -363,18 +449,4 @@ export interface OwnPlanDetailItem {
     estimatedDuration: number;
     type: string | null;
   };
-}
-
-/**
- * Payload for requesting a suggested plan (CU31).
- * Backend contract: `POST /api/plan-suggestions`.
- */
-export interface PlanSuggestionDto {
-  budget: number;
-  latitude: number;
-  longitude: number;
-  peopleCount: number;
-  availableDurationMinutes: number;
-  preferences?: string[];
-  notes?: string;
 }

@@ -35,7 +35,6 @@ const ROLE_OPTIONS: Array<{ value: RoleKey; label: string }> = [
 const STATUS_OPTIONS: Array<{ value: UserStatusKey; label: string }> = [
   { value: "active", label: "Activo" },
   { value: "suspended", label: "Suspendido" },
-  { value: "banned", label: "Baneado" },
 ];
 
 export interface UserReadDialogProps {

@@ -53,11 +53,18 @@
   --fg-3: #9E9589;    /* placeholder/caption */
   --rating-ink: #7A5C00;
   --warning-ink: #7A4A00;
+  --error-ink: #B42318;        /* error text on cream */
+  --error-on-dark: #FFB4A8;    /* error text on char, over a red tint */
+  --error-on-dark-vivid: #FF9A8A; /* an error figure on plain char */
 
   /* ── Surfaces ────────────────────────────────────── */
   --surface:      var(--cream);
   --surface-card: #FFFCF8;    /* card on cream    */
   --admin-surface: #FDFBF7;   /* admin canvas from v2 AdminActivities.jsx */
+  /* Paper behind map tiles while they load: the land colour of
+     COMPOSER_MAP_STYLE (lib/maps/brandedMapStyle.ts), which Google's API
+     also needs as a literal (`backgroundColor`). */
+  --map-paper:    #EEE7DB;
 
   /* ── Borders ─────────────────────────────────────── */
   --hairline:      #E2DDD5;

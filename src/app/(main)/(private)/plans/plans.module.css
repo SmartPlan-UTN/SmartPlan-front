@@ -76,3 +76,27 @@
     margin-bottom: var(--s-2);
   }
 }
+
+/* Create/edit: the page title is a breadcrumb, not a second headline. The
+   composer's own headline carries the screen. */
+.composerHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 44px;
+}
+
+.composerHeader .backLink {
+  margin-bottom: 0;
+}
+
+.composerHeader > span {
+  color: var(--fg-3);
+}
+
+.composerTitle {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+}

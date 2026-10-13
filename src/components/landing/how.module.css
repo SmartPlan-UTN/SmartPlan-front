@@ -401,13 +401,23 @@
 }
 
 .optionTitle {
+  display: -webkit-box;
   margin: 0;
+  overflow: hidden;
   color: var(--char);
   font-size: clamp(14px, 1.35vw, 17px);
   font-weight: var(--w-heading);
   letter-spacing: -0.01em;
   line-height: 1.25;
   text-wrap: balance;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* Two lines are always reserved, so a short title does not make its card
+   shorter than the others in the row (#142). */
+.staticOption .optionTitle {
+  min-height: calc(2em * 1.25);
 }
 
 .optionMeta {
@@ -557,13 +567,27 @@
   display: none;
 }
 
+/* Three equal columns: the first signal at the left edge, the second
+   centred, the last at the right edge, at every width. */
 .staticSignals {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 22px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
   padding: 0;
   margin: 18px 0 0;
   list-style: none;
+}
+
+.staticSignals li:nth-child(1) {
+  justify-self: start;
+}
+
+.staticSignals li:nth-child(2) {
+  justify-self: center;
+}
+
+.staticSignals li:nth-child(3) {
+  justify-self: end;
 }
 
 .staticSignals li {
@@ -573,13 +597,7 @@
   color: var(--ember);
   font-size: 12.5px;
   font-weight: var(--w-label);
-}
-
-.staticSignals li::after {
-  width: 30px;
-  height: 1px;
-  background: color-mix(in srgb, var(--ember) 58%, transparent);
-  content: "";
+  white-space: nowrap;
 }
 
 .staticSignals li::before {
@@ -607,6 +625,14 @@
   display: flex;
 }
 
+/* `Reveal` sits between the item and the card; it has to stretch too, or
+   each card keeps its own content height. */
+.optionReveal {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
 .staticOption {
   display: flex;
   flex: 1;
@@ -618,9 +644,24 @@
   box-shadow: 0 2px 12px -6px color-mix(in srgb, var(--char) 40%, transparent);
 }
 
-.staticOption[data-chosen="true"] {
+/* No card is pre-selected here: the ember edge is a hover state, the same
+   for all three, so the row reads as three equal alternatives. */
+.staticOption:hover {
   border-color: color-mix(in srgb, var(--ember) 42%, var(--hairline));
   box-shadow: 0 20px 42px -24px color-mix(in srgb, var(--ember) 55%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .staticOption {
+    transition:
+      border-color 180ms ease,
+      box-shadow 220ms ease,
+      transform 220ms ease;
+  }
+
+  .staticOption:hover {
+    transform: translateY(-2px);
+  }
 }
 
 @media (max-width: 900px) {
@@ -647,27 +688,7 @@
   }
 
   .staticOptions {
-    display: flex;
     gap: 12px;
-    margin-inline: -20px;
-    padding-inline: 20px;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scroll-snap-type: x proximity;
-    scrollbar-width: none;
-  }
-
-  .staticOptions::-webkit-scrollbar {
-    display: none;
-  }
-
-  .staticOptions li {
-    flex: 0 0 min(78vw, 330px);
-    scroll-snap-align: start;
-  }
-
-  .staticOptions .chosenItem {
-    flex-basis: min(84vw, 360px);
   }
 
   .staticOption .optionMedia {
@@ -676,6 +697,30 @@
 
   .staticOption .optionBody {
     min-height: 82px;
+  }
+}
+
+/* Below this the three columns get too narrow for a title and a photo, so
+   the options stack as compact rows, photo beside the text: all three stay
+   visible and none is cut off at the edge. */
+@media (max-width: 640px) {
+  .staticOptions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .staticOption {
+    flex-direction: row;
+  }
+
+  .staticOption .optionMedia {
+    flex: 0 0 38%;
+    aspect-ratio: auto;
+    min-height: 112px;
+  }
+
+  .staticOption .optionBody {
+    justify-content: center;
+    min-height: 0;
   }
 }
 
@@ -742,17 +787,7 @@
     max-width: 12ch;
   }
 
-  .staticSignals {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px 14px;
-  }
-
-  .staticSignals li:last-child {
-    grid-column: 1 / -1;
-  }
-
-  .staticSignals li::after {
-    flex: 1;
+  .staticSignals li {
+    font-size: 12px;
   }
 }

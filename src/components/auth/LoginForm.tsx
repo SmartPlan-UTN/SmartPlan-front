@@ -47,8 +47,6 @@ function loginErrorMessage(error: ApiError): string {
       return "El email o la contraseña son incorrectos.";
     case "ACCOUNT_SUSPENDED":
       return "Tu cuenta está suspendida. Contactá a soporte para más información.";
-    case "ACCOUNT_BANNED":
-      return "Tu cuenta fue dada de baja. Contactá a soporte si creés que es un error.";
     case "ATTEMPT_LIMIT_EXCEEDED":
     case "TOO_MANY_REQUESTS":
       return "Hiciste demasiados intentos. Esperá un momento antes de volver a intentar.";

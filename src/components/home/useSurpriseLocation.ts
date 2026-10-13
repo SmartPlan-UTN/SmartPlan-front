@@ -3,7 +3,6 @@
 import { useCallback, useRef, useState } from "react";
 
 import { getPreferences } from "@/lib/api";
-import type { UserPreferencesResponse } from "@/types";
 
 export interface SurpriseCoords {
   latitude: number;
@@ -61,7 +60,7 @@ function getCurrentPosition(): Promise<GeolocationPosition> {
 
 /**
  * Resolves the location a surprise plan should be generated from (CU19 · PAN
- * 09). Device GPS first; if the user denies it or it is unavailable, the
+ * 09). Device GPS first when enabled in the saved preferences; if the user denies it or it is unavailable, the
  * profile's preferred area is the fallback — its coordinates are already
  * resolved server-side when preferences are saved, so no extra geocoding
  * happens here. With neither available, this still resolves (`coords:
@@ -70,8 +69,8 @@ function getCurrentPosition(): Promise<GeolocationPosition> {
  * is never a dead end.
  *
  * Permission is only ever requested from `request()` — an explicit user
- * action — never on mount. Preferences are fetched once per request, in
- * parallel with the GPS prompt, and reused for the category hint.
+ * action — never on mount. Preferences are fetched once per request, before
+ * requesting GPS, and reused for the category hint.
  */
 export function useSurpriseLocation(): UseSurpriseLocationResult {
   const [state, setState] = useState<SurpriseLocationState>({ status: "idle" });
@@ -90,55 +89,33 @@ export function useSurpriseLocation(): UseSurpriseLocationResult {
     const thisRun = runId.current;
     setState({ status: "locating" });
 
-    const preferencesPromise: Promise<UserPreferencesResponse | null> =
-      getPreferences()
-        .then((preferences) => {
-          if (runId.current === thisRun) {
-            setHasCategoryPreferences(preferences.categories.length > 0);
-          }
-          return preferences;
-        })
-        .catch(() => null);
-
-    const resolveFromPreferredArea = async (): Promise<void> => {
-      setState({ status: "loading-fallback" });
-      const preferences = await preferencesPromise;
+    setHasCategoryPreferences(null);
+    const resolve = async (): Promise<void> => {
+      const preferences = await getPreferences().catch(() => null);
       if (runId.current !== thisRun) return;
+      setHasCategoryPreferences(preferences ? preferences.categories.length > 0 : null);
 
-      const area = preferences?.preferredArea;
-      if (area) {
-        setState({
-          status: "resolved",
-          coords: { latitude: area.latitude, longitude: area.longitude },
-          source: "preferred-area",
-        });
-        return;
-      }
-      setState({ status: "resolved", coords: null, source: "default" });
-    };
-
-    if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
-      void resolveFromPreferredArea();
-      return;
-    }
-
-    void getCurrentPosition().then(
-      (position) => {
-        if (runId.current !== thisRun) return;
-        setState({
-          status: "resolved",
-          coords: {
+      if (preferences?.useDeviceLocation && typeof navigator !== "undefined" && "geolocation" in navigator) {
+        try {
+          const position = await getCurrentPosition();
+          if (runId.current !== thisRun) return;
+          setState({ status: "resolved", coords: {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
-          },
-          source: "device",
-        });
-      },
-      () => {
-        if (runId.current !== thisRun) return;
-        void resolveFromPreferredArea();
-      },
-    );
+          }, source: "device" });
+          return;
+        } catch {
+          if (runId.current !== thisRun) return;
+        }
+      }
+      const area = preferences?.preferredArea;
+      setState(area ? {
+        status: "resolved",
+        coords: { latitude: area.latitude, longitude: area.longitude },
+        source: "preferred-area",
+      } : { status: "resolved", coords: null, source: "default" });
+    };
+    void resolve();
   }, []);
 
   return { state, hasCategoryPreferences, request, reset };

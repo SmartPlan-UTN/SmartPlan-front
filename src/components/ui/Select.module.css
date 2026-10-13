@@ -38,6 +38,11 @@
   border-color: color-mix(in srgb, var(--fg-1) 25%, var(--hairline));
 }
 
+.trigger:disabled {
+  color: var(--fg-3);
+  cursor: not-allowed;
+}
+
 .trigger:focus-visible {
   outline: none;
   border-color: var(--ember);

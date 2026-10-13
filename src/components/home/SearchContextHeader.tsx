@@ -67,6 +67,7 @@ export function SearchContextHeader({
 
 function ContextBadges({ context }: { context: ResolvedPlanContext }) {
   const hasAny =
+    context.appliedMaxDistanceKm != null ||
     context.budget != null ||
     context.partySize != null ||
     context.departmentName != null ||
@@ -76,6 +77,9 @@ function ContextBadges({ context }: { context: ResolvedPlanContext }) {
 
   return (
     <div className={styles.contextBadges}>
+      {context.appliedMaxDistanceKm != null ? (
+        <Badge variant="tag">Hasta {context.appliedMaxDistanceKm} km</Badge>
+      ) : null}
       {context.budget != null ? (
         <Badge variant="cost">
           <Icon name="wallet" size={11} aria-hidden="true" />~{formatArs(context.budget)}

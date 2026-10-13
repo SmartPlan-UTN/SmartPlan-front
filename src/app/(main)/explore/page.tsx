@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { explorationQuery, readExplorationState, type ExplorationSearchParams } from "@/components/explore";
 import { ExploreTabs } from "@/components/explore";
 import { Container, PageKicker } from "@/components/layout";
 
@@ -9,25 +10,31 @@ export const metadata: Metadata = {
   title: "Explorar",
 };
 
-export default function ExplorePage() {
+export default async function ExplorePage({ searchParams }: { searchParams: Promise<ExplorationSearchParams> }) {
+  const initialState = readExplorationState(await searchParams);
   return (
     <div className={styles.backdrop}>
       <Container>
         <div className={styles.page}>
-          <header className="sp-page-intro">
-            <PageKicker>Explorá a tu manera</PageKicker>
-            <h1 className={`sp-page-title ${styles.title}`}>
-              Encontrá algo
-              <span className={`sp-page-title-accent ${styles.titleAccent}`}>
-                {" "}que te pinte.
-              </span>
-            </h1>
-            <p className="sp-page-lead">
-              Buscá una experiencia o descubrí recorridos que ya tienen
-              sentido juntos.
-            </p>
-          </header>
-          <ExploreTabs />
+          <ExploreTabs
+            key={explorationQuery(initialState)}
+            initialState={initialState}
+            intro={
+              <header className="sp-page-intro">
+                <PageKicker>Explorá a tu manera</PageKicker>
+                <h1 className={`sp-page-title ${styles.title}`}>
+                  Encontrá algo
+                  <span className="sp-page-title-accent">
+                    {" "}que te guste.
+                  </span>
+                </h1>
+                <p className="sp-page-lead">
+                  Buscá una experiencia o descubrí recorridos que ya tienen
+                  sentido juntos.
+                </p>
+              </header>
+            }
+          />
         </div>
       </Container>
     </div>

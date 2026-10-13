@@ -42,7 +42,6 @@ const STATUS_OPTIONS: Array<{ value: StatusFilter; label: string }> = [
   { value: "", label: "Estado: Todos" },
   { value: "active", label: "Activo" },
   { value: "suspended", label: "Suspendido" },
-  { value: "banned", label: "Baneado" },
 ];
 
 const integerFormatter = new Intl.NumberFormat("es-AR");
@@ -94,7 +93,7 @@ function SortableHeading({
 function readableError(error: unknown, fallback: string): string {
   if (error instanceof ApiError) {
     if (error.code === "ADMIN_SELF_STATUS_CHANGE") {
-      return "No podés suspender ni banear tu propia cuenta.";
+      return "No podés suspender tu propia cuenta.";
     }
     if (error.code === "USER_NOT_FOUND") {
       return "El usuario ya no existe.";

@@ -24,12 +24,10 @@
   gap: var(--s-5);
 }
 
+/* One line next to the tab switch, so the filters and results start
+   higher on the page. */
 .title {
-  font-size: clamp(38px, 5vw, 64px);
-}
-
-.titleAccent {
-  display: block;
+  font-size: clamp(36px, 4vw, 52px);
 }
 
 @media (max-width: 560px) {

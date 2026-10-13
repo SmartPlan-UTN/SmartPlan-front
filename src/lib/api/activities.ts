@@ -14,10 +14,12 @@ import { apiClient } from './client';
  * `SmartPlan-back`.
  */
 export async function searchActivities(
-  params: ActivitySearchParams
+  params: ActivitySearchParams,
+  options: { signal?: AbortSignal } = {}
 ): Promise<PaginatedResult<ActivitySearchResult>> {
   return apiClient.get<PaginatedResult<ActivitySearchResult>>('/activities', {
     params,
+    signal: options.signal,
   });
 }
 
@@ -34,9 +36,11 @@ export async function getActivity(id: number): Promise<ActivityDetailResult> {
  * Backend contract: `GET /activities/map`.
  */
 export async function getActivityMapMarkers(
-  params: MapActivitiesParams
+  params: MapActivitiesParams,
+  options: { signal?: AbortSignal } = {}
 ): Promise<PaginatedResult<ActivityMapMarker>> {
   return apiClient.get<PaginatedResult<ActivityMapMarker>>('/activities/map', {
     params,
+    signal: options.signal,
   });
 }
