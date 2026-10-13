@@ -425,3 +425,11 @@ Things that have been spotted but don't have an owner yet:
 | 2026-10-12 | Issue #140 (`SMART-140-preserve-explore-filters`): preserve supported search parameters through list/map navigation and initialize the list from the return URL. Price errors are announced beside both inputs; activity and plan requests pause until the range is valid. Cancelled searches cannot overwrite results. Regression tests cover restoration and invalid-range recovery. |
 
 2026-10-12 — `fix/103-generation-preferences` implements back #103 / front #20/#30 in an isolated worktree from `origin/develop`. Verification and PR links are recorded in the ticket table above. Staging data and concurrent photo work are untouched.
+
+## 2026-10-12 — Generation waiting experience (#146)
+
+- **In progress** · branch `fix/146-generation-wait` · PR: not opened. CU17/CU19.
+- Always show indeterminate activity and only the current backend-confirmed stage; remove elapsed/stage/estimated timing from the visible wait.
+- At 15 s, offer keep-waiting/back while polling the same request. Connection failures preserve that request; `GENERATION_TIMEOUT` shows a terminal error. Stale POST/poll responses are ignored after navigation or replacement.
+- Validation: 873 frontend tests, lint and production build passed. Playwright desktop/mobile checks use simulated responses (no provider calls), including a 390 px viewport, animated progress, no horizontal overflow and the terminal timeout message.
+- Backend #119 provides the absolute 30 s deadline. Staging validation remains pending by agreement; this task changes local code only.

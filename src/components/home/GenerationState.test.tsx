@@ -45,7 +45,10 @@ describe("GenerationState (CU17)", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Buscando actividades" })).toBeInTheDocument();
-    expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Buscando actividades");
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+    expect(screen.queryByText(/transcurridos|en esta etapa|estimamos/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("Entendiendo tu idea")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Etapa confirmada")).toHaveTextContent("Buscando actividades");
   });
 
   it("reflects the backend processing state when detailed stages are unavailable", () => {
@@ -59,7 +62,7 @@ describe("GenerationState (CU17)", () => {
 
     const card = screen.getByText(/ya recibimos tu búsqueda/i).closest("div");
     expect(card).toHaveAttribute("aria-busy", "true");
-    expect(screen.getByRole("progressbar", { name: /ya recibimos tu búsqueda/i })).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: /generación en curso/i })).toBeInTheDocument();
     expect(screen.queryByRole("list", { name: "Etapas confirmadas" })).not.toBeInTheDocument();
   });
 
@@ -67,7 +70,7 @@ describe("GenerationState (CU17)", () => {
     const user = userEvent.setup();
     const { onKeepWaiting, onDiscard } = renderState("timedOut");
 
-    expect(screen.getByText(/sigue tardando más de lo esperado/i)).toBeInTheDocument();
+    expect(screen.getByText(/está tardando más de lo esperado/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /seguir esperando/i }));
 

@@ -83,27 +83,23 @@ function PlanRequestBody({ requestId }: { requestId: number }) {
         </div>
       ) : (
         <div className={styles.waitContent}>
-          {planning.phase === "submitting" ? (
-            <p className={styles.accepting} role="status">Abriendo una nueva búsqueda…</p>
-          ) : (
-            <GenerationState
-              phase={planning.phase === "idle" ? "failed" : planning.phase}
-              failure={planning.failure ?? {
-                code: null,
-                message: "No pudimos recuperar esta búsqueda. Podés volver al inicio y probar otra vez.",
-              }}
-              onKeepWaiting={planning.keepWaiting}
-              onRetry={planning.retry}
-              onDiscard={goHome}
-              canRetry={Boolean(planning.lastSubmission)}
-              mode={planning.mode === "surprise" ? "surprise" : "auto"}
-              query={planning.query}
-              progressStage={planning.progressStage}
-              progressStageAt={planning.progressStageAt}
-              requestedAt={planning.requestedAt}
-              estimatedRemainingSeconds={planning.estimatedRemainingSeconds}
-            />
-          )}
+          <GenerationState
+            phase={planning.phase === "idle" ? "failed" : planning.phase}
+            failure={planning.failure ?? {
+              code: null,
+              message: "No pudimos recuperar esta búsqueda. Podés volver al inicio y probar otra vez.",
+            }}
+            onKeepWaiting={planning.keepWaiting}
+            onRetry={planning.retry}
+            onDiscard={goHome}
+            canRetry={Boolean(planning.lastSubmission)}
+            mode={planning.mode === "surprise" ? "surprise" : "auto"}
+            query={planning.query}
+            progressStage={planning.progressStage}
+            progressStageAt={planning.progressStageAt}
+            requestedAt={planning.requestedAt}
+            estimatedRemainingSeconds={planning.estimatedRemainingSeconds}
+          />
         </div>
       )}
     </section>

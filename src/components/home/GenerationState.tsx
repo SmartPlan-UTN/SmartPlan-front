@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-
 import { Button, Icon } from "@/components/ui";
 import type { PlanRequestFailure, PlanRequestPhase } from "@/hooks";
 import type { PlanRequestProgressStage } from "@/types";
@@ -60,22 +58,6 @@ const WAITING_LABEL: Record<GenerationMode, { queued: string; working: string }>
   },
 };
 
-function elapsedLabel(start: string | null | undefined, now: number): string | null {
-  if (!start) return null;
-  const seconds = Math.max(0, Math.floor((now - new Date(start).getTime()) / 1000));
-  if (!Number.isFinite(seconds)) return null;
-  if (seconds < 60) return `${seconds} s transcurridos`;
-  const minutes = Math.floor(seconds / 60);
-  const remainder = seconds % 60;
-  return remainder < 10 ? `${minutes} min transcurridos` : `${minutes} min ${remainder} s transcurridos`;
-}
-
-function remainingLabel(seconds: number | null | undefined): string | null {
-  if (seconds == null || seconds <= 0 || !Number.isFinite(seconds)) return null;
-  if (seconds < 60) return `Estimamos unos ${seconds} s más`;
-  return `Estimamos unos ${Math.ceil(seconds / 60)} min más`;
-}
-
 export function GenerationState({
   phase,
   failure,
@@ -87,30 +69,19 @@ export function GenerationState({
   note,
   query,
   progressStage = null,
-  progressStageAt,
-  requestedAt,
-  estimatedRemainingSeconds,
 }: GenerationStateProps) {
-  const [now, setNow] = useState(() => Date.now());
-  const waiting = phase === "submitting" || phase === "pending" || phase === "processing";
-  const steps = STEPS[mode];
-  const activeIndex = progressStage ? steps.findIndex((step) => step.id === progressStage) : -1;
-  const activeStep = activeIndex >= 0 ? steps[activeIndex] : null;
-  const elapsed = useMemo(() => elapsedLabel(requestedAt, now), [now, requestedAt]);
-  const stageElapsed = useMemo(() => elapsedLabel(progressStageAt, now), [now, progressStageAt]);
-  const remaining = remainingLabel(estimatedRemainingSeconds);
-  const hasActiveStage = activeIndex >= 0;
-
-  useEffect(() => {
-    if (!waiting || !requestedAt) return;
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, [requestedAt, waiting]);
+  const waiting = ["submitting", "pending", "processing", "timedOut"].includes(phase);
+  const activeStep = STEPS[mode].find((step) => step.id === progressStage);
+  const delayed = phase === "timedOut";
+  const connectionLost = failure?.code === "STATUS_UNAVAILABLE";
 
   if (phase === "failed") {
-    const surpriseCopy = mode === "surprise" && failure
-      ? surpriseGenerationErrorCopy({ code: failure.code })
+    const timeoutCopy = failure?.code === "GENERATION_TIMEOUT"
+      ? { title: "Tu pedido superó el tiempo de espera", body: "No pudimos completar el plan a tiempo. Podés volver a intentarlo." }
       : null;
+    const surpriseCopy = timeoutCopy ?? (mode === "surprise" && failure
+      ? surpriseGenerationErrorCopy({ code: failure.code })
+      : null);
 
     return (
       <div className={styles.generationState}>
@@ -120,22 +91,6 @@ export function GenerationState({
           <p className="sp-body">{surpriseCopy?.body ?? failure?.message ?? "Intentá de nuevo en un momento."}</p>
           <div className={styles.generationActions}>
             {canRetry ? <Button onClick={onRetry}><Icon name="repeat" size={15} />Reintentar</Button> : null}
-            <Button variant="ghostEmber" onClick={onDiscard}>Volver al buscador</Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (phase === "timedOut") {
-    return (
-      <div className={styles.generationState}>
-        <div className={styles.generationCard}>
-          <span className={styles.generationEyebrow}>Seguimos en eso</span>
-          <h2 className="sp-h3">Sigue tardando más de lo esperado</h2>
-          <p className="sp-body">La búsqueda sigue activa. Podés quedarte y retomamos el mismo pedido.</p>
-          <div className={styles.generationActions}>
-            <Button onClick={onKeepWaiting}>Seguir esperando</Button>
             <Button variant="ghostEmber" onClick={onDiscard}>Volver al buscador</Button>
           </div>
         </div>
@@ -165,41 +120,19 @@ export function GenerationState({
           {query ? <p className={styles.generationQuery}>“{query}”</p> : null}
           {note ? <p className={styles.generationNote}>{note}</p> : null}
 
-          {hasActiveStage ? (
-            <ol className={styles.progressSteps} aria-label="Etapas confirmadas">
-              {steps.slice(0, activeIndex + 1).map((step, index) => {
-                const active = step.id === progressStage;
-                const confirmed = index < activeIndex;
-                return (
-                  <li
-                    key={step.id}
-                    className={styles.progressStep}
-                    data-active={active}
-                    data-confirmed={confirmed}
-                    aria-current={active ? "step" : undefined}
-                  >
-                    <span className={styles.stepMark} aria-hidden="true">
-                      {confirmed ? <Icon name="check" size={11} /> : active ? <span className={styles.stepDot} /> : null}
-                    </span>
-                    <span>{step.label}</span>
-                  </li>
-                );
-              })}
-            </ol>
-          ) : (
-            <div className={styles.waitingProgress} role="progressbar" aria-label={heading} aria-valuetext={heading}>
-              <span className={styles.indeterminateTrack} aria-hidden="true" />
+          <div className={styles.waitingProgress} role="progressbar" aria-label="Generación en curso">
+            <span className={styles.indeterminateTrack} aria-hidden="true" />
+          </div>
+          {activeStep ? <p className={styles.activeStage} aria-label="Etapa confirmada">{activeStep.label}</p> : null}
+          {delayed ? (
+            <div role="status">
+              <p className="sp-body">{connectionLost ? "No podemos consultar el estado de tu pedido" : "Está tardando más de lo esperado"}</p>
+              <p className="sp-body">{connectionLost ? "Revisá tu conexión. Volveremos a consultar el mismo pedido." : "Todavía no recibimos un resultado. Podés seguir esperando o volver."}</p>
             </div>
-          )}
-
-          {activeStep && stageElapsed ? <p className={styles.activeStage}>{stageElapsed.replace(" transcurridos", " en esta etapa")}</p> : null}
-          {elapsed || remaining ? (
-            <p className={styles.generationTiming} aria-live="polite">
-              {elapsed}{elapsed && remaining ? <span aria-hidden="true"> · </span> : null}{remaining}
-            </p>
           ) : null}
 
           <div className={styles.generationActions}>
+            {delayed ? <Button onClick={onKeepWaiting}>Seguir esperando</Button> : null}
             <Button variant="ghostEmber" onClick={onDiscard}>Volver al inicio</Button>
           </div>
         </div>

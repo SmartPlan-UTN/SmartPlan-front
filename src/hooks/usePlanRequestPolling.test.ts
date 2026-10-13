@@ -112,6 +112,10 @@ describe("usePlanRequestPolling", () => {
               activityNames: ["Degustación", "Almuerzo", "Paseo"],
               status: { key: "generated", name: "Generated" },
               viewerPlanState: "selectable",
+            activeOutingId: null,
+            kind: "generated",
+            visibility: "private",
+            ownedByViewer: true,
               details: [],
             },
           ],
@@ -194,7 +198,7 @@ describe("usePlanRequestPolling", () => {
     expect(requestId).toBe(42);
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(90000);
+      await vi.advanceTimersByTimeAsync(15000);
     });
 
     expect(result.current.phase).toBe("timedOut");
@@ -210,6 +214,7 @@ describe("usePlanRequestPolling", () => {
 
     await act(async () => {
       result.current.keepWaiting();
+      await vi.advanceTimersByTimeAsync(2200);
     });
 
     expect(createPlanRequest).toHaveBeenCalledTimes(1);
@@ -361,4 +366,51 @@ describe("usePlanRequestPolling", () => {
     expect(result.current.lastSubmission?.payload).toEqual({ query: "algo tranquilo" });
   });
 
+});
+
+describe("generation polling races", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    createPlanRequest.mockReset();
+    getPlanRequestStatus.mockReset();
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it("keeps polling after the delay notice and accepts a terminal result without a click", async () => {
+    createPlanRequest.mockResolvedValue(accepted());
+    getPlanRequestStatus.mockResolvedValue(status());
+    const { result } = renderHook(() => usePlanRequestPolling());
+    await act(async () => result.current.submit({ query: "coffee" }));
+    await act(async () => vi.advanceTimersByTimeAsync(15000));
+    expect(result.current.phase).toBe("timedOut");
+    getPlanRequestStatus.mockResolvedValue(status({ statusKey: "failed", failureCode: "GENERATION_TIMEOUT" }));
+    await act(async () => vi.advanceTimersByTimeAsync(2500));
+    expect(result.current.failure?.code).toBe("GENERATION_TIMEOUT");
+    expect(result.current.phase).toBe("failed");
+    expect(createPlanRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores an accepted POST after leaving the screen", async () => {
+    let resolve!: (value: PlanRequestAccepted) => void;
+    createPlanRequest.mockReturnValue(new Promise<PlanRequestAccepted>(r => { resolve = r; }));
+    const { result } = renderHook(() => usePlanRequestPolling());
+    act(() => result.current.submit({ query: "coffee" }));
+    act(() => result.current.discard());
+    await act(async () => resolve(accepted()));
+    expect(result.current.phase).toBe("idle");
+    expect(getPlanRequestStatus).not.toHaveBeenCalled();
+  });
+
+  it("reports a lost connection without declaring the server request failed", async () => {
+    createPlanRequest.mockResolvedValue(accepted());
+    getPlanRequestStatus.mockRejectedValue(new Error("offline"));
+    const { result } = renderHook(() => usePlanRequestPolling());
+    await act(async () => result.current.submit({ query: "coffee" }));
+    expect(result.current.phase).toBe("timedOut");
+    expect(result.current.failure?.code).toBe("STATUS_UNAVAILABLE");
+    getPlanRequestStatus.mockResolvedValue(status({ statusKey: "generated", plans: [] }));
+    await act(async () => vi.advanceTimersByTimeAsync(3500));
+    expect(result.current.phase).toBe("generated");
+    expect(createPlanRequest).toHaveBeenCalledTimes(1);
+  });
 });
