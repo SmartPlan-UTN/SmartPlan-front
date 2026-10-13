@@ -50,7 +50,7 @@ const OUTING = {
   ],
 };
 
-function ownRating(activityId: number, score: number, moderationStatus = "approved") {
+function ownRating(activityId: number, score: number) {
   return {
     id: activityId * 100,
     score,
@@ -60,8 +60,8 @@ function ownRating(activityId: number, score: number, moderationStatus = "approv
     updatedAt: "2026-08-29T00:00:00.000Z",
     activityId,
     planId: 7,
-    moderationStatus,
-    moderationReason: null,
+    isOwn: true,
+    removed: false,
   };
 }
 
@@ -595,7 +595,7 @@ describe("FeedbackDialog → rating the activities (CU23 → CU44)", () => {
     createRating.mockImplementation((id: number, input: { score: number }) =>
       id === 11
         ? Promise.reject(new ApiError({ message: "Se cortó la conexión.", type: "NETWORK" }))
-        : Promise.resolve(ownRating(id, input.score, "rejected"))
+        : Promise.resolve(ownRating(id, input.score))
     );
     const { onSubmitted } = setup();
     await sendFeedback();
@@ -620,7 +620,7 @@ describe("FeedbackDialog → rating the activities (CU23 → CU44)", () => {
     await userEvent.click(screen.getByRole("button", { name: /guardar valoraciones/i }));
     expect(createRating).toHaveBeenCalledTimes(1);
     expect(createRating).toHaveBeenCalledWith(11, { planId: 7, score: 4, comment: undefined });
-    expect(await screen.findByText(/no pasó la moderación/i)).toBeInTheDocument();
+    expect(await screen.findByText(/gracias por valorar/i)).toBeInTheDocument();
   });
 
   it("updates a rating created elsewhere meanwhile", async () => {
@@ -644,22 +644,6 @@ describe("FeedbackDialog → rating the activities (CU23 → CU44)", () => {
 
     expect(updateRating).toHaveBeenCalledWith(1100, { score: 2, comment: null });
     expect(await screen.findByText(/gracias por valorar/i)).toBeInTheDocument();
-  });
-
-  it("warns when a comment didn't pass moderation", async () => {
-    createRating.mockImplementation((id: number, input: { score: number }) =>
-      Promise.resolve(ownRating(id, input.score, "rejected"))
-    );
-    setup();
-    await sendFeedback();
-    await skipPhotos();
-    await userEvent.click(await screen.findByRole("button", { name: /valorar actividades/i }));
-
-    const [lunch] = screen.getAllByRole("radiogroup");
-    await userEvent.click(within(lunch).getByRole("radio", { name: /1 estrella/i }));
-    await userEvent.click(screen.getByRole("button", { name: /guardar valoraciones/i }));
-
-    expect(await screen.findByText(/no pasó la moderación/i)).toBeInTheDocument();
   });
 
   it("skipping the activities still reports the saved feedback", async () => {

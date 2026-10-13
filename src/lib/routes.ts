@@ -34,8 +34,7 @@ export const ROUTES = {
   adminActivities: "/admin/activities",
   adminPlaces: "/admin/places",
   adminPlans: "/admin/plans",
-  adminRatings: "/admin/ratings",
-  adminExperiences: "/admin/experiences",
+  adminReports: "/admin/reports",
   adminUsers: "/admin/users",
 } as const;
 
