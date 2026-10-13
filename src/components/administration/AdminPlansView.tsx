@@ -12,13 +12,15 @@ import type { AdminPlan, AdminPlansResult, PlanKind, PlanStatusKey, PlanVisibili
 import { AdminPlanDialog } from "./AdminPlanDialog";
 import styles from "./AdminManagement.module.css";
 import {
-  PLAN_KIND_COPY,
+  EXPLORE_HIDDEN_REASON,
   PLAN_KIND_OPTIONS,
   PLAN_STATUS_COPY,
   PLAN_STATUS_OPTIONS,
-  PLAN_VISIBILITY_LABEL,
   PLAN_VISIBILITY_OPTIONS,
-  explorePresence,
+  exploreHiddenCause,
+  planKindCopy,
+  planStatusCopy,
+  planVisibilityLabel,
 } from "./planAdminPresentation";
 
 type StatusFilter = "" | PlanStatusKey;
@@ -148,7 +150,7 @@ export function AdminPlansView() {
         : <><div className={`${styles.tableScroll} ${loading ? styles.tableLoading : ""}`}><table className={styles.table}><thead><tr><th>Plan</th><th>Propietario</th><th>Estado</th><th>Origen y visibilidad</th><th>Personas</th><th>Actividades</th><th>Costo / duración</th><th>Acciones</th></tr></thead><tbody>{plans.map((plan) => <tr key={plan.id}>
           <td><span className={styles.entityName}>{plan.title}</span><span className={styles.secondary}>#{plan.id}</span></td>
           <td><span className={styles.entityName}>{plan.owner.name} {plan.owner.lastName}</span><span className={styles.secondary}>{plan.owner.email}</span></td>
-          <td><span className={styles.status} title={PLAN_STATUS_COPY[plan.status.key].description}>{PLAN_STATUS_COPY[plan.status.key].label}</span></td>
+          <td><PlanStatusCell status={plan.status} /></td>
           <td><PlanVisibilityCell plan={plan} /></td><td>{plan.peopleCount}</td><td>{plan.activityCount}</td><td>{formatArs(plan.estimatedTotalCost)}<span className={styles.secondary}>{formatDuration(plan.estimatedTotalDuration)}</span></td>
           <td><span className={styles.actions}><button className={styles.iconButton} type="button" aria-label={`Editar ${plan.title}`} onClick={() => { setActionError(null); setEditing(plan); }}><Icon name="pencil" size={16} /></button><button className={`${styles.iconButton} ${styles.dangerButton}`} type="button" aria-label={`Eliminar ${plan.title}`} onClick={() => { setActionError(null); setDeleting(plan); }}><Icon name="trash-2" size={16} /></button></span></td>
         </tr>)}</tbody></table></div></>}
@@ -160,13 +162,25 @@ export function AdminPlansView() {
   );
 }
 
+function PlanStatusCell({ status }: { status: AdminPlan["status"] }) {
+  const copy = planStatusCopy(status);
+  return <span className={styles.status} title={copy.description || undefined}>{copy.label}</span>;
+}
+
 function PlanVisibilityCell({ plan }: { plan: AdminPlan }) {
-  const presence = explorePresence(plan);
+  const kind = planKindCopy(plan.kind);
+  const visibility = planVisibilityLabel(plan.visibility);
+  const hiddenCause = exploreHiddenCause(plan.kind, plan.visibility, plan.status.key);
+  if (!kind || !visibility || hiddenCause === undefined) {
+    return <span className={styles.secondary}>Sin datos de origen</span>;
+  }
   return (
     <>
-      <span className={styles.entityName} title={PLAN_KIND_COPY[plan.kind].description}>{PLAN_KIND_COPY[plan.kind].label}</span>
+      <span className={styles.entityName} title={kind.description}>{kind.label}</span>
       <span className={styles.secondary}>
-        {PLAN_VISIBILITY_LABEL[plan.visibility]} · <span className={presence.visible ? styles.exploreVisible : undefined}>{presence.visible ? presence.reason : `No se ve en Explorar. ${presence.reason}`}</span>
+        {visibility} · {hiddenCause === null
+          ? <span className={styles.exploreVisible}>Visible en Explorar</span>
+          : <span>No se ve en Explorar. {EXPLORE_HIDDEN_REASON[hiddenCause]}</span>}
       </span>
     </>
   );

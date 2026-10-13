@@ -406,6 +406,12 @@
   font-weight: var(--w-label);
 }
 
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .fieldHint {
   color: var(--fg-3);
   font-size: 12.5px;

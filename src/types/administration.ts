@@ -193,9 +193,12 @@ export interface AdminPlan {
   estimatedTotalDuration: number;
   peopleCount: number;
   activityCount: number;
-  /** Where the plan comes from; only `authored` plans can reach Explorar (#160). */
-  kind: PlanKind;
-  visibility: PlanVisibility;
+  /**
+   * Where the plan comes from; only `authored` plans can reach Explorar (#160).
+   * Optional because back versions before SmartPlan-back#124 don't send it.
+   */
+  kind?: PlanKind;
+  visibility?: PlanVisibility;
   owner: { id: number; name: string; lastName: string; email: string };
   status: { key: PlanStatusKey; name: string };
   createdAt: string;

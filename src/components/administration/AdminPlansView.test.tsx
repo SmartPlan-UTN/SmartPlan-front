@@ -138,6 +138,37 @@ describe("AdminPlansView", () => {
 
     const dialog = screen.getByRole("dialog");
     expect(within(dialog).getByText("Ya se realizó. No cambia su visibilidad.")).toBeInTheDocument();
-    expect(within(dialog).getByText(/No aparece en Explorar: su autor no lo publicó/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/No aparece en Explorar\. Su autor no lo publicó\. Cambiar el estado no lo publica/)).toBeInTheDocument();
+  });
+
+  it("warns that cancelling a public plan removes it from Explorar (#160)", async () => {
+    vi.mocked(listAdminPlans).mockResolvedValue(result([plan({ visibility: "public" })]));
+    const user = userEvent.setup();
+    render(<AdminPlansView />);
+    await screen.findByText("Sábado en Mendoza");
+
+    await user.click(screen.getByRole("button", { name: "Editar Sábado en Mendoza" }));
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByText("Este plan aparece en Explorar.")).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText("Estado"), "cancelled");
+    expect(within(dialog).getByText("Hoy aparece en Explorar. Si lo guardás como cancelado, deja de mostrarse.")).toBeInTheDocument();
+  });
+
+  it("still renders and edits plans from a back without origin data or with an unknown status", async () => {
+    const legacy = plan({ status: { key: "archived" as AdminPlan["status"]["key"], name: "Archivado" } });
+    delete legacy.kind;
+    delete legacy.visibility;
+    vi.mocked(listAdminPlans).mockResolvedValue(result([legacy]));
+    const user = userEvent.setup();
+    render(<AdminPlansView />);
+
+    expect(await screen.findByText("Archivado", { selector: "td span" })).toBeInTheDocument();
+    expect(screen.getByText("Sin datos de origen")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Editar Sábado en Mendoza" }));
+    expect(screen.getByLabelText("Estado")).toHaveValue("archived");
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+    await waitFor(() => expect(updateAdminPlan).toHaveBeenCalledWith(12, expect.objectContaining({ status: "archived" })));
   });
 });

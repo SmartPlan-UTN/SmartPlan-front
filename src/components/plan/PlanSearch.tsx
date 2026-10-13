@@ -245,11 +245,16 @@ export function PlanSearch({ head }: { head?: ReactNode }) {
                 ? "No encontramos planes publicados para tu búsqueda. Probá con otras palabras o ajustando los filtros."
                 : "Cuando alguien publique un plan, lo vas a ver acá."}
             </p>
-            <p className="sp-small">
-              En Explorar solo aparecen los planes que sus autores publicaron.
-              Los planes generados y tus salidas son personales y no se publican
-              automáticamente; podés publicar los tuyos desde Mis planes.
-            </p>
+            {hasCriteria ? null : (
+              <p className="sp-small">
+                En Explorar solo aparecen los planes que sus autores publicaron.
+                Los resultados de Planificar y las salidas son personales y no se
+                publican.
+                {sessionStatus === "authenticated"
+                  ? " Podés publicar los tuyos desde Mis planes."
+                  : null}
+              </p>
+            )}
           </div>
         ) : null}
 
