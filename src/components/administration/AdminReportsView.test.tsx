@@ -118,6 +118,7 @@ describe("AdminReportsView (#156)", () => {
           reason: "harassment",
           detail: "Insulta a todos.",
           createdAt: "2026-10-10T10:00:00.000Z",
+          system: false,
           reporter: { id: 4, name: "Diego", lastName: "Ruiz" },
         },
         {
@@ -125,6 +126,15 @@ describe("AdminReportsView (#156)", () => {
           reason: "other",
           detail: "Marcada por la moderación automática anterior",
           createdAt: "2026-10-11T10:00:00.000Z",
+          system: true,
+          reporter: null,
+        },
+        {
+          id: 3,
+          reason: "spam",
+          detail: null,
+          createdAt: "2026-10-12T10:00:00.000Z",
+          system: false,
           reporter: null,
         },
       ],
@@ -137,7 +147,10 @@ describe("AdminReportsView (#156)", () => {
     const reports = await screen.findByRole("list", { name: "Denuncias recibidas" });
     expect(within(reports).getByText("Acoso o insulto")).toBeInTheDocument();
     expect(within(reports).getByText("Insulta a todos.")).toBeInTheDocument();
+    expect(within(reports).getByText(/Diego Ruiz/)).toBeInTheDocument();
     expect(within(reports).getByText(/Moderación automática anterior/)).toBeInTheDocument();
+    // A deleted account's report is not mistaken for the system's.
+    expect(within(reports).getByText(/Cuenta eliminada/)).toBeInTheDocument();
     expect(getContentReport).toHaveBeenCalledWith("rating", 31);
   });
 

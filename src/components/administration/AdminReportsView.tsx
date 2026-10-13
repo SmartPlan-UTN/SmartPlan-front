@@ -28,6 +28,7 @@ import {
   REPORT_REASON_LABELS,
   type ContentReportCounts,
   type ContentReportDetail,
+  type ContentReportItem,
   type ContentReportsQuery,
   type ContentReportsResult,
   type ContentReportSummary,
@@ -363,6 +364,12 @@ export function AdminReportsView() {
   );
 }
 
+/** Who made a report: a user, a deleted account or the old moderation. */
+function reporterLabel({ system, reporter }: ContentReportItem): string {
+  if (system) return "Moderación automática anterior";
+  return reporter ? `${reporter.name} ${reporter.lastName}` : "Cuenta eliminada";
+}
+
 function ReportCard({
   item,
   saving,
@@ -497,9 +504,7 @@ function ReportCard({
                   <span>
                     <span className={styles.reportReason}>{REPORT_REASON_LABELS[report.reason]}</span>
                     {" · "}
-                    {report.reporter
-                      ? `${report.reporter.name} ${report.reporter.lastName}`
-                      : "Moderación automática anterior"}
+                    {reporterLabel(report)}
                     {" · "}
                     <time dateTime={report.createdAt}>{formatRelativeTime(report.createdAt)}</time>
                   </span>

@@ -78,7 +78,9 @@ export interface ContentReportItem {
   reason: ReportReason;
   detail: string | null;
   createdAt: string;
-  /** `null` for a report the system raised when the old moderation ended. */
+  /** Raised by the system when the old automatic moderation ended. */
+  system: boolean;
+  /** `null` for a system report, and for a reporter whose account was deleted. */
   reporter: { id: number; name: string; lastName: string } | null;
 }
 
