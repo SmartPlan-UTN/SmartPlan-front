@@ -2,7 +2,7 @@ import { BaseEntity } from './common';
 import type { PaginatedResult, SortDirection } from './common';
 import type { User } from './users';
 import type { RoleKey, UserStatusKey } from './users';
-import type { PlanStatusKey } from './plans';
+import type { PlanKind, PlanStatusKey, PlanVisibility } from './plans';
 
 /**
  * Possible actions recorded in the audit log.
@@ -185,6 +185,9 @@ export interface AdminActivityInput {
 export type UpdateAdminActivityInput = Partial<AdminActivityInput>;
 export type AdminActivitiesResult = PaginatedResult<AdminActivity>;
 
+/** Why Explorar leaves a plan out. Matches `ExploreHiddenCause` in SmartPlan-back. */
+export type ExploreHiddenCause = 'generated' | 'outing' | 'private' | 'cancelled';
+
 /** Plan projection used by PAN 22 (CU60). */
 export interface AdminPlan {
   id: number;
@@ -194,6 +197,16 @@ export interface AdminPlan {
   estimatedTotalDuration: number;
   peopleCount: number;
   activityCount: number;
+  /**
+   * Where the plan comes from; only `authored` plans can reach Explorar (#160).
+   * Optional because back versions before SmartPlan-back#124 don't send it.
+   */
+  kind?: PlanKind;
+  visibility?: PlanVisibility;
+  /** Whether Explorar > Planes lists it right now, as SmartPlan-back decides. */
+  listedInExplore?: boolean;
+  /** Why Explorar leaves it out; `null` when listed. */
+  exploreHiddenCause?: ExploreHiddenCause | null;
   owner: { id: number; name: string; lastName: string; email: string };
   status: { key: PlanStatusKey; name: string };
   createdAt: string;
@@ -203,6 +216,12 @@ export interface AdminPlan {
 export interface AdminPlansQuery {
   search?: string;
   status?: PlanStatusKey;
+  kind?: PlanKind;
+  visibility?: PlanVisibility;
+  /** Whether Explorar > Planes lists it right now, as SmartPlan-back decides. */
+  listedInExplore?: boolean;
+  /** Why Explorar leaves it out; `null` when listed. */
+  exploreHiddenCause?: ExploreHiddenCause | null;
   page?: number;
   limit?: number;
   sortBy?: 'createdAt' | 'title' | 'status' | 'cost';
