@@ -441,3 +441,10 @@ Things that have been spotted but don't have an owner yet:
 - HTTP 408/429 and connection errors keep polling the same request; connection recovery before 15 seconds restores the normal waiting state. Delayed queued requests keep their accepted heading.
 - Removed unused generation props and reviewed CSS selectors; added regression coverage for transient status failures and recovery copy. Staging acceptance remains pending.
 - Validation: lint and production build passed; 880 tests passed in both complete runs (31 focused tests also passed). The reported intermittent frontend failure was not reproduced.
+
+## 2026-10-13 — Keep waiting during delayed submission (#146)
+
+- **In review** · `fix/146-generation-wait` · [PR #175](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/175), CU17/CU19.
+- A delayed POST retains the sending heading until the backend accepts it. Keep waiting dismisses the notice without an ID, resending or cancelling; the choice survives acceptance and polling continues on the same request.
+- New submissions clear the previous ID, and surprise regeneration cannot replace an in-flight delayed request. Tests cover automatic/surprise submission, acceptance after dismissal and discarding a delayed response.
+- Validation: lint and production build passed; the final complete run passed 886 tests. One initial run hit the existing intermittent suggestion timeout in the unchanged `CreatePlanForm` test; its focused repeat (62 tests) and the full repeat passed. Staging acceptance remains pending.

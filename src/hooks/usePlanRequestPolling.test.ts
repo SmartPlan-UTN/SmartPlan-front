@@ -372,9 +372,52 @@ describe("generation polling races", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     createPlanRequest.mockReset();
+    createSurprisePlanRequest.mockReset();
     getPlanRequestStatus.mockReset();
   });
   afterEach(() => vi.useRealTimers());
+
+  it.each(["auto", "surprise"])("dismisses a delayed %s submission without resending and accepts its result", async (kind) => {
+    let resolve!: (value: PlanRequestAccepted) => void;
+    const post = kind === "auto" ? createPlanRequest : createSurprisePlanRequest;
+    post.mockReturnValue(new Promise<PlanRequestAccepted>(r => { resolve = r; }));
+    const requestedAt = new Date().toISOString();
+    getPlanRequestStatus.mockResolvedValue(status({ requestedAt, statusKey: "processing" }));
+    const { result } = renderHook(() => usePlanRequestPolling());
+    act(() => {
+      if (kind === "auto") result.current.submit({ query: "coffee" });
+      else result.current.submitSurprise({ latitude: -32.9, longitude: -68.8 });
+    });
+    await act(async () => vi.advanceTimersByTimeAsync(15000));
+    expect(result.current.phase).toBe("submissionDelayed");
+    expect(result.current.planRequestId).toBeNull();
+    act(() => result.current.regenerate());
+    act(() => result.current.keepWaiting());
+    expect(result.current.phase).toBe("submitting");
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(getPlanRequestStatus).not.toHaveBeenCalled();
+    await act(async () => resolve(accepted({ requestedAt })));
+    await act(async () => vi.advanceTimersByTimeAsync(2500));
+    expect(result.current.phase).toBe("processing");
+    getPlanRequestStatus.mockResolvedValue(status({ statusKey: "generated", plans: [] }));
+    await act(async () => vi.advanceTimersByTimeAsync(2500));
+    expect(result.current.phase).toBe("generated");
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(getPlanRequestStatus).toHaveBeenLastCalledWith(42);
+  });
+
+  it("ignores a delayed acceptance after discarding the submission", async () => {
+    let resolve!: (value: PlanRequestAccepted) => void;
+    createPlanRequest.mockReturnValue(new Promise<PlanRequestAccepted>(r => { resolve = r; }));
+    const { result } = renderHook(() => usePlanRequestPolling());
+    act(() => result.current.submit({ query: "coffee" }));
+    await act(async () => vi.advanceTimersByTimeAsync(15000));
+    act(() => result.current.discard());
+    await act(async () => resolve(accepted()));
+    expect(result.current.phase).toBe("idle");
+    expect(result.current.planRequestId).toBeNull();
+    expect(getPlanRequestStatus).not.toHaveBeenCalled();
+  });
 
   it("keeps polling after the delay notice and accepts a terminal result without a click", async () => {
     createPlanRequest.mockResolvedValue(accepted());

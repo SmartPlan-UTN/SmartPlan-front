@@ -122,6 +122,7 @@ export function LandingHero({
   const composing = phase === "idle";
   const generating =
     phase === "submitting" ||
+    phase === "submissionDelayed" ||
     phase === "pending" ||
     phase === "processing" ||
     phase === "timedOut" ||

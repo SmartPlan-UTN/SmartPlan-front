@@ -67,9 +67,10 @@ export function GenerationState({
   query,
   progressStage = null,
 }: GenerationStateProps) {
-  const waiting = ["submitting", "pending", "processing", "timedOut"].includes(phase);
+  const submitting = phase === "submitting" || phase === "submissionDelayed";
+  const waiting = submitting || ["pending", "processing", "timedOut"].includes(phase);
   const activeStep = STEPS[mode].find((step) => step.id === progressStage);
-  const delayed = phase === "timedOut";
+  const delayed = phase === "timedOut" || phase === "submissionDelayed";
   const connectionLost = failure?.code === "STATUS_UNAVAILABLE";
 
   if (phase === "failed") {
@@ -100,7 +101,7 @@ export function GenerationState({
     );
   }
 
-  const heading = phase === "submitting"
+  const heading = submitting
     ? mode === "surprise" ? "Preparando tu sorpresa" : "Enviando tu búsqueda"
     : activeStep && activeStep.id !== "queued"
       ? activeStep.label

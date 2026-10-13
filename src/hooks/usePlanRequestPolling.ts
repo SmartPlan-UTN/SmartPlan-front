@@ -17,6 +17,7 @@ const GENERIC_ERROR = 'No pudimos generar tu plan. Intentá de nuevo.';
 export type PlanRequestPhase =
   | 'idle'
   | 'submitting'
+  | 'submissionDelayed'
   | 'pending'
   | 'processing'
   | 'timedOut'
@@ -96,6 +97,7 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
   const pollStartedAt = useRef(0);
   const generation = useRef(0);
   const delayedRef = useRef(false);
+  const delayNoticeDismissedRef = useRef(false);
 
   const clearTimers = useCallback(() => {
     if (pollTimeoutRef.current !== null) {
@@ -134,14 +136,15 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
     setPhase(delayedRef.current && ['pending', 'processing'].includes(status.statusKey) ? 'timedOut' : phaseForStatus(status));
   }, []);
 
-  const startPolling = useCallback((id: number, startedAt = Date.now()) => {
+  const startPolling = useCallback((id: number, startedAt = Date.now(), noticeDismissed = false) => {
     const epoch = ++generation.current;
     delayedRef.current = false;
+    delayNoticeDismissedRef.current = noticeDismissed;
     clearTimers();
     activeRequestId.current = id;
     pollStartedAt.current = startedAt;
 
-    displayTimeoutRef.current = setTimeout(() => {
+    if (!noticeDismissed) displayTimeoutRef.current = setTimeout(() => {
       if (generation.current !== epoch || activeRequestId.current !== id) return;
       delayedRef.current = true;
       setPhase('timedOut');
@@ -152,7 +155,7 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
       try {
         const status = await getPlanRequestStatus(id);
         if (generation.current !== epoch || activeRequestId.current !== id) return;
-        if (firstPoll && Date.now() - new Date(status.requestedAt).getTime() >= DISPLAY_TIMEOUT_MS) delayedRef.current = true;
+        if (firstPoll && !delayNoticeDismissedRef.current && Date.now() - new Date(status.requestedAt).getTime() >= DISPLAY_TIMEOUT_MS) delayedRef.current = true;
         firstPoll = false;
         applyStatus(status);
 
@@ -191,6 +194,9 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
   ) => {
     clearTimers();
     activeRequestId.current = null;
+    setPlanRequestId(null);
+    delayedRef.current = false;
+    delayNoticeDismissedRef.current = false;
     setFailure(null);
     setPlans(null);
     setResolvedContext(null);
@@ -203,7 +209,7 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
     displayTimeoutRef.current = setTimeout(() => {
       if (generation.current !== epoch) return;
       delayedRef.current = true;
-      setPhase('timedOut');
+      setPhase('submissionDelayed');
     }, DISPLAY_TIMEOUT_MS);
 
     try {
@@ -214,7 +220,7 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
       if (accepted.mode) setMode(accepted.mode);
       if (accepted.requestedAt) setRequestedAt(accepted.requestedAt);
       setPhase('pending');
-      startPolling(accepted.id, startedAt);
+      startPolling(accepted.id, startedAt, delayNoticeDismissedRef.current);
     } catch (error) {
       if (generation.current !== epoch) return;
       clearTimers();
@@ -248,18 +254,19 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
 
   const regenerate = useCallback(() => {
     if (!lastSubmission || lastSubmission.kind !== 'surprise') return;
-    if (phase === 'submitting' || phase === 'pending' || phase === 'processing') return;
+    if (['submitting', 'submissionDelayed', 'pending', 'processing', 'timedOut'].includes(phase)) return;
     void beginRequest(() => createSurprisePlanRequest(lastSubmission.payload));
   }, [beginRequest, lastSubmission, phase]);
 
   const keepWaiting = useCallback(() => {
-    if (planRequestId === null) return;
+    if (phase !== 'submissionDelayed' && phase !== 'timedOut') return;
     delayedRef.current = false;
+    delayNoticeDismissedRef.current = true;
     setFailure(null);
-    setPhase('pending');
+    setPhase(activeRequestId.current === null ? 'submitting' : 'pending');
     // Polling continues on the same request; this only dismisses the notice.
     if (displayTimeoutRef.current !== null) clearTimeout(displayTimeoutRef.current);
-  }, [planRequestId]);
+  }, [phase]);
 
   const discard = useCallback(() => {
     generation.current += 1;

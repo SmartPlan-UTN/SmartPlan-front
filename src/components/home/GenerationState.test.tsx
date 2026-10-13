@@ -81,6 +81,18 @@ describe("GenerationState (CU17)", () => {
     expect(screen.getByRole("heading", { name: "Ya recibimos tu búsqueda" })).toBeInTheDocument();
   });
 
+  it.each(["auto", "surprise"] as const)("does not announce acceptance during a delayed %s submission", async (mode) => {
+    const onKeepWaiting = vi.fn();
+    render(<GenerationState phase="submissionDelayed" mode={mode} failure={null}
+      onKeepWaiting={onKeepWaiting} onRetry={vi.fn()} onDiscard={vi.fn()} />);
+    expect(screen.getByRole("heading", { name: mode === "auto" ? "Enviando tu búsqueda" : "Preparando tu sorpresa" })).toBeInTheDocument();
+    expect(screen.queryByText("Ya recibimos tu búsqueda")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Etapa confirmada")).not.toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole("button", { name: "Seguir esperando" }));
+    expect(onKeepWaiting).toHaveBeenCalledOnce();
+  });
+
   it.each([true, false])("offers timeout recovery matching retry availability (%s)", (canRetry) => {
     render(<GenerationState phase="failed" failure={{ code: "GENERATION_TIMEOUT", message: "ignored" }}
       canRetry={canRetry} onKeepWaiting={vi.fn()} onRetry={vi.fn()} onDiscard={vi.fn()} />);
