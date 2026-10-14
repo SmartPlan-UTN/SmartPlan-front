@@ -19,7 +19,7 @@ export function placePriceReferenceText(
   price: ExternalPrice | null | undefined,
 ): string | null {
   if (!price) return null;
-  const arsOnly = price.currency === null || price.currency === "ARS";
+  const arsOnly = price.currency === "ARS";
   if (arsOnly && (price.min !== null || price.max !== null)) {
     if (price.min !== null && price.max !== null) {
       return `${formatArs(price.min)} – ${formatArs(price.max)}`;

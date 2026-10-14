@@ -987,14 +987,13 @@
   bottom: 6px;
   max-width: calc(100% - 12px);
   padding: 2px 8px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.55);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.72);
   color: #fff;
   font-size: 0.65rem;
   line-height: 1.5;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .openImageCredit a {

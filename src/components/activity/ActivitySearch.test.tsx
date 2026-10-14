@@ -57,7 +57,7 @@ describe("ActivitySearch", () => {
     render(<ActivitySearch />);
     await screen.findByRole("heading", { name: "Ruta del vino" });
     await user.click(screen.getByRole("button", { name: "Tipo de actividad" }));
-    await user.click(screen.getByRole("option", { name: "Degustación", exact: true }));
+    await user.click(screen.getByRole("option", { name: "Degustación" }));
     expect(searchExplore).toHaveBeenLastCalledWith(expect.objectContaining({ type: "tasting", itemType: "ACTIVITY" }));
     expect(screen.getByRole("link", { name: "Ver mapa" })).toHaveAttribute("href", expect.stringContaining("type=tasting"));
     expect(screen.getByRole("link", { name: "Ver mapa" })).toHaveAttribute("href", expect.stringContaining("itemType=ACTIVITY"));

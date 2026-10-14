@@ -9,6 +9,7 @@ import type { PlaceImage, PlacePhotoMedia, PlaceSummary } from "@/types";
 
 import { AuthenticatedImage } from "./AuthenticatedImage";
 import { GoogleUiKitMedia } from "./GoogleUiKitMedia";
+import { imageLicenseUrl, imageSourceTitle } from "./imageAttribution";
 import styles from "./media.module.css";
 
 export interface PlaceMediaProps {
@@ -66,7 +67,8 @@ function OpenImage({
 }) {
   const [broken, setBroken] = useState(false);
   if (broken) return null;
-  const credit = [image.author, image.license].filter(Boolean).join(" · ");
+  const title = imageSourceTitle(image.sourceUrl);
+  const licenseUrl = imageLicenseUrl(image.license);
   return (
     <figure className={variant === "hero" ? styles.openImageHero : styles.openImage}>
       {/* Wikimedia Commons serves the file; next/image is not configured for it. */}
@@ -81,11 +83,12 @@ function OpenImage({
       <figcaption className={styles.openImageCredit}>
         {isHttpUrl(image.sourceUrl) ? (
           <a href={image.sourceUrl} target="_blank" rel="noopener noreferrer">
-            Foto: {credit || "Wikimedia Commons"}
+            Foto: {[title, image.author].filter(Boolean).join(" · ") || "Wikimedia Commons"}
           </a>
         ) : (
-          <>Foto: {credit || "Wikimedia Commons"}</>
+          <>Foto: {image.author || "Wikimedia Commons"}</>
         )}
+        {image.license ? <>{" · "}{licenseUrl ? <a href={licenseUrl} target="_blank" rel="noopener noreferrer">{image.license}</a> : image.license}</> : null}
       </figcaption>
     </figure>
   );
