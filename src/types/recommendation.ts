@@ -217,6 +217,8 @@ export interface CreateFeedbackPayload {
    * `actualCost`, which is never split across activities.
    */
   activityCosts?: Array<{ activityId: number; amount: number }>;
+  /** How many people shared the reported cost. */
+  partySize?: number;
   actualDuration?: number;
   /** Shares the experience with the community (#106); private when absent. */
   shared?: boolean;

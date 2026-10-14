@@ -9,7 +9,7 @@ import {
   PlaceLeg,
   PlaceReason,
 } from "@/components/activity/inspect/PlaceParts";
-import { AuthenticatedImage, GooglePlaceContext } from "@/components/media";
+import { AuthenticatedImage, GooglePlaceContext, RatingBadge } from "@/components/media";
 import { Icon } from "@/components/ui";
 import { formatDuration, formatPrice, priceCaveat } from "@/lib/utils";
 import { categoryLabel } from "@/lib/utils/catalogLabels";
@@ -216,12 +216,12 @@ export function QuickViewBody({
               <span title={priceCaveat(facts ?? subject) ?? undefined}>
                 {formatPrice(facts ?? subject)}
               </span>
-              {rating !== null ? (
-                <span className={styles.rating}>
-                  <Icon name="star" size={12} aria-hidden="true" />
-                  {rating.toLocaleString("es-AR", { maximumFractionDigits: 1 })}
-                </span>
-              ) : null}
+              <RatingBadge
+                averageRating={rating}
+                ratingCount={facts?.ratingCount ?? 0}
+                externalRating={location?.externalRating ?? facts?.place?.externalRating ?? null}
+                hideEmpty
+              />
             </p>
           </div>
           {onClose ? (

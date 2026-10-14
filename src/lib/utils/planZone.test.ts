@@ -56,6 +56,10 @@ function plan(details: PlanDetailResult["details"]): PlanDetailResult {
     activityNames: [],
     status: { key: "generated", name: "Generated" },
     viewerPlanState: "selectable",
+    activeOutingId: null,
+    kind: "generated",
+    visibility: "private",
+    ownedByViewer: false,
     details,
   };
 }

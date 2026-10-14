@@ -31,6 +31,13 @@ export {
 
 export { searchActivities, getActivity, getActivityMapMarkers } from './activities';
 export {
+  searchExplore,
+  getExploreMapMarkers,
+  getPlaceDetail,
+  claimUiKitElements,
+  getPlacePhotoMedia,
+} from './explore';
+export {
   searchPlans,
   getPlan,
   listOwnPlans,

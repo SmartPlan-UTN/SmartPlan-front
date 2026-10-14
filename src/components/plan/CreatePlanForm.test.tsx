@@ -96,9 +96,6 @@ function canonicalPlan(): OwnPlanDetail {
     estimatedTotalDuration: 150,
     activityCount: 1,
     status: { key: "confirmed", name: "Confirmado" },
-    completedAt: null,
-    feedbackState: "not_available",
-    feedback: null,
     createdAt: "2026-09-01T00:00:00.000Z",
     updatedAt: "2026-09-01T00:00:00.000Z",
     details: [

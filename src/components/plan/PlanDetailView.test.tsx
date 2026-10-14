@@ -65,7 +65,7 @@ function ownPlan(overrides: Partial<OwnPlanDetail> = {}): OwnPlanDetail {
     estimatedCostPerPerson: 4250,
     activityCount: 1,
     status: { key: "confirmed", name: "Confirmado" },
-    visibility: "private",
+
     createdAt: "2026-08-01T00:00:00.000Z",
     updatedAt: "2026-08-12T00:00:00.000Z",
     details: [],

@@ -43,9 +43,6 @@ const plan: OwnPlanDetail = {
   estimatedTotalDuration: 120,
   activityCount: 1,
   status: { key: "confirmed", name: "Confirmado" },
-  completedAt: null,
-  feedbackState: "not_available",
-  feedback: null,
   createdAt: "2026-08-25T12:00:00.000Z",
   updatedAt: "2026-08-25T12:00:00.000Z",
   details: [{

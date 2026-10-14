@@ -88,6 +88,14 @@ import {
   Smartphone,
   X,
   type LucideIcon,
+  Beer,
+  Bike,
+  IceCreamCone,
+  Landmark,
+  Store,
+  Waves,
+  Sun,
+  Tent,
 } from "lucide-react";
 
 /**
@@ -192,6 +200,14 @@ export const iconRegistry = {
   wallet: Wallet,
   wine: Wine,
   smartphone: Smartphone,
+  beer: Beer,
+  bike: Bike,
+  "ice-cream-cone": IceCreamCone,
+  landmark: Landmark,
+  store: Store,
+  waves: Waves,
+  sun: Sun,
+  tent: Tent,
   x: X,
 } satisfies Record<string, LucideIcon>;
 

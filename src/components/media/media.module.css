@@ -851,3 +851,212 @@
   font-size: 0.8125rem;
   opacity: 0.85;
 }
+
+/* ── Rating badge: SmartPlan rating, else attributed Google, else none ── */
+.ratingBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--fg-1, #2a1d12);
+  font-size: var(--t-label, 0.8rem);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ratingBadgeStar {
+  color: var(--ember, #c4622d);
+}
+
+.ratingBadgeCount {
+  color: var(--fg-2, #6b6358);
+  font-weight: 400;
+}
+
+.ratingBadgeEmpty {
+  color: var(--fg-2, #6b6358);
+  font-size: var(--t-label, 0.8rem);
+}
+
+/* ── Card / hero media ─────────────────────────────────────────────── */
+.cardMedia {
+  position: relative;
+  width: 100%;
+  min-height: 150px;
+  container-type: inline-size;
+}
+
+/* Reserve the compact widget's media ratio plus its name, Maps link and
+   attribution before the provider loads. The widget itself keeps natural
+   height, as required by Google; attribution is never clipped. */
+.cardMedia[data-google-slot]::before {
+  display: block;
+  height: calc(66.67cqw + 170px);
+  content: "";
+}
+
+.cardMedia[data-google-slot] > .artwork {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+}
+
+.artwork,
+.artworkHero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.artwork {
+  height: 150px;
+}
+
+.artworkHero {
+  height: clamp(200px, 32vw, 320px);
+  border-radius: var(--r-card, 18px);
+}
+
+.artwork::after,
+.artworkHero::after {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.16), transparent 45%),
+    radial-gradient(circle at 85% 90%, rgba(0, 0, 0, 0.18), transparent 50%);
+  content: "";
+}
+
+.artworkIcon {
+  position: relative;
+  z-index: 1;
+  opacity: 0.9;
+}
+
+.artworkLabel {
+  position: relative;
+  z-index: 1;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.18);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.ownImage,
+.openImage {
+  position: relative;
+  width: 100%;
+  height: 150px;
+  margin: 0;
+  overflow: hidden;
+}
+
+.ownImage img,
+.openImage img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ownImageHero,
+.openImageHero {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--r-card, 18px);
+}
+
+.ownImageHero img,
+.openImageHero img {
+  display: block;
+  width: 100%;
+  height: clamp(220px, 34vw, 360px);
+  object-fit: cover;
+}
+
+.openImageCredit {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  max-width: calc(100% - 12px);
+  padding: 2px 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 0.65rem;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.openImageCredit a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.openImageCredit a:hover {
+  text-decoration: underline;
+}
+
+.heroMedia {
+  position: relative;
+  height: clamp(220px, 34vw, 360px);
+}
+
+.heroMedia > * {
+  position: absolute;
+  inset: 0;
+}
+
+.heroMedia .artworkHero {
+  height: 100%;
+}
+
+/* Places UI Kit: rendered off-screen until Google finished loading, then it
+   replaces the artwork. Google's name, Maps link and attribution stay
+   visible: the element is never clipped. */
+.uiKitPending {
+  position: absolute;
+  inset: 0 0 auto;
+  visibility: hidden;
+}
+
+.uiKitVisible {
+  position: absolute;
+  inset: 0 0 auto;
+}
+
+.uiKitHost {
+  width: 100%;
+}
+
+.uiKitElement {
+  display: block;
+  width: 100%;
+  border: none;
+  background: var(--surface-card, #fffaf3);
+  color-scheme: light;
+  --gmp-mat-font-family: var(--font-bricolage-grotesque), system-ui, sans-serif;
+  --gmp-mat-color-surface: var(--surface-card, #fffaf3);
+  --gmp-mat-color-on-surface: var(--fg-1, #2a1d12);
+  --gmp-mat-color-on-surface-variant: var(--fg-2, #6b6358);
+  --gmp-mat-color-primary: var(--ember, #8a3b12);
+  --gmp-mat-color-secondary-container: var(--ember-10, #f6e6d8);
+  --gmp-mat-color-on-secondary-container: var(--ember-ink, #5b2a0d);
+  --gmp-mat-color-outline-decorative: transparent;
+}
+
+/* ── Place-level Google price reference on cards ─────────────────── */
+.priceRef {
+  color: var(--fg-2, #6b6358);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}

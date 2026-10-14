@@ -20,6 +20,7 @@ import {
 import { formatArs, NO_PRICE_TOTAL_LABEL } from "@/lib/utils";
 import type { FeedbackTag, PlanFeedback } from "@/types";
 
+import { ActivityCostsField, parseCostAmount } from "./ActivityCostsField";
 import {
   ActivityRatingsStep,
   type ActivityRatingsResult,
@@ -130,6 +131,8 @@ export function FeedbackDialog({
   const [tags, setTags] = useState<Set<FeedbackTag>>(() => new Set());
   const [costRaw, setCostRaw] = useState("");
   const [costInputError, setCostInputError] = useState<string | null>(null);
+  const [partyRaw, setPartyRaw] = useState("");
+  const [activityCostsRaw, setActivityCostsRaw] = useState<Record<number, string>>({});
   const [commentOpen, setCommentOpen] = useState(false);
   const [comment, setComment] = useState("");
   const [shared, setShared] = useState(false);
@@ -189,6 +192,8 @@ export function FeedbackDialog({
     setTags(new Set());
     setCostRaw("");
     setCostInputError(null);
+    setPartyRaw("");
+    setActivityCostsRaw({});
     setCommentOpen(false);
     setComment("");
     setPhase("form");
@@ -313,8 +318,19 @@ export function FeedbackDialog({
       dialogRef.current?.querySelector<HTMLInputElement>("#feedback-cost")?.focus();
       return;
     }
+    const activityCosts = Object.entries(activityCostsRaw)
+      .map(([id, raw]) => ({ activityId: Number(id), amount: parseCostAmount(raw) }))
+      .filter(
+        (item): item is { activityId: number; amount: number } =>
+          item.amount !== null,
+      );
+    const partySize = Number.parseInt(partyRaw, 10);
     const outcome = await submission.submit(planId, {
       rating,
+      ...(activityCosts.length > 0 ? { activityCosts } : {}),
+      ...(Number.isInteger(partySize) && partySize >= 1 && partySize <= 1000
+        ? { partySize }
+        : {}),
       tags: tags.size > 0 ? [...tags] : undefined,
       comment: comment.trim() || undefined,
       shared: canShare && shared ? true : undefined,
@@ -637,6 +653,33 @@ export function FeedbackDialog({
                       )}
                     </div>
                   </div>
+
+                  <div className={styles.field}>
+                    <label className={styles.realCostLabel} htmlFor="feedback-party">
+                      ¿Cuántas personas fueron? (opcional)
+                    </label>
+                    <div className={styles.moneyInput}>
+                      <input
+                        id="feedback-party"
+                        inputMode="numeric"
+                        autoComplete="off"
+                        placeholder="Igual que el plan"
+                        value={partyRaw}
+                        disabled={busy}
+                        maxLength={4}
+                        onChange={(event) => {
+                          setPartyRaw(event.target.value.replace(/D/g, "").slice(0, 4));
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <ActivityCostsField
+                    outingId={planId}
+                    disabled={busy}
+                    values={activityCostsRaw}
+                    onChange={setActivityCostsRaw}
+                  />
 
                   <div className={`${styles.field} ${styles.commentField}`}>
                     {commentOpen ? (

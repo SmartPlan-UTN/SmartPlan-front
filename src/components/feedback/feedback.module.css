@@ -1219,3 +1219,13 @@
     padding: var(--s-4);
   }
 }
+
+.moneyRow {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.moneyRow label {
+  font-size: 0.875rem;
+}

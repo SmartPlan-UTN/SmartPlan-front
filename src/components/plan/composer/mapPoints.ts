@@ -21,7 +21,11 @@ export interface MapCandidate {
   longitude: number;
   estimatedCost: number | null;
   price?: Price | null;
-  averageRating: number;
+  /** SmartPlan's own average; null when nobody rated it. */
+  averageRating: number | null;
+  ratingCount?: number;
+  /** The place, with its live attributed Google context. */
+  place?: import("@/types").PlaceSummary | null;
   /** Measured by the server from the search's location, when there is one. */
   distanceKm: number | null;
   categories: ActivityCategorySummary[];
@@ -49,6 +53,8 @@ export function candidatesFromMarkers(
     estimatedCost: marker.estimatedCost,
     price: marker.price ?? null,
     averageRating: marker.averageRating,
+    ratingCount: marker.ratingCount ?? 0,
+    place: marker.place ?? null,
     distanceKm: marker.distanceKm,
     categories: marker.categories,
   }));
@@ -79,6 +85,8 @@ export function candidatesFromAssistant(
         estimatedCost: activity.estimatedCost,
         price: activity.price ?? null,
         averageRating: activity.averageRating,
+        ratingCount: activity.ratingCount,
+        place: activity.place ?? null,
         distanceKm: activity.distanceKm,
         categories: activity.categories,
         activity,

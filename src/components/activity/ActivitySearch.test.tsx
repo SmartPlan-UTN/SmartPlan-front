@@ -7,13 +7,13 @@ import type { ActivitySearchResult, PaginatedResult } from "@/types";
 
 import { ActivitySearch } from "./ActivitySearch";
 
-const searchActivities = vi.hoisted(() => vi.fn());
+const searchExplore = vi.hoisted(() => vi.fn());
 const listCategories = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api", async () => {
   const actual =
     await vi.importActual<typeof import("@/lib/api")>("@/lib/api");
-  return { ...actual, searchActivities, listCategories };
+  return { ...actual, searchExplore, listCategories };
 });
 
 function makeActivity(
@@ -39,7 +39,7 @@ function page(
   overrides: Partial<PaginatedResult<ActivitySearchResult>["pagination"]> = {},
 ): PaginatedResult<ActivitySearchResult> {
   return {
-    data,
+    data: data.map((activity) => ({ ...activity, itemType: "ACTIVITY" as const })),
     pagination: {
       page: 1,
       limit: 20,
@@ -51,8 +51,21 @@ function page(
 }
 
 describe("ActivitySearch", () => {
+  it("filters a subtype and carries the activity and subtype selection to the map", async () => {
+    searchExplore.mockResolvedValue(page([makeActivity()]));
+    const user = userEvent.setup();
+    render(<ActivitySearch />);
+    await screen.findByRole("heading", { name: "Ruta del vino" });
+    await user.click(screen.getByRole("button", { name: "Tipo de actividad" }));
+    await user.click(screen.getByRole("option", { name: "Degustación", exact: true }));
+    expect(searchExplore).toHaveBeenLastCalledWith(expect.objectContaining({ type: "tasting", itemType: "ACTIVITY" }));
+    expect(screen.getByRole("link", { name: "Ver mapa" })).toHaveAttribute("href", expect.stringContaining("type=tasting"));
+    expect(screen.getByRole("link", { name: "Ver mapa" })).toHaveAttribute("href", expect.stringContaining("itemType=ACTIVITY"));
+    await user.click(screen.getByRole("button", { name: "Limpiar" }));
+    expect(searchExplore).toHaveBeenLastCalledWith(expect.objectContaining({ type: undefined }));
+  });
   beforeEach(() => {
-    searchActivities.mockReset();
+    searchExplore.mockReset();
     listCategories.mockReset();
     listCategories.mockResolvedValue({
       data: [],
@@ -65,7 +78,7 @@ describe("ActivitySearch", () => {
   });
 
   it("shows the results grid once the search resolves", async () => {
-    searchActivities.mockResolvedValue(page([makeActivity()]));
+    searchExplore.mockResolvedValue(page([makeActivity()]));
 
     render(<ActivitySearch />);
 
@@ -75,21 +88,21 @@ describe("ActivitySearch", () => {
   });
 
   it("shows how many activities matched, pluralized", async () => {
-    searchActivities.mockResolvedValue(
+    searchExplore.mockResolvedValue(
       page([makeActivity()], { total: 1, totalPages: 1 }),
     );
 
     render(<ActivitySearch />);
 
     expect(
-      await screen.findByText("actividad encontrada cerca tuyo", {
+      await screen.findByText("resultado en Mendoza", {
         exact: false,
       }),
     ).toBeInTheDocument();
   });
 
   it("shows the empty state when there are no results", async () => {
-    searchActivities.mockResolvedValue(page([]));
+    searchExplore.mockResolvedValue(page([]));
 
     render(<ActivitySearch />);
 
@@ -97,7 +110,7 @@ describe("ActivitySearch", () => {
   });
 
   it("shows the error state and retries on demand", async () => {
-    searchActivities.mockRejectedValueOnce(
+    searchExplore.mockRejectedValueOnce(
       new ApiError({ message: "No se pudo conectar.", type: "NETWORK" }),
     );
     const user = userEvent.setup();
@@ -105,7 +118,7 @@ describe("ActivitySearch", () => {
 
     expect(await screen.findByText("No se pudo conectar.")).toBeInTheDocument();
 
-    searchActivities.mockResolvedValueOnce(page([makeActivity()]));
+    searchExplore.mockResolvedValueOnce(page([makeActivity()]));
     await user.click(screen.getByRole("button", { name: "Reintentar" }));
 
     expect(
@@ -115,46 +128,46 @@ describe("ActivitySearch", () => {
 
   it("debounces the search box before calling the API again", async () => {
     vi.useFakeTimers();
-    searchActivities.mockResolvedValue(page([]));
+    searchExplore.mockResolvedValue(page([]));
     render(<ActivitySearch />);
 
     // Initial mount fires one search with an empty query.
-    expect(searchActivities).toHaveBeenCalledTimes(1);
+    expect(searchExplore).toHaveBeenCalledTimes(1);
 
-    const input = screen.getByLabelText("Buscar actividades");
+    const input = screen.getByLabelText("Buscar actividades y lugares");
     fireEvent.change(input, { target: { value: "v" } });
     fireEvent.change(input, { target: { value: "vi" } });
     fireEvent.change(input, { target: { value: "vino" } });
 
     // Still debouncing: intermediate keystrokes don't fire a request.
-    expect(searchActivities).toHaveBeenCalledTimes(1);
+    expect(searchExplore).toHaveBeenCalledTimes(1);
 
     act(() => {
       vi.advanceTimersByTime(400);
     });
 
-    expect(searchActivities).toHaveBeenCalledTimes(2);
-    expect(searchActivities).toHaveBeenLastCalledWith(
+    expect(searchExplore).toHaveBeenCalledTimes(2);
+    expect(searchExplore).toHaveBeenLastCalledWith(
       expect.objectContaining({ search: "vino" }),
     );
   });
 
   it("searches immediately on 'Buscar', without waiting for the debounce", async () => {
     vi.useFakeTimers();
-    searchActivities.mockResolvedValue(page([]));
+    searchExplore.mockResolvedValue(page([]));
     render(<ActivitySearch />);
 
-    expect(searchActivities).toHaveBeenCalledTimes(1);
+    expect(searchExplore).toHaveBeenCalledTimes(1);
 
-    fireEvent.change(screen.getByLabelText("Buscar actividades"), {
+    fireEvent.change(screen.getByLabelText("Buscar actividades y lugares"), {
       target: { value: "vino" },
     });
-    expect(searchActivities).toHaveBeenCalledTimes(1);
+    expect(searchExplore).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole("button", { name: "Buscar" }));
 
-    expect(searchActivities).toHaveBeenCalledTimes(2);
-    expect(searchActivities).toHaveBeenLastCalledWith(
+    expect(searchExplore).toHaveBeenCalledTimes(2);
+    expect(searchExplore).toHaveBeenLastCalledWith(
       expect.objectContaining({ search: "vino" }),
     );
 
@@ -162,26 +175,26 @@ describe("ActivitySearch", () => {
     act(() => {
       vi.advanceTimersByTime(400);
     });
-    expect(searchActivities).toHaveBeenCalledTimes(2);
+    expect(searchExplore).toHaveBeenCalledTimes(2);
   });
 
   it("also searches immediately when Enter is pressed in the search box", async () => {
     vi.useFakeTimers();
-    searchActivities.mockResolvedValue(page([]));
+    searchExplore.mockResolvedValue(page([]));
     render(<ActivitySearch />);
 
-    const input = screen.getByLabelText("Buscar actividades");
+    const input = screen.getByLabelText("Buscar actividades y lugares");
     fireEvent.change(input, { target: { value: "termas" } });
     fireEvent.keyDown(input, { key: "Enter" });
 
-    expect(searchActivities).toHaveBeenCalledTimes(2);
-    expect(searchActivities).toHaveBeenLastCalledWith(
+    expect(searchExplore).toHaveBeenCalledTimes(2);
+    expect(searchExplore).toHaveBeenLastCalledWith(
       expect.objectContaining({ search: "termas" }),
     );
   });
 
   it("replaces the grid with the next page instead of appending to it", async () => {
-    searchActivities.mockResolvedValueOnce(
+    searchExplore.mockResolvedValueOnce(
       page([makeActivity({ id: 1, name: "Ruta del vino" })], {
         page: 1,
         totalPages: 2,
@@ -195,7 +208,7 @@ describe("ActivitySearch", () => {
       screen.getByRole("navigation", { name: "Paginación de resultados" }),
     ).toBeInTheDocument();
 
-    searchActivities.mockResolvedValueOnce(
+    searchExplore.mockResolvedValueOnce(
       page([makeActivity({ id: 2, name: "Termas de Cacheuta" })], {
         page: 2,
         totalPages: 2,
@@ -209,13 +222,13 @@ describe("ActivitySearch", () => {
     expect(
       screen.queryByRole("heading", { name: "Ruta del vino" }),
     ).not.toBeInTheDocument();
-    expect(searchActivities).toHaveBeenLastCalledWith(
+    expect(searchExplore).toHaveBeenLastCalledWith(
       expect.objectContaining({ page: 2 }),
     );
   });
 
   it("doesn't show pagination controls when there's only one page", async () => {
-    searchActivities.mockResolvedValue(
+    searchExplore.mockResolvedValue(
       page([makeActivity()], { page: 1, totalPages: 1 }),
     );
     render(<ActivitySearch />);

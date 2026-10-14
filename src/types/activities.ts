@@ -3,6 +3,7 @@ import { BaseEntity } from './common';
 import type { ExplorationQueryParams } from './common';
 import type { Place } from './places';
 import type { Category } from './categories';
+import type { PlaceSummary } from './explore';
 
 /**
  * A specific catalog experience (CU9-CU11, CU14, CU50, CU53).
@@ -60,11 +61,20 @@ export interface ActivitySearchResult {
   estimatedCost: number | null;
   price?: Price | null;
   estimatedDuration: number;
+  /** `ActivitySubtype` key (what the person does). */
   type: string | null;
-  averageRating: number;
+  /** Spanish label of `type`. */
+  typeLabel?: string | null;
+  /** Months (1-12) a seasonal activity runs in; null = all year. */
+  availableMonths?: number[] | null;
+  inSeason?: boolean;
+  /** SmartPlan's own average; null when nobody rated it (never 0). */
+  averageRating: number | null;
   ratingCount: number;
   distanceKm: number | null;
   categories: ActivityCategorySummary[];
+  /** The place the card refers to, with live attributed Google context. */
+  place?: PlaceSummary | null;
 }
 
 /**
@@ -121,6 +131,7 @@ export interface ActivityLocationSummary {
     name: string;
     description: string | null;
     address: string;
+    kind?: string | null;
     department: {
       id: number;
       name: string;
@@ -140,6 +151,8 @@ export interface ActivityLocationSummary {
 export interface ActivityDetailResult extends ActivitySearchResult {
   images?: import('./media').MediaImage[];
   locations: ActivityLocationSummary[];
+  /** False when it cannot be added to a plan (e.g. no exact location). */
+  planEligible?: boolean;
 }
 
 /**
@@ -157,11 +170,15 @@ export interface ActivityMapMarker {
   estimatedCost: number | null;
   price?: Price | null;
   type: string | null;
-  averageRating: number;
+  typeLabel?: string | null;
+  /** SmartPlan's own average; null when nobody rated it (never 0). */
+  averageRating: number | null;
+  ratingCount?: number;
   latitude: number;
   longitude: number;
   distanceKm: number | null;
   categories: ActivityCategorySummary[];
+  place?: PlaceSummary | null;
 }
 
 /**

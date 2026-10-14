@@ -7,7 +7,12 @@ import { AddToCollectionDialog } from "@/components/collection";
 import { LocationPreview } from "@/components/explore";
 import { AddToPlanDialog } from "@/components/plan";
 import { categoryPresentation } from "@/components/preferences/categoryPresentation";
-import { GooglePlaceContext, GooglePlacePhoto, MediaGallery } from "@/components/media";
+import {
+  GooglePlaceContext,
+  MediaGallery,
+  PlaceMedia,
+  RatingBadge,
+} from "@/components/media";
 import {
   Badge,
   Button,
@@ -19,7 +24,12 @@ import {
 import { useFavorites } from "@/context";
 import { useDetailFetch } from "@/hooks";
 import { getActivity } from "@/lib/api";
-import { ROUTES } from "@/lib/routes";
+import { placeDetailRoute, ROUTES } from "@/lib/routes";
+import {
+  activitySubtypePresentation,
+  placeKindPresentation,
+  seasonLabel,
+} from "@/lib/catalog/taxonomy";
 import { formatDuration, formatPrice, isPriceUnknown, priceCaveat } from "@/lib/utils";
 import type { ActivityDetailResult, RatingSummary } from "@/types";
 
@@ -134,23 +144,38 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
           .join(" · ")
       : null;
   const firstLocation = activity.locations[0] ?? null;
-  const googlePlaceId =
-    activity.locations.find((location) => location.googlePlaceId)
-      ?.googlePlaceId ?? null;
   const displayRatingSummary: RatingSummary =
     ratingSummary ?? {
-      averageRating: activity.averageRating,
+      averageRating: activity.averageRating ?? 0,
       ratingCount: activity.ratingCount,
     };
+  const hasOwnRatings = displayRatingSummary.ratingCount > 0;
   const address = firstLocation?.place.address ?? null;
+  const subtype = activitySubtypePresentation(activity.type);
+  const artwork =
+    subtype.family !== "other"
+      ? subtype
+      : placeKindPresentation(activity.place?.kind);
+  const season = seasonLabel(activity.availableMonths);
+  const hasOwnImages = (activity.images?.length ?? 0) > 0;
+  const plannable = activity.planEligible !== false;
 
   return (
     <div>
       <FloatingBackLink href={ROUTES.explore} label="Volver" heroRef={heroRef} />
 
-      <div className={styles.hero} ref={heroRef}>
-        <Icon name="route" size={90} className={styles.heroIcon} />
-        <span className={styles.heroBadge}>Sin imagen disponible</span>
+      <div className={styles.heroMedia} ref={heroRef}>
+        <PlaceMedia
+          variant="hero"
+          ownImageUrl={hasOwnImages ? null : undefined}
+          place={hasOwnImages ? null : activity.place}
+          alt={`Foto de ${activity.name}`}
+          artwork={{
+            family: artwork.family,
+            icon: artwork.icon,
+            label: activity.typeLabel ?? null,
+          }}
+        />
         <button
           type="button"
           className={styles.heroBookmark}
@@ -163,9 +188,6 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
       </div>
 
       <MediaGallery target="activity" resourceId={activity.id} resourceName={activity.name} />
-      {googlePlaceId && (!activity.images || activity.images.length === 0) ? (
-        <GooglePlacePhoto placeId={googlePlaceId} alt={`Foto de ${activity.name}`} />
-      ) : null}
       <div className={styles.titleBlock}>
         <div className={styles.badgeRow}>
           {categoryLabel ? (
@@ -175,21 +197,30 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
               <em>Sin categoría</em>
             </Badge>
           )}
-          <span className={styles.ratingSummary}>
-            <Stars rating={displayRatingSummary.averageRating} size={12} />
-            <span className="sp-small">
-              {displayRatingSummary.averageRating.toFixed(1)}
-              {displayRatingSummary.ratingCount > 0
-                ? ` · ${displayRatingSummary.ratingCount.toLocaleString("es-AR")} valoraciones`
-                : ""}
-            </span>
-          </span>
+          {activity.typeLabel ? <Badge variant="tag">{activity.typeLabel}</Badge> : null}
+          <RatingBadge
+            averageRating={hasOwnRatings ? displayRatingSummary.averageRating : null}
+            ratingCount={displayRatingSummary.ratingCount}
+            externalRating={hasOwnRatings ? null : firstLocation?.externalRating}
+            size={12}
+          />
         </div>
 
         <h1 className={styles.title}>{activity.name}</h1>
+        {firstLocation ? (
+          <p className={styles.placeLine}>
+            En{" "}
+            <Link href={placeDetailRoute(firstLocation.place.id)}>
+              {firstLocation.place.name}
+            </Link>
+            {firstLocation.place.department?.name
+              ? ` · ${firstLocation.place.department.name}`
+              : ""}
+          </p>
+        ) : null}
         <GooglePlaceContext
-          rating={firstLocation?.externalRating}
-          price={firstLocation?.externalPrice}
+          rating={hasOwnRatings ? null : firstLocation?.externalRating}
+          price={isPriceUnknown(activity) ? firstLocation?.externalPrice : null}
         />
 
         <div className={styles.addressRow}>
@@ -262,7 +293,16 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
                 <Icon name="calendar" size={15} className={styles.infoIcon} />
                 <div>
                   <p className={styles.infoLabel}>Horarios y disponibilidad</p>
-                  <p className={styles.missing}>Sin información disponible</p>
+                  {season ? (
+                    <p className={styles.infoValue}>
+                      Temporada: {season}
+                      {activity.inSeason === false ? " (fuera de temporada ahora)" : ""}
+                    </p>
+                  ) : (
+                    <p className={styles.missing}>
+                      Confirmá horarios y reserva con el lugar antes de ir.
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -296,8 +336,12 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
         <div className={styles.tabContent}>
           <div className={styles.ratingSummaryCard}>
             <div className={styles.ratingBigBlock}>
-              <p className={styles.ratingBig}>{displayRatingSummary.averageRating.toFixed(1)}</p>
-              <Stars rating={displayRatingSummary.averageRating} size={14} />
+              <p className={styles.ratingBig}>
+                {hasOwnRatings ? displayRatingSummary.averageRating.toFixed(1) : "—"}
+              </p>
+              {hasOwnRatings ? (
+                <Stars rating={displayRatingSummary.averageRating} size={14} />
+              ) : null}
               <p className={styles.ratingCountNote}>
                 {displayRatingSummary.ratingCount > 0
                   ? `${displayRatingSummary.ratingCount.toLocaleString("es-AR")} valoraciones`
@@ -332,6 +376,12 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
             variant="primary"
             className={styles.actionBarPrimary}
             onClick={() => setShowPlanDialog(true)}
+            disabled={!plannable}
+            title={
+              plannable
+                ? undefined
+                : "Todavía no podemos ubicar esta actividad con precisión para armar un plan."
+            }
           >
             <Icon name="plus" size={16} aria-hidden="true" />
             Agregar a plan
