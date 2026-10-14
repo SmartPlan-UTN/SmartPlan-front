@@ -346,6 +346,7 @@ export interface NotificationList {
 /** Own plan plus its ordered itinerary — `GET /users/me/plans/:id`. */
 export interface OwnPlanDetail extends OwnPlanSummary {
   details: {
+    perPersonCost?: number | null;
     id: number;
     order: number;
     estimatedCost: number;
@@ -437,6 +438,7 @@ export interface OwnPlanCostSummary {
 }
 
 export interface OwnPlanDetailItem {
+  perPersonCost?: number | null;
   id: number;
   order: number;
   estimatedCost: number;

@@ -218,7 +218,7 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
                 <div>
                   <p className={styles.infoLabel}>Costo</p>
                   <p className={styles.costValue}>{formatArs(activity.estimatedCost)}</p>
-                  <p className={styles.costNote}>Precio estimado por persona · ARS</p>
+                  <p className={styles.costNote}>{activity.costBasis === 'per_person' ? 'Precio estimado por persona · ARS' : activity.costBasis === 'per_party' ? 'Precio estimado por grupo · ARS' : 'Precio estimado · ARS'}</p>
                 </div>
               </div>
 

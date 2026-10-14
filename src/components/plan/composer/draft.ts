@@ -7,6 +7,7 @@ import type {
 import type { Coords } from "./routeDistance";
 
 export interface ComposerStop {
+  perPersonCost?: number | null;
   activity: ActivitySearchResult;
   detailId?: number;
   estimatedCost: number;
@@ -35,6 +36,7 @@ export function createInitialDraft(plan?: OwnPlanDetail): ComposerDraft {
     stops: (plan?.details ?? []).map((detail) => ({
       detailId: detail.id,
       estimatedCost: detail.estimatedCost,
+      perPersonCost: detail.perPersonCost,
       estimatedDuration: detail.estimatedDuration,
       activity: {
         id: detail.activity.id,

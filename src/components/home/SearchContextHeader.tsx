@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge, Icon } from "@/components/ui";
-import { categoryLabel, formatArs } from "@/lib/utils";
+import { categoryLabel, formatArs, formatDuration } from "@/lib/utils";
 import type { ResolvedPlanContext } from "@/types";
 
 import styles from "./generation.module.css";
@@ -19,10 +19,8 @@ export interface SearchContextHeaderProps {
  * (CU17) — replacing a header that used to say nothing more than "your
  * plan is ready". The badge row is built only from non-null
  * `resolvedContext` fields: a value the system never resolved gets no
- * badge, never a placeholder. `timeOfDay` is deliberately never shown here
- * even though it can be part of the request — it's a pick, not something
- * the system "detected", and this row is specifically about what got
- * understood from the request.
+ * badge, never a placeholder. Explicit selections and interpreted values
+ * both describe the effective search constraints.
  */
 export function SearchContextHeader({
   mode,
@@ -67,6 +65,9 @@ export function SearchContextHeader({
 
 function ContextBadges({ context }: { context: ResolvedPlanContext }) {
   const hasAny =
+    context.travelMode != null ||
+    context.timeOfDay != null ||
+    context.availableDuration != null ||
     context.appliedMaxDistanceKm != null ||
     context.budget != null ||
     context.partySize != null ||
@@ -77,6 +78,9 @@ function ContextBadges({ context }: { context: ResolvedPlanContext }) {
 
   return (
     <div className={styles.contextBadges}>
+      {context.travelMode ? <Badge variant="tag">{{ drive: 'En auto', walk: 'Caminando', bicycle: 'En bicicleta' }[context.travelMode]}</Badge> : null}
+      {context.timeOfDay ? <Badge variant="tag">{{ morning: "Mañana", afternoon: "Tarde", evening: "Noche", night: "Madrugada" }[context.timeOfDay]}</Badge> : null}
+      {context.availableDuration != null ? <Badge variant="tag">Hasta {formatDuration(context.availableDuration)}</Badge> : null}
       {context.appliedMaxDistanceKm != null ? (
         <Badge variant="tag">Hasta {context.appliedMaxDistanceKm} km</Badge>
       ) : null}

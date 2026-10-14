@@ -148,6 +148,11 @@ export function PlanComposer({
       textareaRef.current?.focus();
       return;
     }
+    if (trimmed.length > 1000) {
+      setValidationError('Resumí tu consulta en hasta 1.000 caracteres.');
+      textareaRef.current?.focus();
+      return;
+    }
     onSubmit(trimmed, context);
   }
 
