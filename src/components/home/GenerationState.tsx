@@ -74,6 +74,7 @@ export function GenerationState({
   const connectionLost = failure?.code === "STATUS_UNAVAILABLE";
 
   if (phase === "failed") {
+    const noAvailablePlans = failure?.code === "NO_VALID_COMBINATIONS";
     const timeoutCopy = failure?.code === "GENERATION_TIMEOUT"
       ? {
         title: "Tu pedido superó el tiempo de espera",
@@ -82,18 +83,18 @@ export function GenerationState({
           : "No pudimos completar el plan a tiempo. Volvé al buscador para hacer una nueva búsqueda.",
       }
       : null;
-    const surpriseCopy = timeoutCopy ?? (mode === "surprise" && failure
+    const surpriseCopy = timeoutCopy ?? ((mode === "surprise" || noAvailablePlans) && failure
       ? surpriseGenerationErrorCopy({ code: failure.code })
       : null);
 
     return (
       <div className={styles.generationState}>
         <div className={styles.generationCard} role="alert">
-          <span className={styles.generationEyebrow}>No salió esta vez</span>
+          <span className={styles.generationEyebrow}>{noAvailablePlans ? "Sin resultados" : "No salió esta vez"}</span>
           <h2 className="sp-h3">{surpriseCopy?.title ?? "No pudimos generar tu plan"}</h2>
           <p className="sp-body">{surpriseCopy?.body ?? failure?.message ?? "Intentá de nuevo en un momento."}</p>
           <div className={styles.generationActions}>
-            {canRetry ? <Button onClick={onRetry}><Icon name="repeat" size={15} />Reintentar</Button> : null}
+            {canRetry && !noAvailablePlans ? <Button onClick={onRetry}><Icon name="repeat" size={15} />Reintentar</Button> : null}
             <Button variant="ghostEmber" onClick={onDiscard}>Volver al buscador</Button>
           </div>
         </div>

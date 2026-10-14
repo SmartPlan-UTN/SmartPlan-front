@@ -161,14 +161,10 @@ export function PlanResults({
         <div className={styles.emptyResults}>
           <Icon name="inbox" size={32} />
           <p className="sp-h4">
-            {surprise
-              ? "No encontramos suficientes actividades cerca de tu ubicación"
-              : "No encontramos un plan para eso"}
+            No hay planes disponibles para esa consulta
           </p>
           <p className="sp-body">
-            {surprise
-              ? "Intentá en otro momento o explorá otras zonas."
-              : "Probá contarnos tu idea de otra forma."}
+            Probá con otra zona o cambiá los filtros de tu búsqueda.
           </p>
           <div className={styles.resultsActions}>
             {canAdjust ? (

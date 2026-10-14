@@ -14,10 +14,10 @@ export interface SurpriseErrorCopy {
   actions: SurpriseErrorAction[];
 }
 
-const NOT_ENOUGH_ACTIVITIES: SurpriseErrorCopy = {
-  title: "No encontramos suficientes actividades cerca de tu ubicación.",
-  body: "Intentá en otro momento o explorá otras zonas.",
-  actions: ["retry", "go-back"],
+const NO_AVAILABLE_PLANS: SurpriseErrorCopy = {
+  title: "No hay planes disponibles para esa consulta",
+  body: "Probá con otra zona o cambiá los filtros de tu búsqueda.",
+  actions: ["go-back"],
 };
 
 const GENERATION_ERROR: SurpriseErrorCopy = {
@@ -40,7 +40,7 @@ export function surpriseGenerationErrorCopy(input: {
 
   switch (code) {
     case "NO_VALID_COMBINATIONS":
-      return NOT_ENOUGH_ACTIVITIES;
+      return NO_AVAILABLE_PLANS;
     case "TOO_MANY_ACTIVE_REQUESTS":
       return {
         title: "Ya tenés varios planes generándose.",

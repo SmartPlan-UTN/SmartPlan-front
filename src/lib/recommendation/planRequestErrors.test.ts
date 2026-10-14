@@ -5,10 +5,11 @@ import { ApiError } from "@/lib/api";
 import { surpriseGenerationErrorCopy } from "./planRequestErrors";
 
 describe("surpriseGenerationErrorCopy", () => {
-  it("maps NO_VALID_COMBINATIONS to the not-enough-activities copy", () => {
+  it("explains that no plans match the query without retrying the same filters", () => {
     expect(
       surpriseGenerationErrorCopy({ code: "NO_VALID_COMBINATIONS" }).title,
-    ).toMatch(/no encontramos suficientes actividades cerca/i);
+    ).toBe("No hay planes disponibles para esa consulta");
+    expect(surpriseGenerationErrorCopy({ code: "NO_VALID_COMBINATIONS" }).actions).toEqual(["go-back"]);
   });
 
   it("explains the active-request limit without offering a retry", () => {
