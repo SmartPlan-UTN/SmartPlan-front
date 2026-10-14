@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/api";
 import type { ActivitySearchResult, PaginatedResult } from "@/types";
 
+import { readExplorationState } from "@/components/explore/searchState";
 import { ActivitySearch } from "./ActivitySearch";
 
 const searchExplore = vi.hoisted(() => vi.fn());
@@ -13,7 +14,10 @@ const listCategories = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/api", async () => {
   const actual =
     await vi.importActual<typeof import("@/lib/api")>("@/lib/api");
-  return { ...actual, searchExplore, listCategories };
+  return { ...actual, searchExplore, listCategories,
+    listCities: vi.fn().mockResolvedValue({ data: [] }),
+    listDepartments: vi.fn().mockResolvedValue({ data: [] }),
+  };
 });
 
 function makeActivity(
@@ -239,4 +243,70 @@ describe("ActivitySearch", () => {
       screen.queryByRole("navigation", { name: "Paginación de resultados" }),
     ).not.toBeInTheDocument();
   });
+});
+
+
+describe("exploration filter continuity (CU10/CU16)", () => {
+  it("restores the search, filters, ordering and page carried by the map URL", async () => {
+    searchExplore.mockReset();
+    searchExplore.mockResolvedValue(page([makeActivity()], { page: 3, totalPages: 4 }));
+    listCategories.mockResolvedValue({ data: [], pagination: { total: 0 } });
+    const initialState = readExplorationState({
+      search: "vino & cena", categoryIds: "2,4", minPrice: "0", maxPrice: "20000",
+      minRating: "4", cityId: "1", departmentId: "2", sortBy: "price", direction: "desc", page: "3",
+    });
+    const { unmount } = render(<ActivitySearch initialState={initialState} />);
+    await screen.findByRole("heading", { name: "Ruta del vino" });
+    expect(searchExplore).toHaveBeenLastCalledWith(expect.objectContaining({
+      search: "vino & cena", categoryIds: [2, 4], minPrice: 0, maxPrice: 20000,
+      minRating: 4, cityId: 1, departmentId: 2, sortBy: "price", direction: "desc", page: 3,
+    }));
+    expect(screen.getByLabelText("Buscar actividades y lugares")).toHaveValue("vino & cena");
+    const mapUrl = new URL(screen.getByRole("link", { name: "Ver mapa" }).getAttribute("href") ?? "", "http://localhost");
+    unmount();
+    // The map return link carries these same supported parameters.
+    render(<ActivitySearch initialState={readExplorationState(Object.fromEntries(mapUrl.searchParams))} />);
+    await screen.findByRole("heading", { name: "Ruta del vino" });
+    expect(searchExplore).toHaveBeenLastCalledWith(expect.objectContaining({ page: 3, categoryIds: [2, 4], search: "vino & cena" }));
+    expect(screen.getByLabelText("Mínimo")).toHaveValue(0);
+    expect(screen.getByLabelText("Máximo")).toHaveValue(20000);
+  });
+
+  it("blocks contradictory prices and resumes after correcting them", async () => {
+    vi.useFakeTimers();
+    searchExplore.mockReset();
+    searchExplore.mockResolvedValue(page([]));
+    listCategories.mockResolvedValue({ data: [], pagination: { total: 0 } });
+    render(<ActivitySearch />);
+    const initialCalls = searchExplore.mock.calls.length;
+    fireEvent.change(screen.getByLabelText("Mínimo"), { target: { value: "20000" } });
+    fireEvent.change(screen.getByLabelText("Máximo"), { target: { value: "10000" } });
+    expect(screen.getByRole("alert")).toHaveTextContent("El precio mínimo no puede superar al máximo.");
+    expect(screen.getByLabelText("Mínimo")).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByRole("link", { name: "Ver mapa" })).toHaveAttribute("aria-disabled", "true");
+    await act(async () => { vi.advanceTimersByTime(400); });
+    expect(searchExplore).toHaveBeenCalledTimes(initialCalls);
+    fireEvent.change(screen.getByLabelText("Máximo"), { target: { value: "30000" } });
+    await act(async () => { vi.advanceTimersByTime(400); });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(searchExplore).toHaveBeenLastCalledWith(expect.objectContaining({ minPrice: 20000, maxPrice: 30000, page: 1 }));
+    vi.useRealTimers();
+  });
+});
+
+
+it("clears an invalid restored range with the keyboard and searches again", async () => {
+  searchExplore.mockReset();
+  searchExplore.mockResolvedValue(page([]));
+  listCategories.mockResolvedValue({ data: [], pagination: { total: 0 } });
+  const user = userEvent.setup();
+  render(<ActivitySearch initialState={readExplorationState({ minPrice: "20", maxPrice: "10" })} />);
+  expect(searchExplore).not.toHaveBeenCalled();
+  expect(screen.getByRole("alert")).toBeInTheDocument();
+  screen.getByRole("button", { name: "Limpiar" }).focus();
+  await user.keyboard("{Enter}");
+  expect(screen.getByLabelText("Mínimo")).toHaveValue(null);
+  expect(screen.getByLabelText("Máximo")).toHaveValue(null);
+  expect(await screen.findByText("Sin resultados")).toBeInTheDocument();
+  expect(searchExplore).toHaveBeenLastCalledWith(expect.objectContaining({ minPrice: undefined, maxPrice: undefined }));
 });

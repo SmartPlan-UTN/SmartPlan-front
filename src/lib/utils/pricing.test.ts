@@ -79,6 +79,10 @@ describe("formatPrice", () => {
 });
 
 describe("priceCaveat", () => {
+  it("does not describe a curated reference as a user-reported expense", () => {
+    expect(priceCaveat({ estimatedCost: 1, price: price({ source: "CURATED", confidence: "MEDIUM" }) })).toBe("Precio orientativo: confirmalo antes de ir");
+    expect(priceCaveat({ estimatedCost: 1, price: price({ source: "USER_REPORTED", confidence: "MEDIUM" }) })).toBe("Precio estimado a partir de gastos reportados");
+  });
   it("explains unverified estimates and stays silent for trusted prices", () => {
     expect(priceCaveat({ estimatedCost: 1, price: price({ source: "LEGACY", confidence: "LOW" }) })).toMatch(/sin verificar/);
     expect(priceCaveat({ estimatedCost: 1, price: price({}) })).toBeNull();

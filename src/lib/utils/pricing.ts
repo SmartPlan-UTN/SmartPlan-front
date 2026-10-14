@@ -92,14 +92,17 @@ export function priceCaveat(priced: PricedLike): string | null {
   if (price.source === "LEGACY" || price.confidence === "LOW") {
     return "Precio estimado, sin verificar";
   }
-  if (price.confidence === "MEDIUM") {
-    return "Precio estimado a partir de gastos reportados";
-  }
   if (price.stale) {
     const when = referenceMonth(price.verifiedAt);
     return when
       ? `Precio de referencia de ${when}: confirmalo antes de ir`
       : "Precio sin verificar hace tiempo";
+  }
+  if (price.source === "USER_REPORTED") {
+    return "Precio estimado a partir de gastos reportados";
+  }
+  if (price.confidence === "MEDIUM") {
+    return "Precio orientativo: confirmalo antes de ir";
   }
   return null;
 }

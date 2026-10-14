@@ -1,4 +1,10 @@
-import type { AvatarImage, MediaImage, MediaTarget } from '@/types';
+import type {
+  AvatarImage,
+  ImageAttribution,
+  MediaImage,
+  MediaTarget,
+  PhotoAuthor,
+} from '@/types';
 import { apiClient } from './client';
 import { getApiBaseUrl } from './config';
 
@@ -10,14 +16,22 @@ const UPLOAD_RESOURCES: Record<MediaTarget, string> = {
   feedback: 'feedback',
 };
 
-/** API responses include /api; the configured base URL already ends there. */
+/** A Google Places photo the API streams for one activity place (SmartPlan-back#102). */
+const PLACE_PHOTO_PATH = /^\/api\/activity-places\/\d+\/photo$/;
+
+/**
+ * API responses include /api; the configured base URL already ends there.
+ * Only SmartPlan images are accepted: uploaded media and place photos.
+ */
 export function mediaRequestPath(url: string): string {
   const base = new URL(getApiBaseUrl());
   const value = new URL(url, base.origin);
-  if (value.origin !== base.origin || !value.pathname.startsWith('/api/media/')) {
+  const isImage =
+    value.pathname.startsWith('/api/media/') || PLACE_PHOTO_PATH.test(value.pathname);
+  if (value.origin !== base.origin || !isImage) {
     throw new Error('Invalid SmartPlan media URL');
   }
-  return value.pathname.slice('/api'.length);
+  return `${value.pathname.slice('/api'.length)}${value.search}`;
 }
 
 export function listMedia(target: MediaTarget, resourceId: number): Promise<MediaImage[]> {
@@ -70,6 +84,53 @@ export async function deleteAvatar(): Promise<void> {
   await apiClient.delete<void>('/users/me/avatar');
 }
 
-export function downloadMedia(url: string): Promise<Blob> {
-  return apiClient.get<Blob>(mediaRequestPath(url), { responseType: 'blob' });
+export interface MediaDownload {
+  blob: Blob;
+  /** Set for a provider photo, which must be credited wherever it shows. */
+  attribution: ImageAttribution | null;
+}
+
+/** Reads the credit the API sends with a Google Places photo, if any. */
+export function readImageAttribution(
+  provider: unknown,
+  encodedAuthors: unknown,
+): ImageAttribution | null {
+  if (provider !== 'google_maps') return null;
+  let authors: PhotoAuthor[] = [];
+  if (typeof encodedAuthors === 'string' && encodedAuthors) {
+    try {
+      const parsed: unknown = JSON.parse(decodeURIComponent(encodedAuthors));
+      if (Array.isArray(parsed)) {
+        authors = parsed
+          .filter(
+            (author): author is { displayName: string; uri?: unknown } =>
+              typeof author === 'object' &&
+              author !== null &&
+              typeof (author as { displayName?: unknown }).displayName === 'string',
+          )
+          .map((author) => ({
+            displayName: author.displayName,
+            uri: typeof author.uri === 'string' && /^https:\/\//.test(author.uri) ? author.uri : null,
+          }));
+      }
+    } catch {
+      // A malformed header still leaves the mandatory "Google Maps" credit.
+    }
+  }
+  return { provider: 'google_maps', authors };
+}
+
+export async function downloadMedia(url: string): Promise<MediaDownload> {
+  const response = await apiClient.request<Blob>({
+    method: 'GET',
+    url: mediaRequestPath(url),
+    responseType: 'blob',
+  });
+  return {
+    blob: response.data,
+    attribution: readImageAttribution(
+      response.headers['x-photo-provider'],
+      response.headers['x-photo-attributions'],
+    ),
+  };
 }

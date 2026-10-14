@@ -12,7 +12,7 @@ import {
   placeKindPresentation,
   seasonLabel,
 } from "@/lib/catalog/taxonomy";
-import { formatDuration, formatPrice, isPriceUnknown } from "@/lib/utils";
+import { formatDuration, formatPrice, isPriceUnknown, priceCaveat } from "@/lib/utils";
 import type { ActivitySearchResult } from "@/types";
 
 import styles from "./activity.module.css";
@@ -77,6 +77,7 @@ export function ActivityCard({
         className={exploreStyles.cardContent}
       >
         <div className={exploreStyles.body}>
+          <h3 className={exploreStyles.name}>{activity.name}</h3>
           {activity.typeLabel || place ? (
             <p className={exploreStyles.kicker}>
               {[activity.typeLabel, place?.department]
@@ -84,7 +85,6 @@ export function ActivityCard({
                 .join(" · ")}
             </p>
           ) : null}
-          <h3 className={exploreStyles.name}>{activity.name}</h3>
           <p className={styles.description}>{activity.description}</p>
 
           <div className={exploreStyles.metaRow}>
@@ -92,7 +92,7 @@ export function ActivityCard({
               <Icon name="clock" size={12} />
               {formatDuration(activity.estimatedDuration)}
             </span>
-            <Badge variant="cost">{formatPrice(activity)}</Badge>
+            <Badge variant="cost" className={exploreStyles.cardPrice}>{formatPrice(activity)}</Badge>
             <RatingBadge
               averageRating={activity.averageRating}
               ratingCount={activity.ratingCount}
@@ -106,6 +106,7 @@ export function ActivityCard({
             ) : null}
           </div>
           {unknownPrice ? <PlacePriceReference price={place?.externalPrice} /> : null}
+          {activity.price?.stale ? <p className={exploreStyles.seasonNote}>{priceCaveat(activity)}</p> : null}
           {season ? (
             <p className={exploreStyles.seasonNote}>
               <Icon name="calendar" size={12} aria-hidden="true" /> Temporada: {season}

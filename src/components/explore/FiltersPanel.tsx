@@ -5,6 +5,7 @@ import { useEffect, useId, useState } from "react";
 import { Select } from "@/components/ui";
 import type { CategoryOption, LocationOption } from "@/types";
 
+import { priceRangeError } from "./searchState";
 import { getCategoriesOnce } from "./categoryCatalog";
 import { categoryPresentation } from "@/components/preferences/categoryPresentation";
 import { ACTIVITY_TYPE_OPTIONS } from "@/lib/catalog/taxonomy";
@@ -72,6 +73,8 @@ export function FiltersPanel({
   activityType,
 }: FiltersPanelProps) {
   const ratingName = useId();
+  const rangeError = priceRangeError(minPrice, maxPrice);
+  const priceErrorId = `${ratingName}-price-error`;
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [showAllCategories, setShowAllCategories] = useState(false);
 
@@ -167,6 +170,8 @@ export function FiltersPanel({
               type="number"
               inputMode="decimal"
               min={0}
+              aria-invalid={rangeError !== null}
+              aria-describedby={rangeError ? priceErrorId : undefined}
               placeholder="$0"
               className={styles.input}
               value={minPrice}
@@ -181,6 +186,8 @@ export function FiltersPanel({
               type="number"
               inputMode="decimal"
               min={0}
+              aria-invalid={rangeError !== null}
+              aria-describedby={rangeError ? priceErrorId : undefined}
               placeholder="Sin límite"
               className={styles.input}
               value={maxPrice}
@@ -190,11 +197,13 @@ export function FiltersPanel({
             />
           </label>
         </div>
-        {minPrice.trim() !== "" || maxPrice.trim() !== "" ? (
-          <p className={styles.fieldLabel}>
-            Las actividades sin precio confirmado no aparecen al filtrar por
-            precio.
+        {rangeError ? (
+          <p id={priceErrorId} role="alert" className={styles.filterError}>
+            {rangeError}
           </p>
+        ) : null}
+        {minPrice.trim() !== "" || maxPrice.trim() !== "" ? (
+          <p className={styles.fieldLabel}>Las actividades sin precio confirmado no aparecen al filtrar por precio.</p>
         ) : null}
       </section>
 

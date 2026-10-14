@@ -257,11 +257,13 @@ export type PlanRecommendationReason =
 
 /**
  * Card-friendly plan projection for the recommendations rail. Same shape as
- * `PlanRequestPlanSummary` plus `imageUrl` — `null` until the backend has an
- * image source; the card falls back to an editorial treatment.
+ * `PlanRequestPlanSummary` plus its image: an uploaded one, else a Google
+ * Places photo (SmartPlan-back#102), else `null` and the card falls back to
+ * an editorial treatment.
  */
 export interface RecommendedPlanSummary extends PlanRequestPlanSummary {
   imageUrl: string | null;
+  imageSource?: import('./media').ImageSource | null;
 }
 
 /** One entry of `GET /plan-recommendations`. Matches `PlanRecommendationDto`. */

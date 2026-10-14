@@ -9,6 +9,7 @@ import {
   SortControl,
   type SortOption,
 } from "@/components/explore";
+import { priceRangeError } from "@/components/explore";
 import { Button, Icon, LoadingDots } from "@/components/ui";
 import { useDebouncedValue, useExplorationFilters, useExplorationSearch } from "@/hooks";
 import { searchPlans } from "@/lib/api";
@@ -112,12 +113,17 @@ export function PlanSearch({ head }: { head?: ReactNode }) {
     ],
   );
 
+  const rangeError = priceRangeError(minPrice, maxPrice);
+  const canSearch =
+    rangeError === null &&
+    priceRangeError(debouncedMinPrice, debouncedMaxPrice) === null;
+
   const { items, pagination, status, errorMessage, hasResults, page, goToPage, retry } =
     useExplorationSearch(
       searchPlans,
       params,
       PAGE_SIZE,
-      sessionStatus !== "loading",
+      sessionStatus !== "loading" && canSearch,
     );
 
   const resultsCountLabel =
@@ -129,7 +135,7 @@ export function PlanSearch({ head }: { head?: ReactNode }) {
   // Once there's a grid on screen, a refetch (chip, filter, page) dims it
   // in place instead of swapping it for the big loading state — that swap
   // is what caused the flash on every click.
-  const isRefetching = status === "loading" && hasResults;
+  const isRefetching = status === "loading" && hasResults && canSearch;
 
   // Shown on the narrow-screen "Filtros" toggle, so a folded sidebar never
   // filters silently.
@@ -221,7 +227,7 @@ export function PlanSearch({ head }: { head?: ReactNode }) {
           </div>
         ) : null}
 
-        {status === "idle" && !hasResults ? (
+        {status === "idle" && !hasResults && canSearch ? (
           <div className={activityStyles.stateBlock}>
             <Icon name="inbox" size={32} className={activityStyles.stateIcon} />
             <h2 className="sp-h3">Sin resultados</h2>
@@ -247,7 +253,7 @@ export function PlanSearch({ head }: { head?: ReactNode }) {
                 page={page}
                 totalPages={pagination.totalPages}
                 onPageChange={goToPage}
-                disabled={isRefetching}
+                disabled={isRefetching || !canSearch}
               />
             ) : null}
 

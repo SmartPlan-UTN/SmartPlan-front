@@ -33,10 +33,10 @@ export function PlaceCard({ item }: { item: ExplorePlaceItem }) {
         />
       <Link href={placeDetailRoute(item.id)} className={styles.cardContent}>
         <div className={styles.body}>
+          <h3 className={styles.name}>{item.name}</h3>
           <p className={styles.kicker}>
             {[item.kindLabel, place.department].filter(Boolean).join(" · ")}
           </p>
-          <h3 className={styles.name}>{item.name}</h3>
           {item.description ? (
             <p className={styles.placeDescription}>{item.description}</p>
           ) : (
@@ -57,7 +57,6 @@ export function PlaceCard({ item }: { item: ExplorePlaceItem }) {
           <PlacePriceReference price={place.externalPrice} />
 
           <div className={styles.tagRow}>
-            <Badge variant="tag">Lugar para conocer</Badge>
             {item.categories.slice(0, 1).map((category) => (
               <Badge variant="tag" key={category.id}>
                 {
@@ -70,6 +69,7 @@ export function PlaceCard({ item }: { item: ExplorePlaceItem }) {
               </Badge>
             ))}
           </div>
+          <span className={styles.cardAction}>Conocer el lugar <Icon name="arrow-right" size={15} aria-hidden="true" /></span>
         </div>
       </Link>
     </article>

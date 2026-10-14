@@ -8,7 +8,6 @@ import { ARTWORK_GRADIENTS, type ArtworkFamily } from "@/lib/catalog/taxonomy";
 import type { PlaceImage, PlacePhotoMedia, PlaceSummary } from "@/types";
 
 import { AuthenticatedImage } from "./AuthenticatedImage";
-import { GoogleUiKitMedia } from "./GoogleUiKitMedia";
 import { imageLicenseUrl, imageSourceTitle } from "./imageAttribution";
 import styles from "./media.module.css";
 
@@ -100,12 +99,29 @@ function GoogleHeroPhoto({
   alt,
   onUnavailable,
   onLoaded,
+  variant = "hero",
 }: {
   googlePlaceId: string;
   alt: string;
   onUnavailable: () => void;
   onLoaded: () => void;
+  variant?: "card" | "hero";
 }) {
+  const hostRef = useRef<HTMLElement>(null);
+  const [near, setNear] = useState(variant === "hero");
+  useEffect(() => {
+    if (near || typeof IntersectionObserver === "undefined") return;
+    const host = hostRef.current;
+    if (!host) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        setNear(true);
+        observer.disconnect();
+      }
+    }, { rootMargin: "150px 0px" });
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, [near]);
   const [media, setMedia] = useState<{
     placeId: string;
     value: PlacePhotoMedia;
@@ -118,8 +134,9 @@ function GoogleHeroPhoto({
   }, [onUnavailable]);
 
   useEffect(() => {
+    if (!near && typeof IntersectionObserver !== "undefined") return;
     let active = true;
-    getPlacePhotoMedia(googlePlaceId, 1200)
+    getPlacePhotoMedia(googlePlaceId, variant === "hero" ? 1200 : 640)
       .then((value) => {
         if (active) setMedia({ placeId: googlePlaceId, value });
       })
@@ -131,12 +148,12 @@ function GoogleHeroPhoto({
     return () => {
       active = false;
     };
-  }, [googlePlaceId]);
+  }, [googlePlaceId, near, variant]);
 
-  if (!media || media.placeId !== googlePlaceId) return null;
+  if (!media || media.placeId !== googlePlaceId) return <figure ref={hostRef} className={variant === "hero" ? styles.openImageHero : styles.openImage} />;
   const { photoUri, authors } = media.value;
   return (
-    <figure className={styles.openImageHero}>
+    <figure ref={hostRef} className={variant === "hero" ? styles.openImageHero : styles.openImage}>
       {/* Short-lived Google URI: loaded directly, never stored. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -165,7 +182,7 @@ function GoogleHeroPhoto({
             {" · "}
           </>
         ) : null}
-        Google Maps
+        <span translate="no">Google Maps</span>
       </figcaption>
     </figure>
   );
@@ -175,8 +192,9 @@ function GoogleHeroPhoto({
  * The photo of an Explore card or detail header, from the cheapest real
  * source available (USD 0 policy, in this order):
  * 1. SmartPlan-owned photo, 2. open-licensed place photo (credited),
- * 3. Google: Places UI Kit on cards (free allowance), one capped live photo
- *    on detail headers, 4. SmartPlan's designed artwork.
+ * 3. Google: a lazy, capped live photo with complete author credit,
+ *    4. SmartPlan's designed artwork. No provider business heading is
+ *    duplicated inside the image; SmartPlan's real title owns the hierarchy.
  */
 export function PlaceMedia({
   ownImageUrl,
@@ -184,10 +202,8 @@ export function PlaceMedia({
   alt,
   artwork,
   variant = "card",
-  screen = "explore",
 }: PlaceMediaProps) {
   const [googleFailedFor, setGoogleFailedFor] = useState<string | null>(null);
-  const [uiKitShownFor, setUiKitShownFor] = useState<string | null>(null);
   const [heroShownFor, setHeroShownFor] = useState<string | null>(null);
   const [brokenImageUrl, setBrokenImageUrl] = useState<string | null>(null);
   const googlePlaceId = place?.googlePlaceId ?? null;
@@ -195,7 +211,7 @@ export function PlaceMedia({
   if (ownImageUrl) {
     return (
       <div className={variant === "hero" ? styles.ownImageHero : styles.ownImage}>
-        <AuthenticatedImage url={ownImageUrl} alt={alt} width={640} height={360} />
+        <AuthenticatedImage url={ownImageUrl} alt={alt} width={640} height={360} attribution="full" fallback={<><Artwork {...artwork} variant={variant} /><span className="sp-sr-only">Sin imagen disponible</span></>} />
       </div>
     );
   }
@@ -211,7 +227,7 @@ export function PlaceMedia({
   if (variant === "hero") {
     return (
       <div className={styles.heroMedia}>
-        {heroShownFor !== googlePlaceId || !googleAvailable ? <Artwork {...artwork} variant="hero" /> : null}
+        {heroShownFor !== googlePlaceId || !googleAvailable ? <><Artwork {...artwork} variant="hero" /><span className="sp-sr-only">Sin imagen disponible</span></> : null}
         {googleAvailable ? (
           <GoogleHeroPhoto
             googlePlaceId={googlePlaceId}
@@ -224,22 +240,18 @@ export function PlaceMedia({
     );
   }
 
-  const uiKitShown = googlePlaceId !== null && uiKitShownFor === googlePlaceId;
   return (
-    <div className={styles.cardMedia} data-google-slot={googlePlaceId !== null || undefined} data-media={uiKitShown ? "google" : "artwork"}>
-      {!uiKitShown ? <Artwork {...artwork} variant="card" /> : null}
+    <div className={styles.cardMedia} data-media={heroShownFor === googlePlaceId && googleAvailable ? "google" : "artwork"}>
+      {heroShownFor !== googlePlaceId || !googleAvailable ? <Artwork {...artwork} variant="card" /> : null}
       {googleAvailable ? (
-        <div className={uiKitShown ? styles.uiKitVisible : styles.uiKitPending}>
-          <GoogleUiKitMedia
+          <GoogleHeroPhoto
             key={googlePlaceId}
             googlePlaceId={googlePlaceId}
-            screen={screen}
-            onSettled={(shown) => {
-              if (shown) setUiKitShownFor(googlePlaceId);
-              else setGoogleFailedFor(googlePlaceId);
-            }}
+            variant="card"
+            alt={alt}
+            onUnavailable={() => setGoogleFailedFor(googlePlaceId)}
+            onLoaded={() => setHeroShownFor(googlePlaceId)}
           />
-        </div>
       ) : null}
     </div>
   );

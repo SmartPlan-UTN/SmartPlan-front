@@ -167,9 +167,9 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
       <div className={styles.heroMedia} ref={heroRef}>
         <PlaceMedia
           variant="hero"
-          ownImageUrl={hasOwnImages ? null : undefined}
+          ownImageUrl={activity.imageUrl}
           place={hasOwnImages ? null : activity.place}
-          alt={`Foto de ${activity.name}`}
+          alt={activity.name}
           artwork={{
             family: artwork.family,
             icon: artwork.icon,

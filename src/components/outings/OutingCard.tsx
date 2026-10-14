@@ -86,6 +86,9 @@ export function OutingCard({
               width={160}
               height={160}
               className={styles.stampImage}
+              // The 72 px stamp cannot hold the credit; the summary names
+              // Google Maps instead (SmartPlan-back#102).
+              attribution="external"
             />
           ) : null}
           <span className={styles.stampDay} aria-hidden="true">
@@ -122,6 +125,14 @@ export function OutingCard({
               {OUTINGS_COPY.people(outing.peopleCount)}
             </span>
           </div>
+
+          {outing.imageUrl && outing.imageSource === "google_maps" ? (
+            <p className={styles.sourceNote}>
+              <Icon name="image" size={13} aria-hidden="true" />
+              {OUTINGS_COPY.photoCredit}{" "}
+              <span translate="no">Google Maps</span>
+            </p>
+          ) : null}
 
           {outing.source && !outing.source.available ? (
             <p className={styles.sourceNote}>

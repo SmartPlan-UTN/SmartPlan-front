@@ -10,6 +10,7 @@ import type {
 import { apiClient } from './client';
 
 const round6 = (value: number) => Math.round(value * 1e6) / 1e6;
+const inFlightPhotos = new Map<string, Promise<PlacePhotoMedia>>();
 
 /**
  * Explore: real activities and places without a verified activity yet,
@@ -78,8 +79,13 @@ export async function getPlacePhotoMedia(
   googlePlaceId: string,
   maxWidthPx = 1200,
 ): Promise<PlacePhotoMedia> {
-  return apiClient.get<PlacePhotoMedia>(
+  const key = `${googlePlaceId}:${maxWidthPx}`;
+  const pending = inFlightPhotos.get(key);
+  if (pending) return pending;
+  const request = apiClient.get<PlacePhotoMedia>(
     `/external-integration/places/${encodeURIComponent(googlePlaceId)}/photo-media`,
     { params: { maxWidthPx } },
-  );
+  ).finally(() => { inFlightPhotos.delete(key); });
+  inFlightPhotos.set(key, request);
+  return request;
 }

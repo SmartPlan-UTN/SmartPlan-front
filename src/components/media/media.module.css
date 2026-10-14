@@ -33,6 +33,66 @@
   animation: media-shimmer 1.4s ease-in-out infinite;
 }
 
+/* ── Provider attribution (SmartPlan-back#102) ───────────────────
+   A Google Places photo always names Google Maps; the full variant also
+   links its authors. Kept legible over any photo with a dark scrim. */
+.attributed {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.attribution {
+  position: absolute;
+  left: var(--s-2);
+  bottom: var(--s-2);
+  max-width: calc(100% - var(--s-4));
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--s-2);
+  padding: 2px 8px;
+  border-radius: var(--r-chip);
+  background: color-mix(in srgb, var(--char) 64%, transparent);
+  color: var(--fg-on-dark);
+  font-size: 11px;
+  line-height: 1.4;
+  pointer-events: auto;
+}
+
+/* Centered on top, clear of a hero's back link, badges and title. */
+.attributionTop {
+  top: var(--s-3);
+  bottom: auto;
+  left: 50%;
+  transform: translateX(-50%);
+  justify-content: center;
+  text-align: center;
+}
+
+.attributionProvider {
+  font-weight: var(--w-label);
+  white-space: nowrap;
+}
+
+.attributionAuthors {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--fg-on-dark-2);
+}
+
+.attributionAuthors a {
+  color: var(--fg-on-dark);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.attributionAuthors a:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 1px;
+}
+
 /* ── Shared photo button ─────────────────────────────────────── */
 .photoButton {
   position: relative;
@@ -735,6 +795,12 @@
 }
 
 @media (max-width: 560px) {
+  /* Below the hero's floating back link and bookmark, which share its top. */
+  .attributionTop {
+    top: 56px;
+    max-width: calc(100% - var(--s-8));
+  }
+
   .manager {
     padding: var(--s-4);
   }
@@ -881,20 +947,14 @@
 .cardMedia {
   position: relative;
   width: 100%;
-  min-height: 150px;
+  aspect-ratio: 16 / 10;
   container-type: inline-size;
 }
 
 /* Reserve the compact widget's media ratio plus its name, Maps link and
    attribution before the provider loads. The widget itself keeps natural
    height, as required by Google; attribution is never clipped. */
-.cardMedia[data-google-slot]::before {
-  display: block;
-  height: calc(66.67cqw + 170px);
-  content: "";
-}
-
-.cardMedia[data-google-slot] > .artwork {
+.cardMedia > * {
   position: absolute;
   inset: 0;
   height: 100%;
@@ -913,7 +973,8 @@
 }
 
 .artwork {
-  height: 150px;
+  aspect-ratio: 16 / 10;
+  height: auto;
 }
 
 .artworkHero {
@@ -952,7 +1013,8 @@
 .openImage {
   position: relative;
   width: 100%;
-  height: 150px;
+  aspect-ratio: 16 / 10;
+  height: auto;
   margin: 0;
   overflow: hidden;
 }
@@ -963,6 +1025,11 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.ownImage > img, .openImage > img {
+  position: absolute;
+  inset: 0;
 }
 
 .ownImageHero,
@@ -1026,6 +1093,15 @@
   position: absolute;
   inset: 0 0 auto;
   visibility: hidden;
+}
+
+/* Both the artwork and the loading photo occupy the same reserved frame. */
+.cardMedia > .artwork,
+.cardMedia > .openImage {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  aspect-ratio: auto;
 }
 
 .uiKitVisible {
