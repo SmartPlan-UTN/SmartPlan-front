@@ -478,3 +478,5 @@ Review: [PR #184](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/184), ba
 - Prepared for review on `codex/efficient-plan-search`: duration, radius, travel mode and opt-in location controls; result badges show effective constraints. Invalid radius/currency input has actionable recovery and empty results retain the no-plans state.
 - Administration maintains availability periods, participant limits and whole-party/per-person costs. Manual plan edits preserve per-person unit-price snapshots when changing group size; whole-party snapshots remain stable.
 - Validation: pnpm lint, pnpm build and 52 focused tests across 7 files passed, following the requested basic-check scope. Requires the paired backend and its two additive migrations before deployment. Required approvals and production deployment remain pending.
+
+- **In review**: [PR #185](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/185), base develop. Companion: [SmartPlan-back#133](https://github.com/SmartPlan-UTN/SmartPlan-back/pull/133).
