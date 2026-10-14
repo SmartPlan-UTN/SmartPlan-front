@@ -127,6 +127,17 @@ beforeEach(() => {
   });
 });
 
+it("shows unrated plans and itinerary stops without fabricated zero scores", async () => {
+  const unrated = plan({ averageRating: 0 });
+  unrated.details[0].activity.averageRating = 0;
+  unrated.details[0].activity.ratingCount = 0;
+  getPlan.mockResolvedValue(unrated);
+  render(<PlanDetailView planId={7} />);
+  expect(await screen.findAllByText("Sin reseñas")).toHaveLength(2);
+  expect(screen.queryByText("0.0")).not.toBeInTheDocument();
+  expect(screen.queryByRole("img", { name: "0 de 5 estrellas" })).not.toBeInTheDocument();
+});
+
 async function renderDetail(
   viewerPlanState: ViewerPlanState,
   overrides: Partial<PlanDetailResult> = {},

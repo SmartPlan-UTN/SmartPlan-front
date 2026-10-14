@@ -249,8 +249,9 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
                 <span className={styles.heroMetaDot}>·</span>
               </>
             ) : null}
-            <Stars rating={plan.averageRating} size={14} />
-            <span>{plan.averageRating.toFixed(1)}</span>
+            {plan.averageRating > 0 ? (
+              <><Stars rating={plan.averageRating} size={14} /><span>{plan.averageRating.toFixed(1)}</span></>
+            ) : <span>Sin reseñas</span>}
             <span className={styles.heroMetaDot}>·</span>
             <span>{formatDuration(plan.estimatedTotalDuration)}</span>
           </div>

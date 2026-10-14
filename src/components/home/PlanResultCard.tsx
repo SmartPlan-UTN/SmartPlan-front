@@ -6,6 +6,7 @@ import { PLAN_SELECTION } from "@/components/plan/planSelectionContent";
 import { Badge, Button, Icon, Stars } from "@/components/ui";
 import { outingDetailRoute, planDetailRoute, ROUTES } from "@/lib/routes";
 import { formatDuration, getPlanZone, formatPlanTotal } from "@/lib/utils";
+import { categoryLabel } from "@/lib/utils/catalogLabels";
 import type { PlanDetailResult } from "@/types";
 
 import styles from "./plan-result-card.module.css";
@@ -122,7 +123,7 @@ export function PlanResultCard({
           <div className={styles.tagRow}>
             {plan.categories.slice(0, 2).map((category) => (
               <Badge variant="tag" key={category.id}>
-                {category.name}
+                {categoryLabel(category.name)}
               </Badge>
             ))}
           </div>

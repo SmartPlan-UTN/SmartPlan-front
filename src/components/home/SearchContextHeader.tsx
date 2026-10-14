@@ -2,6 +2,7 @@
 
 import { Badge, Icon } from "@/components/ui";
 import { formatArs } from "@/lib/utils";
+import { categoryLabel } from "@/lib/utils/catalogLabels";
 import type { ResolvedPlanContext } from "@/types";
 
 import styles from "./generation.module.css";
@@ -95,7 +96,7 @@ function ContextBadges({ context }: { context: ResolvedPlanContext }) {
       ) : null}
       {context.categories.slice(0, 2).map((category) => (
         <Badge variant="tag" key={category.id}>
-          {category.name}
+          {categoryLabel(category.name)}
         </Badge>
       ))}
     </div>

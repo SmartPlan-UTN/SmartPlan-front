@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -141,6 +141,7 @@ function readFiltersFromSearchParams(
  */
 export function MapView() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [markerMessage, setMarkerMessage] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const filters = readFiltersFromSearchParams(searchParams);
   const filtersRef = useRef(filters);
@@ -154,13 +155,22 @@ export function MapView() {
     const infoWindow = new google.maps.InfoWindow();
     const requestIdRef = { current: 0 };
     let cancelled = false;
+    let markerSignature = "";
+    let fitFilteredResults = Object.values(filtersRef.current).some(
+      (value) => value !== undefined,
+    );
 
     async function fetchMarkersForCurrentBounds() {
       const bounds = map.getBounds();
       if (!bounds) return;
 
       const currentRequestId = ++requestIdRef.current;
-      const { north, south, east, west } = bounds.toJSON();
+      // Start a filtered search across the catalog, then frame its actual
+      // points. A downtown viewport excludes Maipú and Valle de Uco.
+      const shouldFit = fitFilteredResults;
+      const { north, south, east, west } = shouldFit
+        ? { north: 90, south: -90, east: 180, west: -180 }
+        : bounds.toJSON();
 
       try {
         const result = await getExploreMapMarkers({
@@ -168,11 +178,20 @@ export function MapView() {
           south,
           east,
           west,
-          limit: 300,
+          limit: 100,
           ...filtersRef.current,
         });
         if (cancelled || currentRequestId !== requestIdRef.current) return;
+        fitFilteredResults = false;
+        setMarkerMessage(
+          result.data.length === 0
+            ? "No hay resultados en esta zona. Mové el mapa o volvé a la lista."
+            : null,
+        );
 
+        const nextSignature = JSON.stringify(result.data);
+        if (nextSignature === markerSignature) return;
+        markerSignature = nextSignature;
         markersRef.current.forEach((marker) => marker.setMap(null));
         markersRef.current = result.data.map((markerData) => {
           const marker = new google.maps.Marker({
@@ -195,9 +214,17 @@ export function MapView() {
 
           return marker;
         });
+        if (shouldFit && result.data.length > 0) {
+          const resultBounds = new google.maps.LatLngBounds();
+          result.data.forEach((point) =>
+            resultBounds.extend({ lat: point.latitude, lng: point.longitude }),
+          );
+          map.fitBounds(resultBounds, 48);
+        }
       } catch {
-        // A failed marker refresh (e.g. a network blip while panning)
-        // isn't worth tearing down an already-rendered map for.
+        if (!cancelled && currentRequestId === requestIdRef.current) {
+          setMarkerMessage("No pudimos actualizar los resultados. Mové el mapa para reintentar o volvé a la lista.");
+        }
       }
     }
 
@@ -227,6 +254,8 @@ export function MapView() {
 
   return (
     <div className={styles.mapWrapper}>
+      {status === "loading" && <p role="status">Cargando el mapa…</p>}
+      {markerMessage && <p role="status">{markerMessage}</p>}
       <div ref={containerRef} className={styles.mapCanvas} />
     </div>
   );

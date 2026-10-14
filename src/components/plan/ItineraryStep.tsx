@@ -1,6 +1,8 @@
 import Link from "next/link";
 
-import { Badge, Icon, Stars } from "@/components/ui";
+import { Badge, Icon } from "@/components/ui";
+import { RatingBadge } from "@/components/media/RatingBadge";
+import { categoryLabel as labelCategory } from "@/lib/utils/catalogLabels";
 import { activityDetailRoute } from "@/lib/routes";
 import { formatDuration, googleMapsUrl, formatPrice } from "@/lib/utils";
 import type { PlanItineraryItem } from "@/types";
@@ -24,7 +26,7 @@ export function ItineraryStep({
   const location = activity.locations[0] ?? null;
   const categoryLabel =
     activity.categories.length > 0
-      ? activity.categories.map((category) => category.name).join(" · ")
+      ? activity.categories.map((category) => labelCategory(category.name)).join(" · ")
       : null;
 
   return (
@@ -55,8 +57,7 @@ export function ItineraryStep({
           <div className={styles.stepBadgeRow}>
             {categoryLabel ? <Badge variant="tag">{categoryLabel}</Badge> : null}
             <span className={styles.stepRating}>
-              <Stars rating={activity.averageRating} size={11} />
-              <span>{activity.averageRating.toFixed(1)}</span>
+              <RatingBadge averageRating={activity.averageRating} ratingCount={activity.ratingCount} />
             </span>
           </div>
 
