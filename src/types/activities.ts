@@ -51,6 +51,7 @@ export interface ActivityCategorySummary {
  * (CU9-CU11). Matches `ActivitySummaryDto` in `SmartPlan-back`.
  */
 export interface ActivitySearchResult {
+  costBasis?: 'per_party' | 'per_person';
   id: number;
   imageUrl?: string | null;
   name: string;
@@ -119,6 +120,10 @@ export interface ActivityLocationSummary {
  * summary plus every meeting point.
  */
 export interface ActivityDetailResult extends ActivitySearchResult {
+  costBasis?: 'per_party' | 'per_person';
+  availableTimesOfDay?: import('./recommendation').TimeOfDay[];
+  minPeople?: number | null;
+  maxPeople?: number | null;
   images?: import('./media').MediaImage[];
   locations: ActivityLocationSummary[];
 }

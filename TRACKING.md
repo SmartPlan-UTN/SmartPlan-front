@@ -472,3 +472,9 @@ Companion backend PR: https://github.com/SmartPlan-UTN/SmartPlan-back/pull/122.
 
 2026-10-13 — CU17/CU19, branch `fix/no-plans-available`: automatic and surprise searches now show "No hay planes disponibles para esa consulta" with guidance to change the area or filters when no valid plan exists; empty result lists use the same copy. The no-results state returns to the search instead of retrying identical filters. Lint, build and 37 focused regression tests passed. Per user request, the full frontend test run and backend integration were stopped in favor of basic checks. Paired backend branch: `fix/single-activity-plans`. Pending review and deployment.
 Review: [PR #184](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/184), base develop. Companion: [SmartPlan-back#132](https://github.com/SmartPlan-UTN/SmartPlan-back/pull/132).
+
+## 2026-10-13 — Effective search constraints (CU17/CU19/CU21)
+
+- Prepared for review on `codex/efficient-plan-search`: duration, radius, travel mode and opt-in location controls; result badges show effective constraints. Invalid radius/currency input has actionable recovery and empty results retain the no-plans state.
+- Administration maintains availability periods, participant limits and whole-party/per-person costs. Manual plan edits preserve per-person unit-price snapshots when changing group size; whole-party snapshots remain stable.
+- Validation: pnpm lint, pnpm build and 52 focused tests across 7 files passed, following the requested basic-check scope. Requires the paired backend and its two additive migrations before deployment. Required approvals and production deployment remain pending.

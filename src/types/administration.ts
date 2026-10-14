@@ -3,6 +3,7 @@ import type { PaginatedResult, SortDirection } from './common';
 import type { User } from './users';
 import type { RoleKey, UserStatusKey } from './users';
 import type { PlanKind, PlanStatusKey, PlanVisibility } from './plans';
+import type { TimeOfDay } from './recommendation';
 
 /**
  * Possible actions recorded in the audit log.
@@ -150,6 +151,10 @@ export type AdminUsersResult = PaginatedResult<AdminUser>;
 
 /** Activity projection used by PAN 21 (CU53). */
 export interface AdminActivity {
+  costBasis?: 'per_party' | 'per_person';
+  availableTimesOfDay?: TimeOfDay[];
+  minPeople?: number | null;
+  maxPeople?: number | null;
   id: number;
   name: string;
   description: string;
@@ -173,6 +178,10 @@ export interface AdminActivitiesQuery {
 }
 
 export interface AdminActivityInput {
+  costBasis?: 'per_party' | 'per_person';
+  availableTimesOfDay?: TimeOfDay[];
+  minPeople?: number | null;
+  maxPeople?: number | null;
   name: string;
   description: string;
   estimatedCost: number;

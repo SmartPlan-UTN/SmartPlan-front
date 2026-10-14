@@ -314,7 +314,8 @@ export function PlanComposer({
                   ...current.stops,
                   {
                     activity,
-                    estimatedCost: activity.estimatedCost,
+                    estimatedCost: activity.estimatedCost * (activity.costBasis === 'per_person' ? current.peopleCount : 1),
+                    perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : null,
                     estimatedDuration: activity.estimatedDuration,
                   },
                 ],
@@ -342,7 +343,7 @@ export function PlanComposer({
   ) {
     updateRequestIdRef.current = null;
     setSubmitError(null);
-    setDraft((current) => ({ ...current, [field]: value }));
+    setDraft((current) => ({ ...current, [field]: value, ...(field === 'peopleCount' && typeof value === 'number' ? { stops: current.stops.map((stop) => stop.perPersonCost != null ? { ...stop, estimatedCost: Math.round(stop.perPersonCost * value * 100) / 100 } : stop) } : {}) }));
   }
 
   function validateIdea(): boolean {
@@ -408,7 +409,8 @@ export function PlanComposer({
               ...current.stops,
               {
                 activity,
-                estimatedCost: activity.estimatedCost,
+                estimatedCost: activity.estimatedCost * (activity.costBasis === 'per_person' ? current.peopleCount : 1),
+                perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : null,
                 estimatedDuration: activity.estimatedDuration,
               },
             ],
@@ -534,7 +536,8 @@ export function PlanComposer({
     const next = [...previous];
     next.splice(slot, 0, {
       activity,
-      estimatedCost: activity.estimatedCost,
+      estimatedCost: activity.estimatedCost * (activity.costBasis === 'per_person' ? draft.peopleCount : 1),
+      perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : null,
       estimatedDuration: activity.estimatedDuration,
     });
     updateDraft("stops", next);
