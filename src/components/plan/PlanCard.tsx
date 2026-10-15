@@ -16,12 +16,14 @@ import exploreStyles from "../explore/explore.module.css";
 export interface PlanCardProps {
   plan: Omit<PlanSearchResult, "averageRating" | "status"> &
     Partial<Pick<PlanSearchResult, "averageRating" | "status">>;
+  returnTo?: string;
   isSaved?: boolean;
   onSavedChange?: (saved: boolean) => void;
 }
 
 export function PlanCard({
   plan,
+  returnTo,
   isSaved: controlledSaved,
   onSavedChange,
 }: PlanCardProps) {
@@ -48,7 +50,7 @@ export function PlanCard({
     // No `aria-label` override: the card's own content already gives a
     // screen reader everything a sighted user sees.
     <article className={exploreStyles.card}>
-      <Link href={planDetailRoute(plan.id)} className={exploreStyles.cardContent}>
+      <Link href={planDetailRoute(plan.id, returnTo)} className={exploreStyles.cardContent}>
         <div
           className={exploreStyles.imageWrapper}
           style={{ background: gradientFor(plan.id) }}

@@ -67,6 +67,7 @@ function PlanRequestBody({ requestId }: { requestId: number }) {
       {planning.phase === "generated" && planning.plans ? (
         <div className={styles.resultsContent}>
           <PlanResults
+            returnTo={planRequestRoute(requestId)}
             plans={planning.plans}
             query={planning.query}
             resolvedContext={planning.resolvedContext}

@@ -10,7 +10,7 @@ import { useFavorites } from "@/context";
 import { useDetailFetch, usePlanSelection } from "@/hooks";
 import { ApiError, cancelOwnPlan, getOwnPlan, getPlan } from "@/lib/api";
 import { useSession } from "@/lib/auth";
-import { outingDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
+import { outingDetailRoute, planDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
 import { formatDuration, formatPrice, formatPlanTotal, formatPerPerson } from "@/lib/utils";
 import type {
   OwnPlanDetail,
@@ -34,6 +34,7 @@ import activityStyles from "../activity/activity.module.css";
 
 export interface PlanDetailViewProps {
   planId: number;
+  returnTo?: string;
 }
 
 const GENERIC_ERROR = "No pudimos cargar el plan. Intentá de nuevo.";
@@ -59,8 +60,9 @@ const GENERIC_ERROR = "No pudimos cargar el plan. Intentá de nuevo.";
  * publish it or make it private. An outing is not a plan to browse: its
  * owner is sent to its page in Mis salidas.
  */
-export function PlanDetailView({ planId }: PlanDetailViewProps) {
+export function PlanDetailView({ planId, returnTo = ROUTES.explore }: PlanDetailViewProps) {
   const router = useRouter();
+  const backLabel = returnTo.startsWith(`${ROUTES.planRequests}/`) ? "Volver a los resultados" : "Volver";
   const { status: sessionStatus } = useSession();
   const {
     data: plan,
@@ -152,7 +154,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
 
   async function handleShare() {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(new URL(planDetailRoute(planId), window.location.origin).href);
       setCopied(true);
       setTimeout(() => {
         setCopied(false);
@@ -199,9 +201,9 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
         <Icon name="inbox" size={32} className={activityStyles.stateIcon} />
         <h1 className="sp-h3">No encontramos este plan</h1>
         <p className="sp-body">Puede que ya no esté disponible.</p>
-        <Link href={ROUTES.explore} className={activityStyles.backLink}>
+        <Link href={returnTo} className={activityStyles.backLink}>
           <Icon name="arrow-left" size={14} aria-hidden="true" />
-          Volver a explorar
+          {backLabel}
         </Link>
       </div>
     );
@@ -229,7 +231,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
 
   return (
     <div>
-      <FloatingBackLink href={ROUTES.explore} label="Volver" heroRef={heroRef} />
+      <FloatingBackLink href={returnTo} label={backLabel} heroRef={heroRef} />
 
       <p className={styles.srOnly} role="status" aria-live="polite">
         {liveMessage}

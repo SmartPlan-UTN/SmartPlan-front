@@ -5,7 +5,7 @@ import { categoryLabel } from "@/lib/utils/catalogLabels";
 import { AuthenticatedImage } from "@/components/media";
 import { Badge, Icon, Stars } from "@/components/ui";
 import { RECOMMENDATIONS } from "@/components/landing/landingContent";
-import { planDetailRoute } from "@/lib/routes";
+import { planDetailRoute, ROUTES } from "@/lib/routes";
 import { formatDuration, gradientFor, formatPlanTotal } from "@/lib/utils";
 import type { PlanRecommendation } from "@/types";
 
@@ -49,7 +49,7 @@ export function RecommendationCard({
 
   return (
     <li className={styles.card} data-card>
-      <Link href={planDetailRoute(plan.id)} className={styles.link}>
+      <Link href={planDetailRoute(plan.id, ROUTES.home)} className={styles.link}>
         <CardMedia
           imageUrl={plan.imageUrl}
           planId={plan.id}

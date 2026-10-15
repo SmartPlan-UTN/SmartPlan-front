@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useImperativeHandle, useRef, type Ref } from "react";
+import { useCallback, useEffect, useImperativeHandle, useRef, type Ref } from "react";
 import Link from "next/link";
 
 import { useGoogleMap } from "@/lib/maps/useGoogleMap";
+import { frameResultsMap } from "@/lib/maps/frameResultsMap";
 import { BRANDED_MAP_STYLE } from "@/lib/maps/brandedMapStyle";
 import type { ResultsMapPlanPin } from "@/lib/maps/buildPlanPins";
 import { useReducedMotion } from "@/hooks";
@@ -96,6 +97,22 @@ export function ResultsMap({
   );
   const polylinesRef = useRef(new Map<number, google.maps.Polyline>());
   const mapRef = useRef<google.maps.Map | null>(null);
+  const cancelFrameRef = useRef<(() => void) | null>(null);
+  const requestedPlanRef = useRef<number | null>(null);
+
+  const frame = useCallback((map: google.maps.Map, targetPlans: ResultsMapPlanPin[], padding: number, animate = false) => {
+    cancelFrameRef.current?.();
+    cancelFrameRef.current = null;
+    // Google ignores fitBounds in a display:none container. Defer every
+    // camera action until layout has given the map a real viewport.
+    if (!containerRef.current?.clientWidth || !containerRef.current.clientHeight) return;
+    cancelFrameRef.current = frameResultsMap(
+      map,
+      targetPlans.flatMap((plan) => plan.stops.map(({ lat, lng }) => ({ lat, lng }))),
+      padding,
+      animate,
+    );
+  }, []);
 
   useEffect(() => {
     onPinHoverRef.current = onPinHover;
@@ -104,16 +121,12 @@ export function ResultsMap({
 
   const { status, errorMessage } = useGoogleMap(containerRef, MAP_OPTIONS, (map) => {
     mapRef.current = map;
-    const bounds = new google.maps.LatLngBounds();
-    let stopCount = 0;
 
     for (const plan of plans) {
       const planMarkers: { marker: google.maps.Marker; color: string; order: number }[] = [];
 
       plan.stops.forEach((stop, index) => {
         const position = { lat: stop.lat, lng: stop.lng };
-        bounds.extend(position);
-        stopCount += 1;
 
         const marker = new google.maps.Marker({
           position,
@@ -143,14 +156,12 @@ export function ResultsMap({
       }
     }
 
-    // Nothing to frame — every visible plan lacks coordinates. Leave the
-    // default Mendoza center/zoom instead of calling fitBounds on an empty
-    // LatLngBounds, which throws.
-    if (stopCount > 0) {
-      map.fitBounds(bounds, 48);
-    }
+    const requested = plans.filter((plan) => plan.planId === requestedPlanRef.current);
+    frame(map, requested.length ? requested : plans, requested.length ? 64 : 48);
 
     return () => {
+      cancelFrameRef.current?.();
+      cancelFrameRef.current = null;
       markersRef.current.forEach((planMarkers) => {
         planMarkers.forEach(({ marker }) => marker.setMap(null));
       });
@@ -187,43 +198,30 @@ export function ResultsMap({
   // becomes visible again (mobile toggle). The instance stays mounted the
   // whole time; recreating it on every tap would drop zoom/pan state and be
   // slow.
-  const stopsSignature = plans.map((plan) => plan.stops.length).join(",");
+  const stopsSignature = plans.map((plan) => `${plan.planId}:${plan.stops.map((stop) => `${stop.lat},${stop.lng}`).join(";")}`).join("|");
   useEffect(() => {
     if (!visible || !mapRef.current) return;
     const map = mapRef.current;
     google.maps.event.trigger(map, "resize");
-
-    const bounds = new google.maps.LatLngBounds();
-    let stopCount = 0;
-    plans.forEach((plan) =>
-      plan.stops.forEach((stop) => {
-        bounds.extend({ lat: stop.lat, lng: stop.lng });
-        stopCount += 1;
-      }),
-    );
-    if (stopCount > 0) map.fitBounds(bounds, 48);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- refit on visibility flipping true or the stop count changing, not on every `plans` identity change.
-  }, [visible, stopsSignature]);
+    const requested = plans.filter((plan) => plan.planId === requestedPlanRef.current);
+    frame(map, requested.length ? requested : plans, requested.length ? 64 : 48);
+    requestedPlanRef.current = null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- coordinate signature tracks framing data without reacting to equivalent array identities.
+  }, [visible, stopsSignature, frame]);
 
   useImperativeHandle(
     ref,
     () => ({
       panToPlan(planId: number) {
-        const map = mapRef.current;
-        const planMarkers = markersRef.current.get(planId);
-        if (!map || !planMarkers || planMarkers.length === 0) return;
-
-        const bounds = new google.maps.LatLngBounds();
-        planMarkers.forEach(({ marker }) => {
-          const position = marker.getPosition();
-          if (position) bounds.extend(position);
-        });
-
-        if (!reducedMotion) map.panTo(bounds.getCenter());
-        map.fitBounds(bounds, 64);
+        const target = plans.filter((plan) => plan.planId === planId);
+        if (!target.some((plan) => plan.stops.length > 0)) return;
+        // The mobile map may still be hidden or loading. Replay the requested
+        // route after it becomes visible instead of framing all alternatives.
+        requestedPlanRef.current = planId;
+        if (mapRef.current) frame(mapRef.current, target, 64, !reducedMotion);
       },
     }),
-    [reducedMotion],
+    [plans, reducedMotion, frame],
   );
 
   if (status === "error") {

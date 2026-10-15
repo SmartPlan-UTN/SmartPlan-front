@@ -415,3 +415,12 @@ describe("PlanResults (CU22 — Lo voy a hacer)", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+
+it("carries the same request origin in desktop and mobile detail links", async () => {
+  const user = userEvent.setup();
+  render(<PlanResults plans={[PLAN]} returnTo="/plan-requests/42" onAdjust={vi.fn()} onDiscard={vi.fn()} />);
+  expect(screen.getByRole("link", { name: PLAN.title })).toHaveAttribute("href", "/plans/7?from=%2Fplan-requests%2F42");
+  await user.click(screen.getByRole("tab", { name: "Mapa" }));
+  expect(screen.getByRole("link", { name: "Ver plan" })).toHaveAttribute("href", "/plans/7?from=%2Fplan-requests%2F42");
+});

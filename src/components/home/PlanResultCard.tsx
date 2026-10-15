@@ -13,6 +13,7 @@ import styles from "./plan-result-card.module.css";
 
 export interface PlanResultCardProps {
   plan: PlanDetailResult;
+  returnTo?: string;
   index: number;
   accentColor: string;
   active: boolean;
@@ -40,6 +41,7 @@ export interface PlanResultCardProps {
  */
 export function PlanResultCard({
   plan,
+  returnTo,
   index,
   accentColor,
   active,
@@ -73,7 +75,7 @@ export function PlanResultCard({
             {index + 1}
           </span>
           <h3 className={styles.title}>
-            <Link href={planDetailRoute(plan.id)} className={styles.titleLink}>
+            <Link href={planDetailRoute(plan.id, returnTo)} className={styles.titleLink}>
               {plan.title}
             </Link>
           </h3>

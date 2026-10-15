@@ -40,7 +40,7 @@ describe("RecommendationCard (CU20)", () => {
   it("links to the plan detail and shows the discovery essentials", () => {
     render(<RecommendationCard recommendation={make()} />);
 
-    expect(screen.getByRole("link")).toHaveAttribute("href", "/plans/7");
+    expect(screen.getByRole("link")).toHaveAttribute("href", "/plans/7?from=%2F");
     expect(screen.getByRole("heading", { name: "Tarde de vinos" })).toBeInTheDocument();
     expect(screen.getByText("Va con lo tuyo")).toBeInTheDocument();
     expect(screen.getByText("Bodegas")).toBeInTheDocument();
@@ -123,7 +123,7 @@ describe("RecommendationCard (CU20)", () => {
 
     expect(onDismiss).toHaveBeenCalledWith(7, "Tarde de vinos");
     // The click never bubbled to the card's link.
-    expect(screen.getByRole("link")).toHaveAttribute("href", "/plans/7");
+    expect(screen.getByRole("link")).toHaveAttribute("href", "/plans/7?from=%2F");
   });
 
   it("surfaces the CU21 reason chips", () => {
