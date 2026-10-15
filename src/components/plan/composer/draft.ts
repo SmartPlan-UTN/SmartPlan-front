@@ -8,6 +8,7 @@ import type { Price } from "@/types/pricing";
 import type { Coords } from "./routeDistance";
 
 export interface ComposerStop {
+  perPersonCost?: number | null;
   activity: ActivitySearchResult;
   detailId?: number;
   /** Lower bound of the stop price; `null` when it is unknown (never 0). */
@@ -40,6 +41,7 @@ export function createInitialDraft(plan?: OwnPlanDetail): ComposerDraft {
       detailId: detail.id,
       estimatedCost: detail.estimatedCost,
       price: detail.price ?? null,
+      perPersonCost: detail.perPersonCost,
       estimatedDuration: detail.estimatedDuration,
       activity: {
         id: detail.activity.id,

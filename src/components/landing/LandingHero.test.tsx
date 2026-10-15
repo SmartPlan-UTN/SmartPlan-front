@@ -101,13 +101,14 @@ describe("LandingHero", () => {
     expect(onSubmit).toHaveBeenCalledWith("algo tranquilo", {});
   });
 
-  it("replaces the composer with the generation state in place", () => {
-    renderHero({ phase: "processing" });
+  it.each(["processing", "submissionDelayed"] as const)("replaces the composer with the %s generation state in place", (phase) => {
+    renderHero({ phase });
 
     // Same screen answering, not a route change: the field is gone and
     // nothing else on the hero survives alongside it.
     expect(screen.queryByLabelText(FIELD)).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Generación de planes" })).not.toHaveAttribute("aria-labelledby");
   });
 });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 import { Icon } from '@/components/ui';
@@ -15,6 +15,8 @@ interface MediaLightboxProps {
   resourceName: string;
   onIndexChange: (index: number) => void;
   onClose: () => void;
+  /** Extra controls for the photo on screen, e.g. reporting it (#156). */
+  renderActions?: (image: MediaImage) => ReactNode;
 }
 
 /**
@@ -22,7 +24,14 @@ interface MediaLightboxProps {
  * photos, Escape or the backdrop closes it, and focus returns to the photo
  * that opened it.
  */
-export function MediaLightbox({ images, index, resourceName, onIndexChange, onClose }: MediaLightboxProps) {
+export function MediaLightbox({
+  images,
+  index,
+  resourceName,
+  onIndexChange,
+  onClose,
+  renderActions,
+}: MediaLightboxProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const total = images.length;
@@ -91,6 +100,7 @@ export function MediaLightbox({ images, index, resourceName, onIndexChange, onCl
       <button ref={closeRef} type="button" className={styles.lightboxClose} onClick={onClose} aria-label="Cerrar">
         <Icon name="x" size={22} aria-hidden="true" />
       </button>
+      {renderActions ? <div className={styles.lightboxActions}>{renderActions(image)}</div> : null}
 
       <figure className={styles.lightboxFigure}>
         <AuthenticatedImage

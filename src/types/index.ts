@@ -19,3 +19,4 @@ export * from './ratings';
 export * from './media';
 export * from './experiences';
 export * from './explore';
+export * from './contentReports';

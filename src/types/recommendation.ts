@@ -13,6 +13,7 @@ export type RequestStatusKey = 'pending' | 'processing' | 'generated' | 'failed'
 
 /** Time-of-day option accepted in a plan request's context (CU17, CU19). */
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'night';
+export type TravelMode = 'drive' | 'walk' | 'bicycle';
 
 /**
  * Optional generation context for a plan request (CU17). Every field is
@@ -21,6 +22,11 @@ export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'night';
  * Matches `PlanRequestContextDto` in `SmartPlan-back`.
  */
 export interface PlanRequestContext {
+  travelMode?: TravelMode;
+  idDepartment?: number;
+  latitude?: number;
+  longitude?: number;
+  maxDistanceKm?: number;
   budget?: number;
   partySize?: number;
   timeOfDay?: TimeOfDay;
@@ -91,6 +97,11 @@ export interface PlanRequestPlanSummary {
  * placeholder. Matches `ResolvedPlanContextDto` in `SmartPlan-back`.
  */
 export interface ResolvedPlanContext {
+  travelMode?: TravelMode;
+  timeOfDay?: TimeOfDay | null;
+  availableDuration?: number | null;
+  /** Only present when the backend actually applied a distance filter. */
+  appliedMaxDistanceKm?: number | null;
   budget: number | null;
   partySize: number | null;
   departmentName: string | null;
@@ -185,8 +196,8 @@ export interface PlanFeedback {
   /** Whether the owner shares it with the plan's community (#106). */
   shared: boolean;
   /**
-   * `true` only when moderation took the comment down from the community.
-   * The owner never sees any other moderation state.
+   * `true` only when an administrator removed the comment after a report
+   * (#156). The owner never sees any other moderation state.
    */
   commentHidden: boolean;
   createdAt: string;

@@ -65,7 +65,8 @@ export const MOBILE_LINKS: readonly NavigationLink[] = [
 ];
 
 /**
- * User menu options. Seguridad (CU6's password change) sits between
+ * User menu options. Ayuda (help and support) closes the list, right
+ * before Cerrar sesión. Seguridad (CU6's password change) sits between
  * Preferencias and Cerrar sesión — its own `/security` destination, not a
  * card on `/profile`, matching the system design's dedicated `Security.jsx`
  * screen instead of `Profile.jsx`'s duplicate inline card.
@@ -74,6 +75,7 @@ export const USER_LINKS: readonly NavigationLink[] = [
   { href: ROUTES.profile, label: "Mi perfil", icon: "user" },
   { href: ROUTES.preferences, label: "Preferencias", icon: "settings" },
   { href: ROUTES.security, label: "Seguridad", icon: "lock" },
+  { href: ROUTES.help, label: "Ayuda", icon: "circle-help" },
 ];
 
 /** Role-specific account-menu entry for users who can access administration. */

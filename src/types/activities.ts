@@ -54,6 +54,7 @@ export interface ActivityCategorySummary {
  * (CU9-CU11). Matches `ActivitySummaryDto` in `SmartPlan-back`.
  */
 export interface ActivitySearchResult {
+  costBasis?: 'per_party' | 'per_person';
   id: number;
   imageUrl?: string | null;
   /** `google_maps` when `imageUrl` is a Google Places photo (SmartPlan-back#102). */
@@ -153,6 +154,10 @@ export interface ActivityLocationSummary {
  * summary plus every meeting point.
  */
 export interface ActivityDetailResult extends ActivitySearchResult {
+  costBasis?: 'per_party' | 'per_person';
+  availableTimesOfDay?: import('./recommendation').TimeOfDay[];
+  minPeople?: number | null;
+  maxPeople?: number | null;
   images?: import('./media').MediaImage[];
   locations: ActivityLocationSummary[];
   /** False when it cannot be added to a plan (e.g. no exact location). */

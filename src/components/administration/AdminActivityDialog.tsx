@@ -9,6 +9,7 @@ import type {
   AdminActivityInput,
   CategoryOption,
   PlaceOption,
+  TimeOfDay,
 } from "@/types";
 import type { PriceInput, PriceKind, PriceUnit } from "@/types/pricing";
 
@@ -91,7 +92,7 @@ export function AdminActivityDialog({
   const [priceUnit, setPriceUnit] = useState<PriceUnit>(
     activity?.price?.unit && activity.price.unit !== "UNSPECIFIED"
       ? activity.price.unit
-      : "PER_PERSON",
+      : activity?.costBasis === "per_party" ? "PER_GROUP" : "PER_PERSON",
   );
   const [priceSource, setPriceSource] = useState<"OFFICIAL" | "CURATED">(
     activity?.price?.source === "OFFICIAL" ? "OFFICIAL" : "CURATED",
@@ -106,6 +107,12 @@ export function AdminActivityDialog({
     activity ? String(activity.estimatedDuration) : "",
   );
   const [type, setType] = useState(activity?.type ?? "");
+  const costBasis = !priceTouched && activity?.costBasis
+    ? activity.costBasis
+    : ["PER_PERSON", "ENTRY", "CONSUMPTION"].includes(priceUnit) ? "per_person" : "per_party";
+  const [availableTimesOfDay, setAvailableTimesOfDay] = useState<TimeOfDay[]>(activity?.availableTimesOfDay ?? []);
+  const [minPeople, setMinPeople] = useState(activity?.minPeople == null ? '' : String(activity.minPeople));
+  const [maxPeople, setMaxPeople] = useState(activity?.maxPeople == null ? '' : String(activity.maxPeople));
   const [categoryIds, setCategoryIds] = useState(
     () => new Set(activity?.categories.map((item) => item.id) ?? []),
   );
@@ -202,7 +209,17 @@ export function AdminActivityDialog({
                 }),
           }
         : undefined;
+    const minimum = minPeople === '' ? null : Number(minPeople);
+    const maximum = maxPeople === '' ? null : Number(maxPeople);
+    if ([minimum, maximum].some((value) => value !== null && (!Number.isInteger(value) || value < 1 || value > 1000)) || (minimum !== null && maximum !== null && minimum > maximum)) {
+      setValidationError('Revisá los límites de personas: el mínimo no puede superar al máximo.');
+      return;
+    }
     await onSave({
+      costBasis,
+      availableTimesOfDay,
+      minPeople: minimum,
+      maxPeople: maximum,
       name: name.trim(),
       description: description.trim(),
       ...(price ? { price } : {}),
@@ -360,6 +377,20 @@ export function AdminActivityDialog({
             Tipo de salida (opcional)
             <input value={type} maxLength={80} placeholder="Ej. cultural" onChange={(event) => setType(event.target.value)} />
           </label>
+          <div className={styles.formGrid}>
+            <label className={styles.field}>Mínimo de personas (opcional)<input type="number" min="1" max="1000" value={minPeople} onChange={(event) => setMinPeople(event.target.value)} /></label>
+            <label className={styles.field}>Máximo de personas (opcional)<input type="number" min="1" max="1000" value={maxPeople} onChange={(event) => setMaxPeople(event.target.value)} /></label>
+          </div>
+          <fieldset className={styles.choiceGroup}>
+            <legend>Momentos disponibles</legend>
+            <p className="sp-small">Sin seleccionar: disponibilidad sin especificar.</p>
+            <div className={styles.choiceList}>
+              {(['morning', 'afternoon', 'evening', 'night'] as const).map((period) => <label className={styles.checkOption} key={period}>
+                <input type="checkbox" checked={availableTimesOfDay.includes(period)} onChange={() => setAvailableTimesOfDay((current) => current.includes(period) ? current.filter((value) => value !== period) : [...current, period])} />
+                {{ morning: 'Mañana', afternoon: 'Tarde', evening: 'Noche', night: 'Madrugada' }[period]}
+              </label>)}
+            </div>
+          </fieldset>
 
           <fieldset className={styles.choiceGroup}>
             <legend>Categorías</legend>

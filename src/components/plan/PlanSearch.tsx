@@ -113,6 +113,13 @@ export function PlanSearch({ head }: { head?: ReactNode }) {
     ],
   );
 
+  const hasCriteria =
+    params.search !== undefined ||
+    params.categoryIds !== undefined ||
+    params.minPrice !== undefined ||
+    params.maxPrice !== undefined ||
+    params.minRating !== undefined;
+
   const rangeError = priceRangeError(minPrice, maxPrice);
   const canSearch =
     rangeError === null &&
@@ -230,11 +237,24 @@ export function PlanSearch({ head }: { head?: ReactNode }) {
         {status === "idle" && !hasResults && canSearch ? (
           <div className={activityStyles.stateBlock}>
             <Icon name="inbox" size={32} className={activityStyles.stateIcon} />
-            <h2 className="sp-h3">Sin resultados</h2>
+            <h2 className="sp-h3">
+              {hasCriteria ? "Sin resultados" : "Todavía no hay planes publicados"}
+            </h2>
             <p className="sp-body">
-              No encontramos planes para tu búsqueda. Probá con otras palabras o
-              ajustando los filtros.
+              {hasCriteria
+                ? "No encontramos planes publicados para tu búsqueda. Probá con otras palabras o ajustando los filtros."
+                : "Cuando alguien publique un plan, lo vas a ver acá."}
             </p>
+            {hasCriteria ? null : (
+              <p className="sp-small">
+                En Explorar solo aparecen los planes que sus autores publicaron.
+                Los resultados de Planificar y las salidas son personales y no se
+                publican.
+                {sessionStatus === "authenticated"
+                  ? " Podés publicar los tuyos desde Mis planes."
+                  : null}
+              </p>
+            )}
           </div>
         ) : null}
 

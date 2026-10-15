@@ -25,8 +25,8 @@ export interface MediaImage {
   displayOrder: number;
   createdAt: string;
   /**
-   * Only on the owner's own outing photos (#106): moderation took this one
-   * down from the community, so it is no longer shown there.
+   * Only on the owner's own outing photos (#106): an administrator removed
+   * it after a report (#156), so the community no longer sees it.
    */
   communityHidden?: true;
 }

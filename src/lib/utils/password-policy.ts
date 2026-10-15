@@ -3,7 +3,7 @@ export const MAX_PASSWORD_LENGTH = 128;
 
 export const PASSWORD_UPPERCASE_PATTERN = /[A-Z]/;
 export const PASSWORD_DIGIT_PATTERN = /[0-9]/;
-export const PASSWORD_SYMBOL_PATTERN = /[!@#$%^&*]/;
+export const PASSWORD_SYMBOL_PATTERN = /[!@#$%^&*.]/;
 
 const PRESENTATION_SEQUENCE_PATTERN = /[^\uFE0F\uFE0E][\uFE0F\uFE0E]/g;
 const SURROGATE_PAIR_PATTERN = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g;
@@ -42,7 +42,7 @@ export function newPasswordValidationMessage(password: string): string | undefin
     return "La contraseña debe incluir al menos un número";
   }
   if (!PASSWORD_SYMBOL_PATTERN.test(password)) {
-    return "La contraseña debe incluir al menos un símbolo (!@#$%^&*)";
+    return "La contraseña debe incluir al menos un símbolo (!@#$%^&*.)";
   }
 
   return undefined;
@@ -66,7 +66,7 @@ export function passwordRequirements(password: string): PasswordRequirement[] {
       met: PASSWORD_DIGIT_PATTERN.test(password),
     },
     {
-      label: "Al menos un símbolo (!@#$%^&*)",
+      label: "Al menos un símbolo (!@#$%^&*.)",
       met: PASSWORD_SYMBOL_PATTERN.test(password),
     },
   ];

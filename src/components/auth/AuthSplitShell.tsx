@@ -25,6 +25,8 @@ export interface AuthSplitShellProps {
   cardVariant: "login" | "register";
   backHref?: string;
   backLabel?: string;
+  /** Optional content under the card, e.g. the login context strip. */
+  footer?: ReactNode;
 }
 
 /**
@@ -43,6 +45,7 @@ export function AuthSplitShell({
   cardVariant,
   backHref = ROUTES.home,
   backLabel = "Volver al inicio",
+  footer,
 }: AuthSplitShellProps) {
   return (
     <div className={styles.shell}>
@@ -89,6 +92,7 @@ export function AuthSplitShell({
         >
           {children}
         </div>
+        {footer}
       </div>
     </div>
   );

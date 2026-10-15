@@ -7,14 +7,15 @@ import { MediaGalleryManager } from "@/components/media";
 import type { AdminPlan, PlanStatusKey, UpdateAdminPlanInput } from "@/types";
 
 import styles from "./AdminManagement.module.css";
-
-export const PLAN_STATUS_OPTIONS: Array<{ value: PlanStatusKey; label: string }> = [
-  { value: "generated", label: "Generado" },
-  { value: "selected", label: "Seleccionado" },
-  { value: "confirmed", label: "Confirmado" },
-  { value: "completed", label: "Completado" },
-  { value: "cancelled", label: "Cancelado" },
-];
+import {
+  EXPLORE_HIDDEN_REASON,
+  PLAN_STATUS_COPY,
+  PLAN_STATUS_OPTIONS,
+  exploreHiddenCauseAfter,
+  planKindCopy,
+  planStatusCopy,
+  planVisibilityLabel,
+} from "./planAdminPresentation";
 
 interface AdminPlanDialogProps {
   plan: AdminPlan;
@@ -35,6 +36,16 @@ export function AdminPlanDialog({ plan, saving, error, onClose, onSave }: AdminP
   const [peopleCount, setPeopleCount] = useState(String(plan.peopleCount));
   const [status, setStatus] = useState<PlanStatusKey>(plan.status.key);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const statusHintId = useId();
+  const knownStatus = PLAN_STATUS_OPTIONS.some((option) => option.value === plan.status.key);
+  // Keep an unknown current status selectable so opening the dialog doesn't
+  // silently swap it for the first known one on save.
+  const statusOptions = knownStatus
+    ? PLAN_STATUS_OPTIONS
+    : [{ value: plan.status.key, label: planStatusCopy(plan.status).label }, ...PLAN_STATUS_OPTIONS];
+  const statusHint = status === plan.status.key
+    ? planStatusCopy(plan.status).description
+    : PLAN_STATUS_COPY[status].description;
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -119,13 +130,17 @@ export function AdminPlanDialog({ plan, saving, error, onClose, onSave }: AdminP
               Cantidad de personas
               <input type="number" min="1" max="1000" step="1" value={peopleCount} onChange={(event) => setPeopleCount(event.target.value)} />
             </label>
-            <label className={styles.field}>
-              Estado
-              <select value={status} onChange={(event) => setStatus(event.target.value as PlanStatusKey)}>
-                {PLAN_STATUS_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-              </select>
-            </label>
+            <div className={styles.fieldGroup}>
+              <label className={styles.field}>
+                Estado
+                <select value={status} aria-describedby={statusHint ? statusHintId : undefined} onChange={(event) => setStatus(event.target.value as PlanStatusKey)}>
+                  {statusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+              </label>
+              {statusHint ? <span id={statusHintId} className={styles.fieldHint}>{statusHint}</span> : null}
+            </div>
           </div>
+          <PlanVisibilityNote plan={plan} status={status} />
           {validationError || error ? <p className={styles.formError} role="alert">{validationError ?? error}</p> : null}
           <div className={styles.dialogActions}>
             <Button variant="ghostLight" disabled={saving} onClick={onClose}>Cancelar</Button>
@@ -136,6 +151,36 @@ export function AdminPlanDialog({ plan, saving, error, onClose, onSave }: AdminP
           <MediaGalleryManager target="plan" resourceId={plan.id} resourceName={plan.title} />
         </div>
       </div>
+    </div>
+  );
+}
+
+const STATUS_DOES_NOT_PUBLISH = "Cambiar el estado no lo publica: la visibilidad la decide su autor desde Mis planes.";
+
+function PlanVisibilityNote({ plan, status }: { plan: AdminPlan; status: PlanStatusKey }) {
+  const kind = planKindCopy(plan.kind);
+  const visibility = planVisibilityLabel(plan.visibility);
+  const before = plan.exploreHiddenCause;
+  const after = exploreHiddenCauseAfter(plan, status);
+  if (!kind || !visibility || before === undefined || after === undefined) return null;
+
+  let presence: string;
+  if (before === null && after !== null) {
+    presence = "Hoy aparece en Explorar. Si lo guardás como cancelado, deja de mostrarse.";
+  } else if (before !== null && after === null) {
+    presence = "Hoy no aparece en Explorar. Si lo guardás con este estado, vuelve a mostrarse.";
+  } else if (after === null) {
+    presence = "Este plan aparece en Explorar.";
+  } else if (after === "cancelled") {
+    presence = `No aparece en Explorar. ${EXPLORE_HIDDEN_REASON[after]}`;
+  } else {
+    presence = `No aparece en Explorar. ${EXPLORE_HIDDEN_REASON[after]} ${STATUS_DOES_NOT_PUBLISH}`;
+  }
+
+  return (
+    <div className={styles.visibilityNote}>
+      <p><strong>Origen:</strong> {kind.label} · <strong>Visibilidad:</strong> {visibility}</p>
+      <p>{presence}</p>
     </div>
   );
 }

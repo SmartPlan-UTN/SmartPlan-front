@@ -909,3 +909,15 @@
   color: var(--error);
   font-size: var(--t-small);
 }
+
+/* "Localidad" status (needs a province, loading, empty): kept out of the
+   option list so it never reads as a selectable value (#181). */
+.filterHint {
+  margin: 0;
+  color: var(--fg-3);
+  font-size: var(--t-small);
+}
+
+.filterHint:empty {
+  display: none;
+}

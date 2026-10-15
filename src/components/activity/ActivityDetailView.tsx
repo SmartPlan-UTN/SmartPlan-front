@@ -130,7 +130,7 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
     );
   }
 
-  const categoryLabel =
+  const categoriesText =
     activity.categories.length > 0
       ? activity.categories
           .map(
@@ -190,8 +190,8 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
       <MediaGallery target="activity" resourceId={activity.id} resourceName={activity.name} />
       <div className={styles.titleBlock}>
         <div className={styles.badgeRow}>
-          {categoryLabel ? (
-            <Badge variant="tag">{categoryLabel}</Badge>
+          {categoriesText ? (
+            <Badge variant="tag">{categoriesText}</Badge>
           ) : (
             <Badge variant="tag">
               <em>Sin categoría</em>
@@ -310,8 +310,8 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
                 <Icon name="tag" size={15} className={styles.infoIcon} />
                 <div>
                   <p className={styles.infoLabel}>Categoría</p>
-                  {categoryLabel ? (
-                    <p className={styles.infoValue}>{categoryLabel}</p>
+                  {categoriesText ? (
+                    <p className={styles.infoValue}>{categoriesText}</p>
                   ) : (
                     <p className={styles.missing}>Sin información disponible</p>
                   )}

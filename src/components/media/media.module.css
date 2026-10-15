@@ -364,8 +364,9 @@
   pointer-events: none;
 }
 
-/* Only on the owner's outing photos that moderation took down (#106):
-   the photo stays theirs, it just no longer shows in the community. */
+/* Only on the owner's outing photos an administrator removed after a
+   report (#156): the photo stays theirs, it just no longer shows in the
+   community. */
 .hiddenBadge {
   position: absolute;
   top: var(--s-2);
@@ -770,6 +771,13 @@
 .lightboxNav:focus-visible {
   outline: 2px solid var(--ember);
   outline-offset: 2px;
+}
+
+.lightboxActions {
+  position: absolute;
+  top: var(--s-4);
+  left: var(--s-4);
+  z-index: 1;
 }
 
 .lightboxClose {

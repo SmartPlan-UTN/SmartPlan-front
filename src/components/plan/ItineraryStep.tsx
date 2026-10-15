@@ -24,7 +24,7 @@ export function ItineraryStep({
 }) {
   const { activity } = detail;
   const location = activity.locations[0] ?? null;
-  const categoryLabel =
+  const categoriesText =
     activity.categories.length > 0
       ? activity.categories.map((category) => labelCategory(category.name)).join(" · ")
       : null;
@@ -55,7 +55,7 @@ export function ItineraryStep({
 
         <div>
           <div className={styles.stepBadgeRow}>
-            {categoryLabel ? <Badge variant="tag">{categoryLabel}</Badge> : null}
+            {categoriesText ? <Badge variant="tag">{categoriesText}</Badge> : null}
             <span className={styles.stepRating}>
               <RatingBadge averageRating={activity.averageRating} ratingCount={activity.ratingCount} />
             </span>

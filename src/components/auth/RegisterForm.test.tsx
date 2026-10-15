@@ -52,7 +52,7 @@ describe("RegisterForm", () => {
 
     expect(
       await screen.findByText(
-        "La contraseña debe incluir al menos un símbolo (!@#$%^&*)",
+        "La contraseña debe incluir al menos un símbolo (!@#$%^&*.)",
       ),
     ).toBeInTheDocument();
     expect(register).not.toHaveBeenCalled();
@@ -70,7 +70,7 @@ describe("RegisterForm", () => {
     const user = userEvent.setup();
     renderForm();
 
-    await fillRegistration(user, "Abcdef1!");
+    await fillRegistration(user, "Abcdef1.");
     await user.click(screen.getByRole("button", { name: "Crear cuenta" }));
 
     await waitFor(() => {
@@ -78,7 +78,7 @@ describe("RegisterForm", () => {
         name: "Ana",
         lastName: "Pérez",
         email: "ana@example.com",
-        password: "Abcdef1!",
+        password: "Abcdef1.",
       });
     });
     expect(replace).toHaveBeenCalledWith("/");

@@ -43,7 +43,7 @@ rereading the entire git history.
 |---|---|
 | **Phase** | Foundations — layout and navigation ready, no use cases implemented |
 | **Base branch** | `develop` |
-| **Last update** | 2026-09-30 |
+| **Last update** | 2026-10-12 |
 | **Completed use cases** | 0 / 62 |
 
 ---
@@ -71,6 +71,7 @@ rereading the entire git history.
 | Mobile-first responsive navigation and screen layouts | `In review` | `feature/mobile-first-responsive` | [#124](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/124) | Depends on visual-refresh PR #123. Adds a persistent bottom navigation below 900px, safe-area-aware shell spacing, and responsive refinements across user-facing screens without changing the landing content layout. |
 | [F06] Continuous integration: lint and tests on every PR | `In review` | `SMART-f06-integracion-continua-lint-y-tests-en-prs` | [#84](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/84) | Ref [`SmartPlan-back#28`](https://github.com/SmartPlan-UTN/SmartPlan-back/issues/28). F20's `ci.yml` already covered lint/test/build on push and PR against develop/main; this ticket aligns the job id to `ci` (was `quality`) and the setup to `pnpm/action-setup` + `actions/setup-node` with `node-version-file: '.nvmrc'` (was the composite `pnpm/setup`), matching `SmartPlan-back`. The branch-protection row above says `Completed`, but there was no evidence the check was configured as a required status check — F06 confirms and configures it. The manual GitHub step is still pending (exact check name after the first run) |
 | [#144] Ordenar la pantalla de resultados de generación (CU17, CU19) | `In review` | `SMART-144-ordenar-resultados-generacion` | [#155](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/155) | `PlanResultCard` loses its empty 84px media block for an accent bar in the plan's pin colour, a comparable summary strip (cost, duration, stops), a readable "A → B → C" itinerary, at most 2 tags, and actions split by a hairline. More air between cards and in the header. Dead CSS removed. Refines the current list + map layout, no redesign |
+| [#160] Aclarar estados y visibilidad de los planes entre Administración y Explorar | `In review` | `SMART-160-estados-visibilidad-planes` | [#178](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/178) | PAN 22 shows statuses in Spanish with a short meaning, a new "Origen y visibilidad" column saying whether Explorar lists the plan and why not, origin/visibility filters, and a collapsible legend. The edit dialog explains that changing the status does not publish. Explorar's empty state explains that only published plans appear. Needs back [#124](https://github.com/SmartPlan-UTN/SmartPlan-back/pull/124) (`kind` and `visibility` in `/admin/plans`) |
 
 ---
 
@@ -87,6 +88,18 @@ traceability matrix (`skills/01-domain/`).
 | CU2 | Register user | PAN 04 | `In progress` | `SMART-13-cu1-iniciar-sesion` | |
 | CU3 | Recover password | — | `Not started` | | |
 | CU4 | Log out | — | `In progress` | `SMART-16-cu4-cerrar-sesion` | |
+
+### Ticket fix — 2026-10-12
+
+| Ticket | Status | Branch | PR |
+| --- | --- | --- | --- |
+| #163 / back #111 | `In review` | `fix/163-password-dot` | [#172](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/172) |
+
+Accept dot in shared validation and checklist across registration, recovery and change (CU2/CU3/CU6). Issue #163 was closed without this change in develop.
+
+
+Verification: `pnpm lint`, `pnpm test --maxWorkers=4` (864 passed), `pnpm build`. Registration, reset and change form success fixtures use dot as their only symbol.
+
 
 ### User management
 
@@ -121,6 +134,18 @@ traceability matrix (`skills/01-domain/`).
 | CU21 | Adjust recommendations based on history | — | `In review` | `7-epica-recomendacion` | #117 |
 | CU22 | Select plan | PAN 11, PAN 17 | `In review` | `feature/130-mis-planes-mis-salidas` | #148 |
 | CU23 | Submit plan feedback | PAN 13, PAN 17 | `In review` | `feature/130-mis-planes-mis-salidas` | #148 |
+
+### Ticket fix — 2026-10-12
+
+| Ticket | Status | Branch | PR |
+| --- | --- | --- | --- |
+| back #103 / front #20/#30 | `In review` | `fix/103-generation-preferences` | [#173](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/173) |
+
+Respect useDeviceLocation before requesting GPS; fallback to saved area; display only the radius actually applied by the backend (CU8/CU18/CU19).
+
+
+Verification: `pnpm lint`, `pnpm test --maxWorkers=1` (862 passed), `pnpm build`. A parallel full run hit existing timeouts in CreatePlanForm and CollectionDetailView; the complete serial run passed. GPS disabled/enabled/denied, failed preferences, cancellation and applied-radius rendering are covered.
+
 
 ### Planning
 
@@ -187,10 +212,11 @@ traceability matrix (`skills/01-domain/`).
 |---|---|---|---|---|---|
 | CU53 | Manage activities | PAN 21 | `In review` | `SMART-59-63-cu53-cu60-admin-management` | #109 |
 | CU54 | Manage categories | — | `Not started` | | |
-| CU55 | Moderate ratings | PAN 20 | `In review` | `SMART-60-cu55-moderar-valoraciones` | [#118](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/118) |
+| CU55 | Moderate ratings (report-based since #156) | PAN 20 | `In review` | `feature/156-moderacion-por-denuncias` | [#118](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/118), [#177](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/177) |
 | CU56 | Delete content | — | `Not started` | | |
 | CU57 | Manage users | PAN 19 | `In review` | `SMART-62-cu58-panel-de-control` | #99 |
 | CU58 | View system metrics | REP-01 | `In review` | `SMART-62-cu58-panel-de-control` | #99 |
+| #174 / CU58 | Download the complete dashboard CSV report | REP-01 | `In review` | `SMART-174-download-dashboard-report` | [#176](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/176) |
 | CU59 | Review user suggestion | — | `Not started` | | |
 | CU60 | Manage plans | PAN 22 | `In review` | `SMART-59-63-cu53-cu60-admin-management` | #109 |
 | CU61 | Manage permissions | — | `Not started` | | |
@@ -200,12 +226,18 @@ traceability matrix (`skills/01-domain/`).
 
 ## Decisions
 
+2026-10-12 — CU58 downloads a Blob through apiClient.request to preserve session handling and Content-Disposition. The clicked range is captured while period navigation remains available; an immediate ref blocks duplicate downloads. The report includes the complete visible dashboard.
+
+
+2026-10-12 — Accept dot in shared validation and checklist across registration, recovery and change (CU2/CU3/CU6). Issue #163 was closed without this change in develop.
+
 Technical decisions made and their reasoning. Keeps the same thing from
 being re-discussed twice.
 
 | Date | Decision | Reason |
 |---|---|---|
 | 2026-10-12 | #136: every image goes through `AuthenticatedImage`, which reads the provider credit from the API's `X-Photo-*` headers and names Google Maps on any Google Places photo by itself; detail heroes pass `attribution="full"` to also link the authors | Google requires the Google Maps credit wherever a Places photo appears and the authors where it is shown large. Doing it in the one component that downloads images means no card can forget it; only the 72 px outing stamp opts out (`external`) and credits Google Maps in the card text instead. |
+| 2026-10-12 | PAN 20 is the "Denuncias" queue (#156): it replaces the ratings tray and the experiences queues, and supersedes the 2026-09-02 decisions about the "Rechazadas" tab and its counters | Content is published at once and only reported content reaches an administrator, so the old states (pendiente/aprobada/rechazada, sin revisar) no longer exist. One queue groups open reports by content with Todas/Valoraciones/Comentarios/Fotos tabs (counters still read `pagination.total` from one-row listings); each card shows the content, its author, what it is about, how many reports and a "Revisado antes" mark for kept content reported again, and opens the report list inline. Reporting has one entry point for the three types: `ReportButton` (a flag; a login link without a session; nothing on one's own content) plus `useContentReporter`, which owns a list's single dialog and confirmation toast so it outlives the item that leaves the view. The shared pieces this needed were extracted, not copied: `FormDialog` (from `RatingRejectionDialog`, now `ReasonDialog`), `CountedTextarea`, and `Toast` (from the composer's `UndoToast`, which now wraps it). |
 | 2026-10-04 | #131 discovery: catalog rows act with icons (ⓘ inspect, + add, ✓ removes); one Quick View appears in three places (inside its row, as a card on the map, as a sheet on phones); Review draws the plan on a map of straight lines; list, route and map share one "pointed at" activity | A row's ✓ undoes in place (with the undo toast) so nobody has to find the stop in the route to take it back. The Quick View is a glance, not the full page: "Ver ficha completa" appears only when that page holds content the preview leaves out (more photos, ratings, other meeting points, a cut description). Markers stay HTML buttons in one OverlayView (see `lib/maps/htmlMarkerLayer.ts`); stops that would cover each other spread into a small ring in route order while the line keeps their true positions. Lines between stops are straight and labelled as such: no street routing or travel time is claimed. Linking is plain React state in `PlanComposer`, after profiling showed catalog rows do not re-render and only rows that are stops report hover; a selector store is not warranted. Supersedes the 2026-09-30 row's "five results / 12-item pagination" (the catalog shows 8 per page). |
 | 2026-09-30 | #131 keeps one in-memory draft for create and edit and saves it atomically at the end | Navigation between steps preserves edits; refresh discards them. Existing stops retain their `PlanDetail` identity so backend edits preserve saved cost/duration snapshots, while new stops use current catalog estimates. The catalog previews five results and reuses 12-item pagination. CU31 stays unavailable until its backend contract exists; Playwright and refresh recovery remain out of scope. |
 | 2026-09-15 | A 401 renews the session and replays the request instead of logging the user out, and every renewal goes through a single-flight | The access token lives 15 minutes and the refresh cookie 30 days, but the client treated any 401 as "session over", so everyone was dropped to the login screen 15 minutes after logging in with a perfectly valid cookie in the browser. The single-flight is correctness, not an optimization: `SmartPlan-back` rotates the refresh token on every `POST /sessions/refresh` and revokes the whole session when the old one is replayed (`REFRESH_TOKEN_REUSED`), so a screen firing several requests in parallel — which is what produces several simultaneous 401s the moment the token expires — would have had all but the first refresh revoke the session, turning the repair into the same logout it was meant to prevent. Startup rehydration shares the same single-flight for that reason. The endpoints that *open* a session are excluded: a 401 there is the answer itself, and on `/sessions/refresh` a retry would recurse into the call that just failed. |
@@ -257,11 +289,14 @@ being re-discussed twice.
 
 ---
 
+2026-10-12 — Respect useDeviceLocation before requesting GPS; fallback to saved area; display only the radius actually applied by the backend (CU8/CU18/CU19).
+
 ## UX fixes in review
 
 | Issue | Status | Date | Branch | PR | Notes |
 |---|---|---|---|---|---|
 | #140 — Predictable exploration filters (CU9–CU12, CU16) | In review | 2026-10-12 | `SMART-140-preserve-explore-filters` | [#170](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/170) | Restore search, filters, sort and page on return from the map; reject contradictory or negative prices before fetching. |
+| #181 — Location filters read as two province pickers (CU10) | In review | 2026-10-13 | `SMART-181-ubicacion-filtros` | [#182](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/182) | Visible "Provincia"/"Localidad" labels; "Localidad" disabled with a separate hint until a province is chosen; loading, empty and failed lookups announced outside the options, with retry. |
 
 ## Known Pending Items
 
@@ -315,10 +350,16 @@ Things that have been spotted but don't have an owner yet:
 
 ## Log
 
+2026-10-13 — `SMART-160-estados-visibilidad-planes` implements #160 with back [#124](https://github.com/SmartPlan-UTN/SmartPlan-back/pull/124). Explorar's filter (authored + public + not cancelled) was already correct; the "Completed" plans missing from Explorar are outings, generated results, or private plans. `pnpm lint` and `pnpm build` pass; `pnpm test` 873/874 with the known unrelated `CreatePlanForm.test.tsx` flake that passes on its own. Checked in the browser against the local backend: Spanish statuses, origin/visibility column and legend, edit-dialog note, Explorar listing only the public authored plan, and the empty state.
+
+2026-10-12 — `fix/163-password-dot` implements #163 / back #111 in an isolated worktree from `origin/develop`. Verification and PR links are recorded in the ticket table above. Staging data and concurrent photo work are untouched.
+
 2026-09-30 — `feature/image-galleries`: gallery UI and authenticated image loading in progress. Added avatar management, reusable gallery viewer/editor, cards and details, rating/feedback photos, and the minimal administration place gallery. Integrated the latest `origin/develop`; lint, 639 unit tests, and production build pass locally. End-to-end verification with a private test bucket and the backend database remains pending.
 
 | Date | What happened |
 |---|---|
+| 2026-10-06 | #139 and #143 on `SMART-139-143-tipos-actividad-explorar-y-login`, in review in [PR #169](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/169). **#139**: the backend keeps English category keys (`Gastronomy`, `Short trips`, ...) and Explorar showed them as is. They now go through `categoryLabel` (`lib/utils/catalogLabels`, introduced by #131 and re-exported from `@/lib/utils`; this branch first had its own copy, dropped when merging `develop` on 2026-10-13). It also translates free-text activity types like `culture`; unknown names pass through. Applied to the category chips and the sidebar filters, activity and plan cards, activity detail, itinerary steps, Inicio cards and search header; the plan composer already used it; `categoryPresentation` now takes its label from it. Admin screens keep the raw catalog names on purpose. **#143**: the login now shows a `LoginHighlights` strip under the card (planes a tu medida, actividades cerca, lo que guardaste) through a new optional `footer` slot in `AuthSplitShell`; descriptions hide on short desktop viewports, and the right panel gets 72px top padding so the card never overlaps "Volver al inicio". Checked visually at 1440x900 and 1280x720. After merging `develop` (2026-10-13), lint, `vitest run`, and `next build` pass (run directly: local Node is 22.16). |
+| 2026-10-12 | #156 report-based moderation, [#177](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/177) on `feature/156-moderacion-por-denuncias` (needs SmartPlan-back#123). Ratings, experience comments and experience photos get a "Denunciar" flag (reason list, detail required for "Otro", "Gracias, lo vamos a revisar", "Ya denunciaste este contenido"); the reported item leaves the reporter's view at once and the ratings page refetches its average. Photos can be reported from the wall, the card and the lightbox (new `renderActions` slot in `MediaLightbox`). `/admin/reports` replaces `/admin/ratings` and `/admin/experiences`; the dashboard KPI is "Denuncias abiertas". "Pendiente de moderación" copy and the feedback flow's "no pasó la moderación" notice are gone; an author only learns of a removal. `pnpm lint`, `pnpm test` (125 files, 876 tests) and `pnpm build` pass; checked in a browser against the branch API (reader, author and admin flows, 1280 px and 390 px). |
 | 2026-09-30 | #131 Plan Composer is implemented locally on `feature/plan-generation-ux-overhaul`: shared create/edit Guided Canvas, in-memory draft, searchable/paginated catalog, accessible itinerary reorder, review, atomic-save API integration, and activity-origin routing. `pnpm test` (87 files, 576 tests), `pnpm lint`, and `pnpm build` pass. HTTP 200 on `/`, `/login`, and `/plans/create` at localhost:3210. Visual review remains static-only; desktop/mobile browser sign-off and PR are pending. |
 | 2026-10-04 | #144, [#155](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/155) on `SMART-144-ordenar-resultados-generacion`: the CU17/CU19 results screen is tidier. Each card now leads with an accent bar tied to its map pin, a summary strip with cost, duration and stops in the same place on all three, a readable itinerary, and separated actions; zone and rating are secondary and tags are capped at two. Spacing between cards and in the search-context header increased. No copy or logic changed. `pnpm lint` and `pnpm build` pass; `pnpm test` 659/660 with an unrelated timeout in `CreatePlanForm.test.tsx` that passes on its own. Not yet checked visually in a browser: plan generation was unavailable locally (Gemini provider). |
 | 2026-09-30 | Rating the activities now follows the plan feedback (CU23 → CU44/CU46), on `feature/valorar-actividades-tras-feedback`, PR #151. Once `FeedbackDialog` saves the feedback, it loads the outing's activities (`getOuting` + `getOwnRating` each, `lib/plans/ratableActivities.ts`) and asks "¿Querés valorar las actividades que hiciste?" under the thanks whenever the outing has activities; only a failed or empty outing lookup closes on its own. "Valorar actividades" opens `ActivityRatingsStep` in the same sheet: one optional star row per activity (itinerary order, no repeats) with an optional comment. Existing ratings show their current value and can be changed through `updateRating` (CU46); new ratings use `createRating` with the outing as `planId` (CU44). Only new or changed rows are sent, each independently, so a failure keeps the others saved and can be retried; a concurrent `RATING_ALREADY_EXISTS` is resolved and updated instead of discarding the chosen value, and comments rejected by moderation are explained even across a partial retry. "Ahora no", "Omitir", and Escape all report the saved feedback through `onSubmitted`, never `onDismiss`. Works from all three entries (the card invite, the outing page, "Marcar como realizada"). `RatingInput` gains `required` (default `true`). No backend change: an outing is the user's own `completed` plan with its details, which `requireEligiblePlan` accepts. `pnpm lint`, `pnpm test` (635), and `pnpm build` pass. |
@@ -396,3 +437,49 @@ Things that have been spotted but don't have an owner yet:
 | 2026-10-12 | Issue #136, [PR #171](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/171) on `feature/136-fotos-de-lugares` (back: SmartPlan-back#102, PR #116). Plans, activities, recommendations and Mis salidas show the place's Google Places photo when nobody uploaded one: `imageUrl` may now be `/api/activity-places/:id/photo` with `imageSource: "google_maps"`. `downloadMedia` returns the blob plus its credit; `AuthenticatedImage` overlays "Google Maps" (untranslated) and, with `attribution="full"`, the linked authors; a `fallback` keeps the recommendation card's editorial graphic and the heroes' art when the photo is missing, unauthorized or the quota ran out. The activity and plan detail heroes now show the photo. `pnpm lint`, `pnpm test` (859) and `pnpm build` passing; checked in the browser against the back branch with a real Google photo. |
 
 | 2026-10-14 | Local integration of feature/136-fotos-de-lugares into feature/mendoza-catalog-platform: preserved attributed image downloads, hero/outing/recommendation fallbacks and filter restoration; adapted type/item filters to the Place/Activity catalog. Compact 16:10 photos, prominent titles, complete credits, honest unrated/dated-price states, map request/frame fix and independent new generation searches. Desktop/tablet/mobile/intermediate evidence and real composer/generation/feedback checks are recorded in the backend catalog PRODUCT-QA.md. Local work only; no push or deployment. |
+
+2026-10-12 — `fix/103-generation-preferences` implements back #103 / front #20/#30 in an isolated worktree from `origin/develop`. Verification and PR links are recorded in the ticket table above. Staging data and concurrent photo work are untouched.
+
+## 2026-10-12 — Generation waiting experience (#146)
+
+- **In review** · branch `fix/146-generation-wait` · PR: [#175](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/175) targeting `develop`. CU17/CU19.
+- Always show indeterminate activity and only the current backend-confirmed stage; remove elapsed/stage/estimated timing from the visible wait.
+- At 15 s, offer keep-waiting/back while polling the same request. Connection failures preserve that request; `GENERATION_TIMEOUT` shows a terminal error. Stale POST/poll responses are ignored after navigation or replacement.
+- Validation: 873 frontend tests, lint and production build passed. Playwright desktop/mobile checks use simulated responses (no provider calls), including a 390 px viewport, animated progress, no horizontal overflow and the terminal timeout message.
+- Backend #119 provides the absolute 30 s deadline. Staging validation remains pending by agreement; this task changes local code only.
+
+## 2026-10-13 — Generation waiting review fixes (#146)
+
+- **In review** · `fix/146-generation-wait` · [PR #175](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/175), CU17/CU19.
+- Timeout recovery copy matches the available action: retry when the original submission exists, otherwise return to the search form. Historical result routes do not persist original submissions.
+- HTTP 408/429 and connection errors keep polling the same request; connection recovery before 15 seconds restores the normal waiting state. Delayed queued requests keep their accepted heading.
+- Removed unused generation props and reviewed CSS selectors; added regression coverage for transient status failures and recovery copy. Staging acceptance remains pending.
+- Validation: lint and production build passed; 880 tests passed in both complete runs (31 focused tests also passed). The reported intermittent frontend failure was not reproduced.
+
+## 2026-10-13 — Keep waiting during delayed submission (#146)
+
+- **In review** · `fix/146-generation-wait` · [PR #175](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/175), CU17/CU19.
+- A delayed POST retains the sending heading until the backend accepts it. Keep waiting dismisses the notice without an ID, resending or cancelling; the choice survives acceptance and polling continues on the same request.
+- New submissions clear the previous ID, and surprise regeneration cannot replace an in-flight delayed request. Tests cover automatic/surprise submission, acceptance after dismissal and discarding a delayed response.
+- Validation: lint and production build passed; the final complete run passed 886 tests. One initial run hit the existing intermittent suggestion timeout in the unchanged `CreatePlanForm` test; its focused repeat (62 tests) and the full repeat passed. Staging acceptance remains pending.
+2026-10-12 — Issue #174 (CU58), branch `SMART-174-download-dashboard-report`: added permission-gated report download beside the period selector, spinner, duplicate-request guard, server/fallback filenames, browser resource cleanup and a dismissible six-second error toast. Added the export audit label. Validation: pnpm lint, pnpm test --maxWorkers=2 (124 files, 893 tests passed), pnpm build. Per user request, manual responsive/dark-theme and end-to-end download checks remain with the user. Review at /admin with metric.view; requires companion SmartPlan-back#120 and its migration. ROADMAP.md is absent locally and at the documented develop URL; no sprint or estimate was invented. [#176](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/176).
+Companion backend PR: https://github.com/SmartPlan-UTN/SmartPlan-back/pull/122.
+
+| 2026-10-13 | PR #177 (`feature/156-moderacion-por-denuncias`), review fixes for #156: keep reported ratings hidden across list refreshes for the current viewer and activity, recover the last valid page after a report shrinks the list, and retain pagination when all ratings on a page are locally hidden. Added regression coverage for successful and duplicate reports, summary preservation, pagination recovery, and account changes. Lint, build, and all 17 rating-list tests passed; the catalog-suggestions test passed in isolation after an intermittent failure in the full run. |
+
+2026-10-13 — PR #176 readiness review (CU58): integrated current `develop`, resolving API/test and tracking conflicts while retaining the report download and the new report-based moderation flow. Removed obsolete moderation API imports, functions and tests as required by `develop`; preserved both tracking entries. Validation: pnpm lint, pnpm test --maxWorkers=2, pnpm build and git diff --check. Paired backend PR #122 now exports the current open-report KPI and passes its 14 administration HTTP tests. Manual responsive/dark-theme and spreadsheet acceptance and required GitHub approvals remain pending.
+
+2026-10-13 — Issue #181 (CU10), branch `SMART-181-ubicacion-filtros`: verified in the backend that `City` is "Provincia" and `Department` is "Localidad", so labels and `cityId`/`departmentId` stay. The second select no longer shows "Elegí una provincia" as its option; both selects carry visible labels, "Localidad" stays disabled until its province's localities load, and its status (needs province / loading / empty / error + retry) is a separate hint wired with `aria-describedby`. Reselecting the current province no longer clears its localities. Tests cover the dependent filter in `FiltersPanel` and `ActivitySearch`; checked visually at desktop and 390px widths with a mocked API. The "An internal error occurred" in the report's screenshot wasn't reproduced (no backend run). `pnpm lint`, `pnpm test` (913), and `pnpm build` green.
+
+2026-10-13 — PR #182 review fixes (#181): a locality restored from the URL is dropped when its province's lookup fails or doesn't offer it, instead of filtering from a disabled, blank "Localidad"; the failed-lookup message is now its `aria-describedby`; "Reintentar" keeps keyboard focus on the hint while loading, then hands it to "Localidad" (or back to the button on another failure). Regression tests cover each case.
+
+2026-10-13 — CU17/CU19, branch `fix/no-plans-available`: automatic and surprise searches now show "No hay planes disponibles para esa consulta" with guidance to change the area or filters when no valid plan exists; empty result lists use the same copy. The no-results state returns to the search instead of retrying identical filters. Lint, build and 37 focused regression tests passed. Per user request, the full frontend test run and backend integration were stopped in favor of basic checks. Paired backend branch: `fix/single-activity-plans`. Pending review and deployment.
+Review: [PR #184](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/184), base develop. Companion: [SmartPlan-back#132](https://github.com/SmartPlan-UTN/SmartPlan-back/pull/132).
+
+## 2026-10-13 — Effective search constraints (CU17/CU19/CU21)
+
+- Prepared for review on `codex/efficient-plan-search`: duration, radius, travel mode and opt-in location controls; result badges show effective constraints. Invalid radius/currency input has actionable recovery and empty results retain the no-plans state.
+- Administration maintains availability periods, participant limits and whole-party/per-person costs. Manual plan edits preserve per-person unit-price snapshots when changing group size; whole-party snapshots remain stable.
+- Validation: pnpm lint, pnpm build and 52 focused tests across 7 files passed, following the requested basic-check scope. Requires the paired backend and its two additive migrations before deployment. Required approvals and production deployment remain pending.
+
+- **In review**: [PR #185](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/185), base develop. Companion: [SmartPlan-back#133](https://github.com/SmartPlan-UTN/SmartPlan-back/pull/133).

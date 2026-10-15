@@ -53,10 +53,9 @@ export async function listRatings(
 }
 
 /**
- * Edits the caller's own rating (CU46). `SmartPlan-back` re-runs moderation
- * on the new comment when one is sent, so `updatedAt` and, potentially,
- * `moderationStatus`/`moderationReason` on the response can differ from the
- * pre-edit rating even when the score didn't change.
+ * Edits the caller's own rating (CU46). There is no automatic moderation
+ * (#156): a new comment is public at once, unless the rating is under
+ * review after a report, which an edit never lifts.
  * Backend contract: `PATCH /ratings/:id`.
  */
 export async function updateRating(
