@@ -483,3 +483,9 @@ Review: [PR #184](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/184), ba
 - Validation: pnpm lint, pnpm build and 52 focused tests across 7 files passed, following the requested basic-check scope. Requires the paired backend and its two additive migrations before deployment. Required approvals and production deployment remain pending.
 
 - **In review**: [PR #185](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/185), base develop. Companion: [SmartPlan-back#133](https://github.com/SmartPlan-UTN/SmartPlan-back/pull/133).
+
+## 2026-10-14 - Integrated Mendoza catalog release (CU10/CU17/CU51)
+
+- PR #186 integrates feature/136-fotos-de-lugares and current develop. Compact 16:10 attributed photos, prominent SmartPlan titles, secondary venue metadata and no duplicate Google business heading; preserved report moderation, dependent filters and effective generation constraints. Fresh desktop/mobile browser evidence saved locally after integration.
+- Final validation: 140 files / 1011 tests passed, lint and production build passed; CI and Vercel preview build passed. Backend PR #134 is deployed on Railway staging; 583 Places / 74 Activities and 137 temporary Maps caches loaded while retaining existing staging rows.
+- This frontend staging domain tracks develop. Two required PR approvals and merge remain pending; the new interface is available locally and in the access-protected Vercel preview. Detailed acceptance evidence and data limits are in the backend catalog PRODUCT-QA.md.
