@@ -134,6 +134,7 @@ Verification: `pnpm lint`, `pnpm test --maxWorkers=4` (864 passed), `pnpm build`
 | CU21 | Adjust recommendations based on history | — | `In review` | `7-epica-recomendacion` | #117 |
 | CU22 | Select plan | PAN 11, PAN 17 | `In review` | `feature/130-mis-planes-mis-salidas` | #148 |
 | CU23 | Submit plan feedback | PAN 13, PAN 17 | `In review` | `feature/130-mis-planes-mis-salidas` | #148 |
+| CU17 (#189) | Reopen recent searches («Tus últimas búsquedas» under the Home composer) | PAN 07 | `In review` | `feature/189-busquedas-recientes` | #192 |
 
 ### Ticket fix — 2026-10-12
 

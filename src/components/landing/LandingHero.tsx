@@ -9,6 +9,7 @@ import {
   PlanComposer,
   PlanResults,
   PreferencesHint,
+  RecentSearches,
   SurpriseButton,
   type PlanComposerHandle,
   type SurpriseCoords,
@@ -245,6 +246,7 @@ export function LandingHero({
             </div>
 
             <PreferencesHint />
+            <RecentSearches />
           </div>
         ) : null}
 

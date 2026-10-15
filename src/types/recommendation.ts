@@ -135,6 +135,24 @@ export interface PlanRequestStatus {
   failureDetail?: Record<string, unknown> | null;
 }
 
+/**
+ * One row of `GET /plan-requests` (#189): a past search the user can reopen.
+ * Only generated and in-flight requests are listed. Matches
+ * `PlanRequestSummaryDto` in `SmartPlan-back`.
+ */
+export interface PlanRequestSummary {
+  id: number;
+  statusKey: 'pending' | 'processing' | 'generated';
+  mode: 'automatic' | 'surprise';
+  requestedAt: string;
+  /** Null for surprise requests. */
+  query: string | null;
+  /** 0 while the request is still in flight. */
+  planCount: number;
+  /** Up to three plan titles. */
+  planTitles: string[];
+}
+
 export type PlanRequestProgressStage =
   | 'queued'
   | 'interpreting'
