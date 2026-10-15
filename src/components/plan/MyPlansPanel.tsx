@@ -173,7 +173,7 @@ export function MyPlansPanel() {
                   <div className={styles.cardHeader}>
                     <h2 className={styles.cardTitle}>
                       <Link
-                        href={planDetailRoute(plan.id)}
+                        href={planDetailRoute(plan.id, ROUTES.plans)}
                         className={styles.cardTitleLink}
                       >
                         {plan.title}

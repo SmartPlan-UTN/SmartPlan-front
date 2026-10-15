@@ -345,3 +345,34 @@ describe("PlanDetailView — community experiences (#106)", () => {
     expect(getPlanExperiences).not.toHaveBeenCalled();
   });
 });
+
+
+it.each(["/", "/explore", "/plans", "/favorites", "/plan-requests/42"])("returns to its explicit origin %s", async (returnTo) => {
+  getPlan.mockResolvedValue(plan());
+  render(<PlanDetailView planId={7} returnTo={returnTo} />);
+  const label = returnTo.startsWith("/plan-requests/") ? "Volver a los resultados" : "Volver";
+  expect(await screen.findByRole("link", { name: label })).toHaveAttribute("href", returnTo);
+});
+
+it("returns direct visitors to Explore", async () => {
+  getPlan.mockResolvedValue(plan());
+  render(<PlanDetailView planId={7} />);
+  expect(await screen.findByRole("link", { name: "Volver" })).toHaveAttribute("href", "/explore");
+});
+
+it("keeps the results destination when the plan no longer exists", async () => {
+  getPlan.mockRejectedValue(new ApiError({ type: "HTTP", status: 404, message: "Missing" }));
+  render(<PlanDetailView planId={7} returnTo="/plan-requests/42" />);
+  expect(await screen.findByRole("link", { name: "Volver a los resultados" })).toHaveAttribute("href", "/plan-requests/42");
+});
+
+it("shares the canonical plan URL without navigation context", async () => {
+  const user = userEvent.setup();
+  const writeText = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+  window.history.replaceState(null, "", "/plans/7?from=%2Fplan-requests%2F42");
+  getPlan.mockResolvedValue(plan());
+  render(<PlanDetailView planId={7} returnTo="/plan-requests/42" />);
+  await user.click(await screen.findByRole("button", { name: "Compartir" }));
+  expect(writeText).toHaveBeenCalledWith(new URL("/plans/7", window.location.origin).href);
+  window.history.replaceState(null, "", "/");
+});

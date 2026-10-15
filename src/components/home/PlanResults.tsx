@@ -19,6 +19,7 @@ import layoutStyles from "./results-layout.module.css";
 
 export interface PlanResultsProps {
   plans: PlanDetailResult[];
+  returnTo?: string;
   /** The free-text idea that produced these plans, for the "Buscaste:" line. `null`/absent for surprise mode. */
   query?: string | null;
   /** What the system understood from the request (budget/location/party size/categories). */
@@ -65,6 +66,7 @@ const MAX_VISIBLE_PLANS = 3;
  */
 export function PlanResults({
   plans,
+  returnTo,
   query = null,
   resolvedContext = null,
   onAdjust,
@@ -245,6 +247,7 @@ export function PlanResults({
               <PlanResultCard
                 key={plan.id}
                 plan={plan}
+                returnTo={returnTo}
                 index={index}
                 accentColor={planColors.get(plan.id) ?? "var(--ember)"}
                 active={activePlanId === plan.id}
@@ -272,6 +275,7 @@ export function PlanResults({
           />
           {mobileView === "map" && visiblePlans.length > 0 ? (
             <MobilePlanSheet
+              returnTo={returnTo}
               plans={visiblePlans}
               selectedPlanId={activePlanId ?? visiblePlans[0].id}
               onSelect={(id) => {
@@ -306,10 +310,12 @@ export function PlanResults({
 
 function MobilePlanSheet({
   plans,
+  returnTo,
   selectedPlanId,
   onSelect,
 }: {
   plans: PlanDetailResult[];
+  returnTo?: string;
   selectedPlanId: number;
   onSelect: (id: number) => void;
 }) {
@@ -353,7 +359,7 @@ function MobilePlanSheet({
         <span><Icon name="clock" size={13} />{formatDuration(plan.estimatedTotalDuration)}</span>
         <span><Icon name="wallet" size={13} />{formatPlanTotal(plan)}</span>
         <span><Icon name="map-pin" size={13} />{plan.activityCount} paradas</span>
-        <Link href={planDetailRoute(plan.id)}>Ver plan</Link>
+        <Link href={planDetailRoute(plan.id, returnTo)}>Ver plan</Link>
       </div>
       <p className={layoutStyles.sheetSwipeHint}>Deslizá para comparar</p>
     </section>

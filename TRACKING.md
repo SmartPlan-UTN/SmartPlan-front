@@ -490,3 +490,9 @@ Review: [PR #184](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/184), ba
 - PR #186 integrates feature/136-fotos-de-lugares and current develop. Compact 16:10 attributed photos, prominent SmartPlan titles, secondary venue metadata and no duplicate Google business heading; preserved report moderation, dependent filters and effective generation constraints. Fresh desktop/mobile browser evidence saved locally after integration.
 - Final validation: 140 files / 1011 tests passed, lint and production build passed; CI and Vercel preview build passed. Backend PR #134 is deployed on Railway staging; 583 Places / 74 Activities and 137 temporary Maps caches loaded while retaining existing staging rows.
 - This frontend staging domain tracks develop. Two required PR approvals and merge remain pending; the new interface is available locally and in the access-protected Vercel preview. Detailed acceptance evidence and data limits are in the backend catalog PRODUCT-QA.md.
+
+
+## 2026-10-15 — Plan detail return navigation (#187, CU17/CU22)
+
+- In progress on `fix/187-188-plan-results`, based on current develop including #189. Explicit allowlisted `from` destinations preserve the originating request, Home, Explore, My plans or Favorites across reloads and new tabs. Direct and invalid origins fall back to Explore; sharing uses the canonical plan URL.
+- Focused navigation tests passed (91 tests); final lint, full tests, production build and browser acceptance are recorded with the companion #188 change below.
