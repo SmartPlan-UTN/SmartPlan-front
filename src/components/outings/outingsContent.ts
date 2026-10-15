@@ -55,6 +55,8 @@ export const OUTINGS_COPY = {
   completedPill: "Realizada",
   people: (count: number) => (count === 1 ? "1 persona" : `${count} personas`),
   sourceUnavailable: "El plan original ya no está disponible",
+  /** Followed by the untranslatable "Google Maps" (SmartPlan-back#102). */
+  photoCredit: "Foto:",
   actions: {
     complete: "Marcar como realizada",
     completing: "Guardando…",

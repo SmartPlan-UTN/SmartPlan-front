@@ -1,10 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { downloadMedia } from "@/lib/api/media";
 
 import type { PlanRecommendation } from "@/types";
 
 import { RecommendationCard } from "./RecommendationCard";
+
+vi.mock("@/lib/api/media", () => ({ downloadMedia: vi.fn() }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
@@ -51,15 +55,51 @@ describe("RecommendationCard (CU20)", () => {
     expect(container.querySelector("img")).toBeNull();
   });
 
-  it("renders a real image when the plan has one", () => {
-    const { container } = render(
-      <RecommendationCard
-        recommendation={make({ imageUrl: "https://example.test/p.jpg" })}
-      />,
-    );
-    const img = container.querySelector("img");
-    expect(img?.getAttribute("src")).toContain("p.jpg");
-    expect(screen.queryByText("Bodega → Almuerzo")).toBeNull();
+  describe("with an image", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      Object.defineProperty(URL, "createObjectURL", {
+        configurable: true,
+        value: vi.fn(() => "blob:plan-photo"),
+      });
+      Object.defineProperty(URL, "revokeObjectURL", {
+        configurable: true,
+        value: vi.fn(),
+      });
+    });
+
+    it("renders the place's Google photo, credited to Google Maps (SmartPlan-back#102)", async () => {
+      vi.mocked(downloadMedia).mockResolvedValue({
+        blob: new Blob(["photo"]),
+        attribution: { provider: "google_maps", authors: [] },
+      });
+      const { container } = render(
+        <RecommendationCard
+          recommendation={make({
+            imageUrl: "/api/activity-places/3/photo",
+            imageSource: "google_maps",
+          })}
+        />,
+      );
+
+      expect(await screen.findByText("Google Maps")).toBeInTheDocument();
+      expect(container.querySelector("img")?.getAttribute("src")).toBe(
+        "blob:plan-photo",
+      );
+      expect(downloadMedia).toHaveBeenCalledWith("/api/activity-places/3/photo");
+      expect(screen.queryByText("Bodega → Almuerzo")).toBeNull();
+    });
+
+    it("keeps the editorial graphic when the photo cannot be loaded", async () => {
+      vi.mocked(downloadMedia).mockRejectedValue(new Error("401"));
+      render(
+        <RecommendationCard
+          recommendation={make({ imageUrl: "/api/activity-places/3/photo" })}
+        />,
+      );
+
+      expect(await screen.findByText("Bodega → Almuerzo")).toBeInTheDocument();
+    });
   });
 
   it("omits the rating when there are no ratings yet", () => {

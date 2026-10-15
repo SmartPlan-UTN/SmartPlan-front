@@ -186,6 +186,16 @@
   color: color-mix(in srgb, var(--char) 20%, transparent);
 }
 
+/* A photo covers the hero; the bookmark, later in the markup, stays on top. */
+.heroMedia {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .heroBadge {
   position: absolute;
   top: var(--s-3);
@@ -750,4 +760,30 @@
     grid-row: 1;
     grid-column: 1 / -1;
   }
+}
+
+/* Detail header with a real photo (or SmartPlan artwork) and the bookmark. */
+.heroMedia {
+  position: relative;
+  margin-bottom: var(--s-4);
+}
+
+.heroMedia .heroBookmark {
+  z-index: 2;
+}
+
+.placeLine {
+  margin: 4px 0 0;
+  color: var(--fg-2);
+  font-size: var(--t-body-sm, 0.9rem);
+}
+
+.placeLine a {
+  color: var(--ember);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.placeLine a:hover {
+  text-decoration: underline;
 }

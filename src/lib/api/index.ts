@@ -26,10 +26,17 @@ export type { SessionRefresher } from './session-refresher';
 export { getApiBaseUrl } from './config';
 export {
   mediaRequestPath, listMedia, uploadMedia, updateMedia, deleteMedia,
-  uploadAvatar, deleteAvatar, downloadMedia,
+  uploadAvatar, deleteAvatar, downloadMedia, readImageAttribution,
 } from './media';
 
 export { searchActivities, getActivity, getActivityMapMarkers } from './activities';
+export {
+  searchExplore,
+  getExploreMapMarkers,
+  getPlaceDetail,
+  claimUiKitElements,
+  getPlacePhotoMedia,
+} from './explore';
 export {
   searchPlans,
   getPlan,

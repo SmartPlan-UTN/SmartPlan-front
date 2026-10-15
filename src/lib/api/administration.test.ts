@@ -38,7 +38,7 @@ describe("dashboard CSV download (CU58)", () => {
       vi.mocked(apiClient.request).mockResolvedValue({
         data: blob,
         headers: { "content-disposition": 'attachment; filename="report.csv"' },
-      } as AxiosResponse<Blob>);
+      } as unknown as AxiosResponse<Blob>);
       await expect(downloadDashboardMetrics(range)).resolves.toEqual({
         blob,
         filename: "report.csv",
@@ -65,7 +65,7 @@ describe("dashboard CSV download (CU58)", () => {
     vi.mocked(apiClient.request).mockResolvedValue({
       data: new Blob(),
       headers: { "content-disposition": header },
-    } as AxiosResponse<Blob>);
+    } as unknown as AxiosResponse<Blob>);
     expect((await downloadDashboardMetrics("7d")).filename).toBe(expected);
   });
 
@@ -81,7 +81,7 @@ describe("dashboard CSV download (CU58)", () => {
       vi.mocked(apiClient.request).mockResolvedValue({
         data: new Blob(),
         headers: { "content-disposition": header },
-      } as AxiosResponse<Blob>);
+      } as unknown as AxiosResponse<Blob>);
       expect((await downloadDashboardMetrics("7d")).filename).toBe(
         `smartplan-metricas-7d-${new Date().toISOString().slice(0, 10)}.csv`,
       );
@@ -166,7 +166,7 @@ describe("administration user API", () => {
     const input: AdminActivityInput = {
       name: "Tarde de juegos",
       description: "Actividad sin ubicación física obligatoria.",
-      estimatedCost: 0,
+      price: { kind: "UNKNOWN" },
       estimatedDuration: 90,
       type: null,
       categoryIds: [2],

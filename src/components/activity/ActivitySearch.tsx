@@ -10,12 +10,19 @@ import {
   SortControl,
   type SortOption,
 } from "@/components/explore";
+import { PlaceCard } from "@/components/explore/PlaceCard";
+import { Button, Chip, Icon, LoadingDots } from "@/components/ui";
 import { priceRangeError, explorationQuery, readExplorationState, type ExplorationSearchState } from "@/components/explore";
-import { Button, Icon, LoadingDots } from "@/components/ui";
+
 import { useDebouncedValue, useExplorationFilters, useExplorationSearch } from "@/hooks";
-import { listCities, listDepartments, searchActivities } from "@/lib/api";
+import { listCities, listDepartments, searchExplore } from "@/lib/api";
 import { ROUTES } from "@/lib/routes";
-import type { ActivitySearchParams, ActivitySortField, LocationOption } from "@/types";
+import type {
+  ActivitySortField,
+  ExploreItemType,
+  ExploreSearchParams,
+  LocationOption,
+} from "@/types";
 
 import { ActivityCard } from "./ActivityCard";
 import styles from "./activity.module.css";
@@ -33,6 +40,12 @@ const SORT_OPTIONS: SortOption<ActivitySortField>[] = [
   { value: "relevance", label: "Relevancia" },
   { value: "price", label: "Precio" },
   { value: "rating", label: "Rating" },
+];
+
+const ITEM_TYPES: Array<{ value: ExploreItemType; label: string }> = [
+  { value: "ALL", label: "Todo" },
+  { value: "ACTIVITY", label: "Actividades" },
+  { value: "PLACE", label: "Lugares" },
 ];
 
 function toNumber(value: string): number | undefined {
@@ -88,6 +101,10 @@ export function ActivitySearch({
   const [departmentsLoading, setDepartmentsLoading] = useState(initialState.cityId !== null);
   const [departmentsError, setDepartmentsError] = useState(false);
   const [departmentsAttempt, setDepartmentsAttempt] = useState(0);
+  // Activities are things to do; places (wineries, parks...) without a
+  // verified activity yet are discoverable too, but shown as places.
+  const [itemType, setItemType] = useState<ExploreItemType>(initialState.itemType ?? "ALL");
+  const [activityType, setActivityType] = useState(initialState.type ?? "");
 
   useEffect(() => {
     let active = true;
@@ -185,9 +202,11 @@ export function ActivitySearch({
   const debouncedMaxPrice = useDebouncedValue(maxPrice, DEBOUNCE_MS);
   const debouncedMinRating = useDebouncedValue(minRating, DEBOUNCE_MS);
 
-  const params = useMemo<ActivitySearchParams>(
+  const params = useMemo<ExploreSearchParams>(
     () => ({
       search: effectiveQuery.trim() || undefined,
+      type: activityType || undefined,
+      itemType: itemType === "ALL" ? undefined : itemType,
       categoryIds: categoryIds.length > 0 ? categoryIds : undefined,
       minPrice: toNumber(debouncedMinPrice),
       maxPrice: toNumber(debouncedMaxPrice),
@@ -198,6 +217,8 @@ export function ActivitySearch({
       direction,
     }),
     [
+      itemType,
+      activityType,
       effectiveQuery,
       categoryIds,
       debouncedMinPrice,
@@ -215,11 +236,12 @@ export function ActivitySearch({
     rangeError === null &&
     priceRangeError(debouncedMinPrice, debouncedMaxPrice) === null;
   const { items, pagination, status, errorMessage, hasResults, page, goToPage, retry } =
-    useExplorationSearch(searchActivities, params, PAGE_SIZE, canSearch, {
+    useExplorationSearch(searchExplore, params, PAGE_SIZE, canSearch, {
       initialPage: initialState.page,
     });
   // Carry the current controls, including edits still waiting for debounce.
   const mapFiltersQuery = `${ROUTES.exploreMap}?${explorationQuery({
+    type: activityType, itemType,
     search: query, categoryIds, minPrice, maxPrice, minRating,
     cityId, departmentId,
     sortBy: sortBy === "distance" ? "relevance" : sortBy,
@@ -230,9 +252,17 @@ export function ActivitySearch({
 
   const resultsCountLabel =
     pagination != null
-      ? pagination.total === 1
-        ? "actividad encontrada"
-        : "actividades encontradas"
+      ? itemType === "ACTIVITY"
+        ? pagination.total === 1
+          ? "actividad en Mendoza"
+          : "actividades en Mendoza"
+        : itemType === "PLACE"
+          ? pagination.total === 1
+            ? "lugar en Mendoza"
+            : "lugares en Mendoza"
+          : pagination.total === 1
+            ? "resultado en Mendoza"
+            : "actividades y lugares en Mendoza"
       : null;
   // Once there's a grid on screen, a refetch (chip, filter, page) dims it
   // in place instead of swapping it for the big loading state — that swap
@@ -245,6 +275,7 @@ export function ActivitySearch({
     categoryIds.length +
     [minPrice, maxPrice, minRating].filter((value) => value.trim() !== "").length +
     (cityId !== null ? 1 : 0) +
+    (activityType ? 1 : 0) +
     (departmentId !== null ? 1 : 0);
 
   return (
@@ -261,8 +292,10 @@ export function ActivitySearch({
           onMinRatingChange={setMinRating}
           categoryIds={categoryIds}
           onToggleCategory={toggleCategory}
+          activityType={{ value: activityType, onChange: (value) => { setActivityType(value); if (value) setItemType("ACTIVITY"); } }}
           onClear={() => {
             clearFilters();
+            setActivityType("");
             handleCityIdChange(null);
           }}
           location={{
@@ -292,7 +325,7 @@ export function ActivitySearch({
               type="search"
               className={styles.searchInput}
               placeholder="Buscá una actividad, lugar o experiencia"
-              aria-label="Buscar actividades"
+              aria-label="Buscar actividades y lugares"
               value={query}
               onChange={(event) => {
                 handleQueryChange(event.target.value);
@@ -320,10 +353,26 @@ export function ActivitySearch({
           </Link>
         </div>
 
+        <div
+          className={exploreStyles.itemTypeRow}
+          role="group"
+          aria-label="Qué mostrar"
+        >
+          {ITEM_TYPES.map((option) => (
+            <Chip
+              key={option.value}
+              active={itemType === option.value}
+              onClick={() => { setItemType(option.value); if (option.value === "PLACE") setActivityType(""); }}
+            >
+              {option.label}
+            </Chip>
+          ))}
+        </div>
+
         <div className={exploreStyles.toolbar}>
           {pagination != null && hasResults ? (
             <p className={`sp-body ${styles.resultsLabel}`}>
-              <strong>{pagination.total}</strong> {resultsCountLabel} cerca tuyo
+              <strong>{pagination.total}</strong> {resultsCountLabel}
             </p>
           ) : (
             <span />
@@ -363,8 +412,8 @@ export function ActivitySearch({
             <Icon name="inbox" size={32} className={styles.stateIcon} />
             <h2 className="sp-h3">Sin resultados</h2>
             <p className="sp-body">
-              No encontramos actividades para tu búsqueda. Probá con otras
-              palabras o ajustando los filtros.
+              No encontramos actividades ni lugares para tu búsqueda. Probá
+              con otras palabras o ajustando los filtros.
             </p>
           </div>
         ) : null}
@@ -374,9 +423,13 @@ export function ActivitySearch({
             className={`${exploreStyles.resultsFade} ${isRefetching ? exploreStyles.resultsFadeLoading : ""}`}
           >
             <div className={exploreStyles.grid}>
-              {items.map((activity) => (
-                <ActivityCard activity={activity} key={activity.id} />
-              ))}
+              {items.map((item) =>
+                item.itemType === "PLACE" ? (
+                  <PlaceCard item={item} key={`place-${item.id}`} />
+                ) : (
+                  <ActivityCard activity={item} key={`activity-${item.id}`} />
+                ),
+              )}
             </div>
 
             {pagination ? (

@@ -8,6 +8,8 @@
  * later) is shown as it is rather than hidden or guessed.
  */
 const LABELS: Record<string, string> = {
+  adventure: "Aventura",
+  "wine tourism": "Enoturismo",
   culture: "Cultura",
   entertainment: "Entretenimiento",
   gastronomy: "Gastronomía",

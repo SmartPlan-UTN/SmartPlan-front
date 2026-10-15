@@ -1,7 +1,8 @@
 "use client";
 
 import { Badge, Icon } from "@/components/ui";
-import { categoryLabel, formatArs, formatDuration } from "@/lib/utils";
+import { formatArs, formatDuration } from "@/lib/utils";
+import { categoryLabel } from "@/lib/utils/catalogLabels";
 import type { ResolvedPlanContext } from "@/types";
 
 import styles from "./generation.module.css";

@@ -4,6 +4,7 @@ import type {
   ActivityMapMarker,
   ActivitySearchResult,
 } from "@/types";
+import type { Price } from "@/types/pricing";
 
 /**
  * One marker on the discovery map. An activity can happen at several places
@@ -18,8 +19,13 @@ export interface MapCandidate {
   placeName: string | null;
   latitude: number;
   longitude: number;
-  estimatedCost: number;
-  averageRating: number;
+  estimatedCost: number | null;
+  price?: Price | null;
+  /** SmartPlan's own average; null when nobody rated it. */
+  averageRating: number | null;
+  ratingCount?: number;
+  /** The place, with its live attributed Google context. */
+  place?: import("@/types").PlaceSummary | null;
   /** Measured by the server from the search's location, when there is one. */
   distanceKm: number | null;
   categories: ActivityCategorySummary[];
@@ -45,7 +51,10 @@ export function candidatesFromMarkers(
     latitude: marker.latitude,
     longitude: marker.longitude,
     estimatedCost: marker.estimatedCost,
+    price: marker.price ?? null,
     averageRating: marker.averageRating,
+    ratingCount: marker.ratingCount ?? 0,
+    place: marker.place ?? null,
     distanceKm: marker.distanceKm,
     categories: marker.categories,
   }));
@@ -74,7 +83,10 @@ export function candidatesFromAssistant(
         latitude: location.latitude,
         longitude: location.longitude,
         estimatedCost: activity.estimatedCost,
+        price: activity.price ?? null,
         averageRating: activity.averageRating,
+        ratingCount: activity.ratingCount,
+        place: activity.place ?? null,
         distanceKm: activity.distanceKm,
         categories: activity.categories,
         activity,
@@ -117,6 +129,7 @@ export function summaryFromDetail(
     name: detail.name,
     description: detail.description,
     estimatedCost: detail.estimatedCost,
+    price: detail.price ?? null,
     estimatedDuration: detail.estimatedDuration,
     type: detail.type,
     averageRating: detail.averageRating,

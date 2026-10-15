@@ -47,6 +47,11 @@ export function activityDetailRoute(id: number): string {
   return `${ROUTES.explore}/${id}`;
 }
 
+/** `/explore/places/:id` — a place and the real activities offered there. */
+export function placeDetailRoute(id: number): string {
+  return `${ROUTES.explore}/places/${id}`;
+}
+
 /** `/plans/:id` — plan detail (CU13, CU29). */
 export function planDetailRoute(id: number): string {
   return `${ROUTES.plans}/${id}`;

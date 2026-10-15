@@ -4,7 +4,8 @@ import { Badge, Icon, Stars } from "@/components/ui";
 import { AuthenticatedImage } from "@/components/media";
 import { useFavorites } from "@/context";
 import { planDetailRoute } from "@/lib/routes";
-import { categoryLabel, formatArs, formatDuration, gradientFor } from "@/lib/utils";
+import { formatDuration, gradientFor, formatPlanTotal } from "@/lib/utils";
+import { categoryLabel } from "@/lib/utils/catalogLabels";
 import type { PlanSearchResult } from "@/types";
 
 import styles from "./plan.module.css";
@@ -70,13 +71,13 @@ export function PlanCard({
             <Icon name="clock" size={12} />
             {formatDuration(plan.estimatedTotalDuration)}
           </span>
-          <Badge variant="cost">{formatArs(plan.estimatedTotalCost)}</Badge>
-          {plan.averageRating != null ? (
+          <Badge variant="cost">{formatPlanTotal(plan)}</Badge>
+          {plan.averageRating != null && plan.averageRating > 0 ? (
             <span className={exploreStyles.metaItem}>
               <Stars rating={plan.averageRating} size={11} />
               {plan.averageRating.toFixed(1)}
             </span>
-          ) : null}
+          ) : <span className={exploreStyles.metaItem}>Sin reseñas</span>}
           {plan.distanceKm != null ? (
             <span className={exploreStyles.metaItem}>
               <Icon name="map-pin" size={12} />

@@ -10,64 +10,69 @@ export interface CategoryPresentation {
 }
 
 /**
- * Spanish presentation for the ten category names seeded by SmartPlan-back.
- * The label comes from the shared `categoryLabel` so Explorar, Inicio and
- * Preferencias name each category the same way.
+ * Spanish presentation for the category names seeded by SmartPlan-back.
  * IDs and API values stay untouched: this is display-only, so preference
  * reads and writes continue using the backend's numeric contract.
  */
 const SEEDED_CATEGORY_DETAILS: Readonly<
   Record<string, Omit<CategoryPresentation, "label">>
 > = {
-  Gastronomy: {
-    description: "Restaurantes, bodegas, cafés y experiencias para comer rico.",
+  Gastronomy: {    description: "Restaurantes, cafés, cervecerías y experiencias para comer rico.",
     iconName: "utensils",
     displayOrder: 0,
   },
   Outdoors: {
     description: "Parques, montaña, trekking y actividades al aire libre.",
     iconName: "trees",
-    displayOrder: 1,
+    displayOrder: 2,
   },
   Culture: {
     description: "Museos, teatro, patrimonio y recorridos guiados.",
     iconName: "drama",
-    displayOrder: 2,
+    displayOrder: 4,
   },
   Entertainment: {
     description: "Cine, juegos, parques temáticos y espectáculos.",
     iconName: "popcorn",
-    displayOrder: 3,
+    displayOrder: 5,
   },
   Nightlife: {
     description: "Bares, clubes y salidas para disfrutar la noche.",
     iconName: "martini",
-    displayOrder: 4,
+    displayOrder: 6,
   },
   Sports: {
     description: "Actividades deportivas para practicar o mirar.",
     iconName: "dumbbell",
-    displayOrder: 5,
+    displayOrder: 7,
   },
   "Live music": {
     description: "Conciertos, peñas y shows de música en vivo.",
     iconName: "music-2",
-    displayOrder: 6,
+    displayOrder: 8,
   },
   Wellness: {
     description: "Spa, termas, yoga y experiencias para bajar un cambio.",
     iconName: "flower-2",
-    displayOrder: 7,
+    displayOrder: 9,
   },
   Shopping: {
     description: "Ferias, mercados, paseos de compras y artesanías.",
     iconName: "shopping-bag",
-    displayOrder: 8,
+    displayOrder: 10,
+  },
+  "Wine tourism": {    description: "Bodegas, degustaciones, visitas guiadas y almuerzos entre viñedos.",
+    iconName: "wine",
+    displayOrder: 1,
+  },
+  Adventure: {    description: "Rafting, cabalgatas, trekking, canopy y otras actividades de aventura.",
+    iconName: "mountain",
+    displayOrder: 3,
   },
   "Short trips": {
     description: "Salidas de un día a destinos cercanos.",
     iconName: "luggage",
-    displayOrder: 9,
+    displayOrder: 11,
   },
 };
 

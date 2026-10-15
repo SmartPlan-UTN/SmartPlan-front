@@ -65,7 +65,7 @@ function ownPlan(overrides: Partial<OwnPlanDetail> = {}): OwnPlanDetail {
     estimatedCostPerPerson: 4250,
     activityCount: 1,
     status: { key: "confirmed", name: "Confirmado" },
-    visibility: "private",
+
     createdAt: "2026-08-01T00:00:00.000Z",
     updatedAt: "2026-08-12T00:00:00.000Z",
     details: [],
@@ -125,6 +125,17 @@ beforeEach(() => {
     pagination: { page: 1, limit: 6, total: 0, totalPages: 0 },
     summary: { averageRating: 0, experienceCount: 0, photoCount: 0, photos: [] },
   });
+});
+
+it("shows unrated plans and itinerary stops without fabricated zero scores", async () => {
+  const unrated = plan({ averageRating: 0 });
+  unrated.details[0].activity.averageRating = 0;
+  unrated.details[0].activity.ratingCount = 0;
+  getPlan.mockResolvedValue(unrated);
+  render(<PlanDetailView planId={7} />);
+  expect(await screen.findAllByText("Sin reseñas")).toHaveLength(2);
+  expect(screen.queryByText("0.0")).not.toBeInTheDocument();
+  expect(screen.queryByRole("img", { name: "0 de 5 estrellas" })).not.toBeInTheDocument();
 });
 
 async function renderDetail(

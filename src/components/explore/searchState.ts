@@ -3,6 +3,8 @@ import type { SortDirection } from "@/types";
 export type ExplorationSearchParams = Record<string, string | string[] | undefined>;
 
 export interface ExplorationSearchState {
+  type?: string;
+  itemType?: "ALL" | "ACTIVITY" | "PLACE";
   search: string;
   categoryIds: number[];
   minPrice: string;
@@ -30,6 +32,8 @@ export function readExplorationState(params: ExplorationSearchParams = {}): Expl
   const sortBy = value("sortBy");
   const rating = value("minRating");
   return {
+    type: value("type") || undefined,
+    itemType: value("itemType") === "ACTIVITY" ? "ACTIVITY" : value("itemType") === "PLACE" ? "PLACE" : "ALL",
     search: value("search"),
     categoryIds: [...new Set(value("categoryIds").split(",").map(positiveId).filter((id): id is number => id !== null))],
     minPrice: price("minPrice"),
@@ -45,6 +49,8 @@ export function readExplorationState(params: ExplorationSearchParams = {}): Expl
 
 export function explorationQuery(state: ExplorationSearchState): string {
   const params = new URLSearchParams();
+  if (state.type) params.set("type", state.type);
+  if (state.itemType && state.itemType !== "ALL") params.set("itemType", state.itemType);
   if (state.search) params.set("search", state.search);
   if (state.categoryIds.length) params.set("categoryIds", state.categoryIds.join(","));
   for (const key of ["minPrice", "maxPrice", "minRating"] as const) {

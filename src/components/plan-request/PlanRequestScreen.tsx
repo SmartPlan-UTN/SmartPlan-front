@@ -8,7 +8,6 @@ import { PlanResults } from "@/components/home/PlanResults";
 import { Button, Icon } from "@/components/ui";
 import { usePlanRequestPolling } from "@/hooks";
 import { ROUTES, planRequestRoute } from "@/lib/routes";
-import type { PlanRequestContext } from "@/types";
 
 import styles from "./plan-request.module.css";
 
@@ -36,10 +35,9 @@ function PlanRequestBody({ requestId }: { requestId: number }) {
       return;
     }
 
-    const context: PlanRequestContext = {};
-    if (planning.resolvedContext?.budget != null) context.budget = planning.resolvedContext.budget;
-    if (planning.resolvedContext?.partySize != null) context.partySize = planning.resolvedContext.partySize;
-    planning.submit({ query, context: Object.keys(context).length ? context : undefined });
+    // A new idea must be interpreted independently: inferred values from
+    // the previous sentence must not override this sentence's budget/party.
+    planning.submit({ query });
   }, [draftValue, planning]);
 
   const goHome = useCallback(() => router.push(ROUTES.home), [router]);

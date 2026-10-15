@@ -6,8 +6,8 @@ import { Pagination } from "@/components/explore";
 import { Button, ConfirmationDialog, Icon, Select } from "@/components/ui";
 import { useDebouncedValue } from "@/hooks";
 import { ApiError, deleteAdminPlan, listAdminPlans, updateAdminPlan } from "@/lib/api";
-import { formatArs, formatDuration } from "@/lib/utils";
-import type { AdminPlan, AdminPlansResult, PlanKind, PlanStatusKey, PlanVisibility, UpdateAdminPlanInput } from "@/types";
+import { formatDuration, formatPlanTotal } from "@/lib/utils";
+import type { AdminPlan, AdminPlansResult, PlanKind, PlanVisibility, PlanStatusKey, UpdateAdminPlanInput } from "@/types";
 
 import { AdminPlanDialog } from "./AdminPlanDialog";
 import styles from "./AdminManagement.module.css";
@@ -150,7 +150,7 @@ export function AdminPlansView() {
           <td><span className={styles.entityName}>{plan.title}</span><span className={styles.secondary}>#{plan.id}</span></td>
           <td><span className={styles.entityName}>{plan.owner.name} {plan.owner.lastName}</span><span className={styles.secondary}>{plan.owner.email}</span></td>
           <td><PlanStatusCell status={plan.status} /></td>
-          <td><PlanVisibilityCell plan={plan} /></td><td>{plan.peopleCount}</td><td>{plan.activityCount}</td><td>{formatArs(plan.estimatedTotalCost)}<span className={styles.secondary}>{formatDuration(plan.estimatedTotalDuration)}</span></td>
+          <td><PlanVisibilityCell plan={plan} /></td><td>{plan.peopleCount}</td><td>{plan.activityCount}</td><td>{formatPlanTotal(plan)}<span className={styles.secondary}>{formatDuration(plan.estimatedTotalDuration)}</span></td>
           <td><span className={styles.actions}><button className={styles.iconButton} type="button" aria-label={`Editar ${plan.title}`} onClick={() => { setActionError(null); setEditing(plan); }}><Icon name="pencil" size={16} /></button><button className={`${styles.iconButton} ${styles.dangerButton}`} type="button" aria-label={`Eliminar ${plan.title}`} onClick={() => { setActionError(null); setDeleting(plan); }}><Icon name="trash-2" size={16} /></button></span></td>
         </tr>)}</tbody></table></div></>}
       </div>

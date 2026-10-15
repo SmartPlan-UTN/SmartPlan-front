@@ -225,6 +225,7 @@ export function DiscoveryMap({
             name: candidate.name,
             categoryName: candidate.categories[0]?.name ?? null,
             estimatedCost: candidate.estimatedCost,
+            price: candidate.price ?? null,
             placeName: candidate.placeName,
             distanceKm: distance,
             reason: candidate.reason ?? null,
@@ -350,6 +351,7 @@ export function DiscoveryMap({
             name: candidate.name,
             categoryName: candidate.categories[0]?.name ?? null,
             estimatedCost: candidate.estimatedCost,
+            price: candidate.price ?? null,
             selected,
           }),
       });

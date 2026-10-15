@@ -1,3 +1,4 @@
+import type { PriceCompleteness } from './pricing';
 import { BaseEntity, CatalogEntity } from './common';
 import type { PaginationMetadata } from './common';
 import type { ActivityCategorySummary } from './activities';
@@ -73,7 +74,10 @@ export interface PlanRequestPlanSummary {
   id: number;
   title: string;
   description: string | null;
-  estimatedTotalCost: number;
+  estimatedTotalCost: number | null;
+  estimatedTotalCostMax?: number | null;
+  unpricedCount?: number;
+  priceCompleteness?: PriceCompleteness;
   estimatedTotalDuration: number;
   activityCount: number;
   averageRating: number;
@@ -219,6 +223,13 @@ export interface CreateFeedbackPayload {
   tags?: FeedbackTag[];
   comment?: string;
   actualCost?: number;
+  /**
+   * What was paid for individual activities (whole party). Stored apart from
+   * `actualCost`, which is never split across activities.
+   */
+  activityCosts?: Array<{ activityId: number; amount: number }>;
+  /** How many people shared the reported cost. */
+  partySize?: number;
   actualDuration?: number;
   /** Shares the experience with the community (#106); private when absent. */
   shared?: boolean;
@@ -257,11 +268,13 @@ export type PlanRecommendationReason =
 
 /**
  * Card-friendly plan projection for the recommendations rail. Same shape as
- * `PlanRequestPlanSummary` plus `imageUrl` — `null` until the backend has an
- * image source; the card falls back to an editorial treatment.
+ * `PlanRequestPlanSummary` plus its image: an uploaded one, else a Google
+ * Places photo (SmartPlan-back#102), else `null` and the card falls back to
+ * an editorial treatment.
  */
 export interface RecommendedPlanSummary extends PlanRequestPlanSummary {
   imageUrl: string | null;
+  imageSource?: import('./media').ImageSource | null;
 }
 
 /** One entry of `GET /plan-recommendations`. Matches `PlanRecommendationDto`. */
