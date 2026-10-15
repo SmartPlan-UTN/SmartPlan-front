@@ -106,7 +106,7 @@ export {
 } from './feedback';
 export { getPlanExperiences } from './experiences';
 export { getPreferences, updatePreferences } from './users';
-export { createPlanRequest, createSurprisePlanRequest, getPlanRequestStatus } from './plan-requests';
+export { createPlanRequest, createSurprisePlanRequest, getPlanRequestStatus, listPlanRequests } from './plan-requests';
 export { getRecommendations, dismissRecommendation, undoDismissRecommendation } from './plan-recommendations';
 export {
   listFavoriteActivities,
