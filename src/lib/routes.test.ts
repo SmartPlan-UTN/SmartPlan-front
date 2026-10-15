@@ -4,6 +4,8 @@ import {
   PASSWORD_CHANGED_PARAM,
   REDIRECT_PARAM,
   ROUTES,
+  planDetailRoute,
+  planDetailOrigin,
   safeDestination,
   isActiveRoute,
   loginRoute,
@@ -59,5 +61,28 @@ describe("isActiveRoute", () => {
 
   it("doesn't confuse a route that only shares the prefix", () => {
     expect(isActiveRoute("/favorites-viejos", ROUTES.favorites)).toBe(false);
+  });
+});
+
+
+describe("plan detail origin", () => {
+  it.each(["/", "/explore", "/plans", "/favorites", "/plan-requests/42"])("returns to %s", (origin) => {
+    expect(planDetailOrigin(origin)).toBe(origin);
+    expect(planDetailRoute(7, origin)).toBe(`/plans/7?${new URLSearchParams({ from: origin })}`);
+  });
+
+  it.each([
+    undefined, null, "", "https://example.com", "//example.com", "/\\example.com",
+    "/admin", "/plans/7", "/explore/../admin", "/explore?redirect=//example.com",
+    "/plan-requests/0", "/plan-requests/-1", "/plan-requests/1.5", "/plan-requests/1/",
+    "/plan-requests/9007199254740992", "/plan-requests/1\n", "%2Fexplore",
+    ["/", "/favorites"],
+  ])("falls back for invalid or duplicate origins: %j", (origin) => {
+    expect(planDetailOrigin(origin)).toBe(ROUTES.explore);
+  });
+
+  it("keeps canonical links when no valid origin is supplied", () => {
+    expect(planDetailRoute(7)).toBe("/plans/7");
+    expect(planDetailRoute(7, "//example.com")).toBe("/plans/7");
   });
 });

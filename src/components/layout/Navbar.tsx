@@ -6,11 +6,12 @@ import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
 
 import { Icon, LoadingDots, Logo, MoodBackground } from "@/components/ui";
-import { isActiveRoute, ROUTES } from "@/lib/routes";
+import { isActiveRoute, ROUTES, START_COMPOSER_EVENT } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 import { NavLink } from "./NavLink";
-import { MAIN_LINKS } from "./links";
+import { MAIN_LINKS, MOBILE_LINKS, PLAN_OUTING_LINK } from "./links";
+import { NotificationBell } from "./NotificationBell";
 import { UserMenu } from "./UserMenu";
 import styles from "./layout.module.css";
 
@@ -20,17 +21,30 @@ import styles from "./layout.module.css";
 const EXPLORE_TRANSITION_MS = 900;
 
 /**
+ * The one bottom-bar tab that owns the current route. `isActiveRoute` alone
+ * isn't enough there: a nested destination with its own tab must take
+ * precedence over its parent, so the longest matching `href` wins.
+ * "Planificar" carries a query string, so it never claims a route: no bottom
+ * tab stays active while Inicio or its composer is open.
+ */
+function activeMobileHref(currentRoute: string): string | undefined {
+  return MOBILE_LINKS.filter((link) => isActiveRoute(currentRoute, link.href))
+    .map((link) => link.href)
+    .sort((a, b) => b.length - a.length)[0];
+}
+
+/**
  * 60px navigation bar (`--navbar-h`), fixed at the top with a
  * `backdrop-filter` over the content, as required by the EMBER design system.
  *
  * Always the light variant (cream, ink logo, dark text): the
  * SmartPlanSystemDesign prototype's `Navbar` component still has a `dark`
  * prop, but the shipped build hardcodes it to light for every screen. The
- * border below the bar stays transparent until the page scrolls, same as
+ * hairline below the bar stays transparent until the page scrolls, same as
  * the prototype.
  *
- * Below 900px the links collapse into a dropdown panel; the user menu
- * stays visible at every size.
+ * Below 900px the top bar keeps identity and session only; the frequent
+ * destinations move to a persistent, thumb-reachable bottom bar.
  *
  * Explorar also gets a full-screen "Armando tu plan perfecto..." transition
  * (matching `Results.jsx`'s own loading state) when it's clicked from
@@ -40,22 +54,12 @@ const EXPLORE_TRANSITION_MS = 900;
  * this link, so it never re-triggers.
  */
 export function Navbar() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const currentRoute = usePathname();
-  const [menuRoute, setMenuRoute] = useState(currentRoute);
   const router = useRouter();
   const [transitioning, setTransitioning] = useState(false);
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Navigating has to close the panel: otherwise the new screen appears
-  // covered. This is adjusted during render instead of with an effect,
-  // which would trigger a second render with the panel still open:
-  // https://react.dev/learn/you-might-not-need-an-effect
-  if (currentRoute !== menuRoute) {
-    setMenuRoute(currentRoute);
-    setMenuOpen(false);
-  }
+  const mobileActiveHref = activeMobileHref(currentRoute);
 
   useEffect(() => {
     const onScroll = () => {
@@ -125,12 +129,20 @@ export function Navbar() {
     }, EXPLORE_TRANSITION_MS);
   }
 
+  // Already on Inicio: the URL would not change, so the landing never sees
+  // `?startComposer=1`. Ask it to focus the composer directly instead.
+  function handlePlanOutingClick(event: MouseEvent<HTMLAnchorElement>) {
+    if (currentRoute !== ROUTES.home) return;
+    event.preventDefault();
+    window.dispatchEvent(new Event(START_COMPOSER_EVENT));
+  }
+
   return (
     <>
       <header className={cn(styles.navbar, scrolled && styles.navbarScrolled)}>
         <div className={styles.navbarInner}>
           <Link href={ROUTES.home} className={styles.brand}>
-            <Logo variant="ink" kind="full" height={22} priority />
+            <Logo variant="ember" kind="full" height={22} priority />
           </Link>
 
           <nav className={styles.nav} aria-label="Navegación principal">
@@ -146,59 +158,43 @@ export function Navbar() {
           </nav>
 
           <div className={styles.actions}>
-            <Link href={ROUTES.createPlan} className={styles.createPlanNavBtn}>
-            <Icon name="plus" size={15} aria-hidden="true" />
-              <span className={styles.createPlanNavLabel}>Crear plan</span>
-            </Link>
-
+            <NotificationBell />
             <UserMenu />
-
-            <button
-            type="button"
-            className={styles.menuButton}
-            aria-expanded={menuOpen}
-            aria-controls="collapsible-navigation"
-            aria-label={menuOpen ? "Cerrar la navegación" : "Abrir la navegación"}
-            onClick={() => {
-              setMenuOpen((isOpen) => !isOpen);
-            }}
-          >
-              <Icon name={menuOpen ? "x" : "menu"} size={20} />
-            </button>
           </div>
         </div>
-
-        {menuOpen ? (
-          <nav
-            id="collapsible-navigation"
-            className={styles.mobilePanel}
-            aria-label="Navegación principal plegable"
-          >
-            {MAIN_LINKS.map((link) => (
-              <NavLink
-                key={link.href}
-                href={link.href}
-                label={link.label}
-                icon={link.icon}
-                variant="option"
-                onClick={link.href === ROUTES.explore ? handleExploreClick : undefined}
-                onNavigate={() => {
-                  setMenuOpen(false);
-                }}
-              />
-            ))}
-            <NavLink
-              href={ROUTES.createPlan}
-              label="Crear plan"
-              icon="plus"
-              variant="option"
-              onNavigate={() => {
-                setMenuOpen(false);
-              }}
-            />
-          </nav>
-        ) : null}
       </header>
+
+      <nav className={styles.mobileNav} aria-label="Navegación móvil">
+        {MOBILE_LINKS.map((link) => {
+          const active = link.href === mobileActiveHref;
+          const isCreate = link.href === PLAN_OUTING_LINK.href;
+
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                styles.mobileNavLink,
+                active && styles.mobileNavLinkActive,
+                isCreate && styles.mobileNavCreate,
+              )}
+              aria-current={active ? "page" : undefined}
+              onClick={
+                link.href === ROUTES.explore
+                  ? handleExploreClick
+                  : isCreate
+                    ? handlePlanOutingClick
+                    : undefined
+              }
+            >
+              <span className={styles.mobileNavIcon}>
+                <Icon name={link.icon} size={isCreate ? 22 : 20} aria-hidden="true" />
+              </span>
+              <span className={styles.mobileNavLabel}>{link.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
 
       {/* Portaled to `document.body`, not rendered as a child of `<header>`
           above: `.navbar` sets `backdrop-filter` for its sticky-blur
@@ -216,11 +212,12 @@ export function Navbar() {
                   through before the illusion finishes), so nothing behind
                   it would otherwise be visible here. Same reasoning
                   `ResultsLoading` in `Results.jsx` has its own
-                  `<MoodBackground mood="idle" />` rather than assuming one
-                  from a parent. Temporary (unmounts with the overlay in
-                  `EXPLORE_TRANSITION_MS`), so it doesn't compete with the
-                  ambient canvas' own tide continuity. */}
-              <MoodBackground mood="idle" />
+                  `<MoodBackground />` rather than assuming one from a
+                  parent. It fills the whole overlay, unlike the app-wide
+                  canvas' low horizon band. Temporary (unmounts with the
+                  overlay in `EXPLORE_TRANSITION_MS`), so it doesn't compete
+                  with the ambient canvas' own tide continuity. */}
+              <MoodBackground />
               <div className={styles.exploreTransitionContent}>
                 <LoadingDots
                   title="Armando tu plan perfecto..."

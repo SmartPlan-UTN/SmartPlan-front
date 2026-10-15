@@ -4,12 +4,23 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
-import { Button, Field, Icon, PasswordStrength } from "@/components/ui";
+import {
+  Button,
+  Field,
+  Icon,
+  PasswordRequirements,
+  PasswordStrength,
+} from "@/components/ui";
 import { useToggle } from "@/hooks";
 import { ApiError } from "@/lib/api";
 import { useSession } from "@/lib/auth";
 import { ROUTES } from "@/lib/routes";
-import { EMAIL_PATTERN, MIN_PASSWORD_LENGTH, REQUIRED_MESSAGE } from "@/lib/utils";
+import {
+  EMAIL_PATTERN,
+  MIN_PASSWORD_LENGTH,
+  newPasswordValidationMessage,
+  REQUIRED_MESSAGE,
+} from "@/lib/utils";
 
 import styles from "./AuthForm.module.css";
 import { TermsDialog } from "./TermsDialog";
@@ -106,8 +117,11 @@ function validate(
 
   if (!password) {
     errors.password = REQUIRED_MESSAGE;
-  } else if (password.length < MIN_PASSWORD_LENGTH) {
-    errors.password = `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres`;
+  } else {
+    const passwordError = newPasswordValidationMessage(password);
+    if (passwordError) {
+      errors.password = passwordError;
+    }
   }
 
   if (!confirmPassword) {
@@ -274,6 +288,7 @@ export function RegisterForm() {
             }}
           />
           <PasswordStrength password={password} />
+          <PasswordRequirements password={password} />
         </div>
 
         <Field

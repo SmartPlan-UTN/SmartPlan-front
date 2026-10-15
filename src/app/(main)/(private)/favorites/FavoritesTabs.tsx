@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { CollectionsPanel } from "@/components/collection";
 import { SavedActivitiesPanel, SavedPlansPanel } from "@/components/favorites";
-import { Screen } from "@/components/layout";
+import { PageKicker, Screen } from "@/components/layout";
 
 import styles from "./favorites.module.css";
 
@@ -16,10 +16,15 @@ export function FavoritesTabs() {
   return (
     <Screen labelledBy="saved-title">
       <header className={styles.header}>
-        <p className={`sp-label ${styles.eyebrow}`}>Para vos</p>
-        <h1 id="saved-title" className="sp-h2">
-          Tus favoritos
-        </h1>
+        <div className="sp-page-intro">
+          <PageKicker>Para volver</PageKicker>
+          <h1 id="saved-title" className="sp-page-title">
+            Tus <span className="sp-page-title-accent">favoritos</span>
+          </h1>
+          <p className="sp-page-lead">
+            Guardá acá las ideas que merecen convertirse en una próxima salida.
+          </p>
+        </div>
 
         <div
           className={styles.sectionNav}

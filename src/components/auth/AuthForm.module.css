@@ -88,6 +88,19 @@ button.resendButton { border-width: 1.5px; border-color: var(--ember); color: va
   font-size: var(--t-small);
 }
 
+.formErrorLink {
+  color: inherit;
+  font-weight: var(--w-label);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.formErrorLink:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 .formError svg {
   flex-shrink: 0;
   color: var(--error);
@@ -196,14 +209,16 @@ button.resendButton { border-width: 1.5px; border-color: var(--ember); color: va
     gap: 12px;
   }
 
-  .row2 {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
   .footerLogin,
   .footerRegister {
     margin-top: 18px;
+  }
+}
+
+@media (max-width: 340px) {
+  .row2 {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 }
 

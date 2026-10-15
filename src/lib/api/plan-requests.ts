@@ -1,4 +1,6 @@
 import type {
+  PaginatedResult,
+  PlanRequestSummary,
   CreatePlanRequestPayload,
   CreateSurprisePlanRequestPayload,
   PlanRequestAccepted,
@@ -36,4 +38,17 @@ export async function createSurprisePlanRequest(
  */
 export async function getPlanRequestStatus(id: number): Promise<PlanRequestStatus> {
   return apiClient.get<PlanRequestStatus>(`/plan-requests/${id}`);
+}
+
+/**
+ * Lists the caller's own generated and in-flight requests, newest first
+ * (#189), so a past result can be reopened instead of generated again.
+ * Backend contract: `GET /plan-requests`.
+ */
+export async function listPlanRequests(
+  params?: { page?: number; limit?: number },
+): Promise<PaginatedResult<PlanRequestSummary>> {
+  return apiClient.get<PaginatedResult<PlanRequestSummary>>('/plan-requests', {
+    params,
+  });
 }

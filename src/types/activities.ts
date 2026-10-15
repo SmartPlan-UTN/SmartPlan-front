@@ -1,7 +1,9 @@
+import type { Price } from './pricing';
 import { BaseEntity } from './common';
 import type { ExplorationQueryParams } from './common';
 import type { Place } from './places';
 import type { Category } from './categories';
+import type { PlaceSummary } from './explore';
 
 /**
  * A specific catalog experience (CU9-CU11, CU14, CU50, CU53).
@@ -9,7 +11,8 @@ import type { Category } from './categories';
 export interface Activity extends BaseEntity {
   name: string;
   description: string;
-  estimatedCost: number;
+  estimatedCost: number | null;
+  price?: Price | null;
   estimatedDuration: number;
   categories?: ActivityCategory[];
   places?: ActivityPlace[];
@@ -51,16 +54,30 @@ export interface ActivityCategorySummary {
  * (CU9-CU11). Matches `ActivitySummaryDto` in `SmartPlan-back`.
  */
 export interface ActivitySearchResult {
+  costBasis?: 'per_party' | 'per_person';
   id: number;
+  imageUrl?: string | null;
+  /** `google_maps` when `imageUrl` is a Google Places photo (SmartPlan-back#102). */
+  imageSource?: import('./media').ImageSource | null;
   name: string;
   description: string;
-  estimatedCost: number;
+  estimatedCost: number | null;
+  price?: Price | null;
   estimatedDuration: number;
+  /** `ActivitySubtype` key (what the person does). */
   type: string | null;
-  averageRating: number;
+  /** Spanish label of `type`. */
+  typeLabel?: string | null;
+  /** Months (1-12) a seasonal activity runs in; null = all year. */
+  availableMonths?: number[] | null;
+  inSeason?: boolean;
+  /** SmartPlan's own average; null when nobody rated it (never 0). */
+  averageRating: number | null;
   ratingCount: number;
   distanceKm: number | null;
   categories: ActivityCategorySummary[];
+  /** The place the card refers to, with live attributed Google context. */
+  place?: PlaceSummary | null;
 }
 
 /**
@@ -93,14 +110,33 @@ export interface ActivitySearchParams extends ExplorationQueryParams {
  */
 export interface ActivityLocationSummary {
   id: number;
+  /** This place's Google Places photo; `null` when it is not linked to Google. */
+  photoUrl?: string | null;
   latitude: number | null;
   longitude: number | null;
   notes: string | null;
+  /** Google Place ID (identity link): lets the UI request a live photo. */
+  googlePlaceId?: string | null;
+  /** Temporary Google rating of the place: attribute it to Google Maps. */
+  externalRating?: {
+    rating: number;
+    ratingCount: number;
+    source: "google";
+  } | null;
+  /** Temporary place-level Google price reference (not the activity price). */
+  externalPrice?: {
+    min: number | null;
+    max: number | null;
+    currency: string | null;
+    level: string | null;
+    source: "google";
+  } | null;
   place: {
     id: number;
     name: string;
     description: string | null;
     address: string;
+    kind?: string | null;
     department: {
       id: number;
       name: string;
@@ -118,7 +154,14 @@ export interface ActivityLocationSummary {
  * summary plus every meeting point.
  */
 export interface ActivityDetailResult extends ActivitySearchResult {
+  costBasis?: 'per_party' | 'per_person';
+  availableTimesOfDay?: import('./recommendation').TimeOfDay[];
+  minPeople?: number | null;
+  maxPeople?: number | null;
+  images?: import('./media').MediaImage[];
   locations: ActivityLocationSummary[];
+  /** False when it cannot be added to a plan (e.g. no exact location). */
+  planEligible?: boolean;
 }
 
 /**
@@ -133,13 +176,18 @@ export interface ActivityMapMarker {
   name: string;
   placeName: string;
   address: string;
-  estimatedCost: number;
+  estimatedCost: number | null;
+  price?: Price | null;
   type: string | null;
-  averageRating: number;
+  typeLabel?: string | null;
+  /** SmartPlan's own average; null when nobody rated it (never 0). */
+  averageRating: number | null;
+  ratingCount?: number;
   latitude: number;
   longitude: number;
   distanceKm: number | null;
   categories: ActivityCategorySummary[];
+  place?: PlaceSummary | null;
 }
 
 /**

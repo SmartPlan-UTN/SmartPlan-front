@@ -14,7 +14,8 @@ import {
   listPlaces,
   updateAdminActivity,
 } from "@/lib/api";
-import { formatArs, formatDuration, googleMapsUrl } from "@/lib/utils";
+import { formatDuration, googleMapsUrl, formatPrice } from "@/lib/utils";
+import { eligibilityBadges } from "./eligibilityLabels";
 import type {
   AdminActivitiesResult,
   AdminActivity,
@@ -210,10 +211,10 @@ export function AdminActivitiesView() {
                 <thead><tr><th>Actividad</th><th>Categorías</th><th>Lugares</th><th>Costo</th><th>Duración</th><th>Acciones</th></tr></thead>
                 <tbody>{activities.map((activity) => (
                   <tr key={activity.id}>
-                    <td><span className={styles.entityName}>{activity.name}</span><span className={styles.secondary}>{activity.type || "Sin tipo"}</span></td>
+                    <td><span className={styles.entityName}>{activity.name}</span><span className={styles.secondary}>{activity.type || "Sin tipo"}</span>{eligibilityBadges(activity).map((badge) => <span className={styles.tag} key={badge.key} title={badge.detail}>{badge.label}</span>)}</td>
                     <td><span className={styles.tags}>{activity.categories.length ? activity.categories.map((category) => <span className={styles.tag} key={category.id}>{category.name}</span>) : <span className={styles.secondary}>Sin categorías</span>}</span></td>
                     <td><span className={styles.tags}>{activity.places.length ? activity.places.map((place) => <a className={styles.placeLink} key={place.id} href={googleMapsUrl(null, null, place.address)} target="_blank" rel="noreferrer"><Icon name="map-pin" size={13} />{place.name}</a>) : <span className={styles.secondary}>Sin ubicación</span>}</span></td>
-                    <td>{formatArs(activity.estimatedCost)}</td><td>{formatDuration(activity.estimatedDuration)}</td>
+                    <td>{formatPrice(activity)}</td><td>{formatDuration(activity.estimatedDuration)}</td>
                     <td><span className={styles.actions}><button className={styles.iconButton} type="button" aria-label={`Editar ${activity.name}`} disabled={catalogLoading || Boolean(catalogError)} onClick={() => { setActionError(null); setEditing(activity); }}><Icon name="pencil" size={16} /></button><button className={`${styles.iconButton} ${styles.dangerButton}`} type="button" aria-label={`Eliminar ${activity.name}`} onClick={() => { setActionError(null); setDeleting(activity); }}><Icon name="trash-2" size={16} /></button></span></td>
                   </tr>
                 ))}</tbody>

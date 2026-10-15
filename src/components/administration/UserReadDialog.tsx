@@ -2,7 +2,12 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
-import { Button, ConfirmationDialog, Icon } from "@/components/ui";
+import {
+  Button,
+  ConfirmationDialog,
+  Icon,
+  UserAvatar,
+} from "@/components/ui";
 import { ApiError } from "@/lib/api";
 import type {
   AdminUser,
@@ -11,7 +16,6 @@ import type {
   UserStatusKey,
 } from "@/types";
 
-import { UserAvatar } from "./UserAvatar";
 import { UserStatusBadge } from "./UserStatusBadge";
 
 import styles from "./administration.module.css";
@@ -31,7 +35,6 @@ const ROLE_OPTIONS: Array<{ value: RoleKey; label: string }> = [
 const STATUS_OPTIONS: Array<{ value: UserStatusKey; label: string }> = [
   { value: "active", label: "Activo" },
   { value: "suspended", label: "Suspendido" },
-  { value: "banned", label: "Baneado" },
 ];
 
 export interface UserReadDialogProps {

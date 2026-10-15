@@ -6,7 +6,7 @@ import { ROUTES } from "@/lib/routes";
 import MyPlansPage from "./page";
 
 vi.mock("@/components/plan", () => ({
-  MyPlansPanel: () => <a href={ROUTES.createPlan}>Crear un plan nuevo</a>,
+  MyPlansPanel: () => <a href={ROUTES.createPlan}>Crear un plan (tarjeta)</a>,
 }));
 
 describe("MyPlansPage", () => {
@@ -17,11 +17,13 @@ describe("MyPlansPage", () => {
       screen.getByRole("heading", { name: "Mis planes", level: 1 }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Crear plan" }),
+      screen.getByRole("link", { name: "Crear un plan" }),
     ).toHaveAttribute("href", ROUTES.createPlan);
     expect(
-      screen.getByRole("link", { name: "Crear un plan nuevo" }),
+      screen.getByRole("link", { name: "Crear un plan (tarjeta)" }),
     ).toHaveAttribute("href", ROUTES.createPlan);
+    // It tells authored plans apart from the ones the person chose to do.
+    expect(screen.getByText(/están en Mis salidas/)).toBeInTheDocument();
   });
 
   it("labels the section with its heading", () => {

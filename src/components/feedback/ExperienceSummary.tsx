@@ -1,5 +1,7 @@
-import { Badge, Stars } from "@/components/ui";
-import { formatArs } from "@/lib/utils";
+import type { ReactNode } from "react";
+
+import { Badge, Icon, Stars } from "@/components/ui";
+import { formatArs, NO_PRICE_TOTAL_LABEL } from "@/lib/utils";
 import type { PlanFeedback } from "@/types";
 
 import {
@@ -14,7 +16,9 @@ import styles from "./feedback.module.css";
 export interface ExperienceSummaryProps {
   feedback: PlanFeedback;
   /** What SmartPlan estimated — shown next to the real spend for contrast. */
-  estimatedTotalCost: number;
+  estimatedTotalCost: number | null;
+  /** Closes the section, e.g. whether it is shared with the community. */
+  footer?: ReactNode;
 }
 
 /**
@@ -25,6 +29,7 @@ export interface ExperienceSummaryProps {
 export function ExperienceSummary({
   feedback,
   estimatedTotalCost,
+  footer,
 }: ExperienceSummaryProps) {
   const orderedTags = FEEDBACK_TAG_ORDER.filter((tag) =>
     feedback.tags.includes(tag)
@@ -58,7 +63,9 @@ export function ExperienceSummary({
             {FEEDBACK_COPY.experience.estimatedLabel}
           </span>
           <span className={styles.expCostValue}>
-            {formatArs(estimatedTotalCost)}
+            {estimatedTotalCost === null
+              ? NO_PRICE_TOTAL_LABEL
+              : formatArs(estimatedTotalCost)}
           </span>
         </div>
         {hasRealCost ? (
@@ -72,7 +79,9 @@ export function ExperienceSummary({
             </span>
           </div>
           <span className={styles.expDelta}>
-            {costDeltaLabel(estimatedTotalCost, feedback.actualCost as number)}
+            {estimatedTotalCost === null
+              ? null
+              : costDeltaLabel(estimatedTotalCost, feedback.actualCost as number)}
           </span>
           </>
         ) : null}
@@ -81,6 +90,15 @@ export function ExperienceSummary({
       {feedback.comment ? (
         <p className={styles.expComment}>“{feedback.comment}”</p>
       ) : null}
+      {/* The only moderation trace the author ever sees: a removal (#156). */}
+      {feedback.comment && feedback.commentHidden ? (
+        <p className={styles.expHiddenNotice}>
+          <Icon name="eye-off" size={14} aria-hidden="true" />
+          {FEEDBACK_COPY.sharing.commentHidden}
+        </p>
+      ) : null}
+
+      {footer}
     </section>
   );
 }

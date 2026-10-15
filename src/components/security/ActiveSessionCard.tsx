@@ -7,7 +7,7 @@ import { Button, Icon } from "@/components/ui";
 import { getCurrentSession, type CurrentSession } from "@/lib/auth/api";
 import { useSession } from "@/lib/auth";
 import { ROUTES } from "@/lib/routes";
-import { formatRelativeTime } from "@/lib/utils";
+import { formatAbsoluteDateTime } from "@/lib/utils";
 
 import styles from "./security.module.css";
 
@@ -18,12 +18,11 @@ type LoadStatus = "loading" | "loaded" | "error";
  * — scoped to what `SmartPlan-back` actually knows. The prototype shows a
  * fake multi-device list ("iPhone 16 Pro · Buenos Aires · Ahora") with a
  * "Cerrar todas" action; there is no endpoint to list other sessions or
- * devices for the account, and `user_session` tracks no user-agent at all,
- * only `ip`/`startedAt` (`GET /sessions/me`). So this reports the one
- * session it can — the one making the request — as "Sesión actual", and
- * "Cerrar sesión" is the real CU4 `DELETE /sessions` (`useSession().
- * logout()`, same as the navbar's), singular because there's only ever one
- * session to close here.
+ * devices for the account. This reports the one session it can — the one
+ * making the request — as "Sesión actual" and shows only its absolute local
+ * start date. "Cerrar sesión" is the real CU4 `DELETE /sessions`
+ * (`useSession().logout()`, same as the navbar's), singular because there's
+ * only ever one session to close here.
  *
  * Renders nothing while loading or on a load failure: this card is a
  * secondary "by the way" panel below the actual password form, not worth
@@ -85,7 +84,7 @@ export function ActiveSessionCard() {
         <div>
           <p className={`sp-small ${styles.sessionTitle}`}>Sesión actual</p>
           <p className={`sp-small ${styles.sessionSubtitle}`}>
-            {session.ip ?? "IP desconocida"} · {formatRelativeTime(session.startedAt)}
+            Iniciada el {formatAbsoluteDateTime(session.startedAt)}
           </p>
         </div>
       </div>

@@ -4,129 +4,40 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { ExperienceSummary, FeedbackInvite } from "@/components/feedback";
 import { Badge, Button, ConfirmationDialog, Divider, FloatingBackLink, Icon, Stars } from "@/components/ui";
+import { AuthenticatedImage, MediaGallery } from "@/components/media";
 import { useFavorites } from "@/context";
 import { useDetailFetch, usePlanSelection } from "@/hooks";
 import { ApiError, cancelOwnPlan, getOwnPlan, getPlan } from "@/lib/api";
 import { useSession } from "@/lib/auth";
-import { activityDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
-import { formatArs, formatDuration, googleMapsUrl } from "@/lib/utils";
+import { outingDetailRoute, planDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
+import { formatDuration, formatPrice, formatPlanTotal, formatPerPerson } from "@/lib/utils";
 import type {
-  FeedbackState,
+  OwnPlanDetail,
   PlanDetailResult,
-  PlanFeedback,
-  PlanItineraryItem,
-  PlanStatusKey,
+  PlanVisibility,
   ViewerPlanState,
 } from "@/types";
 
+import { CommunityExperiences } from "./CommunityExperiences";
+import { ItineraryStep } from "./ItineraryStep";
 import { PlanIntentionPanel } from "./PlanIntentionPanel";
+import {
+  PlanVisibilityBadge,
+  PlanVisibilityControl,
+} from "./PlanVisibilityControl";
 import { PLAN_SELECTION } from "./planSelectionContent";
 import { planStatusPresentation } from "./statusPresentation";
+import { VISIBILITY_COPY } from "./visibilityContent";
 import styles from "./plan.module.css";
 import activityStyles from "../activity/activity.module.css";
 
 export interface PlanDetailViewProps {
   planId: number;
+  returnTo?: string;
 }
 
 const GENERIC_ERROR = "No pudimos cargar el plan. Intentá de nuevo.";
-
-function ItineraryStep({
-  detail,
-  isFirst,
-  isLast,
-}: {
-  detail: PlanItineraryItem;
-  isFirst: boolean;
-  isLast: boolean;
-}) {
-  const { activity } = detail;
-  const location = activity.locations[0] ?? null;
-  const categoryLabel =
-    activity.categories.length > 0
-      ? activity.categories.map((category) => category.name).join(" · ")
-      : null;
-
-  return (
-    <div className={styles.stepRow}>
-      <div className={styles.stepTimeline}>
-        <span
-          className={`${styles.stepLine} ${!isFirst ? styles.stepLineVisible : ""}`}
-        />
-        <span className={styles.stepBadge}>{detail.order}</span>
-        <span
-          className={`${styles.stepLine} ${!isLast ? styles.stepLineVisible : ""}`}
-        />
-      </div>
-
-      {/* The whole card is a target — matches PlanDetail.jsx's
-          card-wide onClick — via a stretched `Link` overlay instead of a
-          click handler on a `<div>`, so it stays keyboard- and
-          screen-reader-accessible. "Ver en mapa", a real external link,
-          sits above the overlay so it keeps its own click. */}
-      <div className={styles.stepCard}>
-        <Link
-          href={activityDetailRoute(activity.id)}
-          className={styles.stepStretchedLink}
-          aria-label={`Ver ${activity.name}`}
-        />
-
-        <div>
-          <div className={styles.stepBadgeRow}>
-            {categoryLabel ? <Badge variant="tag">{categoryLabel}</Badge> : null}
-            <span className={styles.stepRating}>
-              <Stars rating={activity.averageRating} size={11} />
-              <span>{activity.averageRating.toFixed(1)}</span>
-            </span>
-          </div>
-
-          <p className={styles.stepName}>{activity.name}</p>
-
-          <div className={styles.stepMetaRow}>
-            {location ? (
-              <span className={styles.stepMetaItem}>
-                <Icon name="map-pin" size={13} />
-                {location.place.address}
-              </span>
-            ) : null}
-            <span className={styles.stepMetaItem}>
-              <Icon name="clock" size={13} />
-              {formatDuration(detail.estimatedDuration)}
-            </span>
-          </div>
-        </div>
-
-        <div className={styles.stepActions}>
-          <p className={styles.stepCost}>{formatArs(detail.estimatedCost)}</p>
-
-          <div className={styles.stepLinks}>
-            {location ? (
-              <a
-                href={googleMapsUrl(
-                  location.latitude,
-                  location.longitude,
-                  location.place.address,
-                )}
-                target="_blank"
-                rel="noreferrer"
-                className={styles.stepMapLink}
-              >
-                <Icon name="map-pin" size={13} aria-hidden="true" />
-                Ver en mapa
-              </a>
-            ) : null}
-            <span className={styles.stepDetailHint}>
-              Ver detalle
-              <Icon name="chevron-right" size={12} aria-hidden="true" />
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /**
  * Plan detail (CU13 · PAN 17), matching
@@ -139,12 +50,19 @@ function ItineraryStep({
  * lo recomiendan") and per-person cost split are fabricated demo numbers
  * with no backend behind them — there's no "people who did this plan"
  * tracking or party-size field in the contract, so both are left out
- * rather than inventing data. "Lo voy a hacer" is CU22 — a reversible intent
- * toggle (`PATCH`/`DELETE /plans/:id/select`), shown only when the caller can
- * act on it. "Compartir" is real — it copies the page URL.
+ * rather than inventing data. "Lo voy a hacer" is CU22 — a one-shot action
+ * that copies the plan into an outing of "Mis salidas" (`POST
+ * /users/me/outings`), shown only when the caller can choose the plan; once
+ * done it reads "Agregado a Mis salidas" (#130). "Compartir" is real — it
+ * copies the page URL.
+ *
+ * The author of a plan also gets its visibility (Público/Privado) and can
+ * publish it or make it private. An outing is not a plan to browse: its
+ * owner is sent to its page in Mis salidas.
  */
-export function PlanDetailView({ planId }: PlanDetailViewProps) {
+export function PlanDetailView({ planId, returnTo = ROUTES.explore }: PlanDetailViewProps) {
   const router = useRouter();
+  const backLabel = returnTo.startsWith(`${ROUTES.planRequests}/`) ? "Volver a los resultados" : "Volver";
   const { status: sessionStatus } = useSession();
   const {
     data: plan,
@@ -160,124 +78,63 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
   const { isPlanSaved, toggleSavePlan } = useFavorites();
   const saved = isPlanSaved(planId);
   const [copied, setCopied] = useState(false);
-  const [isOwner, setIsOwner] = useState(false);
-  const [ownPlan, setOwnPlan] = useState<import("@/types").OwnPlanDetail | null>(null);
+  const [ownPlan, setOwnPlan] = useState<OwnPlanDetail | null>(null);
+  const [visibilityOverride, setVisibilityOverride] =
+    useState<PlanVisibility | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
   const heroRef = useRef<HTMLDivElement>(null);
-  const [ownFeedback, setOwnFeedback] = useState<{
-    planId: number;
-    feedbackState: FeedbackState;
-    feedback: PlanFeedback | null;
-    completedAt: string | null;
-    activityCount: number;
-  } | null>(null);
 
+  const isAuthor = plan?.ownedByViewer === true && plan.kind === "authored";
+
+  // An outing has its own page, with its lifecycle and feedback.
   useEffect(() => {
-    if (sessionStatus !== "authenticated") return;
-    let active = true;
-    getOwnPlan(planId)
-      .then((data) => {
-        if (active) {
-          setIsOwner(true);
-          setOwnPlan(data);
-          setOwnFeedback({
-            planId: data.id,
-            feedbackState: data.feedbackState,
-            feedback: data.feedback,
-            completedAt: data.completedAt ?? data.createdAt,
-            activityCount: data.activityCount,
-          });
-        }
-      })
-      .catch(() => {
-        if (active) {
-          setIsOwner(false);
-          setOwnPlan(null);
-        }
-      });
-    return () => {
-      active = false;
-    };
-  }, [sessionStatus, planId]);
-
-  // CU23. Feedback lives on the owner-only endpoint; the public detail never
-  // carries it. A secondary, non-blocking fetch — a viewer who isn't the
-  // owner just gets a 403/404 here and no feedback section shows. Keyed by
-  // plan id so a stale result from a previous plan never renders.
-  const planId_ = plan?.id ?? null;
-  useEffect(() => {
-    if (sessionStatus !== "authenticated" || planId_ == null) return;
-    let active = true;
-    getOwnPlan(planId_)
-      .then((own) => {
-        if (active) {
-          setOwnFeedback({
-            planId: own.id,
-            feedbackState: own.feedbackState,
-            feedback: own.feedback,
-            completedAt: own.completedAt ?? own.createdAt,
-            activityCount: own.activityCount,
-          });
-        }
-      })
-      .catch(() => {
-        // Not the owner, or offline — leave the feedback section hidden.
-      });
-    return () => {
-      active = false;
-    };
-  }, [sessionStatus, planId_]);
-
-  const feedbackInfo =
-    ownFeedback && ownFeedback.planId === planId_ ? ownFeedback : null;
-
-  async function reconcileFeedback() {
-    if (planId_ == null) return;
-    try {
-      const own = await getOwnPlan(planId_);
-      setOwnFeedback({
-        planId: own.id,
-        feedbackState: own.feedbackState,
-        feedback: own.feedback,
-        completedAt: own.completedAt ?? own.createdAt,
-        activityCount: own.activityCount,
-      });
-    } catch {
-      // Keep the current owner-only projection if reconciliation is offline.
+    if (plan?.kind === "outing" && plan.ownedByViewer) {
+      router.replace(outingDetailRoute(plan.id));
     }
-  }
+  }, [plan, router]);
 
-  // CU22. The new status is applied from the backend result, not optimistically;
+  // The author's projection carries the people count behind the per-person
+  // cost; nobody else can read it.
+  useEffect(() => {
+    if (!isAuthor || plan == null) return;
+    let active = true;
+    getOwnPlan(plan.id)
+      .then((own) => {
+        if (active) setOwnPlan(own);
+      })
+      .catch(() => {
+        // Keep the shared detail; the per-person cost just stays hidden.
+      });
+    return () => {
+      active = false;
+    };
+  }, [isAuthor, plan]);
+
+  // CU22. The outing is applied from the backend result, not optimistically;
   // `useDetailFetch` has no mutate, so a local override reflects it until the
   // next real load (a navigation back here re-reads the authoritative state).
   const selection = usePlanSelection();
   const [override, setOverride] = useState<{
-    statusKey: PlanStatusKey;
     viewerPlanState: ViewerPlanState;
+    activeOutingId: number | null;
   } | null>(null);
   const [liveMessage, setLiveMessage] = useState("");
 
-  async function toggleIntent(direction: "on" | "off") {
+  async function chooseOuting() {
     if (!plan || selection.status === "working") return;
     setLiveMessage("");
 
-    const outcome = await (direction === "on"
-      ? selection.select(plan.id)
-      : selection.deselect(plan.id));
+    const outcome = await selection.choose(plan.id);
     if (!outcome) return;
 
     if (outcome.ok) {
       setOverride({
-        statusKey: outcome.result.status.key,
-        viewerPlanState: direction === "on" ? "selected" : "selectable",
+        viewerPlanState: "selected",
+        activeOutingId: outcome.result.outing.id,
       });
-      setLiveMessage(
-        direction === "on"
-          ? PLAN_SELECTION.detail.announceOn
-          : PLAN_SELECTION.detail.announceOff,
-      );
+      setLiveMessage(PLAN_SELECTION.announceAdded(plan.title));
       selection.reset();
       return;
     }
@@ -297,7 +154,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
 
   async function handleShare() {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(new URL(planDetailRoute(planId), window.location.origin).href);
       setCopied(true);
       setTimeout(() => {
         setCopied(false);
@@ -344,9 +201,9 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
         <Icon name="inbox" size={32} className={activityStyles.stateIcon} />
         <h1 className="sp-h3">No encontramos este plan</h1>
         <p className="sp-body">Puede que ya no esté disponible.</p>
-        <Link href={ROUTES.explore} className={activityStyles.backLink}>
+        <Link href={returnTo} className={activityStyles.backLink}>
           <Icon name="arrow-left" size={14} aria-hidden="true" />
-          Volver a explorar
+          {backLabel}
         </Link>
       </div>
     );
@@ -366,22 +223,40 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
     .map((detail) => detail.activity.name)
     .join(" → ");
 
-  const statusKey = override?.statusKey ?? plan.status.key;
   const viewerPlanState = override?.viewerPlanState ?? plan.viewerPlanState;
-  const statusInfo = planStatusPresentation(statusKey);
+  const activeOutingId =
+    override?.activeOutingId ?? plan.activeOutingId ?? null;
+  const visibility = visibilityOverride ?? plan.visibility;
+  const statusInfo = planStatusPresentation(plan.status.key);
 
   return (
     <div>
-      <FloatingBackLink href={ROUTES.explore} label="Volver" heroRef={heroRef} />
+      <FloatingBackLink href={returnTo} label={backLabel} heroRef={heroRef} />
 
       <p className={styles.srOnly} role="status" aria-live="polite">
         {liveMessage}
       </p>
 
       <div className={styles.hero} ref={heroRef}>
-        <Icon name="route" size={110} className={styles.heroIcon} />
+        {plan.imageUrl ? (
+          // An uploaded cover, or the Google Places photo of its first place
+          // with its full credit (SmartPlan-back#102).
+          <div className={styles.heroMedia}>
+            <AuthenticatedImage
+              url={plan.imageUrl}
+              alt={plan.title}
+              width={960}
+              height={300}
+              attribution="full"
+              attributionPlacement="top"
+              fallback={<Icon name="route" size={110} className={styles.heroIcon} />}
+            />
+          </div>
+        ) : (
+          <Icon name="route" size={110} className={styles.heroIcon} />
+        )}
         <Badge variant="cost" className={styles.heroCostBadge}>
-          {formatArs(plan.estimatedTotalCost)}
+          {formatPlanTotal(plan)}
         </Badge>
 
         <div className={styles.heroTitleBlock}>
@@ -392,8 +267,9 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
                 <span className={styles.heroMetaDot}>·</span>
               </>
             ) : null}
-            <Stars rating={plan.averageRating} size={14} />
-            <span>{plan.averageRating.toFixed(1)}</span>
+            {plan.averageRating > 0 ? (
+              <><Stars rating={plan.averageRating} size={14} /><span>{plan.averageRating.toFixed(1)}</span></>
+            ) : <span>Sin reseñas</span>}
             <span className={styles.heroMetaDot}>·</span>
             <span>{formatDuration(plan.estimatedTotalDuration)}</span>
           </div>
@@ -423,6 +299,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           </p>
         ) : null}
 
+        <MediaGallery target="plan" resourceId={plan.id} resourceName={plan.title} />
         <div className={styles.section}>
           <p className={activityStyles.sectionLabel}>itinerario</p>
           {plan.details.map((detail, index) => (
@@ -442,7 +319,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
               <div className={styles.costRow} key={detail.id}>
                 <span className={styles.costRowLabel}>{detail.activity.name}</span>
                 <span className={styles.costRowValue}>
-                  {formatArs(detail.estimatedCost)}
+                  {formatPrice(detail)}
                 </span>
               </div>
             ))}
@@ -451,7 +328,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           <div className={styles.costTotalRow}>
             <span className={styles.costRowLabel}>Total</span>
             <span className={styles.costTotalValue}>
-              {formatArs(plan.estimatedTotalCost)}
+              {formatPlanTotal(plan)}
             </span>
           </div>
           {ownPlan && ownPlan.peopleCount > 0 ? (
@@ -461,48 +338,52 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
                 {ownPlan.peopleCount === 1 ? "persona" : "personas"})
               </span>
               <span className={styles.costRowValue}>
-                {formatArs(ownPlan.estimatedCostPerPerson)}
+                {formatPerPerson(ownPlan.estimatedCostPerPerson)}
               </span>
             </div>
           ) : null}
         </div>
 
-        {feedbackInfo?.feedback ? (
-          <ExperienceSummary
-            feedback={feedbackInfo.feedback}
-            estimatedTotalCost={plan.estimatedTotalCost}
-          />
-        ) : feedbackInfo?.feedbackState === "available" ? (
-          <FeedbackInvite
-            planId={plan.id}
-            planTitle={plan.title}
-            estimatedTotalCost={plan.estimatedTotalCost}
-            completedAt={feedbackInfo.completedAt}
-            activityCount={feedbackInfo.activityCount}
-            onSubmitted={(feedback) =>
-              setOwnFeedback({
-                planId: plan.id,
-                feedbackState: "submitted",
-                feedback,
-                completedAt: feedbackInfo.completedAt,
-                activityCount: feedbackInfo.activityCount,
-              })
-            }
-            onReconcile={() => void reconcileFeedback()}
-          />
+        {/* Experiences of people who did it (#106): only a published plan
+            that is still on has a community to show. */}
+        {plan.kind === "authored" &&
+        visibility === "public" &&
+        plan.status.key !== "cancelled" ? (
+          <CommunityExperiences planId={plan.id} planTitle={plan.title} />
+        ) : null}
+
+        {isAuthor ? (
+          <div className={styles.visibilityBox}>
+            <div>
+              <PlanVisibilityBadge visibility={visibility} />
+              <p className={styles.visibilityHint}>
+                {VISIBILITY_COPY.hint[visibility]}
+              </p>
+            </div>
+            {plan.status.key !== "cancelled" ? (
+              <PlanVisibilityControl
+                planId={plan.id}
+                planTitle={plan.title}
+                visibility={visibility}
+                onChanged={(next) => {
+                  setVisibilityOverride(next);
+                  setLiveMessage(VISIBILITY_COPY.announce[next]);
+                }}
+              />
+            ) : null}
+          </div>
         ) : null}
 
         <div className={styles.actionBar}>
-          {sessionStatus === "authenticated" && isOwner && plan.status.key !== "cancelled" ? (
+          {sessionStatus === "authenticated" && isAuthor && plan.status.key !== "cancelled" ? (
             <>
               <Link href={planEditRoute(planId)} className={styles.ownerActionLink}>
-                <Button variant="ghostLight" className={styles.ownerActionButton}>
-                  <Icon name="pencil" size={16} aria-hidden="true" />
-                  Editar plan
-                </Button>
+                <Icon name="pencil" size={16} aria-hidden="true" />
+                Editar plan
               </Link>
               <Button
                 variant="ghostLight"
+                size="sm"
                 className={styles.ownerActionButton}
                 onClick={() => setShowCancelModal(true)}
               >
@@ -513,48 +394,43 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           ) : null}
           {/* Guardar + Compartir — secondary. Each control reserves its
               widest label so a state swap never changes its box. */}
-          <div className={styles.actionSecondary}>
-            <Button
-              variant="ghostLight"
-              size="sm"
-              className={styles.saveButton}
-              aria-pressed={saved}
-              aria-label={saved ? "Quitar de guardados" : "Guardar plan"}
-              onClick={() => {
-                // Optimistic rollback is handled inside FavoritesContext (CU43).
-                void toggleSavePlan(planId);
-              }}
-            >
-              <Icon
-                name="bookmark"
-                size={16}
-                aria-hidden="true"
-                className={saved ? styles.saveIconOn : undefined}
-              />
-              {saved ? "Guardado" : "Guardar plan"}
-            </Button>
-            <Button
-              variant="ghostLight"
-              size="sm"
-              className={styles.shareButton}
-              onClick={() => {
-                void handleShare();
-              }}
-            >
-              <Icon name="share-2" size={16} aria-hidden="true" />
-              {copied ? "¡Copiado!" : "Compartir"}
-            </Button>
-          </div>
+          <Button
+            variant="ghostLight"
+            size="sm"
+            className={styles.saveButton}
+            aria-pressed={saved}
+            aria-label={saved ? "Quitar de guardados" : "Guardar plan"}
+            onClick={() => {
+              // Optimistic rollback is handled inside FavoritesContext (CU43).
+              void toggleSavePlan(planId);
+            }}
+          >
+            <Icon
+              name="bookmark"
+              size={16}
+              aria-hidden="true"
+              className={saved ? styles.saveIconOn : undefined}
+            />
+            {saved ? "Guardado" : "Guardar plan"}
+          </Button>
+          <Button
+            variant="ghostLight"
+            size="sm"
+            className={styles.shareButton}
+            onClick={() => {
+              void handleShare();
+            }}
+          >
+            <Icon name="share-2" size={16} aria-hidden="true" />
+            {copied ? "¡Copiado!" : "Compartir"}
+          </Button>
 
-          {/* Personal state on the plan (CU22) — carries the visual weight.
-              Supersedes the disabled "Lo quiero hacer" placeholder this
-              action bar used before CU22 landed. */}
+          {/* Personal state on the plan (CU22) — carries the visual weight. */}
           <PlanIntentionPanel
             viewerPlanState={viewerPlanState}
-            statusKey={statusKey}
+            activeOutingId={activeOutingId}
             busy={selection.status === "working"}
-            onIntend={() => void toggleIntent("on")}
-            onWithdraw={() => void toggleIntent("off")}
+            onIntend={() => void chooseOuting()}
           />
         </div>
       </div>
@@ -573,6 +449,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           <p>El plan se eliminará de tus planes y ya no estará disponible.</p>
         </ConfirmationDialog>
       ) : null}
+
     </div>
   );
 }

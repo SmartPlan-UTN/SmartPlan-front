@@ -89,6 +89,7 @@ describe("FavoritesContext", () => {
       login: vi.fn(),
       register: vi.fn(),
       logout: vi.fn(),
+      applyAuthentication: vi.fn(),
     });
 
     vi.mocked(listFavoriteActivities).mockResolvedValueOnce({
@@ -125,6 +126,7 @@ describe("FavoritesContext", () => {
       login: vi.fn(),
       register: vi.fn(),
       logout: vi.fn(),
+      applyAuthentication: vi.fn(),
     });
 
     vi.mocked(listFavoriteActivities).mockResolvedValueOnce({
@@ -166,6 +168,7 @@ describe("FavoritesContext", () => {
       login: vi.fn(),
       register: vi.fn(),
       logout: vi.fn(),
+      applyAuthentication: vi.fn(),
     });
 
     vi.mocked(listFavoriteActivities).mockResolvedValueOnce({
@@ -207,6 +210,7 @@ describe("FavoritesContext", () => {
       login: vi.fn(),
       register: vi.fn(),
       logout: vi.fn(),
+      applyAuthentication: vi.fn(),
     });
 
     vi.mocked(listFavoriteActivities).mockResolvedValueOnce({
@@ -246,6 +250,7 @@ describe("FavoritesContext", () => {
       login: vi.fn(),
       register: vi.fn(),
       logout: vi.fn(),
+      applyAuthentication: vi.fn(),
     });
 
     const { result } = renderHook(() => useFavorites(), {
@@ -269,6 +274,7 @@ describe("FavoritesContext", () => {
       login: vi.fn(),
       register: vi.fn(),
       logout: vi.fn(),
+      applyAuthentication: vi.fn(),
     });
 
     const { result } = renderHook(() => useFavorites(), {
@@ -300,6 +306,7 @@ describe("FavoritesContext", () => {
       login: vi.fn(),
       register: vi.fn(),
       logout: vi.fn(),
+      applyAuthentication: vi.fn(),
     });
     vi.mocked(listFavoriteActivities).mockImplementation(async (params) => ({
       data: [

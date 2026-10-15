@@ -35,7 +35,7 @@
   --white-15:      rgba(255,255,255,0.15);
   --white-18:      rgba(255,255,255,0.18);
 
-  /* Fixed glow under the animated wave canvas. Mood palettes live in
+  /* Fixed glow under the animated wave canvas. The wave fills live in
      styles/wave-palettes.ts because the Web Worker cannot read the DOM. */
   --wave-bottom-glow: rgba(232,93,32,0.06);
 
@@ -53,11 +53,18 @@
   --fg-3: #9E9589;    /* placeholder/caption */
   --rating-ink: #7A5C00;
   --warning-ink: #7A4A00;
+  --error-ink: #B42318;        /* error text on cream */
+  --error-on-dark: #FFB4A8;    /* error text on char, over a red tint */
+  --error-on-dark-vivid: #FF9A8A; /* an error figure on plain char */
 
   /* ── Surfaces ────────────────────────────────────── */
   --surface:      var(--cream);
   --surface-card: #FFFCF8;    /* card on cream    */
   --admin-surface: #FDFBF7;   /* admin canvas from v2 AdminActivities.jsx */
+  /* Paper behind map tiles while they load: the land colour of
+     COMPOSER_MAP_STYLE (lib/maps/brandedMapStyle.ts), which Google's API
+     also needs as a literal (`backgroundColor`). */
+  --map-paper:    #EEE7DB;
 
   /* ── Borders ─────────────────────────────────────── */
   --hairline:      #E2DDD5;
@@ -93,8 +100,17 @@
 
   /* ── Layout ──────────────────────────────────────── */
   --navbar-h:   60px;
+  --mobile-nav-h: 64px;
   --max-w:      1200px;
   --section-v:  64px;
+
+  /* Shell spacing that screens measure against. `Container`'s vertical
+     padding and the room `<main>` reserves below the floating mobile bar
+     change with the viewport; screens that bleed past the container or
+     fill the viewport read these instead of repeating the numbers. */
+  --page-pad-top:      var(--section-v);
+  --page-pad-bottom:   var(--section-v);
+  --bottom-nav-space:  0px;
 
   /* ── Radii ───────────────────────────────────────── */
   --r-pill:    40px;
@@ -111,6 +127,21 @@
   /* ── Spacing ─────────────────────────────────────── */
   --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
   --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px;
+}
+
+/* Below 900px the primary navigation is a fixed bottom bar (see
+   `.mobileNav` in layout.module.css), so the page keeps that much room. */
+@media (max-width: 899px) {
+  :root {
+    --bottom-nav-space: calc(var(--mobile-nav-h) + var(--s-5) + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --page-pad-top:    var(--s-6);
+    --page-pad-bottom: var(--s-7);
+  }
 }
 
 /* ── Reset ───────────────────────────────────────────── */
@@ -161,6 +192,57 @@ input::placeholder { color: var(--fg-3); }
   letter-spacing: var(--track-label);
   text-transform: uppercase;
   line-height: 1;
+}
+
+/* ── Editorial page heading ──────────────────────────────────────
+   Shared by focused application screens. It carries the landing's type
+   voice into the product without bringing its hero objects or scale into
+   task-oriented pages. */
+.sp-page-intro {
+  max-width: 680px;
+}
+.sp-page-kicker {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0 0 var(--s-3);
+  color: var(--ember);
+}
+.sp-page-kicker-mark {
+  flex: none;
+}
+.sp-page-title {
+  margin: 0;
+  color: var(--char);
+  font-size: clamp(36px, 4.4vw, 54px);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+.sp-page-title-accent {
+  color: var(--ember);
+  font-family: var(--font-display-serif);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+.sp-page-lead {
+  max-width: 52ch;
+  margin: var(--s-4) 0 0;
+  color: var(--fg-2);
+  font-size: var(--t-body);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+@media (max-width: 560px) {
+  .sp-page-title {
+    font-size: clamp(34px, 10vw, 44px);
+  }
+
+  .sp-page-lead {
+    font-size: var(--t-small);
+  }
 }
 
 /* Visually hidden but still reachable by screen readers: for a heading a

@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { listNotifications, markNotificationAsRead } from "@/lib/api";
 import { SessionProvider } from "@/lib/auth";
 import { logout, refreshSession } from "@/lib/auth/api";
 
@@ -11,6 +12,12 @@ vi.mock("@/lib/auth/api", () => ({
   refreshSession: vi.fn(),
   login: vi.fn(),
   logout: vi.fn(),
+}));
+
+vi.mock("@/lib/api", async (importActual) => ({
+  ...(await importActual<typeof import("@/lib/api")>()),
+  listNotifications: vi.fn(),
+  markNotificationAsRead: vi.fn(),
 }));
 
 const route = vi.hoisted(() => ({ actual: "/" }));
@@ -37,13 +44,21 @@ const authenticatedResponse = {
   },
 };
 
+const adminAuthenticatedResponse = {
+  ...authenticatedResponse,
+  user: {
+    ...authenticatedResponse.user,
+    role: { key: "admin", name: "Administrador" },
+  },
+};
+
 /** No refresh cookie, or an expired/revoked one: the normal anonymous case. */
 function mockAnonymousStartup() {
   vi.mocked(refreshSession).mockRejectedValueOnce(new Error("no session"));
 }
 
-function mockAuthenticatedStartup() {
-  vi.mocked(refreshSession).mockResolvedValueOnce(authenticatedResponse);
+function mockAuthenticatedStartup(response = authenticatedResponse) {
+  vi.mocked(refreshSession).mockResolvedValueOnce(response);
 }
 
 function renderNavbar() {
@@ -59,6 +74,13 @@ describe("Navbar", () => {
     route.actual = "/";
     replace.mockClear();
     push.mockClear();
+    vi.mocked(listNotifications).mockReset();
+    vi.mocked(listNotifications).mockResolvedValue({
+      data: [],
+      pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+      unreadCount: 0,
+    });
+    vi.mocked(markNotificationAsRead).mockReset();
 
     // The Explorar transition mounts its own `MoodBackground` — jsdom has
     // neither of these APIs, and it degrades gracefully without them (no
@@ -84,7 +106,7 @@ describe("Navbar", () => {
     vi.useRealTimers();
   });
 
-  it("offers the four main navigation destinations", async () => {
+  it("offers the five main navigation destinations, and no create CTA", async () => {
     mockAnonymousStartup();
     renderNavbar();
 
@@ -99,11 +121,17 @@ describe("Navbar", () => {
       within(nav).getByRole("link", { name: "Explorar" }),
     ).toHaveAttribute("href", "/explore");
     expect(
+      within(nav).getByRole("link", { name: "Mis planes" }),
+    ).toHaveAttribute("href", "/plans");
+    expect(
+      within(nav).getByRole("link", { name: "Mis salidas" }),
+    ).toHaveAttribute("href", "/outings");
+    expect(
       within(nav).getByRole("link", { name: "Favoritos" }),
     ).toHaveAttribute("href", "/favorites");
-    expect(
-      within(nav).getByRole("link", { name: "Historial" }),
-    ).toHaveAttribute("href", "/history");
+    expect(screen.queryByRole("link", { name: "Historial" })).toBeNull();
+    // Creating lives inside Mis planes; the bar keeps no duplicate of it.
+    expect(screen.queryByRole("link", { name: /crear/i })).toBeNull();
   });
 
   it("marks the current route's destination with aria-current", async () => {
@@ -165,6 +193,43 @@ describe("Navbar", () => {
     expect(
       screen.getByRole("button", { name: "Cerrar sesión" }),
     ).toBeInTheDocument();
+  });
+
+  it("shows the authenticated user's initials in the account trigger", async () => {
+    mockAuthenticatedStartup();
+    renderNavbar();
+
+    const trigger = await screen.findByRole("button", { name: /mi cuenta/i });
+    const initials = within(trigger).getByText("AP");
+
+    expect(initials).toHaveAttribute("aria-hidden", "true");
+    expect(trigger).toHaveAttribute("aria-label", "Mi cuenta");
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(trigger).toHaveAttribute("aria-controls");
+  });
+
+  it("offers the administration panel only to administrators", async () => {
+    mockAuthenticatedStartup(adminAuthenticatedResponse);
+    const user = userEvent.setup();
+    renderNavbar();
+
+    await user.click(await screen.findByRole("button", { name: /mi cuenta/i }));
+
+    expect(
+      screen.getByRole("link", { name: "Panel de control" }),
+    ).toHaveAttribute("href", "/admin");
+  });
+
+  it("does not offer the administration panel to regular users", async () => {
+    mockAuthenticatedStartup();
+    const user = userEvent.setup();
+    renderNavbar();
+
+    await user.click(await screen.findByRole("button", { name: /mi cuenta/i }));
+
+    expect(
+      screen.queryByRole("link", { name: "Panel de control" }),
+    ).not.toBeInTheDocument();
   });
 
   it("closes the user menu with Escape", async () => {
@@ -324,23 +389,119 @@ describe("Navbar", () => {
     expect(screen.queryByText("Armando tu plan perfecto...")).not.toBeInTheDocument();
   });
 
-  it("expands the collapsible navigation on small viewports", async () => {
+  it("lists the bottom bar's destinations with the same names as desktop", async () => {
     mockAnonymousStartup();
-    const user = userEvent.setup();
     renderNavbar();
 
-    const button = await screen.findByRole("button", {
-      name: "Abrir la navegación",
+    const mobileNav = await screen.findByRole("navigation", {
+      name: "Navegación móvil",
     });
-    await user.click(button);
+    const links = within(mobileNav).getAllByRole("link");
 
-    const collapsible = screen.getByRole("navigation", {
-      name: "Navegación principal plegable",
+    expect(links.map((link) => link.textContent)).toEqual([
+      "Explorar",
+      "Mis planes",
+      "Planificar",
+      "Mis salidas",
+      "Favoritos",
+    ]);
+    // The centre tab is the main feature: Inicio's composer, not the editor.
+    expect(
+      within(mobileNav).getByRole("link", { name: "Planificar" }),
+    ).toHaveAttribute("href", "/?startComposer=1");
+  });
+
+  it("marks the current route's tab in the mobile navigation", async () => {
+    route.actual = "/favorites";
+    mockAnonymousStartup();
+    renderNavbar();
+
+    const mobileNav = await screen.findByRole("navigation", {
+      name: "Navegación móvil",
     });
 
     expect(
-      within(collapsible).getByRole("link", { name: "Historial" }),
-    ).toBeInTheDocument();
-    expect(button).toHaveAccessibleName("Cerrar la navegación");
+      within(mobileNav).getByRole("link", { name: "Favoritos" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      within(mobileNav).getByRole("link", { name: "Mis salidas" }),
+    ).not.toHaveAttribute("aria-current");
+    expect(
+      within(mobileNav).queryByRole("link", { name: "Inicio" }),
+    ).toBeNull();
+  });
+
+  it("asks Inicio to focus the composer when Planificar is pressed there", async () => {
+    mockAnonymousStartup();
+    const user = userEvent.setup();
+    const onStart = vi.fn();
+    window.addEventListener("smartplan:start-composer", onStart);
+    renderNavbar();
+
+    const mobileNav = await screen.findByRole("navigation", {
+      name: "Navegación móvil",
+    });
+    await user.click(within(mobileNav).getByRole("link", { name: "Planificar" }));
+
+    expect(onStart).toHaveBeenCalledOnce();
+    window.removeEventListener("smartplan:start-composer", onStart);
+  });
+
+  it("keeps Mis salidas current inside an outing's own screen", async () => {
+    route.actual = "/outings/40";
+    mockAnonymousStartup();
+    renderNavbar();
+
+    const nav = await screen.findByRole("navigation", {
+      name: "Navegación principal",
+    });
+
+    expect(
+      within(nav).getByRole("link", { name: "Mis salidas" }),
+    ).toHaveAttribute("aria-current", "page");
+
+    const mobileNav = await screen.findByRole("navigation", {
+      name: "Navegación móvil",
+    });
+    expect(
+      within(mobileNav).getByRole("link", { name: "Mis salidas" }),
+    ).toHaveAttribute("aria-current", "page");
+  });
+
+  it("keeps Mis planes current inside a plan's own screens", async () => {
+    route.actual = "/plans/42/edit";
+    mockAnonymousStartup();
+    renderNavbar();
+
+    const mobileNav = await screen.findByRole("navigation", {
+      name: "Navegación móvil",
+    });
+
+    expect(
+      within(mobileNav).getByRole("link", { name: "Mis planes" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      within(mobileNav).getByRole("link", { name: "Planificar" }),
+    ).not.toHaveAttribute("aria-current");
+  });
+
+  it("shows the Explorar transition from the mobile navigation too", async () => {
+    mockAnonymousStartup();
+    renderNavbar();
+
+    const mobileNav = await screen.findByRole("navigation", {
+      name: "Navegación móvil",
+    });
+
+    vi.useFakeTimers();
+    fireEvent.click(within(mobileNav).getByRole("link", { name: "Explorar" }));
+
+    expect(screen.getByText("Armando tu plan perfecto...")).toBeInTheDocument();
+    expect(push).toHaveBeenCalledWith("/explore");
+
+    await act(async () => {
+      vi.advanceTimersByTime(900);
+    });
+    expect(screen.queryByText("Armando tu plan perfecto...")).not.toBeInTheDocument();
   });
 });

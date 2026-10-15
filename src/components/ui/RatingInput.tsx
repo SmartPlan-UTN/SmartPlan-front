@@ -16,6 +16,8 @@ export interface RatingInputProps {
   /** id of the visible group label, wired as `aria-labelledby`. */
   labelledBy?: string;
   disabled?: boolean;
+  /** Announced as required; `false` where picking a score is optional. */
+  required?: boolean;
   /** Fires as the pointer/keyboard previews a value (for live copy). */
   onPreview?: (value: number) => void;
 }
@@ -44,6 +46,7 @@ export function RatingInput({
   size = 40,
   labelledBy,
   disabled = false,
+  required = true,
   onPreview,
 }: RatingInputProps) {
   const [hovered, setHovered] = useState(0);
@@ -99,7 +102,7 @@ export function RatingInput({
       className={styles.ratingInput}
       role="radiogroup"
       aria-labelledby={labelledBy}
-      aria-required="true"
+      aria-required={required}
       onKeyDown={onKeyDown}
       onMouseLeave={clearPreview}
     >

@@ -14,10 +14,12 @@ import { apiClient } from './client';
  * `SmartPlan-back`.
  */
 export async function searchActivities(
-  params: ActivitySearchParams
+  params: ActivitySearchParams,
+  options: { signal?: AbortSignal } = {}
 ): Promise<PaginatedResult<ActivitySearchResult>> {
   return apiClient.get<PaginatedResult<ActivitySearchResult>>('/activities', {
     params,
+    signal: options.signal,
   });
 }
 
@@ -34,9 +36,26 @@ export async function getActivity(id: number): Promise<ActivityDetailResult> {
  * Backend contract: `GET /activities/map`.
  */
 export async function getActivityMapMarkers(
-  params: MapActivitiesParams
+  params: MapActivitiesParams,
+  options: { signal?: AbortSignal } = {}
 ): Promise<PaginatedResult<ActivityMapMarker>> {
+  // The API accepts at most 6 decimal places (~0.1 m); a Maps viewport reports
+  // 14+, which the contract rejects as a validation error.
+  const round6 = (value: number) => Math.round(value * 1e6) / 1e6;
   return apiClient.get<PaginatedResult<ActivityMapMarker>>('/activities/map', {
-    params,
+    params: {
+      ...params,
+      north: round6(params.north),
+      south: round6(params.south),
+      east: round6(params.east),
+      west: round6(params.west),
+      ...(params.latitude !== undefined
+        ? { latitude: round6(params.latitude) }
+        : {}),
+      ...(params.longitude !== undefined
+        ? { longitude: round6(params.longitude) }
+        : {}),
+    },
+    signal: options.signal,
   });
 }

@@ -7,6 +7,13 @@ const nextConfig: NextConfig = {
     // for browsers without AVIF.
     formats: ["image/avif", "image/webp"],
   },
+  async redirects() {
+    return [
+      // Historial became "Mis salidas" (#130). Answered before rendering so
+      // saved links and bookmarks land on the new screen right away.
+      { source: "/history", destination: "/outings", permanent: false },
+    ];
+  },
 };
 
 export default nextConfig;
