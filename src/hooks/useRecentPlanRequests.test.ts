@@ -38,7 +38,7 @@ function page(data: PlanRequestSummary[]) {
 describe("useRecentPlanRequests", () => {
   beforeEach(() => {
     listPlanRequests.mockReset();
-    useSession.mockReturnValue({ authenticated: true });
+    useSession.mockReturnValue({ authenticated: true, user: { id: 7 } });
   });
 
   afterEach(() => {
@@ -46,7 +46,7 @@ describe("useRecentPlanRequests", () => {
   });
 
   it("stays idle and never calls the API without a session", () => {
-    useSession.mockReturnValue({ authenticated: false });
+    useSession.mockReturnValue({ authenticated: false, user: null });
 
     const { result } = renderHook(() => useRecentPlanRequests());
 
@@ -65,12 +65,32 @@ describe("useRecentPlanRequests", () => {
     expect(result.current.requests.map(({ id }) => id)).toEqual([2, 1]);
   });
 
-  it("drops generated searches without plans and reports empty", async () => {
-    listPlanRequests.mockResolvedValue(page([summary(1, { planCount: 0 })]));
+  it("reports empty when there is nothing to reopen", async () => {
+    listPlanRequests.mockResolvedValue(page([]));
 
     const { result } = renderHook(() => useRecentPlanRequests());
 
     await waitFor(() => expect(result.current.status).toBe("empty"));
+  });
+
+  it("never shows the previous user's searches after switching accounts", async () => {
+    listPlanRequests.mockResolvedValueOnce(page([summary(1)]));
+    let resolveNext!: (value: ReturnType<typeof page>) => void;
+    listPlanRequests.mockReturnValueOnce(new Promise((resolve) => (resolveNext = resolve)));
+
+    const { result, rerender } = renderHook(() => useRecentPlanRequests());
+    await waitFor(() => expect(result.current.status).toBe("ready"));
+
+    useSession.mockReturnValue({ authenticated: false, user: null });
+    rerender();
+    expect(result.current).toMatchObject({ status: "idle", requests: [] });
+
+    useSession.mockReturnValue({ authenticated: true, user: { id: 8 } });
+    rerender();
+    expect(result.current).toMatchObject({ status: "loading", requests: [] });
+
+    await act(async () => resolveNext(page([summary(2)])));
+    expect(result.current.requests.map(({ id }) => id)).toEqual([2]);
   });
 
   it("reports an error and retries", async () => {

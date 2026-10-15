@@ -38,7 +38,11 @@ export function RecentSearches() {
         <ul className={styles.list}>
           {requests.map((request) => (
             <li key={request.id}>
-              <Link href={planRequestRoute(request.id)} className={styles.item}>
+              <Link
+                href={planRequestRoute(request.id)}
+                className={styles.item}
+                title={request.planTitles.join(" · ") || undefined}
+              >
                 <Icon name="arrow-right" size={13} aria-hidden="true" className={styles.icon} />
                 <span className={styles.query}>{searchLabel(request)}</span>
                 <span className={styles.meta}>
@@ -63,7 +67,7 @@ function resultLabel(request: PlanRequestSummary): string {
   return request.planCount === 1 ? "1 plan" : `${request.planCount} planes`;
 }
 
-/** "hoy", "ayer" or dd/mm, in the visitor's local time. */
+/** "hoy", "ayer", dd/mm, or dd/mm/aa before this year, in the visitor's local time. */
 export function relativeDay(isoDate: string, now = new Date()): string {
   const date = new Date(isoDate);
   const startOfDay = (value: Date) =>
@@ -71,5 +75,7 @@ export function relativeDay(isoDate: string, now = new Date()): string {
   const days = Math.round((startOfDay(now) - startOfDay(date)) / 86_400_000);
   if (days === 0) return "hoy";
   if (days === 1) return "ayer";
-  return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}`;
+  const dayMonth = `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}`;
+  if (date.getFullYear() === now.getFullYear()) return dayMonth;
+  return `${dayMonth}/${String(date.getFullYear() % 100).padStart(2, "0")}`;
 }

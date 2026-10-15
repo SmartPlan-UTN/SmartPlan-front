@@ -19,29 +19,37 @@ const RECENT_LIMIT = 5;
 const IN_FLIGHT_REFRESH_MS = 5_000;
 
 /**
- * The signed-in user's latest searches (#189). Generated results without
- * plans are dropped: there is nothing to reopen. Without a session it stays
- * `idle` and never calls the API.
+ * The signed-in user's latest searches (#189). The API only lists searches
+ * with something to reopen. Without a session it stays `idle`, never calls
+ * the API and forgets the previous user's list.
  */
 export function useRecentPlanRequests(): UseRecentPlanRequestsResult {
-  const { authenticated } = useSession();
+  const { authenticated, user } = useSession();
+  const userId = authenticated ? (user?.id ?? null) : null;
   const [status, setStatus] = useState<RecentPlanRequestsStatus>("loading");
   const [requests, setRequests] = useState<PlanRequestSummary[]>([]);
   const [attempt, setAttempt] = useState(0);
   const [refresh, setRefresh] = useState(0);
 
+  // Another user (or none): never show the previous one's searches, not even
+  // while the new list loads.
+  const [listedFor, setListedFor] = useState(userId);
+  if (listedFor !== userId) {
+    setListedFor(userId);
+    setStatus("loading");
+    setRequests([]);
+    setRefresh(0);
+  }
+
   useEffect(() => {
-    if (!authenticated) return;
+    if (userId === null) return;
     let active = true;
 
     listPlanRequests({ limit: RECENT_LIMIT })
       .then(({ data }) => {
         if (!active) return;
-        const reopenable = data.filter(
-          (request) => request.statusKey !== "generated" || request.planCount > 0,
-        );
-        setRequests(reopenable);
-        setStatus(reopenable.length > 0 ? "ready" : "empty");
+        setRequests(data);
+        setStatus(data.length > 0 ? "ready" : "empty");
       })
       .catch(() => {
         if (!active) return;
@@ -52,7 +60,7 @@ export function useRecentPlanRequests(): UseRecentPlanRequestsResult {
     return () => {
       active = false;
     };
-  }, [authenticated, attempt, refresh]);
+  }, [userId, attempt, refresh]);
 
   const inFlight = requests.some((request) => request.statusKey !== "generated");
   useEffect(() => {
@@ -67,5 +75,5 @@ export function useRecentPlanRequests(): UseRecentPlanRequestsResult {
     setAttempt((value) => value + 1);
   }, []);
 
-  return { status: authenticated ? status : "idle", requests, retry };
+  return { status: userId === null ? "idle" : status, requests, retry };
 }

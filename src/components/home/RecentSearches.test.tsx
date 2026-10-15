@@ -47,7 +47,7 @@ describe("RecentSearches", () => {
     useRecentPlanRequests.mockReturnValue({
       status: "ready",
       requests: [
-        summary(42),
+        summary(42, { planTitles: ["Cena con vista", "Paseo y vino"] }),
         summary(41, { mode: "surprise", query: null, planCount: 1 }),
         summary(40, { statusKey: "processing", planCount: 0 }),
       ],
@@ -64,6 +64,8 @@ describe("RecentSearches", () => {
     ]);
     expect(links[0]).toHaveTextContent("«plan romántico con mi novia»");
     expect(links[0]).toHaveTextContent("hoy · 4 planes");
+    expect(links[0]).toHaveAttribute("title", "Cena con vista · Paseo y vino");
+    expect(links[1]).not.toHaveAttribute("title");
     expect(links[1]).toHaveTextContent("Sorpréndeme");
     expect(links[1]).toHaveTextContent("1 plan");
     expect(links[2]).toHaveTextContent("Generando…");
@@ -86,6 +88,7 @@ describe("relativeDay", () => {
     [new Date(2026, 9, 15, 0, 5), "hoy"],
     [new Date(2026, 9, 14, 23, 50), "ayer"],
     [new Date(2026, 9, 2, 12, 0), "02/10"],
+    [new Date(2025, 11, 31, 12, 0), "31/12/25"],
   ])("formats %s as %s", (date, expected) => {
     expect(relativeDay(date.toISOString(), now)).toBe(expected);
   });
