@@ -276,7 +276,12 @@
   cursor: pointer;
 }
 
-.userCell:hover {
+.clickableRow {
+  cursor: pointer;
+}
+
+.userCell:hover,
+.clickableRow:hover .userCell {
   color: var(--ember);
 }
 

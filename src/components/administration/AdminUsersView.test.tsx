@@ -157,6 +157,19 @@ describe("AdminUsersView", () => {
     expect(within(dialog).getByText("#7")).toBeInTheDocument();
   });
 
+  it("opens the user view from anywhere in the row, but not from its actions menu", async () => {
+    const user = userEvent.setup();
+    render(<AdminUsersView />);
+    await screen.findByText("Martina García");
+
+    await user.click(screen.getByRole("button", { name: "Acciones para Martina García" }));
+    expect(screen.queryByRole("dialog", { name: "Martina García" })).not.toBeInTheDocument();
+    await user.keyboard("{Escape}");
+
+    await user.click(screen.getByText("martina@example.com", { exact: false }));
+    expect(screen.getByRole("dialog", { name: "Martina García" })).toBeInTheDocument();
+  });
+
   it("edits all mutable user fields from the read view actions", async () => {
     const user = userEvent.setup();
     render(<AdminUsersView />);

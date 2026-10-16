@@ -430,16 +430,22 @@ export function AdminUsersView() {
                 </thead>
                 <tbody>
                   {users.map((user) => (
-                    <tr key={user.id}>
+                    // The whole row opens the user's detail; the name button is
+                    // the same action for keyboard and screen-reader users, and
+                    // its click simply bubbles up to the row.
+                    <tr
+                      key={user.id}
+                      className={styles.clickableRow}
+                      onClick={() => {
+                        setEditingFromMenu(false);
+                        setViewingUser(user);
+                      }}
+                    >
                       <td className={styles.userCellContainer}>
                         <button
                           type="button"
                           className={styles.userCell}
                           aria-label={`Ver detalle de ${user.name} ${user.lastName}`}
-                          onClick={() => {
-                            setEditingFromMenu(false);
-                            setViewingUser(user);
-                          }}
                         >
                           <UserAvatar name={user.name} lastName={user.lastName} userId={user.id} />
                           <span>{user.name} {user.lastName}</span>
@@ -449,7 +455,12 @@ export function AdminUsersView() {
                       <td><span className={styles.roleBadge}>{user.role.name}</span></td>
                       <td className={styles.secondaryCell}>{dateFormatter.format(new Date(user.createdAt))}</td>
                       <td><UserStatusBadge status={user.status.key} /></td>
-                      <td className={styles.actionsColumn}>
+                      {/* Menu clicks (portaled, but still bubbling through React)
+                          must not also open the row's detail. */}
+                      <td
+                        className={styles.actionsColumn}
+                        onClick={(event) => event.stopPropagation()}
+                      >
                         <span className={styles.actionsCell}>
                           <UserActionsMenu
                             user={user}
