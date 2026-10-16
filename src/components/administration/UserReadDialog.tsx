@@ -42,6 +42,8 @@ export interface UserReadDialogProps {
   onClose: () => void;
   onSave: (id: number, input: UpdateAdminUserInput) => Promise<AdminUser>;
   onDelete: (id: number) => Promise<void>;
+  /** Opens straight into the edit form, as "Editar usuario" in the row menu does. */
+  startEditing?: boolean;
 }
 
 export function UserReadDialog({
@@ -49,10 +51,11 @@ export function UserReadDialog({
   onClose,
   onSave,
   onDelete,
+  startEditing = false,
 }: UserReadDialogProps) {
   const dialogRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(startEditing);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);

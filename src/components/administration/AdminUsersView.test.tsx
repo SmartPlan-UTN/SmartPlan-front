@@ -184,6 +184,30 @@ describe("AdminUsersView", () => {
     expect(screen.getByRole("dialog", { name: "Marina García" })).toBeInTheDocument();
   });
 
+  it("opens the edit form straight from the row actions menu", async () => {
+    const user = userEvent.setup();
+    render(<AdminUsersView />);
+    await screen.findByText("Martina García");
+
+    await user.click(screen.getByRole("button", { name: "Acciones para Martina García" }));
+    await user.click(screen.getByRole("menuitem", { name: "Editar usuario" }));
+
+    const dialog = screen.getByRole("dialog", { name: "Martina García" });
+    expect(within(dialog).getByText("Editar usuario")).toBeInTheDocument();
+    expect(within(dialog).getByLabelText("Nombre")).toHaveValue("Martina");
+
+    await user.clear(within(dialog).getByLabelText("Apellido"));
+    await user.type(within(dialog).getByLabelText("Apellido"), "Gómez");
+    await user.click(within(dialog).getByRole("button", { name: "Guardar cambios" }));
+
+    await waitFor(() => {
+      expect(updateAdminUser).toHaveBeenCalledWith(7, expect.objectContaining({
+        name: "Martina",
+        lastName: "Gómez",
+      }));
+    });
+  });
+
   it("deletes a user after confirming and removes it from the table", async () => {
     const user = userEvent.setup();
     render(<AdminUsersView />);

@@ -135,6 +135,19 @@ function KpiCard({
   );
 }
 
+/** Lets a long email wrap after its `@` before breaking inside a word. */
+function emailWithBreak(email: string) {
+  const at = email.indexOf("@");
+  if (at < 0) return email;
+  return (
+    <>
+      {email.slice(0, at + 1)}
+      <wbr />
+      {email.slice(at + 1)}
+    </>
+  );
+}
+
 export function AdminUsersView() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search.trim(), 400);
@@ -152,6 +165,7 @@ export function AdminUsersView() {
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [viewingUser, setViewingUser] = useState<AdminUser | null>(null);
+  const [editingFromMenu, setEditingFromMenu] = useState(false);
 
   useEffect(() => {
     let ignore = false;
@@ -422,19 +436,29 @@ export function AdminUsersView() {
                           type="button"
                           className={styles.userCell}
                           aria-label={`Ver detalle de ${user.name} ${user.lastName}`}
-                          onClick={() => setViewingUser(user)}
+                          onClick={() => {
+                            setEditingFromMenu(false);
+                            setViewingUser(user);
+                          }}
                         >
                           <UserAvatar name={user.name} lastName={user.lastName} userId={user.id} />
                           <span>{user.name} {user.lastName}</span>
                         </button>
                       </td>
-                      <td className={styles.secondaryCell}>{user.email}</td>
+                      <td className={`${styles.secondaryCell} ${styles.emailCell}`}>{emailWithBreak(user.email)}</td>
                       <td><span className={styles.roleBadge}>{user.role.name}</span></td>
                       <td className={styles.secondaryCell}>{dateFormatter.format(new Date(user.createdAt))}</td>
                       <td><UserStatusBadge status={user.status.key} /></td>
                       <td className={styles.actionsColumn}>
                         <span className={styles.actionsCell}>
-                          <UserActionsMenu user={user} onSelect={requestStatusChange} />
+                          <UserActionsMenu
+                            user={user}
+                            onSelect={requestStatusChange}
+                            onEdit={(selected) => {
+                              setEditingFromMenu(true);
+                              setViewingUser(selected);
+                            }}
+                          />
                         </span>
                       </td>
                     </tr>
@@ -462,7 +486,9 @@ export function AdminUsersView() {
 
       {viewingUser ? (
         <UserReadDialog
+          key={`${viewingUser.id}-${editingFromMenu ? "edit" : "view"}`}
           user={viewingUser}
+          startEditing={editingFromMenu}
           onClose={() => setViewingUser(null)}
           onSave={saveUser}
           onDelete={deleteUser}
