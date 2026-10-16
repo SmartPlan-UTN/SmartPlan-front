@@ -155,6 +155,34 @@
   background: var(--ember-04);
 }
 
+/* The actions column stays pinned to the right edge while the rest of the
+   table scrolls under it, as in the users table: otherwise, on any window
+   narrower than the table, the row's buttons sit past the visible edge and
+   the only way to reach them is a scrollbar at the bottom of the list.
+   Opaque backgrounds so the scrolled cells don't show through. */
+.actionsHeading,
+.actionsColumn {
+  position: sticky;
+  right: 0;
+  width: 1%;
+  white-space: nowrap;
+  background: var(--surface-card);
+  box-shadow: -10px 0 14px -14px color-mix(in srgb, var(--char) 35%, transparent);
+}
+
+.actionsHeading {
+  z-index: 2;
+  text-align: right !important;
+}
+
+.actionsColumn {
+  z-index: 1;
+}
+
+.table tbody tr:hover .actionsColumn {
+  background: color-mix(in srgb, var(--ember) 4%, var(--surface-card));
+}
+
 .table tbody tr:last-child td {
   border-bottom: 0;
 }
