@@ -311,7 +311,7 @@ export function AdminDashboard() {
           </p>
           <h1 id="admin-dashboard-title" className={`sp-h2 ${styles.title}`}>
             {greeting(new Date())}
-            {user ? `, ${user.name}` : ""} 👋
+            {user ? `, ${user.name}` : ""}
           </h1>
           <p className={`sp-body ${styles.subtitle}`}>
             Resumen general de SmartPlan al día de hoy.
