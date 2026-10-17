@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -48,6 +48,18 @@ describe("AdminPlacesView", () => {
     );
     expect(screen.getByText("Mostrando 1–1 de 21 lugares")).toBeInTheDocument();
     expect(listPlaces).toHaveBeenCalledWith({ search: undefined, page: 1, limit: 20 });
+  });
+
+  it("opens a read-only view from the place row and manages images from it", async () => {
+    const user = userEvent.setup();
+    render(<AdminPlacesView />);
+    await user.click(await screen.findByText("Mercado Norte"));
+
+    const dialog = screen.getByRole("dialog", { name: "Mercado Norte" });
+    expect(within(dialog).getByText("Argentina")).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("button", { name: "Gestionar imágenes" }));
+    expect(screen.getByRole("dialog", { name: "Imágenes del lugar" })).toBeInTheDocument();
   });
 
   it("searches with a debounce and resets to the first page", async () => {

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -87,6 +87,19 @@ describe("AdminActivitiesView", () => {
     );
     expect(screen.getByText("Mostrando 1–1 de 41 actividades")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Página siguiente" })).toBeEnabled();
+  });
+
+  it("opens a read-only view from the activity row and edits from it", async () => {
+    const user = userEvent.setup();
+    render(<AdminActivitiesView />);
+    await user.click(await screen.findByText("Paseo cultural"));
+
+    const dialog = screen.getByRole("dialog", { name: "Paseo cultural" });
+    expect(within(dialog).getByText("Cultura & Arte")).toBeInTheDocument();
+    expect(within(dialog).getByRole("link", { name: /Parque Central/ })).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("button", { name: "Editar" }));
+    expect(screen.queryByRole("dialog", { name: "Paseo cultural" })).not.toBeInTheDocument();
   });
 
   it("creates an activity without a physical location", async () => {

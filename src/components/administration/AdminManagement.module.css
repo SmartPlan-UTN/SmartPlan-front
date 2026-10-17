@@ -496,3 +496,85 @@
     padding: var(--s-5);
   }
 }
+
+/* ── Read-only record view (AdminReadDialog) ───────────────────── */
+
+.clickableRow {
+  cursor: pointer;
+}
+
+.clickableRow:hover .entityName {
+  color: var(--ember);
+}
+
+.readIdentity {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.readIcon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--ember-10);
+  color: var(--ember);
+}
+
+.readEyebrow {
+  margin: 0 0 2px !important;
+  color: var(--fg-3) !important;
+  font-size: var(--t-label);
+  font-weight: var(--w-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.readGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-4) var(--s-5);
+  margin: 0;
+  padding: var(--s-4) 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.readGrid dt {
+  margin-bottom: var(--s-1);
+  color: var(--fg-3);
+  font-size: var(--t-label);
+  font-weight: var(--w-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.readGrid dd {
+  margin: 0;
+  color: var(--fg-1);
+  font-size: 14.5px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.readWide {
+  grid-column: 1 / -1;
+}
+
+.readActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--s-2);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--hairline);
+}
+
+@media (max-width: 560px) {
+  .readGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

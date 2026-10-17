@@ -10,6 +10,7 @@ import { googleMapsUrl } from "@/lib/utils";
 import type { PaginatedResult, PlaceOption } from "@/types";
 
 import { AdminPlaceImagesDialog } from "./AdminPlaceImagesDialog";
+import { AdminReadDialog } from "./AdminReadDialog";
 import styles from "./AdminManagement.module.css";
 
 const PAGE_SIZE = 20;
@@ -31,6 +32,7 @@ export function AdminPlacesView() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadSequence, setReloadSequence] = useState(0);
   const [managing, setManaging] = useState<PlaceOption | null>(null);
+  const [viewing, setViewing] = useState<PlaceOption | null>(null);
   // Loading is derived: the request is pending until its own response settles.
   const requestKey = `${debouncedSearch}|${page}|${reloadSequence}`;
   const [settledKey, setSettledKey] = useState<string | null>(null);
@@ -91,11 +93,11 @@ export function AdminPlacesView() {
               <table className={styles.table}>
                 <thead><tr><th>Lugar</th><th>Ubicación</th><th>Dirección</th><th className={styles.actionsHeading}>Acciones</th></tr></thead>
                 <tbody>{places.map((place) => (
-                  <tr key={place.id}>
+                  <tr key={place.id} className={styles.clickableRow} onClick={() => setViewing(place)}>
                     <td><span className={styles.entityName}>{place.name}</span><span className={styles.secondary}>{place.description || "Sin descripción"}</span></td>
                     <td><span className={styles.entityName}>{place.department.name}</span><span className={styles.secondary}>{place.department.city.name}</span></td>
-                    <td><a className={styles.placeLink} href={googleMapsUrl(null, null, place.address)} target="_blank" rel="noreferrer"><Icon name="map-pin" size={13} />{place.address}</a></td>
-                    <td className={styles.actionsColumn}><span className={styles.actions}><button className={styles.iconButton} type="button" aria-label={`Gestionar imágenes de ${place.name}`} onClick={() => setManaging(place)}><Icon name="image-plus" size={16} /></button></span></td>
+                    <td><a className={styles.placeLink} href={googleMapsUrl(null, null, place.address)} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}><Icon name="map-pin" size={13} />{place.address}</a></td>
+                    <td className={styles.actionsColumn} onClick={(event) => event.stopPropagation()}><span className={styles.actions}><button className={styles.iconButton} type="button" aria-label={`Gestionar imágenes de ${place.name}`} onClick={() => setManaging(place)}><Icon name="image-plus" size={16} /></button></span></td>
                   </tr>
                 ))}</tbody>
               </table>
@@ -106,6 +108,28 @@ export function AdminPlacesView() {
 
       {result && result.pagination.total > 0 ? <div className={styles.paginationArea}><p>Mostrando {firstVisible}–{lastVisible} de {result.pagination.total} lugares</p><Pagination page={result.pagination.page} totalPages={result.pagination.totalPages} disabled={loading} onPageChange={setPage} /></div> : null}
 
+      {viewing ? (
+        <AdminReadDialog
+          icon="map-pin"
+          eyebrow="Lugar"
+          title={viewing.name}
+          subtitle={`${viewing.department.name}, ${viewing.department.city.name}`}
+          onClose={() => setViewing(null)}
+          fields={[
+            { label: "Descripción", value: viewing.description || "Sin descripción", wide: true },
+            {
+              label: "Dirección",
+              wide: true,
+              value: <a className={styles.placeLink} href={googleMapsUrl(null, null, viewing.address)} target="_blank" rel="noreferrer"><Icon name="map-pin" size={13} />{viewing.address}</a>,
+            },
+            { label: "Departamento", value: viewing.department.name },
+            { label: "Ciudad", value: viewing.department.city.name },
+            { label: "País", value: viewing.department.city.country.name },
+            { label: "Identificador", value: `#${viewing.id}` },
+          ]}
+          actions={<Button onClick={() => { setManaging(viewing); setViewing(null); }}><Icon name="image-plus" size={15} /> Gestionar imágenes</Button>}
+        />
+      ) : null}
       {managing ? <AdminPlaceImagesDialog place={managing} onClose={() => setManaging(null)} /> : null}
     </section>
   );

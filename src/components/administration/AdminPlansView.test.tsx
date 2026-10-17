@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -48,6 +48,21 @@ describe("AdminPlansView", () => {
     expect(screen.getByText("Ana Pérez")).toBeInTheDocument();
     expect(screen.getByText("Confirmado")).toBeInTheDocument();
     expect(screen.getByText("Mostrando 1–1 de 25 planes")).toBeInTheDocument();
+  });
+
+  it("opens a read-only view from the plan row, not from its actions", async () => {
+    const user = userEvent.setup();
+    render(<AdminPlansView />);
+    await screen.findByText("Sábado en Mendoza");
+
+    await user.click(screen.getByRole("button", { name: "Editar Sábado en Mendoza" }));
+    expect(screen.queryByRole("dialog", { name: "Sábado en Mendoza" })).not.toBeInTheDocument();
+    await user.keyboard("{Escape}");
+
+    await user.click(screen.getByText("ana@example.com"));
+    const dialog = screen.getByRole("dialog", { name: "Sábado en Mendoza" });
+    expect(within(dialog).getByText("Confirmado")).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Eliminar" })).toBeInTheDocument();
   });
 
   it("requests the selected status filter", async () => {
