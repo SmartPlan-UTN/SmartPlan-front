@@ -29,25 +29,25 @@ vi.mock("./client", () => ({
   },
 }));
 
-describe("dashboard CSV download (CU58)", () => {
+describe("dashboard PDF download (CU58)", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it.each(["today", "7d", "30d", "month"] as const)(
     "requests an authenticated blob for %s and keeps the server filename",
     async (range) => {
-      const blob = new Blob(['\uFEFF"Métrica";"Valor"']);
+      const blob = new Blob(["%PDF-1.3"], { type: "application/pdf" });
       vi.mocked(apiClient.request).mockResolvedValue({
         data: blob,
-        headers: { "content-disposition": 'attachment; filename="report.csv"' },
+        headers: { "content-disposition": 'attachment; filename="report.pdf"' },
       } as AxiosResponse<Blob>);
       await expect(downloadDashboardMetrics(range)).resolves.toEqual({
         blob,
-        filename: "report.csv",
+        filename: "report.pdf",
       });
       expect(apiClient.request).toHaveBeenCalledWith({
         method: "GET",
         url: "/admin/metrics/export",
-        params: { range, format: "csv" },
+        params: { range, format: "pdf" },
         responseType: "blob",
       });
     },
@@ -84,7 +84,7 @@ describe("dashboard CSV download (CU58)", () => {
         headers: { "content-disposition": header },
       } as AxiosResponse<Blob>);
       expect((await downloadDashboardMetrics("7d")).filename).toBe(
-        `smartplan-metricas-7d-${new Date().toISOString().slice(0, 10)}.csv`,
+        `smartplan-metricas-7d-${new Date().toISOString().slice(0, 10)}.pdf`,
       );
     },
   );

@@ -66,17 +66,17 @@ function reportFilename(disposition: unknown, fallback: string): string {
   return safe && safe !== "." && safe !== ".." ? safe : fallback;
 }
 
-/** Requests a session-authenticated CSV report, preserving its server filename (CU58). */
+/** Requests the session-authenticated PDF report, preserving its server filename (CU58). */
 export async function downloadDashboardMetrics(
   range: DashboardRange,
 ): Promise<{ blob: Blob; filename: string }> {
   const response = await apiClient.request<Blob>({
     method: "GET",
     url: "/admin/metrics/export",
-    params: { range, format: "csv" },
+    params: { range, format: "pdf" },
     responseType: "blob",
   });
-  const fallback = `smartplan-metricas-${range}-${new Date().toISOString().slice(0, 10)}.csv`;
+  const fallback = `smartplan-metricas-${range}-${new Date().toISOString().slice(0, 10)}.pdf`;
   return {
     blob: response.data,
     filename: reportFilename(response.headers["content-disposition"], fallback),
