@@ -70,7 +70,9 @@ export { getProfile, updateProfile, changePassword, deleteAccount } from './user
 export type { UpdateProfileData, ChangePasswordData, DeleteAccountData } from './users';
 export {
   changeAdminUserStatus,
+  createAdminUser,
   deleteAdminUser,
+  downloadAdminUsersReport,
   getAdminUserMetrics,
   getDashboardMetrics,
   downloadDashboardMetrics,

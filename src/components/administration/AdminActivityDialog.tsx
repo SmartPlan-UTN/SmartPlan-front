@@ -12,6 +12,7 @@ import type {
   TimeOfDay,
 } from "@/types";
 import type { PriceInput, PriceKind, PriceUnit } from "@/types/pricing";
+import { useScrollLock } from "@/hooks";
 
 import styles from "./AdminManagement.module.css";
 
@@ -72,6 +73,7 @@ export function AdminActivityDialog({
   onClose,
   onSave,
 }: AdminActivityDialogProps) {
+  useScrollLock();
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);

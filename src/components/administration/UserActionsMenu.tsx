@@ -11,9 +11,10 @@ import styles from "./administration.module.css";
 export interface UserActionsMenuProps {
   user: AdminUser;
   onSelect: (user: AdminUser, status: UserStatusKey) => void;
+  onEdit: (user: AdminUser) => void;
 }
 
-export function UserActionsMenu({ user, onSelect }: UserActionsMenuProps) {
+export function UserActionsMenu({ user, onSelect, onEdit }: UserActionsMenuProps) {
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState({ top: 0, right: 0 });
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -81,6 +82,17 @@ export function UserActionsMenu({ user, onSelect }: UserActionsMenuProps) {
           role="menu"
           style={{ top: position.top, right: position.right }}
         >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              onEdit(user);
+            }}
+          >
+            <Icon name="pencil" size={16} />
+            Editar usuario
+          </button>
           {user.status.key !== "active" ? (
             <button type="button" role="menuitem" onClick={() => select("active")}>
               <Icon name="circle-check" size={16} />
