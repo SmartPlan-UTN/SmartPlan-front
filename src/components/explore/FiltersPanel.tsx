@@ -3,11 +3,12 @@
 import { useEffect, useId, useRef, useState } from "react";
 
 import { Select } from "@/components/ui";
-import { categoryLabel } from "@/lib/utils";
 import type { CategoryOption, LocationOption } from "@/types";
 
 import { priceRangeError } from "./searchState";
 import { getCategoriesOnce } from "./categoryCatalog";
+import { categoryPresentation } from "@/components/preferences/categoryPresentation";
+import { ACTIVITY_TYPE_OPTIONS } from "@/lib/catalog/taxonomy";
 import styles from "./explore.module.css";
 
 const ANY_LOCATION = "";
@@ -70,6 +71,7 @@ export interface FiltersPanelProps {
   onToggleCategory: (categoryId: number) => void;
   onClear: () => void;
   location?: LocationFilterProps;
+  activityType?: { value: string; onChange: (value: string) => void };
 }
 
 /**
@@ -89,6 +91,7 @@ export function FiltersPanel({
   onToggleCategory,
   onClear,
   location,
+  activityType,
 }: FiltersPanelProps) {
   const ratingName = useId();
   const rangeError = priceRangeError(minPrice, maxPrice);
@@ -231,6 +234,13 @@ export function FiltersPanel({
         </section>
       ) : null}
 
+      {activityType ? (
+        <section className={styles.filterSection} aria-labelledby={`${ratingName}-type`}>
+          <h3 id={`${ratingName}-type`} className={styles.filterHeading}>Tipo de actividad</h3>
+          <Select aria-label="Tipo de actividad" value={activityType.value} onChange={activityType.onChange} options={ACTIVITY_TYPE_OPTIONS} />
+        </section>
+      ) : null}
+
       <section className={styles.filterSection} aria-labelledby={`${ratingName}-price`}>
         <h3 id={`${ratingName}-price`} className={styles.filterHeading}>
           Precio
@@ -274,6 +284,9 @@ export function FiltersPanel({
             {rangeError}
           </p>
         ) : null}
+        {minPrice.trim() !== "" || maxPrice.trim() !== "" ? (
+          <p className={styles.fieldLabel}>Las actividades sin precio confirmado no aparecen al filtrar por precio.</p>
+        ) : null}
       </section>
 
       <div className={styles.filterSection}>
@@ -310,7 +323,7 @@ export function FiltersPanel({
                     onToggleCategory(category.id);
                   }}
                 />
-                {categoryLabel(category.name)}
+                {categoryPresentation(category).label}
               </label>
             ))}
             {categories.length > VISIBLE_CATEGORIES ? (

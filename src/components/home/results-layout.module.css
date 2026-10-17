@@ -166,7 +166,7 @@
   .viewToggle[data-view="map"] {
     position: fixed;
     z-index: 9;
-    top: calc(var(--navbar-h) + 102px);
+    top: calc(var(--navbar-h) + 102px + var(--results-map-offset, 0px));
     left: 50%;
     transform: translateX(-50%);
     margin: 0;
@@ -184,7 +184,7 @@
   .resultsMapCol[data-mobile-hidden="false"] {
     position: fixed;
     z-index: 5;
-    inset: calc(var(--navbar-h) + 152px) 0 calc(var(--mobile-nav-h) + env(safe-area-inset-bottom));
+    inset: calc(var(--navbar-h) + 152px + var(--results-map-offset, 0px)) 0 calc(var(--mobile-nav-h) + env(safe-area-inset-bottom));
     display: block;
     width: 100%;
     height: auto;

@@ -26,6 +26,7 @@ function toSearchResult(suggestion: ActivitySuggestion): ActivitySearchResult {
     name: suggestion.name,
     description: suggestion.description,
     estimatedCost: suggestion.estimatedCost,
+    price: suggestion.price ?? null,
     estimatedDuration: suggestion.estimatedDuration,
     type: suggestion.type,
     averageRating: 0,

@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { Button, ConfirmationDialog, Icon, LoadingDots } from "@/components/ui";
 import { ApiError, cancelOwnPlan, listOwnPlans } from "@/lib/api";
 import { planDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
-import { formatArs, formatDuration } from "@/lib/utils";
+import { formatDuration, formatPlanTotal } from "@/lib/utils";
 import type { OwnPlanSummary, PlanVisibility } from "@/types";
 
 import {
@@ -173,7 +173,7 @@ export function MyPlansPanel() {
                   <div className={styles.cardHeader}>
                     <h2 className={styles.cardTitle}>
                       <Link
-                        href={planDetailRoute(plan.id)}
+                        href={planDetailRoute(plan.id, ROUTES.plans)}
                         className={styles.cardTitleLink}
                       >
                         {plan.title}
@@ -234,7 +234,7 @@ export function MyPlansPanel() {
                     </span>
                     <span className={`${styles.metaItem} ${styles.cost}`}>
                       <Icon name="wallet" size={14} />
-                      {formatArs(plan.estimatedTotalCost)}
+                      {formatPlanTotal(plan)}
                     </span>
                   </div>
                 </article>

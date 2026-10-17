@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MediaTarget } from '@/types';
 import { apiClient } from './client';
-import { mediaRequestPath, uploadMedia } from './media';
+import { downloadMedia, mediaRequestPath, readImageAttribution, uploadMedia } from './media';
 
-vi.mock('./client', () => ({ apiClient: { post: vi.fn() } }));
+vi.mock('./client', () => ({ apiClient: { post: vi.fn(), request: vi.fn() } }));
 
 describe('uploadMedia', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -49,5 +49,70 @@ describe('mediaRequestPath', () => {
     vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.smartplan.test/api');
     expect(() => mediaRequestPath('https://other.test/api/media/plan/18')).toThrow();
     expect(() => mediaRequestPath('/api/users/me')).toThrow();
+  });
+});
+
+describe('place photos (SmartPlan-back#102)', () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it('accepts the place photo route, keeping its query', () => {
+    vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.smartplan.test/api');
+    expect(mediaRequestPath('/api/activity-places/12/photo')).toBe('/activity-places/12/photo');
+    expect(mediaRequestPath('/api/activity-places/12/photo?width=480')).toBe(
+      '/activity-places/12/photo?width=480',
+    );
+    expect(() => mediaRequestPath('/api/activity-places/12')).toThrow();
+  });
+
+  it('reads Google credit from the response headers', async () => {
+    vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.smartplan.test/api');
+    const blob = new Blob(['photo']);
+    vi.mocked(apiClient.request).mockResolvedValueOnce({
+      data: blob,
+      headers: {
+        'x-photo-provider': 'google_maps',
+        'x-photo-attributions': encodeURIComponent(
+          JSON.stringify([{ displayName: 'Ana Pérez', uri: 'https://maps.google.com/ana' }]),
+        ),
+      },
+    } as never);
+
+    await expect(downloadMedia('/api/activity-places/12/photo')).resolves.toEqual({
+      blob,
+      attribution: {
+        provider: 'google_maps',
+        authors: [{ displayName: 'Ana Pérez', uri: 'https://maps.google.com/ana' }],
+      },
+    });
+    expect(apiClient.request).toHaveBeenCalledWith({
+      method: 'GET',
+      url: '/activity-places/12/photo',
+      responseType: 'blob',
+    });
+  });
+
+  it('has no credit for an uploaded image', () => {
+    expect(readImageAttribution(undefined, undefined)).toBeNull();
+  });
+
+  it('keeps the Google Maps credit when the author list is malformed', () => {
+    expect(readImageAttribution('google_maps', '%E0%A4%A')).toEqual({ provider: 'google_maps', authors: [] });
+    expect(readImageAttribution('google_maps', encodeURIComponent('{"not":"a list"}'))).toEqual({
+      provider: 'google_maps',
+      authors: [],
+    });
+  });
+
+  it('drops author links that are not https', () => {
+    const header = encodeURIComponent(
+      JSON.stringify([
+        { displayName: 'Ana', uri: 'javascript:alert(1)' },
+        { uri: 'https://maps.google.com/nameless' },
+      ]),
+    );
+    expect(readImageAttribution('google_maps', header)).toEqual({
+      provider: 'google_maps',
+      authors: [{ displayName: 'Ana', uri: null }],
+    });
   });
 });

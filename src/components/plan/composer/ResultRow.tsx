@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { formatDistanceAway } from "@/components/activity/inspect/PlaceParts";
 import { Icon } from "@/components/ui";
-import { formatArs, formatDuration } from "@/lib/utils";
+import { formatDuration, formatPrice } from "@/lib/utils";
 import type { ActivitySearchResult } from "@/types";
 
 import { IconAction, RouteToggle } from "./IconAction";
@@ -107,7 +107,7 @@ export const ResultRow = memo(function ResultRow({
           <p>
             {category ? <span>{category}</span> : null}
             <span>{formatDuration(activity.estimatedDuration)}</span>
-            <span>{formatArs(activity.estimatedCost)}</span>
+            <span>{formatPrice(activity)}</span>
             {showDistance && activity.distanceKm !== null ? (
               <span>{formatDistanceAway(activity.distanceKm)}</span>
             ) : null}

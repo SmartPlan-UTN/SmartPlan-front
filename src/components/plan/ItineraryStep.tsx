@@ -1,8 +1,10 @@
 import Link from "next/link";
 
-import { Badge, Icon, Stars } from "@/components/ui";
+import { Badge, Icon } from "@/components/ui";
+import { RatingBadge } from "@/components/media/RatingBadge";
+import { categoryLabel as labelCategory } from "@/lib/utils/catalogLabels";
 import { activityDetailRoute } from "@/lib/routes";
-import { categoryLabel, formatArs, formatDuration, googleMapsUrl } from "@/lib/utils";
+import { formatDuration, googleMapsUrl, formatPrice } from "@/lib/utils";
 import type { PlanItineraryItem } from "@/types";
 
 import styles from "./plan.module.css";
@@ -24,7 +26,7 @@ export function ItineraryStep({
   const location = activity.locations[0] ?? null;
   const categoriesText =
     activity.categories.length > 0
-      ? activity.categories.map((category) => categoryLabel(category.name)).join(" · ")
+      ? activity.categories.map((category) => labelCategory(category.name)).join(" · ")
       : null;
 
   return (
@@ -55,8 +57,7 @@ export function ItineraryStep({
           <div className={styles.stepBadgeRow}>
             {categoriesText ? <Badge variant="tag">{categoriesText}</Badge> : null}
             <span className={styles.stepRating}>
-              <Stars rating={activity.averageRating} size={11} />
-              <span>{activity.averageRating.toFixed(1)}</span>
+              <RatingBadge averageRating={activity.averageRating} ratingCount={activity.ratingCount} />
             </span>
           </div>
 
@@ -77,7 +78,7 @@ export function ItineraryStep({
         </div>
 
         <div className={styles.stepActions}>
-          <p className={styles.stepCost}>{formatArs(detail.estimatedCost)}</p>
+          <p className={styles.stepCost}>{formatPrice(detail)}</p>
 
           <div className={styles.stepLinks}>
             {location ? (

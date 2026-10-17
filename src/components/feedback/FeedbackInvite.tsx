@@ -12,7 +12,7 @@ import styles from "./feedback.module.css";
 export interface FeedbackInviteProps {
   planId: number;
   planTitle: string;
-  estimatedTotalCost: number;
+  estimatedTotalCost: number | null;
   completedAt: string | null;
   activityCount: number;
   onSubmitted: (feedback: PlanFeedback) => void;

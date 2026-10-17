@@ -17,7 +17,7 @@ import {
 } from "motion/react";
 
 import { Icon } from "@/components/ui";
-import { formatArs, formatDuration } from "@/lib/utils";
+import { formatDuration, formatPrice } from "@/lib/utils";
 
 import type { ComposerStop } from "./draft";
 import { formatLeg } from "./routeDistance";
@@ -294,7 +294,7 @@ function StopContent({
         <span className={styles.meta}>
           <span>{categoryOf(stop)}</span>
           <span>{formatDuration(stop.estimatedDuration)}</span>
-          <span>{formatArs(stop.estimatedCost)}</span>
+          <span>{formatPrice(stop)}</span>
         </span>
       </div>
       {actions}

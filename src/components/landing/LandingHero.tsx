@@ -9,6 +9,7 @@ import {
   PlanComposer,
   PlanResults,
   PreferencesHint,
+  RecentSearches,
   SurpriseButton,
   type PlanComposerHandle,
   type SurpriseCoords,
@@ -16,6 +17,7 @@ import {
 } from "@/components/home";
 import { useReducedMotion, type UsePlanRequestPollingResult } from "@/hooks";
 import { EASE_OUT } from "@/lib/motion";
+import { planRequestRoute, ROUTES } from "@/lib/routes";
 import type { PlanRequestContext } from "@/types";
 
 /**
@@ -245,6 +247,7 @@ export function LandingHero({
             </div>
 
             <PreferencesHint />
+            <RecentSearches />
           </div>
         ) : null}
 
@@ -276,6 +279,7 @@ export function LandingHero({
               transition={{ duration: 0.26, ease: EASE_OUT }}
             >
               <PlanResults
+                returnTo={planning.planRequestId != null ? planRequestRoute(planning.planRequestId) : ROUTES.home}
                 plans={plans ?? []}
                 query={submittedQuery}
                 resolvedContext={resolvedContext}

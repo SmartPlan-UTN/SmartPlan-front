@@ -40,6 +40,10 @@ function plan(overrides: Partial<PlanDetailResult> = {}): PlanDetailResult {
     activityNames: [],
     status: { key: "generated", name: "Generated" },
     viewerPlanState: "selectable",
+    activeOutingId: null,
+    kind: "generated",
+    visibility: "private",
+    ownedByViewer: false,
     details: [],
     ...overrides,
   };

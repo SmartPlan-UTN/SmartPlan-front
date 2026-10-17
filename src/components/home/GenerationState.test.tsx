@@ -142,12 +142,12 @@ describe("GenerationState (CU19 surprise)", () => {
     ).toBeInTheDocument();
   });
 
-  it("maps a NO_VALID_COMBINATIONS failure to the spec copy", () => {
+  it.each(["auto", "surprise"] as const)("shows no available plans for %s searches (CU17/CU19)", (mode) => {
     render(
       <GenerationState
         phase="failed"
         failure={{ code: "NO_VALID_COMBINATIONS", message: "ignored" }}
-        mode="surprise"
+        mode={mode}
         onKeepWaiting={vi.fn()}
         onRetry={vi.fn()}
         onDiscard={vi.fn()}
@@ -155,7 +155,11 @@ describe("GenerationState (CU19 surprise)", () => {
     );
 
     expect(
-      screen.getByText(/no encontramos suficientes actividades cerca/i),
+      screen.getByText("No hay planes disponibles para esa consulta"),
     ).toBeInTheDocument();
+    expect(screen.getByText("Sin resultados")).toBeInTheDocument();
+    expect(screen.getByText(/probá con otra zona/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /reintentar/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /volver al buscador/i })).toBeInTheDocument();
   });
 });

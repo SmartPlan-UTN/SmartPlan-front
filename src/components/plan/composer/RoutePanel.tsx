@@ -38,8 +38,11 @@ interface RoutePanelProps {
   stopInfo: Record<number, StopInfo>;
   health: DurationHealth;
   totalCost: number;
+  /** Honest total ("Desde $X", "$X + 1 sin precio"...); wins over `totalCost`. */
+  totalCostLabel?: string;
   totalDuration: number;
   costPerPerson: number;
+  costPerPersonLabel?: string;
   highlightedActivityId: number | null;
   itineraryError: string | null;
   isSaving: boolean;
@@ -69,7 +72,8 @@ function describeEffect(proposal: AssistantProposal): string[] {
   const { minutes, cost, km } = proposal.effect;
   const parts: string[] = [];
   if (minutes !== 0) parts.push(signed(minutes, formatDuration));
-  if (cost !== 0) parts.push(signed(cost, formatArs));
+  if (cost === null) parts.push("precio sin confirmar");
+  else if (cost !== 0) parts.push(signed(cost, formatArs));
   if (km !== null && Math.abs(km) >= 0.1) {
     parts.push(
       `${km < 0 ? "−" : "+"}${Math.abs(km).toLocaleString("es-AR", { maximumFractionDigits: 1 })} km`,
@@ -120,8 +124,10 @@ export function RoutePanel({
   stopInfo,
   health,
   totalCost,
+  totalCostLabel,
   totalDuration,
   costPerPerson,
+  costPerPersonLabel,
   highlightedActivityId,
   itineraryError,
   isSaving,
@@ -481,9 +487,15 @@ export function RoutePanel({
             <div className={styles.footerRow}>
               <p className={styles.total}>
                 <span>Total</span>
-                <strong>{stops.length > 0 ? formatArs(totalCost) : "—"}</strong>
+                <strong>
+                  {stops.length > 0
+                    ? (totalCostLabel ?? formatArs(totalCost))
+                    : "—"}
+                </strong>
                 {stops.length > 0 ? (
-                  <small>{formatArs(costPerPerson)} por persona</small>
+                  <small>
+                    {costPerPersonLabel ?? formatArs(costPerPerson)} por persona
+                  </small>
                 ) : null}
               </p>
               <AnimatePresence initial={false} mode="popLayout">

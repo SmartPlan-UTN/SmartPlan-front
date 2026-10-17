@@ -1,3 +1,4 @@
+import type { PriceCompleteness } from './pricing';
 import { BaseEntity, CatalogEntity } from './common';
 import type { PaginationMetadata } from './common';
 import type { ActivityCategorySummary } from './activities';
@@ -12,6 +13,7 @@ export type RequestStatusKey = 'pending' | 'processing' | 'generated' | 'failed'
 
 /** Time-of-day option accepted in a plan request's context (CU17, CU19). */
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'night';
+export type TravelMode = 'drive' | 'walk' | 'bicycle';
 
 /**
  * Optional generation context for a plan request (CU17). Every field is
@@ -20,6 +22,11 @@ export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'night';
  * Matches `PlanRequestContextDto` in `SmartPlan-back`.
  */
 export interface PlanRequestContext {
+  travelMode?: TravelMode;
+  idDepartment?: number;
+  latitude?: number;
+  longitude?: number;
+  maxDistanceKm?: number;
   budget?: number;
   partySize?: number;
   timeOfDay?: TimeOfDay;
@@ -67,7 +74,10 @@ export interface PlanRequestPlanSummary {
   id: number;
   title: string;
   description: string | null;
-  estimatedTotalCost: number;
+  estimatedTotalCost: number | null;
+  estimatedTotalCostMax?: number | null;
+  unpricedCount?: number;
+  priceCompleteness?: PriceCompleteness;
   estimatedTotalDuration: number;
   activityCount: number;
   averageRating: number;
@@ -87,6 +97,9 @@ export interface PlanRequestPlanSummary {
  * placeholder. Matches `ResolvedPlanContextDto` in `SmartPlan-back`.
  */
 export interface ResolvedPlanContext {
+  travelMode?: TravelMode;
+  timeOfDay?: TimeOfDay | null;
+  availableDuration?: number | null;
   /** Only present when the backend actually applied a distance filter. */
   appliedMaxDistanceKm?: number | null;
   budget: number | null;
@@ -120,6 +133,24 @@ export interface PlanRequestStatus {
   failedAt?: string | null;
   failureCode?: string | null;
   failureDetail?: Record<string, unknown> | null;
+}
+
+/**
+ * One row of `GET /plan-requests` (#189): a past search the user can reopen.
+ * Only generated and in-flight requests are listed. Matches
+ * `PlanRequestSummaryDto` in `SmartPlan-back`.
+ */
+export interface PlanRequestSummary {
+  id: number;
+  statusKey: 'pending' | 'processing' | 'generated';
+  mode: 'automatic' | 'surprise';
+  requestedAt: string;
+  /** Null for surprise requests. */
+  query: string | null;
+  /** 0 while the request is still in flight. */
+  planCount: number;
+  /** Up to three plan titles. */
+  planTitles: string[];
 }
 
 export type PlanRequestProgressStage =
@@ -210,6 +241,13 @@ export interface CreateFeedbackPayload {
   tags?: FeedbackTag[];
   comment?: string;
   actualCost?: number;
+  /**
+   * What was paid for individual activities (whole party). Stored apart from
+   * `actualCost`, which is never split across activities.
+   */
+  activityCosts?: Array<{ activityId: number; amount: number }>;
+  /** How many people shared the reported cost. */
+  partySize?: number;
   actualDuration?: number;
   /** Shares the experience with the community (#106); private when absent. */
   shared?: boolean;
@@ -248,11 +286,13 @@ export type PlanRecommendationReason =
 
 /**
  * Card-friendly plan projection for the recommendations rail. Same shape as
- * `PlanRequestPlanSummary` plus `imageUrl` — `null` until the backend has an
- * image source; the card falls back to an editorial treatment.
+ * `PlanRequestPlanSummary` plus its image: an uploaded one, else a Google
+ * Places photo (SmartPlan-back#102), else `null` and the card falls back to
+ * an editorial treatment.
  */
 export interface RecommendedPlanSummary extends PlanRequestPlanSummary {
   imageUrl: string | null;
+  imageSource?: import('./media').ImageSource | null;
 }
 
 /** One entry of `GET /plan-recommendations`. Matches `PlanRecommendationDto`. */

@@ -4,6 +4,8 @@ import { categoryLabel, localizeCatalogText } from "./catalogLabels";
 
 describe("categoryLabel", () => {
   it.each([
+    ["Adventure", "Aventura"],
+    ["Wine tourism", "Enoturismo"],
     ["Culture", "Cultura"],
     ["Entertainment", "Entretenimiento"],
     ["Gastronomy", "Gastronomía"],

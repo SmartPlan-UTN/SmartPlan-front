@@ -9,10 +9,50 @@ import type {
   AdminActivityInput,
   CategoryOption,
   PlaceOption,
+  TimeOfDay,
 } from "@/types";
+import type { PriceInput, PriceKind, PriceUnit } from "@/types/pricing";
 import { useScrollLock } from "@/hooks";
 
 import styles from "./AdminManagement.module.css";
+
+const PRICE_KIND_OPTIONS: Array<{ value: PriceKind; label: string }> = [
+  { value: "UNKNOWN", label: "Sin precio confirmado" },
+  { value: "FREE", label: "Gratis (con evidencia)" },
+  { value: "FIXED", label: "Precio fijo" },
+  { value: "FROM", label: "Desde (depende del consumo)" },
+  { value: "RANGE", label: "Rango de precios" },
+];
+
+const PRICE_UNIT_OPTIONS: Array<{ value: PriceUnit; label: string }> = [
+  { value: "PER_PERSON", label: "Por persona" },
+  { value: "PER_GROUP", label: "Por grupo" },
+  { value: "ENTRY", label: "Entrada (por persona)" },
+  { value: "CONSUMPTION", label: "Consumo (por persona)" },
+];
+
+/** Validates the price fields; returns an error message or null. */
+function priceError(
+  kind: PriceKind,
+  min: string,
+  max: string,
+  source: string,
+): string | null {
+  if (kind === "UNKNOWN") return null;
+  if (!source) return "Indicá la fuente del precio.";
+  if (kind === "FREE") return null;
+  const lo = Number(min);
+  if (min.trim() === "" || !Number.isFinite(lo) || lo <= 0) {
+    return "Ingresá un monto mayor a cero.";
+  }
+  if (kind === "RANGE") {
+    const hi = Number(max);
+    if (max.trim() === "" || !Number.isFinite(hi) || hi <= lo) {
+      return "El máximo debe ser mayor que el mínimo.";
+    }
+  }
+  return null;
+}
 
 interface AdminActivityDialogProps {
   activity: AdminActivity | null;
@@ -41,13 +81,40 @@ export function AdminActivityDialog({
   const savingRef = useRef(saving);
   const [name, setName] = useState(activity?.name ?? "");
   const [description, setDescription] = useState(activity?.description ?? "");
-  const [estimatedCost, setEstimatedCost] = useState(
-    activity ? String(activity.estimatedCost) : "",
+  const [priceKind, setPriceKind] = useState<PriceKind>(
+    activity?.price?.kind ??
+      (activity && activity.estimatedCost !== null ? "FIXED" : "UNKNOWN"),
   );
+  const [priceMin, setPriceMin] = useState(
+    activity?.price?.min != null ? String(activity.price.min) : "",
+  );
+  const [priceMax, setPriceMax] = useState(
+    activity?.price?.max != null ? String(activity.price.max) : "",
+  );
+  const [priceUnit, setPriceUnit] = useState<PriceUnit>(
+    activity?.price?.unit && activity.price.unit !== "UNSPECIFIED"
+      ? activity.price.unit
+      : activity?.costBasis === "per_party" ? "PER_GROUP" : "PER_PERSON",
+  );
+  const [priceSource, setPriceSource] = useState<"OFFICIAL" | "CURATED">(
+    activity?.price?.source === "OFFICIAL" ? "OFFICIAL" : "CURATED",
+  );
+  const [priceSourceRef, setPriceSourceRef] = useState(
+    activity?.price?.sourceRef ?? "",
+  );
+  // The price is only sent when the administrator touched it, so editing a
+  // name never silently "verifies" a legacy or estimated amount.
+  const [priceTouched, setPriceTouched] = useState(false);
   const [estimatedDuration, setEstimatedDuration] = useState(
     activity ? String(activity.estimatedDuration) : "",
   );
   const [type, setType] = useState(activity?.type ?? "");
+  const costBasis = !priceTouched && activity?.costBasis
+    ? activity.costBasis
+    : ["PER_PERSON", "ENTRY", "CONSUMPTION"].includes(priceUnit) ? "per_person" : "per_party";
+  const [availableTimesOfDay, setAvailableTimesOfDay] = useState<TimeOfDay[]>(activity?.availableTimesOfDay ?? []);
+  const [minPeople, setMinPeople] = useState(activity?.minPeople == null ? '' : String(activity.minPeople));
+  const [maxPeople, setMaxPeople] = useState(activity?.maxPeople == null ? '' : String(activity.maxPeople));
   const [categoryIds, setCategoryIds] = useState(
     () => new Set(activity?.categories.map((item) => item.id) ?? []),
   );
@@ -111,14 +178,16 @@ export function AdminActivityDialog({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const cost = Number(estimatedCost);
     const duration = Number(estimatedDuration);
     if (!name.trim() || !description.trim()) {
       setValidationError("Completá el nombre y la descripción.");
       return;
     }
-    if (!Number.isFinite(cost) || cost < 0) {
-      setValidationError("Ingresá un costo válido, igual o mayor a cero.");
+    const priceProblem = priceTouched
+      ? priceError(priceKind, priceMin, priceMax, priceSource)
+      : null;
+    if (priceProblem) {
+      setValidationError(priceProblem);
       return;
     }
     if (!Number.isInteger(duration) || duration < 1) {
@@ -126,10 +195,36 @@ export function AdminActivityDialog({
       return;
     }
     setValidationError(null);
+    const price: PriceInput | undefined =
+      priceTouched || !activity
+        ? {
+            kind: priceKind,
+            ...(priceKind === "UNKNOWN"
+              ? {}
+              : {
+                  min: priceKind === "FREE" ? 0 : Number(priceMin),
+                  max: priceKind === "RANGE" ? Number(priceMax) : null,
+                  unit: priceUnit,
+                  source: priceSource,
+                  sourceRef: priceSourceRef.trim() || null,
+                  verifiedAt: new Date().toISOString(),
+                }),
+          }
+        : undefined;
+    const minimum = minPeople === '' ? null : Number(minPeople);
+    const maximum = maxPeople === '' ? null : Number(maxPeople);
+    if ([minimum, maximum].some((value) => value !== null && (!Number.isInteger(value) || value < 1 || value > 1000)) || (minimum !== null && maximum !== null && minimum > maximum)) {
+      setValidationError('Revisá los límites de personas: el mínimo no puede superar al máximo.');
+      return;
+    }
     await onSave({
+      costBasis,
+      availableTimesOfDay,
+      minPeople: minimum,
+      maxPeople: maximum,
       name: name.trim(),
       description: description.trim(),
-      estimatedCost: cost,
+      ...(price ? { price } : {}),
       estimatedDuration: duration,
       type: type.trim() || null,
       categoryIds: [...categoryIds],
@@ -175,11 +270,106 @@ export function AdminActivityDialog({
             Descripción
             <textarea value={description} maxLength={5000} onChange={(event) => setDescription(event.target.value)} />
           </label>
-          <div className={styles.formGrid}>
+          <fieldset className={styles.choiceGroup}>
+            <legend>Precio</legend>
             <label className={styles.field}>
-              Costo estimado
-              <input type="number" min="0" step="0.01" value={estimatedCost} onChange={(event) => setEstimatedCost(event.target.value)} />
+              Tipo de precio
+              <select
+                value={priceKind}
+                onChange={(event) => {
+                  setPriceKind(event.target.value as PriceKind);
+                  setPriceTouched(true);
+                }}
+              >
+                {PRICE_KIND_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
             </label>
+            {priceKind === "UNKNOWN" ? (
+              <p className="sp-small">
+                Mientras no haya un precio confirmado, la actividad se muestra como
+                &quot;Precio no disponible&quot; y no cuenta en los totales.
+              </p>
+            ) : (
+              <>
+                {priceKind !== "FREE" && (
+                  <div className={styles.formGrid}>
+                    <label className={styles.field}>
+                      {priceKind === "RANGE" ? "Mínimo (ARS)" : "Monto (ARS)"}
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={priceMin}
+                        onChange={(event) => {
+                          setPriceMin(event.target.value);
+                          setPriceTouched(true);
+                        }}
+                      />
+                    </label>
+                    {priceKind === "RANGE" && (
+                      <label className={styles.field}>
+                        Máximo (ARS)
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={priceMax}
+                          onChange={(event) => {
+                            setPriceMax(event.target.value);
+                            setPriceTouched(true);
+                          }}
+                        />
+                      </label>
+                    )}
+                  </div>
+                )}
+                <div className={styles.formGrid}>
+                  <label className={styles.field}>
+                    Se cobra
+                    <select
+                      value={priceUnit}
+                      onChange={(event) => {
+                        setPriceUnit(event.target.value as PriceUnit);
+                        setPriceTouched(true);
+                      }}
+                    >
+                      {PRICE_UNIT_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className={styles.field}>
+                    Fuente
+                    <select
+                      value={priceSource}
+                      onChange={(event) => {
+                        setPriceSource(event.target.value as "OFFICIAL" | "CURATED");
+                        setPriceTouched(true);
+                      }}
+                    >
+                      <option value="OFFICIAL">Sitio o tarifario oficial</option>
+                      <option value="CURATED">Relevado por el equipo</option>
+                    </select>
+                  </label>
+                </div>
+                <label className={styles.field}>
+                  Enlace a la fuente (opcional)
+                  <input
+                    value={priceSourceRef}
+                    maxLength={500}
+                    placeholder="https://"
+                    onChange={(event) => {
+                      setPriceSourceRef(event.target.value);
+                      setPriceTouched(true);
+                    }}
+                  />
+                </label>
+              </>
+            )}
+          </fieldset>
+          <div className={styles.formGrid}>
             <label className={styles.field}>
               Duración en minutos
               <input type="number" min="1" step="1" value={estimatedDuration} onChange={(event) => setEstimatedDuration(event.target.value)} />
@@ -189,6 +379,20 @@ export function AdminActivityDialog({
             Tipo de salida (opcional)
             <input value={type} maxLength={80} placeholder="Ej. cultural" onChange={(event) => setType(event.target.value)} />
           </label>
+          <div className={styles.formGrid}>
+            <label className={styles.field}>Mínimo de personas (opcional)<input type="number" min="1" max="1000" value={minPeople} onChange={(event) => setMinPeople(event.target.value)} /></label>
+            <label className={styles.field}>Máximo de personas (opcional)<input type="number" min="1" max="1000" value={maxPeople} onChange={(event) => setMaxPeople(event.target.value)} /></label>
+          </div>
+          <fieldset className={styles.choiceGroup}>
+            <legend>Momentos disponibles</legend>
+            <p className="sp-small">Sin seleccionar: disponibilidad sin especificar.</p>
+            <div className={styles.choiceList}>
+              {(['morning', 'afternoon', 'evening', 'night'] as const).map((period) => <label className={styles.checkOption} key={period}>
+                <input type="checkbox" checked={availableTimesOfDay.includes(period)} onChange={() => setAvailableTimesOfDay((current) => current.includes(period) ? current.filter((value) => value !== period) : [...current, period])} />
+                {{ morning: 'Mañana', afternoon: 'Tarde', evening: 'Noche', night: 'Madrugada' }[period]}
+              </label>)}
+            </div>
+          </fieldset>
 
           <fieldset className={styles.choiceGroup}>
             <legend>Categorías</legend>

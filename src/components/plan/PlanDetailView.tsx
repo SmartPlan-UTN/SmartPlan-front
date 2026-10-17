@@ -5,13 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { Badge, Button, ConfirmationDialog, Divider, FloatingBackLink, Icon, Stars } from "@/components/ui";
-import { MediaGallery } from "@/components/media";
+import { AuthenticatedImage, MediaGallery } from "@/components/media";
 import { useFavorites } from "@/context";
 import { useDetailFetch, usePlanSelection } from "@/hooks";
 import { ApiError, cancelOwnPlan, getOwnPlan, getPlan } from "@/lib/api";
 import { useSession } from "@/lib/auth";
-import { outingDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
-import { formatArs, formatDuration } from "@/lib/utils";
+import { outingDetailRoute, planDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
+import { formatDuration, formatPrice, formatPlanTotal, formatPerPerson } from "@/lib/utils";
 import type {
   OwnPlanDetail,
   PlanDetailResult,
@@ -34,6 +34,7 @@ import activityStyles from "../activity/activity.module.css";
 
 export interface PlanDetailViewProps {
   planId: number;
+  returnTo?: string;
 }
 
 const GENERIC_ERROR = "No pudimos cargar el plan. Intentá de nuevo.";
@@ -59,8 +60,9 @@ const GENERIC_ERROR = "No pudimos cargar el plan. Intentá de nuevo.";
  * publish it or make it private. An outing is not a plan to browse: its
  * owner is sent to its page in Mis salidas.
  */
-export function PlanDetailView({ planId }: PlanDetailViewProps) {
+export function PlanDetailView({ planId, returnTo = ROUTES.explore }: PlanDetailViewProps) {
   const router = useRouter();
+  const backLabel = returnTo.startsWith(`${ROUTES.planRequests}/`) ? "Volver a los resultados" : "Volver";
   const { status: sessionStatus } = useSession();
   const {
     data: plan,
@@ -152,7 +154,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
 
   async function handleShare() {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(new URL(planDetailRoute(planId), window.location.origin).href);
       setCopied(true);
       setTimeout(() => {
         setCopied(false);
@@ -199,9 +201,9 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
         <Icon name="inbox" size={32} className={activityStyles.stateIcon} />
         <h1 className="sp-h3">No encontramos este plan</h1>
         <p className="sp-body">Puede que ya no esté disponible.</p>
-        <Link href={ROUTES.explore} className={activityStyles.backLink}>
+        <Link href={returnTo} className={activityStyles.backLink}>
           <Icon name="arrow-left" size={14} aria-hidden="true" />
-          Volver a explorar
+          {backLabel}
         </Link>
       </div>
     );
@@ -229,16 +231,32 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
 
   return (
     <div>
-      <FloatingBackLink href={ROUTES.explore} label="Volver" heroRef={heroRef} />
+      <FloatingBackLink href={returnTo} label={backLabel} heroRef={heroRef} />
 
       <p className={styles.srOnly} role="status" aria-live="polite">
         {liveMessage}
       </p>
 
       <div className={styles.hero} ref={heroRef}>
-        <Icon name="route" size={110} className={styles.heroIcon} />
+        {plan.imageUrl ? (
+          // An uploaded cover, or the Google Places photo of its first place
+          // with its full credit (SmartPlan-back#102).
+          <div className={styles.heroMedia}>
+            <AuthenticatedImage
+              url={plan.imageUrl}
+              alt={plan.title}
+              width={960}
+              height={300}
+              attribution="full"
+              attributionPlacement="top"
+              fallback={<Icon name="route" size={110} className={styles.heroIcon} />}
+            />
+          </div>
+        ) : (
+          <Icon name="route" size={110} className={styles.heroIcon} />
+        )}
         <Badge variant="cost" className={styles.heroCostBadge}>
-          {formatArs(plan.estimatedTotalCost)}
+          {formatPlanTotal(plan)}
         </Badge>
 
         <div className={styles.heroTitleBlock}>
@@ -249,8 +267,9 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
                 <span className={styles.heroMetaDot}>·</span>
               </>
             ) : null}
-            <Stars rating={plan.averageRating} size={14} />
-            <span>{plan.averageRating.toFixed(1)}</span>
+            {plan.averageRating > 0 ? (
+              <><Stars rating={plan.averageRating} size={14} /><span>{plan.averageRating.toFixed(1)}</span></>
+            ) : <span>Sin reseñas</span>}
             <span className={styles.heroMetaDot}>·</span>
             <span>{formatDuration(plan.estimatedTotalDuration)}</span>
           </div>
@@ -300,7 +319,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
               <div className={styles.costRow} key={detail.id}>
                 <span className={styles.costRowLabel}>{detail.activity.name}</span>
                 <span className={styles.costRowValue}>
-                  {formatArs(detail.estimatedCost)}
+                  {formatPrice(detail)}
                 </span>
               </div>
             ))}
@@ -309,7 +328,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           <div className={styles.costTotalRow}>
             <span className={styles.costRowLabel}>Total</span>
             <span className={styles.costTotalValue}>
-              {formatArs(plan.estimatedTotalCost)}
+              {formatPlanTotal(plan)}
             </span>
           </div>
           {ownPlan && ownPlan.peopleCount > 0 ? (
@@ -319,7 +338,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
                 {ownPlan.peopleCount === 1 ? "persona" : "personas"})
               </span>
               <span className={styles.costRowValue}>
-                {formatArs(ownPlan.estimatedCostPerPerson)}
+                {formatPerPerson(ownPlan.estimatedCostPerPerson)}
               </span>
             </div>
           ) : null}

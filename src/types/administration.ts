@@ -1,8 +1,10 @@
+import type { Price, PriceCompleteness, PriceInput } from './pricing';
 import { BaseEntity } from './common';
 import type { PaginatedResult, SortDirection } from './common';
 import type { User } from './users';
 import type { RoleKey, UserStatusKey } from './users';
-import type { PlanStatusKey } from './plans';
+import type { PlanKind, PlanStatusKey, PlanVisibility } from './plans';
+import type { TimeOfDay } from './recommendation';
 
 /**
  * Possible actions recorded in the audit log.
@@ -183,12 +185,25 @@ export type AdminUsersResult = PaginatedResult<AdminUser>;
 
 /** Activity projection used by PAN 21 (CU53). */
 export interface AdminActivity {
+  costBasis?: 'per_party' | 'per_person';
+  availableTimesOfDay?: TimeOfDay[];
+  minPeople?: number | null;
+  maxPeople?: number | null;
   id: number;
   name: string;
   description: string;
-  estimatedCost: number;
+  estimatedCost: number | null;
+  price?: Price | null;
   estimatedDuration: number;
   type: string | null;
+  /** Where the activity may appear, and why not (catalog eligibility). */
+  eligibility?: {
+    status: 'draft' | 'in_review' | 'published' | 'archived';
+    discoverable: boolean;
+    planEligible: boolean;
+    autoRecommendEligible: boolean;
+    reasons: string[];
+  };
   categories: Array<{ id: number; name: string }>;
   places: Array<{ id: number; name: string; address: string }>;
   createdAt: string;
@@ -206,9 +221,14 @@ export interface AdminActivitiesQuery {
 }
 
 export interface AdminActivityInput {
+  costBasis?: 'per_party' | 'per_person';
+  availableTimesOfDay?: TimeOfDay[];
+  minPeople?: number | null;
+  maxPeople?: number | null;
   name: string;
   description: string;
-  estimatedCost: number;
+  /** Structured price. Omitted means UNKNOWN: never send 0 for "no price". */
+  price?: PriceInput;
   estimatedDuration: number;
   type?: string | null;
   categoryIds: number[];
@@ -218,15 +238,31 @@ export interface AdminActivityInput {
 export type UpdateAdminActivityInput = Partial<AdminActivityInput>;
 export type AdminActivitiesResult = PaginatedResult<AdminActivity>;
 
+/** Why Explorar leaves a plan out. Matches `ExploreHiddenCause` in SmartPlan-back. */
+export type ExploreHiddenCause = 'generated' | 'outing' | 'private' | 'cancelled';
+
 /** Plan projection used by PAN 22 (CU60). */
 export interface AdminPlan {
   id: number;
   title: string;
   description: string | null;
-  estimatedTotalCost: number;
+  estimatedTotalCost: number | null;
+  estimatedTotalCostMax?: number | null;
+  unpricedCount?: number;
+  priceCompleteness?: PriceCompleteness;
   estimatedTotalDuration: number;
   peopleCount: number;
   activityCount: number;
+  /**
+   * Where the plan comes from; only `authored` plans can reach Explorar (#160).
+   * Optional because back versions before SmartPlan-back#124 don't send it.
+   */
+  kind?: PlanKind;
+  visibility?: PlanVisibility;
+  /** Whether Explorar > Planes lists it right now, as SmartPlan-back decides. */
+  listedInExplore?: boolean;
+  /** Why Explorar leaves it out; `null` when listed. */
+  exploreHiddenCause?: ExploreHiddenCause | null;
   owner: { id: number; name: string; lastName: string; email: string };
   status: { key: PlanStatusKey; name: string };
   createdAt: string;
@@ -236,6 +272,12 @@ export interface AdminPlan {
 export interface AdminPlansQuery {
   search?: string;
   status?: PlanStatusKey;
+  kind?: PlanKind;
+  visibility?: PlanVisibility;
+  /** Whether Explorar > Planes lists it right now, as SmartPlan-back decides. */
+  listedInExplore?: boolean;
+  /** Why Explorar leaves it out; `null` when listed. */
+  exploreHiddenCause?: ExploreHiddenCause | null;
   page?: number;
   limit?: number;
   sortBy?: 'createdAt' | 'title' | 'status' | 'cost';
@@ -250,4 +292,3 @@ export interface UpdateAdminPlanInput {
 }
 
 export type AdminPlansResult = PaginatedResult<AdminPlan>;
-

@@ -1,4 +1,6 @@
 .page {
+  /* Reserve the request search bar above the fixed mobile map controls. */
+  --results-map-offset: var(--s-7);
   width: min(100%, 1480px);
   min-height: calc(100svh - var(--navbar-h));
   margin-inline: auto;

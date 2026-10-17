@@ -152,7 +152,7 @@ describe("PlanResults (CU17)", () => {
     const onAdjust = vi.fn();
     render(<PlanResults plans={[]} onAdjust={onAdjust} onDiscard={vi.fn()} />);
 
-    expect(screen.getByText(/no encontramos un plan/i)).toBeInTheDocument();
+    expect(screen.getByText("No hay planes disponibles para esa consulta")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /ajustar la idea/i }));
     expect(onAdjust).toHaveBeenCalledOnce();
   });
@@ -248,11 +248,11 @@ describe("PlanResults (CU19 surprise)", () => {
     expect(onRegenerate).toHaveBeenCalledOnce();
   });
 
-  it("maps the not-enough-activities case to the spec copy", () => {
+  it.each(["auto", "surprise"] as const)("shows an empty result for %s queries (CU17/CU19)", (mode) => {
     render(
       <PlanResults
         plans={[]}
-        mode="surprise"
+        mode={mode}
         canAdjust={false}
         onRegenerate={vi.fn()}
         onAdjust={vi.fn()}
@@ -261,7 +261,7 @@ describe("PlanResults (CU19 surprise)", () => {
     );
 
     expect(
-      screen.getByText(/no encontramos suficientes actividades cerca/i),
+      screen.getByText("No hay planes disponibles para esa consulta"),
     ).toBeInTheDocument();
   });
 });
@@ -414,4 +414,13 @@ describe("PlanResults (CU22 — Lo voy a hacer)", () => {
       screen.queryByRole("button", { name: /^lo voy a hacer$/i }),
     ).not.toBeInTheDocument();
   });
+});
+
+
+it("carries the same request origin in desktop and mobile detail links", async () => {
+  const user = userEvent.setup();
+  render(<PlanResults plans={[PLAN]} returnTo="/plan-requests/42" onAdjust={vi.fn()} onDiscard={vi.fn()} />);
+  expect(screen.getByRole("link", { name: PLAN.title })).toHaveAttribute("href", "/plans/7?from=%2Fplan-requests%2F42");
+  await user.click(screen.getByRole("tab", { name: "Mapa" }));
+  expect(screen.getByRole("link", { name: "Ver plan" })).toHaveAttribute("href", "/plans/7?from=%2Fplan-requests%2F42");
 });

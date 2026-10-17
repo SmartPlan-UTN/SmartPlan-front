@@ -8,7 +8,7 @@ import { Button, Icon } from "@/components/ui";
 import { usePlanSelection, useReducedMotion } from "@/hooks";
 import { planDetailRoute } from "@/lib/routes";
 import { buildPlanPins } from "@/lib/maps/buildPlanPins";
-import { formatArs, formatDuration } from "@/lib/utils";
+import { formatDuration, formatPlanTotal } from "@/lib/utils";
 import type { PlanDetailResult, ResolvedPlanContext } from "@/types";
 
 import { PlanResultCard } from "./PlanResultCard";
@@ -19,6 +19,7 @@ import layoutStyles from "./results-layout.module.css";
 
 export interface PlanResultsProps {
   plans: PlanDetailResult[];
+  returnTo?: string;
   /** The free-text idea that produced these plans, for the "Buscaste:" line. `null`/absent for surprise mode. */
   query?: string | null;
   /** What the system understood from the request (budget/location/party size/categories). */
@@ -65,6 +66,7 @@ const MAX_VISIBLE_PLANS = 3;
  */
 export function PlanResults({
   plans,
+  returnTo,
   query = null,
   resolvedContext = null,
   onAdjust,
@@ -161,14 +163,10 @@ export function PlanResults({
         <div className={styles.emptyResults}>
           <Icon name="inbox" size={32} />
           <p className="sp-h4">
-            {surprise
-              ? "No encontramos suficientes actividades cerca de tu ubicación"
-              : "No encontramos un plan para eso"}
+            No hay planes disponibles para esa consulta
           </p>
           <p className="sp-body">
-            {surprise
-              ? "Intentá en otro momento o explorá otras zonas."
-              : "Probá contarnos tu idea de otra forma."}
+            Probá con otra zona o cambiá los filtros de tu búsqueda.
           </p>
           <div className={styles.resultsActions}>
             {canAdjust ? (
@@ -249,6 +247,7 @@ export function PlanResults({
               <PlanResultCard
                 key={plan.id}
                 plan={plan}
+                returnTo={returnTo}
                 index={index}
                 accentColor={planColors.get(plan.id) ?? "var(--ember)"}
                 active={activePlanId === plan.id}
@@ -276,6 +275,7 @@ export function PlanResults({
           />
           {mobileView === "map" && visiblePlans.length > 0 ? (
             <MobilePlanSheet
+              returnTo={returnTo}
               plans={visiblePlans}
               selectedPlanId={activePlanId ?? visiblePlans[0].id}
               onSelect={(id) => {
@@ -310,10 +310,12 @@ export function PlanResults({
 
 function MobilePlanSheet({
   plans,
+  returnTo,
   selectedPlanId,
   onSelect,
 }: {
   plans: PlanDetailResult[];
+  returnTo?: string;
   selectedPlanId: number;
   onSelect: (id: number) => void;
 }) {
@@ -355,9 +357,9 @@ function MobilePlanSheet({
       {plan.description ? <p className={layoutStyles.sheetDescription}>{plan.description}</p> : null}
       <div className={layoutStyles.sheetMeta}>
         <span><Icon name="clock" size={13} />{formatDuration(plan.estimatedTotalDuration)}</span>
-        <span><Icon name="wallet" size={13} />{formatArs(plan.estimatedTotalCost)}</span>
+        <span><Icon name="wallet" size={13} />{formatPlanTotal(plan)}</span>
         <span><Icon name="map-pin" size={13} />{plan.activityCount} paradas</span>
-        <Link href={planDetailRoute(plan.id)}>Ver plan</Link>
+        <Link href={planDetailRoute(plan.id, returnTo)}>Ver plan</Link>
       </div>
       <p className={layoutStyles.sheetSwipeHint}>Deslizá para comparar</p>
     </section>

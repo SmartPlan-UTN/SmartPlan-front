@@ -35,6 +35,7 @@ interface ReviewStepProps {
   stopInfo: Record<number, StopInfo>;
   totalDuration: number;
   costPerPerson: number;
+  costPerPersonLabel?: string;
   isSaving: boolean;
   /** The stop pointed at in the route, or on the map. */
   focusedActivityId: number | null;
@@ -77,6 +78,7 @@ export function ReviewStep({
   stopInfo,
   totalDuration,
   costPerPerson,
+  costPerPersonLabel,
   isSaving,
   focusedActivityId,
   onPoint,
@@ -186,7 +188,7 @@ export function ReviewStep({
           </div>
           <div>
             <dt>Por persona</dt>
-            <dd>{formatArs(costPerPerson)}</dd>
+            <dd>{costPerPersonLabel ?? formatArs(costPerPerson)}</dd>
           </div>
         </dl>
 

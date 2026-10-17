@@ -9,11 +9,12 @@ import {
   PlaceLeg,
   PlaceReason,
 } from "@/components/activity/inspect/PlaceParts";
-import { AuthenticatedImage } from "@/components/media";
+import { AuthenticatedImage, GooglePlaceContext, RatingBadge } from "@/components/media";
 import { Icon } from "@/components/ui";
-import { formatArs, formatDuration } from "@/lib/utils";
+import { formatDuration, formatPrice, priceCaveat } from "@/lib/utils";
 import { categoryLabel } from "@/lib/utils/catalogLabels";
 import type { ActivityDetailResult, ActivitySearchResult } from "@/types";
+import type { Price } from "@/types/pricing";
 
 import { summaryFromDetail } from "./mapPoints";
 import type { MiniMapStop } from "./PlaceMiniMap";
@@ -33,7 +34,8 @@ export interface QuickViewSubject {
   summary: ActivitySearchResult | null;
   name: string;
   categoryName: string | null;
-  estimatedCost: number;
+  estimatedCost: number | null;
+  price?: Price | null;
   /** A map marker knows its place before the detail does. */
   placeName: string | null;
   /** Measured by the server from the search's location. */
@@ -53,6 +55,7 @@ export function subjectFromActivity(
     name: activity.name,
     categoryName: activity.categories[0]?.name ?? null,
     estimatedCost: activity.estimatedCost,
+    price: activity.price ?? null,
     placeName: null,
     distanceKm: activity.distanceKm,
     reason,
@@ -210,13 +213,15 @@ export function QuickViewBody({
               <span className={facts ? undefined : styles.pending}>
                 {facts ? formatDuration(facts.estimatedDuration) : "—"}
               </span>
-              <span>{formatArs(facts?.estimatedCost ?? subject.estimatedCost)}</span>
-              {rating !== null ? (
-                <span className={styles.rating}>
-                  <Icon name="star" size={12} aria-hidden="true" />
-                  {rating.toLocaleString("es-AR", { maximumFractionDigits: 1 })}
-                </span>
-              ) : null}
+              <span title={priceCaveat(facts ?? subject) ?? undefined}>
+                {formatPrice(facts ?? subject)}
+              </span>
+              <RatingBadge
+                averageRating={rating}
+                ratingCount={facts?.ratingCount ?? 0}
+                externalRating={location?.externalRating ?? facts?.place?.externalRating ?? null}
+                hideEmpty
+              />
             </p>
           </div>
           {onClose ? (
@@ -224,6 +229,10 @@ export function QuickViewBody({
           ) : null}
         </header>
       )}
+
+      {!inline && facts && priceCaveat(facts) ? (
+        <p className={styles.priceNote}>{priceCaveat(facts)}</p>
+      ) : null}
 
       <PlaceReason reason={subject.reason} />
 
@@ -244,6 +253,13 @@ export function QuickViewBody({
           <strong>{placeName}</strong>
           {address ? <span>{address}</span> : null}
         </p>
+      ) : null}
+
+      {!inline ? (
+        <GooglePlaceContext
+          rating={location?.externalRating}
+          price={location?.externalPrice}
+        />
       ) : null}
 
       {showMiniMap && place ? (

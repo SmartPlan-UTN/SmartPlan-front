@@ -1,4 +1,5 @@
-import { formatArs } from "@/lib/utils";
+import type { Price } from "@/types/pricing";
+import { formatPrice } from "@/lib/utils";
 import { categoryLabel } from "@/lib/utils/catalogLabels";
 
 import styles from "./markers.module.css";
@@ -45,7 +46,8 @@ export function renderStopMarker(element: HTMLElement, input: StopMarkerInput) {
 export interface ResultMarkerInput {
   name: string;
   categoryName: string | null;
-  estimatedCost: number;
+  estimatedCost: number | null;
+  price?: Price | null;
   selected: boolean;
   /** Context only: unlabelled, not interactive. */
   mini?: boolean;
@@ -66,7 +68,7 @@ export function renderResultMarker(
     [
       input.name,
       input.categoryName ? categoryLabel(input.categoryName) : null,
-      formatArs(input.estimatedCost),
+      formatPrice(input),
     ]
       .filter(Boolean)
       .join(", "),

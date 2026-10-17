@@ -35,7 +35,7 @@ import {
   planDetailRoute,
   ROUTES,
 } from "@/lib/routes";
-import { formatArs, formatDuration } from "@/lib/utils";
+import { formatDuration, formatPrice, formatPlanTotal, formatPerPerson } from "@/lib/utils";
 import type { OutingDetail, PlanFeedback } from "@/types";
 
 import { OUTINGS_COPY } from "./outingsContent";
@@ -189,7 +189,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
       <div className={planStyles.hero} ref={heroRef}>
         <Icon name="calendar-check" size={110} className={planStyles.heroIcon} />
         <Badge variant="cost" className={planStyles.heroCostBadge}>
-          {formatArs(current.estimatedTotalCost)}
+          {formatPlanTotal(current)}
         </Badge>
 
         <div className={planStyles.heroTitleBlock}>
@@ -262,7 +262,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
                   {detail.activity.name}
                 </span>
                 <span className={planStyles.costRowValue}>
-                  {formatArs(detail.estimatedCost)}
+                  {formatPrice(detail)}
                 </span>
               </div>
             ))}
@@ -271,7 +271,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
           <div className={planStyles.costTotalRow}>
             <span className={planStyles.costRowLabel}>Total</span>
             <span className={planStyles.costTotalValue}>
-              {formatArs(current.estimatedTotalCost)}
+              {formatPlanTotal(current)}
             </span>
           </div>
           <div className={planStyles.costPerPersonRow}>
@@ -280,7 +280,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
               {current.peopleCount === 1 ? "persona" : "personas"})
             </span>
             <span className={planStyles.costRowValue}>
-              {formatArs(current.estimatedCostPerPerson)}
+              {formatPerPerson(current.estimatedCostPerPerson)}
             </span>
           </div>
         </div>

@@ -26,6 +26,7 @@ function toCardActivity(
     name: a.name,
     description: a.description,
     estimatedCost: a.estimatedCost,
+    price: a.price ?? null,
     estimatedDuration: a.estimatedDuration,
     type: a.type,
     distanceKm: null,

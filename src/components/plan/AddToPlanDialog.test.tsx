@@ -36,7 +36,7 @@ function mockPlanSummary(
     estimatedTotalDuration: 240,
     activityCount: 2,
     status: { key: "confirmed", name: "Confirmado" },
-    visibility: "private",
+
     createdAt: "2026-08-25T12:00:00.000Z",
     updatedAt: "2026-08-25T12:00:00.000Z",
     ...overrides,

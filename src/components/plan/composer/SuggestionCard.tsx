@@ -1,7 +1,7 @@
 import { memo, type CSSProperties } from "react";
 
 import { Icon } from "@/components/ui";
-import { formatArs, formatDuration } from "@/lib/utils";
+import { formatDuration, formatPrice } from "@/lib/utils";
 import type { ActivitySearchResult } from "@/types";
 
 import styles from "./SuggestionCard.module.css";
@@ -47,7 +47,7 @@ export const SuggestionCard = memo(function SuggestionCard({
       {reason ? <p className={styles.reason}>{localizeCatalogText(reason)}</p> : null}
       <p className={styles.meta}>
         {formatDuration(activity.estimatedDuration)} ·{" "}
-        {formatArs(activity.estimatedCost)}
+        {formatPrice(activity)}
       </p>
       <button
         type="button"
