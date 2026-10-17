@@ -9,7 +9,8 @@
   margin-bottom: var(--s-1);
 }
 
-/* Title block on the left; range, report and "Nuevo usuario" on the right. */
+/* Title on the left, range and report on the right: the dashboard's header
+   layout (AdminDashboard.module.css), so both screens read the same. */
 .headerRow {
   display: flex;
   flex-wrap: wrap;
@@ -23,12 +24,15 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--s-3);
+  min-width: 0;
 }
 
-/* Same segmented range control as the dashboard (AdminDashboard.module.css). */
 .rangeGroup {
   display: flex;
+  flex-shrink: 0;
   gap: 3px;
+  align-self: flex-start;
+  margin-top: var(--s-1);
   padding: 4px;
   border-radius: var(--r-card-sm);
   background: color-mix(in srgb, var(--char) 6%, transparent);
@@ -787,6 +791,18 @@
 
   .kpiCard {
     padding: var(--s-4);
+  }
+}
+
+@media (max-width: 600px) {
+  .headerActions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .headerActions .rangeGroup {
+    align-self: stretch;
   }
 }
 

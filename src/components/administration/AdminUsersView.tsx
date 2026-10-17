@@ -409,6 +409,7 @@ export function AdminUsersView() {
           </div>
           <Button
             variant="ghostLight"
+            size="sm"
             disabled={downloading}
             aria-busy={downloading}
             onClick={() => void downloadReport()}
@@ -420,11 +421,6 @@ export function AdminUsersView() {
             />
             {downloading ? "Descargando…" : "Descargar reporte"}
           </Button>
-          {canCreate ? (
-            <Button onClick={() => setCreating(true)}>
-              <Icon name="plus" size={17} /> Nuevo usuario
-            </Button>
-          ) : null}
         </div>
       </header>
 
@@ -489,6 +485,11 @@ export function AdminUsersView() {
             }}
           />
         </div>
+        {canCreate ? (
+          <Button onClick={() => setCreating(true)}>
+            <Icon name="plus" size={17} /> Nuevo usuario
+          </Button>
+        ) : null}
       </div>
 
       <div className={styles.tableCard}>
