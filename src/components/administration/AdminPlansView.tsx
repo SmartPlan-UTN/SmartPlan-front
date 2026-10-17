@@ -10,6 +10,7 @@ import { formatDuration, formatPlanTotal } from "@/lib/utils";
 import type { AdminPlan, AdminPlansResult, PlanKind, PlanVisibility, PlanStatusKey, UpdateAdminPlanInput } from "@/types";
 
 import { AdminPlanDialog } from "./AdminPlanDialog";
+import { AdminReadDialog } from "./AdminReadDialog";
 import styles from "./AdminManagement.module.css";
 import {
   EXPLORE_HIDDEN_REASON,
@@ -51,6 +52,12 @@ function readableError(error: unknown, fallback: string): string {
   return fallback;
 }
 
+const dateFormatter = new Intl.DateTimeFormat("es-AR", {
+  day: "2-digit",
+  month: "long",
+  year: "numeric",
+});
+
 export function AdminPlansView() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search.trim(), 400);
@@ -64,6 +71,7 @@ export function AdminPlansView() {
   const [reloadSequence, setReloadSequence] = useState(0);
   const [editing, setEditing] = useState<AdminPlan | null>(null);
   const [deleting, setDeleting] = useState<AdminPlan | null>(null);
+  const [viewing, setViewing] = useState<AdminPlan | null>(null);
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -146,15 +154,40 @@ export function AdminPlansView() {
         {loadError && !result ? <div className={styles.state} role="alert"><span className={styles.stateIcon}><Icon name="triangle-alert" size={24} /></span><strong>No pudimos cargar los planes</strong><p>{loadError}</p><Button size="sm" variant="ghostLight" onClick={() => setReloadSequence((current) => current + 1)}>Reintentar</Button></div>
         : loading && !result ? <div className={styles.state} role="status"><Icon name="loader-circle" className="sp-spin" size={28} /><p>Cargando planes...</p></div>
         : plans.length === 0 ? <div className={styles.state}><span className={styles.stateIcon}><Icon name="search" size={24} /></span><strong>Sin resultados</strong><p>Probá ajustar la búsqueda o los filtros.</p></div>
-        : <><div className={`${styles.tableScroll} ${loading ? styles.tableLoading : ""}`}><table className={styles.table}><thead><tr><th>Plan</th><th>Propietario</th><th>Estado</th><th>Origen y visibilidad</th><th>Personas</th><th>Actividades</th><th>Costo / duración</th><th>Acciones</th></tr></thead><tbody>{plans.map((plan) => <tr key={plan.id}>
+        : <><div className={`${styles.tableScroll} ${loading ? styles.tableLoading : ""}`}><table className={styles.table}><thead><tr><th>Plan</th><th>Propietario</th><th>Estado</th><th>Origen y visibilidad</th><th>Personas</th><th>Actividades</th><th>Costo / duración</th><th className={styles.actionsHeading}>Acciones</th></tr></thead><tbody>{plans.map((plan) => <tr key={plan.id} className={styles.clickableRow} onClick={() => setViewing(plan)}>
           <td><span className={styles.entityName}>{plan.title}</span><span className={styles.secondary}>#{plan.id}</span></td>
           <td><span className={styles.entityName}>{plan.owner.name} {plan.owner.lastName}</span><span className={styles.secondary}>{plan.owner.email}</span></td>
           <td><PlanStatusCell status={plan.status} /></td>
           <td><PlanVisibilityCell plan={plan} /></td><td>{plan.peopleCount}</td><td>{plan.activityCount}</td><td>{formatPlanTotal(plan)}<span className={styles.secondary}>{formatDuration(plan.estimatedTotalDuration)}</span></td>
-          <td><span className={styles.actions}><button className={styles.iconButton} type="button" aria-label={`Editar ${plan.title}`} onClick={() => { setActionError(null); setEditing(plan); }}><Icon name="pencil" size={16} /></button><button className={`${styles.iconButton} ${styles.dangerButton}`} type="button" aria-label={`Eliminar ${plan.title}`} onClick={() => { setActionError(null); setDeleting(plan); }}><Icon name="trash-2" size={16} /></button></span></td>
+          <td className={styles.actionsColumn} onClick={(event) => event.stopPropagation()}><span className={styles.actions}><button className={styles.iconButton} type="button" aria-label={`Editar ${plan.title}`} onClick={() => { setActionError(null); setEditing(plan); }}><Icon name="pencil" size={16} /></button><button className={`${styles.iconButton} ${styles.dangerButton}`} type="button" aria-label={`Eliminar ${plan.title}`} onClick={() => { setActionError(null); setDeleting(plan); }}><Icon name="trash-2" size={16} /></button></span></td>
         </tr>)}</tbody></table></div></>}
       </div>
       {result && result.pagination.total > 0 ? <div className={styles.paginationArea}><p>Mostrando {firstVisible}–{lastVisible} de {result.pagination.total} planes</p><Pagination page={result.pagination.page} totalPages={result.pagination.totalPages} disabled={loading} onPageChange={setPage} /></div> : null}
+      {viewing ? (
+        <AdminReadDialog
+          icon="route"
+          eyebrow="Plan"
+          title={viewing.title}
+          subtitle={`#${viewing.id}`}
+          onClose={() => setViewing(null)}
+          fields={[
+            { label: "Descripción", value: viewing.description || "Sin descripción", wide: true },
+            { label: "Propietario", value: <>{viewing.owner.name} {viewing.owner.lastName}<span className={styles.secondary}>{viewing.owner.email}</span></> },
+            { label: "Estado", value: <PlanStatusCell status={viewing.status} /> },
+            { label: "Origen y visibilidad", value: <PlanVisibilityCell plan={viewing} /> },
+            { label: "Personas", value: viewing.peopleCount },
+            { label: "Actividades", value: viewing.activityCount },
+            { label: "Costo estimado", value: formatPlanTotal(viewing) },
+            { label: "Duración estimada", value: formatDuration(viewing.estimatedTotalDuration) },
+            { label: "Creado", value: dateFormatter.format(new Date(viewing.createdAt)) },
+            { label: "Última actualización", value: dateFormatter.format(new Date(viewing.updatedAt)) },
+          ]}
+          actions={<>
+            <Button variant="ghostLight" onClick={() => { setActionError(null); setDeleting(viewing); setViewing(null); }}><Icon name="trash-2" size={15} /> Eliminar</Button>
+            <Button onClick={() => { setActionError(null); setEditing(viewing); setViewing(null); }}><Icon name="pencil" size={15} /> Editar</Button>
+          </>}
+        />
+      ) : null}
       {editing ? <AdminPlanDialog plan={editing} saving={saving} error={actionError} onClose={() => { if (!saving) setEditing(null); }} onSave={savePlan} /> : null}
       {deleting ? <ConfirmationDialog title="Eliminar plan" confirmLabel="Eliminar" confirmingLabel="Eliminando..." isConfirming={saving} error={actionError} onCancel={() => { if (!saving) setDeleting(null); }} onConfirm={() => void confirmDelete()}><p>¿Querés eliminar <strong>{deleting.title}</strong>? El registro se conservará para auditoría.</p></ConfirmationDialog> : null}
     </section>

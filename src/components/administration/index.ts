@@ -4,3 +4,4 @@ export { AdminUsersView } from "./AdminUsersView";
 export { AdminActivitiesView } from "./AdminActivitiesView";
 export { AdminPlansView } from "./AdminPlansView";
 export { AdminReportsView } from "./AdminReportsView";
+export { AdminPlacesView } from "./AdminPlacesView";

@@ -18,6 +18,7 @@ export {
   type UseExplorationSearchResult,
 } from "./useExplorationSearch";
 export { useReducedMotion } from "./useReducedMotion";
+export { useScrollLock } from "./useScrollLock";
 export {
   useScrollProgress,
   type UseScrollProgressResult,
