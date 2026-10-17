@@ -5,6 +5,7 @@ import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { Button, Icon } from "@/components/ui";
 import { MediaGalleryManager } from "@/components/media";
 import type { AdminPlan, PlanStatusKey, UpdateAdminPlanInput } from "@/types";
+import { useScrollLock } from "@/hooks";
 
 import styles from "./AdminManagement.module.css";
 
@@ -25,6 +26,7 @@ interface AdminPlanDialogProps {
 }
 
 export function AdminPlanDialog({ plan, saving, error, onClose, onSave }: AdminPlanDialogProps) {
+  useScrollLock();
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);

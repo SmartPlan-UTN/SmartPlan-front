@@ -138,6 +138,16 @@ export interface AdminUserMetrics {
 }
 
 /** Editable fields accepted by `PATCH /admin/users/:id`. */
+/** `POST /admin/users` (CU57): an account created from the panel. */
+export interface CreateAdminUserInput {
+  name: string;
+  lastName: string;
+  email: string;
+  password: string;
+  role: RoleKey;
+  status: UserStatusKey;
+}
+
 export interface UpdateAdminUserInput {
   name?: string;
   lastName?: string;

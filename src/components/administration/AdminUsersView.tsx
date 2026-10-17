@@ -11,9 +11,11 @@ import {
   type IconName,
 } from "@/components/ui";
 import { useDebouncedValue } from "@/hooks";
+import { useSession } from "@/lib/auth";
 import {
   ApiError,
   changeAdminUserStatus,
+  createAdminUser,
   deleteAdminUser,
   getAdminUserMetrics,
   listAdminUsers,
@@ -24,11 +26,13 @@ import type {
   AdminUserMetrics,
   AdminUsersQuery,
   AdminUsersResult,
+  CreateAdminUserInput,
   SortDirection,
   UserStatusKey,
 } from "@/types";
 
 import { UserActionsMenu } from "./UserActionsMenu";
+import { UserCreateDialog } from "./UserCreateDialog";
 import { UserReadDialog } from "./UserReadDialog";
 import { UserStatusBadge } from "./UserStatusBadge";
 import { UserStatusDialog } from "./UserStatusDialog";
@@ -166,6 +170,9 @@ export function AdminUsersView() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [viewingUser, setViewingUser] = useState<AdminUser | null>(null);
   const [editingFromMenu, setEditingFromMenu] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const { user: sessionUser } = useSession();
+  const canCreate = sessionUser?.permissions.includes("user.create") ?? false;
 
   useEffect(() => {
     let ignore = false;
@@ -267,6 +274,16 @@ export function AdminUsersView() {
     }
   }
 
+  async function createUser(input: CreateAdminUserInput) {
+    const created = await createAdminUser(input);
+    setCreating(false);
+    // Back to the first page, newest first, so the new account is in view.
+    setPage(1);
+    setReloadSequence((current) => current + 1);
+    setMetricsReloadSequence((current) => current + 1);
+    return created;
+  }
+
   async function saveUser(
     id: number,
     input: Parameters<typeof updateAdminUser>[1],
@@ -319,15 +336,22 @@ export function AdminUsersView() {
 
   return (
     <section className={styles.screen} aria-busy={loading}>
-      <header className={styles.header}>
-        <p className={styles.eyebrow}>
-          <Icon name="users" size={14} />
-          Comunidad
-        </p>
-        <h1 className={`sp-h2 ${styles.title}`}>Administración de Usuarios</h1>
-        <p className={`sp-body ${styles.subtitle}`}>
-          Gestioná las cuentas registradas en la plataforma.
-        </p>
+      <header className={`${styles.header} ${styles.headerRow}`}>
+        <div>
+          <p className={styles.eyebrow}>
+            <Icon name="users" size={14} />
+            Comunidad
+          </p>
+          <h1 className={`sp-h2 ${styles.title}`}>Administración de Usuarios</h1>
+          <p className={`sp-body ${styles.subtitle}`}>
+            Gestioná las cuentas registradas en la plataforma.
+          </p>
+        </div>
+        {canCreate ? (
+          <Button onClick={() => setCreating(true)}>
+            <Icon name="plus" size={17} /> Nuevo usuario
+          </Button>
+        ) : null}
       </header>
 
       <div className={styles.kpiGrid} aria-label="Métricas de usuarios">
@@ -493,6 +517,13 @@ export function AdminUsersView() {
             onPageChange={setPage}
           />
         </div>
+      ) : null}
+
+      {creating ? (
+        <UserCreateDialog
+          onClose={() => setCreating(false)}
+          onCreate={createUser}
+        />
       ) : null}
 
       {viewingUser ? (

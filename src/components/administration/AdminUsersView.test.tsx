@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   changeAdminUserStatus,
+  createAdminUser,
   deleteAdminUser,
   getAdminUserMetrics,
   listAdminUsers,
@@ -16,10 +17,26 @@ import { AdminUsersView } from "./AdminUsersView";
 vi.mock("@/lib/api", () => ({
   ApiError: class ApiError extends Error {},
   changeAdminUserStatus: vi.fn(),
+  createAdminUser: vi.fn(),
   deleteAdminUser: vi.fn(),
   getAdminUserMetrics: vi.fn(),
   listAdminUsers: vi.fn(),
   updateAdminUser: vi.fn(),
+}));
+
+vi.mock("@/lib/auth", () => ({
+  useSession: () => ({
+    status: "authenticated",
+    authenticated: true,
+    user: {
+      id: 1,
+      name: "Admin",
+      lastName: "SmartPlan",
+      email: "admin@example.com",
+      role: { key: "admin", name: "Administrador" },
+      permissions: ["user.list", "user.create", "user.update"],
+    },
+  }),
 }));
 
 function adminUser(status: UserStatusKey = "active"): AdminUser {
@@ -219,6 +236,62 @@ describe("AdminUsersView", () => {
         lastName: "Gómez",
       }));
     });
+  });
+
+  it("creates a user from the Nuevo usuario dialog and reloads the list", async () => {
+    vi.mocked(createAdminUser).mockResolvedValue({
+      ...adminUser(),
+      id: 21,
+      name: "Lucía",
+      lastName: "Pérez",
+      email: "lucia@example.com",
+    });
+    const user = userEvent.setup();
+    render(<AdminUsersView />);
+    await screen.findByText("Martina García");
+    const listCalls = vi.mocked(listAdminUsers).mock.calls.length;
+
+    await user.click(screen.getByRole("button", { name: "Nuevo usuario" }));
+    const dialog = screen.getByRole("dialog", { name: "Nuevo usuario" });
+    await user.type(within(dialog).getByLabelText("Nombre"), "Lucía");
+    await user.type(within(dialog).getByLabelText("Apellido"), "Pérez");
+    await user.type(within(dialog).getByLabelText("Correo electrónico"), "lucia@example.com");
+    await user.type(within(dialog).getByLabelText("Contraseña inicial"), "Segura123.");
+    await user.selectOptions(within(dialog).getByLabelText("Rol"), "admin");
+    await user.click(within(dialog).getByRole("button", { name: "Crear usuario" }));
+
+    await waitFor(() => {
+      expect(createAdminUser).toHaveBeenCalledWith({
+        name: "Lucía",
+        lastName: "Pérez",
+        email: "lucia@example.com",
+        password: "Segura123.",
+        role: "admin",
+        status: "active",
+      });
+    });
+    expect(screen.queryByRole("dialog", { name: "Nuevo usuario" })).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(vi.mocked(listAdminUsers).mock.calls.length).toBeGreaterThan(listCalls);
+    });
+  });
+
+  it("keeps the Nuevo usuario dialog open when the password misses the policy", async () => {
+    vi.mocked(createAdminUser).mockClear();
+    const user = userEvent.setup();
+    render(<AdminUsersView />);
+    await screen.findByText("Martina García");
+
+    await user.click(screen.getByRole("button", { name: "Nuevo usuario" }));
+    const dialog = screen.getByRole("dialog", { name: "Nuevo usuario" });
+    await user.type(within(dialog).getByLabelText("Nombre"), "Lucía");
+    await user.type(within(dialog).getByLabelText("Apellido"), "Pérez");
+    await user.type(within(dialog).getByLabelText("Correo electrónico"), "lucia@example.com");
+    await user.type(within(dialog).getByLabelText("Contraseña inicial"), "corta");
+    await user.click(within(dialog).getByRole("button", { name: "Crear usuario" }));
+
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("al menos 8 caracteres");
+    expect(createAdminUser).not.toHaveBeenCalled();
   });
 
   it("deletes a user after confirming and removes it from the table", async () => {

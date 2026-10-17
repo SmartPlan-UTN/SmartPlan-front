@@ -322,6 +322,8 @@
   display: grid;
   place-items: center;
   overflow-y: auto;
+  /* The wheel scrolls the dialog, never the page behind the overlay. */
+  overscroll-behavior: contain;
   padding: var(--s-4);
   background: color-mix(in srgb, var(--char) 58%, transparent);
   backdrop-filter: blur(4px);
@@ -331,6 +333,7 @@
   width: min(100%, 720px);
   max-height: calc(100dvh - 32px);
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: var(--s-6);
   border: 1px solid var(--hairline);
   border-radius: var(--r-card);

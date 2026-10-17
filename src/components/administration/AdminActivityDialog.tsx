@@ -10,6 +10,7 @@ import type {
   CategoryOption,
   PlaceOption,
 } from "@/types";
+import { useScrollLock } from "@/hooks";
 
 import styles from "./AdminManagement.module.css";
 
@@ -32,6 +33,7 @@ export function AdminActivityDialog({
   onClose,
   onSave,
 }: AdminActivityDialogProps) {
+  useScrollLock();
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);

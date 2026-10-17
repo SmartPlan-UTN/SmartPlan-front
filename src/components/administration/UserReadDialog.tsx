@@ -15,6 +15,7 @@ import type {
   UpdateAdminUserInput,
   UserStatusKey,
 } from "@/types";
+import { useScrollLock } from "@/hooks";
 
 import { UserStatusBadge } from "./UserStatusBadge";
 
@@ -53,6 +54,7 @@ export function UserReadDialog({
   onDelete,
   startEditing = false,
 }: UserReadDialogProps) {
+  useScrollLock();
   const dialogRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const [editing, setEditing] = useState(startEditing);

@@ -5,6 +5,7 @@ import { useEffect, useId, useRef } from "react";
 import { MediaGalleryManager } from "@/components/media";
 import { Icon } from "@/components/ui";
 import type { PlaceOption } from "@/types";
+import { useScrollLock } from "@/hooks";
 
 import styles from "./AdminManagement.module.css";
 
@@ -14,6 +15,7 @@ interface AdminPlaceImagesDialogProps {
 }
 
 export function AdminPlaceImagesDialog({ place, onClose }: AdminPlaceImagesDialogProps) {
+  useScrollLock();
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
   const onCloseRef = useRef(onClose);

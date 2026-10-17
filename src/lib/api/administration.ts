@@ -1,6 +1,7 @@
 import type {
   AdminUser,
   AdminUserMetrics,
+  CreateAdminUserInput,
   AdminUsersQuery,
   AdminUsersResult,
   DashboardMetrics,
@@ -97,6 +98,13 @@ export async function changeAdminUserStatus(
 }
 
 /** Updates the editable profile, role, and status fields of an administered user. */
+/** Creates an account from the panel (CU57); requires `user.create`. */
+export async function createAdminUser(
+  input: CreateAdminUserInput,
+): Promise<AdminUser> {
+  return apiClient.post<AdminUser>("/admin/users", input);
+}
+
 export async function updateAdminUser(
   id: number,
   input: UpdateAdminUserInput,

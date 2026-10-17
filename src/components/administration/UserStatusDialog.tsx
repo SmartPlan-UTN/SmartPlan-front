@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 
 import { Button, Icon } from "@/components/ui";
 import type { AdminUser, UserStatusKey } from "@/types";
+import { useScrollLock } from "@/hooks";
 
 import styles from "./administration.module.css";
 
@@ -37,6 +38,7 @@ export function UserStatusDialog({
   onCancel,
   onConfirm,
 }: UserStatusDialogProps) {
+  useScrollLock();
   const cancelRef = useRef<HTMLButtonElement>(null);
   const confirmRef = useRef<HTMLButtonElement>(null);
   const copy = COPY[status];

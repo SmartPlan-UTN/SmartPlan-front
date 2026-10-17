@@ -9,6 +9,25 @@
   margin-bottom: var(--s-1);
 }
 
+/* Title block on the left, "Nuevo usuario" on the right. */
+.headerRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-4);
+}
+
+.createIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--ember-10);
+  color: var(--ember);
+}
+
 .eyebrow {
   display: flex;
   align-items: center;
@@ -469,6 +488,9 @@
   z-index: 300;
   display: grid;
   place-items: center;
+  overflow-y: auto;
+  /* The wheel scrolls the dialog, never the page behind the overlay. */
+  overscroll-behavior: contain;
   padding: var(--s-4);
   background: color-mix(in srgb, var(--char) 58%, transparent);
   -webkit-backdrop-filter: blur(4px);
@@ -477,6 +499,11 @@
 
 .dialog {
   width: min(100%, 440px);
+  /* A tall form (e.g. "Nuevo usuario") scrolls inside the dialog instead of
+     running past the bottom of the screen. */
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: var(--s-6);
   border: 1px solid var(--hairline);
   border-radius: var(--r-card);
