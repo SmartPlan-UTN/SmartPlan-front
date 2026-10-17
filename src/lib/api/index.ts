@@ -65,6 +65,7 @@ export {
   changeAdminUserStatus,
   createAdminUser,
   deleteAdminUser,
+  downloadAdminUsersReport,
   getAdminUserMetrics,
   getDashboardMetrics,
   downloadDashboardMetrics,

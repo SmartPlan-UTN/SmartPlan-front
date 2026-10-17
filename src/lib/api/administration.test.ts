@@ -9,6 +9,7 @@ import {
   createAdminActivity,
   deleteAdminActivity,
   deleteAdminPlan,
+  downloadAdminUsersReport,
   downloadDashboardMetrics,
   getAdminUserMetrics,
   listAdminActivities,
@@ -138,27 +139,38 @@ describe("administration user API", () => {
     });
   });
 
-  it("counts active accounts and registrations from the last seven days", async () => {
-    vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(result([], 12))
-      .mockResolvedValueOnce(result([], 9))
-      .mockResolvedValueOnce(
-        result(
-          [
-            user(1, "2026-08-24T10:00:00.000Z"),
-            user(2, "2026-08-18T10:00:00.000Z"),
-            user(3, "2026-08-17T23:59:59.000Z"),
-          ],
-          12,
-        ),
-      );
+  it("reads REP-02 metrics for a range from the backend", async () => {
+    const metrics = { totalUsers: 12, activeUsers: 9, newUsers: 2 };
+    vi.mocked(apiClient.get).mockResolvedValue(metrics);
 
-    await expect(
-      getAdminUserMetrics(new Date("2026-08-25T00:00:00.000Z")),
-    ).resolves.toEqual({
-      totalUsers: 12,
-      activeUsers: 9,
-      newUsersThisWeek: 2,
+    await expect(getAdminUserMetrics("30d")).resolves.toBe(metrics);
+    expect(apiClient.get).toHaveBeenCalledWith("/admin/users/metrics", {
+      params: { range: "30d" },
+    });
+  });
+
+  it("downloads the users report with the table filters and server filename", async () => {
+    const blob = new Blob(["%PDF-1.3"], { type: "application/pdf" });
+    vi.mocked(apiClient.request).mockResolvedValue({
+      data: blob,
+      headers: { "content-disposition": 'attachment; filename="usuarios.pdf"' },
+    } as AxiosResponse<Blob>);
+    const query = {
+      range: "7d" as const,
+      format: "pdf" as const,
+      search: "mar",
+      status: "active" as const,
+    };
+
+    await expect(downloadAdminUsersReport(query)).resolves.toEqual({
+      blob,
+      filename: "usuarios.pdf",
+    });
+    expect(apiClient.request).toHaveBeenCalledWith({
+      method: "GET",
+      url: "/admin/users/export",
+      params: query,
+      responseType: "blob",
     });
   });
 

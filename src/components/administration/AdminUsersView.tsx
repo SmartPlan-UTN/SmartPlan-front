@@ -17,6 +17,7 @@ import {
   changeAdminUserStatus,
   createAdminUser,
   deleteAdminUser,
+  downloadAdminUsersReport,
   getAdminUserMetrics,
   listAdminUsers,
   updateAdminUser,
@@ -27,6 +28,7 @@ import type {
   AdminUsersQuery,
   AdminUsersResult,
   CreateAdminUserInput,
+  DashboardRange,
   SortDirection,
   UserStatusKey,
 } from "@/types";
@@ -123,7 +125,7 @@ function KpiCard({
   label: string;
   value?: number;
   detail: string;
-  tone: "ember" | "success" | "electric";
+  tone: "ember" | "success" | "electric" | "warning";
 }) {
   return (
     <article className={styles.kpiCard}>
@@ -138,6 +140,13 @@ function KpiCard({
     </article>
   );
 }
+
+const RANGE_OPTIONS: Array<{ id: DashboardRange; label: string; detail: string }> = [
+  { id: "today", label: "Hoy", detail: "Desde las 00:00" },
+  { id: "7d", label: "7 días", detail: "Últimos 7 días" },
+  { id: "30d", label: "30 días", detail: "Últimos 30 días" },
+  { id: "month", label: "Este mes", detail: "Desde el 1.° del mes" },
+];
 
 /** Lets a long email wrap after its `@` before breaking inside a word. */
 function emailWithBreak(email: string) {
@@ -171,6 +180,9 @@ export function AdminUsersView() {
   const [viewingUser, setViewingUser] = useState<AdminUser | null>(null);
   const [editingFromMenu, setEditingFromMenu] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [range, setRange] = useState<DashboardRange>("7d");
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState(false);
   const { user: sessionUser } = useSession();
   const canCreate = sessionUser?.permissions.includes("user.create") ?? false;
 
@@ -208,7 +220,7 @@ export function AdminUsersView() {
 
     async function loadMetrics() {
       try {
-        const nextMetrics = await getAdminUserMetrics();
+        const nextMetrics = await getAdminUserMetrics(range);
         if (!ignore) setMetrics(nextMetrics);
       } catch (_error) {
         if (!ignore) setMetrics(null);
@@ -219,7 +231,7 @@ export function AdminUsersView() {
     return () => {
       ignore = true;
     };
-  }, [metricsReloadSequence]);
+  }, [metricsReloadSequence, range]);
 
   function requestStatusChange(user: AdminUser, status: UserStatusKey) {
     setActionError(null);
@@ -271,6 +283,36 @@ export function AdminUsersView() {
       setActionError(readableError(error, "No pudimos cambiar el estado de la cuenta."));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function downloadReport() {
+    if (downloading) return;
+    setDownloading(true);
+    setDownloadError(false);
+    try {
+      const { blob, filename } = await downloadAdminUsersReport({
+        range,
+        format: "pdf",
+        search: debouncedSearch || undefined,
+        status: statusFilter || undefined,
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      try {
+        link.href = url;
+        link.download = filename;
+        document.body.append(link);
+        link.click();
+      } finally {
+        link.remove();
+        // Give the browser a task to start reading the file before revoking it.
+        window.setTimeout(() => URL.revokeObjectURL(url), 0);
+      }
+    } catch (_error) {
+      setDownloadError(true);
+    } finally {
+      setDownloading(false);
     }
   }
 
@@ -326,6 +368,10 @@ export function AdminUsersView() {
   }
 
   const users = result?.data ?? [];
+  const rangeDetail = RANGE_OPTIONS.find((option) => option.id === range)?.detail ?? "";
+  const suspendedPercentage = metrics?.totalUsers
+    ? `${Math.round((metrics.suspendedUsers / metrics.totalUsers) * 100)}% del total`
+    : "Cuentas sin acceso";
   const activePercentage = metrics?.totalUsers
     ? `${Math.round((metrics.activeUsers / metrics.totalUsers) * 100)}% del total`
     : "Cuentas habilitadas";
@@ -347,12 +393,46 @@ export function AdminUsersView() {
             Gestioná las cuentas registradas en la plataforma.
           </p>
         </div>
-        {canCreate ? (
-          <Button onClick={() => setCreating(true)}>
-            <Icon name="plus" size={17} /> Nuevo usuario
+        <div className={styles.headerActions}>
+          <div className={styles.rangeGroup} role="group" aria-label="Período de las métricas">
+            {RANGE_OPTIONS.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                className={`${styles.rangeBtn} ${range === option.id ? styles.rangeBtnActive : ""}`}
+                aria-pressed={range === option.id}
+                onClick={() => setRange(option.id)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <Button
+            variant="ghostLight"
+            disabled={downloading}
+            aria-busy={downloading}
+            onClick={() => void downloadReport()}
+          >
+            <Icon
+              name={downloading ? "loader-circle" : "download"}
+              size={16}
+              className={downloading ? "sp-spin" : undefined}
+            />
+            {downloading ? "Descargando…" : "Descargar reporte"}
           </Button>
-        ) : null}
+          {canCreate ? (
+            <Button onClick={() => setCreating(true)}>
+              <Icon name="plus" size={17} /> Nuevo usuario
+            </Button>
+          ) : null}
+        </div>
       </header>
+
+      {downloadError ? (
+        <div className={styles.inlineError} role="alert">
+          No pudimos generar el reporte. Intentá nuevamente.
+        </div>
+      ) : null}
 
       <div className={styles.kpiGrid} aria-label="Métricas de usuarios">
         <KpiCard
@@ -370,11 +450,18 @@ export function AdminUsersView() {
           detail={activePercentage}
         />
         <KpiCard
+          icon="lock"
+          tone="warning"
+          label="Usuarios suspendidos"
+          value={metrics?.suspendedUsers}
+          detail={suspendedPercentage}
+        />
+        <KpiCard
           icon="calendar"
           tone="electric"
-          label="Nuevos registros (semana)"
-          value={metrics?.newUsersThisWeek}
-          detail="Últimos 7 días"
+          label="Nuevos registros"
+          value={metrics?.newUsers}
+          detail={rangeDetail}
         />
       </div>
 

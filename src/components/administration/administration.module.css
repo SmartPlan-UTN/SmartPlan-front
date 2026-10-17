@@ -9,12 +9,58 @@
   margin-bottom: var(--s-1);
 }
 
-/* Title block on the left, "Nuevo usuario" on the right. */
+/* Title block on the left; range, report and "Nuevo usuario" on the right. */
 .headerRow {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--s-4);
+}
+
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+/* Same segmented range control as the dashboard (AdminDashboard.module.css). */
+.rangeGroup {
+  display: flex;
+  gap: 3px;
+  padding: 4px;
+  border-radius: var(--r-card-sm);
+  background: color-mix(in srgb, var(--char) 6%, transparent);
+}
+
+.rangeBtn {
+  padding: 7px 15px;
+  border: none;
+  border-radius: var(--r-btn);
+  background: transparent;
+  color: var(--fg-2);
+  font-family: var(--font);
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 150ms ease, background 150ms ease, box-shadow 150ms ease;
+}
+
+.rangeBtn:hover {
+  color: var(--fg-1);
+}
+
+.rangeBtn:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.rangeBtnActive {
+  background: var(--surface-card);
+  color: var(--ember);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--char) 10%, transparent);
 }
 
 .createIcon {
@@ -50,7 +96,7 @@
 
 .kpiGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 18px;
 }
 
@@ -85,6 +131,7 @@
 .kpiIcon_ember { background: var(--ember-15); color: var(--ember); }
 .kpiIcon_success { background: var(--success-15); color: var(--success); }
 .kpiIcon_electric { background: var(--electric-15); color: var(--electric); }
+.kpiIcon_warning { background: var(--warning-15); color: var(--warning-ink); }
 
 .kpiLabel,
 .kpiValue,
@@ -116,6 +163,7 @@
 .kpiDetail_ember { color: var(--ember); }
 .kpiDetail_success { color: var(--success); }
 .kpiDetail_electric { color: var(--electric); }
+.kpiDetail_warning { color: var(--warning-ink); }
 
 .toolbar {
   display: flex;
@@ -724,6 +772,12 @@
 
 .paginationArea > nav {
   margin-top: 0;
+}
+
+@media (max-width: 1200px) {
+  .kpiGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 900px) {

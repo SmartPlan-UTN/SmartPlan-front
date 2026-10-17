@@ -6,6 +6,7 @@ import {
   changeAdminUserStatus,
   createAdminUser,
   deleteAdminUser,
+  downloadAdminUsersReport,
   getAdminUserMetrics,
   listAdminUsers,
   updateAdminUser,
@@ -19,6 +20,7 @@ vi.mock("@/lib/api", () => ({
   changeAdminUserStatus: vi.fn(),
   createAdminUser: vi.fn(),
   deleteAdminUser: vi.fn(),
+  downloadAdminUsersReport: vi.fn(),
   getAdminUserMetrics: vi.fn(),
   listAdminUsers: vi.fn(),
   updateAdminUser: vi.fn(),
@@ -66,9 +68,14 @@ describe("AdminUsersView", () => {
   beforeEach(() => {
     vi.mocked(listAdminUsers).mockResolvedValue(usersResult());
     vi.mocked(getAdminUserMetrics).mockResolvedValue({
+      range: { key: "7d", from: "2026-08-13T00:00:00.000Z", to: "2026-08-20T00:00:00.000Z" },
       totalUsers: 2847,
       activeUsers: 2412,
-      newUsersThisWeek: 63,
+      suspendedUsers: 435,
+      administrators: 4,
+      newUsers: 63,
+      byStatus: [],
+      byRole: [],
     });
     vi.mocked(changeAdminUserStatus).mockImplementation(async (_id, status) =>
       adminUser(status),
@@ -95,10 +102,55 @@ describe("AdminUsersView", () => {
     expect(screen.getByText("2.847")).toBeInTheDocument();
     expect(screen.getByText("2.412")).toBeInTheDocument();
     expect(screen.getByText("63")).toBeInTheDocument();
+    expect(screen.getByText("435")).toBeInTheDocument();
+    expect(getAdminUserMetrics).toHaveBeenCalledWith("7d");
     expect(screen.getByText("martina@example.com")).toBeInTheDocument();
     expect(screen.getByText("Activo")).toBeInTheDocument();
     expect(screen.getByRole("cell", { name: "Usuario" })).toBeInTheDocument();
     expect(screen.getByText("Mostrando 1–1 de 1 usuarios")).toBeInTheDocument();
+  });
+
+  it("reloads the metrics for the selected range", async () => {
+    const user = userEvent.setup();
+    render(<AdminUsersView />);
+    await screen.findByText("Martina García");
+
+    await user.click(screen.getByRole("button", { name: "30 días" }));
+
+    await waitFor(() => {
+      expect(getAdminUserMetrics).toHaveBeenLastCalledWith("30d");
+    });
+    expect(screen.getByRole("button", { name: "30 días" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("Últimos 30 días")).toBeInTheDocument();
+  });
+
+  it("downloads the PDF report with the range and the table filters", async () => {
+    const createObjectURL = vi.fn(() => "blob:report");
+    Object.defineProperty(URL, "createObjectURL", { configurable: true, value: createObjectURL });
+    Object.defineProperty(URL, "revokeObjectURL", { configurable: true, value: vi.fn() });
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    vi.mocked(downloadAdminUsersReport).mockResolvedValue({
+      blob: new Blob(["%PDF"]),
+      filename: "usuarios.pdf",
+    });
+    const user = userEvent.setup();
+    render(<AdminUsersView />);
+    await screen.findByText("Martina García");
+
+    await user.click(screen.getByRole("button", { name: "Filtrar por estado" }));
+    await user.click(screen.getByRole("option", { name: "Activo" }));
+    await user.click(screen.getByRole("button", { name: "Descargar reporte" }));
+
+    await waitFor(() => {
+      expect(downloadAdminUsersReport).toHaveBeenCalledWith({
+        range: "7d",
+        format: "pdf",
+        search: undefined,
+        status: "active",
+      });
+    });
+    expect(click).toHaveBeenCalled();
+    click.mockRestore();
   });
 
   it("requests the selected status filter from the API", async () => {
