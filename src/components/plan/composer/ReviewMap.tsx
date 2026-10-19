@@ -4,12 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { renderStopMarker } from "@/components/maps/markers";
 import { Icon } from "@/components/ui";
-import { COMPOSER_MAP_STYLE } from "@/lib/maps/brandedMapStyle";
 import {
   createHtmlMarkerLayer,
   type HtmlMarkerLayer,
 } from "@/lib/maps/htmlMarkerLayer";
+import { mapThemeOptions } from "@/lib/maps/mapTheme";
 import { useGoogleMap } from "@/lib/maps/useGoogleMap";
+import { useMapTheme } from "@/lib/maps/useMapTheme";
+import { useTheme } from "@/lib/theme";
 
 import type { Coords } from "./routeDistance";
 import { useMediaQuery } from "./useMediaQuery";
@@ -52,6 +54,7 @@ export function ReviewMap({
   const containerRef = useRef<HTMLDivElement>(null);
   const coarse = useMediaQuery("(pointer: coarse)");
   const first = stops[0]?.coords;
+  const { theme } = useTheme();
   const [options] = useState<google.maps.MapOptions>(() => ({
     center: first
       ? { lat: first.latitude, lng: first.longitude }
@@ -59,8 +62,7 @@ export function ReviewMap({
     zoom: 13,
     minZoom: 4,
     maxZoom: 18,
-    styles: COMPOSER_MAP_STYLE,
-    backgroundColor: "#EEE7DB",
+    ...mapThemeOptions("composer", theme),
     disableDefaultUI: true,
     clickableIcons: false,
     keyboardShortcuts: false,
@@ -71,6 +73,7 @@ export function ReviewMap({
     return () => setMap(null);
   }, []);
   const { status } = useGoogleMap(containerRef, options, onReady);
+  useMapTheme(map, "composer");
 
   useEffect(() => {
     if (status === "error") onUnavailable();

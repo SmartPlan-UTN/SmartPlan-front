@@ -1,9 +1,12 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { Icon } from "@/components/ui";
+import { mapThemeOptions } from "@/lib/maps/mapTheme";
 import { useGoogleMap } from "@/lib/maps/useGoogleMap";
+import { useMapTheme } from "@/lib/maps/useMapTheme";
+import { useTheme } from "@/lib/theme";
 import { googleMapsUrl } from "@/lib/utils";
 
 import styles from "./explore.module.css";
@@ -34,17 +37,28 @@ export function LocationPreview({
   const containerRef = useRef<HTMLDivElement>(null);
   const hasCoordinates = latitude != null && longitude != null;
 
+  const { theme } = useTheme();
   const options = useMemo<google.maps.MapOptions | null>(() => {
     if (latitude == null || longitude == null) return null;
     // Same plain options as the full CU16 map view — every default
     // control (zoom, map/satellite, street view) visible, not a
-    // stripped-down embed.
-    return { center: { lat: latitude, lng: longitude }, zoom: 15 };
-  }, [latitude, longitude]);
+    // stripped-down embed. `theme` only matters to a map being created;
+    // one on screen is restyled by `useMapTheme`.
+    return {
+      center: { lat: latitude, lng: longitude },
+      zoom: 15,
+      ...mapThemeOptions("vendor", theme),
+    };
+  }, [latitude, longitude, theme]);
 
-  const { status: mapStatus } = useGoogleMap(containerRef, options, (map) => {
+  const [map, setMap] = useState<google.maps.Map | null>(null);
+  useMapTheme(map, "vendor");
+
+  const { status: mapStatus } = useGoogleMap(containerRef, options, (instance) => {
     if (options == null) return;
-    new google.maps.Marker({ position: options.center, map, title });
+    setMap(instance);
+    new google.maps.Marker({ position: options.center, map: instance, title });
+    return () => setMap(null);
   });
 
   const status: MapStatus = !hasCoordinates

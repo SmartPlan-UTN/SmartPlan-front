@@ -3,13 +3,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { renderResultMarker, renderStopMarker } from "@/components/maps/markers";
-import { COMPOSER_MAP_STYLE } from "@/lib/maps/brandedMapStyle";
 import {
   createHtmlMarkerLayer,
   type HtmlMarker,
   type HtmlMarkerLayer,
 } from "@/lib/maps/htmlMarkerLayer";
+import { mapThemeOptions } from "@/lib/maps/mapTheme";
 import { useGoogleMap } from "@/lib/maps/useGoogleMap";
+import { useMapTheme } from "@/lib/maps/useMapTheme";
+import { useTheme } from "@/lib/theme";
 
 import { distanceKm, type Coords } from "./routeDistance";
 import styles from "./PlaceMiniMap.module.css";
@@ -50,24 +52,27 @@ export function PlaceMiniMap({
 }: PlaceMiniMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
+  const { theme } = useTheme();
+  // `theme` only matters to a map being created; one already on screen is
+  // restyled by `useMapTheme` (a new object alone never re-creates it).
   const options = useMemo<google.maps.MapOptions>(
     () => ({
       center: { lat: place.latitude, lng: place.longitude },
       zoom: 15,
-      styles: COMPOSER_MAP_STYLE,
-      backgroundColor: "#EEE7DB",
+      ...mapThemeOptions("composer", theme),
       disableDefaultUI: true,
       clickableIcons: false,
       gestureHandling: "none",
       keyboardShortcuts: false,
     }),
-    [place.latitude, place.longitude],
+    [place.latitude, place.longitude, theme],
   );
   const onReady = useCallback((instance: google.maps.Map) => {
     setMap(instance);
     return () => setMap(null);
   }, []);
   const { status } = useGoogleMap(containerRef, options, onReady);
+  useMapTheme(map, "composer");
 
   const layerRef = useRef<HtmlMarkerLayer | null>(null);
   const legRef = useRef<google.maps.Polyline | null>(null);
