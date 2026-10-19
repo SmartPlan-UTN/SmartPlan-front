@@ -350,6 +350,8 @@ Things that have been spotted but don't have an owner yet:
 
 ## Log
 
+2026-10-19 — `feature/intelligent-search-v1`, PR #196: manual Creator now searches published direct-action places, saves and reopens real Place Actions, and uses shared schedule/budget checks. Mixed drafts preserve target/detail identity; map authentication failures use the product fallback. Local production build, lint, typecheck and full tests (151 files / 1,045 tests) passed. Responsive browser acceptance remains incomplete after the browser disconnected; the paired backend report `docs/intelligent-search-excellence-2026-10-19.md` (PR #142) records the product limits. No merge, deployment or paid-provider enrichment.
+
 2026-10-13 — `SMART-160-estados-visibilidad-planes` implements #160 with back [#124](https://github.com/SmartPlan-UTN/SmartPlan-back/pull/124). Explorar's filter (authored + public + not cancelled) was already correct; the "Completed" plans missing from Explorar are outings, generated results, or private plans. `pnpm lint` and `pnpm build` pass; `pnpm test` 873/874 with the known unrelated `CreatePlanForm.test.tsx` flake that passes on its own. Checked in the browser against the local backend: Spanish statuses, origin/visibility column and legend, edit-dialog note, Explorar listing only the public authored plan, and the empty state.
 
 2026-10-12 — `fix/163-password-dot` implements #163 / back #111 in an isolated worktree from `origin/develop`. Verification and PR links are recorded in the ticket table above. Staging data and concurrent photo work are untouched.

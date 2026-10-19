@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type RefObject } from "react";
 
-import { loadGoogleMaps } from "./loadGoogleMaps";
+import { loadGoogleMaps, GOOGLE_MAPS_AUTH_FAILURE_EVENT } from "./loadGoogleMaps";
 
 export type GoogleMapStatus = "loading" | "ready" | "error";
 
@@ -43,23 +43,34 @@ export function useGoogleMap(
     if (options == null) return;
 
     let cancelled = false;
+    let failed = false;
     let map: google.maps.Map | null = null;
     let readyCleanup: (() => void) | void;
+
+    const unavailable = () => {
+      if (cancelled) return;
+      failed = true;
+      readyCleanup?.();
+      readyCleanup = undefined;
+      if (map) google.maps.event.clearInstanceListeners(map);
+      map = null;
+      containerRef.current?.replaceChildren();
+      setStatus('error');
+      setErrorMessage('No pudimos cargar el mapa. Podés seguir con tu recorrido.');
+    };
+    window.addEventListener(GOOGLE_MAPS_AUTH_FAILURE_EVENT, unavailable);
 
     async function init() {
       try {
         await loadGoogleMaps();
-        if (cancelled || !containerRef.current) return;
+        if (cancelled || failed || !containerRef.current) return;
 
         map = new google.maps.Map(containerRef.current, options as google.maps.MapOptions);
+        if (failed) { unavailable(); return; }
         setStatus("ready");
         readyCleanup = onReadyRef.current?.(map);
-      } catch (error) {
-        if (cancelled) return;
-        setStatus("error");
-        setErrorMessage(
-          error instanceof Error ? error.message : "No pudimos cargar el mapa.",
-        );
+      } catch {
+        unavailable();
       }
     }
 
@@ -67,6 +78,7 @@ export function useGoogleMap(
 
     return () => {
       cancelled = true;
+      window.removeEventListener(GOOGLE_MAPS_AUTH_FAILURE_EVENT, unavailable);
       readyCleanup?.();
       if (map) {
         google.maps.event.clearInstanceListeners(map);

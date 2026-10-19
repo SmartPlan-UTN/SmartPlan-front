@@ -7,7 +7,7 @@ import { checkPlanComposer } from "@/lib/api";
 import { activityDetailRoute, placeDetailRoute } from "@/lib/routes";
 import { formatArs } from "@/lib/utils";
 import type { ComposerCheckPayload, ComposerCheckResult } from "@/types";
-import type { ComposerStop } from "./draft";
+import { composerTarget, type ComposerStop } from "./draft";
 import styles from "./ComposerIntelligence.module.css";
 
 export function ComposerIntelligence({
@@ -42,7 +42,7 @@ export function ComposerIntelligence({
     travelMode,
     ...(budget === undefined ? {} : { budget }),
     stops: stops.map((stop) => ({
-      activityId: stop.activity.id,
+      ...composerTarget(stop),
       durationMinutes: stop.estimatedDuration,
     })),
   };
@@ -98,7 +98,7 @@ export function ComposerIntelligence({
       )
     : [];
   return (
-    <details className={styles.panel}>
+    <details id="composer-intelligence" className={styles.panel}>
       <summary>Comprobar un horario</summary>
       <p className={styles.note}>
         Probá día, hora y presupuesto para revisar tu recorrido.

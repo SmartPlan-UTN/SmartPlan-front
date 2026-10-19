@@ -27,6 +27,7 @@ import type { DiscoveryView } from "./composer/CatalogPanel";
 import { ComposerStepper } from "./composer/ComposerStepper";
 import {
   createInitialDraft,
+  composerTarget,
   getDraftKey,
   type ComposerDraft,
   type ComposerStop,
@@ -53,6 +54,7 @@ import {
 } from "./composer/useAssistant";
 import styles from "./PlanComposer.module.css";
 import { ComposerIntelligence } from './composer/ComposerIntelligence';
+import { PlaceStopPicker } from './composer/PlaceStopPicker';
 
 type ComposerMode =
   | {
@@ -154,7 +156,7 @@ export function PlanComposer({
   const isSearchSettling =
     trimmedSearch.length >= 2 && trimmedSearch !== trimmedDebouncedSearch;
   const stopIds = useMemo(
-    () => draft.stops.map((stop) => stop.activity.id),
+    () => draft.stops.filter((stop) => !stop.placeTarget).map((stop) => stop.activity.id),
     [draft.stops],
   );
   const assistantSearch = useAssistantSearch(askedQuery, stopIds);
@@ -234,7 +236,7 @@ export function PlanComposer({
     title: draft.title,
     description: draft.description,
     stops: draft.stops,
-    enabled: step === 1,
+    enabled: step === 1 && !draft.stops.some((stop) => stop.placeTarget),
   });
   const showAssistance =
     trimmedSearch.length === 0 &&
@@ -602,7 +604,7 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
       peopleCount: draft.peopleCount,
       visibility: draft.visibility,
       stops: draft.stops.map((stop) => ({
-        activityId: stop.activity.id,
+        ...composerTarget(stop),
         ...(stop.detailId === undefined ? {} : { detailId: stop.detailId }),
       })),
     };
@@ -691,6 +693,11 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
 
         {step === 1 ? (
           <ActivitiesStep
+            places={<PlaceStopPicker stops={draft.stops} disabled={isSaving} onAdd={(stop) => {
+              if (stopsRef.current.some((current) => current.activity.id === stop.activity.id)) return;
+              setStops([...stopsRef.current, stop]);
+              setAnnouncement(`${stop.activity.name} se agregó al recorrido.`);
+            }} />}
             title={draft.title}
             headingRef={headingRef}
             health={health}
@@ -802,7 +809,13 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
           isSaving={isSaving}
           visibleOnMobile={mobilePane === "itinerary"}
           improvement={improvement.state}
-          onImprove={improvement.request}
+          onImprove={() => {
+            if (draft.stops.some((stop) => stop.placeTarget)) {
+              const panel = document.getElementById('composer-intelligence');
+              panel?.setAttribute('open', '');
+              panel?.querySelector('input')?.focus();
+            } else improvement.request();
+          }}
           onDismissImprovement={improvement.dismiss}
           onApplyProposal={applyProposal}
           onRemove={removeActivity}

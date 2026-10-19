@@ -597,8 +597,7 @@ export interface CreatePlanDto {
   peopleCount: number;
 }
 
-export interface PlanComposerStopDto {
-  activityId: number;
+export type PlanComposerStopDto = ({ activityId: number; placeId?: never; action?: never } | { activityId?: never; placeId: number; action: string }) & {
   /** Sent only for a stop retained from the plan being edited. */
   detailId?: number;
 }
@@ -642,6 +641,7 @@ export interface OwnPlanCostSummary {
 }
 
 export interface OwnPlanDetailItem {
+  stop?: PlanStop;
   perPersonCost?: number | null;
   id: number;
   order: number;
@@ -656,5 +656,5 @@ export interface OwnPlanDetailItem {
     price?: Price | null;
     estimatedDuration: number;
     type: string | null;
-  };
+  } | null;
 }

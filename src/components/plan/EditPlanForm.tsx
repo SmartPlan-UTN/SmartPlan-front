@@ -86,7 +86,7 @@ export function EditPlanForm({ planId }: EditPlanFormProps) {
     );
   }
 
-  if (result.data.details.some((detail) => detail.activity === null)) {
+  if (result.data.details.some((detail) => !detail.activity && (!detail.stop?.place || !detail.stop.action))) {
     return (
       <div className={activityStyles.stateBlock}>
         <h2 className="sp-h3">Este recorrido incluye paradas en lugares</h2>

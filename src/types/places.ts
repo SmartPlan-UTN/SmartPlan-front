@@ -69,6 +69,7 @@ export interface PlaceOption {
 }
 
 export interface PlaceListParams {
+  scope?: 'plannable';
   search?: string;
   departmentId?: number;
   page?: number;
