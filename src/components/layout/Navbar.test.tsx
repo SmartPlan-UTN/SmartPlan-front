@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { listNotifications, markNotificationAsRead } from "@/lib/api";
 import { SessionProvider } from "@/lib/auth";
 import { logout, refreshSession } from "@/lib/auth/api";
+import { ThemeProvider } from "@/lib/theme";
 
 import { Navbar } from "./Navbar";
 
@@ -74,6 +75,9 @@ describe("Navbar", () => {
     route.actual = "/";
     replace.mockClear();
     push.mockClear();
+    // The dark-mode cases leave their choice behind otherwise.
+    localStorage.clear();
+    delete document.documentElement.dataset.theme;
     vi.mocked(listNotifications).mockReset();
     vi.mocked(listNotifications).mockResolvedValue({
       data: [],
@@ -169,6 +173,40 @@ describe("Navbar", () => {
     expect(
       await screen.findByRole("link", { name: "Iniciar sesión" }),
     ).toHaveAttribute("href", "/login?redirect=%2Fexplore");
+  });
+
+  it("puts the dark-mode moon in the top bar once logged in", async () => {
+    mockAuthenticatedStartup();
+    const user = userEvent.setup();
+    render(
+      <SessionProvider>
+        <ThemeProvider>
+          <Navbar />
+        </ThemeProvider>
+      </SessionProvider>,
+    );
+
+    const moon = await within(screen.getByRole("banner")).findByRole("button", {
+      name: "Modo oscuro",
+    });
+    await user.click(moon);
+
+    expect(moon).toHaveAttribute("aria-pressed", "true");
+    expect(document.documentElement.dataset.theme).toBe("dark");
+  });
+
+  it("doesn't offer the dark mode without a session", async () => {
+    mockAnonymousStartup();
+    render(
+      <SessionProvider>
+        <ThemeProvider>
+          <Navbar />
+        </ThemeProvider>
+      </SessionProvider>,
+    );
+
+    await screen.findByRole("link", { name: "Iniciar sesión" });
+    expect(screen.queryByRole("button", { name: "Modo oscuro" })).toBeNull();
   });
 
   it("expands the user menu when there is a session", async () => {

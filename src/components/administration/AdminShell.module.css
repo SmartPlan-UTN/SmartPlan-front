@@ -95,7 +95,7 @@
 
 .navItem:hover,
 .exitLink:hover {
-  background: color-mix(in srgb, var(--char) 4%, transparent);
+  background: color-mix(in srgb, var(--fg-1) 4%, transparent);
   color: var(--fg-1);
 }
 
@@ -148,8 +148,8 @@
   height: 38px;
   flex-shrink: 0;
   border-radius: var(--r-chip);
-  background: var(--char);
-  color: var(--cream);
+  background: var(--surface-inverse);
+  color: var(--fg-inverse);
   font-size: 15px;
   font-weight: var(--w-heading);
 }
@@ -178,11 +178,27 @@
   font-size: var(--t-small);
 }
 
+.column {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Same width and side padding as `.main`, so the toggle lines up with the
+   right edge of every page header below it. */
+.topbar {
+  display: flex;
+  justify-content: flex-end;
+  max-width: 1320px;
+  padding: 14px 44px 0;
+}
+
 .main {
   flex: 1;
   min-width: 0;
   max-width: 1320px;
-  padding: 36px 44px 56px;
+  padding: var(--s-2) 44px 56px;
 }
 
 .mobileHeader {
@@ -194,7 +210,8 @@
     display: block;
   }
 
-  .sidebar {
+  .sidebar,
+  .topbar {
     display: none;
   }
 
@@ -211,6 +228,20 @@
     background: color-mix(in srgb, var(--admin-surface) 94%, transparent);
     -webkit-backdrop-filter: blur(18px);
     backdrop-filter: blur(18px);
+  }
+
+  .mobileActions {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+  }
+
+  /* Matches the menu trigger beside it rather than the navbar's 44px.
+     Scoped under `.mobileActions` to outrank `ThemeToggle`'s own size:
+     the order two CSS modules load in isn't guaranteed. */
+  .mobileActions .mobileThemeToggle {
+    width: 38px;
+    height: 38px;
   }
 
   .mobileTrigger {
