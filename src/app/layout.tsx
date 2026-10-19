@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import { AppBackground } from "@/components/layout";
 import { FavoritesProvider } from "@/context";
 import { SessionProvider } from "@/lib/auth";
+import { THEME_BOOT_SCRIPT, ThemeProvider } from "@/lib/theme";
 
 import "./globals.css";
 
@@ -57,14 +58,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    // `suppressHydrationWarning`: the boot script below may set
+    // `data-theme` on `<html>` before React hydrates it. It only silences
+    // this element's own attributes, not its children.
     <html
       lang="es"
       className={`${bricolageGrotesque.variable} ${fraunces.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        {/* Applies a dark session's theme before the first paint; see
+            `THEME_BOOT_SCRIPT`. A plain inline script, not `next/script`:
+            even `beforeInteractive` is queued (`self.__next_s`) until
+            Next's client bundle boots, by which time the body may have
+            painted. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col">
         <AppBackground />
         <SessionProvider>
-          <FavoritesProvider>{children}</FavoritesProvider>
+          <ThemeProvider>
+            <FavoritesProvider>{children}</FavoritesProvider>
+          </ThemeProvider>
         </SessionProvider>
       </body>
     </html>

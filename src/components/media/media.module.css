@@ -418,7 +418,7 @@
   padding: 0;
   border: 0;
   border-radius: var(--r-chip);
-  background: color-mix(in srgb, var(--white) 92%, transparent);
+  background: color-mix(in srgb, var(--surface-raised) 92%, transparent);
   color: var(--fg-1);
   box-shadow: 0 2px 8px color-mix(in srgb, var(--char) 18%, transparent);
   cursor: pointer;
@@ -426,7 +426,7 @@
 }
 
 .tileAction:hover:not(:disabled) {
-  background: var(--white);
+  background: var(--surface-raised);
   color: var(--ember);
 }
 
@@ -481,7 +481,7 @@
 }
 
 .confirmNo {
-  background: var(--white);
+  background: var(--surface-raised);
   color: var(--fg-1);
 }
 
@@ -885,7 +885,7 @@
   margin: 0 0 var(--space-4, 16px);
   border-radius: var(--radius-lg, 14px);
   overflow: hidden;
-  background: var(--color-surface-2, #f4efe6);
+  background: var(--surface);
 }
 
 .googlePhoto img {
@@ -898,7 +898,7 @@
 .googlePhoto figcaption {
   padding: 6px 12px;
   font-size: 0.75rem;
-  color: var(--color-ink-soft, #6b6358);
+  color: var(--fg-2);
 }
 
 .googlePhoto a {
@@ -912,9 +912,9 @@
   margin: 12px 0 0;
   padding: 10px 12px;
   border-radius: 12px;
-  background: color-mix(in srgb, var(--color-surface, #fff) 70%, transparent);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
   font-size: 0.875rem;
-  color: var(--color-text-muted, #5f5a53);
+  color: var(--fg-2);
 }
 
 .googleContext p {
@@ -1135,6 +1135,14 @@
   --gmp-mat-color-secondary-container: var(--ember-10, #f6e6d8);
   --gmp-mat-color-on-secondary-container: var(--ember-ink, #5b2a0d);
   --gmp-mat-color-outline-decorative: transparent;
+}
+
+/* The other `--gmp-mat-*` colours are tokens and follow the theme on their
+   own; the element's built-in parts need the scheme, and the dark brown
+   on its ember chips would vanish on a dark card. */
+:global(:root[data-theme="dark"]) .uiKitElement {
+  color-scheme: dark;
+  --gmp-mat-color-on-secondary-container: var(--fg-1);
 }
 
 /* ── Place-level Google price reference on cards ─────────────────── */

@@ -62,11 +62,11 @@
   background: color-mix(in srgb, var(--ember) 10%, transparent);
 }
 
-/* ✓: a piece of the dark route itself. */
+/* ✓: a piece of the route, in the inverse of the card it sits on. */
 .added {
-  border-color: var(--char);
-  background: var(--char);
-  color: var(--fg-on-dark);
+  border-color: var(--surface-inverse);
+  background: var(--surface-inverse);
+  color: var(--fg-inverse);
 }
 
 /* Set by the caller only on the press that made it ✓, never on mount. */
@@ -75,8 +75,8 @@
 }
 
 .added:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--char) 82%, var(--ember));
-  background: color-mix(in srgb, var(--char) 82%, var(--ember));
+  border-color: color-mix(in srgb, var(--surface-inverse) 82%, var(--ember));
+  background: color-mix(in srgb, var(--surface-inverse) 82%, var(--ember));
 }
 
 /* A toggle holds both glyphs, stacked; they cross-fade when it flips. */
@@ -113,8 +113,8 @@
   left: 50%;
   padding: 5px 9px;
   border-radius: 8px;
-  background: var(--char);
-  color: var(--fg-on-dark);
+  background: var(--surface-inverse);
+  color: var(--fg-inverse);
   content: attr(data-tip);
   font-size: 12px;
   font-weight: 650;

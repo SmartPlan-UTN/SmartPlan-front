@@ -5,7 +5,7 @@
   display: grid;
   place-items: center;
   padding: var(--s-4);
-  background: color-mix(in srgb, var(--char) 58%, transparent);
+  background: color-mix(in srgb, var(--scrim) 58%, transparent);
   backdrop-filter: blur(4px);
 }
 
@@ -213,7 +213,7 @@
   padding: 12px 14px;
   border: 1.5px solid var(--hairline);
   border-radius: var(--r-card);
-  background: color-mix(in srgb, var(--cream) 70%, transparent);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
   color: var(--fg-1);
   font: inherit;
   font-weight: var(--w-body);

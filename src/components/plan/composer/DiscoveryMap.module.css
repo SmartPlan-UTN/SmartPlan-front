@@ -73,7 +73,7 @@
   overflow: hidden;
   padding: 2px 8px;
   border-radius: var(--r-chip);
-  background: color-mix(in srgb, var(--ember) 12%, var(--cream));
+  background: color-mix(in srgb, var(--ember) 12%, var(--surface));
   color: var(--fg-1);
   font-size: 12px;
   font-weight: 650;
@@ -114,7 +114,7 @@
   padding: 0 14px;
   border: 0;
   border-radius: var(--r-chip);
-  background: var(--char);
+  background: var(--surface-dark);
   box-shadow: 0 6px 18px color-mix(in srgb, var(--char) 28%, transparent);
   color: var(--fg-on-dark);
   font: inherit;
@@ -129,7 +129,7 @@
 }
 
 .zoneButton:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--char) 88%, var(--ember));
+  background: color-mix(in srgb, var(--surface-dark) 88%, var(--ember));
 }
 
 .zoneButton:focus-visible {
@@ -320,7 +320,7 @@
   padding: 16px 18px 16px;
   border: 1px solid color-mix(in srgb, var(--fg-1) 8%, transparent);
   border-radius: var(--r-card);
-  background: var(--cream);
+  background: var(--surface);
   box-shadow:
     0 1px 2px color-mix(in srgb, var(--char) 8%, transparent),
     0 14px 36px color-mix(in srgb, var(--char) 16%, transparent);

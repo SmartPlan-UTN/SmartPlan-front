@@ -217,7 +217,7 @@
 }
 
 .tag {
-  background: color-mix(in srgb, var(--char) 6%, transparent);
+  background: color-mix(in srgb, var(--fg-1) 6%, transparent);
   color: var(--fg-2);
 }
 
@@ -346,7 +346,7 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--r-chip);
-  background: color-mix(in srgb, var(--char) 5%, transparent);
+  background: color-mix(in srgb, var(--fg-1) 5%, transparent);
   color: var(--fg-3);
 }
 
@@ -380,7 +380,7 @@
   /* The wheel scrolls the dialog, never the page behind the overlay. */
   overscroll-behavior: contain;
   padding: var(--s-4);
-  background: color-mix(in srgb, var(--char) 58%, transparent);
+  background: color-mix(in srgb, var(--scrim) 58%, transparent);
   backdrop-filter: blur(4px);
 }
 
@@ -452,7 +452,7 @@
 .visibilityNote {
   padding: var(--s-3);
   border-radius: var(--r-card);
-  background: color-mix(in srgb, var(--char) 4%, transparent);
+  background: color-mix(in srgb, var(--fg-1) 4%, transparent);
   color: var(--fg-2);
   font-size: var(--t-small);
 }

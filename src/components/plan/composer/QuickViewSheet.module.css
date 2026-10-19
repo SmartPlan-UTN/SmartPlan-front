@@ -10,7 +10,7 @@
 .scrim {
   position: absolute;
   inset: 0;
-  background: color-mix(in srgb, var(--char) 22%, transparent);
+  background: color-mix(in srgb, var(--scrim) 22%, transparent);
 }
 
 .sheet {
@@ -21,7 +21,7 @@
   overscroll-behavior: contain;
   padding: 0 20px calc(18px + env(safe-area-inset-bottom));
   border-radius: 22px 22px 0 0;
-  background: var(--cream);
+  background: var(--surface);
   box-shadow: 0 -12px 36px color-mix(in srgb, var(--char) 18%, transparent);
 }
 
@@ -38,7 +38,7 @@
   height: 26px;
   margin: 0 -20px 6px;
   place-items: center;
-  background: var(--cream);
+  background: var(--surface);
   cursor: grab;
   touch-action: none;
 }

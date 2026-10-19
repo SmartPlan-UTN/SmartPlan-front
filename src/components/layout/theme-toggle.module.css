@@ -1,0 +1,45 @@
+/* Dark-theme switch: the same 44px round trigger as the notification bell,
+   so the three account controls in the corner read as one group. */
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: transparent;
+  color: var(--fg-1);
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    color 150ms ease;
+}
+
+.toggle:hover {
+  background: color-mix(in srgb, var(--ember) 7%, transparent);
+}
+
+/* On: the moon lights up in ember over its own tint. */
+.toggle[aria-pressed="true"] {
+  background: var(--ember-15);
+  color: var(--ember);
+}
+
+.toggle[aria-pressed="true"]:hover {
+  background: var(--ember-20);
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+/* No transition: `ThemeProvider` switches themes with transitions off, so
+   the tilt would snap anyway. */
+.toggle[aria-pressed="true"] .icon {
+  transform: rotate(-16deg);
+}

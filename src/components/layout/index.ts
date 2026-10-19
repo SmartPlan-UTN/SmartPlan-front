@@ -16,6 +16,7 @@ export {
   type NavigationLink,
 } from "./links";
 export { UserMenu } from "./UserMenu";
+export { ThemeToggle, type ThemeToggleProps } from "./ThemeToggle";
 export { Navbar } from "./Navbar";
 export { SiteFooter } from "./SiteFooter";
 export {

@@ -7,7 +7,10 @@ import { useSearchParams } from "next/navigation";
 import { activityDetailRoute, placeDetailRoute } from "@/lib/routes";
 import { getExploreMapMarkers } from "@/lib/api";
 import { formatPrice, isPriceUnknown } from "@/lib/utils";
+import { mapThemeOptions } from "@/lib/maps/mapTheme";
 import { useGoogleMap } from "@/lib/maps/useGoogleMap";
+import { useMapTheme } from "@/lib/maps/useMapTheme";
+import { useTheme } from "@/lib/theme";
 import { placePriceReferenceText } from "@/components/media/PlacePriceReference";
 import { ratingAccessibleText } from "@/components/media/RatingBadge";
 import type { ExploreSearchParams, ExploreMapMarker } from "@/types";
@@ -150,7 +153,16 @@ export function MapView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `filters` is a fresh object every render; only its serialized contents matter here.
   }, [JSON.stringify(filters)]);
 
-  const { status, errorMessage } = useGoogleMap(containerRef, MAP_OPTIONS, (map) => {
+  const { theme } = useTheme();
+  const [options] = useState<google.maps.MapOptions>(() => ({
+    ...MAP_OPTIONS,
+    ...mapThemeOptions("vendor", theme),
+  }));
+  const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
+  useMapTheme(mapInstance, "vendor");
+
+  const { status, errorMessage } = useGoogleMap(containerRef, options, (map) => {
+    setMapInstance(map);
     const markersRef = { current: [] as google.maps.Marker[] };
     const infoWindow = new google.maps.InfoWindow();
     const requestIdRef = { current: 0 };
@@ -237,6 +249,7 @@ export function MapView() {
       idleListener.remove();
       markersRef.current.forEach((marker) => marker.setMap(null));
       infoWindow.close();
+      setMapInstance(null);
     };
   });
 

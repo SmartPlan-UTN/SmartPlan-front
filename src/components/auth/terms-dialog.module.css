@@ -10,7 +10,7 @@
   display: grid;
   place-items: center;
   padding: var(--s-4);
-  background: color-mix(in srgb, var(--char) 58%, transparent);
+  background: color-mix(in srgb, var(--scrim) 58%, transparent);
   backdrop-filter: blur(4px);
 }
 

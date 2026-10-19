@@ -34,7 +34,7 @@
 
 .avatar_1 {
   background: var(--electric-15);
-  color: var(--electric);
+  color: var(--electric-ink);
 }
 
 .avatar_2 {
@@ -53,6 +53,6 @@
 }
 
 .avatar_5 {
-  background: color-mix(in srgb, var(--char) 8%, transparent);
+  background: color-mix(in srgb, var(--fg-1) 8%, transparent);
   color: var(--fg-2);
 }

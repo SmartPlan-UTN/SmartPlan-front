@@ -263,7 +263,7 @@ button.resendButton { border-width: 1.5px; border-color: var(--ember); color: va
   flex-shrink: 0;
   border: 1.5px solid var(--hairline);
   border-radius: 6px;
-  background: color-mix(in srgb, var(--cream) 70%, transparent);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
   transition: border-color 150ms, background 150ms;
 }
 

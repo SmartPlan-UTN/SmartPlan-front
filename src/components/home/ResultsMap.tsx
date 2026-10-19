@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useImperativeHandle, useRef, type Ref } from "react";
+import { useCallback, useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
 import Link from "next/link";
 
 import { useGoogleMap } from "@/lib/maps/useGoogleMap";
 import { frameResultsMap } from "@/lib/maps/frameResultsMap";
-import { BRANDED_MAP_STYLE } from "@/lib/maps/brandedMapStyle";
+import { mapStylesFor, mapThemeOptions } from "@/lib/maps/mapTheme";
 import type { ResultsMapPlanPin } from "@/lib/maps/buildPlanPins";
+import { useTheme } from "@/lib/theme";
 import { useReducedMotion } from "@/hooks";
 
 import styles from "./results-layout.module.css";
@@ -19,10 +20,10 @@ const PIN_SIZE = 30;
 const PIN_SIZE_ACTIVE = 38;
 const PIN_ASPECT = 42 / 32;
 
+/** Style and paper come from the theme at mount (`mapThemeOptions`). */
 const MAP_OPTIONS: google.maps.MapOptions = {
   center: DEFAULT_CENTER,
   zoom: DEFAULT_ZOOM,
-  styles: BRANDED_MAP_STYLE,
   disableDefaultUI: true,
   zoomControl: true,
   // "cooperative" (not "greedy"): this map sits inside a page column, not a
@@ -119,7 +120,19 @@ export function ResultsMap({
     onPinClickRef.current = onPinClick;
   });
 
-  const { status, errorMessage } = useGoogleMap(containerRef, MAP_OPTIONS, (map) => {
+  const { theme } = useTheme();
+  const [options] = useState<google.maps.MapOptions>(() => ({
+    ...MAP_OPTIONS,
+    ...mapThemeOptions("branded", theme),
+  }));
+
+  // The map lives in a ref here, not state, so this is `useMapTheme`'s
+  // restyle inlined: the moon toggled with the map already on screen.
+  useEffect(() => {
+    mapRef.current?.setOptions({ styles: mapStylesFor("branded", theme) });
+  }, [theme]);
+
+  const { status, errorMessage } = useGoogleMap(containerRef, options, (map) => {
     mapRef.current = map;
 
     for (const plan of plans) {

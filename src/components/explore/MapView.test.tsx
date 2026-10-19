@@ -34,6 +34,8 @@ function setup() {
     getBounds: () => ({ toJSON: () => ({ north: -32.8, south: -32.94, east: -68.7, west: -69 }) }),
     addListener: (_name: string, callback: () => void) => { idle = callback; return { remove: vi.fn() }; },
     fitBounds,
+    // Restyled to the theme once it exists (useMapTheme).
+    setOptions: vi.fn(),
   };
   render(<MapView />);
   mocks.ready?.(map);

@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { NavLink } from "./NavLink";
 import { MAIN_LINKS, MOBILE_LINKS, PLAN_OUTING_LINK } from "./links";
 import { NotificationBell } from "./NotificationBell";
+import { ThemeToggle } from "./ThemeToggle";
 import { UserMenu } from "./UserMenu";
 import styles from "./layout.module.css";
 
@@ -37,11 +38,12 @@ function activeMobileHref(currentRoute: string): string | undefined {
  * 60px navigation bar (`--navbar-h`), fixed at the top with a
  * `backdrop-filter` over the content, as required by the EMBER design system.
  *
- * Always the light variant (cream, ink logo, dark text): the
- * SmartPlanSystemDesign prototype's `Navbar` component still has a `dark`
- * prop, but the shipped build hardcodes it to light for every screen. The
- * hairline below the bar stays transparent until the page scrolls, same as
- * the prototype.
+ * Always the page's own variant: the SmartPlanSystemDesign prototype's
+ * `Navbar` component still has a `dark` prop, but the shipped build
+ * hardcodes it to light for every screen — the bar follows the page, not
+ * the hero under it. With the dark theme on (`ThemeToggle`, the moon next
+ * to the bell) the page is dark, and so is the bar. The hairline below the
+ * bar stays transparent until the page scrolls, same as the prototype.
  *
  * Below 900px the top bar keeps identity and session only; the frequent
  * destinations move to a persistent, thumb-reachable bottom bar.
@@ -142,7 +144,7 @@ export function Navbar() {
       <header className={cn(styles.navbar, scrolled && styles.navbarScrolled)}>
         <div className={styles.navbarInner}>
           <Link href={ROUTES.home} className={styles.brand}>
-            <Logo variant="ember" kind="full" height={22} priority />
+            <Logo variant="ember" darkVariant="ember-cream" kind="full" height={22} priority />
           </Link>
 
           <nav className={styles.nav} aria-label="Navegación principal">
@@ -158,6 +160,7 @@ export function Navbar() {
           </nav>
 
           <div className={styles.actions}>
+            <ThemeToggle />
             <NotificationBell />
             <UserMenu />
           </div>

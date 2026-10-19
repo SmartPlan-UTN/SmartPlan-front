@@ -59,8 +59,8 @@
 }
 
 .buttonSecondary {
-  color: var(--cream);
-  background: var(--char);
+  color: var(--fg-inverse);
+  background: var(--surface-inverse);
 }
 
 .buttonGhost {
@@ -138,7 +138,7 @@
 }
 
 .badgeAi {
-  color: var(--electric);
+  color: var(--electric-ink);
   background: var(--electric-15);
 }
 

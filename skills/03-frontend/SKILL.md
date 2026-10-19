@@ -73,6 +73,7 @@ src/
 ├── lib/
 │   ├── api/                axios client and per-module calls
 │   ├── auth/               session state: token, provider, and hook
+│   ├── theme/              light/dark theme: provider, hook, boot script
 │   ├── utils/               domain-agnostic helpers
 │   └── routes.ts           application route map
 ├── styles/                 design system tokens
@@ -142,9 +143,10 @@ constant breaks the build and the string breaks silently.
 
 `Navbar` (in `@/components/layout`) is the 60px bar (`--navbar-h`) with
 `backdrop-filter`, fixed at the top. On desktop it carries the main links
-(Inicio, Explorar, Mis planes, Mis salidas, Favoritos), the notification
-bell, and the user menu — no create CTA: creating lives inside Mis planes.
-Below 900px the top bar keeps only identity, the bell, and session, while a
+(Inicio, Explorar, Mis planes, Mis salidas, Favoritos), the dark-mode moon
+(`ThemeToggle`, only with a session), the notification bell, and the user
+menu — no create CTA: creating lives inside Mis planes.
+Below 900px the top bar keeps only identity, the moon, the bell, and session, while a
 thumb-reachable bottom bar exposes Explorar, Mis planes, Planificar (the
 centre tab: Inicio's composer, SmartPlan's main feature), Mis salidas, and
 Favoritos without hiding primary destinations behind a hamburger. Inicio
@@ -212,6 +214,18 @@ frontend never reads or writes that cookie directly; `withCredentials: true`
 on the shared Axios instance (`@/lib/api/client.ts`) is what makes the
 browser send it automatically. See `@/lib/auth/api.ts` for the full CU1-CU4
 contract this implements.
+
+### Theme
+
+`ThemeProvider` (`@/lib/theme`), mounted inside `SessionProvider` in
+`app/layout.tsx`, owns light/dark. Dark is a per-account choice available
+only with a session (the moon, `ThemeToggle`); it's applied as `data-theme`
+on `<html>`, and every colour that changes with it is a token — see the
+Dark theme section of `skills/06-design-system/SKILL.md` before writing a
+colour. Components don't branch on the theme; only code that can't read CSS
+calls `useTheme()` (today, the Google Maps styles). Outside the provider
+`useTheme()` answers light rather than throwing, so a component that reads
+it still renders on its own in a test.
 
 ### Protected routes
 

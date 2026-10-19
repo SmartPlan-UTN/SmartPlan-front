@@ -14,7 +14,7 @@
    and the footer links. */
 .link::after { position: absolute; right: 0; bottom: -3px; left: 0; height: 2px; background: currentColor; transform: scaleX(0); transform-origin: left; transition: transform var(--d-fast) var(--ease-out); content: ""; }
 .link svg { transition: transform var(--d-fast) var(--ease-out); }
-.link:hover { color: var(--char); }
+.link:hover { color: var(--fg-1); }
 .link:hover::after, .link:focus-visible::after { transform: scaleX(1); }
 .link:hover svg { transform: translateX(5px); }
 .link:active { transform: scale(0.99); transition-duration: var(--d-micro); }
@@ -24,9 +24,9 @@
 .capabilities li:nth-child(even) { margin-top: 24px; }
 .capabilities li:nth-last-child(-n + 2) { border-bottom: 0; }
 .capabilities svg { color: var(--ember); transition: transform var(--d-fast) var(--ease-out); }
-.capabilityNumber { color: color-mix(in srgb, var(--char) 48%, transparent); font-size: 11px; font-variant-numeric: tabular-nums; font-weight: 800; letter-spacing: .08em; }
+.capabilityNumber { color: color-mix(in srgb, var(--fg-1) 48%, transparent); font-size: 11px; font-variant-numeric: tabular-nums; font-weight: 800; letter-spacing: .08em; }
 @media (hover: hover) and (pointer: fine) {
-  .capabilities li:hover { color: var(--char); transform: translateX(4px); }
+  .capabilities li:hover { color: var(--fg-1); transform: translateX(4px); }
   .capabilities li:hover svg { transform: scale(1.06); }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -35,3 +35,13 @@
 }
 @media (max-width: 920px) { .shell { grid-template-columns: 1fr; gap: 48px; } .copy { padding-top: 0; } .copy h2 { max-width: 10ch; } }
 @media (max-width: 560px) { .section { padding-block: 72px 84px; } .copy h2 { font-size: clamp(44px, 14vw, 60px); } .capabilities { grid-template-columns: 1fr; } .capabilities li, .capabilities li:nth-child(even) { margin-top: 0; border-bottom: 1px solid rgb(36 29 25 / 18%); } .capabilities li:last-child { border-bottom: 0; } }
+
+/* Dark theme: the same sand band at night, a step warmer than the page,
+   with its rules drawn in cream instead of ink. */
+:global(:root[data-theme="dark"]) .section { background: #1f1812; }
+:global(:root[data-theme="dark"]) .capabilities { border-top-color: rgb(245 240 232 / 16%); }
+:global(:root[data-theme="dark"]) .capabilities li { border-bottom-color: rgb(245 240 232 / 12%); }
+@media (max-width: 560px) {
+  :global(:root[data-theme="dark"]) .capabilities li,
+  :global(:root[data-theme="dark"]) .capabilities li:nth-child(even) { border-bottom-color: rgb(245 240 232 / 12%); }
+}

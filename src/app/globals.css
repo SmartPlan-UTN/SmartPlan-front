@@ -47,12 +47,17 @@
   --color-fg-1: var(--fg-1);
   --color-fg-2: var(--fg-2);
   --color-fg-3: var(--fg-3);
+  --color-fg-inverse: var(--fg-inverse);
+  --color-electric-ink: var(--electric-ink);
   --color-rating-ink: var(--rating-ink);
   --color-warning-ink: var(--warning-ink);
 
   /* Superficies y bordes */
   --color-surface: var(--surface);
   --color-surface-card: var(--surface-card);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-inverse: var(--surface-inverse);
+  --color-surface-dark: var(--surface-dark);
   --color-hairline: var(--hairline);
   --color-hairline-dark: var(--hairline-dark);
 
@@ -62,4 +67,26 @@
   --radius-card-sm: var(--r-card-sm);
   --radius-btn: var(--r-btn);
   --radius-chip: var(--r-chip);
+}
+
+/* Google Maps' own info window (the explore map's marker popups) in the
+   dark theme. Its bubble is white by default, while its content inherits
+   the page's text colour — cream once the theme is dark. The close icon's
+   colour is an inline style Google sets, hence the `!important`. */
+:root[data-theme="dark"] .gm-style .gm-style-iw-c {
+  background: var(--surface-card);
+  color: var(--fg-1);
+  box-shadow: var(--shadow-card);
+}
+
+:root[data-theme="dark"] .gm-style .gm-style-iw-tc::after {
+  background: var(--surface-card);
+}
+
+:root[data-theme="dark"] .gm-style .gm-style-iw-c a {
+  color: var(--ember);
+}
+
+:root[data-theme="dark"] .gm-style .gm-ui-hover-effect > span {
+  background-color: var(--fg-2) !important;
 }

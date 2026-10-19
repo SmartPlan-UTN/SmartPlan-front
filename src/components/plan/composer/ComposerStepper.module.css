@@ -78,7 +78,7 @@
 .complete .number {
   border-color: var(--fg-1);
   background: var(--fg-1);
-  color: var(--cream);
+  color: var(--fg-inverse);
 }
 
 .line {

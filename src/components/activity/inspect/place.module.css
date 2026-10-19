@@ -21,8 +21,8 @@
 .stopBadge {
   padding: 3px 9px;
   border-radius: var(--r-chip);
-  background: var(--char);
-  color: var(--fg-on-dark);
+  background: var(--surface-inverse);
+  color: var(--fg-inverse);
   font-size: 11px;
   font-weight: 750;
   font-variant-numeric: tabular-nums;

@@ -98,6 +98,11 @@
   background: #efe6da;
 }
 
+/* ...or, in the dark theme, so nothing flashes sand. */
+:global(:root[data-theme="dark"]) .frame {
+  background: #241d16;
+}
+
 .photo {
   object-fit: cover;
 }
@@ -143,9 +148,9 @@
   width: 44%;
   background: linear-gradient(
     90deg,
-    var(--cream) 0%,
-    var(--cream) 42%,
-    rgb(245 240 232 / 0%) 100%
+    var(--surface) 0%,
+    var(--surface) 42%,
+    transparent 100%
   );
   opacity: clamp(0, calc((1 - var(--shift, 0)) * 3.4), 1);
   content: "";
@@ -244,7 +249,7 @@
 .title {
   max-width: 13ch;
   margin: 0;
-  color: var(--char);
+  color: var(--fg-1);
   font-size: clamp(36px, 4.6vw, 68px);
   font-weight: var(--w-display);
   letter-spacing: -0.035em;

@@ -51,19 +51,28 @@ Auxiliary shades needed by the primitives are also tokens: `--white`,
 ### Surfaces
 | Token | Hex | Use |
 |---|---|---|
-| `--surface` | `#F5F0E8` | Background (= cream) |
+| `--surface` | `#F5F0E8` | Page background (= cream). **Use it, not `--cream`, for a page** |
 | `--surface-card` | `#FFFCF8` | Card over a light background. **Never pure white** |
+| `--surface-raised` | `#FFFFFF` | Brighter than a card: a focused field, a small control over a photo or map |
+| `--surface-inverse` / `--fg-inverse` | char / cream | The opposite of the page: a secondary button, a tooltip, an active segment, a "✓ added" state |
+| `--surface-dark` | char | Floating UI that is dark in both themes with its own on-dark palette: a toast, the composer's route panel, the cost box |
+| `--scrim` | char | What dims the page behind a dialog, mixed in at the dialog's strength |
 | `--char-surface` | `#1E1812` | Card over a dark background |
 | `--char-surface2` | `#241D14` | Elevated / hover over dark |
 | `--hairline` | `#E2DDD5` | Thin border over light |
 | `--hairline-dark` | `rgba(255,255,255,0.07)` | Thin border over dark |
+| `--tile-0` … `--tile-5` | pastel gradients | "No photo yet" card tiles (`gradientFor()`) |
 
 ### Text
 Over light: `--fg-1 #1A1109` (primary) · `--fg-2 #5C5448` (secondary) ·
-`--fg-3 #9E9589` (placeholder).
+`--fg-3 #9E9589` (placeholder) · `--electric-ink` (`--electric` as text).
 Over dark: `--fg-on-dark #F5F0E8` · `--fg-on-dark-2` (55%) · `--fg-on-dark-3` (30%).
 
 **Never hand-write a hex value.** Always use the CSS variable.
+
+Every semantic token above has a second value in the dark theme — see
+[Dark theme](#dark-theme) before choosing between a brand colour
+(`--char`, `--cream`, `--white`) and a semantic one.
 
 ## Typography
 
@@ -107,6 +116,66 @@ Focus: `--focus-ember 0 0 0 3px rgba(232,93,32,.18)`.
 
 **Layout:** navbar `60px` · content max width `1200px` · vertical section
 spacing `64px`.
+
+## Dark theme
+
+Opted into **per account, once logged in**: a moon button in the top-right
+corner (`ThemeToggle`, `src/components/layout/`) — in the navbar before the
+notification bell, in the administration panel's desktop top bar and in its
+mobile header next to the menu trigger. Without a session there is no moon
+and every screen is light; logging out returns to light, and the next login
+brings the account's choice back.
+
+**How it works.** `ThemeProvider` (`src/lib/theme/`) sets `data-theme` on
+`<html>` and remembers each account's choice in `localStorage`
+(`smartplan:theme:<userId>`), plus the theme last on screen
+(`smartplan:theme`). An inline script in the root layout's `<head>`
+(`THEME_BOOT_SCRIPT`) reads that last one before the first paint: the session
+is only known after `POST /sessions/refresh`, and waiting for it would flash
+the light theme on every reload of a dark session. Switching turns
+transitions off for a frame so the whole page changes at once.
+
+**Only semantic tokens change.** `:root[data-theme="dark"]` in
+`tokens.css` redefines `--surface*`, `--fg-*`, `--hairline`, `--scrim`,
+`--tile-*`, `--map-paper` and the inks; the brand colours (`--ember`,
+`--char`, `--cream`, `--white`, `--gold`, `--electric`) never change. The
+values extend EMBER's own dark surfaces and keep the light theme's contrast
+steps on the page: `--fg-2` above 7:1, `--fg-3` about 5:1.
+
+**Writing a style that works in both themes:**
+
+| You want | Use | Not |
+|---|---|---|
+| The page behind everything | `--surface` | `--cream` |
+| Text | `--fg-1` / `--fg-2` / `--fg-3` | `--char` |
+| A subtle tint or hover over the page | `color-mix(in srgb, var(--fg-1) N%, transparent)` | `var(--char) N%` |
+| A light field or control | `--surface-raised` | `--white` |
+| A char chip/tooltip/active state with cream text | `--surface-inverse` + `--fg-inverse` | `--char` + `--cream` |
+| A dark floating panel with gold/cream content | `--surface-dark` | `--char` |
+| A dialog's backdrop | `color-mix(in srgb, var(--scrim) 58%, transparent)` | `var(--char) 58%` |
+| A shadow, text over a photo, a hero that is dark by design | `--char` (unchanged) | — |
+| White text on ember/electric/error | `--white` (unchanged) | — |
+
+**Art-directed one-offs** (the landing's paper and sand, the map preview's
+greens, the danger zone's rust) keep their literal light values and add a
+dark one next to them with
+`:global(:root[data-theme="dark"]) .className { … }` in the same CSS module.
+Use it only for illustration-like colours with no semantic role; anything
+with a role gets a token.
+
+**What can't read CSS** asks `useTheme()`: Google Maps styles
+(`mapThemeOptions` at creation, `useMapTheme` to restyle on toggle; night
+styles in `brandedMapStyle.ts`), and nothing else so far. Logos on surfaces
+that follow the theme pass `darkVariant` (see [Logos](#logos)) and CSS picks
+one. The wave background (`MoodBackground`) keeps its palette and drops to
+~38% opacity in the dark theme, where its layers would otherwise stack into
+a muddy band.
+
+**The light theme must not move.** The dark theme was added with every
+light value unchanged and was verified by pixel-diffing the light theme
+against `develop` on every screen. Keep it that way: a new token gets its
+current light value, and `color-scheme` stays undeclared in light (declaring
+`light` changes how Chrome renders text inside form controls).
 
 > **The navbar itself is NOT capped at `1200px`.** `v2/Navbar.jsx` spans the
 > full window edge to edge with `padding: 0 48px` (`--s-7`); only the page
@@ -293,7 +362,9 @@ días"*).
 **Navbar** — 60px bar with `backdrop-filter: blur(18px)`, spanning the full
 window width with `48px` of side padding on desktop (`24px`/`--s-4` below
 900px) — **not** capped at `--max-w`, see the layout note above. Always the
-light variant: cream background, ember logo (see Logos), `--fg-1`/`--fg-2` text. The
+page's own variant: cream background, ember logo (see Logos), `--fg-1`/`--fg-2`
+text — or, with the dark theme on, the night surface and the `ember-cream`
+logo. The
 `Navbar` component in `v2/Navbar.jsx` still has a `dark` prop, but the
 shipped `SmartPlan v3.html` hardcodes `navDark = false` ("Results is now
 light theme") — there's no dark-over-hero navbar in the current design, on
@@ -307,7 +378,8 @@ navbar uses the fixed brand tone. Its dropdown is always light-card styled
 navbar's own background — same as in the prototype. "Cerrar sesión" opens a
 confirmation dialog instead of logging out immediately. On desktop,
 navigation includes Inicio, Explorar, Mis planes, Mis salidas and Favoritos,
-plus the notification bell next to the account avatar.
+plus — with a session — the dark-mode moon and the notification bell next to
+the account avatar.
 Administrators also see a "Panel de control" entry in the account
 dropdown; regular users never see that role-specific destination.
 Below 900px, the top bar keeps only the logo and session control; a fixed
@@ -344,7 +416,9 @@ screens the band is cropped to the form panel; the landing has no canvas; and
 administration hides and pauses it because that area has a separate visual
 language. Screens never mount their own — the only other instance is the
 short Explore transition overlay in `Navbar`. It's decorative, `aria-hidden`,
-and must not compete with content.
+and must not compete with content. With the dark theme on, both instances
+drop their opacity (`layout.module.css`): the palette is the same, but its
+layers stack into a muddy band on a dark page at the light theme's strength.
 
 > **Size the canvas off the actual container, not the viewport.** The React
 > port originally sized the waves from `window.innerWidth/Height`, which only
@@ -440,9 +514,11 @@ Rating from 0 to 5 with half-stars. Filled `#FFD166`, empty
 `rgba(255,209,102,0.22)`. Props: `rating`, `size` (12).
 
 ### Logo
-Props: `variant` (`white` | `ink` | `ember`), `kind` (`full` | `mark`), `height` (26).
-Resolves the file by convention `logo-{kind}-{variant}.png`. When porting
-it, point it to `public/brand/` and use `<Image>` from `next/image`.
+Props: `variant` (`white` | `ink` | `ember` | `ember-cream`), `darkVariant`
+(the variant shown while the dark theme is on), `kind` (`full` | `mark`),
+`height` (26). Resolves the file by convention `logo-{kind}-{variant}.png`.
+When porting it, point it to `public/brand/` and use `<Image>` from
+`next/image`.
 
 ### Divider
 1px line. `--hairline` over light, `--hairline-dark` over dark. `dark` prop.
@@ -588,6 +664,18 @@ In [`public/brand/`](../../public/brand/):
 | `logo-mark-white.png` | Isotype only, over dark |
 | `logo-full-ember.png` | Brand lockup over light: ember isotype, ink wordmark |
 | `logo-mark-ember.png` | Ember isotype only, over light |
+| `logo-full-ember-cream.png` | Brand lockup over dark: ember isotype, cream wordmark |
+| `logo-mark-ember-cream.png` | Ember isotype only (same as `logo-mark-ember`, so the variant resolves for both kinds) |
+
+> **On a surface that follows the theme, pass `darkVariant`.** `<Logo
+> variant="ember" darkVariant="ember-cream" />` renders both images and CSS
+> shows one (`.sp-light-only` / `.sp-dark-only` in `tokens.css`) — choosing
+> in React would flash the light logo on every dark reload. The navbar and
+> the 404 use `ember` → `ember-cream`; administration uses `ink` → `white`.
+> A logo on a surface that never changes (the char footer) takes no
+> `darkVariant`. The `ember-cream` files were generated from the `ember` ones
+> by recolouring the ink wordmark pixels to `--fg-on-dark` (`#F5F0E8`) and
+> keeping the alpha.
 
 > **Prefer `ember` over `ink` on light user-facing surfaces** (issue #135:
 > the brand read as generic with the all-ink logo). The navbar, the auth

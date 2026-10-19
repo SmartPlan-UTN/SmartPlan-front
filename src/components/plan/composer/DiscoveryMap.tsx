@@ -15,13 +15,15 @@ import {
   renderStopMarker,
 } from "@/components/maps/markers";
 import { Icon } from "@/components/ui";
-import { COMPOSER_MAP_STYLE } from "@/lib/maps/brandedMapStyle";
 import {
   createHtmlMarkerLayer,
   type HtmlMarker,
   type HtmlMarkerLayer,
 } from "@/lib/maps/htmlMarkerLayer";
+import { mapThemeOptions } from "@/lib/maps/mapTheme";
 import { useGoogleMap } from "@/lib/maps/useGoogleMap";
+import { useMapTheme } from "@/lib/maps/useMapTheme";
+import { useTheme } from "@/lib/theme";
 import { localizeCatalogText } from "@/lib/utils/catalogLabels";
 import type { ActivitySearchParams } from "@/types";
 
@@ -45,13 +47,12 @@ import styles from "./DiscoveryMap.module.css";
 // Mendoza, the product's default location (see skills/06-design-system).
 const DEFAULT_CENTER = { lat: -32.8895, lng: -68.8458 };
 const EMBER = "#E85D20"; // --ember
+/** Style and paper come from the theme at mount (`mapThemeOptions`). */
 const MAP_OPTIONS: google.maps.MapOptions = {
   center: DEFAULT_CENTER,
   zoom: 13,
   minZoom: 4,
   maxZoom: 18,
-  styles: COMPOSER_MAP_STYLE,
-  backgroundColor: "#EEE7DB",
   disableDefaultUI: true,
   clickableIcons: false,
   // "greedy", tested against "cooperative" on a phone and a desktop: in map
@@ -128,14 +129,20 @@ export function DiscoveryMap({
   const containerRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
+  const { theme } = useTheme();
+  const [options] = useState<google.maps.MapOptions>(() => ({
+    ...MAP_OPTIONS,
+    ...mapThemeOptions("composer", theme),
+  }));
   const { status, errorMessage } = useGoogleMap(
     containerRef,
-    MAP_OPTIONS,
+    options,
     (instance) => {
       setMap(instance);
       return () => setMap(null);
     },
   );
+  useMapTheme(map, "composer");
 
   const assistantMode =
     assistant.status === "loading" || assistant.status === "ready";

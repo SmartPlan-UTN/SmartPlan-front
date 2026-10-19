@@ -22,6 +22,7 @@ export default function NotFoundPage() {
       <div className={styles.content}>
         <Logo
           variant="ember"
+          darkVariant="ember-cream"
           kind="full"
           height={28}
           priority

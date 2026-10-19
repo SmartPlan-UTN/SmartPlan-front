@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
+import { ThemeToggle } from "@/components/layout";
 import { Icon, Logo, type IconName } from "@/components/ui";
 import { useSession } from "@/lib/auth";
 import { ROUTES, isActiveRoute, type Route } from "@/lib/routes";
@@ -73,7 +74,7 @@ export function AdminShell({ children }: AdminShellProps) {
 
       <aside className={styles.sidebar}>
         <div className={styles.brand}>
-          <Logo variant="ink" kind="full" height={24} priority />
+          <Logo variant="ink" darkVariant="white" kind="full" height={24} priority />
           <span>Admin</span>
         </div>
         <p className={styles.navLabel}>Gestión</p>
@@ -89,18 +90,21 @@ export function AdminShell({ children }: AdminShellProps) {
 
       <header className={styles.mobileHeader}>
         <div className={styles.brand}>
-          <Logo variant="ink" kind="full" height={22} priority />
+          <Logo variant="ink" darkVariant="white" kind="full" height={22} priority />
           <span>Admin</span>
         </div>
-        <button
-          type="button"
-          className={styles.mobileTrigger}
-          aria-label={mobileOpen ? "Cerrar menú administrativo" : "Abrir menú administrativo"}
-          aria-expanded={mobileOpen}
-          onClick={() => setMobileOpen((current) => !current)}
-        >
-          <Icon name={mobileOpen ? "x" : "menu"} size={20} />
-        </button>
+        <div className={styles.mobileActions}>
+          <ThemeToggle className={styles.mobileThemeToggle} />
+          <button
+            type="button"
+            className={styles.mobileTrigger}
+            aria-label={mobileOpen ? "Cerrar menú administrativo" : "Abrir menú administrativo"}
+            aria-expanded={mobileOpen}
+            onClick={() => setMobileOpen((current) => !current)}
+          >
+            <Icon name={mobileOpen ? "x" : "menu"} size={20} />
+          </button>
+        </div>
         {mobileOpen ? (
           <div className={styles.mobilePanel}>
             <AdminNavigation pathname={pathname} onNavigate={() => setMobileOpen(false)} />
@@ -112,9 +116,18 @@ export function AdminShell({ children }: AdminShellProps) {
         ) : null}
       </header>
 
-      <main id="main-content" className={styles.main}>
-        {children}
-      </main>
+      <div className={styles.column}>
+        {/* Desktop only: below 900px the toggle lives in `.mobileHeader`.
+            A bar of its own rather than a corner overlay — every page
+            header already puts its range and report controls on the
+            right, right where an overlay would land. */}
+        <div className={styles.topbar}>
+          <ThemeToggle />
+        </div>
+        <main id="main-content" className={styles.main}>
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

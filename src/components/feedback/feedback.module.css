@@ -18,7 +18,7 @@
   display: grid;
   place-items: center;
   padding: 24px var(--s-5);
-  background: color-mix(in srgb, var(--char) 54%, transparent);
+  background: color-mix(in srgb, var(--scrim) 54%, transparent);
   animation: feedback-overlay-in 220ms var(--ease-out) both;
   transition: opacity 200ms var(--ease-out);
 }
@@ -194,11 +194,11 @@
   height: 100%;
   padding: var(--s-4);
   border-radius: var(--r-card);
-  background: color-mix(in srgb, var(--ember) 5%, var(--cream));
+  background: color-mix(in srgb, var(--ember) 5%, var(--surface));
 }
 
 .costField {
-  background: color-mix(in srgb, var(--gold) 8%, var(--cream));
+  background: color-mix(in srgb, var(--gold) 8%, var(--surface));
 }
 
 .fieldLabel {
@@ -233,7 +233,7 @@
   padding: 10px 12px;
   border: 1px solid var(--hairline);
   border-radius: var(--r-card-sm);
-  background: color-mix(in srgb, var(--surface-card) 88%, var(--cream));
+  background: color-mix(in srgb, var(--surface-card) 88%, var(--surface));
   color: var(--fg-2);
   font: inherit;
   font-size: var(--t-small);
@@ -431,7 +431,7 @@
   padding: var(--s-3) var(--s-4);
   border: 1px solid var(--hairline);
   border-radius: var(--r-card-sm);
-  background: color-mix(in srgb, var(--surface-card) 88%, var(--cream));
+  background: color-mix(in srgb, var(--surface-card) 88%, var(--surface));
   cursor: pointer;
   transition:
     border-color 110ms var(--ease-out),
@@ -693,7 +693,7 @@
   margin-top: var(--s-4);
   padding: var(--s-5) var(--s-4) var(--s-4);
   border-radius: var(--r-card);
-  background: color-mix(in srgb, var(--gold) 8%, var(--cream));
+  background: color-mix(in srgb, var(--gold) 8%, var(--surface));
   animation: feedback-reveal 220ms var(--ease-out) both;
 }
 
@@ -736,11 +736,11 @@
   gap: var(--s-2);
   padding: var(--s-4);
   border-radius: var(--r-card);
-  background: color-mix(in srgb, var(--ember) 5%, var(--cream));
+  background: color-mix(in srgb, var(--ember) 5%, var(--surface));
 }
 
 .activityRow[data-done="true"] {
-  background: color-mix(in srgb, var(--gold) 8%, var(--cream));
+  background: color-mix(in srgb, var(--gold) 8%, var(--surface));
 }
 
 .activityHead {
@@ -1150,7 +1150,7 @@
   width: min(100%, 520px);
   padding: var(--s-5);
   border-radius: var(--r-card);
-  background: color-mix(in srgb, var(--ember) 4%, var(--cream));
+  background: color-mix(in srgb, var(--ember) 4%, var(--surface));
   animation: feedback-reveal 220ms var(--ease-out) both;
 }
 
@@ -1228,4 +1228,10 @@
 
 .moneyRow label {
   font-size: 0.875rem;
+}
+
+/* A card-coloured knob vanishes on the dark theme's hairline track: there
+   it's cream, the way a switch knob reads on a dark surface. */
+:global(:root[data-theme="dark"]) .switchThumb {
+  background: var(--fg-1);
 }
