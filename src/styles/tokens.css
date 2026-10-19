@@ -51,6 +51,9 @@
   --fg-1: #1A1109;    /* primary on cream   */
   --fg-2: #5C5448;    /* secondary on cream */
   --fg-3: #9E9589;    /* placeholder/caption */
+  /* `--electric` as text. The same blue in the light theme; the dark theme
+     lightens it, since #2B5BFF on char reads at 3.6:1. */
+  --electric-ink: var(--electric);
   --rating-ink: #7A5C00;
   --warning-ink: #7A4A00;
   --error-ink: #B42318;        /* error text on cream */
@@ -60,11 +63,41 @@
   /* ── Surfaces ────────────────────────────────────── */
   --surface:      var(--cream);
   --surface-card: #FFFCF8;    /* card on cream    */
+  /* Brighter than a card: a focused field, a small control floating over a
+     photo or a map. Pure white in the light theme, where it has always been
+     `--white`; the dark theme lifts it above the card instead. */
+  --surface-raised: var(--white);
   --admin-surface: #FDFBF7;   /* admin canvas from v2 AdminActivities.jsx */
   /* Paper behind map tiles while they load: the land colour of
      COMPOSER_MAP_STYLE (lib/maps/brandedMapStyle.ts), which Google's API
      also needs as a literal (`backgroundColor`). */
   --map-paper:    #EEE7DB;
+
+  /* The opposite of the page: a char chip, tooltip, toast or secondary
+     button over the light theme, a cream one over the dark theme. Surfaces
+     that are dark by design in both themes (a hero, the footer, the route
+     panel) use `--char` directly instead. */
+  --surface-inverse: var(--char);
+  --fg-inverse:      var(--cream);
+  /* Floating UI that is dark in both themes and carries its own on-dark
+     palette (a toast with a gold action, the composer's route panel): char
+     over the light theme, lifted a step in the dark theme so it still
+     stands off a dark page. Its text stays --fg-on-dark. */
+  --surface-dark:    var(--char);
+  /* What dims the page behind a dialog, mixed in at the dialog's own
+     strength (`color-mix(in srgb, var(--scrim) 58%, transparent)`). Char
+     over the light theme; black over the dark one, where char would barely
+     dim a page that's already nearly char. Text over photos keeps --char. */
+  --scrim:           var(--char);
+
+  /* "No photo yet" tiles for cards (`gradientFor()` in
+     lib/utils/gradient.ts), the IMG_GRADS palette of v2/Results.jsx. */
+  --tile-0: linear-gradient(155deg, #F2D9C8, #EDE0D0);
+  --tile-1: linear-gradient(155deg, #C8D8F2, #D8E4F0);
+  --tile-2: linear-gradient(155deg, #D0C8F2, #DDD8F0);
+  --tile-3: linear-gradient(155deg, #C8E8D4, #D4EDE0);
+  --tile-4: linear-gradient(155deg, #F2C8D8, #F0D4E0);
+  --tile-5: linear-gradient(155deg, #F2ECC8, #EFEAD0);
 
   /* ── Borders ─────────────────────────────────────── */
   --hairline:      #E2DDD5;
@@ -129,6 +162,56 @@
   --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px;
 }
 
+/* ── Dark theme ──────────────────────────────────────
+   Chosen per account once logged in (`ThemeProvider` sets `data-theme` on
+   <html>). Only the semantic tokens change: the brand colours (--ember,
+   --char, --cream, --white, ...) stay fixed, so a char hero is still char
+   and white text on an ember button is still white. Components therefore
+   paint pages with --surface, text with --fg-*, and keep the brand
+   colours for what is that colour in both themes.
+
+   The values extend EMBER's own dark surfaces (--char-surface, --fg-on-dark)
+   and keep the light theme's contrast steps on the page: --fg-2 above 7:1,
+   --fg-3 about 5:1 (it's 2.6:1 on cream), a card barely lifted off the
+   page and held by its hairline. */
+:root[data-theme="dark"] {
+  /* Native controls (scrollbars, date pickers, autofill) go dark too. The
+     light theme deliberately leaves `color-scheme` at its default: declaring
+     `light` changes how Chrome renders text inside form controls. */
+  color-scheme: dark;
+
+  --surface:         #16110C;
+  --surface-card:    #1F1913;
+  --surface-raised:  #2A221A;
+  --admin-surface:   #120E0A;
+  --map-paper:       #241D16;
+  --surface-inverse: var(--cream);
+  --fg-inverse:      var(--char);
+  --surface-dark:    #2B231A;
+  --scrim:           #000000;
+
+  /* The same six hues, deep: a pastel tile would be the brightest thing on
+     a dark page. */
+  --tile-0: linear-gradient(155deg, #3B2A20, #31261D);
+  --tile-1: linear-gradient(155deg, #1F2838, #232A35);
+  --tile-2: linear-gradient(155deg, #26223A, #2A2735);
+  --tile-3: linear-gradient(155deg, #1E3027, #22302A);
+  --tile-4: linear-gradient(155deg, #3A2230, #352630);
+  --tile-5: linear-gradient(155deg, #37321E, #333022);
+
+  --hairline: #362D24;
+
+  --fg-1: #F5F0E8;
+  --fg-2: #B5AB9E;
+  --fg-3: #8C8275;
+  --electric-ink: #7D9BFF;
+  --rating-ink:   #F2C14E;
+  --warning-ink:  #FFC46B;
+  --error-ink:    #FF9A8A;
+
+  --shadow-card: var(--shadow-card-dark);
+}
+
 /* Below 900px the primary navigation is a fixed bottom bar (see
    `.mobileNav` in layout.module.css), so the page keeps that much room. */
 @media (max-width: 899px) {
@@ -149,7 +232,7 @@
 html, body { margin: 0; padding: 0; }
 body {
   font-family: var(--font);
-  background: var(--cream);
+  background: var(--surface);
   color: var(--fg-1);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -213,7 +296,7 @@ input::placeholder { color: var(--fg-3); }
 }
 .sp-page-title {
   margin: 0;
-  color: var(--char);
+  color: var(--fg-1);
   font-size: clamp(36px, 4.4vw, 54px);
   font-weight: 600;
   letter-spacing: -0.035em;
@@ -243,6 +326,14 @@ input::placeholder { color: var(--fg-3); }
   .sp-page-lead {
     font-size: var(--t-small);
   }
+}
+
+/* One of two renderings of the same thing, picked by theme — `Logo`'s
+   `darkVariant`. `!important` because they sit on elements whose own class
+   may set a display of its own. */
+:root[data-theme="dark"] .sp-light-only,
+:root:not([data-theme="dark"]) .sp-dark-only {
+  display: none !important;
 }
 
 /* Visually hidden but still reachable by screen readers: for a heading a
@@ -303,7 +394,7 @@ input::placeholder { color: var(--fg-3); }
 
 /* Dark textarea placeholder */
 .sp-textarea-dark::placeholder { color: rgba(255,255,255,0.22); }
-.sp-textarea-light::placeholder { color: rgba(26,17,9,0.28); }
+.sp-textarea-light::placeholder { color: color-mix(in srgb, var(--fg-1) 28%, transparent); }
 
 /* ── Infinite carousel scroll ─────────────────────────── */
 /* translates exactly one full set: 5 items × (210 + 44)px */
