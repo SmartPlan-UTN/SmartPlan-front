@@ -6,7 +6,7 @@
   place-items: center;
   overflow-y: auto;
   padding: var(--s-4);
-  background: color-mix(in srgb, var(--char) 62%, transparent);
+  background: color-mix(in srgb, var(--scrim) 62%, transparent);
   backdrop-filter: blur(5px);
 }
 

@@ -99,7 +99,7 @@
   padding: 13px 14px;
   border: 1.5px solid var(--hairline);
   border-radius: var(--r-card-sm);
-  background: color-mix(in srgb, var(--cream) 70%, transparent);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
   color: var(--fg-1);
   font: inherit;
   transition: border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -110,7 +110,7 @@
 .input:focus {
   border-width: 2px;
   border-color: var(--ember);
-  background: var(--white);
+  background: var(--surface-raised);
   box-shadow: var(--focus-ember);
   outline: none;
 }
@@ -206,7 +206,7 @@
   display: grid;
   place-items: center;
   padding: var(--s-4);
-  background: color-mix(in srgb, var(--char) 58%, transparent);
+  background: color-mix(in srgb, var(--scrim) 58%, transparent);
   backdrop-filter: blur(4px);
 }
 

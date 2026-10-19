@@ -15,9 +15,9 @@
   padding-block: clamp(64px, 9.5vh, 112px);
   background: linear-gradient(
     180deg,
-    var(--cream) 0%,
-    color-mix(in srgb, var(--gold) 6%, var(--cream)) 55%,
-    color-mix(in srgb, var(--gold) 9%, var(--cream)) 100%
+    var(--surface) 0%,
+    color-mix(in srgb, var(--gold) 6%, var(--surface)) 55%,
+    color-mix(in srgb, var(--gold) 9%, var(--surface)) 100%
   );
 }
 
@@ -182,12 +182,12 @@
 
 .railViewport::before {
   left: 0;
-  background: linear-gradient(90deg, var(--cream), transparent);
+  background: linear-gradient(90deg, var(--surface), transparent);
 }
 
 .railViewport::after {
   right: 0;
-  background: linear-gradient(270deg, var(--cream), transparent);
+  background: linear-gradient(270deg, var(--surface), transparent);
 }
 
 .railViewport[data-overflow-left="true"]::before {

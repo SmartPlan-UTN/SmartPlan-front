@@ -193,7 +193,7 @@ p.sectionSubtitle {
   align-items: center;
   justify-content: center;
   border-radius: 11px;
-  background: color-mix(in srgb, var(--char) 5%, transparent);
+  background: color-mix(in srgb, var(--fg-1) 5%, transparent);
   color: var(--fg-2);
 }
 

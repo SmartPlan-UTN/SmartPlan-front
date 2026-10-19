@@ -129,11 +129,12 @@
 }
 
 .selected .label {
-  background: var(--char);
-  color: var(--fg-on-dark);
+  background: var(--surface-inverse);
+  color: var(--fg-inverse);
 }
 
-/* A stop: the route's own numbered node, char on the cream. */
+/* A stop: the route's own numbered node, the inverse of the map under
+   it — char on the cream, cream on the night map. */
 .stop {
   z-index: 3;
   margin: -14px 0 0 -14px;
@@ -146,11 +147,11 @@
   flex-shrink: 0;
   place-items: center;
   border-radius: 50%;
-  background: var(--char);
+  background: var(--surface-inverse);
   box-shadow:
     0 0 0 2px var(--surface-card),
     0 3px 10px color-mix(in srgb, var(--char) 35%, transparent);
-  color: var(--fg-on-dark);
+  color: var(--fg-inverse);
   font-size: 12px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;

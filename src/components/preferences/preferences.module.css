@@ -851,7 +851,7 @@
   display: grid;
   place-items: center;
   padding: var(--s-4);
-  background: color-mix(in srgb, var(--char) 45%, transparent);
+  background: color-mix(in srgb, var(--scrim) 45%, transparent);
   backdrop-filter: blur(2px);
   animation: feedbackIn 160ms ease both;
 }
@@ -866,7 +866,7 @@
   box-shadow: 0 24px 60px color-mix(in srgb, var(--char) 22%, transparent);
 }
 .dialog::backdrop {
-  background: color-mix(in srgb, var(--char) 45%, transparent);
+  background: color-mix(in srgb, var(--scrim) 45%, transparent);
   backdrop-filter: blur(2px);
 }
 .dialogBody { display: grid; gap: var(--s-3); padding: var(--s-5); }
@@ -1173,4 +1173,10 @@
   .stepButton, .stepButtonActive, .interestTile, .interestIcon, .interestCheck, .saveArrow, .switchThumb, .stepperButton, .distancePreset { transition: none; }
   .interestTile { opacity: 1; transform: none; }
   .interestTile:hover:not(:disabled), .interestTile:active:not(:disabled), .interestTileSelected .interestIcon, .saveButton:not(:disabled):hover .saveArrow { transform: none; }
+}
+
+/* A card-coloured knob vanishes on the dark theme's hairline track: there
+   it's cream, the way a switch knob reads on a dark surface. */
+:global(:root[data-theme="dark"]) .switchThumb {
+  background: var(--fg-1);
 }

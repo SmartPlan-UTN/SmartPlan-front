@@ -364,7 +364,7 @@
   padding: 0 var(--s-3);
   border: 1.5px solid var(--hairline);
   border-radius: var(--r-card);
-  background: var(--cream);
+  background: var(--surface);
   color: var(--fg-1);
   font-size: var(--t-small);
   font-family: inherit;
@@ -528,6 +528,16 @@
   stroke-width: 1;
 }
 
+/* The same pale park green would glare on a dark page: the dark theme
+   keeps the hue and drops it to night. */
+:global(:root[data-theme="dark"]) .mapPreview {
+  background: linear-gradient(135deg, #1e2a1d 0%, #23331f 100%);
+}
+
+:global(:root[data-theme="dark"]) .mapPreviewGrid {
+  stroke: #4c6346;
+}
+
 .mapPreviewPin {
   position: relative;
   z-index: 1;
@@ -542,7 +552,7 @@
 .mapPreviewAddress {
   padding: 3px 10px;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.8);
+  background: color-mix(in srgb, var(--surface-raised) 80%, transparent);
   color: var(--fg-1);
   font-size: 12px;
   font-weight: var(--w-label);
@@ -558,7 +568,7 @@
   gap: var(--s-2);
   padding: 7px 14px;
   border-radius: var(--r-btn);
-  background: var(--white);
+  background: var(--surface-raised);
   color: var(--fg-1);
   font-size: 12px;
   font-weight: var(--w-heading);

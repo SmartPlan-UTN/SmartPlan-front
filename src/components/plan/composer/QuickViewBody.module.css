@@ -219,8 +219,8 @@
   margin: 0;
   padding: 0 14px 0 12px;
   border-radius: var(--r-btn);
-  background: var(--char);
-  color: var(--fg-on-dark);
+  background: var(--surface-inverse);
+  color: var(--fg-inverse);
   font-size: 14px;
   font-weight: 700;
   animation: settle 200ms var(--ease-out, ease) both;
@@ -294,5 +294,5 @@
 .priceNote {
   margin: 0;
   font-size: 0.8125rem;
-  color: var(--color-text-muted, #5f5a53);
+  color: var(--fg-2);
 }

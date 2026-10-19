@@ -285,7 +285,7 @@
   gap: var(--s-2);
   padding: var(--s-3) var(--s-5);
   border-radius: var(--r-card-sm);
-  background: var(--char);
+  background: var(--surface-dark);
   color: var(--fg-on-dark);
   font-size: var(--t-small);
   font-weight: 600;
@@ -353,6 +353,25 @@
 .dangerButton:focus-visible {
   outline: 2px solid #d94b2b;
   outline-offset: 2px;
+}
+
+/* The same rust, lifted for the dark theme: #D94B2B reads at 4.4:1 on a
+   dark card, under AA for this small copy. */
+:global(:root[data-theme="dark"]) .dangerTitle,
+:global(:root[data-theme="dark"]) .dangerButton {
+  color: #f0775b;
+}
+
+:global(:root[data-theme="dark"]) .dangerButton {
+  border-color: rgba(240, 119, 91, 0.45);
+}
+
+:global(:root[data-theme="dark"]) .dangerButton:hover {
+  background: rgba(240, 119, 91, 0.1);
+}
+
+:global(:root[data-theme="dark"]) .dangerButton:focus-visible {
+  outline-color: #f0775b;
 }
 
 @media (max-width: 767px) {

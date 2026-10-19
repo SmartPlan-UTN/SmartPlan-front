@@ -25,8 +25,8 @@
   position: relative;
   z-index: 6;
   margin-top: -1px;
-  background: var(--cream);
-  color: var(--char);
+  background: var(--surface);
+  color: var(--fg-1);
 }
 
 .track {
@@ -80,7 +80,7 @@
 
 .title {
   margin: 0;
-  color: var(--char);
+  color: var(--fg-1);
   font-size: clamp(34px, 4.8vw, 62px);
   font-weight: var(--w-display);
   letter-spacing: -0.035em;
@@ -96,7 +96,7 @@
   color: color-mix(
     in srgb,
     var(--fg-3),
-    var(--char) calc(var(--emphasis, 0) * 100%)
+    var(--fg-1) calc(var(--emphasis, 0) * 100%)
   );
 }
 
@@ -258,7 +258,7 @@
   height: 8px;
   border-radius: var(--r-chip);
   background: var(--ember);
-  box-shadow: 0 0 0 5px var(--cream), 0 0 0 6px var(--ember-20);
+  box-shadow: 0 0 0 5px var(--surface), 0 0 0 6px var(--ember-20);
   content: "";
 }
 
@@ -363,6 +363,17 @@
   background: var(--base, #efe6da);
 }
 
+/* The sand behind a photo that is still decoding, at night. The tone
+   fields keep their colour: they stand in for a photograph, and a
+   photograph doesn't change with the theme. */
+:global(:root[data-theme="dark"]) .optionMedia {
+  background: #241d16;
+}
+
+:global(:root[data-theme="dark"]) .optionField {
+  background: var(--base, #241d16);
+}
+
 .option[data-tone="char"],
 .staticOption[data-tone="char"] {
   --base: color-mix(in srgb, var(--char) 86%, var(--ember));
@@ -404,7 +415,7 @@
   display: -webkit-box;
   margin: 0;
   overflow: hidden;
-  color: var(--char);
+  color: var(--fg-1);
   font-size: clamp(14px, 1.35vw, 17px);
   font-weight: var(--w-heading);
   letter-spacing: -0.01em;
@@ -527,7 +538,7 @@
 }
 
 .staticHead .titleSoft {
-  color: var(--char);
+  color: var(--fg-1);
 }
 
 /* The four steps, stated plainly — the microcopy that the scrubbed scene

@@ -13,7 +13,7 @@
   padding: 0 var(--s-3);
   border: 1.5px solid var(--hairline);
   border-radius: var(--r-card);
-  background: var(--cream);
+  background: var(--surface);
   color: var(--fg-1);
   font-size: var(--t-small);
   font-family: inherit;

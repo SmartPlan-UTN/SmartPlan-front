@@ -138,7 +138,7 @@
 }
 
 .stepItem[data-state="current"] {
-  color: var(--electric);
+  color: var(--electric-ink);
   font-weight: var(--w-label);
 }
 

@@ -30,8 +30,8 @@
   position: relative;
   z-index: 5;
   margin-top: -1px;
-  background: var(--cream);
-  color: var(--char);
+  background: var(--surface);
+  color: var(--fg-1);
 }
 
 .track {
@@ -74,6 +74,12 @@
   background: #f1e9dc;
   opacity: var(--warm, 0);
   pointer-events: none;
+}
+
+/* At night the same beat warms the dark a touch toward the hero's own
+   wood, and eases back to within a hair of the page, same as by day. */
+:global(:root[data-theme="dark"]) .warm {
+  background: #1d1610;
 }
 
 /* A size container, so a word can be moved by a fraction of the *stage*
@@ -172,6 +178,11 @@
   will-change: transform, opacity;
 }
 
+/* The gallery's dark-theme value too. */
+:global(:root[data-theme="dark"]) .frame {
+  background: #241d16;
+}
+
 .photo {
   object-fit: cover;
 }
@@ -217,7 +228,7 @@
    the box never resizes as they cross-fade. */
 .name {
   display: grid;
-  color: var(--char);
+  color: var(--fg-1);
   font-size: clamp(18px, 2.3vw, 29px);
   letter-spacing: -0.02em;
   line-height: 1.05;
@@ -231,7 +242,7 @@
 /* Weight and ink are what the sort gives the word; the resolution into the
    stop's name is what the thread gives it. Two different beats, one object. */
 .intention {
-  color: color-mix(in srgb, var(--fg-3), var(--char) calc(var(--sort, 0) * 100%));
+  color: color-mix(in srgb, var(--fg-3), var(--fg-1) calc(var(--sort, 0) * 100%));
   font-weight: calc(500 + var(--sort, 0) * 200);
   opacity: calc(1 - clamp(0, (var(--p, 0) - 0.28) / 0.14, 1));
 }
@@ -268,7 +279,7 @@
 .title {
   max-width: 14ch;
   margin: 0;
-  color: var(--char);
+  color: var(--fg-1);
   font-size: clamp(34px, 4.4vw, 64px);
   font-weight: var(--w-display);
   letter-spacing: -0.035em;
@@ -355,7 +366,7 @@
 }
 
 .staticWords li[data-keeps="true"] {
-  color: var(--char);
+  color: var(--fg-1);
   font-size: clamp(22px, 6.4vw, 30px);
   font-weight: 700;
   letter-spacing: -0.02em;

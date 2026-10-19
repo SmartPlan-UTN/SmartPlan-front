@@ -143,14 +143,14 @@
   margin: 0;
   padding: 12px 14px;
   border-radius: var(--r-card-sm);
-  background: color-mix(in srgb, var(--warning) 18%, var(--cream));
+  background: color-mix(in srgb, var(--warning) 18%, var(--surface));
   color: var(--warning-ink);
   font-size: 14px;
   line-height: 1.45;
 }
 
 .health.beyondDay {
-  background: color-mix(in srgb, var(--error) 12%, var(--cream));
+  background: color-mix(in srgb, var(--error) 12%, var(--surface));
   color: var(--error-ink);
 }
 
@@ -207,8 +207,8 @@
 }
 
 .segments label.selected {
-  background: var(--char);
-  color: var(--fg-on-dark);
+  background: var(--surface-inverse);
+  color: var(--fg-inverse);
 }
 
 .segments input {

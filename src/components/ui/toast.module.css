@@ -10,7 +10,7 @@
   gap: var(--s-2);
   padding: 6px 6px 6px 16px;
   border-radius: var(--r-card-sm);
-  background: var(--char);
+  background: var(--surface-dark);
   box-shadow: 0 12px 32px color-mix(in srgb, var(--char) 28%, transparent);
   color: var(--fg-on-dark);
   font-size: 14px;

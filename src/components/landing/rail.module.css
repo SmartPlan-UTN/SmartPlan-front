@@ -70,12 +70,12 @@
 
 .viewport::before {
   left: 0;
-  background: linear-gradient(90deg, var(--cream), transparent);
+  background: linear-gradient(90deg, var(--surface), transparent);
 }
 
 .viewport::after {
   right: 0;
-  background: linear-gradient(270deg, var(--cream), transparent);
+  background: linear-gradient(270deg, var(--surface), transparent);
 }
 
 .viewport[data-overflow-left="true"]::before {

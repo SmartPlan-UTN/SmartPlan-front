@@ -47,7 +47,7 @@
 
 .card h2 {
   margin: 0;
-  color: var(--char);
+  color: var(--fg-1);
 }
 
 .cardBody {
@@ -61,7 +61,7 @@
 
 .email {
   margin: 0;
-  color: var(--char);
+  color: var(--fg-1);
   font-weight: var(--w-heading);
   overflow-wrap: anywhere;
 }
@@ -107,7 +107,7 @@
 
 .faq h2 {
   margin: 0;
-  color: var(--char);
+  color: var(--fg-1);
 }
 
 .faqList {
@@ -130,7 +130,7 @@
   justify-content: space-between;
   gap: var(--s-4);
   padding: var(--s-4) var(--s-5);
-  color: var(--char);
+  color: var(--fg-1);
   font-weight: var(--w-heading);
   cursor: pointer;
   list-style: none;

@@ -70,6 +70,16 @@
   filter: drop-shadow(0 10px 14px rgba(55, 31, 13, 0.1));
 }
 
+/* A brown shadow at 16% disappears into the night table; black, stronger,
+   still lifts the objects off it. */
+:global(:root[data-theme="dark"]) .objectInner {
+  filter: drop-shadow(0 18px 22px rgba(0, 0, 0, 0.42));
+}
+
+:global(:root[data-theme="dark"]) .object[data-plane="back"] .objectInner {
+  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.3));
+}
+
 .objectInner img {
   display: block;
   width: 100%;

@@ -28,7 +28,7 @@
   padding: 10px;
   border: 1.5px solid var(--hairline);
   border-radius: var(--r-btn);
-  background: color-mix(in srgb, var(--char) 4%, transparent);
+  background: color-mix(in srgb, var(--fg-1) 4%, transparent);
   color: var(--fg-2);
   font-size: var(--t-small);
   font-weight: var(--w-heading);
@@ -387,7 +387,7 @@
 .costBox {
   padding: var(--s-5);
   border-radius: var(--r-card);
-  background: var(--char);
+  background: var(--surface-dark);
 }
 
 .costBoxLabel {
@@ -492,7 +492,7 @@
 .ownerActionButton:hover:not(:disabled),
 .saveButton:hover:not(:disabled),
 .shareButton:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--char) 4%, transparent);
+  background: color-mix(in srgb, var(--fg-1) 4%, transparent);
   filter: none;
 }
 
@@ -777,7 +777,7 @@
   padding: var(--s-3) var(--s-4);
   border: 1.5px solid var(--warning);
   border-radius: var(--r-card-sm);
-  background: color-mix(in srgb, var(--warning) 12%, #fff);
+  background: color-mix(in srgb, var(--warning) 12%, var(--surface-raised));
   color: var(--fg-1);
   font-size: var(--t-small);
 }

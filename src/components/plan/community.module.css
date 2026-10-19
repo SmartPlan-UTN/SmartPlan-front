@@ -274,7 +274,7 @@
   padding: var(--s-5);
   border: 1px dashed var(--hairline);
   border-radius: var(--r-card);
-  background: color-mix(in srgb, var(--surface-card) 70%, var(--cream));
+  background: color-mix(in srgb, var(--surface-card) 70%, var(--surface));
 }
 
 .emptyIcon {

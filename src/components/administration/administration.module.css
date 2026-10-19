@@ -52,7 +52,7 @@
   margin-top: var(--s-1);
   padding: 4px;
   border-radius: var(--r-card-sm);
-  background: color-mix(in srgb, var(--char) 6%, transparent);
+  background: color-mix(in srgb, var(--fg-1) 6%, transparent);
 }
 
 .rangeBtn {
@@ -151,7 +151,7 @@
 
 .kpiIcon_ember { background: var(--ember-15); color: var(--ember); }
 .kpiIcon_success { background: var(--success-15); color: var(--success); }
-.kpiIcon_electric { background: var(--electric-15); color: var(--electric); }
+.kpiIcon_electric { background: var(--electric-15); color: var(--electric-ink); }
 .kpiIcon_warning { background: var(--warning-15); color: var(--warning-ink); }
 
 .kpiLabel,
@@ -183,7 +183,7 @@
 
 .kpiDetail_ember { color: var(--ember); }
 .kpiDetail_success { color: var(--success); }
-.kpiDetail_electric { color: var(--electric); }
+.kpiDetail_electric { color: var(--electric-ink); }
 .kpiDetail_warning { color: var(--warning-ink); }
 
 .toolbar {
@@ -394,7 +394,7 @@
   padding: 5px 10px;
   border: 1px solid var(--hairline);
   border-radius: var(--r-chip);
-  background: color-mix(in srgb, var(--char) 4%, transparent);
+  background: color-mix(in srgb, var(--fg-1) 4%, transparent);
   color: var(--fg-2);
   font-size: 12.5px;
   font-weight: var(--w-label);
@@ -472,7 +472,7 @@
 
 .actionsTrigger:hover,
 .actionsTriggerOpen {
-  background: color-mix(in srgb, var(--char) 6%, transparent);
+  background: color-mix(in srgb, var(--fg-1) 6%, transparent);
   color: var(--fg-1);
 }
 
@@ -507,7 +507,7 @@
 }
 
 .actionsPopover button:hover {
-  background: color-mix(in srgb, var(--char) 5%, transparent);
+  background: color-mix(in srgb, var(--fg-1) 5%, transparent);
 }
 
 .state {
@@ -539,7 +539,7 @@
   height: 56px;
   margin-bottom: var(--s-2);
   border-radius: var(--r-chip);
-  background: color-mix(in srgb, var(--char) 5%, transparent);
+  background: color-mix(in srgb, var(--fg-1) 5%, transparent);
   color: var(--fg-3);
 }
 
@@ -561,7 +561,7 @@
   /* The wheel scrolls the dialog, never the page behind the overlay. */
   overscroll-behavior: contain;
   padding: var(--s-4);
-  background: color-mix(in srgb, var(--char) 58%, transparent);
+  background: color-mix(in srgb, var(--scrim) 58%, transparent);
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
@@ -666,7 +666,7 @@
 }
 
 .readClose:hover {
-  background: color-mix(in srgb, var(--char) 5%, transparent);
+  background: color-mix(in srgb, var(--fg-1) 5%, transparent);
   color: var(--fg-1);
 }
 
@@ -761,7 +761,7 @@
   margin: var(--s-5) 0 0;
   padding: var(--s-3);
   border-radius: var(--r-btn);
-  background: color-mix(in srgb, var(--char) 3%, transparent);
+  background: color-mix(in srgb, var(--fg-1) 3%, transparent);
 }
 
 .immutableGrid dt {
@@ -875,4 +875,11 @@
   .kpiCard {
     transition: none;
   }
+}
+
+/* A card-coloured segment disappears into its track on a dark canvas,
+   where the track is the lighter of the two; the raised surface keeps the
+   chosen range standing out. */
+:global(:root[data-theme="dark"]) .rangeBtnActive {
+  background: var(--surface-raised);
 }

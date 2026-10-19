@@ -106,14 +106,14 @@
 
 /* In the route: the dark route's own ink, like the catalog's ✓. */
 .added {
-  border-color: var(--char);
-  background: var(--char);
-  color: var(--fg-on-dark);
+  border-color: var(--surface-inverse);
+  background: var(--surface-inverse);
+  color: var(--fg-inverse);
 }
 
 .added:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--char) 82%, var(--ember));
-  background: color-mix(in srgb, var(--char) 82%, var(--ember));
+  border-color: color-mix(in srgb, var(--surface-inverse) 82%, var(--ember));
+  background: color-mix(in srgb, var(--surface-inverse) 82%, var(--ember));
 }
 
 @media (max-width: 680px) {

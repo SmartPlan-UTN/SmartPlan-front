@@ -83,7 +83,7 @@
   margin-top: var(--s-1);
   padding: 4px;
   border-radius: var(--r-card-sm);
-  background: rgba(26, 17, 9, 0.06);
+  background: color-mix(in srgb, var(--fg-1) 6%, transparent);
 }
 
 .rangeBtn {
@@ -297,7 +297,7 @@
 .barTrack {
   height: 9px;
   border-radius: var(--r-chip);
-  background: rgba(26, 17, 9, 0.06);
+  background: color-mix(in srgb, var(--fg-1) 6%, transparent);
   overflow: hidden;
 }
 
@@ -340,7 +340,7 @@
   width: 28px;
   height: 28px;
   border-radius: var(--r-card-sm);
-  background: rgba(26, 17, 9, 0.05);
+  background: color-mix(in srgb, var(--fg-1) 5%, transparent);
   font-size: var(--t-small);
   font-weight: var(--w-display);
   color: var(--fg-2);
@@ -479,4 +479,11 @@
   color: var(--fg-3);
   font-size: var(--t-small);
   text-align: center;
+}
+
+/* A card-coloured segment disappears into its track on a dark canvas,
+   where the track is the lighter of the two; the raised surface keeps the
+   chosen range standing out. */
+:global(:root[data-theme="dark"]) .rangeBtnActive {
+  background: var(--surface-raised);
 }

@@ -19,7 +19,7 @@
   gap: 10px;
   margin: 0;
   padding: var(--s-3) 0;
-  background: var(--cream);
+  background: var(--surface);
   box-shadow: 0 1px 0 var(--hairline);
 }
 
@@ -599,7 +599,7 @@
   padding: 0 14px;
   border: 0;
   border-radius: 12px;
-  background: var(--char);
+  background: var(--surface-dark);
   color: var(--fg-on-dark);
   font: inherit;
   font-size: 13px;
@@ -613,7 +613,7 @@
 }
 
 .ask:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--char) 88%, var(--ember));
+  background: color-mix(in srgb, var(--surface-dark) 88%, var(--ember));
 }
 
 .ask:focus-visible {
@@ -677,7 +677,7 @@
   overflow: hidden;
   padding: 4px 10px;
   border-radius: var(--r-chip);
-  background: color-mix(in srgb, var(--ember) 12%, var(--cream));
+  background: color-mix(in srgb, var(--ember) 12%, var(--surface));
   color: var(--fg-1);
   font-size: 12px;
   font-weight: 650;
@@ -707,7 +707,7 @@
   margin-top: var(--s-4);
   padding: 12px 14px;
   border-radius: var(--r-card-sm);
-  background: color-mix(in srgb, var(--ember) 9%, var(--cream));
+  background: color-mix(in srgb, var(--ember) 9%, var(--surface));
   color: var(--fg-1);
 }
 
@@ -729,7 +729,7 @@
   padding: 0 14px;
   border: 1px solid color-mix(in srgb, var(--ember) 45%, transparent);
   border-radius: var(--r-btn);
-  background: var(--cream);
+  background: var(--surface);
   color: var(--ember);
   font: inherit;
   font-size: 13px;
@@ -788,8 +788,8 @@
 }
 
 .viewToggle button[aria-pressed="true"] {
-  background: var(--char);
-  color: var(--fg-on-dark);
+  background: var(--surface-inverse);
+  color: var(--fg-inverse);
 }
 
 .viewToggle button:focus-visible {

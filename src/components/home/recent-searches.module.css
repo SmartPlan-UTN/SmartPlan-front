@@ -42,7 +42,7 @@
 .icon {
   flex: none;
   align-self: center;
-  color: var(--electric);
+  color: var(--electric-ink);
 }
 
 .query {
@@ -75,7 +75,7 @@
   padding: 0;
   border: 0;
   background: none;
-  color: var(--electric);
+  color: var(--electric-ink);
   font: inherit;
   font-weight: var(--w-label);
   cursor: pointer;
