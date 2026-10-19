@@ -135,6 +135,7 @@ export function FeedbackDialog({
   const [activityCostsRaw, setActivityCostsRaw] = useState<Record<number, string>>({});
   const [stopFeedback, setStopFeedback] = useState<StopFeedbackPayload[]>([]);
   const [stopFeedbackInvalid, setStopFeedbackInvalid] = useState(false);
+  const [revealStopInvalid, setRevealStopInvalid] = useState(0);
   const [commentOpen, setCommentOpen] = useState(false);
   const [comment, setComment] = useState("");
   const [shared, setShared] = useState(false);
@@ -319,7 +320,8 @@ export function FeedbackDialog({
     event.preventDefault();
     if (rating === 0 || busy) return;
     if (stopFeedbackInvalid) {
-      dialogRef.current?.querySelector<HTMLInputElement>('[aria-invalid="true"]')?.focus();
+      // The section may be collapsed: it reopens itself and focuses the error.
+      setRevealStopInvalid((value) => value + 1);
       return;
     }
     if (costFilledButInvalid) {
@@ -687,7 +689,7 @@ export function FeedbackDialog({
                     values={activityCostsRaw}
                     onChange={setActivityCostsRaw}
                   />
-                  <StopFeedbackFields outingId={planId} disabled={busy} onChange={setStopFeedback} onInvalidChange={setStopFeedbackInvalid} />
+                  <StopFeedbackFields outingId={planId} disabled={busy} onChange={setStopFeedback} onInvalidChange={setStopFeedbackInvalid} revealInvalid={revealStopInvalid} />
 
                   <div className={`${styles.field} ${styles.commentField}`}>
                     {commentOpen ? (

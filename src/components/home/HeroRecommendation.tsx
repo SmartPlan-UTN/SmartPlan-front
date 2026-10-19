@@ -7,7 +7,7 @@ import { GoogleUiKitMedia } from "@/components/media/GoogleUiKitMedia";
 import { PLAN_SELECTION } from "@/components/plan/planSelectionContent";
 import { Button, Icon } from "@/components/ui";
 import { outingDetailRoute, planDetailRoute, ROUTES } from "@/lib/routes";
-import { planMoneyLine } from "@/lib/plans/planMoney";
+import { hasMoneyToShow, planMoneyLine } from "@/lib/plans/planMoney";
 import {
   anchorOf,
   compactHours,
@@ -17,7 +17,7 @@ import {
   reasonsOf,
 } from "@/lib/plans/story";
 import { stopClock, stopLabel, stopPlace } from "@/lib/plans/stops";
-import { formatArs } from "@/lib/utils";
+import { formatArs, observedWhen } from "@/lib/utils";
 import type { PlanDetailResult, PlanFunnel, StopInsight } from "@/types";
 
 import { PlaceVisual } from "./PlaceVisual";
@@ -51,11 +51,8 @@ const KICKER: Record<NonNullable<PlanDetailResult["insight"]>["role"], string> =
 /** A representative order from the official menu, expandable. */
 function OrderSuggestion({ order }: { order: NonNullable<StopInsight["order"]> }) {
   const [open, setOpen] = useState(false);
-  const [now] = useState(() => Date.now());
-  const observed = order.observedAt ? new Date(order.observedAt) : null;
-  const days = observed
-    ? Math.max(0, Math.floor((now - observed.getTime()) / 86_400_000))
-    : null;
+  const [now] = useState(() => new Date());
+  const when = observedWhen(order.observedAt, now);
   return (
     <div className={styles.order}>
       <button
@@ -91,11 +88,7 @@ function OrderSuggestion({ order }: { order: NonNullable<StopInsight["order"]> }
             <a href={order.sourceUrl} target="_blank" rel="noreferrer">
               carta oficial
             </a>
-            {days !== null
-              ? days <= 1
-                ? ", revisada hoy"
-                : `, revisada hace ${days} días`
-              : ""}
+            {when ? `, revisada ${when}` : ""}
             . Extras y propina aparte.
           </p>
         </div>
@@ -153,6 +146,9 @@ export function HeroRecommendation({
   const headline = planHeadline(plan);
   const reasons = reasonsOf(insight?.why);
   const money = planMoneyLine(plan);
+  const prep = (plan.readiness?.tasks ?? []).filter(
+    (task) => task.required && task.status === "PENDING",
+  );
   const hours = compactHours(stopInsight?.hours ?? null);
   const note = planNote(plan);
   const googlePlaceId =
@@ -220,8 +216,16 @@ export function HeroRecommendation({
         ) : null}
 
         <dl className={styles.ledger}>
-          <Row label="Precio" muted={!stopInsight?.price && !stopInsight?.priceLive}>
-            {stopInsight?.price ? (
+          <Row
+            label="Precio"
+            muted={!stopInsight?.price && !stopInsight?.priceLive && !(multi && money.note === "total estimado")}
+          >
+            {multi && money.note === "total estimado" ? (
+              <>
+                {money.value}
+                <small>Total de las {itinerary.length} paradas</small>
+              </>
+            ) : stopInsight?.price ? (
               <>
                 {stopInsight.price}
                 {stopInsight.priceSource ? (
@@ -235,7 +239,7 @@ export function HeroRecommendation({
                 content={["rating", "price"]}
                 orientation="horizontal"
               />
-            ) : multi && money.value ? (
+            ) : (multi || hasMoneyToShow(plan)) && money.value ? (
               <>
                 {money.value}
                 {money.note ? <small>{money.note}</small> : null}
@@ -307,6 +311,14 @@ export function HeroRecommendation({
               </li>
             ))}
           </ol>
+        ) : null}
+
+        {prep.length ? (
+          <p className={styles.note}>
+            <Icon name="calendar-check" size={13} aria-hidden="true" />
+            Antes de salir: {prep.map((task) => task.label).join(", ")}.
+            Vas a poder confirmarlo en tu salida.
+          </p>
         ) : null}
 
         {note ? (

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ApiError, createPlanRequest, createSurprisePlanRequest, getPlanRequestStatus } from '@/lib/api';
+import { loadRequestContext, saveRequestContext } from '@/lib/plans/requestContext';
 import type {
   CreatePlanRequestPayload,
   CreateSurprisePlanRequestPayload,
@@ -100,7 +101,12 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
   const [funnel, setFunnel] = useState<PlanFunnel | null>(null);
   const [unsupportedExperiences, setUnsupportedExperiences] = useState<string[]>([]);
   const [failure, setFailure] = useState<PlanRequestFailure | null>(null);
-  const [lastSubmission, setLastSubmission] = useState<LastSubmission | null>(null);
+  // A results page opened by id recovers what the person explicitly chose.
+  const [lastSubmission, setLastSubmission] = useState<LastSubmission | null>(() => {
+    if (!initialRequestId || typeof window === 'undefined') return null;
+    const saved = loadRequestContext(initialRequestId);
+    return saved ? { kind: 'auto', payload: saved } : null;
+  });
 
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const displayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -250,7 +256,11 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
     setLastSubmission({ kind: 'auto', payload });
     setQuery(payload.query);
     setMode('automatic');
-    void beginRequest(() => createPlanRequest(payload));
+    void beginRequest(async () => {
+      const accepted = await createPlanRequest(payload);
+      saveRequestContext(accepted.id, payload);
+      return accepted;
+    });
   }, [beginRequest]);
 
   const submitSurprise = useCallback((payload: CreateSurprisePlanRequestPayload) => {
@@ -265,7 +275,12 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
     if (lastSubmission.kind === 'surprise') {
       void beginRequest(() => createSurprisePlanRequest(lastSubmission.payload));
     } else {
-      void beginRequest(() => createPlanRequest(lastSubmission.payload));
+      const payload = lastSubmission.payload;
+      void beginRequest(async () => {
+        const accepted = await createPlanRequest(payload);
+        saveRequestContext(accepted.id, payload);
+        return accepted;
+      });
     }
   }, [beginRequest, lastSubmission]);
 

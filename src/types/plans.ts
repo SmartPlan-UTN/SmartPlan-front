@@ -255,6 +255,8 @@ export interface PlanInsight {
   discarded?: PlanDiscarded | null;
   /** Some prices were checked live in Google Maps (only the verdict is saved). */
   priceBasis?: 'PROVIDER_LIVE' | null;
+  /** When those live prices were checked (ISO); saved results are not rechecked. */
+  priceCheckedAt?: string | null;
 }
 
 /**
@@ -317,6 +319,8 @@ export interface PlanPreparationTask {
   /** `CONFIRMED` only when the person said so; a link never confirms. */
   status: "PENDING" | "CONFIRMED";
   confirmedAt: string | null;
+  /** Always the person: SmartPlan never books or buys for them. */
+  confirmedBy?: "USER" | null;
   actionUrl: string | null;
   actionLabel: string | null;
 }

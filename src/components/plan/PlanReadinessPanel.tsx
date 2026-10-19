@@ -27,6 +27,8 @@ export interface PlanReadinessPanelProps {
   /** Present only where the person can act (their own outing to do). */
   onToggleTask?: (task: PlanPreparationTask, confirmed: boolean) => void;
   busyDetailId?: number | null;
+  /** Another change is in flight: no task may start a second one. */
+  disabled?: boolean;
   error?: string | null;
 }
 
@@ -38,6 +40,7 @@ export function PlanReadinessPanel({
   readiness,
   onToggleTask,
   busyDetailId = null,
+  disabled = false,
   error = null,
 }: PlanReadinessPanelProps) {
   const reached = rank(readiness.stage);
@@ -92,7 +95,7 @@ export function PlanReadinessPanel({
                     <Button
                       variant={confirmed ? "ghost" : "secondary"}
                       size="sm"
-                      disabled={busyDetailId === task.detailId}
+                      disabled={disabled || busyDetailId === task.detailId}
                       onClick={() => onToggleTask(task, !confirmed)}
                     >
                       {confirmed ? "Deshacer" : "Ya lo resolví"}

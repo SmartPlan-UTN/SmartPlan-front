@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Select } from "@/components/ui";
 import { getOuting } from "@/lib/api";
 import { stopLabel } from "@/lib/plans/stops";
@@ -36,17 +36,32 @@ export function StopFeedbackFields({
   disabled,
   onChange,
   onInvalidChange,
+  revealInvalid = 0,
 }: {
   outingId: number;
   disabled: boolean;
   onChange: (value: StopFeedbackPayload[]) => void;
   onInvalidChange: (invalid: boolean) => void;
+  /** Bumped by the parent when a submit was blocked by an invalid amount. */
+  revealInvalid?: number;
 }) {
+  const panel = useRef<HTMLDetailsElement>(null);
   const [open, setOpen] = useState(false);
   const [outing, setOuting] = useState<OutingDetail | null>(null);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [drafts, setDrafts] = useState<Record<number, Draft>>({});
+  // A blocked submit must show the problem even when the section is closed.
+  useEffect(() => {
+    if (revealInvalid === 0 || !panel.current) return;
+    panel.current.open = true;
+    const frame = requestAnimationFrame(() => {
+      panel.current
+        ?.querySelector<HTMLInputElement>('[aria-invalid="true"]')
+        ?.focus();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [revealInvalid]);
   useEffect(() => {
     if (!open || outing) return;
     let active = true;
@@ -99,6 +114,7 @@ export function StopFeedbackFields({
 
   return (
     <details
+      ref={panel}
       className={styles.panel}
       onToggle={(event) => setOpen(event.currentTarget.open)}
     >

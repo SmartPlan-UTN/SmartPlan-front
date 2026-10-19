@@ -87,6 +87,9 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [liveMessage, setLiveMessage] = useState("");
   const [galleryVersion, setGalleryVersion] = useState(0);
+  // One outing mutation at a time: a slower earlier response must never
+  // replace the snapshot of a later one (or undo a completed outing).
+  const mutating = useRef(false);
   const [preparingId, setPreparingId] = useState<number | null>(null);
   const [preparationError, setPreparationError] = useState<string | null>(null);
 
@@ -133,8 +136,11 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
 
   const current = outing;
   const done = current.status === "completed";
+  const locked = busy || preparingId !== null || isCancelling;
 
   async function handleComplete() {
+    if (mutating.current) return;
+    mutating.current = true;
     setBusy(true);
     setActionError(null);
     try {
@@ -145,6 +151,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
     } catch {
       setActionError(OUTINGS_COPY.errors.complete);
     } finally {
+      mutating.current = false;
       setBusy(false);
     }
   }
@@ -153,6 +160,8 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
     task: PlanPreparationTask,
     confirmed: boolean
   ) {
+    if (mutating.current) return;
+    mutating.current = true;
     setPreparingId(task.detailId);
     setPreparationError(null);
     try {
@@ -164,11 +173,13 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
     } catch {
       setPreparationError("No pudimos guardar el cambio. Intentá de nuevo.");
     } finally {
+      mutating.current = false;
       setPreparingId(null);
     }
   }
 
   async function handleRepeat() {
+    if (mutating.current) return;
     setBusy(true);
     setActionError(null);
     try {
@@ -253,6 +264,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
             readiness={current.readiness}
             onToggleTask={done ? undefined : (task, confirmed) => void handlePreparation(task, confirmed)}
             busyDetailId={preparingId}
+            disabled={locked}
             error={preparationError}
           />
         ) : null}
@@ -378,7 +390,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
           {done ? (
             <Button
               variant="ghostEmber"
-              disabled={busy}
+              disabled={locked}
               onClick={() => void handleRepeat()}
             >
               <Icon name="repeat" size={16} aria-hidden="true" />
@@ -391,7 +403,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
               <Button
                 variant="ghostLight"
                 className={planStyles.ownerActionButton}
-                disabled={busy}
+                disabled={locked}
                 onClick={() => {
                   setCancelError(null);
                   setConfirmingCancel(true);
@@ -401,7 +413,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
               </Button>
               <Button
                 variant="primary"
-                disabled={busy}
+                disabled={locked}
                 onClick={() => void handleComplete()}
               >
                 <Icon name="circle-check" size={16} aria-hidden="true" />

@@ -16,6 +16,7 @@ const getOuting = vi.hoisted(() => vi.fn());
 const completeOuting = vi.hoisted(() => vi.fn());
 const cancelOuting = vi.hoisted(() => vi.fn());
 const repeatOuting = vi.hoisted(() => vi.fn());
+const setOutingPreparation = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/api")>()),
@@ -23,6 +24,7 @@ vi.mock("@/lib/api", async (importActual) => ({
   completeOuting,
   cancelOuting,
   repeatOuting,
+  setOutingPreparation,
 }));
 
 beforeEach(() => {
@@ -184,5 +186,58 @@ describe("OutingDetailView (#130, CU22, CU23)", () => {
     expect(
       await screen.findByText("No encontramos esta salida"),
     ).toBeInTheDocument();
+  });
+
+  describe("readiness mutations", () => {
+    const task = (detailId: number, status: "PENDING" | "CONFIRMED" = "PENDING") => ({
+      detailId,
+      kind: "TICKET" as const,
+      required: true,
+      label: `Entradas ${detailId}`,
+      status,
+      confirmedAt: null,
+      actionUrl: null,
+      actionLabel: null,
+    });
+    const readiness = (tasks: ReturnType<typeof task>[]) => ({
+      stage: "PREPARATION_REQUIRED" as const,
+      label: "Falta preparar",
+      summary: "Falta confirmar entradas.",
+      ready: false,
+      verifiedStops: 2,
+      totalStops: 2,
+      tasks,
+    });
+
+    it("blocks every other change while one is saving, so a stale snapshot cannot win", async () => {
+      getOuting.mockResolvedValue(outingDetail({ readiness: readiness([task(1), task(2)]) }));
+      let resolve!: (value: unknown) => void;
+      setOutingPreparation.mockReturnValue(new Promise((r) => (resolve = r)));
+      const user = userEvent.setup();
+      render(<OutingDetailView outingId={40} />);
+
+      const buttons = await screen.findAllByRole("button", { name: "Ya lo resolví" });
+      await user.click(buttons[0]);
+
+      expect(screen.getByRole("button", { name: "Marcar como realizada" })).toBeDisabled();
+      for (const button of screen.getAllByRole("button", { name: /Ya lo resolví|Deshacer/ })) {
+        expect(button).toBeDisabled();
+      }
+      await user.click(buttons[1]);
+      expect(setOutingPreparation).toHaveBeenCalledTimes(1);
+
+      resolve(outingDetail({ readiness: readiness([task(1, "CONFIRMED"), task(2)]) }));
+      expect(await screen.findByRole("button", { name: "Deshacer" })).toBeEnabled();
+    });
+
+    it("shows an error and keeps the task pending when saving fails", async () => {
+      getOuting.mockResolvedValue(outingDetail({ readiness: readiness([task(1)]) }));
+      setOutingPreparation.mockRejectedValue(new Error("boom"));
+      const user = userEvent.setup();
+      render(<OutingDetailView outingId={40} />);
+      await user.click(await screen.findByRole("button", { name: "Ya lo resolví" }));
+      expect(await screen.findByText(/No pudimos guardar el cambio/)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Ya lo resolví" })).toBeEnabled();
+    });
   });
 });

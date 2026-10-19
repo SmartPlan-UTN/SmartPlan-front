@@ -9,6 +9,7 @@ import { ResultsHeader } from "@/components/home/ResultsHeader";
 import { usePlanRequestPolling } from "@/hooks";
 import { ROUTES, planRequestRoute } from "@/lib/routes";
 import { refinePlanRequest } from '@/lib/api';
+import { carryRequestContext } from '@/lib/plans/requestContext';
 import type { PlanRequestContext, RefinePlanRequestPayload } from '@/types';
 import { RefinementChips, StopAdjustments } from './PlanRefinementActions';
 
@@ -63,6 +64,7 @@ function PlanRequestBody({ requestId }: { requestId: number }) {
     setRefinementError(null);
     try {
       const accepted = await refinePlanRequest(requestId, payload);
+      carryRequestContext(requestId, accepted.id);
       router.push(planRequestRoute(accepted.id));
     } catch {
       setRefinementError('No pudimos ajustar este plan. Tu recorrido sigue disponible; podés volver a intentar.');

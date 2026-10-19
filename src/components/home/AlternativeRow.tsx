@@ -68,7 +68,7 @@ export function AlternativeRow({
   const hours = compactHours(anchor?.insight?.hours ?? null);
   const money = planMoneyLine(plan);
   const googlePlaceId = place?.googlePlaceId ?? null;
-  const facts = [hours, anchor?.insight?.price ? money.value : null].filter(
+  const facts = [hours, money.value].filter(
     (fact): fact is string => Boolean(fact),
   );
   return (
