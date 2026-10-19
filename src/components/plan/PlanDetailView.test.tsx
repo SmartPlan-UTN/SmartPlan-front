@@ -14,9 +14,11 @@ import type {
 import { PlanDetailView } from "./PlanDetailView";
 
 const replace = vi.hoisted(() => vi.fn());
+const push = vi.hoisted(() => vi.fn());
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), replace, refresh: vi.fn() }),
+  useRouter: () => ({ push, replace, refresh: vi.fn() }),
+  usePathname: () => "/plans/7",
 }));
 
 const useSession = vi.hoisted(() => vi.fn());
@@ -127,6 +129,31 @@ beforeEach(() => {
   });
 });
 
+describe("sharing by WhatsApp", () => {
+  it("opens WhatsApp with the plan link for a published plan", async () => {
+    const open = vi.spyOn(window, "open").mockReturnValue(null);
+    getPlan.mockResolvedValue(plan());
+    render(<PlanDetailView planId={7} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Compartir por WhatsApp" }));
+
+    const [url] = open.mock.calls[0];
+    expect(String(url)).toMatch(/^https:\/\/api\.whatsapp\.com\/send\?text=/);
+    expect(decodeURIComponent(String(url))).toContain(`${window.location.origin}/plans/7`);
+    // Emojis travel percent-encoded, intact (✨ is E2 9C A8).
+    expect(String(url)).toContain("%E2%9C%A8");
+    open.mockRestore();
+  });
+
+  it("is not offered for a private plan", async () => {
+    getPlan.mockResolvedValue(plan({ visibility: "private" }));
+    render(<PlanDetailView planId={7} />);
+
+    await screen.findByText("Tarde de vinos", { selector: "h1" });
+    expect(screen.queryByRole("button", { name: "Compartir por WhatsApp" })).not.toBeInTheDocument();
+  });
+});
+
 it("shows unrated plans and itinerary stops without fabricated zero scores", async () => {
   const unrated = plan({ averageRating: 0 });
   unrated.details[0].activity.averageRating = 0;
@@ -157,6 +184,17 @@ describe("PlanDetailView — Lo voy a hacer (CU22, PAN 17, #130)", () => {
     await renderDetail("selectable");
 
     expect(screen.getByRole("button", intendButton)).toBeEnabled();
+  });
+
+  it("sends someone without a session to log in before choosing the plan", async () => {
+    useSession.mockReturnValue({ status: "anonymous", authenticated: false });
+    const user = userEvent.setup();
+    await renderDetail("selectable");
+
+    await user.click(screen.getByRole("button", intendButton));
+
+    expect(push).toHaveBeenCalledWith("/login?redirect=%2Fplans%2F7");
+    expect(createOuting).not.toHaveBeenCalled();
   });
 
   it("adds the plan to Mis salidas once and links to the new outing", async () => {

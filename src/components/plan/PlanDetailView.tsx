@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { Badge, Button, ConfirmationDialog, Divider, FloatingBackLink, Icon, Stars } from "@/components/ui";
 import { AuthenticatedImage, MediaGallery } from "@/components/media";
@@ -10,7 +10,7 @@ import { useFavorites } from "@/context";
 import { useDetailFetch, usePlanSelection } from "@/hooks";
 import { ApiError, cancelOwnPlan, getOwnPlan, getPlan } from "@/lib/api";
 import { useSession } from "@/lib/auth";
-import { outingDetailRoute, planDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
+import { loginRoute, outingDetailRoute, planDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
 import { formatDuration, formatPrice, formatPlanTotal, formatPerPerson } from "@/lib/utils";
 import type {
   OwnPlanDetail,
@@ -27,6 +27,7 @@ import {
   PlanVisibilityControl,
 } from "./PlanVisibilityControl";
 import { PLAN_SELECTION } from "./planSelectionContent";
+import { planShareMessage } from "./shareMessage";
 import { planStatusPresentation } from "./statusPresentation";
 import { VISIBILITY_COPY } from "./visibilityContent";
 import styles from "./plan.module.css";
@@ -54,7 +55,8 @@ const GENERIC_ERROR = "No pudimos cargar el plan. Intentá de nuevo.";
  * that copies the plan into an outing of "Mis salidas" (`POST
  * /users/me/outings`), shown only when the caller can choose the plan; once
  * done it reads "Agregado a Mis salidas" (#130). "Compartir" is real — it
- * copies the page URL.
+ * copies the page URL — and a published plan can also be sent by WhatsApp:
+ * its page opens without a session, which is only needed to act on it.
  *
  * The author of a plan also gets its visibility (Público/Privado) and can
  * publish it or make it private. An outing is not a plan to browse: its
@@ -62,6 +64,7 @@ const GENERIC_ERROR = "No pudimos cargar el plan. Intentá de nuevo.";
  */
 export function PlanDetailView({ planId, returnTo = ROUTES.explore }: PlanDetailViewProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const backLabel = returnTo.startsWith(`${ROUTES.planRequests}/`) ? "Volver a los resultados" : "Volver";
   const { status: sessionStatus } = useSession();
   const {
@@ -152,9 +155,20 @@ export function PlanDetailView({ planId, returnTo = ROUTES.explore }: PlanDetail
     }
   }
 
+  function planUrl() {
+    return new URL(planDetailRoute(planId), window.location.origin).href;
+  }
+
+  function handleWhatsAppShare(shared: PlanDetailResult) {
+    const text = planShareMessage(shared, planUrl());
+    // Straight to api.whatsapp.com: the wa.me redirect turns every emoji
+    // into "�" on its way there.
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+  }
+
   async function handleShare() {
     try {
-      await navigator.clipboard.writeText(new URL(planDetailRoute(planId), window.location.origin).href);
+      await navigator.clipboard.writeText(planUrl());
       setCopied(true);
       setTimeout(() => {
         setCopied(false);
@@ -424,13 +438,33 @@ export function PlanDetailView({ planId, returnTo = ROUTES.explore }: PlanDetail
             <Icon name="share-2" size={16} aria-hidden="true" />
             {copied ? "¡Copiado!" : "Compartir"}
           </Button>
+          {/* Only a published plan opens for whoever gets the link. */}
+          {plan.kind === "authored" && visibility === "public" && plan.status.key !== "cancelled" ? (
+            <Button
+              variant="ghostLight"
+              size="sm"
+              className={styles.shareButton}
+              aria-label="Compartir por WhatsApp"
+              onClick={() => handleWhatsAppShare(plan)}
+            >
+              <Icon name="message-circle" size={16} aria-hidden="true" />
+              WhatsApp
+            </Button>
+          ) : null}
 
           {/* Personal state on the plan (CU22) — carries the visual weight. */}
           <PlanIntentionPanel
             viewerPlanState={viewerPlanState}
             activeOutingId={activeOutingId}
             busy={selection.status === "working"}
-            onIntend={() => void chooseOuting()}
+            onIntend={() => {
+              // Someone who opened a shared link signs in first, then returns.
+              if (sessionStatus === "anonymous") {
+                router.push(loginRoute(pathname));
+                return;
+              }
+              void chooseOuting();
+            }}
           />
         </div>
       </div>
