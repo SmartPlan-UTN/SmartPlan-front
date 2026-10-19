@@ -62,7 +62,14 @@ const GENERIC_ERROR = "No pudimos cargar el plan. Intentá de nuevo.";
  * publish it or make it private. An outing is not a plan to browse: its
  * owner is sent to its page in Mis salidas.
  */
-export function PlanDetailView({ planId, returnTo = ROUTES.explore }: PlanDetailViewProps) {
+export function PlanDetailView(props: PlanDetailViewProps) {
+  const { status, user } = useSession();
+  // Session changes discard private data, pending reads and personal overrides
+  // together, before the new viewer's detail is loaded.
+  return <PlanDetailContent key={`${props.planId}:${status}:${user?.id ?? "anonymous"}`} {...props} />;
+}
+
+function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailViewProps) {
   const router = useRouter();
   const pathname = usePathname();
   const backLabel = returnTo.startsWith(`${ROUTES.planRequests}/`) ? "Volver a los resultados" : "Volver";

@@ -130,6 +130,28 @@ beforeEach(() => {
 });
 
 describe("sharing by WhatsApp", () => {
+  it("drops an owner's private detail after session revocation", async () => {
+    getPlan.mockResolvedValue(plan({ visibility: "private", ownedByViewer: true }));
+    const view = render(<PlanDetailView planId={7} />);
+    await screen.findByRole("heading", { name: "Tarde de vinos", level: 1 });
+    getPlan.mockRejectedValue(new ApiError({ message: "Plan not found", status: 404 }));
+    useSession.mockReturnValue({ status: "anonymous", authenticated: false });
+    view.rerender(<PlanDetailView planId={7} />);
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Tarde de vinos", level: 1 })).not.toBeInTheDocument());
+  });
+
+  it("reloads personal plan state when the authenticated account changes", async () => {
+    useSession.mockReturnValue({ status: "authenticated", user: { id: 1 } });
+    getPlan.mockResolvedValueOnce(plan({ viewerPlanState: "selected", activeOutingId: 40 }));
+    const view = render(<PlanDetailView planId={7} />);
+    await screen.findByRole("heading", { name: "Tarde de vinos", level: 1 });
+    getPlan.mockResolvedValueOnce(plan({ viewerPlanState: "selectable", activeOutingId: null }));
+    useSession.mockReturnValue({ status: "authenticated", user: { id: 2 } });
+    view.rerender(<PlanDetailView planId={7} />);
+    await waitFor(() => expect(getPlan).toHaveBeenCalledTimes(2));
+    expect(await screen.findByRole("button", { name: "Lo voy a hacer" })).toBeEnabled();
+  });
+
   it("opens WhatsApp with the plan link for a published plan", async () => {
     const open = vi.spyOn(window, "open").mockReturnValue(null);
     getPlan.mockResolvedValue(plan());
