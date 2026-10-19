@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Keep local QA builds separate from a developer's running Next server.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   images: {
     // The landing leans on large transparent hero cut-outs and full-bleed
     // photography; AVIF first cuts those bytes hard, WebP is the fallback

@@ -1,0 +1,124 @@
+/* ================================================================
+   Place visual — the picture of a recommended place.
+   A real photo (with its credit) when the compliant photo strategy allows
+   one; otherwise a designed "poster": warm, typographic, tinted by the
+   kind of place. Never a pastel placeholder.
+   ================================================================ */
+
+.frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--char);
+  container-type: size;
+}
+
+/* PlaceMedia sizes itself for detail headers; here the frame decides. */
+.frame > div {
+  height: 100% !important;
+  border-radius: 0 !important;
+}
+
+.frame figure,
+.frame img {
+  height: 100% !important;
+  width: 100%;
+  margin: 0;
+  border-radius: 0 !important;
+  object-fit: cover;
+}
+
+.poster {
+  --poster-ink: var(--fg-on-dark);
+  --poster-glow: rgba(232, 93, 32, 0.55);
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  color: var(--poster-ink);
+  background:
+    radial-gradient(90% 70% at 88% 4%, rgba(232, 93, 32, 0.5), transparent 62%),
+    radial-gradient(120% 90% at 6% 112%, rgba(255, 209, 102, 0.26), transparent 56%),
+    linear-gradient(155deg, #402516 0%, #2a180d 45%, var(--char) 100%);
+}
+
+/* A printed-cover keyline: the empty space reads as composition. */
+.poster::after {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  border: 1px solid color-mix(in srgb, var(--poster-ink) 22%, transparent);
+  border-radius: 14px;
+  pointer-events: none;
+}
+
+.poster[data-tone="table"] {
+  --poster-glow: rgba(255, 209, 102, 0.42);
+  background:
+    radial-gradient(110% 80% at 90% 105%, var(--poster-glow), transparent 60%),
+    linear-gradient(155deg, #b9440f 0%, var(--ember) 46%, #f08a45 100%);
+}
+
+.poster[data-tone="day"] {
+  --poster-ink: var(--char);
+  --poster-glow: rgba(232, 93, 32, 0.28);
+  background:
+    radial-gradient(110% 80% at 88% 108%, var(--poster-glow), transparent 60%),
+    linear-gradient(160deg, #f7e6c9 0%, #efe2d3 58%, #e6c79d 100%);
+}
+
+/* Contour lines: the foothills behind Mendoza, as paper texture. */
+.contours {
+  position: absolute;
+  inset: 0;
+  opacity: 0.9;
+  background: repeating-radial-gradient(
+    circle at 82% 118%,
+    transparent 0 26px,
+    color-mix(in srgb, var(--poster-ink) 18%, transparent) 26px 27px
+  );
+  mask-image: radial-gradient(90% 90% at 82% 118%, #000 0%, transparent 78%);
+}
+
+.glyph {
+  position: absolute;
+  left: 5%;
+  bottom: -16%;
+  font-family: var(--font-display-serif);
+  font-weight: 600;
+  font-size: clamp(9rem, 100cqh, 34rem);
+  line-height: 0.8;
+  letter-spacing: -0.04em;
+  color: color-mix(in srgb, var(--poster-ink) 24%, transparent);
+  user-select: none;
+}
+
+.kind {
+  position: absolute;
+  top: var(--s-4);
+  right: var(--s-4);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--r-chip);
+  border: 1px solid color-mix(in srgb, var(--poster-ink) 28%, transparent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.frame[data-size="thumb"] .glyph {
+  font-size: clamp(4.5rem, 90cqh, 9rem);
+  left: 10%;
+}
+
+.frame[data-size="thumb"] .poster::after {
+  inset: 7px;
+  border-radius: 9px;
+}
+
+.frame[data-size="thumb"] .kind {
+  display: none;
+}

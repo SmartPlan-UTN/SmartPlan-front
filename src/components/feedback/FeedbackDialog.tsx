@@ -18,7 +18,8 @@ import {
   type RatableActivity,
 } from "@/lib/plans/ratableActivities";
 import { formatArs, NO_PRICE_TOTAL_LABEL } from "@/lib/utils";
-import type { FeedbackTag, PlanFeedback } from "@/types";
+import type { FeedbackTag, PlanFeedback, StopFeedbackPayload } from "@/types";
+import { StopFeedbackFields } from './StopFeedbackFields';
 
 import { ActivityCostsField, parseCostAmount } from "./ActivityCostsField";
 import {
@@ -69,7 +70,7 @@ const FOCUSABLE =
 const dateFormatter = new Intl.DateTimeFormat("es-AR", {
   day: "2-digit",
   month: "short",
-  timeZone: "UTC",
+  timeZone: "America/Argentina/Mendoza",
 });
 
 function formatCompletedAt(value: string): string {
@@ -132,6 +133,8 @@ export function FeedbackDialog({
   const [costInputError, setCostInputError] = useState<string | null>(null);
   const [partyRaw, setPartyRaw] = useState("");
   const [activityCostsRaw, setActivityCostsRaw] = useState<Record<number, string>>({});
+  const [stopFeedback, setStopFeedback] = useState<StopFeedbackPayload[]>([]);
+  const [stopFeedbackInvalid, setStopFeedbackInvalid] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
   const [comment, setComment] = useState("");
   const [shared, setShared] = useState(false);
@@ -193,6 +196,8 @@ export function FeedbackDialog({
     setCostInputError(null);
     setPartyRaw("");
     setActivityCostsRaw({});
+    setStopFeedback([]);
+    setStopFeedbackInvalid(false);
     setCommentOpen(false);
     setComment("");
     setPhase("form");
@@ -313,6 +318,10 @@ export function FeedbackDialog({
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (rating === 0 || busy) return;
+    if (stopFeedbackInvalid) {
+      dialogRef.current?.querySelector<HTMLInputElement>('[aria-invalid="true"]')?.focus();
+      return;
+    }
     if (costFilledButInvalid) {
       dialogRef.current?.querySelector<HTMLInputElement>("#feedback-cost")?.focus();
       return;
@@ -327,6 +336,7 @@ export function FeedbackDialog({
     const outcome = await submission.submit(planId, {
       rating,
       ...(activityCosts.length > 0 ? { activityCosts } : {}),
+      ...(stopFeedback.length ? { stops: stopFeedback } : {}),
       ...(Number.isInteger(partySize) && partySize >= 1 && partySize <= 1000
         ? { partySize }
         : {}),
@@ -379,7 +389,7 @@ export function FeedbackDialog({
   const apiError = submission.status === "error" ? submission.error : null;
   const dateLabel = completedAt ? formatCompletedAt(completedAt) : null;
   const activityLabel = Number.isFinite(activityCount)
-    ? `${activityCount} ${activityCount === 1 ? "actividad" : "actividades"}`
+    ? `${activityCount} ${activityCount === 1 ? "parada" : "paradas"}`
     : null;
 
   return createPortal(
@@ -665,7 +675,7 @@ export function FeedbackDialog({
                         disabled={busy}
                         maxLength={4}
                         onChange={(event) => {
-                          setPartyRaw(event.target.value.replace(/D/g, "").slice(0, 4));
+                          setPartyRaw(event.target.value.replace(/\D/g, "").slice(0, 4));
                         }}
                       />
                     </div>
@@ -677,6 +687,7 @@ export function FeedbackDialog({
                     values={activityCostsRaw}
                     onChange={setActivityCostsRaw}
                   />
+                  <StopFeedbackFields outingId={planId} disabled={busy} onChange={setStopFeedback} onInvalidChange={setStopFeedbackInvalid} />
 
                   <div className={`${styles.field} ${styles.commentField}`}>
                     {commentOpen ? (

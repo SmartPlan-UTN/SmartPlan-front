@@ -59,8 +59,26 @@ export interface ResultsMapHandle {
   panToPlan: (planId: number) => void;
 }
 
+/** Frames a set of points; a single venue gets a street-level zoom, not the maximum. */
+function frame(map: google.maps.Map, points: google.maps.LatLngLiteral[], padding: number) {
+  if (!points.length) return;
+  const bounds = new google.maps.LatLngBounds();
+  points.forEach((point) => bounds.extend(point));
+  const single = points.every(
+    (point) => point.lat === points[0].lat && point.lng === points[0].lng,
+  );
+  if (single) {
+    map.setCenter(points[0]);
+    map.setZoom(15);
+    return;
+  }
+  map.fitBounds(bounds, padding);
+}
+
 export interface ResultsMapProps {
   plans: ResultsMapPlanPin[];
+  /** The plan the camera frames first; the others stay visible around it. */
+  focusPlanId?: number | null;
   activePlanId: number | null;
   onPinHover: (planId: number | null) => void;
   onPinClick: (planId: number) => void;
@@ -80,6 +98,7 @@ export interface ResultsMapProps {
  */
 export function ResultsMap({
   plans,
+  focusPlanId = null,
   activePlanId,
   onPinHover,
   onPinClick,
@@ -147,7 +166,10 @@ export function ResultsMap({
     // default Mendoza center/zoom instead of calling fitBounds on an empty
     // LatLngBounds, which throws.
     if (stopCount > 0) {
-      map.fitBounds(bounds, 48);
+      const focused = plans.find((plan) => plan.planId === focusPlanId);
+      if (focused?.stops.length)
+        frame(map, focused.stops.map((stop) => ({ lat: stop.lat, lng: stop.lng })), 72);
+      else map.fitBounds(bounds, 48);
     }
 
     return () => {
@@ -201,7 +223,10 @@ export function ResultsMap({
         stopCount += 1;
       }),
     );
-    if (stopCount > 0) map.fitBounds(bounds, 48);
+    const focused = plans.find((plan) => plan.planId === focusPlanId);
+    if (focused?.stops.length)
+      frame(map, focused.stops.map((stop) => ({ lat: stop.lat, lng: stop.lng })), 72);
+    else if (stopCount > 0) map.fitBounds(bounds, 48);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refit on visibility flipping true or the stop count changing, not on every `plans` identity change.
   }, [visible, stopsSignature]);
 
@@ -213,14 +238,14 @@ export function ResultsMap({
         const planMarkers = markersRef.current.get(planId);
         if (!map || !planMarkers || planMarkers.length === 0) return;
 
-        const bounds = new google.maps.LatLngBounds();
+        const points: google.maps.LatLngLiteral[] = [];
         planMarkers.forEach(({ marker }) => {
           const position = marker.getPosition();
-          if (position) bounds.extend(position);
+          if (position) points.push(position.toJSON());
         });
 
-        if (!reducedMotion) map.panTo(bounds.getCenter());
-        map.fitBounds(bounds, 64);
+        if (!reducedMotion && points.length) map.panTo(points[0]);
+        frame(map, points, 72);
       },
     }),
     [reducedMotion],

@@ -55,6 +55,12 @@ const plan: OwnPlanDetail = {
 };
 
 describe("EditPlanForm entry point", () => {
+  it("preserves place stops by showing the full plan instead of opening an incompatible editor", async () => {
+    vi.mocked(getOwnPlan).mockResolvedValue({ ...plan, details: [{ ...plan.details[0], activity: null }] });
+    render(<EditPlanForm planId={12} />);
+    expect(await screen.findByText("Este recorrido incluye paradas en lugares")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ver el plan completo" })).toHaveAttribute("href", "/plans/12");
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getOwnPlan).mockResolvedValue(plan);

@@ -1,13 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { GenerationState } from "@/components/home/GenerationState";
 import { PlanResults } from "@/components/home/PlanResults";
-import { Button, Icon } from "@/components/ui";
+import { ResultsHeader } from "@/components/home/ResultsHeader";
 import { usePlanRequestPolling } from "@/hooks";
 import { ROUTES, planRequestRoute } from "@/lib/routes";
+import { refinePlanRequest } from '@/lib/api';
+import type { PlanRequestContext, RefinePlanRequestPayload } from '@/types';
+import { RefinementChips, StopAdjustments } from './PlanRefinementActions';
 
 import styles from "./plan-request.module.css";
 
@@ -18,65 +21,100 @@ export function PlanRequestScreen({ requestId }: { requestId: number }) {
 function PlanRequestBody({ requestId }: { requestId: number }) {
   const router = useRouter();
   const planning = usePlanRequestPolling(requestId);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [draft, setDraft] = useState<string | null>(null);
-  const draftValue = draft ?? planning.query ?? "";
+  const [refining, setRefining] = useState(false);
+  const [refinementError, setRefinementError] = useState<string | null>(null);
+  const refinementPending = useRef(false);
 
   useEffect(() => {
     if (planning.planRequestId == null || planning.planRequestId === requestId) return;
     router.push(planRequestRoute(planning.planRequestId));
   }, [planning.planRequestId, requestId, router]);
 
-  const startNewSearch = useCallback((event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const query = draftValue.trim();
-    if (!query) {
-      inputRef.current?.focus();
-      return;
-    }
+  // A new sentence is interpreted on its own: what was inferred from the
+  // previous one must not leak into this one. Only context the person
+  // chose explicitly travels with it.
+  const lastContext: PlanRequestContext | undefined =
+    planning.lastSubmission?.kind === "auto"
+      ? planning.lastSubmission.payload.context
+      : undefined;
 
-    // A new idea must be interpreted independently: inferred values from
-    // the previous sentence must not override this sentence's budget/party.
-    planning.submit({ query });
-  }, [draftValue, planning]);
+  const search = useCallback(
+    (query: string) => {
+      if (!query.trim()) return;
+      planning.submit({ query: query.trim(), context: lastContext });
+    },
+    [planning, lastContext],
+  );
+
+  const addContext = useCallback(
+    (context: Partial<PlanRequestContext>) => {
+      const query = planning.query?.trim();
+      if (!query) return;
+      planning.submit({ query, context: { ...lastContext, ...context } });
+    },
+    [planning, lastContext],
+  );
 
   const goHome = useCallback(() => router.push(ROUTES.home), [router]);
+  async function refine(payload: RefinePlanRequestPayload) {
+    if (refinementPending.current) return;
+    refinementPending.current = true;
+    setRefining(true);
+    setRefinementError(null);
+    try {
+      const accepted = await refinePlanRequest(requestId, payload);
+      router.push(planRequestRoute(accepted.id));
+    } catch {
+      setRefinementError('No pudimos ajustar este plan. Tu recorrido sigue disponible; podés volver a intentar.');
+      refinementPending.current = false;
+      setRefining(false);
+    }
+  }
+
+  const plans = planning.phase === "generated" ? planning.plans : null;
+  const generated = plans !== null;
+  const failed = planning.phase === "failed" || planning.phase === "idle";
+
   return (
     <section className={styles.page} aria-label="Búsqueda de planes">
-      <header className={styles.searchBar}>
-        <button type="button" className={styles.backLink} onClick={goHome} aria-label="Volver al inicio">
-          <Icon name="arrow-left" size={18} aria-hidden="true" />
-          <span>Inicio</span>
-        </button>
-        <form className={styles.searchForm} onSubmit={startNewSearch}>
-          <Icon name="sparkles" size={17} aria-hidden="true" className={styles.searchIcon} />
-          <input
-            ref={inputRef}
-            aria-label="Editar búsqueda"
-            value={draftValue}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder="Contanos qué te gustaría hacer"
-            maxLength={500}
-          />
-          <Button type="submit" size="sm" disabled={!draftValue.trim()}>
-            Buscar otra idea
-          </Button>
-        </form>
-      </header>
+      <ResultsHeader
+        query={planning.query ?? ""}
+        understanding={planning.understanding}
+        thinking={!generated && !failed}
+        onBack={goHome}
+        onSearch={search}
+        onAddContext={addContext}
+      />
 
-      {planning.phase === "generated" && planning.plans ? (
+      {plans ? (
         <div className={styles.resultsContent}>
+          {refining ? <p role="status" className={styles.refiningNote}>Ajustando la recomendación…</p> : null}
+          {refinementError ? <p role="alert" className={styles.refiningNote}>{refinementError}</p> : null}
           <PlanResults
-            plans={planning.plans}
+            plans={plans}
             query={planning.query}
             resolvedContext={planning.resolvedContext}
+            understanding={planning.understanding}
+            funnel={planning.funnel}
+            unsupportedExperiences={planning.unsupportedExperiences}
             mode={planning.mode === "surprise" ? "surprise" : "auto"}
+            hideHeader
             canAdjust={false}
-            onAdjust={() => inputRef.current?.focus()}
+            onAdjust={goHome}
             onDiscard={goHome}
             onRegenerate={planning.regenerate}
             onPlanSelected={planning.applySelectionChange}
             onSelectionReconcile={planning.refresh}
+            renderRefinement={(plan) =>
+              plan.insight ? (
+                <>
+                  <RefinementChips plan={plan} busy={refining} onRefine={(payload) => void refine(payload)} />
+                  {plan.details.length > 1 ? (
+                    <StopAdjustments plan={plan} busy={refining} onRefine={(payload) => void refine(payload)} />
+                  ) : null}
+                </>
+              ) : null
+            }
           />
         </div>
       ) : (
@@ -94,6 +132,7 @@ function PlanRequestBody({ requestId }: { requestId: number }) {
             mode={planning.mode === "surprise" ? "surprise" : "auto"}
             query={planning.query}
             progressStage={planning.progressStage}
+            unsupportedExperiences={planning.unsupportedExperiences}
           />
         </div>
       )}

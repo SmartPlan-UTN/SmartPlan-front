@@ -154,15 +154,15 @@ describe("FeedbackDialog (CU23)", () => {
   it("shows the plan date and activity count as compact experience context", () => {
     setup();
 
-    expect(screen.getByText(/28 ago/i)).toBeInTheDocument();
-    expect(screen.getByText(/3 actividades/i)).toBeInTheDocument();
+    expect(screen.getByText(/27 ago/i)).toBeInTheDocument();
+    expect(screen.getByText(/3 paradas/i)).toBeInTheDocument();
   });
 
   it("omits unavailable activity metadata instead of rendering undefined", () => {
     setup({ activityCount: undefined as unknown as number });
 
     expect(screen.queryByText(/undefined/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/28 ago/i)).toBeInTheDocument();
+    expect(screen.getByText(/27 ago/i)).toBeInTheDocument();
   });
 
   it("focuses the selected star and traps Tab inside the dialog", async () => {

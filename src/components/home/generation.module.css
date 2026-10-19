@@ -233,7 +233,47 @@
 .contextBadges {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--s-2);
+}
+
+/* "Entendimos": the reading SmartPlan made of the request. */
+.understoodLabel {
+  color: var(--fg-3);
+  font-size: var(--t-label);
+  font-weight: var(--w-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+/* A value taken from the profile, not said in the request. */
+.chipSource {
+  color: var(--fg-3);
+  font-weight: 400;
+}
+
+/* Real counts of what the planner reviewed: quiet, factual. */
+.funnelNote {
+  margin: var(--s-2) 0 0;
+  color: var(--fg-3);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+/* What SmartPlan cannot plan yet, said once and plainly. */
+.unsupportedNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: var(--s-2) 0 0;
+  color: var(--warning-ink);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.unsupportedNote :global(svg) {
+  flex: 0 0 auto;
+  margin-top: 2px;
 }
 
 .resultsEyebrow {
@@ -288,6 +328,18 @@
 
 .resultLiveWarn {
   color: var(--fg-2);
+}
+
+/* Keep announcements mounted without reserving a blank row before any action. */
+.resultLive:empty,
+.resultLiveWarn:empty {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
 }
 
 .resultsFooter,

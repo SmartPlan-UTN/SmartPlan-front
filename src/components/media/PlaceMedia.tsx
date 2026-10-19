@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { Icon, type IconName } from "@/components/ui";
 import { getPlacePhotoMedia } from "@/lib/api";
@@ -20,6 +20,8 @@ export interface PlaceMediaProps {
   artwork: { family: ArtworkFamily; icon: IconName; label?: string | null };
   /** `card`: Explore/map cards. `hero`: a detail page header. */
   variant?: "card" | "hero";
+  /** Replaces the generic artwork when there is no real photo. */
+  fallback?: ReactNode;
   /** Usage-log label for Google UI Kit allowances. */
   screen?: string;
 }
@@ -202,6 +204,7 @@ export function PlaceMedia({
   alt,
   artwork,
   variant = "card",
+  fallback,
 }: PlaceMediaProps) {
   const [googleFailedFor, setGoogleFailedFor] = useState<string | null>(null);
   const [heroShownFor, setHeroShownFor] = useState<string | null>(null);
@@ -211,7 +214,7 @@ export function PlaceMedia({
   if (ownImageUrl) {
     return (
       <div className={variant === "hero" ? styles.ownImageHero : styles.ownImage}>
-        <AuthenticatedImage url={ownImageUrl} alt={alt} width={640} height={360} attribution="full" fallback={<><Artwork {...artwork} variant={variant} /><span className="sp-sr-only">Sin imagen disponible</span></>} />
+        <AuthenticatedImage url={ownImageUrl} alt={alt} width={640} height={360} attribution="full" fallback={<>{fallback ?? <Artwork {...artwork} variant={variant} />}<span className="sp-sr-only">Sin imagen disponible</span></>} />
       </div>
     );
   }
@@ -227,7 +230,7 @@ export function PlaceMedia({
   if (variant === "hero") {
     return (
       <div className={styles.heroMedia}>
-        {heroShownFor !== googlePlaceId || !googleAvailable ? <><Artwork {...artwork} variant="hero" /><span className="sp-sr-only">Sin imagen disponible</span></> : null}
+        {heroShownFor !== googlePlaceId || !googleAvailable ? <>{fallback ?? <Artwork {...artwork} variant="hero" />}<span className="sp-sr-only">Sin imagen disponible</span></> : null}
         {googleAvailable ? (
           <GoogleHeroPhoto
             googlePlaceId={googlePlaceId}
@@ -242,7 +245,7 @@ export function PlaceMedia({
 
   return (
     <div className={styles.cardMedia} data-media={heroShownFor === googlePlaceId && googleAvailable ? "google" : "artwork"}>
-      {heroShownFor !== googlePlaceId || !googleAvailable ? <Artwork {...artwork} variant="card" /> : null}
+      {heroShownFor !== googlePlaceId || !googleAvailable ? (fallback ?? <Artwork {...artwork} variant="card" />) : null}
       {googleAvailable ? (
           <GoogleHeroPhoto
             key={googlePlaceId}

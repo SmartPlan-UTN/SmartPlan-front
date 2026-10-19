@@ -1,0 +1,212 @@
+/* ================================================================
+   Alternative — a runner-up. Compact and quiet next to the hero.
+   ================================================================ */
+
+.row {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 18px;
+  align-items: stretch;
+  padding: 16px;
+  border: 1px solid var(--hairline);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--surface-card) 70%, transparent);
+  scroll-margin-top: calc(var(--navbar-h, 64px) + 12px);
+  transition: border-color 200ms ease, background-color 200ms ease, transform 200ms ease;
+  animation: alt-in 480ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.row:hover,
+.rowActive {
+  border-color: color-mix(in srgb, var(--accent, var(--ember)) 55%, var(--hairline));
+  background: var(--surface-card);
+}
+
+.thumb {
+  position: relative;
+  min-height: 132px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--char);
+}
+
+.thumb > div {
+  position: absolute;
+  inset: 0;
+}
+
+.body {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.role {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--fg-3);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.roleDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent, var(--ember));
+}
+
+.name {
+  margin: 0;
+  font-size: clamp(20px, 1.9vw, 24px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.name a {
+  color: var(--fg-1);
+  text-decoration: none;
+}
+
+.name a:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.name a:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 3px;
+}
+
+.tagline {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.difference {
+  margin: 0;
+  color: var(--fg-1);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.facts {
+  margin: 0;
+  color: var(--fg-3);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.choose {
+  min-height: 38px;
+  padding: 0 16px;
+  border: 1.5px solid var(--char);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--fg-1);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.choose:hover:not(:disabled) {
+  background: var(--char);
+  color: var(--cream);
+}
+
+.choose:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.map {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg-2);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.map:hover {
+  color: var(--ember);
+}
+
+.chosen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  color: #0f6b3b;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.choose:focus-visible,
+.map:focus-visible,
+.chosen:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 3px;
+}
+
+@keyframes alt-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .row {
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 14px;
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .thumb {
+    min-height: 96px;
+    border-radius: 12px;
+  }
+
+  .tagline {
+    font-size: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row {
+    animation: none;
+    transition: none;
+  }
+}

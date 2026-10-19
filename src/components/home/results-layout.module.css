@@ -319,3 +319,13 @@
     text-align: center;
   }
 }
+
+/* "Otras opciones": quiet divider between the recommended plan and the rest. */
+.othersHeading {
+  margin: var(--s-2) 0 calc(var(--s-2) * -1);
+  color: var(--fg-3);
+  font-size: var(--t-label);
+  font-weight: var(--w-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}

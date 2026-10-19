@@ -11,6 +11,7 @@ import { useDetailFetch, usePlanSelection } from "@/hooks";
 import { ApiError, cancelOwnPlan, getOwnPlan, getPlan } from "@/lib/api";
 import { useSession } from "@/lib/auth";
 import { outingDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
+import { stopLabel } from "@/lib/plans/stops";
 import { formatDuration, formatPrice, formatPlanTotal, formatPerPerson } from "@/lib/utils";
 import type {
   OwnPlanDetail,
@@ -21,6 +22,8 @@ import type {
 
 import { CommunityExperiences } from "./CommunityExperiences";
 import { ItineraryStep } from "./ItineraryStep";
+import { PlanReadinessPanel } from "./PlanReadinessPanel";
+import { PlanUncertainties } from "./PlanUncertainties";
 import { PlanIntentionPanel } from "./PlanIntentionPanel";
 import {
   PlanVisibilityBadge,
@@ -217,9 +220,7 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
     );
   }
 
-  const routeSummary = plan.details
-    .map((detail) => detail.activity.name)
-    .join(" → ");
+  const routeSummary = plan.details.map(stopLabel).join(" → ");
 
   const viewerPlanState = override?.viewerPlanState ?? plan.viewerPlanState;
   const activeOutingId =
@@ -297,6 +298,9 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           </p>
         ) : null}
 
+        {plan.readiness ? <PlanReadinessPanel readiness={plan.readiness} /> : null}
+        <PlanUncertainties insight={plan.insight} />
+
         <MediaGallery target="plan" resourceId={plan.id} resourceName={plan.title} />
         <div className={styles.section}>
           <p className={activityStyles.sectionLabel}>itinerario</p>
@@ -315,9 +319,9 @@ export function PlanDetailView({ planId }: PlanDetailViewProps) {
           <div className={styles.costBreakdown}>
             {plan.details.map((detail) => (
               <div className={styles.costRow} key={detail.id}>
-                <span className={styles.costRowLabel}>{detail.activity.name}</span>
+                <span className={styles.costRowLabel}>{stopLabel(detail)}</span>
                 <span className={styles.costRowValue}>
-                  {formatPrice(detail)}
+                  {formatPrice(detail, { withUnit: true })}
                 </span>
               </div>
             ))}

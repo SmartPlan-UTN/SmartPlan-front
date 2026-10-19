@@ -12,6 +12,8 @@ import {
 } from "@/components/feedback";
 import { ItineraryStep } from "@/components/plan/ItineraryStep";
 import { MediaGalleryManager } from "@/components/media";
+import { PlanReadinessPanel } from "@/components/plan/PlanReadinessPanel";
+import { PlanUncertainties } from "@/components/plan/PlanUncertainties";
 import planStyles from "@/components/plan/plan.module.css";
 import activityStyles from "@/components/activity/activity.module.css";
 import {
@@ -28,6 +30,7 @@ import {
   completeOuting,
   getOuting,
   repeatOuting,
+  setOutingPreparation,
 } from "@/lib/api";
 import {
   outingDetailRoute,
@@ -36,7 +39,12 @@ import {
   ROUTES,
 } from "@/lib/routes";
 import { formatDuration, formatPrice, formatPlanTotal, formatPerPerson } from "@/lib/utils";
-import type { OutingDetail, PlanFeedback } from "@/types";
+import { stopLabel } from "@/lib/plans/stops";
+import type {
+  OutingDetail,
+  PlanFeedback,
+  PlanPreparationTask,
+} from "@/types";
 
 import { OUTINGS_COPY } from "./outingsContent";
 import styles from "./outings.module.css";
@@ -79,6 +87,8 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [liveMessage, setLiveMessage] = useState("");
   const [galleryVersion, setGalleryVersion] = useState(0);
+  const [preparingId, setPreparingId] = useState<number | null>(null);
+  const [preparationError, setPreparationError] = useState<string | null>(null);
 
   if (status === "loading" && !outing) {
     return (
@@ -136,6 +146,25 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
       setActionError(OUTINGS_COPY.errors.complete);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handlePreparation(
+    task: PlanPreparationTask,
+    confirmed: boolean
+  ) {
+    setPreparingId(task.detailId);
+    setPreparationError(null);
+    try {
+      const next = await setOutingPreparation(current.id, task.detailId, confirmed);
+      setOverride(next);
+      setLiveMessage(
+        confirmed ? `Marcaste como resuelto: ${task.label}` : `Volvió a pendiente: ${task.label}`
+      );
+    } catch {
+      setPreparationError("No pudimos guardar el cambio. Intentá de nuevo.");
+    } finally {
+      setPreparingId(null);
     }
   }
 
@@ -219,6 +248,15 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
       </div>
 
       <div className={planStyles.content}>
+        {current.readiness ? (
+          <PlanReadinessPanel
+            readiness={current.readiness}
+            onToggleTask={done ? undefined : (task, confirmed) => void handlePreparation(task, confirmed)}
+            busyDetailId={preparingId}
+            error={preparationError}
+          />
+        ) : null}
+        <PlanUncertainties insight={current.insight} />
         {current.description ? (
           <p className={`sp-body-lg ${activityStyles.detailDescription}`}>
             {current.description}
@@ -259,10 +297,10 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
             {current.details.map((detail) => (
               <div className={planStyles.costRow} key={detail.id}>
                 <span className={planStyles.costRowLabel}>
-                  {detail.activity.name}
+                  {stopLabel(detail)}
                 </span>
                 <span className={planStyles.costRowValue}>
-                  {formatPrice(detail)}
+                  {formatPrice(detail, { withUnit: true })}
                 </span>
               </div>
             ))}

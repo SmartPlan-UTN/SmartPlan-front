@@ -57,7 +57,7 @@ async function findEligiblePlanId(activityId: number): Promise<number | null> {
 
     for (const outing of result.data) {
       const detail = await getOuting(outing.id);
-      if (detail.details.some((item) => item.activity.id === activityId)) {
+      if (detail.details.some((item) => item.activity?.id === activityId)) {
         return outing.id;
       }
     }

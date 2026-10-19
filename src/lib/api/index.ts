@@ -43,6 +43,7 @@ export {
   listOwnPlans,
   createPlan,
   createPlanFromComposer,
+  checkPlanComposer,
   addPlanActivity,
   getOwnPlan,
   updateOwnPlan,
@@ -62,6 +63,7 @@ export {
   getOuting,
   listOutings,
   repeatOuting,
+  setOutingPreparation,
 } from './outings';
 export { listNotifications, markNotificationAsRead } from './notifications';
 export { listCategories } from './categories';
@@ -106,7 +108,7 @@ export {
 } from './feedback';
 export { getPlanExperiences } from './experiences';
 export { getPreferences, updatePreferences } from './users';
-export { createPlanRequest, createSurprisePlanRequest, getPlanRequestStatus } from './plan-requests';
+export { createPlanRequest, createSurprisePlanRequest, getPlanRequestStatus, refinePlanRequest } from './plan-requests';
 export { getRecommendations, dismissRecommendation, undoDismissRecommendation } from './plan-recommendations';
 export {
   listFavoriteActivities,

@@ -3,6 +3,7 @@ import type {
   CreateSurprisePlanRequestPayload,
   PlanRequestAccepted,
   PlanRequestStatus,
+  RefinePlanRequestPayload,
 } from '@/types';
 import { apiClient } from './client';
 
@@ -36,4 +37,8 @@ export async function createSurprisePlanRequest(
  */
 export async function getPlanRequestStatus(id: number): Promise<PlanRequestStatus> {
   return apiClient.get<PlanRequestStatus>(`/plan-requests/${id}`);
+}
+
+export async function refinePlanRequest(id: number, payload: RefinePlanRequestPayload): Promise<PlanRequestAccepted> {
+  return apiClient.post<PlanRequestAccepted>(`/plan-requests/${id}/refine`, payload);
 }

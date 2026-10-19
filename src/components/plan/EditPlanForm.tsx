@@ -86,5 +86,14 @@ export function EditPlanForm({ planId }: EditPlanFormProps) {
     );
   }
 
+  if (result.data.details.some((detail) => detail.activity === null)) {
+    return (
+      <div className={activityStyles.stateBlock}>
+        <h2 className="sp-h3">Este recorrido incluye paradas en lugares</h2>
+        <p className="sp-body">El editor de actividades todavía no permite modificar estas paradas. Podés consultar el itinerario completo y elegirlo desde el detalle.</p>
+        <Link href={planDetailRoute(planId)} className={activityStyles.backLink}>Ver el plan completo</Link>
+      </div>
+    );
+  }
   return <PlanComposer mode="edit" plan={result.data} />;
 }

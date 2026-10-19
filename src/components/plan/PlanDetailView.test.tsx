@@ -129,6 +129,7 @@ beforeEach(() => {
 
 it("shows unrated plans and itinerary stops without fabricated zero scores", async () => {
   const unrated = plan({ averageRating: 0 });
+  if (!unrated.details[0].activity) throw new Error('The fixture needs an activity');
   unrated.details[0].activity.averageRating = 0;
   unrated.details[0].activity.ratingCount = 0;
   getPlan.mockResolvedValue(unrated);
@@ -151,6 +152,18 @@ async function renderDetail(
 }
 
 const intendButton = { name: /^lo voy a hacer$/i } as const;
+
+it("keeps incomplete experiences and unconfirmed costs visible on direct detail visits", async () => {
+  await renderDetail("selectable", {
+    insight: {
+      role: "BEST", roleLabel: "La mejor opción", why: "Cena", difference: null,
+      uncertainties: ["Falta planificar cine con información suficiente", "Precio sin confirmar"],
+      budgetStatus: "UNKNOWN", travelMinutes: null, travelKm: null, stops: [],
+    },
+  });
+  expect(screen.getByRole("region", { name: "Antes de elegir este plan" })).toHaveTextContent("Falta planificar cine");
+  expect(screen.getByText("Precio sin confirmar")).toBeVisible();
+});
 
 describe("PlanDetailView — Lo voy a hacer (CU22, PAN 17, #130)", () => {
   it("offers 'Lo voy a hacer' when the viewer can choose the plan", async () => {

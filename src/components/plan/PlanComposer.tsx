@@ -52,6 +52,7 @@ import {
   useRouteImprovement,
 } from "./composer/useAssistant";
 import styles from "./PlanComposer.module.css";
+import { ComposerIntelligence } from './composer/ComposerIntelligence';
 
 type ComposerMode =
   | {
@@ -826,6 +827,25 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
           }}
           focusedActivityId={linkedActivityId}
           onPoint={setFocusedActivityId}
+          intelligence={draft.stops.length > 0 ? (
+            <ComposerIntelligence
+              stops={draft.stops}
+              peopleCount={draft.peopleCount}
+              disabled={isSaving}
+              onFindCheaper={() => {
+                goToStep(1);
+                setMobilePane("catalog");
+                setDiscoveryView("list");
+                setAskedQuery(null);
+                setSearch("");
+                setCategoryIds([]);
+                setMinPrice("");
+                setMaxPrice("");
+                setUserSort("price");
+                setAnnouncement("Opciones ordenadas por precio. Elegí cuáles cambiar en tu recorrido.");
+              }}
+            />
+          ) : null}
         />
       </div>
 

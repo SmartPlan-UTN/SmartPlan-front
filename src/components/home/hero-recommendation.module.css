@@ -1,0 +1,536 @@
+/* ================================================================
+   Hero recommendation — the one place smartplan stands behind.
+   A large picture (sticky on desktop), the venue's name in the display
+   serif, a hairline ledger of the facts that decide, and a dark "why it
+   fits" block that says the request back. One ember voice: the decision.
+   ================================================================ */
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 64px);
+  align-items: start;
+  width: min(100%, 1240px);
+  margin-inline: auto;
+  animation: hero-in 560ms cubic-bezier(0.2, 0.7, 0.2, 1) 120ms both;
+  scroll-margin-top: calc(var(--navbar-h, 64px) + 12px);
+}
+
+/* ── The picture ───────────────────────────────────────────── */
+.visual {
+  position: sticky;
+  top: calc(var(--navbar-h, 64px) + 16px);
+  height: clamp(500px, 78vh, 760px);
+  border-radius: 22px;
+  overflow: hidden;
+  background: var(--char);
+  box-shadow: 0 34px 64px -34px rgba(26, 17, 9, 0.5);
+  isolation: isolate;
+}
+
+.visual > div:first-child {
+  position: absolute;
+  inset: 0;
+}
+
+.badge {
+  position: absolute;
+  z-index: 2;
+  top: 16px;
+  left: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 16px 9px 13px;
+  border-radius: var(--r-pill);
+  background: rgba(26, 17, 9, 0.86);
+  backdrop-filter: blur(8px);
+  color: var(--fg-on-dark);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.badgeDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ember);
+  box-shadow: 0 0 0 0 rgba(232, 93, 32, 0.6);
+  animation: badge-pulse 2.4s ease-out 1.2s 2;
+}
+
+.hours {
+  position: absolute;
+  z-index: 2;
+  bottom: 16px;
+  left: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 15px 9px 12px;
+  border-radius: var(--r-pill);
+  background: var(--gold);
+  color: var(--char);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── The story ─────────────────────────────────────────────── */
+.story {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 2px;
+}
+
+.kickerLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 0;
+  color: var(--fg-3);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.kickerLine > span + span::before {
+  content: "·";
+  margin-right: 10px;
+}
+
+.kickerLine > .seal::before {
+  content: none !important;
+}
+
+.seal {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  color: var(--success);
+  letter-spacing: 0.06em;
+}
+
+.name {
+  margin: 0;
+  font-family: var(--font-display-serif);
+  font-size: clamp(36px, 4.4vw, 62px);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  color: var(--fg-1);
+}
+
+.nameLink {
+  color: inherit;
+  text-decoration: none;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 0 2px;
+  transition: background-size 260ms ease;
+}
+
+.nameLink:hover {
+  background-size: 100% 2px;
+}
+
+.nameLink:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 4px;
+}
+
+.tagline {
+  max-width: 36ch;
+  margin: -4px 0 0;
+  color: var(--fg-2);
+  font-size: clamp(17px, 1.5vw, 20px);
+  line-height: 1.4;
+}
+
+/* ── Ledger ────────────────────────────────────────────────── */
+.ledger {
+  margin: 2px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.row dt {
+  padding-top: 4px;
+  color: var(--fg-3);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.row dd {
+  margin: 0;
+  color: var(--fg-1);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.row dd small {
+  display: block;
+  margin-top: 3px;
+  color: var(--fg-3);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.rowMuted dd {
+  color: var(--fg-2);
+  font-weight: 600;
+}
+
+/* ── Order suggestion ──────────────────────────────────────── */
+.order {
+  margin-top: -6px;
+}
+
+.orderToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg-1);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.orderToggle:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 3px;
+}
+
+.orderTotal {
+  color: var(--fg-2);
+  font-weight: 600;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.orderBody {
+  padding: 4px 0 8px;
+  color: var(--fg-2);
+  font-size: 13px;
+}
+
+.orderBody ul {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.orderBody li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 5px 0;
+  border-bottom: 1px dashed var(--hairline);
+  color: var(--fg-1);
+}
+
+.orderBody p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── Why it fits ───────────────────────────────────────────── */
+.why {
+  margin-top: 4px;
+  padding: 22px 24px 20px;
+  border-radius: 18px;
+  background:
+    radial-gradient(90% 120% at 100% 0%, rgba(232, 93, 32, 0.22), transparent 62%),
+    var(--char);
+  color: var(--fg-on-dark);
+}
+
+.whyLabel {
+  margin: 0 0 12px;
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.echo {
+  margin: 0 0 14px;
+  font-family: var(--font-display-serif);
+  font-size: clamp(21px, 2vw, 26px);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.reasons {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reasons li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: rgba(245, 240, 232, 0.88);
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.reasons li svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--gold);
+}
+
+.chosenFrom {
+  margin: 16px 0 0;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(245, 240, 232, 0.22);
+  color: var(--fg-on-dark-2);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* ── Multi-stop route ──────────────────────────────────────── */
+.route {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.route li {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+  font-weight: 700;
+}
+
+.route time {
+  color: var(--ember);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+}
+
+.route small {
+  display: block;
+  color: var(--fg-3);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.note svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+/* ── Decision ──────────────────────────────────────────────── */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.primary {
+  min-height: 54px;
+  padding-inline: 28px;
+  font-size: 16px;
+}
+
+.secondary {
+  min-height: 54px;
+}
+
+.spinner {
+  animation: hero-spin 0.9s linear infinite;
+}
+
+.chosen {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 54px;
+  padding: 0 20px;
+  border-radius: var(--r-pill);
+  background: var(--success-15);
+  color: #0f6b3b;
+  font-weight: 700;
+}
+
+.chosen a {
+  color: inherit;
+  text-underline-offset: 3px;
+}
+
+.refine {
+  margin-top: 6px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hairline);
+}
+
+.refineLabel {
+  margin: 0 0 10px;
+  color: var(--fg-3);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes badge-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(232, 93, 32, 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgba(232, 93, 32, 0);
+  }
+}
+
+@keyframes hero-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Tablet & mobile: the picture leads, the decision stays near ── */
+@media (max-width: 960px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .visual {
+    position: relative;
+    top: auto;
+    height: auto;
+    aspect-ratio: 16 / 10;
+    border-radius: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .visual {
+    aspect-ratio: 16 / 11;
+    margin-inline: calc(var(--s-3) * -1);
+    border-radius: 0 0 22px 22px;
+  }
+
+  .badge {
+    top: 12px;
+    left: 12px;
+    padding: 8px 13px 8px 11px;
+    font-size: 10px;
+  }
+
+  .hours {
+    bottom: 12px;
+    left: 12px;
+    font-size: 11px;
+  }
+
+  .story {
+    gap: 16px;
+  }
+
+  .row {
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .why {
+    padding: 18px 18px 16px;
+  }
+
+  /* Small screens: who it is and the decision first, the facts after. */
+  .kickerLine { order: 0; }
+  .name { order: 1; }
+  .tagline { order: 2; margin-top: -8px; }
+  .actions { order: 3; margin-top: 0; }
+  .ledger { order: 4; }
+  .order { order: 5; }
+  .why { order: 6; }
+  .route { order: 7; }
+  .note { order: 8; }
+  .refine { order: 9; }
+
+  .primary {
+    flex: 1 1 auto;
+    padding-inline: 18px;
+  }
+
+  .secondary {
+    padding-inline: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero,
+  .badgeDot,
+  .spinner {
+    animation: none;
+  }
+
+  .nameLink {
+    transition: none;
+  }
+}
