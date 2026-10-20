@@ -267,49 +267,58 @@ export function RegisterForm() {
           required
         />
 
-        <div>
-          <Field
-            label="Contraseña"
-            type={showPassword ? "text" : "password"}
-            autoComplete="new-password"
-            value={password}
-            onChange={(event) => {
-              setPassword(event.target.value);
-            }}
-            error={fieldErrors.password}
-            disabled={submitting}
-            placeholder={`Mínimo ${MIN_PASSWORD_LENGTH} caracteres`}
-            required
-            rightSlot={{
-              icon: showPassword ? "eye-off" : "eye",
-              label: showPassword ? "Ocultar contraseña" : "Mostrar contraseña",
-              pressed: showPassword,
-              onClick: toggleShowPassword,
-            }}
-          />
-          <PasswordStrength password={password} />
-          <PasswordRequirements password={password} />
-        </div>
+        <div className={styles.passwordGrid}>
+          <div className={styles.passwordField}>
+            <Field
+              label="Contraseña"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              value={password}
+              onChange={(event) => {
+                setPassword(event.target.value);
+              }}
+              error={fieldErrors.password}
+              disabled={submitting}
+              placeholder={`Mínimo ${MIN_PASSWORD_LENGTH} caracteres`}
+              required
+              rightSlot={{
+                icon: showPassword ? "eye-off" : "eye",
+                label: showPassword ? "Ocultar contraseña" : "Mostrar contraseña",
+                pressed: showPassword,
+                onClick: toggleShowPassword,
+              }}
+            />
+          </div>
+          {/* Its own grid area so, side by side from tablet up, the hints
+              span both password columns instead of stretching only the
+              first one; stacked on phones they stay right under it. */}
+          <div className={styles.passwordHints}>
+            <PasswordStrength password={password} />
+            <PasswordRequirements password={password} />
+          </div>
 
-        <Field
-          label="Confirmar contraseña"
-          type={showConfirmPassword ? "text" : "password"}
-          autoComplete="new-password"
-          value={confirmPassword}
-          onChange={(event) => {
-            setConfirmPassword(event.target.value);
-          }}
-          error={fieldErrors.confirmPassword}
-          disabled={submitting}
-          placeholder="Repetí tu contraseña"
-          required
-          rightSlot={{
-            icon: showConfirmPassword ? "eye-off" : "eye",
-            label: showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña",
-            pressed: showConfirmPassword,
-            onClick: toggleShowConfirmPassword,
-          }}
-        />
+          <div className={styles.confirmField}>
+            <Field
+              label="Confirmar contraseña"
+              type={showConfirmPassword ? "text" : "password"}
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(event) => {
+                setConfirmPassword(event.target.value);
+              }}
+              error={fieldErrors.confirmPassword}
+              disabled={submitting}
+              placeholder="Repetí tu contraseña"
+              required
+              rightSlot={{
+                icon: showConfirmPassword ? "eye-off" : "eye",
+                label: showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña",
+                pressed: showConfirmPassword,
+                onClick: toggleShowConfirmPassword,
+              }}
+            />
+          </div>
+        </div>
 
         <div>
           <label className={styles.terms}>
