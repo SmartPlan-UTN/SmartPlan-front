@@ -458,6 +458,72 @@
   min-height: 420px;
 }
 
+/* Card inside a map marker's info window. Fixed width and a reserved photo
+   ratio, so Google sizes the window once and never adds scrollbars. The map
+   popup is always light, so it uses fixed colors instead of theme tokens. */
+.mapCard {
+  width: 240px;
+  overflow: hidden;
+  color: #2a1d14;
+  font-family: inherit;
+}
+
+.mapCardMedia {
+  overflow: hidden;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.mapCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 2px 2px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.mapCardBody:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.mapCardKicker {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.mapCardTitle {
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.mapCardMeta {
+  font-size: 12.5px;
+}
+
+.mapCardAction {
+  margin-top: 4px;
+  color: #c4501f;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mapCardBody:hover .mapCardAction {
+  text-decoration: underline;
+}
+
+/* Name under each map badge. The map tiles stay light in both themes, so the
+   label uses fixed dark text with a white halo instead of theme tokens. */
+.markerLabel {
+  max-width: 160px;
+  white-space: nowrap;
+  text-shadow:
+    0 0 2px #fff,
+    0 0 2px #fff,
+    0 0 4px #fff;
+}
+
 .mapError {
   display: flex;
   flex-direction: column;
