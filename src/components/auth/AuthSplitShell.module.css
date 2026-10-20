@@ -24,6 +24,13 @@
     background:
       linear-gradient(160deg, rgba(232, 93, 32, 0.72) 0%, rgba(26, 17, 9, 0.88) 100%),
       url("/mock/login-hero.jpg") center / cover no-repeat;
+    /* Pinned to the viewport: when the form panel outgrows a short screen,
+       only the form scrolls and the headline at the bottom stays visible
+       instead of being pushed below the fold. */
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: 100dvh;
   }
 }
 
@@ -155,6 +162,9 @@
 }
 
 .card {
+  /* Lets the register form switch to two columns by the card's own width
+     (`AuthForm.module.css`), not the viewport's. */
+  container: auth-card / inline-size;
   width: 100%;
   max-width: 420px;
   background: var(--surface-card);
@@ -169,8 +179,40 @@
   padding: 40px 36px 36px;
 }
 
+/* Wider than login: the form panel has the room, and two columns for the
+   passwords and their requirements cut the card's height by about a third. */
 .cardRegister {
-  padding: 36px 36px 32px;
+  max-width: 560px;
+  padding: 36px 40px 32px;
+}
+
+/* Short laptop screens (1366×768, 1280×720): tighter panel and card
+   padding so both cards fit without scrolling. */
+@media (min-width: 561px) and (max-height: 820px) {
+  .rightPanel {
+    padding-top: 64px;
+    padding-bottom: var(--s-5);
+  }
+
+  .cardLogin {
+    padding: 32px 36px 28px;
+  }
+
+  .cardRegister {
+    padding: 28px 40px 24px;
+  }
+}
+
+@media (min-width: 561px) and (max-height: 760px) {
+  .rightPanel {
+    padding-top: 56px;
+    padding-bottom: var(--s-1);
+  }
+
+  .cardLogin,
+  .cardRegister {
+    padding-block: 20px 16px;
+  }
 }
 
 @media (max-width: 560px) {
