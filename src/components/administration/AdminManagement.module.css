@@ -233,55 +233,6 @@
 }
 
 /* #160: what each plan status means and why Explorar hides a plan. */
-.legend {
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-card);
-  background: var(--surface-card);
-  color: var(--fg-2);
-  font-size: var(--t-small);
-}
-
-.legend summary {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  padding: var(--s-3) var(--s-4);
-  color: var(--fg-1);
-  font-weight: var(--w-label);
-  cursor: pointer;
-}
-
-.legendBody {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-  padding: 0 var(--s-4) var(--s-4);
-}
-
-.legendBody p {
-  margin: 0;
-}
-
-.legendList {
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: var(--s-1) var(--s-4);
-  margin: 0;
-}
-
-.legendList div {
-  display: contents;
-}
-
-.legendList dt {
-  color: var(--fg-1);
-  font-weight: var(--w-label);
-}
-
-.legendList dd {
-  margin: 0;
-}
-
 .placeLink {
   display: inline-flex;
   align-items: center;
@@ -572,11 +523,7 @@
 
   .formGrid,
   .choiceList,
-  .legendList {
-    grid-template-columns: 1fr;
-  }
-
-  .dialog {
+    .dialog {
     padding: var(--s-5);
   }
 }
