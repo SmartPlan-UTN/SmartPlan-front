@@ -17,8 +17,10 @@ import styles from "./plan.module.css";
  *  - `absent` → nothing to show (`view-only`: anonymous, cancelled, an
  *               outing, or a plan the viewer cannot choose).
  *  - `intend` → "Lo voy a hacer", a one-shot action: disabled while it saves.
- *  - `added`  → a record, not a toggle: "Agregado a Mis salidas" plus a link
- *               to that outing. There is no undo here; the outing is
+ *  - `added`  → a record, not a toggle: the same box becomes a link to that
+ *               outing, short enough to keep the button's width: it reads
+ *               "En Mis salidas", and "Agregado a Mis salidas — Ver en Mis
+ *               salidas" to screen readers. There is no undo here; the outing is
  *               cancelled from Mis salidas, with a confirmation.
  */
 export type PlanPanelState = "absent" | "intend" | "added";
@@ -52,27 +54,19 @@ export function PlanIntentionPanel({
   if (state === "added") {
     return (
       <div className={styles.statePanel} data-state="added">
-        <div className={styles.stateRecord}>
-          <p className={styles.stateChip}>
-            <span className={styles.stateIcon}>
-              <Icon name="circle-check" size={18} aria-hidden="true" />
-            </span>
-            <span className={styles.stateLabel}>{PLAN_SELECTION.added}</span>
-          </p>
-          <div className={styles.stateActions}>
-            <Link
-              href={
-                activeOutingId === null
-                  ? ROUTES.outings
-                  : outingDetailRoute(activeOutingId)
-              }
-              className={styles.stateLink}
-            >
-              {PLAN_SELECTION.viewOuting}
-              <Icon name="chevron-right" size={14} aria-hidden="true" />
-            </Link>
-          </div>
-        </div>
+        <Link
+          href={
+            activeOutingId === null
+              ? ROUTES.outings
+              : outingDetailRoute(activeOutingId)
+          }
+          className={styles.stateRecord}
+        >
+          <Icon name="circle-check" size={16} aria-hidden="true" />
+          <span className={styles.srOnly}>{PLAN_SELECTION.added}</span>
+          <span aria-hidden="true">{PLAN_SELECTION.inOutings}</span>
+          <span className={styles.srOnly}>{PLAN_SELECTION.viewOuting}</span>
+        </Link>
       </div>
     );
   }
@@ -86,14 +80,13 @@ export function PlanIntentionPanel({
         aria-busy={busy}
         onClick={onIntend}
       >
-        <span className={styles.toggleIcon} aria-hidden="true">
-          <Icon
-            name={busy ? "loader-circle" : "circle"}
-            size={18}
-            className={busy ? styles.stateSpinner : styles.toggleIconOff}
-          />
-        </span>
-        <span className={styles.stateLabel}>{PLAN_SELECTION.intend}</span>
+        <Icon
+          name={busy ? "loader-circle" : "plus"}
+          size={16}
+          aria-hidden="true"
+          className={busy ? styles.stateSpinner : undefined}
+        />
+        <span>{PLAN_SELECTION.intend}</span>
       </button>
     </div>
   );
