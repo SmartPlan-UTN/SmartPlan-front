@@ -15,7 +15,6 @@ import styles from "./AdminManagement.module.css";
 import {
   EXPLORE_HIDDEN_REASON,
   PLAN_KIND_OPTIONS,
-  PLAN_STATUS_COPY,
   PLAN_STATUS_OPTIONS,
   PLAN_VISIBILITY_OPTIONS,
   planKindCopy,
@@ -140,16 +139,6 @@ export function AdminPlansView() {
         <div className={styles.selectFilter}><Select aria-label="Filtrar por origen" value={kindFilter} options={KIND_FILTER_OPTIONS} onChange={(value) => { setKindFilter(value); setPage(1); }} /></div>
         <div className={styles.selectFilter}><Select aria-label="Filtrar por visibilidad" value={visibilityFilter} options={VISIBILITY_FILTER_OPTIONS} onChange={(value) => { setVisibilityFilter(value); setPage(1); }} /></div>
       </div>
-      <details className={styles.legend}>
-        <summary><Icon name="info" size={16} />¿Qué significa cada estado y por qué un plan no aparece en Explorar?</summary>
-        <div className={styles.legendBody}>
-          <p>El <strong>estado</strong> indica en qué momento está el plan; la <strong>visibilidad</strong> es una decisión de su autor. Son independientes: completar un plan no lo publica.</p>
-          <dl className={styles.legendList}>
-            {PLAN_STATUS_OPTIONS.map((option) => <div key={option.value}><dt>{option.label}</dt><dd>{PLAN_STATUS_COPY[option.value].description}</dd></div>)}
-          </dl>
-          <p>En <strong>Explorar &gt; Planes</strong> solo aparecen los planes creados por una persona, públicos y no cancelados. Los resultados generados y las salidas son personales y nunca se publican automáticamente.</p>
-        </div>
-      </details>
       <div className={styles.tableCard}>
         {loadError && !result ? <div className={styles.state} role="alert"><span className={styles.stateIcon}><Icon name="triangle-alert" size={24} /></span><strong>No pudimos cargar los planes</strong><p>{loadError}</p><Button size="sm" variant="ghostLight" onClick={() => setReloadSequence((current) => current + 1)}>Reintentar</Button></div>
         : loading && !result ? <div className={styles.state} role="status"><Icon name="loader-circle" className="sp-spin" size={28} /><p>Cargando planes...</p></div>
