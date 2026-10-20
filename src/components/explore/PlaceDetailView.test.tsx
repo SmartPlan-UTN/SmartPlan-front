@@ -6,6 +6,7 @@ import { ApiError, ensurePlaceVisit, getActivity, getPlaceDetail } from "@/lib/a
 import type { ActivityDetailResult, PlaceDetailResult } from "@/types";
 
 import { PlaceDetailView } from "./PlaceDetailView";
+import { ActivityDetailView } from "@/components/activity/ActivityDetailView";
 
 const { push, session } = vi.hoisted(() => ({ push: vi.fn(), session: { authenticated: true, status: "authenticated" } }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
@@ -118,6 +119,34 @@ describe("Place detail uses the complete activity flow", () => {
     expect(screen.getByText("Esta actividad todavía no está disponible para agregar a un plan.")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Guardar" }));
     expect(toggleSaveActivity).toHaveBeenCalledWith(42);
+  });
+
+  it.each(["place", "activity"])("opens the location from ratings on the %s route", async (route) => {
+    const user = userEvent.setup();
+    const venue = place();
+    vi.mocked(getActivity).mockResolvedValue({
+      ...activity(42),
+      locations: [{
+        id: 1, latitude: -32.89, longitude: -68.85, notes: null,
+        place: { id: venue.id, name: venue.name, description: venue.description,
+          address: venue.address, department: venue.department },
+      }],
+    });
+    render(route === "place" ? <PlaceDetailView placeId={52} /> : <ActivityDetailView activityId={42} />);
+    await user.click(await screen.findByRole("button", { name: "Valoraciones" }));
+    expect(screen.getByText("Reviews for activity 42")).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: "Antares" });
+    const destination = "#activity-location";
+    expect(link).toHaveAttribute("href", destination);
+    expect(document.querySelector(destination)).toBeNull();
+    // Native fragment navigation needs its target during the click event.
+    let mountedDuringClick = false;
+    const observeClick = () => { mountedDuringClick = document.querySelector(destination) !== null; };
+    document.addEventListener("click", observeClick, { once: true });
+    await user.click(link);
+    expect(mountedDuringClick).toBe(true);
+    expect(document.querySelector(destination)).toHaveTextContent("ubicación");
+    expect(screen.queryByText("Reviews for activity 42")).not.toBeInTheDocument();
   });
 
   it("does not treat a place without activities as an existing activity", async () => {

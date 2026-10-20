@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import Link from "next/link";
 
 import { AddToCollectionDialog } from "@/components/collection";
@@ -212,7 +213,10 @@ function ActivityDetailContent({ activityId, placeContext, activityPicker, initi
         {firstLocation ? (
           <p className={styles.placeLine}>
             En{" "}
-            <a href="#activity-location">{firstLocation.place.name}</a>
+            <a href="#activity-location" onClick={() => {
+              // Mount the location before the browser follows the fragment.
+              flushSync(() => setTab("info"));
+            }}>{firstLocation.place.name}</a>
             {firstLocation.place.department?.name
               ? ` · ${firstLocation.place.department.name}`
               : ""}
