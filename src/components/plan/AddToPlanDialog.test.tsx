@@ -30,6 +30,7 @@ function mockPlanSummary(
     title: "Fin de semana en Mendoza",
     description: "Visita a bodegas",
     visibility: "private",
+    removedByModeration: false,
     peopleCount: 2,
     estimatedTotalCost: 20000,
     estimatedCostPerPerson: 10000,

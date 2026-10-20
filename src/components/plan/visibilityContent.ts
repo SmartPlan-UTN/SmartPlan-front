@@ -32,8 +32,13 @@ export const VISIBILITY_COPY = {
     },
     back: "Volver",
   },
+  removed: {
+    label: "Dado de baja",
+    hint: "Lo dimos de baja de la comunidad tras una denuncia. Sigue siendo tuyo, pero ya no se puede publicar.",
+  },
   errors: {
     empty: "Sumale al menos una actividad antes de publicarlo.",
+    removed: "Este plan fue dado de baja por moderación y no se puede publicar.",
     generic: "No pudimos cambiar la visibilidad. Probá de nuevo.",
   },
   announce: {

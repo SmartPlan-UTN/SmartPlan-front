@@ -28,6 +28,7 @@ function mockSummary(overrides: Partial<OwnPlanSummary> = {}): OwnPlanSummary {
     title: "Domingo de bodegas",
     description: "Recorrido por viñedos",
     visibility: "private",
+    removedByModeration: false,
     peopleCount: 2,
     estimatedTotalCost: 15000,
     estimatedCostPerPerson: 7500,
@@ -220,5 +221,15 @@ describe("MyPlansPanel (CU29)", () => {
       await screen.findByText(/sumale al menos una actividad/i),
     ).toBeInTheDocument();
     expect(screen.getByText("Privado")).toBeInTheDocument();
+  });
+
+  it("marks a plan moderation took down, and offers no publishing (#156)", async () => {
+    resolveWith([mockSummary({ visibility: "private", removedByModeration: true })]);
+    render(<MyPlansPanel />);
+
+    expect(await screen.findByText("Dado de baja")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Publicar Domingo de bodegas" }),
+    ).not.toBeInTheDocument();
   });
 });
