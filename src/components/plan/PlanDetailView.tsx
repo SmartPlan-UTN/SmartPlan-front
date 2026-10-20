@@ -20,6 +20,7 @@ import type {
   ViewerPlanState,
 } from "@/types";
 
+import { PlanOwnExperiences } from "./PlanOwnExperiences";
 import { CommunityExperiences } from "./CommunityExperiences";
 import { ItineraryStep } from "./ItineraryStep";
 import { PlanIntentionPanel } from "./PlanIntentionPanel";
@@ -91,6 +92,7 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
   );
   const { isPlanSaved, toggleSavePlan } = useFavorites();
   const saved = isPlanSaved(planId);
+  const [experienceVersion, setExperienceVersion] = useState(0);
   const [copied, setCopied] = useState(false);
   const [ownPlan, setOwnPlan] = useState<OwnPlanDetail | null>(null);
   const [visibilityOverride, setVisibilityOverride] =
@@ -209,7 +211,7 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
     }
   }
 
-  if (status === "loading") {
+  if (status === "loading" && plan == null) {
     return (
       <div className={activityStyles.stateBlock}>
         <div className={activityStyles.loadingDots}>
@@ -374,10 +376,21 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
           ) : null}
         </div>
 
+        {plan.kind !== "outing" ? (
+          <PlanOwnExperiences
+            key={plan.id}
+            planId={plan.id}
+            onChanged={() => {
+              setExperienceVersion((version) => version + 1);
+              refetch();
+            }}
+          />
+        ) : null}
+
         {/* Experiences of people who did it (#106): only a published plan
             that is still on has a community to show. */}
         {published ? (
-          <CommunityExperiences planId={plan.id} planTitle={plan.title} />
+          <CommunityExperiences key={experienceVersion} planId={plan.id} planTitle={plan.title} />
         ) : null}
 
         {isAuthor ? (

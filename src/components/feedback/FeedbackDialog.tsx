@@ -44,6 +44,7 @@ export interface FeedbackDialogProps {
   completedAt: string | null;
   activityCount: number;
   initialRating?: number;
+  existingFeedback?: PlanFeedback;
   onDismiss: () => void;
   onSubmitted: (feedback: PlanFeedback) => void;
   onReconcile?: () => void;
@@ -114,26 +115,29 @@ export function FeedbackDialog({
   completedAt,
   activityCount,
   initialRating = 0,
+  existingFeedback,
   onDismiss,
   onSubmitted,
   onReconcile,
   onMediaChanged,
   canShare = false,
 }: FeedbackDialogProps) {
+  const editing = existingFeedback != null;
+  const startingRating = existingFeedback?.rating ?? initialRating;
   const titleId = useId();
   const ratingLabelId = useId();
   const tagsLabelId = useId();
   const costErrorId = useId();
   const submission = useFeedbackSubmit();
-  const [rating, setRating] = useState(initialRating);
-  const [preview, setPreview] = useState(initialRating);
+  const [rating, setRating] = useState(startingRating);
+  const [preview, setPreview] = useState(startingRating);
   const [tags, setTags] = useState<Set<FeedbackTag>>(() => new Set());
   const [costRaw, setCostRaw] = useState("");
   const [costInputError, setCostInputError] = useState<string | null>(null);
   const [partyRaw, setPartyRaw] = useState("");
   const [activityCostsRaw, setActivityCostsRaw] = useState<Record<number, string>>({});
-  const [commentOpen, setCommentOpen] = useState(false);
-  const [comment, setComment] = useState("");
+  const [commentOpen, setCommentOpen] = useState(editing);
+  const [comment, setComment] = useState(existingFeedback?.comment ?? "");
   const [shared, setShared] = useState(false);
   // form → success → photos of the outing, then either closes or offers
   // rating the activities (offer → activities → ratingsDone, where each rated
@@ -186,15 +190,15 @@ export function FeedbackDialog({
 
   useEffect(() => {
     if (!open) return;
-    setRating(initialRating);
-    setPreview(initialRating);
+    setRating(startingRating);
+    setPreview(startingRating);
     setTags(new Set());
     setCostRaw("");
     setCostInputError(null);
     setPartyRaw("");
     setActivityCostsRaw({});
-    setCommentOpen(false);
-    setComment("");
+    setCommentOpen(editing);
+    setComment(existingFeedback?.comment ?? "");
     setPhase("form");
     setRatable([]);
     setRatingsBusy(false);
@@ -337,10 +341,14 @@ export function FeedbackDialog({
         parsedCost && parsedCost > 0 && !Number.isNaN(parsedCost)
           ? Math.round(parsedCost * 100) / 100
           : undefined,
-    });
+    }, editing);
     if (!outcome) return;
     if (!outcome.ok) {
       if (outcome.error.reconcile) onReconcile?.();
+      return;
+    }
+    if (editing) {
+      onSubmitted(outcome.feedback);
       return;
     }
     savedFeedback.current = outcome.feedback;
@@ -395,6 +403,7 @@ export function FeedbackDialog({
       <div
         ref={dialogRef}
         className={styles.sheet}
+        data-mode={editing ? "edit" : "create"}
         data-state={presence}
         role="dialog"
         aria-modal="true"
@@ -536,7 +545,7 @@ export function FeedbackDialog({
           <form className={styles.form} onSubmit={(event) => void handleSubmit(event)} noValidate>
             <div className={styles.formScroll}>
               <header className={styles.head}>
-                <h2 id={titleId} className={styles.title}>{FEEDBACK_COPY.dialog.heading}</h2>
+                <h2 id={titleId} className={styles.title}>{editing ? FEEDBACK_COPY.edit.heading : FEEDBACK_COPY.dialog.heading}</h2>
                 <div className={styles.planContext}>
                   <p className={styles.planName}>{planTitle}</p>
                   <p className={styles.planMeta}>
@@ -562,7 +571,7 @@ export function FeedbackDialog({
                   {shownRating > 0 ? RATING_LABELS[shownRating - 1] : " "}
                 </p>
                 <p className={styles.ratingGuidance} aria-live="polite">
-                  {rating > 0
+                  {editing ? FEEDBACK_COPY.edit.guidance : rating > 0
                     ? FEEDBACK_COPY.dialog.ratingReady
                     : FEEDBACK_COPY.dialog.ratingPrompt}
                 </p>
@@ -570,113 +579,118 @@ export function FeedbackDialog({
 
               {rating > 0 ? (
                 <div className={styles.extras}>
-                  <div
-                    className={`${styles.field} ${styles.tagsField}`}
-                    role="group"
-                    aria-labelledby={tagsLabelId}
-                  >
-                    <div id={tagsLabelId} className={styles.fieldLabel}>
-                      {rating <= 2 ? FEEDBACK_COPY.dialog.lowRatingTagsLabel : FEEDBACK_COPY.dialog.tagsLabel}
-                      <span className={styles.hint}>{FEEDBACK_COPY.dialog.tagsHint}</span>
-                    </div>
-                    <div className={styles.chips}>
-                      {FEEDBACK_TAG_ORDER.map((tag) => (
-                        <button
-                          key={tag}
-                          type="button"
-                          className={styles.tagChoice}
-                          aria-pressed={tags.has(tag)}
-                          disabled={busy}
-                          onPointerDown={(event) => {
-                            if (event.button === 0) toggleTag(tag);
-                          }}
-                          onClick={(event) => {
-                            if (event.detail === 0) toggleTag(tag);
-                          }}
-                        >
-                          <span className={styles.tagCheck} aria-hidden="true">
-                            <Icon name="check" size={14} />
+                  {!editing ? (
+                    <>
+                      <div
+                        className={`${styles.field} ${styles.tagsField}`}
+                        role="group"
+                        aria-labelledby={tagsLabelId}
+                      >
+                        <div id={tagsLabelId} className={styles.fieldLabel}>
+                          {rating <= 2 ? FEEDBACK_COPY.dialog.lowRatingTagsLabel : FEEDBACK_COPY.dialog.tagsLabel}
+                          <span className={styles.hint}>{FEEDBACK_COPY.dialog.tagsHint}</span>
+                        </div>
+                        <div className={styles.chips}>
+                          {FEEDBACK_TAG_ORDER.map((tag) => (
+                            <button
+                              key={tag}
+                              type="button"
+                              className={styles.tagChoice}
+                              aria-pressed={tags.has(tag)}
+                              disabled={busy}
+                              onPointerDown={(event) => {
+                                if (event.button === 0) toggleTag(tag);
+                              }}
+                              onClick={(event) => {
+                                if (event.detail === 0) toggleTag(tag);
+                              }}
+                            >
+                              <span className={styles.tagCheck} aria-hidden="true">
+                                <Icon name="check" size={14} />
+                              </span>
+                              <span>{FEEDBACK_TAG_LABELS[tag]}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className={`${styles.field} ${styles.costField}`}>
+                        <div className={styles.fieldLabel}>
+                          <span>Costo</span>
+                          <span className={styles.hint}>{FEEDBACK_COPY.dialog.costHint}</span>
+                        </div>
+                        <div className={styles.estimated}>
+                          <span className={styles.estimatedLabel}>{FEEDBACK_COPY.dialog.estimatedLabel}</span>
+                          <span className={styles.estimatedValue}>
+                            {estimatedTotalCost === null
+                              ? NO_PRICE_TOTAL_LABEL
+                              : formatArs(estimatedTotalCost)}
                           </span>
-                          <span>{FEEDBACK_TAG_LABELS[tag]}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                        </div>
+                        <label className={styles.realCostLabel} htmlFor="feedback-cost">
+                          {FEEDBACK_COPY.dialog.costLabel}
+                        </label>
+                        <div className={styles.moneyInput}>
+                          <span aria-hidden="true">$</span>
+                          <input
+                            id="feedback-cost"
+                            inputMode="decimal"
+                            autoComplete="off"
+                            placeholder="33.000"
+                            value={costRaw}
+                            disabled={busy}
+                            aria-invalid={costError != null}
+                            aria-describedby={costError != null ? costErrorId : undefined}
+                            maxLength={MAX_COST_INPUT_LENGTH}
+                            onChange={(event) => {
+                              const raw = event.target.value;
+                              setCostRaw(sanitizeCostInput(raw));
+                              setCostInputError(
+                                raw.includes("-") ? FEEDBACK_COPY.dialog.costError : null
+                              );
+                            }}
+                          />
+                        </div>
+                        <div className={styles.costStatus}>
+                          {costError != null ? (
+                            <p id={costErrorId} className={styles.error} role="alert">{costError}</p>
+                          ) : deltaLabel != null ? (
+                            <p className={styles.delta}>{deltaLabel}</p>
+                          ) : (
+                            <span aria-hidden="true">&nbsp;</span>
+                          )}
+                        </div>
+                      </div>
 
-                  <div className={`${styles.field} ${styles.costField}`}>
-                    <div className={styles.fieldLabel}>
-                      <span>Costo</span>
-                      <span className={styles.hint}>{FEEDBACK_COPY.dialog.costHint}</span>
-                    </div>
-                    <div className={styles.estimated}>
-                      <span className={styles.estimatedLabel}>{FEEDBACK_COPY.dialog.estimatedLabel}</span>
-                      <span className={styles.estimatedValue}>
-                        {estimatedTotalCost === null
-                          ? NO_PRICE_TOTAL_LABEL
-                          : formatArs(estimatedTotalCost)}
-                      </span>
-                    </div>
-                    <label className={styles.realCostLabel} htmlFor="feedback-cost">
-                      {FEEDBACK_COPY.dialog.costLabel}
-                    </label>
-                    <div className={styles.moneyInput}>
-                      <span aria-hidden="true">$</span>
-                      <input
-                        id="feedback-cost"
-                        inputMode="decimal"
-                        autoComplete="off"
-                        placeholder="33.000"
-                        value={costRaw}
+                      <div className={styles.field}>
+                        <label className={styles.realCostLabel} htmlFor="feedback-party">
+                          ¿Cuántas personas fueron? (opcional)
+                        </label>
+                        <div className={styles.moneyInput}>
+                          <input
+                            id="feedback-party"
+                            inputMode="numeric"
+                            autoComplete="off"
+                            placeholder="Igual que el plan"
+                            value={partyRaw}
+                            disabled={busy}
+                            maxLength={4}
+                            onChange={(event) => {
+                              setPartyRaw(event.target.value.replace(/D/g, "").slice(0, 4));
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <ActivityCostsField
+                        outingId={planId}
                         disabled={busy}
-                        aria-invalid={costError != null}
-                        aria-describedby={costError != null ? costErrorId : undefined}
-                        maxLength={MAX_COST_INPUT_LENGTH}
-                        onChange={(event) => {
-                          const raw = event.target.value;
-                          setCostRaw(sanitizeCostInput(raw));
-                          setCostInputError(
-                            raw.includes("-") ? FEEDBACK_COPY.dialog.costError : null
-                          );
-                        }}
+                        values={activityCostsRaw}
+                        onChange={setActivityCostsRaw}
                       />
-                    </div>
-                    <div className={styles.costStatus}>
-                      {costError != null ? (
-                        <p id={costErrorId} className={styles.error} role="alert">{costError}</p>
-                      ) : deltaLabel != null ? (
-                        <p className={styles.delta}>{deltaLabel}</p>
-                      ) : (
-                        <span aria-hidden="true">&nbsp;</span>
-                      )}
-                    </div>
-                  </div>
 
-                  <div className={styles.field}>
-                    <label className={styles.realCostLabel} htmlFor="feedback-party">
-                      ¿Cuántas personas fueron? (opcional)
-                    </label>
-                    <div className={styles.moneyInput}>
-                      <input
-                        id="feedback-party"
-                        inputMode="numeric"
-                        autoComplete="off"
-                        placeholder="Igual que el plan"
-                        value={partyRaw}
-                        disabled={busy}
-                        maxLength={4}
-                        onChange={(event) => {
-                          setPartyRaw(event.target.value.replace(/D/g, "").slice(0, 4));
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <ActivityCostsField
-                    outingId={planId}
-                    disabled={busy}
-                    values={activityCostsRaw}
-                    onChange={setActivityCostsRaw}
-                  />
+                    </>
+                  ) : null}
 
                   <div className={`${styles.field} ${styles.commentField}`}>
                     {commentOpen ? (
@@ -731,7 +745,7 @@ export function FeedbackDialog({
                     </div>
                   </div>
 
-                  {canShare ? (
+                  {canShare && !editing ? (
                     <div className={`${styles.field} ${styles.shareField}`}>
                       <label className={styles.shareChoice} htmlFor="feedback-share">
                         <input
@@ -774,8 +788,8 @@ export function FeedbackDialog({
                 disabled={rating === 0 || busy || costFilledButInvalid}
               >
                 {busy ? (
-                  <><Icon name="loader-circle" size={17} className="sp-spin" />{FEEDBACK_COPY.dialog.submitting}</>
-                ) : FEEDBACK_COPY.dialog.submit}
+                  <><Icon name="loader-circle" size={17} className="sp-spin" />{editing ? FEEDBACK_COPY.edit.submitting : FEEDBACK_COPY.dialog.submitting}</>
+                ) : editing ? FEEDBACK_COPY.edit.submit : FEEDBACK_COPY.dialog.submit}
               </Button>
               <button
                 type="button"
@@ -783,7 +797,7 @@ export function FeedbackDialog({
                 onClick={() => requestClose(onDismiss)}
                 disabled={busy}
               >
-                {FEEDBACK_COPY.dialog.dismiss}
+                {editing ? FEEDBACK_COPY.edit.cancel : FEEDBACK_COPY.dialog.dismiss}
               </button>
             </footer>
           </form>

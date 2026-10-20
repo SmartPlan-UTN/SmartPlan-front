@@ -19,6 +19,7 @@ const completeOuting = vi.hoisted(() => vi.fn());
 const cancelOuting = vi.hoisted(() => vi.fn());
 const repeatOuting = vi.hoisted(() => vi.fn());
 const submitFeedback = vi.hoisted(() => vi.fn());
+const updateFeedback = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/api")>()),
@@ -27,6 +28,7 @@ vi.mock("@/lib/api", async (importActual) => ({
   cancelOuting,
   repeatOuting,
   submitFeedback,
+  updateFeedback,
 }));
 
 // The stamp's photo never loads here; only its credit matters (#102).
@@ -424,4 +426,28 @@ describe("OutingsView — Mis salidas (#130, CU22, CU23)", () => {
       ),
     );
   });
+});
+
+
+it("edits the existing rating from the stars in Mis salidas and refreshes the card", async () => {
+  const user = userEvent.setup();
+  serve({ to_do: [], completed: [done({ feedbackState: "submitted", feedback: { ...FEEDBACK, comment: "Antes" } })] });
+  const updated = { ...FEEDBACK, rating: 5, comment: "Ahora excelente" };
+  updateFeedback.mockResolvedValue(updated);
+  render(<OutingsView />);
+  await user.click(screen.getByRole("tab", { name: "Realizadas" }));
+  const edit = await screen.findByRole("button", { name: "Editar valoración de Cena en el centro" });
+  edit.focus();
+  await user.keyboard("{Enter}");
+  const dialog = screen.getByRole("dialog");
+  const comment = within(dialog).getByRole("textbox", { name: /comentario/i });
+  expect(comment).toHaveValue("Antes");
+  await user.click(within(dialog).getAllByRole("radio")[4]);
+  await user.clear(comment);
+  await user.type(comment, "Ahora excelente");
+  await user.click(within(dialog).getByRole("button", { name: "Guardar cambios" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  expect(screen.getByText("“Ahora excelente”")).toBeInTheDocument();
+  expect(updateFeedback).toHaveBeenCalledWith(2, { rating: 5, comment: "Ahora excelente" });
+  expect(submitFeedback).not.toHaveBeenCalled();
 });

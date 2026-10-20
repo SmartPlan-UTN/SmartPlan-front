@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { ConfirmationDialog, Icon, LoadingDots, Stars } from "@/components/ui";
+import { Button, ConfirmationDialog, Icon, LoadingDots, Stars } from "@/components/ui";
 import { MediaGalleryManager } from "@/components/media";
 import {
   ApiError,
@@ -236,17 +236,8 @@ export function ActivityRatingSection({ activityId, onChange }: ActivityRatingSe
           <p className={styles.ratingFormTitle}>Tu valoración</p>
           <div className={styles.ownRatingActions}>
             {/* A removed rating stays removed whatever its author changes,
-                so editing it or adding photos would go nowhere. */}
-            {ownRating.removed ? null : (
-              <button
-                type="button"
-                className={styles.iconButton}
-                onClick={() => setEditing(true)}
-                aria-label="Editar tu valoración"
-              >
-                <Icon name="pencil" size={15} />
-              </button>
-            )}
+                so editing it or adding photos would go nowhere. Editing
+                opens from the stars below. */}
             <button
               type="button"
               className={`${styles.iconButton} ${styles.iconButtonDanger}`}
@@ -260,7 +251,15 @@ export function ActivityRatingSection({ activityId, onChange }: ActivityRatingSe
             </button>
           </div>
         </div>
-        <Stars rating={ownRating.score} size={16} />
+        {ownRating.removed ? (
+          <Stars rating={ownRating.score} size={16} />
+        ) : (
+          <Button variant="ghostLight" onClick={() => setEditing(true)} aria-label="Editar tu valoración">
+            <Stars rating={ownRating.score} size={16} />
+            <Icon name="pencil" size={15} aria-hidden="true" />
+            Editar
+          </Button>
+        )}
         {ownRating.comment ? (
           <p className={`sp-body ${styles.ownRatingComment}`}>{ownRating.comment}</p>
         ) : null}

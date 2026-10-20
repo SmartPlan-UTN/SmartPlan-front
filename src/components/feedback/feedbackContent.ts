@@ -49,6 +49,13 @@ export const FEEDBACK_COPY = {
     subtitle: "Contanos tu experiencia",
     dismiss: "Ahora no",
   },
+  edit: {
+    heading: "Editar tu valoración",
+    guidance: "Cambiá el puntaje o el comentario y guardá los cambios.",
+    submit: "Guardar cambios",
+    submitting: "Guardando…",
+    cancel: "Cancelar",
+  },
   dialog: {
     heading: "¿Cómo estuvo tu plan?",
     ratingLabel: "Tu calificación",

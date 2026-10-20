@@ -104,6 +104,7 @@ export {
 } from './collections';
 export {
   setFeedbackSharing,
+  updateFeedback,
   submitFeedback,
 } from './feedback';
 export { getPlanExperiences } from './experiences';
