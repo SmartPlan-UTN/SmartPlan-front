@@ -18,6 +18,7 @@ export {
   type UseExplorationSearchResult,
 } from "./useExplorationSearch";
 export { useReducedMotion } from "./useReducedMotion";
+export { useScrollLock } from "./useScrollLock";
 export {
   useScrollProgress,
   type UseScrollProgressResult,
@@ -31,6 +32,11 @@ export {
   type UsePlanRequestPollingResult,
   type LastSubmission,
 } from "./usePlanRequestPolling";
+export {
+  useRecentPlanRequests,
+  type RecentPlanRequestsStatus,
+  type UseRecentPlanRequestsResult,
+} from "./useRecentPlanRequests";
 export {
   useRecommendations,
   resetRecommendationsCache,

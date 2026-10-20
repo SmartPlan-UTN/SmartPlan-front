@@ -28,6 +28,7 @@ import styles from "./results-story.module.css";
 
 export interface PlanResultsProps {
   plans: PlanDetailResult[];
+  returnTo?: string;
   /** The free-text idea that produced these plans. `null`/absent for surprise mode. */
   query?: string | null;
   /** What the system understood from the request (budget/location/party size/categories). */
@@ -105,6 +106,7 @@ function mapsLink(plan: PlanDetailResult): string | null {
  */
 export function PlanResults({
   plans,
+  returnTo,
   understanding = null,
   funnel = null,
   onAdjust,
@@ -227,6 +229,7 @@ export function PlanResults({
 
   const shared = (plan: PlanDetailResult) => ({
     plan,
+    returnTo,
     accentColor: planColors.get(plan.id) ?? "var(--ember)",
     active: (hoverPlanId ?? focused?.id) === plan.id,
     intended: plan.viewerPlanState === "selected",

@@ -53,8 +53,22 @@ export function placeDetailRoute(id: number): string {
 }
 
 /** `/plans/:id` — plan detail (CU13, CU29). */
-export function planDetailRoute(id: number): string {
-  return `${ROUTES.plans}/${id}`;
+export function planDetailRoute(id: number, returnTo?: string): string {
+  const route = `${ROUTES.plans}/${id}`;
+  const origin = planDetailOrigin(returnTo);
+  return returnTo && origin === returnTo
+    ? `${route}?${new URLSearchParams({ from: origin })}`
+    : route;
+}
+
+/** Only known plan entry screens can be used as a return destination. */
+export function planDetailOrigin(value: string | string[] | null | undefined): string {
+  if (typeof value !== "string") return ROUTES.explore;
+  if ([ROUTES.home, ROUTES.explore, ROUTES.plans, ROUTES.favorites].some((route) => route === value)) {
+    return value;
+  }
+  const match = /^\/plan-requests\/([1-9]\d*)$/.exec(value);
+  return match && match[0] === value && Number.isSafeInteger(Number(match[1])) ? value : ROUTES.explore;
 }
 
 /** `/plan-requests/:id` — durable generation and results route (CU17, CU19). */

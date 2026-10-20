@@ -72,7 +72,9 @@ export { getProfile, updateProfile, changePassword, deleteAccount } from './user
 export type { UpdateProfileData, ChangePasswordData, DeleteAccountData } from './users';
 export {
   changeAdminUserStatus,
+  createAdminUser,
   deleteAdminUser,
+  downloadAdminUsersReport,
   getAdminUserMetrics,
   getDashboardMetrics,
   downloadDashboardMetrics,
@@ -108,7 +110,7 @@ export {
 } from './feedback';
 export { getPlanExperiences } from './experiences';
 export { getPreferences, updatePreferences } from './users';
-export { createPlanRequest, createSurprisePlanRequest, getPlanRequestStatus, refinePlanRequest } from './plan-requests';
+export { createPlanRequest, createSurprisePlanRequest, getPlanRequestStatus, refinePlanRequest, listPlanRequests } from './plan-requests';
 export { getRecommendations, dismissRecommendation, undoDismissRecommendation } from './plan-recommendations';
 export {
   listFavoriteActivities,

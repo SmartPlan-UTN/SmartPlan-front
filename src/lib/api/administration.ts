@@ -1,6 +1,8 @@
 import type {
   AdminUser,
   AdminUserMetrics,
+  AdminUsersReportQuery,
+  CreateAdminUserInput,
   AdminUsersQuery,
   AdminUsersResult,
   DashboardMetrics,
@@ -64,17 +66,17 @@ function reportFilename(disposition: unknown, fallback: string): string {
   return safe && safe !== "." && safe !== ".." ? safe : fallback;
 }
 
-/** Requests a session-authenticated CSV report, preserving its server filename (CU58). */
+/** Requests the session-authenticated PDF report, preserving its server filename (CU58). */
 export async function downloadDashboardMetrics(
   range: DashboardRange,
 ): Promise<{ blob: Blob; filename: string }> {
   const response = await apiClient.request<Blob>({
     method: "GET",
     url: "/admin/metrics/export",
-    params: { range, format: "csv" },
+    params: { range, format: "pdf" },
     responseType: "blob",
   });
-  const fallback = `smartplan-metricas-${range}-${new Date().toISOString().slice(0, 10)}.csv`;
+  const fallback = `smartplan-metricas-${range}-${new Date().toISOString().slice(0, 10)}.pdf`;
   return {
     blob: response.data,
     filename: reportFilename(response.headers["content-disposition"], fallback),
@@ -97,6 +99,13 @@ export async function changeAdminUserStatus(
 }
 
 /** Updates the editable profile, role, and status fields of an administered user. */
+/** Creates an account from the panel (CU57); requires `user.create`. */
+export async function createAdminUser(
+  input: CreateAdminUserInput,
+): Promise<AdminUser> {
+  return apiClient.post<AdminUser>("/admin/users", input);
+}
+
 export async function updateAdminUser(
   id: number,
   input: UpdateAdminUserInput,
@@ -150,54 +159,31 @@ export async function deleteAdminPlan(id: number): Promise<void> {
   return apiClient.delete<void>(`/admin/plans/${id}`);
 }
 
-/**
- * Builds REP-02's available header metrics from the listing contract.
- *
- * The backend does not expose last-activity timestamps, so `activeUsers`
- * represents accounts whose current status is active. Weekly registrations
- * are read newest-first and stop as soon as a full page crosses the cutoff.
- */
+/** REP-02 header metrics for a range, computed by the backend. */
 export async function getAdminUserMetrics(
-  now = new Date(),
+  range: DashboardRange,
 ): Promise<AdminUserMetrics> {
-  const weekStart = new Date(now);
-  weekStart.setDate(weekStart.getDate() - 7);
+  return apiClient.get<AdminUserMetrics>("/admin/users/metrics", {
+    params: { range },
+  });
+}
 
-  const [allUsers, activeUsers] = await Promise.all([
-    listAdminUsers({ page: 1, limit: 1 }),
-    listAdminUsers({ page: 1, limit: 1, status: "active" }),
-  ]);
-
-  let page = 1;
-  let newUsersThisWeek = 0;
-  let reachedCutoff = false;
-
-  while (!reachedCutoff) {
-    const result = await listAdminUsers({
-      page,
-      limit: 100,
-      sortBy: "createdAt",
-      direction: "desc",
-    });
-
-    for (const user of result.data) {
-      if (new Date(user.createdAt) >= weekStart) {
-        newUsersThisWeek += 1;
-      } else {
-        reachedCutoff = true;
-        break;
-      }
-    }
-
-    if (page >= result.pagination.totalPages || result.data.length === 0) {
-      break;
-    }
-    page += 1;
-  }
-
+/**
+ * Downloads the REP-02 users report (PDF or CSV) with the table's current
+ * search and status filter, preserving the server filename.
+ */
+export async function downloadAdminUsersReport(
+  query: AdminUsersReportQuery,
+): Promise<{ blob: Blob; filename: string }> {
+  const response = await apiClient.request<Blob>({
+    method: "GET",
+    url: "/admin/users/export",
+    params: query,
+    responseType: "blob",
+  });
+  const fallback = `smartplan-usuarios-${query.range}-${new Date().toISOString().slice(0, 10)}.${query.format}`;
   return {
-    totalUsers: allUsers.pagination.total,
-    activeUsers: activeUsers.pagination.total,
-    newUsersThisWeek,
+    blob: response.data,
+    filename: reportFilename(response.headers["content-disposition"], fallback),
   };
 }

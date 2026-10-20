@@ -14,9 +14,11 @@ import type {
 import { PlanDetailView } from "./PlanDetailView";
 
 const replace = vi.hoisted(() => vi.fn());
+const push = vi.hoisted(() => vi.fn());
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), replace, refresh: vi.fn() }),
+  useRouter: () => ({ push, replace, refresh: vi.fn() }),
+  usePathname: () => "/plans/7",
 }));
 
 const useSession = vi.hoisted(() => vi.fn());
@@ -127,6 +129,53 @@ beforeEach(() => {
   });
 });
 
+describe("sharing by WhatsApp", () => {
+  it("drops an owner's private detail after session revocation", async () => {
+    getPlan.mockResolvedValue(plan({ visibility: "private", ownedByViewer: true }));
+    const view = render(<PlanDetailView planId={7} />);
+    await screen.findByRole("heading", { name: "Tarde de vinos", level: 1 });
+    getPlan.mockRejectedValue(new ApiError({ message: "Plan not found", status: 404, type: 'HTTP' }));
+    useSession.mockReturnValue({ status: "anonymous", authenticated: false });
+    view.rerender(<PlanDetailView planId={7} />);
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Tarde de vinos", level: 1 })).not.toBeInTheDocument());
+  });
+
+  it("reloads personal plan state when the authenticated account changes", async () => {
+    useSession.mockReturnValue({ status: "authenticated", user: { id: 1 } });
+    getPlan.mockResolvedValueOnce(plan({ viewerPlanState: "selected", activeOutingId: 40 }));
+    const view = render(<PlanDetailView planId={7} />);
+    await screen.findByRole("heading", { name: "Tarde de vinos", level: 1 });
+    getPlan.mockResolvedValueOnce(plan({ viewerPlanState: "selectable", activeOutingId: null }));
+    useSession.mockReturnValue({ status: "authenticated", user: { id: 2 } });
+    view.rerender(<PlanDetailView planId={7} />);
+    await waitFor(() => expect(getPlan).toHaveBeenCalledTimes(2));
+    expect(await screen.findByRole("button", { name: "Lo voy a hacer" })).toBeEnabled();
+  });
+
+  it("opens WhatsApp with the plan link for a published plan", async () => {
+    const open = vi.spyOn(window, "open").mockReturnValue(null);
+    getPlan.mockResolvedValue(plan());
+    render(<PlanDetailView planId={7} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Compartir por WhatsApp" }));
+
+    const [url] = open.mock.calls[0];
+    expect(String(url)).toMatch(/^https:\/\/api\.whatsapp\.com\/send\?text=/);
+    expect(decodeURIComponent(String(url))).toContain(`${window.location.origin}/plans/7`);
+    // Emojis travel percent-encoded, intact (✨ is E2 9C A8).
+    expect(String(url)).toContain("%E2%9C%A8");
+    open.mockRestore();
+  });
+
+  it("is not offered for a private plan", async () => {
+    getPlan.mockResolvedValue(plan({ visibility: "private" }));
+    render(<PlanDetailView planId={7} />);
+
+    await screen.findByText("Tarde de vinos", { selector: "h1" });
+    expect(screen.queryByRole("button", { name: "Compartir por WhatsApp" })).not.toBeInTheDocument();
+  });
+});
+
 it("shows unrated plans and itinerary stops without fabricated zero scores", async () => {
   const unrated = plan({ averageRating: 0 });
   if (!unrated.details[0].activity) throw new Error('The fixture needs an activity');
@@ -170,6 +219,17 @@ describe("PlanDetailView — Lo voy a hacer (CU22, PAN 17, #130)", () => {
     await renderDetail("selectable");
 
     expect(screen.getByRole("button", intendButton)).toBeEnabled();
+  });
+
+  it("sends someone without a session to log in before choosing the plan", async () => {
+    useSession.mockReturnValue({ status: "anonymous", authenticated: false });
+    const user = userEvent.setup();
+    await renderDetail("selectable");
+
+    await user.click(screen.getByRole("button", intendButton));
+
+    expect(push).toHaveBeenCalledWith("/login?redirect=%2Fplans%2F7");
+    expect(createOuting).not.toHaveBeenCalled();
   });
 
   it("adds the plan to Mis salidas once and links to the new outing", async () => {
@@ -357,4 +417,35 @@ describe("PlanDetailView — community experiences (#106)", () => {
     ).not.toBeInTheDocument();
     expect(getPlanExperiences).not.toHaveBeenCalled();
   });
+});
+
+
+it.each(["/", "/explore", "/plans", "/favorites", "/plan-requests/42"])("returns to its explicit origin %s", async (returnTo) => {
+  getPlan.mockResolvedValue(plan());
+  render(<PlanDetailView planId={7} returnTo={returnTo} />);
+  const label = returnTo.startsWith("/plan-requests/") ? "Volver a los resultados" : "Volver";
+  expect(await screen.findByRole("link", { name: label })).toHaveAttribute("href", returnTo);
+});
+
+it("returns direct visitors to Explore", async () => {
+  getPlan.mockResolvedValue(plan());
+  render(<PlanDetailView planId={7} />);
+  expect(await screen.findByRole("link", { name: "Volver" })).toHaveAttribute("href", "/explore");
+});
+
+it("keeps the results destination when the plan no longer exists", async () => {
+  getPlan.mockRejectedValue(new ApiError({ type: "HTTP", status: 404, message: "Missing" }));
+  render(<PlanDetailView planId={7} returnTo="/plan-requests/42" />);
+  expect(await screen.findByRole("link", { name: "Volver a los resultados" })).toHaveAttribute("href", "/plan-requests/42");
+});
+
+it("shares the canonical plan URL without navigation context", async () => {
+  const user = userEvent.setup();
+  const writeText = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+  window.history.replaceState(null, "", "/plans/7?from=%2Fplan-requests%2F42");
+  getPlan.mockResolvedValue(plan());
+  render(<PlanDetailView planId={7} returnTo="/plan-requests/42" />);
+  await user.click(await screen.findByRole("button", { name: "Compartir" }));
+  expect(writeText).toHaveBeenCalledWith(new URL("/plans/7", window.location.origin).href);
+  window.history.replaceState(null, "", "/");
 });

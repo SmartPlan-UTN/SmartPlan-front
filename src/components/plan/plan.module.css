@@ -737,7 +737,7 @@
   to { transform: rotate(360deg); }
 }
 
-/* Mobile — keep the five actions full-width and stacked. */
+/* Mobile — keep the actions full-width and stacked. */
 @media (max-width: 720px) {
   .actionBar {
     flex-direction: column-reverse;

@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { PlanRefinementActions } from "@/components/plan-request/PlanRefinementActions";
 import { refinePlanRequest } from "@/lib/api";
-import { planRequestRoute } from "@/lib/routes";
 import type { RefinePlanRequestPayload } from "@/types";
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
@@ -14,6 +13,7 @@ import {
   PlanComposer,
   PlanResults,
   PreferencesHint,
+  RecentSearches,
   SurpriseButton,
   type PlanComposerHandle,
   type SurpriseCoords,
@@ -21,6 +21,7 @@ import {
 } from "@/components/home";
 import { useReducedMotion, type UsePlanRequestPollingResult } from "@/hooks";
 import { EASE_OUT } from "@/lib/motion";
+import { planRequestRoute, ROUTES } from "@/lib/routes";
 import type { PlanRequestContext } from "@/types";
 
 /**
@@ -268,6 +269,7 @@ export function LandingHero({
             </div>
 
             <PreferencesHint />
+            <RecentSearches />
           </div>
         ) : null}
 
@@ -299,6 +301,7 @@ export function LandingHero({
               transition={{ duration: 0.26, ease: EASE_OUT }}
             >
               <PlanResults
+                returnTo={planning.planRequestId != null ? planRequestRoute(planning.planRequestId) : ROUTES.home}
                 plans={plans ?? []}
                 query={submittedQuery}
                 resolvedContext={resolvedContext}

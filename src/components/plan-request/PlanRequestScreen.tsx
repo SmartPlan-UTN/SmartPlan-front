@@ -93,6 +93,7 @@ function PlanRequestBody({ requestId }: { requestId: number }) {
           {refining ? <p role="status" className={styles.refiningNote}>Ajustando la recomendación…</p> : null}
           {refinementError ? <p role="alert" className={styles.refiningNote}>{refinementError}</p> : null}
           <PlanResults
+            returnTo={planRequestRoute(requestId)}
             plans={plans}
             query={planning.query}
             resolvedContext={planning.resolvedContext}

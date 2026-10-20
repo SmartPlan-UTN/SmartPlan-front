@@ -100,7 +100,7 @@ describe("AdminDashboard", () => {
     vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
     vi.mocked(downloadDashboardMetrics).mockResolvedValue({
       blob: new Blob(["report"]),
-      filename: "server-report.csv",
+      filename: "server-report.pdf",
     });
   });
 
@@ -134,7 +134,7 @@ describe("AdminDashboard", () => {
       );
       expect(downloadDashboardMetrics).toHaveBeenCalledWith(range);
       expect(saved).toEqual([
-        { filename: "server-report.csv", href: "blob:report" },
+        { filename: "server-report.pdf", href: "blob:report" },
       ]);
       expect(document.querySelector("a[download]")).toBeNull();
       await waitFor(() =>
@@ -177,7 +177,7 @@ describe("AdminDashboard", () => {
     expect(downloadDashboardMetrics).toHaveBeenCalledTimes(1);
     expect(downloadDashboardMetrics).toHaveBeenCalledWith("7d");
     await act(async () => {
-      finish({ blob: new Blob(), filename: "seven-days.csv" });
+      finish({ blob: new Blob(), filename: "seven-days.pdf" });
     });
     expect(
       screen.getByRole("button", { name: "Descargar reporte" }),

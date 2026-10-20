@@ -134,6 +134,7 @@ Verification: `pnpm lint`, `pnpm test --maxWorkers=4` (864 passed), `pnpm build`
 | CU21 | Adjust recommendations based on history | — | `In review` | `7-epica-recomendacion` | #117 |
 | CU22 | Select plan | PAN 11, PAN 17 | `In review` | `feature/130-mis-planes-mis-salidas` | #148 |
 | CU23 | Submit plan feedback | PAN 13, PAN 17 | `In review` | `feature/130-mis-planes-mis-salidas` | #148 |
+| CU17 (#189) | Reopen recent searches («Tus últimas búsquedas» under the Home composer) | PAN 07 | `In review` | `feature/189-busquedas-recientes` | #192 |
 
 ### Ticket fix — 2026-10-12
 
@@ -350,7 +351,12 @@ Things that have been spotted but don't have an owner yet:
 
 ## Log
 
+2026-10-20 — PR #196 integration closure: preserve current develop's public sharing/privacy, recent searches, return navigation and map framing; use unified labels in WhatsApp/metadata for Place Actions. Correct place-add button contrast on cream surfaces. Full integrated suite: 157 files / 1,126 tests passed; lint, isolated TypeScript and production build passed. The machine-suspended run is invalid and excluded. Final responsive/browser acceptance remains blocked by the unavailable browser connection; PR stays draft, paired with backend #142. No PR merge or production deployment.
+
 2026-10-19 — `feature/intelligent-search-v1`, PR #196: manual Creator now searches published direct-action places, saves and reopens real Place Actions, and uses shared schedule/budget checks. Mixed drafts preserve target/detail identity; map authentication failures use the product fallback. Local production build, lint, typecheck and full tests (151 files / 1,045 tests) passed. Responsive browser acceptance remains incomplete after the browser disconnected; the paired backend report `docs/intelligent-search-excellence-2026-10-19.md` (PR #142) records the product limits. No merge, deployment or paid-provider enrichment.
+2026-10-19 — Review fixes for PR #197 (CU13): remount plan detail when the viewer or session changes, discarding private content, pending reads and personal overrides before loading the next viewer. Regression tests cover session revocation and switching authenticated accounts. Validation: lint, 1091 unit tests and production build passed.
+
+2026-10-18 — `feature/compartir-plan-whatsapp` (CU13) with back [#143](https://github.com/SmartPlan-UTN/SmartPlan-back/pull/143): a published plan opens without a session (`/plans/[id]` moved out of `(private-full-bleed)` into `(main)`), and plan detail gets a "WhatsApp" button next to "Compartir" that sends an emoji summary of the plan plus its link. Saving or "Lo voy a hacer" without a session goes to login and back. The link preview card is `plans/[id]/preview-image/route.tsx` (not `opengraph-image.tsx`: Next forces that URL to `localhost` in development), with `og:image` built from the request host so localhost, a tunnel, staging and production need no config (`SITE_URL` overrides it behind a proxy). The button opens `api.whatsapp.com/send` directly because the `wa.me` redirect turns emojis into "�". `pnpm lint`, `pnpm test` (1073) and `pnpm build` pass; the preview card is not verified on a deployed environment yet.
 
 2026-10-13 — `SMART-160-estados-visibilidad-planes` implements #160 with back [#124](https://github.com/SmartPlan-UTN/SmartPlan-back/pull/124). Explorar's filter (authored + public + not cancelled) was already correct; the "Completed" plans missing from Explorar are outings, generated results, or private plans. `pnpm lint` and `pnpm build` pass; `pnpm test` 873/874 with the known unrelated `CreatePlanForm.test.tsx` flake that passes on its own. Checked in the browser against the local backend: Spanish statuses, origin/visibility column and legend, edit-dialog note, Explorar listing only the public authored plan, and the empty state.
 
@@ -503,3 +509,18 @@ Review: [PR #184](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/184), ba
 # 2026-10-17 — Intelligent Search v1 continuation
 
 Local refinement actions, shared Creator schedule/budget checks and optional per-stop outing feedback are wired. Creator budget warnings can open the existing catalog ordered by price without changing the draft. Full frontend tests: 1,027 passed / 144 files; lint, TypeScript and isolated production build completed. New UI browser acceptance remains pending because automatic approval review rejected replacing/launching the QA frontend. Activity-backed Creator drafts work; place-action authoring remains incomplete. No push, merge or deployment. Cross-repository evidence and provisional product scorecard: `SmartPlan-back/docs/measurements/intelligent-search/2026-10-17-resume/report.md`.
+
+## 2026-10-15 — Plan detail return navigation (#187, CU17/CU22)
+
+- In review on `fix/187-188-plan-results`, based on current develop including #189. Explicit allowlisted `from` destinations preserve the originating request, Home, Explore, My plans or Favorites across reloads and new tabs. Direct and invalid origins fall back to Explore; sharing uses the canonical plan URL.
+- Focused navigation tests passed (91 tests); final lint, full tests, production build and browser acceptance are recorded with the companion #188 change below.
+
+
+## 2026-10-15 — Results map framing (#188, CU17/CU16)
+
+- In review on `fix/187-188-plan-results`, delivered with #187 in two issue-specific commits. Automatic framing uses zoom 15 for a single distinct location and caps multi-stop fits at 15 after idle, retaining lower zoom for distant stops and allowing manual zoom. Superseded listeners are removed. Hidden mobile maps defer camera changes and replay the chosen route once visible.
+- Reserved space for fixed mobile Lista/Mapa controls on the request screen: its search bar previously intercepted their taps. Explore's map remains unchanged because it does not fit bounds.
+- Final validation for #187/#188: Node 24, `pnpm lint`, `pnpm test --maxWorkers=2` (143 files / 1068 tests) and `pnpm build` passed. Nine map regressions cover single/repeated/nearby/distant/missing points, asynchronous caps, listener cleanup, visibility and zero-size viewports.
+- Browser acceptance used the Playwright skill with real Google Maps and mocked API responses at 1440px and 390px: zoom 15 for single/nearby locations, zoom 10 for distant stops, touch Lista/Mapa, no overflow, same request after return, reload/new tab and safe fallback origins; zero generation POSTs. Local evidence is in `output/playwright/`. Staging backend integration and deployment were not performed. Required reviews and merge remain pending.
+
+Review for #187/#188: [PR #193](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/193), base `develop`.

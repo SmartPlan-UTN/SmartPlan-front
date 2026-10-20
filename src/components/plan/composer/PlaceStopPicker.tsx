@@ -80,7 +80,7 @@ export function PlaceStopPicker({ stops, disabled, onAdd }: {
         <div><strong>{place.name}</strong><span>{[place.address, place.department.name].filter(Boolean).join(' · ')}</span>
           {unavailable === place.id ? <p>Este lugar necesita una experiencia específica. <Link href={placeDetailRoute(place.id)}>Ver qué ofrece</Link></p> : null}
         </div>
-        <Button size="sm" variant="ghost" disabled={disabled || busy || added} onClick={() => void add(place)}>
+        <Button size="sm" variant="ghostLight" disabled={disabled || busy || added} onClick={() => void add(place)}>
           {added ? 'En tu recorrido' : 'Sumar lugar'}
         </Button>
       </li>;

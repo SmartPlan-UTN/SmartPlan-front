@@ -25,6 +25,7 @@ const ROLE_LABEL: Record<NonNullable<PlanDetailResult["insight"]>["role"], strin
 
 export interface AlternativeRowProps {
   plan: PlanDetailResult;
+  returnTo?: string;
   index: number;
   accentColor: string;
   active: boolean;
@@ -49,6 +50,7 @@ function sentence(text: string): string {
  */
 export function AlternativeRow({
   plan,
+  returnTo,
   index,
   accentColor,
   active,
@@ -100,7 +102,7 @@ export function AlternativeRow({
           {insight ? ROLE_LABEL[insight.role] : "Otra opción"}
         </p>
         <h3 id={`alt-${plan.id}`} className={styles.name}>
-          <Link href={planDetailRoute(plan.id)}>{headline}</Link>
+          <Link href={planDetailRoute(plan.id, returnTo)}>{headline}</Link>
         </h3>
         {insight?.tagline ? (
           <p className={styles.tagline}>{insight.tagline}</p>

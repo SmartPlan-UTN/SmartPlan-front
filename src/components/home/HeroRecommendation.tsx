@@ -25,6 +25,7 @@ import styles from "./hero-recommendation.module.css";
 
 export interface HeroRecommendationProps {
   plan: PlanDetailResult;
+  returnTo?: string;
   mode: "auto" | "surprise";
   funnel: PlanFunnel | null;
   accentColor: string;
@@ -123,6 +124,7 @@ function Row({
  */
 export function HeroRecommendation({
   plan,
+  returnTo,
   mode,
   funnel,
   accentColor,
@@ -207,7 +209,7 @@ export function HeroRecommendation({
         </p>
 
         <h2 id={`hero-${plan.id}`} className={styles.name}>
-          <Link href={planDetailRoute(plan.id)} className={styles.nameLink}>
+          <Link href={planDetailRoute(plan.id, returnTo)} className={styles.nameLink}>
             {headline}
           </Link>
         </h2>

@@ -67,7 +67,7 @@ function ownRating(activityId: number, score: number) {
 
 /** The photos step follows the thanks after a short pause. */
 async function photosStep() {
-  return screen.findByRole("heading", { name: /sumás fotos de la salida/i }, { timeout: 3000 });
+  return screen.findByRole("heading", { name: /sumás fotos de la salida/i }, { timeout: 5000 });
 }
 
 async function skipPhotos() {

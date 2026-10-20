@@ -2,6 +2,8 @@
 
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 
+import { ROUTES } from "@/lib/routes";
+
 import {
   ExploreLayout,
   FiltersPanel,
@@ -264,7 +266,7 @@ export function PlanSearch({ head }: { head?: ReactNode }) {
           >
             <div className={exploreStyles.grid}>
               {items.map((plan) => (
-                <PlanCard plan={plan} key={plan.id} />
+                <PlanCard returnTo={ROUTES.explore} plan={plan} key={plan.id} />
               ))}
             </div>
 

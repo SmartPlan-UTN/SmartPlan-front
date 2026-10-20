@@ -399,3 +399,10 @@ describe("PlanResults (CU22 — Lo voy a hacer)", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+
+it("carries the request origin in hero and alternative detail links", () => {
+  render(<PlanResults plans={[PLAN, { ...PLAN, id: 8, title: 'Otra salida' }]} returnTo="/plan-requests/42" onAdjust={vi.fn()} onDiscard={vi.fn()} />);
+  expect(screen.getByRole("link", { name: PLAN.title })).toHaveAttribute("href", "/plans/7?from=%2Fplan-requests%2F42");
+  expect(screen.getByRole("link", { name: 'Otra salida' })).toHaveAttribute("href", "/plans/8?from=%2Fplan-requests%2F42");
+});

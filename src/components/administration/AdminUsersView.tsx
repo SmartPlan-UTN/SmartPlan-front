@@ -11,10 +11,13 @@ import {
   type IconName,
 } from "@/components/ui";
 import { useDebouncedValue } from "@/hooks";
+import { useSession } from "@/lib/auth";
 import {
   ApiError,
   changeAdminUserStatus,
+  createAdminUser,
   deleteAdminUser,
+  downloadAdminUsersReport,
   getAdminUserMetrics,
   listAdminUsers,
   updateAdminUser,
@@ -24,11 +27,14 @@ import type {
   AdminUserMetrics,
   AdminUsersQuery,
   AdminUsersResult,
+  CreateAdminUserInput,
+  DashboardRange,
   SortDirection,
   UserStatusKey,
 } from "@/types";
 
 import { UserActionsMenu } from "./UserActionsMenu";
+import { UserCreateDialog } from "./UserCreateDialog";
 import { UserReadDialog } from "./UserReadDialog";
 import { UserStatusBadge } from "./UserStatusBadge";
 import { UserStatusDialog } from "./UserStatusDialog";
@@ -119,7 +125,7 @@ function KpiCard({
   label: string;
   value?: number;
   detail: string;
-  tone: "ember" | "success" | "electric";
+  tone: "ember" | "success" | "electric" | "warning";
 }) {
   return (
     <article className={styles.kpiCard}>
@@ -132,6 +138,26 @@ function KpiCard({
         <p className={`${styles.kpiDetail} ${styles[`kpiDetail_${tone}`]}`}>{detail}</p>
       </div>
     </article>
+  );
+}
+
+const RANGE_OPTIONS: Array<{ id: DashboardRange; label: string; detail: string }> = [
+  { id: "today", label: "Hoy", detail: "Desde las 00:00" },
+  { id: "7d", label: "7 días", detail: "Últimos 7 días" },
+  { id: "30d", label: "30 días", detail: "Últimos 30 días" },
+  { id: "month", label: "Este mes", detail: "Desde el 1.° del mes" },
+];
+
+/** Lets a long email wrap after its `@` before breaking inside a word. */
+function emailWithBreak(email: string) {
+  const at = email.indexOf("@");
+  if (at < 0) return email;
+  return (
+    <>
+      {email.slice(0, at + 1)}
+      <wbr />
+      {email.slice(at + 1)}
+    </>
   );
 }
 
@@ -152,6 +178,13 @@ export function AdminUsersView() {
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [viewingUser, setViewingUser] = useState<AdminUser | null>(null);
+  const [editingFromMenu, setEditingFromMenu] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [range, setRange] = useState<DashboardRange>("7d");
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState(false);
+  const { user: sessionUser } = useSession();
+  const canCreate = sessionUser?.permissions.includes("user.create") ?? false;
 
   useEffect(() => {
     let ignore = false;
@@ -187,7 +220,7 @@ export function AdminUsersView() {
 
     async function loadMetrics() {
       try {
-        const nextMetrics = await getAdminUserMetrics();
+        const nextMetrics = await getAdminUserMetrics(range);
         if (!ignore) setMetrics(nextMetrics);
       } catch (_error) {
         if (!ignore) setMetrics(null);
@@ -198,7 +231,7 @@ export function AdminUsersView() {
     return () => {
       ignore = true;
     };
-  }, [metricsReloadSequence]);
+  }, [metricsReloadSequence, range]);
 
   function requestStatusChange(user: AdminUser, status: UserStatusKey) {
     setActionError(null);
@@ -253,6 +286,46 @@ export function AdminUsersView() {
     }
   }
 
+  async function downloadReport() {
+    if (downloading) return;
+    setDownloading(true);
+    setDownloadError(false);
+    try {
+      const { blob, filename } = await downloadAdminUsersReport({
+        range,
+        format: "pdf",
+        search: debouncedSearch || undefined,
+        status: statusFilter || undefined,
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      try {
+        link.href = url;
+        link.download = filename;
+        document.body.append(link);
+        link.click();
+      } finally {
+        link.remove();
+        // Give the browser a task to start reading the file before revoking it.
+        window.setTimeout(() => URL.revokeObjectURL(url), 0);
+      }
+    } catch (_error) {
+      setDownloadError(true);
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  async function createUser(input: CreateAdminUserInput) {
+    const created = await createAdminUser(input);
+    setCreating(false);
+    // Back to the first page, newest first, so the new account is in view.
+    setPage(1);
+    setReloadSequence((current) => current + 1);
+    setMetricsReloadSequence((current) => current + 1);
+    return created;
+  }
+
   async function saveUser(
     id: number,
     input: Parameters<typeof updateAdminUser>[1],
@@ -295,6 +368,10 @@ export function AdminUsersView() {
   }
 
   const users = result?.data ?? [];
+  const rangeDetail = RANGE_OPTIONS.find((option) => option.id === range)?.detail ?? "";
+  const suspendedPercentage = metrics?.totalUsers
+    ? `${Math.round((metrics.suspendedUsers / metrics.totalUsers) * 100)}% del total`
+    : "Cuentas sin acceso";
   const activePercentage = metrics?.totalUsers
     ? `${Math.round((metrics.activeUsers / metrics.totalUsers) * 100)}% del total`
     : "Cuentas habilitadas";
@@ -305,16 +382,53 @@ export function AdminUsersView() {
 
   return (
     <section className={styles.screen} aria-busy={loading}>
-      <header className={styles.header}>
-        <p className={styles.eyebrow}>
-          <Icon name="users" size={14} />
-          Comunidad
-        </p>
-        <h1 className={`sp-h2 ${styles.title}`}>Administración de Usuarios</h1>
-        <p className={`sp-body ${styles.subtitle}`}>
-          Gestioná las cuentas registradas en la plataforma.
-        </p>
+      <header className={`${styles.header} ${styles.headerRow}`}>
+        <div>
+          <p className={styles.eyebrow}>
+            <Icon name="users" size={14} />
+            Comunidad
+          </p>
+          <h1 className={`sp-h2 ${styles.title}`}>Administración de Usuarios</h1>
+          <p className={`sp-body ${styles.subtitle}`}>
+            Gestioná las cuentas registradas en la plataforma.
+          </p>
+        </div>
+        <div className={styles.headerActions}>
+          <div className={styles.rangeGroup} role="group" aria-label="Período de las métricas">
+            {RANGE_OPTIONS.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                className={`${styles.rangeBtn} ${range === option.id ? styles.rangeBtnActive : ""}`}
+                aria-pressed={range === option.id}
+                onClick={() => setRange(option.id)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <Button
+            variant="ghostLight"
+            size="sm"
+            disabled={downloading}
+            aria-busy={downloading}
+            onClick={() => void downloadReport()}
+          >
+            <Icon
+              name={downloading ? "loader-circle" : "download"}
+              size={16}
+              className={downloading ? "sp-spin" : undefined}
+            />
+            {downloading ? "Descargando…" : "Descargar reporte"}
+          </Button>
+        </div>
       </header>
+
+      {downloadError ? (
+        <div className={styles.inlineError} role="alert">
+          No pudimos generar el reporte. Intentá nuevamente.
+        </div>
+      ) : null}
 
       <div className={styles.kpiGrid} aria-label="Métricas de usuarios">
         <KpiCard
@@ -332,11 +446,18 @@ export function AdminUsersView() {
           detail={activePercentage}
         />
         <KpiCard
+          icon="lock"
+          tone="warning"
+          label="Usuarios suspendidos"
+          value={metrics?.suspendedUsers}
+          detail={suspendedPercentage}
+        />
+        <KpiCard
           icon="calendar"
           tone="electric"
-          label="Nuevos registros (semana)"
-          value={metrics?.newUsersThisWeek}
-          detail="Últimos 7 días"
+          label="Nuevos registros"
+          value={metrics?.newUsers}
+          detail={rangeDetail}
         />
       </div>
 
@@ -364,6 +485,11 @@ export function AdminUsersView() {
             }}
           />
         </div>
+        {canCreate ? (
+          <Button onClick={() => setCreating(true)}>
+            <Icon name="plus" size={17} /> Nuevo usuario
+          </Button>
+        ) : null}
       </div>
 
       <div className={styles.tableCard}>
@@ -416,25 +542,46 @@ export function AdminUsersView() {
                 </thead>
                 <tbody>
                   {users.map((user) => (
-                    <tr key={user.id}>
+                    // The whole row opens the user's detail; the name button is
+                    // the same action for keyboard and screen-reader users, and
+                    // its click simply bubbles up to the row.
+                    <tr
+                      key={user.id}
+                      className={styles.clickableRow}
+                      onClick={() => {
+                        setEditingFromMenu(false);
+                        setViewingUser(user);
+                      }}
+                    >
                       <td className={styles.userCellContainer}>
                         <button
                           type="button"
                           className={styles.userCell}
                           aria-label={`Ver detalle de ${user.name} ${user.lastName}`}
-                          onClick={() => setViewingUser(user)}
                         >
                           <UserAvatar name={user.name} lastName={user.lastName} userId={user.id} />
                           <span>{user.name} {user.lastName}</span>
                         </button>
                       </td>
-                      <td className={styles.secondaryCell}>{user.email}</td>
+                      <td className={`${styles.secondaryCell} ${styles.emailCell}`}>{emailWithBreak(user.email)}</td>
                       <td><span className={styles.roleBadge}>{user.role.name}</span></td>
                       <td className={styles.secondaryCell}>{dateFormatter.format(new Date(user.createdAt))}</td>
                       <td><UserStatusBadge status={user.status.key} /></td>
-                      <td className={styles.actionsColumn}>
+                      {/* Menu clicks (portaled, but still bubbling through React)
+                          must not also open the row's detail. */}
+                      <td
+                        className={styles.actionsColumn}
+                        onClick={(event) => event.stopPropagation()}
+                      >
                         <span className={styles.actionsCell}>
-                          <UserActionsMenu user={user} onSelect={requestStatusChange} />
+                          <UserActionsMenu
+                            user={user}
+                            onSelect={requestStatusChange}
+                            onEdit={(selected) => {
+                              setEditingFromMenu(true);
+                              setViewingUser(selected);
+                            }}
+                          />
                         </span>
                       </td>
                     </tr>
@@ -460,9 +607,18 @@ export function AdminUsersView() {
         </div>
       ) : null}
 
+      {creating ? (
+        <UserCreateDialog
+          onClose={() => setCreating(false)}
+          onCreate={createUser}
+        />
+      ) : null}
+
       {viewingUser ? (
         <UserReadDialog
+          key={`${viewingUser.id}-${editingFromMenu ? "edit" : "view"}`}
           user={viewingUser}
+          startEditing={editingFromMenu}
           onClose={() => setViewingUser(null)}
           onSave={saveUser}
           onDelete={deleteUser}

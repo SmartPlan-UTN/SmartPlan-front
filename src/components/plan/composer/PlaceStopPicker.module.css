@@ -8,6 +8,7 @@
 .results { list-style: none; padding: 0; margin: 0; }
 .results li { display: flex; justify-content: space-between; align-items: center; gap: var(--s-3); padding-block: var(--s-3); border-top: 1px solid var(--hairline); }
 .results li > div { min-width: 0; overflow-wrap: anywhere; }
+.results button { flex-shrink: 0; }
 .results strong, .results span { display: block; }
 .results span { color: var(--fg-2); font-size: 0.8rem; margin-top: var(--s-1); }
 .results a { color: var(--ember); text-decoration: underline; }

@@ -133,13 +133,46 @@ export interface AdminUsersQuery {
 }
 
 /** Header values for REP-02, assembled from the current users listing contract. */
+export interface AdminUsersBreakdownEntry {
+  key: string;
+  name: string;
+  count: number;
+}
+
+/** `GET /admin/users/metrics` (REP-02), computed by the backend for a range. */
 export interface AdminUserMetrics {
+  range: { key: DashboardRange; from: string; to: string };
   totalUsers: number;
   activeUsers: number;
-  newUsersThisWeek: number;
+  suspendedUsers: number;
+  administrators: number;
+  /** Accounts created within the range. */
+  newUsers: number;
+  byStatus: AdminUsersBreakdownEntry[];
+  byRole: AdminUsersBreakdownEntry[];
+}
+
+export type AdminUsersReportFormat = "pdf" | "csv";
+
+/** `GET /admin/users/export`: the range plus the table's own filters. */
+export interface AdminUsersReportQuery {
+  range: DashboardRange;
+  format: AdminUsersReportFormat;
+  search?: string;
+  status?: UserStatusKey;
 }
 
 /** Editable fields accepted by `PATCH /admin/users/:id`. */
+/** `POST /admin/users` (CU57): an account created from the panel. */
+export interface CreateAdminUserInput {
+  name: string;
+  lastName: string;
+  email: string;
+  password: string;
+  role: RoleKey;
+  status: UserStatusKey;
+}
+
 export interface UpdateAdminUserInput {
   name?: string;
   lastName?: string;
