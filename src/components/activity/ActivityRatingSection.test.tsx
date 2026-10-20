@@ -366,7 +366,7 @@ it("opens editing from the stars of an existing activity rating", async () => {
   const user = userEvent.setup();
   const onChange = vi.fn();
   renderSection(onChange);
-  await user.click(await screen.findByRole("button", { name: "Editar puntaje y comentario" }));
+  await user.click(await screen.findByRole("button", { name: "Editar tu valoración" }));
   const comment = screen.getByRole("textbox", { name: "Comentario" });
   expect(comment).toHaveValue("Antes");
   await user.clear(comment);

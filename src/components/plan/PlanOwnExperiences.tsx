@@ -3,17 +3,23 @@
 import { useEffect, useState } from "react";
 
 import { ExperienceSummary, FeedbackDialog } from "@/components/feedback";
-import { Button, LoadingDots } from "@/components/ui";
+import { Button } from "@/components/ui";
 import { listOutings } from "@/lib/api";
 import { useSession } from "@/lib/auth";
 import type { OutingSummary, PlanFeedback } from "@/types";
+
+import styles from "./community.module.css";
 
 export interface PlanOwnExperiencesProps {
   planId: number;
   onChanged: () => void;
 }
 
-/** Private feedback stays editable from the original plan, across repeat outings. */
+/**
+ * Private feedback stays editable from the original plan, across repeat
+ * outings. It shows on every plan, so it stays silent while it looks and
+ * when there is nothing of the viewer's to show.
+ */
 export function PlanOwnExperiences({ planId, onChanged }: PlanOwnExperiencesProps) {
   const { status: sessionStatus, user } = useSession();
   const scope = `${planId}:${user?.id ?? sessionStatus}`;
@@ -49,17 +55,18 @@ export function PlanOwnExperiences({ planId, onChanged }: PlanOwnExperiencesProp
   }, [planId, scope, sessionStatus, retry]);
 
   if (sessionStatus !== "authenticated") return null;
-  if (result?.scope !== scope) return <LoadingDots label="Buscando tu valoración…" />;
+  if (result?.scope !== scope) return null;
   if (result.error) {
     return (
-      <div role="alert">
+      <div className={styles.error} role="alert">
         <p>No pudimos cargar tu valoración de este plan.</p>
-        <Button variant="ghostLight" onClick={() => { setResult(null); setRetry((value) => value + 1); }}>
+        <Button variant="ghostLight" size="sm" onClick={() => { setResult(null); setRetry((value) => value + 1); }}>
           Reintentar
         </Button>
       </div>
     );
   }
+  if (result.outings.length === 0) return null;
 
   const editing = result.outings.find((outing) => outing.id === editingId);
   function applyFeedback(outingId: number, feedback: PlanFeedback) {
@@ -76,7 +83,7 @@ export function PlanOwnExperiences({ planId, onChanged }: PlanOwnExperiencesProp
       {result.outings.map((outing) => outing.feedback ? (
         <div key={outing.id}>
           {result.outings.length > 1 && outing.completedAt ? (
-            <p>Salida del {new Intl.DateTimeFormat("es-AR", { dateStyle: "long" }).format(new Date(outing.completedAt))}</p>
+            <p className={styles.cardDate}>Salida del {new Intl.DateTimeFormat("es-AR", { dateStyle: "long" }).format(new Date(outing.completedAt))}</p>
           ) : null}
           <ExperienceSummary
             feedback={outing.feedback}
