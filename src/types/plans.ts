@@ -271,6 +271,7 @@ export interface OutingFilters {
 }
 
 export interface ListOutingsParams extends OutingFilters {
+  sourcePlanId?: number;
   status?: OutingStatus;
   page?: number;
   limit?: number;

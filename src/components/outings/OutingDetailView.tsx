@@ -288,6 +288,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
         {current.feedback ? (
           <ExperienceSummary
             feedback={current.feedback}
+            onEdit={() => setFeedbackOpen(true)}
             estimatedTotalCost={current.estimatedTotalCost}
             footer={
               // A shared one keeps its switch after the plan is no longer
@@ -376,7 +377,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
         </div>
       </div>
 
-      {feedbackOpen && current.feedbackState === "available" ? (
+      {feedbackOpen && (current.feedbackState === "available" || current.feedback) ? (
         <FeedbackDialog
           open
           planId={current.id}
@@ -385,6 +386,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
           completedAt={current.completedAt}
           activityCount={current.activityCount}
           canShare={current.source?.hasCommunity ?? false}
+          existingFeedback={current.feedback ?? undefined}
           onDismiss={() => setFeedbackOpen(false)}
           onSubmitted={applyFeedback}
           onMediaChanged={refreshGallery}

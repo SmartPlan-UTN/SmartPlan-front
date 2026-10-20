@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@/lib/api";
-import { outingCreation } from "@/test/fixtures/outings";
+import { outingCreation, outingDetail } from "@/test/fixtures/outings";
 import type {
   OwnPlanDetail,
   PlanDetailResult,
@@ -46,6 +46,8 @@ const createOuting = vi.hoisted(() => vi.fn());
 const setOwnPlanVisibility = vi.hoisted(() => vi.fn());
 const getPlanExperiences = vi.hoisted(() => vi.fn());
 const reportContent = vi.hoisted(() => vi.fn());
+const listOutings = vi.hoisted(() => vi.fn());
+const updateFeedback = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/api")>()),
@@ -55,6 +57,8 @@ vi.mock("@/lib/api", async (importActual) => ({
   setOwnPlanVisibility,
   getPlanExperiences,
   reportContent,
+  listOutings,
+  updateFeedback,
 }));
 
 function ownPlan(overrides: Partial<OwnPlanDetail> = {}): OwnPlanDetail {
@@ -124,6 +128,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   useSession.mockReturnValue({ status: "authenticated", authenticated: true });
   getOwnPlan.mockResolvedValue(ownPlan());
+  listOutings.mockResolvedValue({ data: [], pagination: { page: 1, total: 0, totalPages: 0 } });
   createOuting.mockResolvedValue(outingCreation({ id: 40 }));
   getPlanExperiences.mockResolvedValue({
     data: [],
@@ -491,4 +496,25 @@ it("shares the canonical plan URL without navigation context", async () => {
   await user.click(await screen.findByRole("button", { name: "Compartir" }));
   expect(writeText).toHaveBeenCalledWith(new URL("/plans/7", window.location.origin).href);
   window.history.replaceState(null, "", "/");
+});
+
+it("edits a shared experience on the original plan and refreshes the public summary", async () => {
+  const user = userEvent.setup();
+  const feedback = { id: 3, rating: 4, tags: [], comment: "Antes", actualCost: null, actualDuration: null, shared: true, commentHidden: false, createdAt: "2026-10-19T12:00:00Z" };
+  listOutings.mockResolvedValue({ data: [outingDetail({ feedback })], pagination: { page: 1, totalPages: 1, total: 1 } });
+  updateFeedback.mockResolvedValue({ ...feedback, rating: 5, comment: "Excelente" });
+  await renderDetail("selectable", { visibility: "public" });
+  await user.click(await screen.findByRole("button", { name: "Editar tu valoración" }));
+  const dialog = screen.getByRole("dialog");
+  const comment = within(dialog).getByRole("textbox", { name: "Tu comentario" });
+  await user.clear(comment);
+  await user.type(comment, "Excelente");
+  await user.click(within(dialog).getAllByRole("radio")[4]);
+  getPlan.mockResolvedValue(plan({ visibility: "public", averageRating: 5 }));
+  await user.click(within(dialog).getByRole("button", { name: "Guardar cambios" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  expect(await screen.findByText("“Excelente”")).toBeInTheDocument();
+  expect(await screen.findByText("5.0")).toBeInTheDocument();
+  expect(updateFeedback).toHaveBeenCalledWith(40, { rating: 5, comment: "Excelente" });
+  expect(getPlanExperiences.mock.calls.length).toBeGreaterThan(1);
 });

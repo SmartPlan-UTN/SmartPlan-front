@@ -357,3 +357,22 @@ describe("ActivityRatingSection", () => {
     expect(screen.getByText("¿Eliminar tu valoración?")).toBeInTheDocument();
   });
 });
+
+
+it("opens editing from the stars of an existing activity rating", async () => {
+  mockAuthenticatedSession();
+  vi.mocked(getOwnRating).mockResolvedValue(ownRating({ score: 3, comment: "Antes" }));
+  vi.mocked(updateRating).mockResolvedValue(ownRating({ score: 5, comment: "Me encantó" }));
+  const user = userEvent.setup();
+  const onChange = vi.fn();
+  renderSection(onChange);
+  await user.click(await screen.findByRole("button", { name: "Editar puntaje y comentario" }));
+  const comment = screen.getByRole("textbox", { name: "Comentario" });
+  expect(comment).toHaveValue("Antes");
+  await user.clear(comment);
+  await user.type(comment, "Me encantó");
+  await user.click(screen.getByRole("button", { name: "5 estrellas" }));
+  await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+  await waitFor(() => expect(onChange).toHaveBeenCalledOnce());
+  expect(updateRating).toHaveBeenCalledWith(1, { score: 5, comment: "Me encantó" });
+});
