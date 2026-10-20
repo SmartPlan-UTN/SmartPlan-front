@@ -142,7 +142,7 @@ describe("sharing by WhatsApp", () => {
     getPlan.mockResolvedValue(plan({ visibility: "private", ownedByViewer: true }));
     const view = render(<PlanDetailView planId={7} />);
     await screen.findByRole("heading", { name: "Tarde de vinos", level: 1 });
-    getPlan.mockRejectedValue(new ApiError({ message: "Plan not found", status: 404 }));
+    getPlan.mockRejectedValue(new ApiError({ message: "Plan not found", type: "HTTP", status: 404 }));
     useSession.mockReturnValue({ status: "anonymous", authenticated: false });
     view.rerender(<PlanDetailView planId={7} />);
     await waitFor(() => expect(screen.queryByRole("heading", { name: "Tarde de vinos", level: 1 })).not.toBeInTheDocument());

@@ -772,6 +772,23 @@
   z-index: 2;
 }
 
+.detailActions {
+  margin-top: var(--s-4);
+}
+
+.mapsLink {
+  margin: var(--s-3) 0 0;
+  font-size: var(--t-small);
+}
+
+.mapsLink a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--ember);
+  font-weight: var(--w-label);
+}
+
 .placeLine {
   margin: 4px 0 0;
   color: var(--fg-2);

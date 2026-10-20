@@ -28,6 +28,7 @@ interface Presentation {
 /** Stable subtype keys used by the Explore API's `type` filter. */
 export const ACTIVITY_TYPE_OPTIONS = [
   { value: "", label: "Cualquier actividad" },
+  { value: "self_guided_visit", label: "Visita por cuenta propia" },
   { value: "tasting", label: "Degustación" },
   { value: "winery_tour", label: "Visita a bodega" },
   { value: "winery_meal", label: "Almuerzo en bodega" },
@@ -107,6 +108,7 @@ const ACTIVITY_SUBTYPES: Record<string, Presentation> = {
   guided_tour: { icon: "landmark", family: "culture" },
   heritage_visit: { icon: "landmark", family: "culture" },
   walk: { icon: "trees", family: "outdoors" },
+  self_guided_visit: { icon: "map-pin", family: "other" },
   viewpoint_visit: { icon: "sunset", family: "outdoors" },
   day_trip: { icon: "luggage", family: "outdoors" },
   trekking: { icon: "mountain", family: "adventure" },
