@@ -34,6 +34,7 @@ export {
   searchExplore,
   getExploreMapMarkers,
   getPlaceDetail,
+  ensurePlaceVisit,
   claimUiKitElements,
   getPlacePhotoMedia,
 } from './explore';

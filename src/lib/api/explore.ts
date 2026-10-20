@@ -59,6 +59,11 @@ export async function getPlaceDetail(id: number): Promise<PlaceDetailResult> {
   return apiClient.get<PlaceDetailResult>(`/places/${id}`);
 }
 
+/** Explicitly creates or reuses the place's self-guided visit (CU14/CU27). */
+export async function ensurePlaceVisit(id: number): Promise<{ activityId: number }> {
+  return apiClient.post<{ activityId: number }>(`/places/${id}/visits`);
+}
+
 /**
  * Asks the backend for permission to instantiate `count` Google Places UI
  * Kit elements. SmartPlan enforces a USD 0 monthly cap: past it, `granted`

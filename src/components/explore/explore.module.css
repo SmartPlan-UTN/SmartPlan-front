@@ -904,6 +904,30 @@
   font-size: var(--t-body-sm, 0.9rem);
 }
 
+.activityPicker {
+  display: grid;
+  gap: var(--s-2);
+  margin-bottom: var(--s-4);
+  color: var(--fg-2);
+  font-size: var(--t-small);
+}
+
+.activityPicker select {
+  width: 100%;
+  min-width: 0;
+  padding: var(--s-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-btn);
+  background: var(--surface-card);
+  color: var(--fg-1);
+  font: inherit;
+}
+
+.activityPicker select:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
 .filterError {
   margin: var(--s-2) 0 0;
   color: var(--error);
