@@ -48,6 +48,7 @@ const TABS: Array<{ value: Tab; label: string }> = [
   { value: "rating", label: "Valoraciones" },
   { value: "experience_comment", label: "Comentarios" },
   { value: "experience_photo", label: "Fotos" },
+  { value: "plan", label: "Planes" },
 ];
 
 type Sort = "oldest" | "most-reported";
@@ -84,6 +85,12 @@ const TYPE_COPY: Record<
       "La foto deja de mostrarse en la comunidad. Su autor recibe una notificación con este motivo.",
     removedLabel: "la foto",
   },
+  plan: {
+    label: "Plan",
+    removeNote:
+      "El plan deja de estar publicado y su autor ya no puede volver a publicarlo; lo sigue viendo en Mis planes. Recibe una notificación con este motivo.",
+    removedLabel: "el plan",
+  },
 };
 
 const EMPTY_COPY: Record<Tab, string> = {
@@ -91,6 +98,7 @@ const EMPTY_COPY: Record<Tab, string> = {
   rating: "No hay valoraciones denunciadas.",
   experience_comment: "No hay comentarios denunciados.",
   experience_photo: "No hay fotos denunciadas.",
+  plan: "No hay planes denunciados.",
 };
 
 type LoadState =
@@ -102,7 +110,8 @@ type LoadState =
  * PAN 20 — reported content (#156). Content is published at once and a
  * user's report hides it; here an administrator reads what was reported and
  * why, and keeps it or removes it. Content kept before and reported again
- * stays visible meanwhile, and carries a "Revisado antes" mark.
+ * stays visible meanwhile, and carries a "Revisado antes" mark. A reported
+ * plan is never hidden: it stays published until it is removed here.
  */
 export function AdminReportsView() {
   const [tab, setTab] = useState<Tab>("all");
@@ -339,9 +348,11 @@ export function AdminReportsView() {
             void decide(keeping, { decision: "keep" }, "No pudimos guardar la decisión.")
           }
         >
-          {keeping.content
-            ? "Vuelve a mostrarse para todos y queda marcado como revisado: una nueva denuncia ya no lo va a ocultar. Su autor no recibe ningún aviso."
-            : "El contenido ya no existe. Se cierran sus denuncias sin más."}
+          {!keeping.content
+            ? "El contenido ya no existe. Se cierran sus denuncias sin más."
+            : keeping.contentType === "plan"
+              ? "El plan sigue publicado y queda marcado como revisado. Su autor no recibe ningún aviso."
+              : "Vuelve a mostrarse para todos y queda marcado como revisado: una nueva denuncia ya no lo va a ocultar. Su autor no recibe ningún aviso."}
         </ConfirmationDialog>
       ) : null}
 
@@ -463,7 +474,9 @@ function ReportCard({
             ) : content.text ? (
               <p className={styles.comment}>{content.text}</p>
             ) : (
-              <p className={styles.noComment}>Sin comentario: solo puntuación.</p>
+              <p className={styles.noComment}>
+                {content.type === "plan" ? "Sin descripción." : "Sin comentario: solo puntuación."}
+              </p>
             )}
             {content.type === "rating" ? (
               <MediaGallery

@@ -296,3 +296,8 @@
   background: var(--success-15);
   color: var(--success);
 }
+
+.visibilityRemoved {
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+  color: var(--error);
+}

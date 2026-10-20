@@ -11,10 +11,26 @@ import styles from "./MyPlansPanel.module.css";
 
 export interface PlanVisibilityBadgeProps {
   visibility: PlanVisibility;
+  /** An administrator took it down after a report (#156). */
+  removedByModeration?: boolean;
 }
 
-/** Says whether a plan the person created is public or private (#130). */
-export function PlanVisibilityBadge({ visibility }: PlanVisibilityBadgeProps) {
+/**
+ * Says whether a plan the person created is public or private (#130), or
+ * that moderation took it down (#156).
+ */
+export function PlanVisibilityBadge({ visibility, removedByModeration = false }: PlanVisibilityBadgeProps) {
+  if (removedByModeration) {
+    return (
+      <span
+        className={`${styles.visibilityBadge} ${styles.visibilityRemoved}`}
+        title={VISIBILITY_COPY.removed.hint}
+      >
+        <Icon name="flag" size={12} aria-hidden="true" />
+        {VISIBILITY_COPY.removed.label}
+      </span>
+    );
+  }
   return (
     <span
       className={
@@ -72,11 +88,7 @@ export function PlanVisibilityControl({
       setConfirming(false);
       onChanged(updated.visibility);
     } catch (err) {
-      setError(
-        err instanceof ApiError && err.code === "PLAN_EMPTY"
-          ? VISIBILITY_COPY.errors.empty
-          : VISIBILITY_COPY.errors.generic,
-      );
+      setError(visibilityErrorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -123,4 +135,12 @@ export function PlanVisibilityControl({
       ) : null}
     </>
   );
+}
+
+function visibilityErrorMessage(err: unknown): string {
+  if (err instanceof ApiError && err.code === "PLAN_EMPTY") return VISIBILITY_COPY.errors.empty;
+  if (err instanceof ApiError && err.code === "PLAN_REMOVED_BY_MODERATION") {
+    return VISIBILITY_COPY.errors.removed;
+  }
+  return VISIBILITY_COPY.errors.generic;
 }

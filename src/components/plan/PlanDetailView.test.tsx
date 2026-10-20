@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -45,6 +45,7 @@ const getOwnPlan = vi.hoisted(() => vi.fn());
 const createOuting = vi.hoisted(() => vi.fn());
 const setOwnPlanVisibility = vi.hoisted(() => vi.fn());
 const getPlanExperiences = vi.hoisted(() => vi.fn());
+const reportContent = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/api")>()),
@@ -53,6 +54,7 @@ vi.mock("@/lib/api", async (importActual) => ({
   createOuting,
   setOwnPlanVisibility,
   getPlanExperiences,
+  reportContent,
 }));
 
 function ownPlan(overrides: Partial<OwnPlanDetail> = {}): OwnPlanDetail {
@@ -61,6 +63,7 @@ function ownPlan(overrides: Partial<OwnPlanDetail> = {}): OwnPlanDetail {
     title: "Tarde de vinos",
     description: null,
     visibility: "private",
+    removedByModeration: false,
     estimatedTotalCost: 8500,
     estimatedTotalDuration: 240,
     peopleCount: 2,
@@ -173,6 +176,59 @@ describe("sharing by WhatsApp", () => {
 
     await screen.findByText("Tarde de vinos", { selector: "h1" });
     expect(screen.queryByRole("button", { name: "Compartir por WhatsApp" })).not.toBeInTheDocument();
+  });
+});
+
+describe("reporting a plan (#156)", () => {
+  it("reports someone else's published plan and keeps showing it", async () => {
+    const user = userEvent.setup();
+    reportContent.mockResolvedValue(undefined);
+    getPlan.mockResolvedValue(plan());
+    render(<PlanDetailView planId={7} />);
+
+    await user.click(await screen.findByRole("button", { name: "Denunciar Tarde de vinos" }));
+    const dialog = screen.getByRole("dialog", { name: "Denunciar plan" });
+    await user.click(within(dialog).getByRole("radio", { name: "Spam o publicidad" }));
+    await user.click(within(dialog).getByRole("button", { name: "Denunciar" }));
+
+    expect(reportContent).toHaveBeenCalledWith({ contentType: "plan", contentId: 7, reason: "spam" });
+    expect(await screen.findByText("Gracias, lo vamos a revisar.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Plan denunciado" })).toBeDisabled();
+    expect(screen.getByRole("heading", { name: "Tarde de vinos", level: 1 })).toBeInTheDocument();
+  });
+
+  it("sends an anonymous visitor to sign in first", async () => {
+    const user = userEvent.setup();
+    useSession.mockReturnValue({ status: "anonymous", authenticated: false });
+    getPlan.mockResolvedValue(plan());
+    render(<PlanDetailView planId={7} />);
+
+    await user.click(await screen.findByRole("button", { name: "Denunciar Tarde de vinos" }));
+
+    expect(push).toHaveBeenCalledWith(expect.stringContaining("/login"));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("is not offered to its author nor for a private plan", async () => {
+    getPlan.mockResolvedValue(plan({ ownedByViewer: true }));
+    const view = render(<PlanDetailView planId={7} />);
+    await screen.findByRole("heading", { name: "Tarde de vinos", level: 1 });
+    expect(screen.queryByRole("button", { name: /^Denunciar/ })).not.toBeInTheDocument();
+    view.unmount();
+
+    getPlan.mockResolvedValue(plan({ visibility: "private" }));
+    render(<PlanDetailView planId={7} />);
+    await screen.findByRole("heading", { name: "Tarde de vinos", level: 1 });
+    expect(screen.queryByRole("button", { name: /^Denunciar/ })).not.toBeInTheDocument();
+  });
+
+  it("tells the author a removed plan cannot be published", async () => {
+    getPlan.mockResolvedValue(plan({ visibility: "private", ownedByViewer: true }));
+    getOwnPlan.mockResolvedValue(ownPlan({ visibility: "private", removedByModeration: true }));
+    render(<PlanDetailView planId={7} />);
+
+    expect(await screen.findByText("Dado de baja")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Publicar/ })).not.toBeInTheDocument();
   });
 });
 

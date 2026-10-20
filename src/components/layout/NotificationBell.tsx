@@ -6,7 +6,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Icon } from "@/components/ui";
 import { useNotifications } from "@/hooks";
 import { useSession } from "@/lib/auth";
-import { outingDetailRoute } from "@/lib/routes";
+import { outingDetailRoute, planDetailRoute } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import type { AppNotification } from "@/types";
 
@@ -28,6 +28,10 @@ function relativeTime(iso: string): string {
 function destination(notification: AppNotification): string | null {
   if (notification.resourceType === "outing" && notification.resourceId) {
     return outingDetailRoute(notification.resourceId);
+  }
+  // A plan of theirs that moderation took down (#156).
+  if (notification.resourceType === "plan" && notification.resourceId) {
+    return planDetailRoute(notification.resourceId);
   }
   return null;
 }

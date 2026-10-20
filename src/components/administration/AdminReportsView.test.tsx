@@ -65,6 +65,7 @@ describe("AdminReportsView (#156)", () => {
       rating: 1,
       experience_comment: 1,
       experience_photo: 1,
+      plan: 0,
     });
   });
 
@@ -98,6 +99,56 @@ describe("AdminReportsView (#156)", () => {
     await waitFor(() =>
       expect(listContentReports).toHaveBeenLastCalledWith(
         expect.objectContaining({ type: "experience_photo", page: 1 }),
+      ),
+    );
+  });
+
+  it("shows a reported plan, which stays published while it waits", async () => {
+    const user = userEvent.setup();
+    vi.mocked(listContentReports).mockResolvedValue(
+      result([
+        summary({
+          contentType: "plan",
+          contentId: 7,
+          content: {
+            type: "plan",
+            id: 7,
+            status: "published",
+            text: "Gratis, escribime al WhatsApp.",
+            score: null,
+            imageUrl: null,
+            createdAt: "2026-10-09T10:00:00.000Z",
+            author: { id: 8, name: "Martina", lastName: "García" },
+            context: { kind: "plan", id: 7, title: "Tarde de vinos" },
+          },
+        }),
+      ]),
+    );
+    render(<AdminReportsView />);
+
+    const card = await screen.findByRole("article", { name: "Plan denunciada" });
+    expect(within(card).getByRole("link", { name: /Tarde de vinos/ })).toHaveAttribute(
+      "href",
+      "/plans/7",
+    );
+    expect(within(card).getByText("Gratis, escribime al WhatsApp.")).toBeInTheDocument();
+
+    await user.click(within(card).getByRole("button", { name: "Eliminar: plan de Martina García" }));
+    expect(
+      screen.getByText(/su autor ya no puede volver a publicarlo/i),
+    ).toBeInTheDocument();
+  });
+
+  it("filters reported plans", async () => {
+    const user = userEvent.setup();
+    render(<AdminReportsView />);
+    await screen.findByText("Martina García");
+
+    await user.click(screen.getByRole("tab", { name: /planes/i }));
+
+    await waitFor(() =>
+      expect(listContentReports).toHaveBeenLastCalledWith(
+        expect.objectContaining({ type: "plan", page: 1 }),
       ),
     );
   });

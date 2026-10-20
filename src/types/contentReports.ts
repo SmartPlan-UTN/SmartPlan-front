@@ -3,12 +3,17 @@ import type { PaginatedResult, SortDirection } from './common';
 /**
  * Report-based moderation (#156): content is published at once, a user's
  * report hides it from everyone but its author, and an administrator keeps
- * it or removes it. Matches `ContentStatus` in `SmartPlan-back`.
+ * it or removes it. A reported plan is the exception: it stays visible until
+ * an administrator removes it. Matches `ContentStatus` in `SmartPlan-back`.
  */
 export type ContentStatus = 'published' | 'under_review' | 'kept' | 'removed';
 
 /** What can be reported. Matches `ReportableContentType`. */
-export type ReportableContentType = 'rating' | 'experience_comment' | 'experience_photo';
+export type ReportableContentType =
+  | 'rating'
+  | 'experience_comment'
+  | 'experience_photo'
+  | 'plan';
 
 export type ReportReason =
   | 'harassment'
@@ -48,15 +53,15 @@ export interface ReportedContent {
   type: ReportableContentType;
   id: number;
   status: ContentStatus;
-  /** The rating or experience comment; `null` for a photo. */
+  /** The rating, experience comment or plan description; `null` for a photo. */
   text: string | null;
-  /** The rating's or the experience's score; `null` for a photo. */
+  /** The rating's or the experience's score; `null` for a photo or plan. */
   score: number | null;
   /** The photo itself; `null` otherwise. */
   imageUrl: string | null;
   createdAt: string;
   author: { id: number; name: string; lastName: string };
-  /** The rated activity or the reviewed plan. */
+  /** The rated activity, the reviewed plan, or the reported plan itself. */
   context: { kind: 'activity' | 'plan'; id: number; title: string };
 }
 

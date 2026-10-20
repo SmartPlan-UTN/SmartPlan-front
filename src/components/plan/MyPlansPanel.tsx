@@ -204,15 +204,20 @@ export function MyPlansPanel() {
                   ) : null}
 
                   <div className={styles.visibilityRow}>
-                    <PlanVisibilityBadge visibility={plan.visibility} />
-                    <PlanVisibilityControl
-                      planId={plan.id}
-                      planTitle={plan.title}
+                    <PlanVisibilityBadge
                       visibility={plan.visibility}
-                      onChanged={(visibility) =>
-                        applyVisibility(plan.id, visibility)
-                      }
+                      removedByModeration={plan.removedByModeration}
                     />
+                    {plan.removedByModeration ? null : (
+                      <PlanVisibilityControl
+                        planId={plan.id}
+                        planTitle={plan.title}
+                        visibility={plan.visibility}
+                        onChanged={(visibility) =>
+                          applyVisibility(plan.id, visibility)
+                        }
+                      />
+                    )}
                   </div>
 
                   <div className={styles.metaRow}>
