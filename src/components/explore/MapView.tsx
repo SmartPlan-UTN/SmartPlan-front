@@ -1,17 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-import { activityDetailRoute, placeDetailRoute } from "@/lib/routes";
 import { getExploreMapMarkers } from "@/lib/api";
-import { formatPrice, isPriceUnknown } from "@/lib/utils";
+import { markerIconUrl, markerPresentation } from "@/lib/maps/markerIcon";
 import { useGoogleMap } from "@/lib/maps/useGoogleMap";
-import { placePriceReferenceText } from "@/components/media/PlacePriceReference";
-import { ratingAccessibleText } from "@/components/media/RatingBadge";
 import type { ExploreSearchParams, ExploreMapMarker } from "@/types";
 
+import { MapMarkerCard } from "./MapMarkerCard";
 import styles from "./explore.module.css";
 
 // Mendoza, the product's default location (see skills/06-design-system).
@@ -20,76 +19,47 @@ const DEFAULT_ZOOM = 12;
 const MAP_OPTIONS: google.maps.MapOptions = {
   center: DEFAULT_CENTER,
   zoom: DEFAULT_ZOOM,
+  // Google's own businesses and stops would compete with SmartPlan's
+  // markers; park and plaza areas stay as context.
+  styles: [
+    { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
+    { featureType: "transit", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+  ],
 };
 
-/** Rating line shared with the cards: SmartPlan, else attributed Google. */
-function ratingLine(markerData: ExploreMapMarker): string | null {
-  const text = ratingAccessibleText({
-    averageRating:
-      markerData.itemType === "ACTIVITY" ? markerData.averageRating : null,
-    ratingCount:
-      markerData.itemType === "ACTIVITY" ? (markerData.ratingCount ?? 0) : 0,
-    externalRating: markerData.place?.externalRating ?? null,
-  });
-  return text === "Sin reseñas" ? text : `★ ${text}`;
+/** Names would pile up over downtown when zoomed out; show them from here on. */
+const LABEL_MIN_ZOOM = 14;
+const LABEL_MAX_LENGTH = 26;
+
+function markerLabelText(name: string): string {
+  return name.length > LABEL_MAX_LENGTH
+    ? `${name.slice(0, LABEL_MAX_LENGTH - 1).trimEnd()}…`
+    : name;
 }
 
-function buildMarkerInfoContent(markerData: ExploreMapMarker): HTMLElement {
-  const container = document.createElement("div");
-  container.style.maxWidth = "240px";
-  container.style.fontFamily = "inherit";
-
-  const kicker = document.createElement("p");
-  kicker.textContent =
-    markerData.itemType === "ACTIVITY"
-      ? [markerData.typeLabel, markerData.placeName].filter(Boolean).join(" · ")
-      : [markerData.kindLabel, markerData.place?.department]
-          .filter(Boolean)
-          .join(" · ");
-  kicker.style.margin = "0 0 2px";
-  kicker.style.fontSize = "12px";
-  kicker.style.opacity = "0.75";
-
-  const title = document.createElement("strong");
-  title.textContent = markerData.name;
-
-  const meta = document.createElement("p");
-  meta.style.margin = "4px 0";
-  const priceText =
-    markerData.itemType === "ACTIVITY" && !isPriceUnknown(markerData)
-      ? formatPrice(markerData)
-      : (() => {
-          const reference = placePriceReferenceText(
-            markerData.place?.externalPrice,
-          );
-          return reference ? `Ref. Google Maps: ${reference}` : null;
-        })();
-  meta.textContent = [priceText, ratingLine(markerData)]
-    .filter(Boolean)
-    .join(" · ");
-
-  const link = document.createElement("a");
-  if (markerData.itemType === "ACTIVITY") {
-    link.href = activityDetailRoute(markerData.activityId);
-    link.textContent = "Ver actividad";
-  } else {
-    link.href = placeDetailRoute(markerData.placeId);
-    link.textContent = "Ver lugar";
-  }
-
-  container.append(kicker, title, meta, link);
-  return container;
-}
-
-/** Places without a verified activity get a smaller, quieter marker. */
-function placeMarkerIcon(): google.maps.Symbol {
+function markerLabel(
+  markerData: ExploreMapMarker,
+  zoom: number | undefined,
+): google.maps.MarkerLabel | null {
+  if (zoom === undefined || zoom < LABEL_MIN_ZOOM) return null;
   return {
-    path: google.maps.SymbolPath.CIRCLE,
-    scale: 6,
-    fillColor: "#8a3b12",
-    fillOpacity: 0.85,
-    strokeColor: "#ffffff",
-    strokeWeight: 2,
+    text: markerLabelText(markerData.name),
+    className: styles.markerLabel,
+    color: "#2a1d14",
+    fontSize: "12px",
+    fontWeight: "600",
+  };
+}
+
+/** A round badge with the activity's icon (food, park, museum…). */
+function markerIcon(markerData: ExploreMapMarker): google.maps.Icon {
+  return {
+    url: markerIconUrl(markerPresentation(markerData), {
+      muted: markerData.itemType === "PLACE",
+    }),
+    scaledSize: new google.maps.Size(36, 36),
+    anchor: new google.maps.Point(18, 18),
+    labelOrigin: new google.maps.Point(18, 46),
   };
 }
 
@@ -142,6 +112,10 @@ function readFiltersFromSearchParams(
 export function MapView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [markerMessage, setMarkerMessage] = useState<string | null>(null);
+  // The info window's content is a node Google owns; React renders the card
+  // into it through a portal, so it keeps the app's router and contexts.
+  const [infoHost, setInfoHost] = useState<HTMLElement | null>(null);
+  const [selected, setSelected] = useState<ExploreMapMarker | null>(null);
   const searchParams = useSearchParams();
   const filters = readFiltersFromSearchParams(searchParams);
   const filtersRef = useRef(filters);
@@ -151,8 +125,18 @@ export function MapView() {
   }, [JSON.stringify(filters)]);
 
   const { status, errorMessage } = useGoogleMap(containerRef, MAP_OPTIONS, (map) => {
-    const markersRef = { current: [] as google.maps.Marker[] };
-    const infoWindow = new google.maps.InfoWindow();
+    const markersRef = {
+      current: [] as Array<{ marker: google.maps.Marker; data: ExploreMapMarker }>,
+    };
+    const infoContent = document.createElement("div");
+    const infoWindow = new google.maps.InfoWindow({
+      content: infoContent,
+      maxWidth: 280,
+    });
+    const closeListener = infoWindow.addListener("closeclick", () =>
+      setSelected(null),
+    );
+    setInfoHost(infoContent);
     const requestIdRef = { current: 0 };
     let cancelled = false;
     let markerSignature = "";
@@ -192,27 +176,24 @@ export function MapView() {
         const nextSignature = JSON.stringify(result.data);
         if (nextSignature === markerSignature) return;
         markerSignature = nextSignature;
-        markersRef.current.forEach((marker) => marker.setMap(null));
+        markersRef.current.forEach(({ marker }) => marker.setMap(null));
+        const zoom = map.getZoom();
         markersRef.current = result.data.map((markerData) => {
           const marker = new google.maps.Marker({
             position: { lat: markerData.latitude, lng: markerData.longitude },
             map,
             title: markerData.name,
-            ...(markerData.itemType === "PLACE"
-              ? { icon: placeMarkerIcon(), zIndex: 1 }
-              : { zIndex: 2 }),
+            icon: markerIcon(markerData),
+            label: markerLabel(markerData, zoom),
+            zIndex: markerData.itemType === "PLACE" ? 1 : 2,
           });
 
           marker.addListener("click", () => {
-            // Built with DOM APIs, not an HTML string: `InfoWindow.setContent`
-            // parses a string as markup, and activity/place names come from
-            // the catalog (CU53 lets admins edit them), not from something
-            // guaranteed to be free of `<`/`>`.
-            infoWindow.setContent(buildMarkerInfoContent(markerData));
+            setSelected(markerData);
             infoWindow.open({ map, anchor: marker });
           });
 
-          return marker;
+          return { marker, data: markerData };
         });
         if (shouldFit && result.data.length > 0) {
           const resultBounds = new google.maps.LatLngBounds();
@@ -231,11 +212,19 @@ export function MapView() {
     const idleListener = map.addListener("idle", () => {
       void fetchMarkersForCurrentBounds();
     });
+    const zoomListener = map.addListener("zoom_changed", () => {
+      const zoom = map.getZoom();
+      markersRef.current.forEach(({ marker, data }) =>
+        marker.setLabel(markerLabel(data, zoom)),
+      );
+    });
 
     return () => {
       cancelled = true;
       idleListener.remove();
-      markersRef.current.forEach((marker) => marker.setMap(null));
+      zoomListener.remove();
+      closeListener.remove();
+      markersRef.current.forEach(({ marker }) => marker.setMap(null));
       infoWindow.close();
     };
   });
@@ -257,6 +246,9 @@ export function MapView() {
       {status === "loading" && <p role="status">Cargando el mapa…</p>}
       {markerMessage && <p role="status">{markerMessage}</p>}
       <div ref={containerRef} className={styles.mapCanvas} />
+      {infoHost && selected
+        ? createPortal(<MapMarkerCard key={selected.id} marker={selected} />, infoHost)
+        : null}
     </div>
   );
 }
