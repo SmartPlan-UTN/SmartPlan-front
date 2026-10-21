@@ -34,6 +34,7 @@ export const ROUTES = {
   resetPassword: "/reset-password",
   admin: "/admin",
   adminActivities: "/admin/activities",
+  adminMcp: "/admin/mcp",
   adminPlaces: "/admin/places",
   adminPlans: "/admin/plans",
   adminReports: "/admin/reports",
