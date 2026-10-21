@@ -127,3 +127,4 @@ export {
   listRatings,
   updateRating,
 } from './ratings';
+export { createMcpKey, listMcpKeys, listMcpTools, revokeMcpKey } from './mcp';
