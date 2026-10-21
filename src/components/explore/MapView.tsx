@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-import { activityDetailRoute } from "@/lib/routes";
-import { getActivityMapMarkers } from "@/lib/api";
-import { formatArs } from "@/lib/utils";
+import { getExploreMapMarkers } from "@/lib/api";
+import { markerIconUrl, markerPresentation } from "@/lib/maps/markerIcon";
 import { useGoogleMap } from "@/lib/maps/useGoogleMap";
-import type { ActivityMapMarker, ActivitySearchParams } from "@/types";
+import type { ExploreSearchParams, ExploreMapMarker } from "@/types";
 
+import { MapMarkerCard } from "./MapMarkerCard";
 import styles from "./explore.module.css";
 
 // Mendoza, the product's default location (see skills/06-design-system).
@@ -18,36 +19,54 @@ const DEFAULT_ZOOM = 12;
 const MAP_OPTIONS: google.maps.MapOptions = {
   center: DEFAULT_CENTER,
   zoom: DEFAULT_ZOOM,
+  // Google's own businesses and stops would compete with SmartPlan's
+  // markers; park and plaza areas stay as context.
+  styles: [
+    { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
+    { featureType: "transit", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+  ],
 };
 
-function buildMarkerInfoContent(markerData: ActivityMapMarker): HTMLElement {
-  const container = document.createElement("div");
-  container.style.maxWidth = "220px";
-  container.style.fontFamily = "inherit";
+/** Names would pile up over downtown when zoomed out; show them from here on. */
+const LABEL_MIN_ZOOM = 14;
+const LABEL_MAX_LENGTH = 26;
 
-  const title = document.createElement("strong");
-  title.textContent = markerData.name;
+function markerLabelText(name: string): string {
+  return name.length > LABEL_MAX_LENGTH
+    ? `${name.slice(0, LABEL_MAX_LENGTH - 1).trimEnd()}…`
+    : name;
+}
 
-  const place = document.createElement("p");
-  place.textContent = markerData.placeName;
-  place.style.margin = "4px 0";
+function markerLabel(
+  markerData: ExploreMapMarker,
+  zoom: number | undefined,
+): google.maps.MarkerLabel | null {
+  if (zoom === undefined || zoom < LABEL_MIN_ZOOM) return null;
+  return {
+    text: markerLabelText(markerData.name),
+    className: styles.markerLabel,
+    color: "#2a1d14",
+    fontSize: "12px",
+    fontWeight: "600",
+  };
+}
 
-  const meta = document.createElement("p");
-  meta.textContent = `${formatArs(markerData.estimatedCost)} · ${markerData.averageRating.toFixed(1)}★`;
-  meta.style.margin = "0 0 4px";
-
-  const link = document.createElement("a");
-  link.href = activityDetailRoute(markerData.activityId);
-  link.textContent = "Ver actividad";
-
-  container.append(title, place, meta, link);
-  return container;
+/** A round badge with the activity's icon (food, park, museum…). */
+function markerIcon(markerData: ExploreMapMarker): google.maps.Icon {
+  return {
+    url: markerIconUrl(markerPresentation(markerData), {
+      muted: markerData.itemType === "PLACE",
+    }),
+    scaledSize: new google.maps.Size(36, 36),
+    anchor: new google.maps.Point(18, 18),
+    labelOrigin: new google.maps.Point(18, 46),
+  };
 }
 
 /** Reads the same filters `ActivitySearch` sends over as `?search=&categoryIds=&...` so the map shows the same subset the user was just browsing, instead of silently ignoring them. */
 function readFiltersFromSearchParams(
   searchParams: URLSearchParams,
-): Partial<ActivitySearchParams> {
+): Partial<ExploreSearchParams> {
   const search = searchParams.get("search") ?? undefined;
   const categoryIdsRaw = searchParams.get("categoryIds");
   const categoryIds = categoryIdsRaw
@@ -66,6 +85,8 @@ function readFiltersFromSearchParams(
 
   return {
     search,
+    type: searchParams.get("type") || undefined,
+    itemType: searchParams.get("itemType") === "ACTIVITY" ? "ACTIVITY" : searchParams.get("itemType") === "PLACE" ? "PLACE" : undefined,
     categoryIds: categoryIds && categoryIds.length > 0 ? categoryIds : undefined,
     minPrice: minPriceRaw ? Number(minPriceRaw) : undefined,
     maxPrice: maxPriceRaw ? Number(maxPriceRaw) : undefined,
@@ -90,6 +111,11 @@ function readFiltersFromSearchParams(
  */
 export function MapView() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [markerMessage, setMarkerMessage] = useState<string | null>(null);
+  // The info window's content is a node Google owns; React renders the card
+  // into it through a portal, so it keeps the app's router and contexts.
+  const [infoHost, setInfoHost] = useState<HTMLElement | null>(null);
+  const [selected, setSelected] = useState<ExploreMapMarker | null>(null);
   const searchParams = useSearchParams();
   const filters = readFiltersFromSearchParams(searchParams);
   const filtersRef = useRef(filters);
@@ -99,20 +125,39 @@ export function MapView() {
   }, [JSON.stringify(filters)]);
 
   const { status, errorMessage } = useGoogleMap(containerRef, MAP_OPTIONS, (map) => {
-    const markersRef = { current: [] as google.maps.Marker[] };
-    const infoWindow = new google.maps.InfoWindow();
+    const markersRef = {
+      current: [] as Array<{ marker: google.maps.Marker; data: ExploreMapMarker }>,
+    };
+    const infoContent = document.createElement("div");
+    const infoWindow = new google.maps.InfoWindow({
+      content: infoContent,
+      maxWidth: 280,
+    });
+    const closeListener = infoWindow.addListener("closeclick", () =>
+      setSelected(null),
+    );
+    setInfoHost(infoContent);
     const requestIdRef = { current: 0 };
     let cancelled = false;
+    let markerSignature = "";
+    let fitFilteredResults = Object.values(filtersRef.current).some(
+      (value) => value !== undefined,
+    );
 
     async function fetchMarkersForCurrentBounds() {
       const bounds = map.getBounds();
       if (!bounds) return;
 
       const currentRequestId = ++requestIdRef.current;
-      const { north, south, east, west } = bounds.toJSON();
+      // Start a filtered search across the catalog, then frame its actual
+      // points. A downtown viewport excludes Maipú and Valle de Uco.
+      const shouldFit = fitFilteredResults;
+      const { north, south, east, west } = shouldFit
+        ? { north: 90, south: -90, east: 180, west: -180 }
+        : bounds.toJSON();
 
       try {
-        const result = await getActivityMapMarkers({
+        const result = await getExploreMapMarkers({
           north,
           south,
           east,
@@ -121,40 +166,65 @@ export function MapView() {
           ...filtersRef.current,
         });
         if (cancelled || currentRequestId !== requestIdRef.current) return;
+        fitFilteredResults = false;
+        setMarkerMessage(
+          result.data.length === 0
+            ? "No hay resultados en esta zona. Mové el mapa o volvé a la lista."
+            : null,
+        );
 
-        markersRef.current.forEach((marker) => marker.setMap(null));
+        const nextSignature = JSON.stringify(result.data);
+        if (nextSignature === markerSignature) return;
+        markerSignature = nextSignature;
+        markersRef.current.forEach(({ marker }) => marker.setMap(null));
+        const zoom = map.getZoom();
         markersRef.current = result.data.map((markerData) => {
           const marker = new google.maps.Marker({
             position: { lat: markerData.latitude, lng: markerData.longitude },
             map,
             title: markerData.name,
+            icon: markerIcon(markerData),
+            label: markerLabel(markerData, zoom),
+            zIndex: markerData.itemType === "PLACE" ? 1 : 2,
           });
 
           marker.addListener("click", () => {
-            // Built with DOM APIs, not an HTML string: `InfoWindow.setContent`
-            // parses a string as markup, and activity/place names come from
-            // the catalog (CU53 lets admins edit them), not from something
-            // guaranteed to be free of `<`/`>`.
-            infoWindow.setContent(buildMarkerInfoContent(markerData));
+            setSelected(markerData);
             infoWindow.open({ map, anchor: marker });
           });
 
-          return marker;
+          return { marker, data: markerData };
         });
+        if (shouldFit && result.data.length > 0) {
+          const resultBounds = new google.maps.LatLngBounds();
+          result.data.forEach((point) =>
+            resultBounds.extend({ lat: point.latitude, lng: point.longitude }),
+          );
+          map.fitBounds(resultBounds, 48);
+        }
       } catch {
-        // A failed marker refresh (e.g. a network blip while panning)
-        // isn't worth tearing down an already-rendered map for.
+        if (!cancelled && currentRequestId === requestIdRef.current) {
+          setMarkerMessage("No pudimos actualizar los resultados. Mové el mapa para reintentar o volvé a la lista.");
+        }
       }
     }
 
     const idleListener = map.addListener("idle", () => {
       void fetchMarkersForCurrentBounds();
     });
+    const zoomListener = map.addListener("zoom_changed", () => {
+      const zoom = map.getZoom();
+      markersRef.current.forEach(({ marker, data }) =>
+        marker.setLabel(markerLabel(data, zoom)),
+      );
+    });
 
     return () => {
       cancelled = true;
       idleListener.remove();
-      markersRef.current.forEach((marker) => marker.setMap(null));
+      zoomListener.remove();
+      closeListener.remove();
+      markersRef.current.forEach(({ marker }) => marker.setMap(null));
       infoWindow.close();
     };
   });
@@ -165,7 +235,7 @@ export function MapView() {
         <p className="sp-body">{errorMessage}</p>
         <p className="sp-small">
           Mientras tanto, podés seguir buscando desde{" "}
-          <Link href="/explore">la lista de actividades</Link>.
+          <Link href="/explore">la lista de actividades y lugares</Link>.
         </p>
       </div>
     );
@@ -173,7 +243,12 @@ export function MapView() {
 
   return (
     <div className={styles.mapWrapper}>
+      {status === "loading" && <p role="status">Cargando el mapa…</p>}
+      {markerMessage && <p role="status">{markerMessage}</p>}
       <div ref={containerRef} className={styles.mapCanvas} />
+      {infoHost && selected
+        ? createPortal(<MapMarkerCard key={selected.id} marker={selected} />, infoHost)
+        : null}
     </div>
   );
 }

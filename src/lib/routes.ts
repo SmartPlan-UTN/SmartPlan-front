@@ -10,6 +10,7 @@
  */
 export const ROUTES = {
   home: "/",
+  planRequests: "/plan-requests",
   explore: "/explore",
   exploreMap: "/explore/map",
   plans: "/plans",
@@ -17,10 +18,13 @@ export const ROUTES = {
   favorites: "/favorites",
   collections: "/collections",
   createCollection: "/collections/new",
-  history: "/history",
+  /** "Mis salidas" (CU22, CU23): outings to do and done. */
+  outings: "/outings",
   profile: "/profile",
   preferences: "/preferences",
   security: "/security",
+  /** Help and support: user manual, FAQs, and contact. */
+  help: "/help",
   login: "/login",
   signup: "/signup",
   recoverPassword: "/recover-password",
@@ -30,8 +34,10 @@ export const ROUTES = {
   resetPassword: "/reset-password",
   admin: "/admin",
   adminActivities: "/admin/activities",
+  adminMcp: "/admin/mcp",
+  adminPlaces: "/admin/places",
   adminPlans: "/admin/plans",
-  adminRatings: "/admin/ratings",
+  adminReports: "/admin/reports",
   adminUsers: "/admin/users",
 } as const;
 
@@ -42,10 +48,71 @@ export function activityDetailRoute(id: number): string {
   return `${ROUTES.explore}/${id}`;
 }
 
-/** `/plans/:id` — plan detail (CU13, CU29). */
-export function planDetailRoute(id: number): string {
-  return `${ROUTES.plans}/${id}`;
+/** `/explore/places/:id` — a place and the real activities offered there. */
+export function placeDetailRoute(id: number): string {
+  return `${ROUTES.explore}/places/${id}`;
 }
+
+/** `/plans/:id` — plan detail (CU13, CU29). */
+export function planDetailRoute(id: number, returnTo?: string): string {
+  const route = `${ROUTES.plans}/${id}`;
+  const origin = planDetailOrigin(returnTo);
+  return returnTo && origin === returnTo
+    ? `${route}?${new URLSearchParams({ from: origin })}`
+    : route;
+}
+
+/** Only known plan entry screens can be used as a return destination. */
+export function planDetailOrigin(value: string | string[] | null | undefined): string {
+  if (typeof value !== "string") return ROUTES.explore;
+  if ([ROUTES.home, ROUTES.explore, ROUTES.plans, ROUTES.favorites].some((route) => route === value)) {
+    return value;
+  }
+  const match = /^\/plan-requests\/([1-9]\d*)$/.exec(value);
+  return match && match[0] === value && Number.isSafeInteger(Number(match[1])) ? value : ROUTES.explore;
+}
+
+/** `/plan-requests/:id` — durable generation and results route (CU17, CU19). */
+export function planRequestRoute(id: number): string {
+  return `${ROUTES.planRequests}/${id}`;
+}
+
+/** The sections of `/help`, reachable as `#<id>` anchors. */
+export type HelpSection = "manual" | "faq" | "contact";
+
+/** `/help#faq` — a given section of the help page. */
+export function helpSectionRoute(section: HelpSection): string {
+  return `${ROUTES.help}#${section}`;
+}
+
+/** `/outings/:id` — one outing of "Mis salidas" (CU22, CU23). */
+export function outingDetailRoute(id: number): string {
+  return `${ROUTES.outings}/${id}`;
+}
+
+/** The tabs of "Mis salidas", selected through `?tab=`. */
+export type OutingsTab = "to-do" | "completed";
+
+/** `/outings?tab=completed` — a given tab of "Mis salidas". */
+export function outingsTabRoute(tab: OutingsTab): string {
+  return tab === "to-do" ? ROUTES.outings : `${ROUTES.outings}?tab=${tab}`;
+}
+
+/**
+ * Query parameter that makes Inicio focus the "Planificar" composer on
+ * arrival — the main feature, reachable from the bottom bar and from other
+ * screens.
+ */
+export const START_COMPOSER_PARAM = "startComposer";
+
+/** `/?startComposer=1` — Inicio with the "Planificar" composer focused. */
+export const PLAN_COMPOSER_ROUTE = `${ROUTES.home}?${START_COMPOSER_PARAM}=1`;
+
+/**
+ * Fired on `window` when "Planificar" is chosen while Inicio is already on
+ * screen: the URL doesn't change, so the landing listens for this instead.
+ */
+export const START_COMPOSER_EVENT = "smartplan:start-composer";
 
 /** `/plans/:id/edit` — edit an owned plan (CU25). */
 export function planEditRoute(id: number): string {

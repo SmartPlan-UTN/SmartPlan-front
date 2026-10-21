@@ -1,15 +1,21 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import Link from "next/link";
 
 import { AddToCollectionDialog } from "@/components/collection";
 import { LocationPreview } from "@/components/explore";
 import { AddToPlanDialog } from "@/components/plan";
+import { categoryPresentation } from "@/components/preferences/categoryPresentation";
+import {
+  GooglePlaceContext,
+  MediaGallery,
+  RatingBadge,
+} from "@/components/media";
 import {
   Badge,
   Button,
-  FloatingBackLink,
   Icon,
   LoadingDots,
   Stars,
@@ -18,8 +24,15 @@ import { useFavorites } from "@/context";
 import { useDetailFetch } from "@/hooks";
 import { getActivity } from "@/lib/api";
 import { ROUTES } from "@/lib/routes";
-import { formatArs, formatDuration } from "@/lib/utils";
-import type { ActivityDetailResult, RatingSummary } from "@/types";
+import {
+  activitySubtypePresentation,
+  placeKindPresentation,
+  seasonLabel,
+} from "@/lib/catalog/taxonomy";
+import { formatDuration, formatPrice, googleMapsUrl, isPriceUnknown, priceCaveat } from "@/lib/utils";
+import type { ActivityDetailResult, PlaceDetailResult, RatingSummary } from "@/types";
+
+import { ExploreDetailHeader } from "@/components/explore/ExploreDetailHeader";
 
 import { ActivityRatingSection } from "./ActivityRatingSection";
 import { RatingsList } from "./RatingsList";
@@ -27,6 +40,9 @@ import styles from "./activity.module.css";
 
 export interface ActivityDetailViewProps {
   activityId: number;
+  placeContext?: PlaceDetailResult;
+  activityPicker?: ReactNode;
+  initialAction?: "plan" | "collection";
 }
 
 type Tab = "info" | "ratings";
@@ -34,12 +50,9 @@ type Tab = "info" | "ratings";
 const GENERIC_ERROR = "No pudimos cargar la actividad. Intentá de nuevo.";
 
 /**
- * Activity detail (CU14 · PAN 18), matching
- * SmartPlanSystemDesign/v2/ActivityDetail.jsx: dark hero, title block, an
- * Información/Valoraciones tab bar, a details card that shows "Sin
- * información disponible" for fields the catalog doesn't have (opening
- * hours — there's no such field in the schema), a decorative map preview
- * linking out to Google Maps, and a sticky action bar.
+ * Activity detail (CU14 · PAN 18), shared by activity and place routes.
+ * Uses the Places photo and overlapping summary while keeping activity-based
+ * favorites, collections, planning and ratings on the selected activity ID.
  *
  * "Guardar" handles real activity favorites (CU15) with optimistic updates.
  * "Agregar a plan" opens the real CU27 dialog.
@@ -60,17 +73,20 @@ const GENERIC_ERROR = "No pudimos cargar la actividad. Intentá de nuevo.";
  * delete. `SmartPlan-back` stays the only source of truth for the number;
  * nothing here computes it client-side.
  */
-export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
-  const { data: activity, status, errorMessage } = useDetailFetch<ActivityDetailResult>(
+export function ActivityDetailView(props: ActivityDetailViewProps) {
+  return <ActivityDetailContent key={props.activityId} {...props} />;
+}
+
+function ActivityDetailContent({ activityId, placeContext, activityPicker, initialAction }: ActivityDetailViewProps) {
+  const { data: activity, status, errorMessage, refetch } = useDetailFetch<ActivityDetailResult>(
     getActivity,
     activityId,
     GENERIC_ERROR,
   );
   const { isActivitySaved, toggleSaveActivity } = useFavorites();
   const [tab, setTab] = useState<Tab>("info");
-  const [showCollectionDialog, setShowCollectionDialog] = useState(false);
-  const [showPlanDialog, setShowPlanDialog] = useState(false);
-  const heroRef = useRef<HTMLDivElement>(null);
+  const [showCollectionDialog, setShowCollectionDialog] = useState(initialAction === "collection");
+  const [showPlanDialog, setShowPlanDialog] = useState(initialAction === "plan");
   // `null` until `RatingsList` fetches its own copy — see the rendering
   // below for the `activity.averageRating`/`ratingCount` fallback used
   // until then (CU47's "Recalculo del promedio").
@@ -89,6 +105,7 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
   if (status === "loading") {
     return (
       <div className={styles.stateBlock}>
+        {activityPicker}
         <LoadingDots label="Cargando la actividad..." />
       </div>
     );
@@ -97,6 +114,7 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
   if (status === "not-found") {
     return (
       <div className={styles.stateBlock}>
+        {activityPicker}
         <Icon name="inbox" size={32} className={styles.stateIcon} />
         <h1 className="sp-h3">No encontramos esta actividad</h1>
         <p className="sp-body">Puede que ya no esté disponible.</p>
@@ -111,64 +129,103 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
   if (status === "error" || activity == null) {
     return (
       <div className={styles.stateBlock} role="alert">
+        {activityPicker}
         <Icon name="triangle-alert" size={32} className={styles.errorIcon} />
         <h1 className="sp-h3">Algo salió mal</h1>
         <p className="sp-body">{errorMessage}</p>
+        <Button variant="secondary" onClick={refetch}>Reintentar</Button>
       </div>
     );
   }
 
-  const categoryLabel =
+  const categoriesText =
     activity.categories.length > 0
-      ? activity.categories.map((category) => category.name).join(" · ")
+      ? activity.categories
+          .map(
+            (category) =>
+              categoryPresentation({
+                id: category.id,
+                name: category.name,
+                description: null,
+              }).label,
+          )
+          .join(" · ")
       : null;
-  const firstLocation = activity.locations[0] ?? null;
+  const firstLocation = activity.locations.find((location) => location.place.id === placeContext?.id)
+    ?? activity.locations[0] ?? null;
+  const place = placeContext?.summary ?? activity.place;
   const displayRatingSummary: RatingSummary =
     ratingSummary ?? {
-      averageRating: activity.averageRating,
+      averageRating: activity.averageRating ?? 0,
       ratingCount: activity.ratingCount,
     };
+  const hasOwnRatings = displayRatingSummary.ratingCount > 0;
   const address = firstLocation?.place.address ?? null;
+  const subtype = activitySubtypePresentation(activity.type);
+  const artwork =
+    subtype.family !== "other"
+      ? subtype
+      : placeKindPresentation(activity.place?.kind);
+  const season = seasonLabel(activity.availableMonths);
+  const hasOwnImages = (activity.images?.length ?? 0) > 0;
+  const plannable = activity.planEligible !== false;
 
   return (
     <div>
-      <FloatingBackLink href={ROUTES.explore} label="Volver" heroRef={heroRef} />
-
-      <div className={styles.hero} ref={heroRef}>
-        <Icon name="route" size={90} className={styles.heroIcon} />
-        <span className={styles.heroBadge}>Sin imagen disponible</span>
-        <button
-          type="button"
-          className={styles.heroBookmark}
-          aria-pressed={saved}
-          aria-label={saved ? "Quitar de guardados" : "Guardar actividad"}
-          onClick={handleToggleSave}
-        >
-          <Icon name="bookmark" size={17} className={saved ? styles.heroBookmarkSaved : undefined} />
-        </button>
-      </div>
-
-      <div className={styles.titleBlock}>
+      <ExploreDetailHeader
+        media={{
+          ownImageUrl: activity.imageUrl,
+          place: hasOwnImages ? null : place,
+          alt: activity.name,
+          artwork: { family: artwork.family, icon: artwork.icon, label: activity.typeLabel ?? null },
+        }}
+        heroAction={
+          <button
+            type="button"
+            className={styles.heroBookmark}
+            aria-pressed={saved}
+            aria-label={saved ? "Quitar de guardados" : "Guardar actividad"}
+            onClick={handleToggleSave}
+          >
+            <Icon name="bookmark" size={17} className={saved ? styles.heroBookmarkSaved : undefined} />
+          </button>
+        }
+      >
+        {activityPicker}
         <div className={styles.badgeRow}>
-          {categoryLabel ? (
-            <Badge variant="tag">{categoryLabel}</Badge>
+          {categoriesText ? (
+            <Badge variant="tag">{categoriesText}</Badge>
           ) : (
             <Badge variant="tag">
               <em>Sin categoría</em>
             </Badge>
           )}
-          <span className={styles.ratingSummary}>
-            <Stars rating={displayRatingSummary.averageRating} size={12} />
-            <span className="sp-small">
-              {displayRatingSummary.averageRating.toFixed(1)}
-              {displayRatingSummary.ratingCount > 0
-                ? ` · ${displayRatingSummary.ratingCount.toLocaleString("es-AR")} valoraciones`
-                : ""}
-            </span>
-          </span>
+          {activity.typeLabel ? <Badge variant="tag">{activity.typeLabel}</Badge> : null}
+          <RatingBadge
+            averageRating={hasOwnRatings ? displayRatingSummary.averageRating : null}
+            ratingCount={displayRatingSummary.ratingCount}
+            externalRating={hasOwnRatings ? null : (firstLocation?.externalRating ?? place?.externalRating)}
+            size={12}
+          />
         </div>
 
         <h1 className={styles.title}>{activity.name}</h1>
+        {firstLocation ? (
+          <p className={styles.placeLine}>
+            En{" "}
+            <a href="#activity-location" onClick={() => {
+              // Mount the location before the browser follows the fragment.
+              flushSync(() => setTab("info"));
+            }}>{firstLocation.place.name}</a>
+            {firstLocation.place.department?.name
+              ? ` · ${firstLocation.place.department.name}`
+              : ""}
+          </p>
+        ) : null}
+        <GooglePlaceContext
+          rating={null}
+          price={isPriceUnknown(activity) ? (firstLocation?.externalPrice ?? place?.externalPrice) : null}
+        />
 
         <div className={styles.addressRow}>
           <Icon name="map-pin" size={14} className={styles.addressIcon} />
@@ -178,7 +235,48 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
             <span className={styles.missing}>Sin información disponible</span>
           )}
         </div>
-      </div>
+        {firstLocation ? (
+          <p className={styles.mapsLink}>
+            <a href={googleMapsUrl(firstLocation.latitude, firstLocation.longitude, firstLocation.place.address)} target="_blank" rel="noopener noreferrer">
+              <Icon name="external-link" size={13} aria-hidden="true" /> Ver en Google Maps (horarios, cómo llegar)
+            </a>
+          </p>
+        ) : null}
+        <div className={styles.detailActions}>
+          <div className={styles.actionBarInner}>
+            <Button
+              variant={saved ? "secondary" : "ghostLight"}
+              onClick={handleToggleSave}
+            >
+              <Icon name="bookmark" size={16} aria-hidden="true" />
+              {saved ? "Guardada" : "Guardar"}
+            </Button>
+            <Button
+              variant="primary"
+              className={styles.actionBarPrimary}
+              onClick={() => setShowPlanDialog(true)}
+              disabled={!plannable}
+              title={
+                plannable
+                  ? undefined
+                  : "Todavía no podemos ubicar esta actividad con precisión para armar un plan."
+              }
+            >
+              <Icon name="plus" size={16} aria-hidden="true" />
+              Agregar a plan
+            </Button>
+            <Button
+              variant="ghostLight"
+              onClick={() => setShowCollectionDialog(true)}
+            >
+              <Icon name="folder-plus" size={16} aria-hidden="true" />
+              Colección
+            </Button>
+          </div>
+        </div>
+
+        {!plannable ? <p className={styles.costNote}>Esta actividad todavía no está disponible para agregar a un plan.</p> : null}
+      </ExploreDetailHeader>
 
       <div className={styles.tabBar}>
         <button
@@ -203,6 +301,7 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
 
       {tab === "info" ? (
         <div className={styles.tabContent}>
+          <MediaGallery target="activity" resourceId={activity.id} resourceName={activity.name} />
           <div className={styles.section}>
             <p className={styles.sectionLabel}>descripción</p>
             <p className="sp-body">{activity.description}</p>
@@ -215,8 +314,14 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
                 <Icon name="wallet" size={15} className={styles.infoIcon} />
                 <div>
                   <p className={styles.infoLabel}>Costo</p>
-                  <p className={styles.costValue}>{formatArs(activity.estimatedCost)}</p>
-                  <p className={styles.costNote}>Precio estimado por persona · ARS</p>
+                  <p className={styles.costValue}>
+                    {formatPrice(activity, { withUnit: true })}
+                  </p>
+                  <p className={styles.costNote}>
+                    {isPriceUnknown(activity)
+                      ? "Todavía no tenemos un precio confirmado para esta actividad."
+                      : (priceCaveat(activity) ?? "Precio en pesos argentinos (ARS)")}
+                  </p>
                 </div>
               </div>
 
@@ -234,7 +339,16 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
                 <Icon name="calendar" size={15} className={styles.infoIcon} />
                 <div>
                   <p className={styles.infoLabel}>Horarios y disponibilidad</p>
-                  <p className={styles.missing}>Sin información disponible</p>
+                  {season ? (
+                    <p className={styles.infoValue}>
+                      Temporada: {season}
+                      {activity.inSeason === false ? " (fuera de temporada ahora)" : ""}
+                    </p>
+                  ) : (
+                    <p className={styles.missing}>
+                      Confirmá horarios y reserva con el lugar antes de ir.
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -242,8 +356,8 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
                 <Icon name="tag" size={15} className={styles.infoIcon} />
                 <div>
                   <p className={styles.infoLabel}>Categoría</p>
-                  {categoryLabel ? (
-                    <p className={styles.infoValue}>{categoryLabel}</p>
+                  {categoriesText ? (
+                    <p className={styles.infoValue}>{categoriesText}</p>
                   ) : (
                     <p className={styles.missing}>Sin información disponible</p>
                   )}
@@ -253,7 +367,7 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
           </div>
 
           {firstLocation ? (
-            <div className={styles.section}>
+            <div className={styles.section} id="activity-location">
               <p className={styles.sectionLabel}>ubicación</p>
               <LocationPreview
                 latitude={firstLocation.latitude}
@@ -268,8 +382,12 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
         <div className={styles.tabContent}>
           <div className={styles.ratingSummaryCard}>
             <div className={styles.ratingBigBlock}>
-              <p className={styles.ratingBig}>{displayRatingSummary.averageRating.toFixed(1)}</p>
-              <Stars rating={displayRatingSummary.averageRating} size={14} />
+              <p className={styles.ratingBig}>
+                {hasOwnRatings ? displayRatingSummary.averageRating.toFixed(1) : "—"}
+              </p>
+              {hasOwnRatings ? (
+                <Stars rating={displayRatingSummary.averageRating} size={14} />
+              ) : null}
               <p className={styles.ratingCountNote}>
                 {displayRatingSummary.ratingCount > 0
                   ? `${displayRatingSummary.ratingCount.toLocaleString("es-AR")} valoraciones`
@@ -291,34 +409,7 @@ export function ActivityDetailView({ activityId }: ActivityDetailViewProps) {
         </div>
       )}
 
-      <div className={styles.actionBar}>
-        <div className={styles.actionBarInner}>
-          <Button
-            variant={saved ? "secondary" : "ghostLight"}
-            onClick={handleToggleSave}
-          >
-            <Icon name="bookmark" size={16} aria-hidden="true" />
-            {saved ? "Guardada" : "Guardar"}
-          </Button>
-          <Button
-            variant="primary"
-            className={styles.actionBarPrimary}
-            onClick={() => setShowPlanDialog(true)}
-          >
-            <Icon name="plus" size={16} aria-hidden="true" />
-            Agregar a plan
-          </Button>
-          <Button
-            variant="ghostLight"
-            onClick={() => setShowCollectionDialog(true)}
-          >
-            <Icon name="folder-plus" size={16} aria-hidden="true" />
-            Colección
-          </Button>
-        </div>
-      </div>
-
-      {showPlanDialog ? (
+      {showPlanDialog && plannable ? (
         <AddToPlanDialog
           activityId={activity.id}
           activityName={activity.name}

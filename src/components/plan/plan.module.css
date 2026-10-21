@@ -21,7 +21,9 @@
 }
 
 .viewPlanButton {
-  display: block;
+  /* Hidden by the search grid's horizontal card on mobile, where the whole
+     card is already the link — see `.grid` in explore.module.css. */
+  display: var(--card-cta-display, block);
   margin-top: var(--s-2);
   padding: 10px;
   border: 1.5px solid var(--hairline);
@@ -47,8 +49,11 @@
    ActivityCard's. */
 .cardBookmark {
   position: absolute;
-  top: var(--s-3);
-  right: var(--s-3);
+  top: var(--card-bookmark-inset, var(--s-3));
+  /* Placement is overridable by the layout that hosts the card (the search
+     grid's horizontal card on mobile, see explore.module.css). */
+  right: var(--card-bookmark-right, var(--s-3));
+  left: var(--card-bookmark-left, auto);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -95,6 +100,13 @@
   left: 50%;
   transform: translate(-50%, -50%);
   color: rgba(255, 255, 255, 0.18);
+}
+
+/* A photo fills the hero under the title's own dark gradient. */
+.heroMedia {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
 }
 
 .heroCostBadge {
@@ -424,24 +436,13 @@
   letter-spacing: -0.02em;
 }
 
-/* ── Action row (not sticky — normal document flow) ───────────────
-   Three peer controls at one fixed height. Every control reserves the
-   width of its widest label and centres its content, so a state swap
-   (icon, text, colour, border, fill) only repaints inside the box —
-   nothing here ever changes width, height or position. */
+/* ── Action row (not sticky — normal document flow) ─────────────── */
 .actionBar {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--s-3);
-}
-
-/* Guardar + Compartir — grouped, secondary weight. The tighter inner
-   gap sets them apart from the intent toggle without a divider. */
-.actionSecondary {
-  display: flex;
-  flex: 0 1 auto;
+  flex-wrap: nowrap;
+  align-items: stretch;
   gap: var(--s-2);
+  width: min(100%, 760px);
 }
 
 .editLink {
@@ -461,27 +462,44 @@
   color: var(--fg-1);
 }
 
+.ownerActionLink,
+.ownerActionButton,
 .saveButton,
 .shareButton {
+  display: inline-flex;
+  flex: 1 1 8rem;
+  align-items: center;
   justify-content: center;
+  gap: var(--s-2);
+  width: auto;
+  max-width: 10rem;
+  min-width: 0;
   min-height: 44px;
+  box-sizing: border-box;
+  padding: 0 var(--s-2);
+  border: 1px solid var(--hairline);
   border-radius: var(--r-btn);
+  background: transparent;
+  color: var(--fg-1);
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  line-height: 1;
+  text-decoration: none;
   white-space: nowrap;
 }
 
-.saveButton {
-  min-width: 9rem;
-}
-
-.shareButton {
-  min-width: 7.25rem;
-}
-
+.ownerActionLink:hover,
+.ownerActionButton:hover:not(:disabled),
 .saveButton:hover:not(:disabled),
 .shareButton:hover:not(:disabled) {
   background: color-mix(in srgb, var(--char) 4%, transparent);
-  border-color: var(--ember-20);
   filter: none;
+}
+
+.ownerActionLink:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+  box-shadow: var(--focus-ember);
 }
 
 /* The bookmark fills the instant it is saved — a short settle, no
@@ -500,191 +518,108 @@
   }
 }
 
-/* ── Intent toggle (CU22) ────────────────────────────────────────
-   The prominent control in the row. Same box in both states — same
-   size, same label ("Lo voy a hacer") — so a state change only
-   repaints: warm ember-tint fill when open (the design system's
-   `ghostEmber`), solid ember fill + check when marked (`primary`). */
+/* ── "Lo voy a hacer" (CU22, #130) ──────────────────────────────
+   The prominent control in the row: the one solid ember fill, sized to
+   its label instead of squeezed like its neighbours. One-shot: once the
+   outing exists it turns into the "Ver en Mis salidas" record, in the
+   same 44px-high box, so the row never jumps or grows. While it saves
+   it keeps its colour; only the icon becomes a spinner. */
 .statePanel {
   display: flex;
-  flex: 0 1 auto;
-  min-width: 0;
+  flex: 0 0 auto;
 }
 
-.stateToggle {
+.stateToggle,
+.stateRecord {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--s-2);
-  min-width: 10.5rem;
+  width: 100%;
   min-height: 44px;
-  padding: var(--s-2) var(--s-4);
+  box-sizing: border-box;
+  padding: 0 var(--s-4);
   border: 1px solid transparent;
   border-radius: var(--r-btn);
-  background: var(--ember-15);
-  color: var(--ember);
-  font-size: var(--t-body);
-  font-weight: var(--w-label);
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  line-height: 1;
   white-space: nowrap;
-  cursor: pointer;
   transition:
     background-color var(--d-fast) var(--ease-inout),
     color var(--d-fast) var(--ease-inout),
     transform var(--d-fast) var(--ease-inout);
 }
 
+.stateToggle {
+  background: var(--ember);
+  color: var(--white);
+  cursor: pointer;
+}
+
 .stateToggle:hover:not(:disabled) {
-  background: var(--ember-20);
+  background: color-mix(in srgb, var(--ember) 90%, var(--char));
 }
 
 .stateToggle:active:not(:disabled) {
   transform: scale(0.97);
 }
 
-.stateToggle[aria-pressed="true"] {
-  background: var(--ember);
-  color: var(--white);
-}
-
-.stateToggle[aria-pressed="true"]:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--ember) 90%, var(--char));
-}
-
 .stateToggle:disabled {
   cursor: progress;
-  opacity: 0.6;
 }
 
-.stateToggle:focus-visible {
+.stateRecord {
+  border-color: var(--ember-20);
+  background: var(--ember-04);
+  color: var(--ember);
+  text-decoration: none;
+}
+
+.stateRecord:hover {
+  background: var(--ember-10);
+}
+
+.stateToggle:focus-visible,
+.stateRecord:focus-visible {
   outline: 2px solid var(--ember);
   outline-offset: 2px;
 }
 
-/* Icon crossfade — the check is the hero of the state change. Both
-   glyphs share one 18px box (absolutely stacked), so nothing around
-   them moves as they swap. */
-.toggleIcon {
-  position: relative;
-  display: inline-flex;
-  flex: none;
-  width: 18px;
-  height: 18px;
-  transition: transform var(--d-fast) var(--ease-out);
+.stateSpinner {
+  animation: sp-state-spin 900ms linear infinite;
 }
 
-.stateToggle:hover:not(:disabled) .toggleIcon {
-  transform: scale(1.06);
+@keyframes sp-state-spin {
+  to { transform: rotate(360deg); }
 }
 
-.toggleIconOff,
-.toggleIconOn {
-  position: absolute;
-  inset: 0;
-  transition:
-    opacity var(--d-fast) var(--ease-inout),
-    transform var(--d-fast) var(--ease-inout);
-}
-
-.toggleIconOn {
-  opacity: 0;
-  transform: scale(0.6);
-}
-
-.stateToggle[aria-pressed="true"] .toggleIconOff {
-  opacity: 0;
-  transform: scale(0.6);
-}
-
-.stateToggle[aria-pressed="true"] .toggleIconOn {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.stateChip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  margin: 0;
-  color: var(--ember);
-  font-size: var(--t-body);
-  font-weight: var(--w-label);
-}
-
-.stateIcon {
-  display: inline-flex;
-}
-
-.stateIconMuted {
-  color: var(--fg-2);
-}
-
-/* State C (completed) — a quiet record, matching the toggle's box. */
-.stateRecord {
-  display: flex;
-  flex: 0 1 auto;
-  flex-wrap: wrap;
-  align-items: center;
-  align-content: center;
-  gap: var(--s-1) var(--s-3);
-  min-width: 10.5rem;
-  min-height: 44px;
-  padding: var(--s-2) var(--s-4);
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-btn);
-  background: var(--ember-04);
-}
-
-.stateMeta {
-  color: var(--fg-3);
-  font-size: var(--t-small);
-}
-
-.stateActions {
-  display: flex;
-  gap: var(--s-2);
-  width: 100%;
-}
-
-/* Mobile — intent toggle on top, Guardar/Compartir a full-width pair
-   below. State changes still never move anything. */
-@media (max-width: 640px) {
+/* Mobile — keep the actions full-width and stacked. */
+@media (max-width: 720px) {
   .actionBar {
     flex-direction: column-reverse;
-    align-items: stretch;
   }
 
-  .actionSecondary {
+  .ownerActionLink,
+  .ownerActionButton,
+  .saveButton,
+  .shareButton {
+    flex: 0 0 auto;
+    max-width: none;
     width: 100%;
-  }
-
-  .actionSecondary > * {
-    flex: 1;
-    min-width: 0;
   }
 
   .statePanel {
-    width: 100%;
-  }
-
-  .stateToggle,
-  .stateRecord {
     width: 100%;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .stateToggle,
-  .toggleIcon,
+  .stateRecord,
+  .stateSpinner,
   .saveIconOn {
     animation: none;
-    transition: none;
-    transform: none;
-  }
-
-  /* Keep the crossfade instant but still correct: the marked state
-     shows the check, the open state shows the circle — no motion. */
-  .toggleIconOff,
-  .toggleIconOn {
     transition: none;
     transform: none;
   }
@@ -703,14 +638,9 @@
 }
 
 .ownerActionLink {
-  display: flex;
-  flex: 1;
-  text-decoration: none;
-}
-
-.ownerActionButton {
-  width: 100%;
-  flex: 1;
+  transition:
+    background-color var(--d-fast) var(--ease-inout),
+    border-color var(--d-fast) var(--ease-inout);
 }
 
 .costPerPersonRow {
@@ -732,5 +662,25 @@
   border-radius: var(--r-card-sm);
   background: color-mix(in srgb, var(--warning) 12%, #fff);
   color: var(--fg-1);
+  font-size: var(--t-small);
+}
+
+/* ── Visibility of an authored plan (#130) ───────────────────── */
+.visibilityBox {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-top: var(--s-6);
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card-sm);
+  background: var(--surface-card);
+}
+
+.visibilityHint {
+  margin: var(--s-1) 0 0;
+  color: var(--fg-2);
   font-size: var(--t-small);
 }

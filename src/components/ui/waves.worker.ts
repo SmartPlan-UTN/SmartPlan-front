@@ -1,10 +1,6 @@
 /// <reference lib="webworker" />
 
-import {
-  createWaveScene,
-  type Mood,
-  type WaveScene,
-} from "./wave-scene";
+import { createWaveScene, type WaveScene } from "./wave-scene";
 
 /**
  * Draws the wave background off the main thread.
@@ -33,10 +29,8 @@ export type WavesRequest =
       width: number;
       height: number;
       dpr: number;
-      mood: Mood;
     }
   | { type: "resize"; width: number; height: number; dpr: number }
-  | { type: "mood"; mood: Mood; animate: boolean }
   | { type: "tide" }
   | { type: "running"; running: boolean };
 
@@ -69,7 +63,7 @@ workerScope.onmessage = (event: MessageEvent<WavesRequest>) => {
     case "init": {
       const ctx = message.canvas.getContext("2d");
       if (!ctx) return;
-      scene = createWaveScene(ctx, message.mood);
+      scene = createWaveScene(ctx);
       scene.resize(message.width, message.height, message.dpr);
       start();
       return;
@@ -81,10 +75,6 @@ workerScope.onmessage = (event: MessageEvent<WavesRequest>) => {
       // of the original stutter.
       scene?.resize(message.width, message.height, message.dpr);
       scene?.draw(performance.now());
-      return;
-    case "mood":
-      scene?.setMood(message.mood, performance.now(), message.animate);
-      if (!message.animate) scene?.draw(performance.now());
       return;
     case "tide":
       // Just an impulse — whether the water is drawn is `running`'s call.

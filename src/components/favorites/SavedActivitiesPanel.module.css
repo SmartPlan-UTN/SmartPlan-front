@@ -30,6 +30,20 @@
   box-shadow: var(--shadow-card);
 }
 
+.stateBox:not([role="alert"])::before {
+  width: min(100%, 420px);
+  height: 104px;
+  border-radius: var(--r-card-sm);
+  background:
+    linear-gradient(
+      180deg,
+      transparent,
+      color-mix(in srgb, var(--char) 24%, transparent)
+    ),
+    url("/landing/cafe-especialidad.jpg") center 58% / cover;
+  content: "";
+}
+
 .emptyIcon {
   display: inline-flex;
   align-items: center;

@@ -17,3 +17,23 @@ export async function submitFeedback(
 ): Promise<PlanFeedback> {
   return apiClient.post<PlanFeedback>(`/plans/${planId}/feedback`, payload);
 }
+
+/**
+ * Shares an own outing's experience with the plan's community, or makes it
+ * private again (#106). Backend contract: `PATCH /plans/:id/feedback`.
+ * Making it private deletes nothing; sharing it again restores it.
+ */
+export async function setFeedbackSharing(
+  outingId: number,
+  shared: boolean
+): Promise<PlanFeedback> {
+  return apiClient.patch<PlanFeedback>(`/plans/${outingId}/feedback`, { shared });
+}
+
+/** Updates the score and comment of an existing outing experience. */
+export async function updateFeedback(
+  outingId: number,
+  payload: { rating: number; comment: string | null }
+): Promise<PlanFeedback> {
+  return apiClient.patch<PlanFeedback>(`/plans/${outingId}/feedback`, payload);
+}

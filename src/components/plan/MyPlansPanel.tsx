@@ -6,19 +6,26 @@ import { useEffect, useState } from "react";
 import { Button, ConfirmationDialog, Icon, LoadingDots } from "@/components/ui";
 import { ApiError, cancelOwnPlan, listOwnPlans } from "@/lib/api";
 import { planDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
-import { formatArs, formatDuration } from "@/lib/utils";
-import type { OwnPlanSummary } from "@/types";
+import { formatDuration, formatPlanTotal } from "@/lib/utils";
+import type { OwnPlanSummary, PlanVisibility } from "@/types";
 
-import { AutoPlanUnavailableDialog } from "./AutoPlanUnavailableDialog";
-
+import {
+  PlanVisibilityBadge,
+  PlanVisibilityControl,
+} from "./PlanVisibilityControl";
+import { VISIBILITY_COPY } from "./visibilityContent";
 import styles from "./MyPlansPanel.module.css";
 
 type LoadStatus = "loading" | "idle" | "error";
 
 /**
- * The user's own plans (CU29), with the create-plan entry point as the
- * first cell of the grid — same shape as `CollectionsPanel`, so both
- * private listings read alike.
+ * The plans the user created (CU29, #130), with the create-plan entry point
+ * as the first cell of the grid — same shape as `CollectionsPanel`, so both
+ * private listings read alike. Only authored plans: results of "Planificar"
+ * and the outings the person chose live in Mis salidas, never here.
+ *
+ * Each card says whether the plan is public or private and lets its author
+ * publish it or make it private again.
  *
  * Deleting (CU26) is offered here as well as on PAN 17: this is the
  * screen someone lands on to manage what they made, and bouncing through
@@ -40,7 +47,6 @@ export function MyPlansPanel() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [showAutoPlanModal, setShowAutoPlanModal] = useState(false);
 
   useEffect(() => {
     let ignore = false;
@@ -69,6 +75,15 @@ export function MyPlansPanel() {
       ignore = true;
     };
   }, [reloadSequence]);
+
+  function applyVisibility(planId: number, visibility: PlanVisibility) {
+    setPlans((current) =>
+      current.map((plan) =>
+        plan.id === planId ? { ...plan, visibility } : plan,
+      ),
+    );
+    setNotice(VISIBILITY_COPY.announce[visibility]);
+  }
 
   function requestDeletion(plan: OwnPlanSummary) {
     setNotice(null);
@@ -114,25 +129,11 @@ export function MyPlansPanel() {
           <span className={styles.createIcon} aria-hidden="true">
             <Icon name="plus" size={22} />
           </span>
-          <span>Crear un plan nuevo</span>
+          <span>Crear un plan</span>
           <span className={styles.createHint}>
-            Armá el itinerario y sumale actividades
+            Armá el itinerario, sumale actividades y publicalo si querés
           </span>
         </Link>
-
-        <button
-          type="button"
-          className={styles.createCard}
-          onClick={() => setShowAutoPlanModal(true)}
-        >
-          <span className={styles.createIcon} aria-hidden="true">
-            <Icon name="sparkles" size={22} />
-          </span>
-          <span>Generar plan automático</span>
-          <span className={styles.createHint}>
-            Itinerario sugerido con IA
-          </span>
-        </button>
 
         {status === "loading" ? (
           <LoadingDots
@@ -159,8 +160,8 @@ export function MyPlansPanel() {
           <div className={styles.stateCard}>
             <Icon name="route" size={28} />
             <p>
-              Todavía no armaste ningún plan. Empezá por el primero y sumale las
-              actividades que quieras.
+              Todavía no creaste ningún plan. Empezá por el primero, sumale las
+              actividades que quieras y decidí si lo publicás.
             </p>
           </div>
         ) : null}
@@ -172,7 +173,7 @@ export function MyPlansPanel() {
                   <div className={styles.cardHeader}>
                     <h2 className={styles.cardTitle}>
                       <Link
-                        href={planDetailRoute(plan.id)}
+                        href={planDetailRoute(plan.id, ROUTES.plans)}
                         className={styles.cardTitleLink}
                       >
                         {plan.title}
@@ -202,6 +203,23 @@ export function MyPlansPanel() {
                     <p className={styles.description}>{plan.description}</p>
                   ) : null}
 
+                  <div className={styles.visibilityRow}>
+                    <PlanVisibilityBadge
+                      visibility={plan.visibility}
+                      removedByModeration={plan.removedByModeration}
+                    />
+                    {plan.removedByModeration ? null : (
+                      <PlanVisibilityControl
+                        planId={plan.id}
+                        planTitle={plan.title}
+                        visibility={plan.visibility}
+                        onChanged={(visibility) =>
+                          applyVisibility(plan.id, visibility)
+                        }
+                      />
+                    )}
+                  </div>
+
                   <div className={styles.metaRow}>
                     <span className={styles.metaItem}>
                       <Icon name="route" size={14} />
@@ -221,7 +239,7 @@ export function MyPlansPanel() {
                     </span>
                     <span className={`${styles.metaItem} ${styles.cost}`}>
                       <Icon name="wallet" size={14} />
-                      {formatArs(plan.estimatedTotalCost)}
+                      {formatPlanTotal(plan)}
                     </span>
                   </div>
                 </article>
@@ -246,13 +264,6 @@ export function MyPlansPanel() {
           </p>
         </ConfirmationDialog>
       ) : null}
-
-      {/* Auto Plan Generation - Módulo en construcción Modal (CU31) */}
-      {showAutoPlanModal && (
-        <AutoPlanUnavailableDialog
-          onClose={() => setShowAutoPlanModal(false)}
-        />
-      )}
     </>
   );
 }

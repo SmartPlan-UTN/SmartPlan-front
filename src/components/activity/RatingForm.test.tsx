@@ -21,8 +21,8 @@ function mockRating() {
     updatedAt: "2026-08-25T12:00:00.000Z",
     activityId: 42,
     planId: 10,
-    moderationStatus: "approved" as const,
-    moderationReason: null,
+    isOwn: true,
+    removed: false,
   };
 }
 

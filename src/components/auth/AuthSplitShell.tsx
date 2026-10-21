@@ -25,6 +25,8 @@ export interface AuthSplitShellProps {
   cardVariant: "login" | "register";
   backHref?: string;
   backLabel?: string;
+  /** Optional content under the card, e.g. the login context strip. */
+  footer?: ReactNode;
 }
 
 /**
@@ -35,13 +37,15 @@ export interface AuthSplitShellProps {
  * Used by `app/login/layout.tsx`, `app/signup/layout.tsx`,
  * `app/recover-password/layout.tsx`, and `app/reset-password/layout.tsx` —
  * each screen lives at the top level, outside a shared route group, so this
- * shell (and its `MoodBackground`) doesn't leak into unrelated routes.
+ * shell provides their shared photo-and-form composition while the root
+ * `AppBackground` provides one cropped wave horizon behind the form panel.
  */
 export function AuthSplitShell({
   children,
   cardVariant,
   backHref = ROUTES.home,
   backLabel = "Volver al inicio",
+  footer,
 }: AuthSplitShellProps) {
   return (
     <div className={styles.shell}>
@@ -78,7 +82,7 @@ export function AuthSplitShell({
           {backLabel}
         </Link>
         <div className={styles.mobileLogo}>
-          <Logo variant="ink" kind="full" height={28} />
+          <Logo variant="ember" kind="full" height={28} />
         </div>
 
         <div
@@ -88,6 +92,7 @@ export function AuthSplitShell({
         >
           {children}
         </div>
+        {footer}
       </div>
     </div>
   );

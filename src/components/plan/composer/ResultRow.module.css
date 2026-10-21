@@ -1,0 +1,162 @@
+/* A catalog result is a line, not a card: the list as a whole reads as one
+   surface and the hairlines between rows are the only structure. */
+.row {
+  border-bottom: 1px solid var(--hairline);
+  transition: background-color 160ms ease;
+}
+
+.line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s-4);
+  min-height: 66px;
+  padding: 11px 8px 11px 12px;
+}
+
+.row:hover,
+.rowOpen {
+  background: var(--surface-card);
+}
+
+.copy {
+  min-width: 0;
+}
+
+.copy h4 {
+  display: flex;
+  min-width: 0;
+  margin: 0 0 3px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+/* The name opens what it is: it reads as the title and answers like a link
+   (ember ink, a drawn underline) the moment it is pointed at. */
+.name {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fg-1);
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1.5px;
+  text-overflow: ellipsis;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color 140ms ease,
+    text-decoration-color 140ms ease;
+}
+
+.name:hover,
+.name[aria-expanded="true"] {
+  color: var(--ember);
+  text-decoration-color: color-mix(in srgb, var(--ember) 45%, transparent);
+}
+
+.name:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.copy p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 13px;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Middle dot between meta items, drawn by the items themselves so a missing
+   one never leaves a dangling separator. */
+.copy p > span + span::before {
+  margin: 0 7px;
+  color: var(--fg-3);
+  content: "·";
+}
+
+.copy .teaser {
+  display: block;
+  overflow: hidden;
+  margin-top: 3px;
+  color: var(--fg-3);
+  font-size: 12px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Why the assistant picked it: one quiet line under the facts. */
+.copy .reason {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 5px;
+  margin-top: 4px;
+  color: var(--fg-2);
+  font-style: italic;
+  line-height: 1.35;
+}
+
+.reason svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--ember);
+}
+
+.actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+/* The Quick View opens in place, under its own line. */
+.expansion {
+  overflow: hidden;
+}
+
+.expansionInner {
+  padding: 0 8px 16px 12px;
+}
+
+@media (max-width: 680px) {
+  /* Narrow rows: a long name gets a second line instead of an ellipsis. */
+  .name {
+    display: -webkit-box;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  .line {
+    min-height: 70px;
+    padding-inline: 4px 0;
+    gap: var(--s-3);
+  }
+
+  .actions {
+    gap: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row,
+  .name {
+    transition-duration: 0.01ms;
+  }
+}

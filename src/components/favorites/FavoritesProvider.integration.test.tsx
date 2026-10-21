@@ -54,6 +54,7 @@ describe("SavedActivitiesPanel with FavoritesProvider", () => {
       login: vi.fn(),
       register: vi.fn(),
       logout: vi.fn(),
+      applyAuthentication: vi.fn(),
     });
     vi.mocked(listFavoritePlans).mockResolvedValue({
       data: [],

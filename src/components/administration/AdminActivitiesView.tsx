@@ -14,7 +14,8 @@ import {
   listPlaces,
   updateAdminActivity,
 } from "@/lib/api";
-import { formatArs, formatDuration, googleMapsUrl } from "@/lib/utils";
+import { formatDuration, googleMapsUrl, formatPrice } from "@/lib/utils";
+import { eligibilityBadges } from "./eligibilityLabels";
 import type {
   AdminActivitiesResult,
   AdminActivity,
@@ -24,6 +25,7 @@ import type {
 } from "@/types";
 
 import { AdminActivityDialog } from "./AdminActivityDialog";
+import { AdminReadDialog } from "./AdminReadDialog";
 import styles from "./AdminManagement.module.css";
 
 const PAGE_SIZE = 20;
@@ -62,6 +64,12 @@ function readableError(error: unknown, fallback: string): string {
   return fallback;
 }
 
+const dateFormatter = new Intl.DateTimeFormat("es-AR", {
+  day: "2-digit",
+  month: "long",
+  year: "numeric",
+});
+
 export function AdminActivitiesView() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
@@ -79,6 +87,7 @@ export function AdminActivitiesView() {
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [editing, setEditing] = useState<AdminActivity | null | undefined>(undefined);
   const [deleting, setDeleting] = useState<AdminActivity | null>(null);
+  const [viewing, setViewing] = useState<AdminActivity | null>(null);
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -207,14 +216,14 @@ export function AdminActivitiesView() {
             {loadError ? <div className={styles.inlineError} role="alert">No pudimos actualizar los resultados.</div> : null}
             <div className={`${styles.tableScroll} ${loading ? styles.tableLoading : ""}`}>
               <table className={styles.table}>
-                <thead><tr><th>Actividad</th><th>Categorías</th><th>Lugares</th><th>Costo</th><th>Duración</th><th>Acciones</th></tr></thead>
+                <thead><tr><th>Actividad</th><th>Categorías</th><th>Lugares</th><th>Costo</th><th>Duración</th><th className={styles.actionsHeading}>Acciones</th></tr></thead>
                 <tbody>{activities.map((activity) => (
-                  <tr key={activity.id}>
-                    <td><span className={styles.entityName}>{activity.name}</span><span className={styles.secondary}>{activity.type || "Sin tipo"}</span></td>
+                  <tr key={activity.id} className={styles.clickableRow} onClick={() => setViewing(activity)}>
+                    <td><span className={styles.entityName}>{activity.name}</span><span className={styles.secondary}>{activity.type || "Sin tipo"}</span>{eligibilityBadges(activity).map((badge) => <span className={styles.tag} key={badge.key} title={badge.detail}>{badge.label}</span>)}</td>
                     <td><span className={styles.tags}>{activity.categories.length ? activity.categories.map((category) => <span className={styles.tag} key={category.id}>{category.name}</span>) : <span className={styles.secondary}>Sin categorías</span>}</span></td>
-                    <td><span className={styles.tags}>{activity.places.length ? activity.places.map((place) => <a className={styles.placeLink} key={place.id} href={googleMapsUrl(null, null, place.address)} target="_blank" rel="noreferrer"><Icon name="map-pin" size={13} />{place.name}</a>) : <span className={styles.secondary}>Sin ubicación</span>}</span></td>
-                    <td>{formatArs(activity.estimatedCost)}</td><td>{formatDuration(activity.estimatedDuration)}</td>
-                    <td><span className={styles.actions}><button className={styles.iconButton} type="button" aria-label={`Editar ${activity.name}`} disabled={catalogLoading || Boolean(catalogError)} onClick={() => { setActionError(null); setEditing(activity); }}><Icon name="pencil" size={16} /></button><button className={`${styles.iconButton} ${styles.dangerButton}`} type="button" aria-label={`Eliminar ${activity.name}`} onClick={() => { setActionError(null); setDeleting(activity); }}><Icon name="trash-2" size={16} /></button></span></td>
+                    <td><span className={styles.tags}>{activity.places.length ? activity.places.map((place) => <a className={styles.placeLink} key={place.id} href={googleMapsUrl(null, null, place.address)} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}><Icon name="map-pin" size={13} />{place.name}</a>) : <span className={styles.secondary}>Sin ubicación</span>}</span></td>
+                    <td>{formatPrice(activity)}</td><td>{formatDuration(activity.estimatedDuration)}</td>
+                    <td className={styles.actionsColumn} onClick={(event) => event.stopPropagation()}><span className={styles.actions}><button className={styles.iconButton} type="button" aria-label={`Editar ${activity.name}`} disabled={catalogLoading || Boolean(catalogError)} onClick={() => { setActionError(null); setEditing(activity); }}><Icon name="pencil" size={16} /></button><button className={`${styles.iconButton} ${styles.dangerButton}`} type="button" aria-label={`Eliminar ${activity.name}`} onClick={() => { setActionError(null); setDeleting(activity); }}><Icon name="trash-2" size={16} /></button></span></td>
                   </tr>
                 ))}</tbody>
               </table>
@@ -225,6 +234,40 @@ export function AdminActivitiesView() {
 
       {result && result.pagination.total > 0 ? <div className={styles.paginationArea}><p>Mostrando {firstVisible}–{lastVisible} de {result.pagination.total} actividades</p><Pagination page={result.pagination.page} totalPages={result.pagination.totalPages} disabled={loading} onPageChange={setPage} /></div> : null}
 
+      {viewing ? (
+        <AdminReadDialog
+          icon="sparkles"
+          eyebrow="Actividad"
+          title={viewing.name}
+          subtitle={viewing.type || "Sin tipo de salida"}
+          onClose={() => setViewing(null)}
+          fields={[
+            { label: "Descripción", value: viewing.description || "Sin descripción", wide: true },
+            { label: "Precio", value: formatPrice(viewing) },
+            { label: "Duración estimada", value: formatDuration(viewing.estimatedDuration) },
+            {
+              label: "Categorías",
+              wide: true,
+              value: viewing.categories.length
+                ? <span className={styles.tags}>{viewing.categories.map((category) => <span className={styles.tag} key={category.id}>{category.name}</span>)}</span>
+                : "Sin categorías",
+            },
+            {
+              label: "Lugares",
+              wide: true,
+              value: viewing.places.length
+                ? <span className={styles.tags}>{viewing.places.map((place) => <a className={styles.placeLink} key={place.id} href={googleMapsUrl(null, null, place.address)} target="_blank" rel="noreferrer"><Icon name="map-pin" size={13} />{place.name} · {place.address}</a>)}</span>
+                : "Sin ubicación",
+            },
+            { label: "Creada", value: dateFormatter.format(new Date(viewing.createdAt)) },
+            { label: "Última actualización", value: dateFormatter.format(new Date(viewing.updatedAt)) },
+          ]}
+          actions={<>
+            <Button variant="ghostLight" onClick={() => { setActionError(null); setDeleting(viewing); setViewing(null); }}><Icon name="trash-2" size={15} /> Eliminar</Button>
+            <Button disabled={catalogLoading || Boolean(catalogError)} onClick={() => { setActionError(null); setEditing(viewing); setViewing(null); }}><Icon name="pencil" size={15} /> Editar</Button>
+          </>}
+        />
+      ) : null}
       {editing !== undefined ? <AdminActivityDialog activity={editing} categories={categories} places={places} saving={saving} error={actionError} onClose={() => { if (!saving) setEditing(undefined); }} onSave={saveActivity} /> : null}
       {deleting ? <ConfirmationDialog title="Eliminar actividad" confirmLabel="Eliminar" confirmingLabel="Eliminando..." isConfirming={saving} error={actionError} onCancel={() => { if (!saving) setDeleting(null); }} onConfirm={() => void confirmDelete()}><p>¿Querés eliminar <strong>{deleting.name}</strong>? Sus referencias históricas se conservarán.</p></ConfirmationDialog> : null}
     </section>
