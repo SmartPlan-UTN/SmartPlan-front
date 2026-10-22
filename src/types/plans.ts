@@ -347,6 +347,11 @@ export interface OwnPlanSummary {
   title: string;
   description: string | null;
   visibility: PlanVisibility;
+  /**
+   * An administrator took it down after a report (#156): it stays private
+   * and cannot be published again.
+   */
+  removedByModeration: boolean;
   estimatedTotalCost: number | null;
   estimatedTotalCostMax?: number | null;
   unpricedCount?: number;
@@ -442,6 +447,7 @@ export interface OutingFilters {
 }
 
 export interface ListOutingsParams extends OutingFilters {
+  sourcePlanId?: number;
   status?: OutingStatus;
   page?: number;
   limit?: number;

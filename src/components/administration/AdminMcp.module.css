@@ -1,0 +1,171 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-5);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+}
+
+.cardTitle {
+  margin: 0;
+  color: var(--fg-1);
+  font-size: 18px;
+}
+
+.tableTitle {
+  padding: var(--s-4) var(--s-5) 0;
+}
+
+.muted {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 14px;
+}
+
+.connection {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--s-2) var(--s-4);
+  margin: 0;
+}
+
+.connection dt {
+  color: var(--fg-3);
+  font-weight: var(--w-label);
+}
+
+.connection dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.createForm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--s-3);
+}
+
+.nameField {
+  flex: 1 1 280px;
+}
+
+.createForm > button {
+  margin-top: 26px;
+}
+
+.createdKey {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-2);
+  padding: var(--s-4);
+  border-radius: var(--r-card);
+  background: var(--ember-10);
+}
+
+.createdTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--fg-1);
+  font-weight: var(--w-label);
+}
+
+.keyRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+}
+
+.keyValue {
+  flex: 1 1 260px;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-chip);
+  background: var(--surface-card);
+  overflow-wrap: anywhere;
+}
+
+.statusActive,
+.statusRevoked {
+  display: inline-flex;
+  padding: 4px 9px;
+  border-radius: var(--r-chip);
+  font-size: 12px;
+  font-weight: var(--w-label);
+  white-space: nowrap;
+}
+
+.statusActive {
+  background: var(--ember-10);
+  color: var(--ember);
+}
+
+.statusRevoked {
+  background: var(--hairline);
+  color: var(--fg-3);
+}
+
+.toolList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tool {
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  padding: var(--s-3) var(--s-4);
+}
+
+.tool summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-3);
+  cursor: pointer;
+}
+
+.toolName {
+  color: var(--fg-1);
+  font-weight: var(--w-label);
+}
+
+.toolDescription {
+  color: var(--fg-2);
+  font-size: 14px;
+}
+
+.paramsTable {
+  width: 100%;
+  margin-top: var(--s-3);
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.paramsTable th,
+.paramsTable td {
+  padding: var(--s-2);
+  border-bottom: 1px solid var(--hairline);
+  text-align: left;
+  vertical-align: top;
+}
+
+.paramsTable th {
+  color: var(--fg-3);
+  font-weight: var(--w-label);
+}
+
+.nested {
+  margin-top: var(--s-2);
+  padding-left: var(--s-3);
+  border-left: 2px solid var(--hairline);
+}

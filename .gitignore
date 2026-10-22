@@ -57,3 +57,5 @@ next-env.d.ts
 
 # Local verification output (never product or provider content).
 *.local.log
+/.playwright-cli/
+/output/playwright/

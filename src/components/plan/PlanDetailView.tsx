@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { Badge, Button, ConfirmationDialog, Divider, FloatingBackLink, Icon, Stars } from "@/components/ui";
 import { AuthenticatedImage, MediaGallery } from "@/components/media";
+import { useContentReporter } from "@/components/reports";
 import { useFavorites } from "@/context";
 import { useDetailFetch, usePlanSelection } from "@/hooks";
 import { ApiError, cancelOwnPlan, getOwnPlan, getPlan } from "@/lib/api";
@@ -20,6 +21,7 @@ import type {
   ViewerPlanState,
 } from "@/types";
 
+import { PlanOwnExperiences } from "./PlanOwnExperiences";
 import { CommunityExperiences } from "./CommunityExperiences";
 import { ItineraryStep } from "./ItineraryStep";
 import { PlanReadinessPanel } from "./PlanReadinessPanel";
@@ -64,6 +66,9 @@ const GENERIC_ERROR = "No pudimos cargar el plan. Intentá de nuevo.";
  * The author of a plan also gets its visibility (Público/Privado) and can
  * publish it or make it private. An outing is not a plan to browse: its
  * owner is sent to its page in Mis salidas.
+ *
+ * Anyone else can report a published plan (#156). Unlike other content it
+ * stays visible: only an administrator takes it down.
  */
 export function PlanDetailView(props: PlanDetailViewProps) {
   const { status, user } = useSession();
@@ -90,6 +95,7 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
   );
   const { isPlanSaved, toggleSavePlan } = useFavorites();
   const saved = isPlanSaved(planId);
+  const [experienceVersion, setExperienceVersion] = useState(0);
   const [copied, setCopied] = useState(false);
   const [ownPlan, setOwnPlan] = useState<OwnPlanDetail | null>(null);
   const [visibilityOverride, setVisibilityOverride] =
@@ -97,6 +103,8 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [reported, setReported] = useState(false);
+  const reporter = useContentReporter(() => setReported(true));
   const heroRef = useRef<HTMLDivElement>(null);
 
   const isAuthor = plan?.ownedByViewer === true && plan.kind === "authored";
@@ -206,7 +214,7 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
     }
   }
 
-  if (status === "loading") {
+  if (status === "loading" && plan == null) {
     return (
       <div className={activityStyles.stateBlock}>
         <div className={activityStyles.loadingDots}>
@@ -250,6 +258,9 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
     override?.activeOutingId ?? plan.activeOutingId ?? null;
   const visibility = visibilityOverride ?? plan.visibility;
   const statusInfo = planStatusPresentation(plan.status.key);
+  const removedByModeration = ownPlan?.removedByModeration === true;
+  const published =
+    plan.kind === "authored" && visibility === "public" && plan.status.key !== "cancelled";
 
   return (
     <div>
@@ -369,23 +380,37 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
           ) : null}
         </div>
 
+        {plan.kind !== "outing" ? (
+          <PlanOwnExperiences
+            key={plan.id}
+            planId={plan.id}
+            onChanged={() => {
+              setExperienceVersion((version) => version + 1);
+              refetch();
+            }}
+          />
+        ) : null}
+
         {/* Experiences of people who did it (#106): only a published plan
             that is still on has a community to show. */}
-        {plan.kind === "authored" &&
-        visibility === "public" &&
-        plan.status.key !== "cancelled" ? (
-          <CommunityExperiences planId={plan.id} planTitle={plan.title} />
+        {published ? (
+          <CommunityExperiences key={experienceVersion} planId={plan.id} planTitle={plan.title} />
         ) : null}
 
         {isAuthor ? (
           <div className={styles.visibilityBox}>
             <div>
-              <PlanVisibilityBadge visibility={visibility} />
+              <PlanVisibilityBadge
+                visibility={visibility}
+                removedByModeration={removedByModeration}
+              />
               <p className={styles.visibilityHint}>
-                {VISIBILITY_COPY.hint[visibility]}
+                {removedByModeration
+                  ? VISIBILITY_COPY.removed.hint
+                  : VISIBILITY_COPY.hint[visibility]}
               </p>
             </div>
-            {plan.status.key !== "cancelled" ? (
+            {plan.status.key !== "cancelled" && !removedByModeration ? (
               <PlanVisibilityControl
                 planId={plan.id}
                 planTitle={plan.title}
@@ -450,7 +475,7 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
             {copied ? "¡Copiado!" : "Compartir"}
           </Button>
           {/* Only a published plan opens for whoever gets the link. */}
-          {plan.kind === "authored" && visibility === "public" && plan.status.key !== "cancelled" ? (
+          {published ? (
             <Button
               variant="ghostLight"
               size="sm"
@@ -460,6 +485,26 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
             >
               <Icon name="message-circle" size={16} aria-hidden="true" />
               WhatsApp
+            </Button>
+          ) : null}
+          {published && !plan.ownedByViewer && sessionStatus !== "loading" ? (
+            <Button
+              variant="ghostLight"
+              size="sm"
+              className={styles.shareButton}
+              disabled={reported}
+              aria-label={reported ? "Plan denunciado" : `Denunciar ${plan.title}`}
+              onClick={() => {
+                // Reporting needs a session; come back here after it.
+                if (sessionStatus === "anonymous") {
+                  router.push(loginRoute(pathname));
+                  return;
+                }
+                reporter.request({ contentType: "plan", contentId: plan.id, title: "Denunciar plan" });
+              }}
+            >
+              <Icon name="flag" size={16} aria-hidden="true" />
+              {reported ? "Denunciado" : "Denunciar"}
             </Button>
           ) : null}
 
@@ -494,6 +539,8 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
           <p>El plan se eliminará de tus planes y ya no estará disponible.</p>
         </ConfirmationDialog>
       ) : null}
+
+      {reporter.element}
 
     </div>
   );

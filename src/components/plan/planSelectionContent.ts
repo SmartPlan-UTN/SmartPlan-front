@@ -12,6 +12,8 @@ export const PLAN_SELECTION = {
   /** Shown instead of the button once the outing exists (preceded by a ✓). */
   added: "Agregado a Mis salidas",
   viewOuting: "Ver en Mis salidas",
+  /** Plan detail: the visible label of the link the button turns into. */
+  inOutings: "En Mis salidas",
   announceAdded: (title: string) => `Agregamos «${title}» a Mis salidas.`,
   error: {
     /** The plan's real state changed on the server; the view was reconciled. */

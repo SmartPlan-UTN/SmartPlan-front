@@ -37,6 +37,7 @@ const plan: OwnPlanDetail = {
   title: "Domingo entre viñas",
   description: "Un recorrido familiar",
   visibility: "public",
+  removedByModeration: false,
   peopleCount: 4,
   estimatedTotalCost: 18000,
   estimatedCostPerPerson: 4500,

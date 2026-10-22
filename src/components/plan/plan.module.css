@@ -560,176 +560,74 @@
 }
 
 /* ── "Lo voy a hacer" (CU22, #130) ──────────────────────────────
-   The prominent control in the row. One-shot: the button (warm
-   ember-tint fill, the design system's `ghostEmber`) turns into the
-   "Agregado a Mis salidas" record once the outing exists; both share
-   the same box, so the swap never moves anything around it. */
+   The prominent control in the row: the one solid ember fill, sized to
+   its label instead of squeezed like its neighbours. One-shot: once the
+   outing exists it turns into the "Ver en Mis salidas" record, in the
+   same 44px-high box, so the row never jumps or grows. While it saves
+   it keeps its colour; only the icon becomes a spinner. */
 .statePanel {
   display: flex;
-  flex: 1 1 8rem;
-  min-width: 0;
-  max-width: 10rem;
+  flex: 0 0 auto;
 }
 
-.stateToggle {
+.stateToggle,
+.stateRecord {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--s-2);
   width: 100%;
-  min-width: 0;
   min-height: 44px;
   box-sizing: border-box;
-  padding: 0 var(--s-2);
-  border: 1px solid var(--hairline);
+  padding: 0 var(--s-4);
+  border: 1px solid transparent;
   border-radius: var(--r-btn);
-  background: var(--ember-15);
-  color: var(--ember);
-  font-size: var(--t-body);
-  font-weight: var(--w-label);
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  line-height: 1;
   white-space: nowrap;
-  cursor: pointer;
   transition:
     background-color var(--d-fast) var(--ease-inout),
     color var(--d-fast) var(--ease-inout),
     transform var(--d-fast) var(--ease-inout);
 }
 
+.stateToggle {
+  background: var(--ember);
+  color: var(--white);
+  cursor: pointer;
+}
+
 .stateToggle:hover:not(:disabled) {
-  background: var(--ember-20);
+  background: color-mix(in srgb, var(--ember) 90%, var(--char));
 }
 
 .stateToggle:active:not(:disabled) {
   transform: scale(0.97);
 }
 
-.stateToggle[aria-pressed="true"] {
-  background: var(--ember);
-  color: var(--white);
-}
-
-.stateToggle[aria-pressed="true"]:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--ember) 90%, var(--char));
-}
-
 .stateToggle:disabled {
   cursor: progress;
-  opacity: 0.6;
 }
 
-.stateToggle:focus-visible {
-  outline: 2px solid var(--ember);
-  outline-offset: 2px;
-}
-
-/* Icon crossfade — the check is the hero of the state change. Both
-   glyphs share one 18px box (absolutely stacked), so nothing around
-   them moves as they swap. */
-.toggleIcon {
-  position: relative;
-  display: inline-flex;
-  flex: none;
-  width: 18px;
-  height: 18px;
-  transition: transform var(--d-fast) var(--ease-out);
-}
-
-.stateToggle:hover:not(:disabled) .toggleIcon {
-  transform: scale(1.06);
-}
-
-.toggleIconOff,
-.toggleIconOn {
-  position: absolute;
-  inset: 0;
-  transition:
-    opacity var(--d-fast) var(--ease-inout),
-    transform var(--d-fast) var(--ease-inout);
-}
-
-.toggleIconOn {
-  opacity: 0;
-  transform: scale(0.6);
-}
-
-.stateToggle[aria-pressed="true"] .toggleIconOff {
-  opacity: 0;
-  transform: scale(0.6);
-}
-
-.stateToggle[aria-pressed="true"] .toggleIconOn {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.stateChip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  margin: 0;
-  color: var(--ember);
-  font-size: var(--t-body);
-  font-weight: var(--w-label);
-}
-
-.stateIcon {
-  display: inline-flex;
-}
-
-.stateIconMuted {
-  color: var(--fg-2);
-}
-
-/* "Agregado a Mis salidas" — a quiet record, matching the button's box. */
 .stateRecord {
-  display: flex;
-  flex: 0 1 auto;
-  flex-wrap: wrap;
-  align-items: center;
-  align-content: center;
-  gap: var(--s-1) var(--s-3);
-  min-width: 10.5rem;
-  min-height: 44px;
-  padding: var(--s-2) var(--s-4);
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-btn);
+  border-color: var(--ember-20);
   background: var(--ember-04);
-}
-
-.stateMeta {
-  color: var(--fg-3);
-  font-size: var(--t-small);
-}
-
-.stateActions {
-  display: flex;
-  gap: var(--s-2);
-  width: 100%;
-}
-
-.stateLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  color: var(--fg-1);
-  font-size: var(--t-small);
-  font-weight: var(--w-label);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.stateLink:hover {
   color: var(--ember);
+  text-decoration: none;
 }
 
-.stateLink:focus-visible {
+.stateRecord:hover {
+  background: var(--ember-10);
+}
+
+.stateToggle:focus-visible,
+.stateRecord:focus-visible {
   outline: 2px solid var(--ember);
   outline-offset: 2px;
 }
 
 .stateSpinner {
-  position: absolute;
-  inset: 0;
   animation: sp-state-spin 900ms linear infinite;
 }
 
@@ -753,31 +651,16 @@
   }
 
   .statePanel {
-    flex: 0 0 auto;
-    width: 100%;
-    max-width: none;
-  }
-
-  .stateToggle,
-  .stateRecord {
     width: 100%;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .stateToggle,
-  .toggleIcon,
+  .stateRecord,
   .stateSpinner,
   .saveIconOn {
     animation: none;
-    transition: none;
-    transform: none;
-  }
-
-  /* Keep the crossfade instant but still correct: the marked state
-     shows the check, the open state shows the circle — no motion. */
-  .toggleIconOff,
-  .toggleIconOn {
     transition: none;
     transform: none;
   }

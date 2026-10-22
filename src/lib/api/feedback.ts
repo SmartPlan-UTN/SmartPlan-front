@@ -29,3 +29,11 @@ export async function setFeedbackSharing(
 ): Promise<PlanFeedback> {
   return apiClient.patch<PlanFeedback>(`/plans/${outingId}/feedback`, { shared });
 }
+
+/** Updates the score and comment of an existing outing experience. */
+export async function updateFeedback(
+  outingId: number,
+  payload: { rating: number; comment: string | null }
+): Promise<PlanFeedback> {
+  return apiClient.patch<PlanFeedback>(`/plans/${outingId}/feedback`, payload);
+}

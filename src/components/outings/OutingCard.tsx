@@ -1,6 +1,9 @@
-import Link from "next/link";
+"use client";
 
-import { FeedbackInvite, ratingLabel } from "@/components/feedback";
+import Link from "next/link";
+import { useState } from "react";
+
+import { FeedbackDialog, FeedbackInvite, ratingLabel } from "@/components/feedback";
 import { Badge, Button, Icon, Stars } from "@/components/ui";
 import { AuthenticatedImage } from "@/components/media";
 import { outingDetailRoute } from "@/lib/routes";
@@ -51,6 +54,7 @@ export function OutingCard({
   onSubmitted,
   onReconcile,
 }: OutingCardProps) {
+  const [editing, setEditing] = useState(false);
   const done = outing.status === "completed";
   const when = done ? (outing.completedAt ?? outing.createdAt) : outing.createdAt;
   const showInvite = outing.feedbackState === "available" && !inviteDismissed;
@@ -144,7 +148,31 @@ export function OutingCard({
       </Link>
 
       {rated ? (
-        <RatedLine feedback={rated} estimated={outing.estimatedTotalCost} />
+        <RatedLine
+          feedback={rated}
+          estimated={outing.estimatedTotalCost}
+          onEdit={() => setEditing(true)}
+          disabled={busy}
+          planTitle={outing.title}
+        />
+      ) : null}
+
+      {editing && rated ? (
+        <FeedbackDialog
+          open
+          planId={outing.id}
+          planTitle={outing.title}
+          estimatedTotalCost={outing.estimatedTotalCost}
+          completedAt={outing.completedAt}
+          activityCount={outing.activityCount}
+          existingFeedback={rated}
+          onDismiss={() => setEditing(false)}
+          onSubmitted={(feedback) => {
+            setEditing(false);
+            onSubmitted(outing.id, feedback);
+          }}
+          onReconcile={onReconcile}
+        />
       ) : null}
 
       {showInvite ? (
@@ -206,19 +234,33 @@ export function OutingCard({
 function RatedLine({
   feedback,
   estimated,
+  onEdit,
+  disabled,
+  planTitle,
 }: {
   feedback: PlanFeedback;
   estimated: number | null;
+  onEdit: () => void;
+  disabled: boolean;
+  planTitle: string;
 }) {
   const hasRealCost = feedback.actualCost != null && feedback.actualCost > 0;
   const comment = feedback.comment?.trim();
   return (
     <div className={styles.rated}>
       <div className={styles.ratedRow}>
-        <span className={styles.ratedScore}>
+        <button
+          type="button"
+          className={styles.ratedScore}
+          onClick={onEdit}
+          disabled={disabled}
+          aria-label={`Editar valoración de ${planTitle}`}
+          title="Editar puntaje y comentario"
+        >
           <Stars rating={feedback.rating} size={14} />
           {ratingLabel(feedback.rating)}
-        </span>
+          <Icon name="pencil" size={14} aria-hidden="true" />
+        </button>
         {hasRealCost ? (
           <span className={styles.ratedCost}>
             <strong>{formatArs(feedback.actualCost as number)}</strong> gastados

@@ -34,6 +34,7 @@ export {
   searchExplore,
   getExploreMapMarkers,
   getPlaceDetail,
+  ensurePlaceVisit,
   claimUiKitElements,
   getPlacePhotoMedia,
 } from './explore';
@@ -106,6 +107,7 @@ export {
 } from './collections';
 export {
   setFeedbackSharing,
+  updateFeedback,
   submitFeedback,
 } from './feedback';
 export { getPlanExperiences } from './experiences';
@@ -127,3 +129,4 @@ export {
   listRatings,
   updateRating,
 } from './ratings';
+export { createMcpKey, listMcpKeys, listMcpTools, revokeMcpKey } from './mcp';

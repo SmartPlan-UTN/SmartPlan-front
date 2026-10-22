@@ -90,6 +90,7 @@ function canonicalPlan(): OwnPlanDetail {
     title: "Sábado entre viñas",
     description: null,
     visibility: "private",
+    removedByModeration: false,
     peopleCount: 2,
     estimatedTotalCost: 15000,
     estimatedCostPerPerson: 7500,

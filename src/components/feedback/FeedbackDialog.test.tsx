@@ -7,8 +7,9 @@ import type { PlanFeedback } from "@/types";
 
 import { FeedbackDialog } from "./FeedbackDialog";
 
-const { submitFeedback, getOuting, getOwnRating, createRating, updateRating } = vi.hoisted(() => ({
+const { submitFeedback, updateFeedback, getOuting, getOwnRating, createRating, updateRating } = vi.hoisted(() => ({
   submitFeedback: vi.fn(),
+  updateFeedback: vi.fn(),
   getOuting: vi.fn(),
   getOwnRating: vi.fn(),
   createRating: vi.fn(),
@@ -31,6 +32,7 @@ vi.mock("@/lib/api/media", () => ({
 vi.mock("@/lib/api", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/api")>()),
   submitFeedback,
+  updateFeedback,
   getOuting,
   getOwnRating,
   createRating,
@@ -691,5 +693,55 @@ describe("FeedbackDialog sharing with the community (#106)", () => {
     await userEvent.click(screen.getByRole("button", { name: /enviar opinión/i }));
 
     expect(submitFeedback).toHaveBeenCalledWith(7, { rating: 5, shared: true });
+  });
+});
+
+
+describe("editing an outing experience", () => {
+  it("prefills the rating and comment and saves without the follow-up steps", async () => {
+    const user = userEvent.setup();
+    const existing = { ...FEEDBACK, comment: "Buena salida", tags: ["great_value"] as PlanFeedback["tags"], actualCost: 3500, shared: true };
+    const updated = { ...existing, rating: 5, comment: "Excelente salida" };
+    updateFeedback.mockResolvedValue(updated);
+    const { onSubmitted } = setup({ existingFeedback: existing });
+
+    expect(screen.getByRole("heading", { name: "Editar tu valoración" })).toBeInTheDocument();
+    expect(screen.getAllByRole("radio")[3]).toHaveAttribute("aria-checked", "true");
+    const comment = screen.getByRole("textbox", { name: /comentario/i });
+    expect(comment).toHaveValue("Buena salida");
+    await user.click(screen.getAllByRole("radio")[4]);
+    await user.clear(comment);
+    await user.type(comment, "Excelente salida");
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith(updated));
+    expect(updateFeedback).toHaveBeenCalledWith(7, { rating: 5, comment: "Excelente salida" });
+    expect(submitFeedback).not.toHaveBeenCalled();
+    expect(getOuting).not.toHaveBeenCalled();
+  });
+
+  it("keeps edits after a failed save and allows removing the comment", async () => {
+    const user = userEvent.setup();
+    updateFeedback.mockRejectedValueOnce(new Error("offline"));
+    const { onSubmitted } = setup({ existingFeedback: { ...FEEDBACK, comment: "Antes" } });
+    const comment = screen.getByRole("textbox", { name: /comentario/i });
+    await user.clear(comment);
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(comment).toHaveValue("");
+    expect(onSubmitted).not.toHaveBeenCalled();
+    updateFeedback.mockResolvedValueOnce({ ...FEEDBACK, comment: null });
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalled());
+    expect(updateFeedback).toHaveBeenLastCalledWith(7, { rating: 4, comment: null });
+  });
+
+  it("cancels without saving", async () => {
+    const user = userEvent.setup();
+    const { onDismiss } = setup({ existingFeedback: FEEDBACK });
+    await user.click(screen.getAllByRole("radio")[0]);
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+    await waitFor(() => expect(onDismiss).toHaveBeenCalled());
+    expect(updateFeedback).not.toHaveBeenCalled();
   });
 });

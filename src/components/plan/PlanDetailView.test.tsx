@@ -1,9 +1,9 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@/lib/api";
-import { outingCreation } from "@/test/fixtures/outings";
+import { outingCreation, outingDetail } from "@/test/fixtures/outings";
 import type {
   OwnPlanDetail,
   PlanDetailResult,
@@ -45,6 +45,9 @@ const getOwnPlan = vi.hoisted(() => vi.fn());
 const createOuting = vi.hoisted(() => vi.fn());
 const setOwnPlanVisibility = vi.hoisted(() => vi.fn());
 const getPlanExperiences = vi.hoisted(() => vi.fn());
+const reportContent = vi.hoisted(() => vi.fn());
+const listOutings = vi.hoisted(() => vi.fn());
+const updateFeedback = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/api")>()),
@@ -53,6 +56,9 @@ vi.mock("@/lib/api", async (importActual) => ({
   createOuting,
   setOwnPlanVisibility,
   getPlanExperiences,
+  reportContent,
+  listOutings,
+  updateFeedback,
 }));
 
 function ownPlan(overrides: Partial<OwnPlanDetail> = {}): OwnPlanDetail {
@@ -61,6 +67,7 @@ function ownPlan(overrides: Partial<OwnPlanDetail> = {}): OwnPlanDetail {
     title: "Tarde de vinos",
     description: null,
     visibility: "private",
+    removedByModeration: false,
     estimatedTotalCost: 8500,
     estimatedTotalDuration: 240,
     peopleCount: 2,
@@ -121,6 +128,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   useSession.mockReturnValue({ status: "authenticated", authenticated: true });
   getOwnPlan.mockResolvedValue(ownPlan());
+  listOutings.mockResolvedValue({ data: [], pagination: { page: 1, total: 0, totalPages: 0 } });
   createOuting.mockResolvedValue(outingCreation({ id: 40 }));
   getPlanExperiences.mockResolvedValue({
     data: [],
@@ -134,7 +142,7 @@ describe("sharing by WhatsApp", () => {
     getPlan.mockResolvedValue(plan({ visibility: "private", ownedByViewer: true }));
     const view = render(<PlanDetailView planId={7} />);
     await screen.findByRole("heading", { name: "Tarde de vinos", level: 1 });
-    getPlan.mockRejectedValue(new ApiError({ message: "Plan not found", status: 404, type: 'HTTP' }));
+    getPlan.mockRejectedValue(new ApiError({ message: "Plan not found", type: "HTTP", status: 404 }));
     useSession.mockReturnValue({ status: "anonymous", authenticated: false });
     view.rerender(<PlanDetailView planId={7} />);
     await waitFor(() => expect(screen.queryByRole("heading", { name: "Tarde de vinos", level: 1 })).not.toBeInTheDocument());
@@ -173,6 +181,59 @@ describe("sharing by WhatsApp", () => {
 
     await screen.findByText("Tarde de vinos", { selector: "h1" });
     expect(screen.queryByRole("button", { name: "Compartir por WhatsApp" })).not.toBeInTheDocument();
+  });
+});
+
+describe("reporting a plan (#156)", () => {
+  it("reports someone else's published plan and keeps showing it", async () => {
+    const user = userEvent.setup();
+    reportContent.mockResolvedValue(undefined);
+    getPlan.mockResolvedValue(plan());
+    render(<PlanDetailView planId={7} />);
+
+    await user.click(await screen.findByRole("button", { name: "Denunciar Tarde de vinos" }));
+    const dialog = screen.getByRole("dialog", { name: "Denunciar plan" });
+    await user.click(within(dialog).getByRole("radio", { name: "Spam o publicidad" }));
+    await user.click(within(dialog).getByRole("button", { name: "Denunciar" }));
+
+    expect(reportContent).toHaveBeenCalledWith({ contentType: "plan", contentId: 7, reason: "spam" });
+    expect(await screen.findByText("Gracias, lo vamos a revisar.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Plan denunciado" })).toBeDisabled();
+    expect(screen.getByRole("heading", { name: "Tarde de vinos", level: 1 })).toBeInTheDocument();
+  });
+
+  it("sends an anonymous visitor to sign in first", async () => {
+    const user = userEvent.setup();
+    useSession.mockReturnValue({ status: "anonymous", authenticated: false });
+    getPlan.mockResolvedValue(plan());
+    render(<PlanDetailView planId={7} />);
+
+    await user.click(await screen.findByRole("button", { name: "Denunciar Tarde de vinos" }));
+
+    expect(push).toHaveBeenCalledWith(expect.stringContaining("/login"));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("is not offered to its author nor for a private plan", async () => {
+    getPlan.mockResolvedValue(plan({ ownedByViewer: true }));
+    const view = render(<PlanDetailView planId={7} />);
+    await screen.findByRole("heading", { name: "Tarde de vinos", level: 1 });
+    expect(screen.queryByRole("button", { name: /^Denunciar/ })).not.toBeInTheDocument();
+    view.unmount();
+
+    getPlan.mockResolvedValue(plan({ visibility: "private" }));
+    render(<PlanDetailView planId={7} />);
+    await screen.findByRole("heading", { name: "Tarde de vinos", level: 1 });
+    expect(screen.queryByRole("button", { name: /^Denunciar/ })).not.toBeInTheDocument();
+  });
+
+  it("tells the author a removed plan cannot be published", async () => {
+    getPlan.mockResolvedValue(plan({ visibility: "private", ownedByViewer: true }));
+    getOwnPlan.mockResolvedValue(ownPlan({ visibility: "private", removedByModeration: true }));
+    render(<PlanDetailView planId={7} />);
+
+    expect(await screen.findByText("Dado de baja")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Publicar/ })).not.toBeInTheDocument();
   });
 });
 
@@ -448,4 +509,25 @@ it("shares the canonical plan URL without navigation context", async () => {
   await user.click(await screen.findByRole("button", { name: "Compartir" }));
   expect(writeText).toHaveBeenCalledWith(new URL("/plans/7", window.location.origin).href);
   window.history.replaceState(null, "", "/");
+});
+
+it("edits a shared experience on the original plan and refreshes the public summary", async () => {
+  const user = userEvent.setup();
+  const feedback = { id: 3, rating: 4, tags: [], comment: "Antes", actualCost: null, actualDuration: null, shared: true, commentHidden: false, createdAt: "2026-10-19T12:00:00Z" };
+  listOutings.mockResolvedValue({ data: [outingDetail({ feedback })], pagination: { page: 1, totalPages: 1, total: 1 } });
+  updateFeedback.mockResolvedValue({ ...feedback, rating: 5, comment: "Excelente" });
+  await renderDetail("selectable", { visibility: "public" });
+  await user.click(await screen.findByRole("button", { name: "Editar tu valoración" }));
+  const dialog = screen.getByRole("dialog");
+  const comment = within(dialog).getByRole("textbox", { name: "Tu comentario" });
+  await user.clear(comment);
+  await user.type(comment, "Excelente");
+  await user.click(within(dialog).getAllByRole("radio")[4]);
+  getPlan.mockResolvedValue(plan({ visibility: "public", averageRating: 5 }));
+  await user.click(within(dialog).getByRole("button", { name: "Guardar cambios" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  expect(await screen.findByText("“Excelente”")).toBeInTheDocument();
+  expect(await screen.findByText("5.0")).toBeInTheDocument();
+  expect(updateFeedback).toHaveBeenCalledWith(40, { rating: 5, comment: "Excelente" });
+  expect(getPlanExperiences.mock.calls.length).toBeGreaterThan(1);
 });

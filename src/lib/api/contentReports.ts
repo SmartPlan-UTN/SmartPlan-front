@@ -10,7 +10,8 @@ import type {
 import { apiClient } from './client';
 
 /**
- * Reports a rating, or an experience comment or photo (#156). Answers
+ * Reports a rating, an experience comment or photo, or a published plan
+ * (#156). Answers
  * `409 CONTENT_REPORT_DUPLICATE` when the user already reported it and
  * `403 CONTENT_REPORT_OWN_CONTENT` for their own content.
  */
@@ -48,8 +49,8 @@ export async function resolveContentReport(
  * same way the other administration screens build their badges.
  */
 export async function getContentReportCounts(): Promise<ContentReportCounts> {
-  const [all, rating, comment, photo] = await Promise.all(
-    [undefined, 'rating', 'experience_comment', 'experience_photo'].map((type) =>
+  const [all, rating, comment, photo, plan] = await Promise.all(
+    [undefined, 'rating', 'experience_comment', 'experience_photo', 'plan'].map((type) =>
       listContentReports({
         ...(type ? { type: type as ReportableContentType } : {}),
         page: 1,
@@ -62,5 +63,6 @@ export async function getContentReportCounts(): Promise<ContentReportCounts> {
     rating: rating.pagination.total,
     experience_comment: comment.pagination.total,
     experience_photo: photo.pagination.total,
+    plan: plan.pagination.total,
   };
 }

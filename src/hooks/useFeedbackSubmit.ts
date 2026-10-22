@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 
-import { submitFeedback } from "@/lib/api";
+import { submitFeedback, updateFeedback } from "@/lib/api";
 import {
   toFeedbackError,
   type FeedbackError,
@@ -22,16 +22,17 @@ export type FeedbackSubmitOutcome =
 export interface UseFeedbackSubmitResult {
   status: FeedbackSubmitStatus;
   error: FeedbackError | null;
-  /** Record feedback for a completed plan (CU23). */
+  /** Creates feedback or edits an existing outing rating and comment. */
   submit: (
     planId: number,
-    payload: CreateFeedbackPayload
+    payload: CreateFeedbackPayload,
+    editing?: boolean
   ) => Promise<FeedbackSubmitOutcome | null>;
   reset: () => void;
 }
 
 /**
- * The CU23 feedback mutation, shared by the history card and the plan detail.
+ * The CU23 feedback mutations, shared by the outings list and detail.
  * Keeps no feedback state of its own — each surface reconciles its own view
  * from the returned feedback or a refetch. One in-flight guard blocks the
  * double submit; no optimistic state.
@@ -44,7 +45,8 @@ export function useFeedbackSubmit(): UseFeedbackSubmitResult {
   const submit = useCallback(
     async (
       planId: number,
-      payload: CreateFeedbackPayload
+      payload: CreateFeedbackPayload,
+      editing = false
     ): Promise<FeedbackSubmitOutcome | null> => {
       if (inFlight.current) return null;
       inFlight.current = true;
@@ -52,7 +54,12 @@ export function useFeedbackSubmit(): UseFeedbackSubmitResult {
       setError(null);
 
       try {
-        const feedback = await submitFeedback(planId, payload);
+        const feedback = editing
+          ? await updateFeedback(planId, {
+              rating: payload.rating,
+              comment: payload.comment?.trim() || null,
+            })
+          : await submitFeedback(planId, payload);
         setStatus("idle");
         return { ok: true as const, feedback };
       } catch (err) {

@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -17,6 +17,7 @@ const completeOuting = vi.hoisted(() => vi.fn());
 const cancelOuting = vi.hoisted(() => vi.fn());
 const repeatOuting = vi.hoisted(() => vi.fn());
 const setOutingPreparation = vi.hoisted(() => vi.fn());
+const updateFeedback = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/api")>()),
@@ -25,6 +26,7 @@ vi.mock("@/lib/api", async (importActual) => ({
   cancelOuting,
   repeatOuting,
   setOutingPreparation,
+  updateFeedback,
 }));
 
 beforeEach(() => {
@@ -240,4 +242,24 @@ describe("OutingDetailView (#130, CU22, CU23)", () => {
       expect(screen.getByRole("button", { name: "Ya lo resolví" })).toBeEnabled();
     });
   });
+});
+
+
+it("edits a completed outing directly from its detail stars", async () => {
+  const user = userEvent.setup();
+  const feedback = { id: 3, rating: 4, tags: [], comment: "Antes", actualCost: 2000, actualDuration: null, shared: false, commentHidden: false, createdAt: "2026-10-19T12:00:00Z" };
+  getOuting.mockResolvedValue(outingDetail({ status: "completed", feedbackState: "submitted", feedback }));
+  updateFeedback.mockResolvedValue({ ...feedback, rating: 5, comment: "Excelente" });
+  render(<OutingDetailView outingId={40} />);
+  await user.click(await screen.findByRole("button", { name: "Editar tu valoración" }));
+  const dialog = screen.getByRole("dialog");
+  const comment = within(dialog).getByRole("textbox", { name: "Tu comentario" });
+  expect(comment).toHaveValue("Antes");
+  await user.click(within(dialog).getAllByRole("radio")[4]);
+  await user.clear(comment);
+  await user.type(comment, "Excelente");
+  await user.click(within(dialog).getByRole("button", { name: "Guardar cambios" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  expect(screen.getByText("“Excelente”")).toBeInTheDocument();
+  expect(updateFeedback).toHaveBeenCalledWith(40, { rating: 5, comment: "Excelente" });
 });

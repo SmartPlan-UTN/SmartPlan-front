@@ -41,6 +41,10 @@
     transform 240ms var(--ease-out);
 }
 
+.sheet[data-mode="edit"] {
+  height: min(620px, calc(100dvh - 48px));
+}
+
 .sheet[data-state="closing"] {
   opacity: 0;
   transform: translateY(10px) scale(0.99);
@@ -844,6 +848,7 @@
 
 .expRatingRow {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--s-3);
 }
@@ -1029,6 +1034,10 @@
     height: min(760px, calc(100dvh - 12px));
     border-radius: var(--r-card) var(--r-card) 0 0;
     animation-name: feedback-sheet-up;
+  }
+
+  .sheet[data-mode="edit"] {
+    height: min(640px, calc(100dvh - 12px));
   }
 
   .sheet[data-state="closing"] {

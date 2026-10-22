@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { Badge, Icon, Stars } from "@/components/ui";
+import { Badge, Button, Icon, Stars } from "@/components/ui";
 import { formatArs, NO_PRICE_TOTAL_LABEL } from "@/lib/utils";
 import type { PlanFeedback } from "@/types";
 
@@ -19,17 +19,21 @@ export interface ExperienceSummaryProps {
   estimatedTotalCost: number | null;
   /** Closes the section, e.g. whether it is shared with the community. */
   footer?: ReactNode;
+  onEdit?: () => void;
+  editLabel?: string;
 }
 
 /**
  * The permanent "Tu experiencia" section on PAN 17 once feedback exists
- * (CU23 · §16). Read-only, no editing. Renders only the parts that have
+ * (CU23 · §16). The owner can open editing from its stars. Renders the parts that have
  * data — no empty comment slot, no invented real cost.
  */
 export function ExperienceSummary({
   feedback,
   estimatedTotalCost,
   footer,
+  onEdit,
+  editLabel = "Editar tu valoración",
 }: ExperienceSummaryProps) {
   const orderedTags = FEEDBACK_TAG_ORDER.filter((tag) =>
     feedback.tags.includes(tag)
@@ -41,7 +45,13 @@ export function ExperienceSummary({
       <p className={styles.expHeading}>{FEEDBACK_COPY.experience.heading}</p>
 
       <div className={styles.expRatingRow}>
-        <Stars rating={feedback.rating} size={18} />
+        {onEdit ? (
+          <Button variant="ghostLight" onClick={onEdit} aria-label={editLabel}>
+            <Stars rating={feedback.rating} size={18} />
+            <Icon name="pencil" size={15} aria-hidden="true" />
+            Editar
+          </Button>
+        ) : <Stars rating={feedback.rating} size={18} />}
         <span className={styles.expRatingLabel}>
           {ratingLabel(feedback.rating)}
         </span>
