@@ -51,6 +51,9 @@ const PLAN: PlanDetailResult = {
   description: "Recorrido por bodegas con almuerzo incluido.",
   estimatedTotalDuration: 300,
   estimatedTotalCost: 24000,
+  estimatedTotalCostMax: 30000,
+  priceCompleteness: "RANGE",
+  peopleCount: 2,
   activityCount: 2,
   averageRating: 4.5,
   distanceKm: 12.4,
@@ -142,14 +145,65 @@ describe("PlanResults (CU17)", () => {
     render(<PlanResults plans={[PLAN]} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
 
     expect(screen.getByTestId("hero-recommendation")).toBeInTheDocument();
+    expect(screen.getByText("2 actividades · 5h estimadas")).toBeInTheDocument();
     expect(screen.getByText("Dónde queda")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /ver recorrido/i })).toBeInTheDocument();
+  });
+
+  it("shows the group total and the matching per-person range", () => {
+    render(<PlanResults plans={[PLAN]} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
+
+    expect(screen.getByText("$ 24.000 – $ 30.000", { exact: false })).toBeInTheDocument();
+    expect(screen.getByText("$ 12.000 – $ 15.000 por persona · 2 personas")).toBeInTheDocument();
   });
 
   it("shows the zone derived from the plan's first located stop", () => {
     render(<PlanResults plans={[PLAN]} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
 
     expect(screen.getByText("Luján de Cuyo")).toBeInTheDocument();
+  });
+
+  it("names a single-stop plan by the experience and shows its venue separately", () => {
+    const firstStop = PLAN.details[0];
+    if (!firstStop?.activity) throw new Error("The fixture needs an activity");
+    const singleStop: PlanDetailResult = {
+      ...PLAN,
+      details: [
+        {
+          ...firstStop,
+          activity: {
+            ...firstStop.activity,
+            name: "Almorzar entre viñedos",
+          },
+        },
+      ],
+    };
+
+    render(<PlanResults plans={[singleStop]} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
+
+    expect(
+      within(screen.getByTestId("hero-recommendation")).getByRole("heading", {
+        level: 2,
+        name: "Almorzar entre viñedos",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Bodega Central")).toBeInTheDocument();
+  });
+
+  it("explains when generated alternatives omit an unavailable experience", () => {
+    render(
+      <PlanResults
+        plans={[PLAN]}
+        unsupportedExperiences={["Cine"]}
+        onAdjust={vi.fn()}
+        onDiscard={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByText(/no encontramos opciones verificables para cine/i),
+    ).toHaveAttribute("role", "status");
+    expect(screen.getByText(/no incluyen esa experiencia/i)).toBeInTheDocument();
   });
 
   it("shows what was understood, with the person's own words and without defaults", () => {

@@ -79,3 +79,56 @@ export function stopEvidence(item: PlanItineraryItem): string[] {
     ? evidence.filter((line): line is string => typeof line === "string")
     : [];
 }
+
+export interface PlanScreeningFacts {
+  movieTitle: string;
+  format: string | null;
+  language: string | null;
+  room: string | null;
+  startsAt: string;
+  movieMinutes: number | null;
+  bookingUrl: string | null;
+  sourceUrl: string | null;
+  observedAt: string | null;
+}
+
+function safeHttpsUrl(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && !url.username && !url.password
+      ? url.href
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The current official showtime saved with a generated plan stop. */
+export function stopScreening(item: PlanItineraryItem): PlanScreeningFacts | null {
+  const value = item.stop?.estimateBasis?.screening;
+  if (!value || typeof value !== "object") return null;
+  const screening = value as Record<string, unknown>;
+  if (
+    typeof screening.movieTitle !== "string" ||
+    typeof screening.startsAt !== "string" ||
+    Number.isNaN(Date.parse(screening.startsAt))
+  )
+    return null;
+  return {
+    movieTitle: screening.movieTitle,
+    format: typeof screening.format === "string" ? screening.format : null,
+    language: typeof screening.language === "string" ? screening.language : null,
+    room: typeof screening.room === "string" ? screening.room : null,
+    startsAt: screening.startsAt,
+    movieMinutes:
+      typeof screening.movieMinutes === "number" ? screening.movieMinutes : null,
+    bookingUrl: safeHttpsUrl(screening.bookingUrl),
+    sourceUrl: safeHttpsUrl(screening.sourceUrl),
+    observedAt:
+      typeof screening.observedAt === "string" &&
+      !Number.isNaN(Date.parse(screening.observedAt))
+        ? screening.observedAt
+        : null,
+  };
+}

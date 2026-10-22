@@ -1,4 +1,4 @@
-import { formatPlanTotal, observedWhen } from "@/lib/utils";
+import { formatArs, formatPlanTotal, observedWhen } from "@/lib/utils";
 import type { PlanDetailResult } from "@/types";
 
 /**
@@ -26,4 +26,31 @@ export function hasMoneyToShow(plan: PlanDetailResult): boolean {
   if (plan.insight?.priceBasis === "PROVIDER_LIVE") return true;
   if (plan.insight?.budgetStatus === "WITHIN") return true;
   return plan.estimatedTotalCost != null && plan.priceCompleteness !== "NONE";
+}
+
+/** Group total is the saved source of truth; divide only when group size is known. */
+export function planPerPersonLine(plan: PlanDetailResult): string | null {
+  const people = plan.peopleCount;
+  const total = plan.estimatedTotalCost;
+  const completeness = plan.priceCompleteness;
+  if (
+    plan.insight?.priceBasis === "PROVIDER_LIVE" ||
+    typeof people !== "number" ||
+    !Number.isInteger(people) ||
+    people < 1 ||
+    total == null ||
+    completeness === "NONE"
+  )
+    return null;
+
+  const perPersonMin = total / people;
+  const max = plan.estimatedTotalCostMax;
+  if (completeness === "RANGE" && max != null && max !== total) {
+    return `${formatArs(perPersonMin)} – ${formatArs(max / people)} por persona · ${people} ${people === 1 ? "persona" : "personas"}`;
+  }
+  if (completeness === "PARTIAL" || completeness === "LOWER_BOUND") {
+    const hasUnpricedStops = (plan.unpricedCount ?? 0) > 0;
+    return `Desde ${formatArs(perPersonMin)} por persona${hasUnpricedStops ? " · hay paradas sin precio" : ""}`;
+  }
+  return `${formatArs(perPersonMin)} por persona · ${people} ${people === 1 ? "persona" : "personas"}`;
 }

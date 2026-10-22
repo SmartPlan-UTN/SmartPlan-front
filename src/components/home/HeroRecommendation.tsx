@@ -7,7 +7,7 @@ import { GoogleUiKitMedia } from "@/components/media/GoogleUiKitMedia";
 import { PLAN_SELECTION } from "@/components/plan/planSelectionContent";
 import { Button, Icon } from "@/components/ui";
 import { outingDetailRoute, planDetailRoute, ROUTES } from "@/lib/routes";
-import { hasMoneyToShow, planMoneyLine } from "@/lib/plans/planMoney";
+import { hasMoneyToShow, planMoneyLine, planPerPersonLine } from "@/lib/plans/planMoney";
 import {
   anchorOf,
   compactHours,
@@ -17,7 +17,7 @@ import {
   reasonsOf,
 } from "@/lib/plans/story";
 import { stopClock, stopLabel, stopPlace } from "@/lib/plans/stops";
-import { formatArs, observedWhen } from "@/lib/utils";
+import { formatArs, formatDuration, observedWhen } from "@/lib/utils";
 import type { PlanDetailResult, PlanFunnel, StopInsight } from "@/types";
 
 import { PlaceVisual } from "./PlaceVisual";
@@ -148,6 +148,7 @@ export function HeroRecommendation({
   const headline = planHeadline(plan);
   const reasons = reasonsOf(insight?.why);
   const money = planMoneyLine(plan);
+  const perPerson = planPerPersonLine(plan);
   const prep = (plan.readiness?.tasks ?? []).filter(
     (task) => task.required && task.status === "PENDING",
   );
@@ -198,7 +199,7 @@ export function HeroRecommendation({
 
       <div className={styles.story}>
         <p className={styles.kickerLine}>
-          {place?.kindLabel ? <span>{place.kindLabel}</span> : null}
+          {place?.name ? <span>{place.name}</span> : null}
           {place?.departmentName ? <span>{place.departmentName}</span> : null}
           {insight?.decisionGrade ? (
             <span className={styles.seal}>
@@ -216,6 +217,12 @@ export function HeroRecommendation({
         {insight?.tagline ? (
           <p className={styles.tagline}>{insight.tagline}</p>
         ) : null}
+        <p className={styles.planShape}>
+          {itinerary.length} {itinerary.length === 1 ? "actividad" : "actividades"}
+          {plan.estimatedTotalDuration > 0 ? (
+            <> · {formatDuration(plan.estimatedTotalDuration)} estimadas</>
+          ) : null}
+        </p>
 
         <dl className={styles.ledger}>
           <Row
@@ -252,6 +259,7 @@ export function HeroRecommendation({
                 <small>Preguntalo al llegar</small>
               </>
             )}
+            {perPerson ? <small>{perPerson}</small> : null}
           </Row>
           <Row label="Horario" muted={!stopInsight?.hours}>
             {stopInsight?.hours ? (

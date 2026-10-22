@@ -10,7 +10,8 @@ import {
   planHeadline,
 } from "@/lib/plans/story";
 import { outingDetailRoute, planDetailRoute, ROUTES } from "@/lib/routes";
-import { planMoneyLine } from "@/lib/plans/planMoney";
+import { planMoneyLine, planPerPersonLine } from "@/lib/plans/planMoney";
+import { formatDuration } from "@/lib/utils";
 import type { PlanDetailResult } from "@/types";
 
 import { PlaceVisual } from "./PlaceVisual";
@@ -69,8 +70,14 @@ export function AlternativeRow({
   const headline = planHeadline(plan);
   const hours = compactHours(anchor?.insight?.hours ?? null);
   const money = planMoneyLine(plan);
+  const perPerson = planPerPersonLine(plan);
   const googlePlaceId = place?.googlePlaceId ?? null;
-  const facts = [hours, money.value].filter(
+  const facts = [
+    `${plan.activityCount} ${plan.activityCount === 1 ? "actividad" : "actividades"}`,
+    plan.estimatedTotalDuration > 0 ? formatDuration(plan.estimatedTotalDuration) : null,
+    hours,
+    money.value,
+  ].filter(
     (fact): fact is string => Boolean(fact),
   );
   return (
@@ -111,7 +118,10 @@ export function AlternativeRow({
           <p className={styles.difference}>{sentence(insight.difference)}</p>
         ) : null}
         {facts.length ? (
-          <p className={styles.facts}>{facts.join(" · ")}</p>
+          <p className={styles.facts}>
+            <span>{facts.join(" · ")}</span>
+            {perPerson ? <small>{perPerson}</small> : null}
+          </p>
         ) : null}
         <div className={styles.actions}>
           {intended ? (

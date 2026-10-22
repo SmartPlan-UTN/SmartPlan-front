@@ -59,14 +59,74 @@ export const PLACEHOLDER_PHRASES = [
  * demonstration, that the field wants a sentence — which is the single
  * thing a first-time visitor has to learn here.
  */
-export const INTENTS: readonly { label: string; icon: IconName; query: string }[] = [
-  { label: "Hoy a la noche", icon: "moon", query: "Algo para hacer hoy a la noche, cerca del centro" },
-  { label: "Con amigos", icon: "users", query: "Una salida con amigos, para juntarnos y comer algo" },
-  { label: "Cita", icon: "heart", query: "Una cita al atardecer, con buena comida y vista" },
-  { label: "Comer algo", icon: "utensils", query: "Salir a comer algo rico, sin que sea una producción" },
-  { label: "Aire libre", icon: "trees", query: "Un plan al aire libre, con caminata y buen clima" },
-  { label: "Barato", icon: "wallet", query: "Un plan barato para el fin de semana, sin gastar mucho" },
-  { label: "Cerca mío", icon: "map-pin", query: "Algo cerca de donde estoy, que no me lleve todo el día" },
+export const INTENTS: readonly {
+  label: string;
+  icon: IconName;
+  queries: readonly string[];
+}[] = [
+  {
+    label: "Hoy a la noche",
+    icon: "moon",
+    queries: [
+      "¿Hacemos algo hoy a la noche? No tengo nada en mente.",
+      "Tengo ganas de salir esta noche, ¿qué hay para hacer por Mendoza?",
+      "Quiero una salida tranquila hoy a la noche.",
+    ],
+  },
+  {
+    label: "Con amigos",
+    icon: "users",
+    queries: [
+      "Che, juntada con amigos hoy a la noche. ¿Qué se te ocurre?",
+      "Somos varios y queremos comer algo rico, ¿a dónde podemos ir?",
+      "Tenemos ganas de tomar algo y charlar tranqui.",
+    ],
+  },
+  {
+    label: "Cita",
+    icon: "heart",
+    queries: [
+      "Quiero invitar a alguien a salir y no se me ocurre nada.",
+      "Una cita linda para dos, con hasta $80.000 entre los dos. ¿Qué puede funcionar?",
+      "Cena y cine esta noche. Elegí vos una peli de la cartelera y decime qué horarios hay y cuánto sale.",
+    ],
+  },
+  {
+    label: "Comer algo",
+    icon: "utensils",
+    queries: [
+      "Me dio hambre: quiero comer algo rico y sin tantas vueltas.",
+      "Tengo ganas de una buena pizza esta noche, ¿qué me recomendás?",
+      "¿Un lugar lindo para merendar y después dar una vuelta?",
+    ],
+  },
+  {
+    label: "Aire libre",
+    icon: "trees",
+    queries: [
+      "Necesito salir un rato, ¿qué lugar lindo hay al aire libre?",
+      "¿Dónde podemos ver el atardecer hoy?",
+      "Algo para hacer afuera este finde, tranqui.",
+    ],
+  },
+  {
+    label: "Barato",
+    icon: "wallet",
+    queries: [
+      "No quiero gastar mucho, pero sí salir. ¿Qué hacemos?",
+      "¿Un plan lindo y barato para este finde?",
+      "Tenemos poca plata para salir los dos; ¿qué puede salir?",
+    ],
+  },
+  {
+    label: "Cerca mío",
+    icon: "map-pin",
+    queries: [
+      "¿Qué hay cerca para hacer ahora?",
+      "Tengo ganas de salir, pero no quiero irme lejos.",
+      "¿Qué hay cerca para hacer hoy? No tengo ganas de manejar.",
+    ],
+  },
 ] as const;
 
 /* ── Inspiration scene ────────────────────────────────────────────── */

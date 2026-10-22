@@ -157,6 +157,14 @@
   line-height: 1.4;
 }
 
+.planShape {
+  margin: -10px 0 0;
+  color: var(--fg-3);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── Ledger ────────────────────────────────────────────────── */
 .ledger {
   margin: 2px 0 0;

@@ -10,6 +10,7 @@ import {
   stopHref,
   stopLabel,
   stopPlace,
+  stopScreening,
 } from "@/lib/plans/stops";
 import { formatDuration, googleMapsUrl, formatPrice } from "@/lib/utils";
 import type { PlanItineraryItem } from "@/types";
@@ -39,6 +40,8 @@ export function ItineraryStep({
   const clock = stopClock(detail);
   const evidence = stopEvidence(detail);
   const caveats = stopCaveats(detail);
+  const screening = stopScreening(detail);
+  const screeningUrl = screening?.bookingUrl ?? screening?.sourceUrl;
   const sourceUrl = detail.price?.sourceRef && /^https?:\/\//.test(detail.price.sourceRef)
     ? detail.price.sourceRef : null;
   const leg = detail.stop?.legTravelMinutes ?? null;
@@ -105,6 +108,37 @@ export function ItineraryStep({
               </span>
             ) : null}
           </div>
+
+          {screening ? (
+            <div className={styles.stepCinemaMeta}>
+              <span>
+                {[
+                  screening.format,
+                  screening.language,
+                  screening.room,
+                ].filter(Boolean).join(" · ") || "Función de cine"}
+                {screening.observedAt
+                  ? ` · cartelera consultada ${new Intl.DateTimeFormat("es-AR", {
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }).format(new Date(screening.observedAt))}`
+                  : " · horario publicado por el cine"}
+              </span>
+              {screeningUrl ? (
+                <a
+                  href={screeningUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={styles.stepCinemaLink}
+                >
+                  Ver función y entradas
+                  <Icon name="external-link" size={12} aria-hidden="true" />
+                </a>
+              ) : null}
+            </div>
+          ) : null}
 
           {evidence.length ? (
             <p className={styles.stepEvidence}>{evidence.join(" · ")}</p>

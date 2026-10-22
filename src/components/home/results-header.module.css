@@ -140,7 +140,7 @@
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -149,14 +149,14 @@
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 0 16px 0 12px;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 11px 0 9px;
   border: 1px solid var(--hairline);
   border-radius: var(--r-pill);
   background: var(--surface-card);
   color: var(--fg-1);
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1;
   box-shadow: 0 1px 0 rgba(26, 17, 9, 0.04);
@@ -165,13 +165,13 @@
 }
 
 .chipIcon {
-  font-size: 16px;
+  font-size: 13px;
   line-height: 1;
 }
 
 .chipSource {
   color: var(--fg-3);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
@@ -198,14 +198,14 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 40px;
-  padding: 0 14px 0 10px;
+  min-height: 32px;
+  padding: 0 10px 0 8px;
   border: 1px dashed color-mix(in srgb, var(--fg-3) 70%, transparent);
   border-radius: var(--r-pill);
   background: transparent;
   color: var(--fg-2);
   font: inherit;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: border-color 160ms ease, color 160ms ease, background-color 160ms ease;
@@ -392,9 +392,9 @@
   }
 
   .chip {
-    min-height: 38px;
-    padding: 0 13px 0 10px;
-    font-size: 14px;
+    min-height: 32px;
+    padding: 0 11px 0 9px;
+    font-size: 13px;
   }
 
   /* The panel becomes a sheet at the bottom, always inside the screen. */

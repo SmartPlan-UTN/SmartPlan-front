@@ -362,6 +362,32 @@
   font-size: var(--t-small);
 }
 
+.stepCinemaMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin-top: var(--s-2);
+  color: var(--fg-3);
+  font-size: var(--t-small);
+}
+
+.stepCinemaLink {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ember);
+  font-weight: var(--w-heading);
+  text-decoration: none;
+}
+
+.stepCinemaLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .stepActions {
   display: flex;
   flex-direction: column;

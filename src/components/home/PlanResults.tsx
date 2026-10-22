@@ -109,6 +109,7 @@ export function PlanResults({
   returnTo,
   understanding = null,
   funnel = null,
+  unsupportedExperiences = [],
   onAdjust,
   onDiscard,
   canAdjust = true,
@@ -273,6 +274,18 @@ export function PlanResults({
       >
         {statusNote?.text ?? ""}
       </p>
+
+      {unsupportedExperiences.length ? (
+        <p className={styles.liveWarn} role="status" aria-live="polite">
+          No encontramos opciones verificables para{" "}
+          {unsupportedExperiences
+            .map((experience) => experience.toLocaleLowerCase("es-AR"))
+            .join(", ")}. Estas propuestas son alternativas y no incluyen{" "}
+          {unsupportedExperiences.length === 1
+            ? "esa experiencia."
+            : "esas experiencias."}
+        </p>
+      ) : null}
 
       <HeroRecommendation
         key={hero.id}

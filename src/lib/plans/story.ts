@@ -1,4 +1,4 @@
-import { stopPlace } from "@/lib/plans/stops";
+import { stopLabel, stopPlace } from "@/lib/plans/stops";
 import type {
   PlanDetailResult,
   PlanItineraryItem,
@@ -37,10 +37,16 @@ export function anchorOf(plan: PlanDetailResult): PlanAnchor | null {
   };
 }
 
-/** What a recommendation is called: the place for one stop, else the story. */
+/** Name the experience first; keep its venue as supporting context. */
 export function planHeadline(plan: PlanDetailResult): string {
-  const anchor = anchorOf(plan);
-  if (plan.details.length === 1 && anchor?.place?.name) return anchor.place.name;
+  const itinerary = itineraryOf(plan);
+  if (itinerary.length === 1) {
+    const item = itinerary[0];
+    const label = stopLabel(item).trim();
+    if (label && label !== "Parada") return label;
+    const place = stopPlace(item);
+    if (place?.name) return place.name;
+  }
   return plan.title;
 }
 

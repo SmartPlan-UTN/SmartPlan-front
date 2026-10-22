@@ -14,6 +14,7 @@ const ADMIN_LINKS: Array<{ href: Route; label: string; icon: IconName }> = [
   { href: ROUTES.admin, label: "Inicio", icon: "layout-dashboard" },
   { href: ROUTES.adminActivities, label: "Actividades", icon: "sparkles" },
   { href: ROUTES.adminPlaces, label: "Lugares", icon: "map-pin" },
+  { href: ROUTES.adminMenus, label: "Cartas", icon: "utensils" },
   { href: ROUTES.adminPlans, label: "Planes", icon: "map" },
   { href: ROUTES.adminUsers, label: "Usuarios", icon: "users" },
   { href: ROUTES.adminReports, label: "Denuncias", icon: "flag" },

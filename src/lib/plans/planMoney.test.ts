@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { PlanDetailResult } from "@/types";
 
-import { hasMoneyToShow, planMoneyLine } from "./planMoney";
+import { hasMoneyToShow, planMoneyLine, planPerPersonLine } from "./planMoney";
 
 const plan = (overrides: Partial<PlanDetailResult> = {}) =>
   ({
@@ -36,5 +36,42 @@ describe("planMoneyLine", () => {
       hasMoneyToShow(plan({ estimatedTotalCost: 54000, priceCompleteness: "EXACT" } as never)),
     ).toBe(true);
     expect(hasMoneyToShow(plan())).toBe(false);
+  });
+});
+
+describe("planPerPersonLine", () => {
+  it("shows both ends of a menu estimate for the known group size", () => {
+    expect(
+      planPerPersonLine(
+        plan({
+          estimatedTotalCost: 80000,
+          estimatedTotalCostMax: 100000,
+          priceCompleteness: "RANGE",
+          peopleCount: 2,
+        } as never),
+      ),
+    ).toBe("$\u00a040.000 – $\u00a050.000 por persona · 2 personas");
+  });
+
+  it("labels partial prices as a lower bound and names the missing costs", () => {
+    expect(
+      planPerPersonLine(
+        plan({
+          estimatedTotalCost: 20000,
+          priceCompleteness: "PARTIAL",
+          unpricedCount: 1,
+          peopleCount: 2,
+        } as never),
+      ),
+    ).toBe("Desde $\u00a010.000 por persona · hay paradas sin precio");
+  });
+
+  it("does not invent a per-person value without party size or a known amount", () => {
+    expect(planPerPersonLine(plan({ estimatedTotalCost: 1000 } as never))).toBeNull();
+    expect(
+      planPerPersonLine(
+        plan({ estimatedTotalCost: 1000, peopleCount: 2, priceCompleteness: "NONE" } as never),
+      ),
+    ).toBeNull();
   });
 });
