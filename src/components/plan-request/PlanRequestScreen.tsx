@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { GenerationState } from "@/components/home/GenerationState";
 import { PlanResults } from "@/components/home/PlanResults";
+import { CommunityFindings } from "@/components/community/CommunityFindings";
 import { ResultsHeader } from "@/components/home/ResultsHeader";
 import { usePlanRequestPolling } from "@/hooks";
 import { ROUTES, planRequestRoute } from "@/lib/routes";
@@ -119,6 +120,7 @@ function PlanRequestBody({ requestId }: { requestId: number }) {
               ) : null
             }
           />
+          <CommunityFindings query={planning.query} />
         </div>
       ) : (
         <div className={styles.waitContent}>

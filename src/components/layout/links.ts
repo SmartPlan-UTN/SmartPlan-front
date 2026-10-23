@@ -21,6 +21,7 @@ export interface NavigationLink {
  */
 const HOME_LINK: NavigationLink = { href: ROUTES.home, label: "Inicio", icon: "house" };
 const EXPLORE_LINK: NavigationLink = { href: ROUTES.explore, label: "Explorar", icon: "search" };
+const COMMUNITY_LINK: NavigationLink = { href: ROUTES.community, label: "Comunidad", icon: "users" };
 const PLANS_LINK: NavigationLink = { href: ROUTES.plans, label: "Mis planes", icon: "route" };
 const FAVORITES_LINK: NavigationLink = { href: ROUTES.favorites, label: "Favoritos", icon: "heart" };
 
@@ -44,6 +45,7 @@ export const PLAN_OUTING_LINK: NavigationLink = {
 export const MAIN_LINKS: readonly NavigationLink[] = [
   HOME_LINK,
   EXPLORE_LINK,
+  COMMUNITY_LINK,
   PLANS_LINK,
   OUTINGS_LINK,
   FAVORITES_LINK,
@@ -58,6 +60,7 @@ export const MAIN_LINKS: readonly NavigationLink[] = [
  */
 export const MOBILE_LINKS: readonly NavigationLink[] = [
   EXPLORE_LINK,
+  COMMUNITY_LINK,
   PLANS_LINK,
   PLAN_OUTING_LINK,
   OUTINGS_LINK,

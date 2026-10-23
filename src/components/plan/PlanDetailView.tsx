@@ -11,7 +11,7 @@ import { useFavorites } from "@/context";
 import { useDetailFetch, usePlanSelection } from "@/hooks";
 import { ApiError, cancelOwnPlan, getOwnPlan, getPlan } from "@/lib/api";
 import { useSession } from "@/lib/auth";
-import { loginRoute, outingDetailRoute, planDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
+import { communityCreatorRoute, loginRoute, outingDetailRoute, planDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
 import { stopLabel } from "@/lib/plans/stops";
 import { formatDuration, formatPrice, formatPlanTotal, formatPerPerson } from "@/lib/utils";
 import type {
@@ -261,6 +261,9 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
   const removedByModeration = ownPlan?.removedByModeration === true;
   const published =
     plan.kind === "authored" && visibility === "public" && plan.status.key !== "cancelled";
+  const communityIdea = plan.kind === "authored" && visibility === "public";
+  const communityPricesNeedConfirmation =
+    communityIdea && plan.details.some((detail) => detail.price?.stale === true);
 
   return (
     <div>
@@ -289,7 +292,7 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
           <Icon name="route" size={110} className={styles.heroIcon} />
         )}
         <Badge variant="cost" className={styles.heroCostBadge}>
-          {formatPlanTotal(plan)}
+          {communityPricesNeedConfirmation ? "Precios a confirmar" : formatPlanTotal(plan)}
         </Badge>
 
         <div className={styles.heroTitleBlock}>
@@ -317,6 +320,12 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
       </div>
 
       <div className={styles.content}>
+        {plan.inspiredBy ? (
+          <p className="sp-small">
+            Inspirado en <Link href={planDetailRoute(plan.inspiredBy.id)}>{plan.inspiredBy.title}</Link>
+            {plan.inspiredBy.creatorUsername ? <> · por <Link href={communityCreatorRoute(plan.inspiredBy.creatorUsername)}>@{plan.inspiredBy.creatorUsername}</Link></> : null}
+          </p>
+        ) : null}
         {plan.status.key === "cancelled" ? (
           <div className={styles.cancelledBanner} role="status">
             <Icon name="triangle-alert" size={20} aria-hidden="true" />
@@ -349,7 +358,12 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
         </div>
 
         <div className={styles.costBox}>
-          <p className={styles.costBoxLabel}>estimación de costos</p>
+          <p className={styles.costBoxLabel}>{communityIdea ? "referencias de costos" : "estimación de costos"}</p>
+          {communityIdea ? (
+            <p className="sp-small">
+              Esta idea conserva los valores registrados al compartirla. Confirmá precios y horarios antes de salir.
+            </p>
+          ) : null}
           <div className={styles.costBreakdown}>
             {plan.details.map((detail) => (
               <div className={styles.costRow} key={detail.id}>
@@ -364,7 +378,7 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
           <div className={styles.costTotalRow}>
             <span className={styles.costRowLabel}>Total</span>
             <span className={styles.costTotalValue}>
-              {formatPlanTotal(plan)}
+              {communityPricesNeedConfirmation ? "Valores a confirmar" : formatPlanTotal(plan)}
             </span>
           </div>
           {ownPlan && ownPlan.peopleCount > 0 ? (
@@ -425,6 +439,12 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
         ) : null}
 
         <div className={styles.actionBar}>
+          {published ? (
+            <Link href={`${ROUTES.createPlan}?inspiredBy=${plan.id}`} className={styles.ownerActionLink}>
+              <Icon name="sparkles" size={16} aria-hidden="true" />
+              Adaptar este plan
+            </Link>
+          ) : null}
           {sessionStatus === "authenticated" && isAuthor && plan.status.key !== "cancelled" ? (
             <>
               <Link href={planEditRoute(planId)} className={styles.ownerActionLink}>

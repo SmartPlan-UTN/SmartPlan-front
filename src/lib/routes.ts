@@ -12,6 +12,7 @@ export const ROUTES = {
   home: "/",
   planRequests: "/plan-requests",
   explore: "/explore",
+  community: "/community",
   exploreMap: "/explore/map",
   plans: "/plans",
   createPlan: "/plans/create",
@@ -42,6 +43,14 @@ export const ROUTES = {
   adminUsers: "/admin/users",
 } as const;
 
+export function communityCreatorRoute(username: string): string {
+  return `${ROUTES.community}/creators/${encodeURIComponent(username)}`;
+}
+
+export function communityExperienceRoute(id: number): string {
+  return `${ROUTES.community}/experiences/${id}`;
+}
+
 export type Route = (typeof ROUTES)[keyof typeof ROUTES];
 
 /** `/explore/:id` — activity detail (CU14). */
@@ -66,7 +75,7 @@ export function planDetailRoute(id: number, returnTo?: string): string {
 /** Only known plan entry screens can be used as a return destination. */
 export function planDetailOrigin(value: string | string[] | null | undefined): string {
   if (typeof value !== "string") return ROUTES.explore;
-  if ([ROUTES.home, ROUTES.explore, ROUTES.plans, ROUTES.favorites].some((route) => route === value)) {
+  if ([ROUTES.home, ROUTES.explore, ROUTES.community, ROUTES.plans, ROUTES.favorites].some((route) => route === value)) {
     return value;
   }
   const match = /^\/plan-requests\/([1-9]\d*)$/.exec(value);

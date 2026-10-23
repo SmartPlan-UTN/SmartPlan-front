@@ -249,6 +249,29 @@ it("shows unrated plans and itinerary stops without fabricated zero scores", asy
   expect(screen.queryByRole("img", { name: "0 de 5 estrellas" })).not.toBeInTheDocument();
 });
 
+it("labels stale prices on public community ideas and hides their old total", async () => {
+  const communityIdea = plan();
+  communityIdea.details[0].price = {
+    kind: "FIXED",
+    min: 8500,
+    max: 8500,
+    unit: "PER_PERSON",
+    currency: "ARS",
+    source: "CURATED",
+    sourceRef: "https://example.test/old-price",
+    verifiedAt: "2026-01-05T00:00:00.000Z",
+    confidence: "HIGH",
+    stale: true,
+  };
+  getPlan.mockResolvedValue(communityIdea);
+  render(<PlanDetailView planId={7} />);
+
+  expect(await screen.findByText("Precios a confirmar")).toBeInTheDocument();
+  expect(screen.getByText("Valores a confirmar")).toBeInTheDocument();
+  expect(screen.getByText(/Precio de referencia de enero de 2026/)).toBeInTheDocument();
+  expect(screen.getByText(/conserva los valores registrados al compartirla/)).toBeInTheDocument();
+});
+
 async function renderDetail(
   viewerPlanState: ViewerPlanState,
   overrides: Partial<PlanDetailResult> = {},

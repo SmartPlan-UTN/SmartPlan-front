@@ -292,6 +292,7 @@ export interface PlanDetailResult extends PlanSearchResult {
   activeOutingId: number | null;
   kind: PlanKind;
   visibility: PlanVisibility;
+  inspiredBy?: { id: number; title: string; creatorUsername: string | null } | null;
   /** The caller owns this plan, result, or outing. */
   ownedByViewer: boolean;
   /** When the plan starts, for plans the planner placed on a date. */
@@ -614,6 +615,7 @@ export interface CreatePlanComposerDto {
   description: string | null;
   peopleCount: number;
   visibility: PlanVisibility;
+  inspiredByPlanId?: number;
   stops: PlanComposerStopDto[];
 }
 

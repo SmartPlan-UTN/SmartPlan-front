@@ -61,7 +61,7 @@ function experience(overrides: Partial<CommunityExperience> = {}): CommunityExpe
     tags: ["would_recommend"],
     comment: "Imperdible al atardecer",
     completedAt: "2026-09-14T18:00:00.000Z",
-    author: { alias: "Lucía M.", avatarUrl: null },
+    author: { alias: "Lucía M.", username: "lucia", avatarUrl: null },
     photos: [photo(1), photo(2)],
     isOwn: false,
     ...overrides,
@@ -112,7 +112,7 @@ describe("CommunityExperiences (#106)", () => {
     ).toBeInTheDocument();
 
     const card = screen.getByRole("article", { name: "Experiencia de Lucía M." });
-    expect(within(card).getByText("Lucía M.")).toBeInTheDocument();
+    expect(within(card).getByRole("link", { name: "@lucia" })).toBeInTheDocument();
     expect(within(card).getByText("Lo hizo en septiembre de 2026")).toBeInTheDocument();
     expect(within(card).getByText("Lo recomendaría")).toBeInTheDocument();
     expect(within(card).getByText("“Imperdible al atardecer”")).toBeInTheDocument();

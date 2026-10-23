@@ -382,7 +382,7 @@
   left: max(var(--s-3), env(safe-area-inset-left));
   z-index: 55;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   align-items: end;
   min-height: var(--mobile-nav-h);
   padding: 5px 6px;
@@ -443,6 +443,12 @@
   color: var(--ember);
 }
 
+@media (max-width: 560px) {
+  .mobileNavLink {
+    font-size: 10px;
+  }
+}
+
 .mobileNavCreate {
   color: var(--fg-1);
 }
@@ -468,6 +474,10 @@
 
   .mobileNavLink {
     letter-spacing: -0.01em;
+  }
+
+  .mobileNavLabel {
+    font-size: 0;
   }
 }
 

@@ -160,10 +160,10 @@ describe("OutingDetailView (#130, CU22, CU23)", () => {
       "aria-checked",
       "true",
     );
-    expect(screen.getByText("No se ve ahora")).toBeInTheDocument();
+    expect(screen.getByText("El plan original ya no está disponible")).toBeInTheDocument();
     unmount();
 
-    // A private one has nothing left to share it with.
+    // A completed outing stays shareable on its own, even when its source is private.
     getOuting.mockResolvedValue(
       outingDetail({
         status: "completed",
@@ -175,7 +175,10 @@ describe("OutingDetailView (#130, CU22, CU23)", () => {
     );
     render(<OutingDetailView outingId={40} />);
     expect(await screen.findByText("Tu experiencia")).toBeInTheDocument();
-    expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+    expect(await screen.findByRole("switch", { name: "Compartir con la comunidad" })).toHaveAttribute(
+      "aria-checked",
+      "false",
+    );
   });
 
   it("explains a missing outing", async () => {

@@ -12,7 +12,7 @@ import {
   stopPlace,
   stopScreening,
 } from "@/lib/plans/stops";
-import { formatDuration, googleMapsUrl, formatPrice } from "@/lib/utils";
+import { formatDuration, googleMapsUrl, formatPrice, priceCaveat } from "@/lib/utils";
 import type { PlanItineraryItem } from "@/types";
 
 import styles from "./plan.module.css";
@@ -40,6 +40,12 @@ export function ItineraryStep({
   const clock = stopClock(detail);
   const evidence = stopEvidence(detail);
   const caveats = stopCaveats(detail);
+  const savedPriceCaveat = detail.price
+    ? priceCaveat({ estimatedCost: detail.estimatedCost, price: detail.price })
+    : null;
+  if (savedPriceCaveat && !caveats.includes(savedPriceCaveat)) {
+    caveats.push(savedPriceCaveat);
+  }
   const screening = stopScreening(detail);
   const screeningUrl = screening?.bookingUrl ?? screening?.sourceUrl;
   const sourceUrl = detail.price?.sourceRef && /^https?:\/\//.test(detail.price.sourceRef)

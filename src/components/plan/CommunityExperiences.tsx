@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useId, useState } from "react";
+import Link from "next/link";
 
 import { FEEDBACK_TAG_LABELS, FEEDBACK_TAG_ORDER, ratingLabel } from "@/components/feedback";
 import { AuthenticatedImage, MediaLightbox } from "@/components/media";
@@ -10,6 +11,7 @@ import { getPlanExperiences } from "@/lib/api";
 import type { CommunityExperience, CommunityExperiencesSummary, MediaImage } from "@/types";
 
 import { COMMUNITY_COPY } from "./communityContent";
+import { communityCreatorRoute } from "@/lib/routes";
 import styles from "./community.module.css";
 
 export interface CommunityExperiencesProps {
@@ -341,11 +343,13 @@ function ExperienceCard({
         <UserAvatar
           name={name}
           lastName={initial}
-          userId={aliasHash(experience.author.alias)}
+          userId={aliasHash(experience.author.username ?? experience.author.alias)}
           avatarUrl={experience.author.avatarUrl}
         />
         <div className={styles.cardAuthor}>
-          <span className={styles.authorName}>{experience.author.alias}</span>
+          <Link className={styles.authorName} href={communityCreatorRoute(experience.author.username ?? "viajero")}>
+            @{experience.author.username ?? "viajero"}
+          </Link>
           {experience.completedAt ? (
             <span className={styles.cardDate}>
               {COMMUNITY_COPY.doneIn(monthFormatter.format(new Date(experience.completedAt)))}

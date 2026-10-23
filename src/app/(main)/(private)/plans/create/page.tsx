@@ -16,10 +16,11 @@ export const metadata: Metadata = {
 export default async function CreatePlanPage({
   searchParams,
 }: {
-  searchParams: Promise<{ activityId?: string; source?: string }>;
+  searchParams: Promise<{ activityId?: string; source?: string; inspiredBy?: string }>;
 }) {
   const query = await searchParams;
   const initialActivityId = parsePositiveIntId(query.activityId ?? "");
+  const inspiredByPlanId = parsePositiveIntId(query.inspiredBy ?? "");
   const returnToActivity =
     query.source === "activity" && initialActivityId !== null;
   const backHref =
@@ -36,13 +37,14 @@ export default async function CreatePlanPage({
         </Link>
         <span aria-hidden="true">/</span>
         <h1 id="create-plan-title" className={styles.composerTitle}>
-          Nuevo plan
+          {inspiredByPlanId ? "Adaptar un plan" : "Nuevo plan"}
         </h1>
       </header>
 
       <CreatePlanForm
         initialActivityId={initialActivityId ?? undefined}
         returnToActivity={returnToActivity}
+        inspiredByPlanId={inspiredByPlanId ?? undefined}
       />
     </Screen>
   );

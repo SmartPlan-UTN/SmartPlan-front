@@ -9,6 +9,7 @@ import { useDebouncedValue, useExplorationSearch } from "@/hooks";
 import {
   createPlanFromComposer,
   getActivity,
+  getPlan,
   searchActivities,
   updatePlanFromComposer,
 } from "@/lib/api";
@@ -17,6 +18,7 @@ import { activityDetailRoute, planDetailRoute, ROUTES } from "@/lib/routes";
 import type {
   ActivitySearchParams,
   ActivitySearchResult,
+  PlanDetailResult,
   AssistantProposal,
   OwnPlanDetail,
   PlanVisibility,
@@ -31,6 +33,7 @@ import {
   getDraftKey,
   type ComposerDraft,
   type ComposerStop,
+  placeComposerStop,
 } from "./composer/draft";
 import { IdeaStep } from "./composer/IdeaStep";
 import {
@@ -62,12 +65,14 @@ type ComposerMode =
       plan?: never;
       initialActivityId?: number;
       returnToActivity?: boolean;
+      inspiredByPlanId?: number;
     }
   | {
       mode: "edit";
       plan: OwnPlanDetail;
       initialActivityId?: never;
       returnToActivity?: never;
+      inspiredByPlanId?: never;
     };
 
 export type PlanComposerProps = ComposerMode;
@@ -90,6 +95,7 @@ export function PlanComposer({
   plan,
   initialActivityId,
   returnToActivity = false,
+  inspiredByPlanId,
 }: PlanComposerProps) {
   const router = useRouter();
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -132,7 +138,7 @@ export function PlanComposer({
   const [pinnedStopId, setPinnedStopId] = useState<number | null>(null);
   const linkedActivityId = focusedActivityId ?? pinnedStopId;
   const [prefillLoading, setPrefillLoading] = useState(
-    Boolean(initialActivityId),
+    Boolean(initialActivityId || inspiredByPlanId),
   );
   const [prefillError, setPrefillError] = useState<string | null>(null);
   const [notice, setNotice] = useState<UndoNotice | null>(null);
@@ -354,6 +360,67 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
       active = false;
     };
   }, [initialActivityId]);
+
+  useEffect(() => {
+    if (!inspiredByPlanId) return;
+    let active = true;
+    getPlan(inspiredByPlanId)
+      .then((source: PlanDetailResult) => {
+        if (!active) return;
+        const stops: ComposerStop[] = source.details.map((detail) => {
+          if (!detail.activity) {
+            const stop = detail.stop;
+            const place = stop?.place;
+            const action = stop?.action;
+            if (!stop || !place || !action) throw new Error("A public plan stop has no available place.");
+            return {
+              ...placeComposerStop(place, {
+                action,
+                label: stop.actionLabel ?? stop.label,
+                durationMinutes: detail.estimatedDuration,
+                price: detail.price ?? null,
+              }),
+              estimatedCost: detail.estimatedCost,
+            };
+          }
+          const activity: ActivitySearchResult = {
+            id: detail.activity.id,
+            name: detail.activity.name,
+            description: detail.activity.description,
+            estimatedCost: detail.activity.estimatedCost,
+            price: detail.activity.price ?? detail.price ?? null,
+            estimatedDuration: detail.activity.estimatedDuration,
+            type: detail.activity.type,
+            averageRating: detail.activity.averageRating,
+            ratingCount: detail.activity.ratingCount,
+            distanceKm: null,
+            categories: detail.activity.categories,
+          };
+          return {
+            activity: { ...activity },
+            estimatedCost: detail.estimatedCost,
+            price: detail.price ?? activity.price ?? null,
+            estimatedDuration: detail.estimatedDuration,
+          };
+        });
+        const adapted: ComposerDraft = {
+          title: source.title,
+          description: source.description ?? "",
+          peopleCount: source.peopleCount ?? 2,
+          visibility: "private",
+          stops,
+        };
+        setDraft(adapted);
+        setStep(1);
+        initialDraftKeyRef.current = getDraftKey(adapted);
+        setAnnouncement(`Borrador inspirado en ${source.title}. Podés editarlo antes de guardar.`);
+      })
+      .catch(() => {
+        if (active) setPrefillError("No pudimos abrir el plan de inspiración. Podés armar el tuyo desde el catálogo.");
+      })
+      .finally(() => { if (active) setPrefillLoading(false); });
+    return () => { active = false; };
+  }, [inspiredByPlanId]);
 
   function updateDraft<Key extends keyof ComposerDraft>(
     field: Key,
@@ -603,6 +670,7 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
       description: draft.description.trim() || null,
       peopleCount: draft.peopleCount,
       visibility: draft.visibility,
+      ...(mode === "create" && inspiredByPlanId ? { inspiredByPlanId } : {}),
       stops: draft.stops.map((stop) => ({
         ...composerTarget(stop),
         ...(stop.detailId === undefined ? {} : { detailId: stop.detailId }),

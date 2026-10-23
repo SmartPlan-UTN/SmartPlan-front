@@ -14,6 +14,8 @@ import styles from "./profile.module.css";
 interface FieldErrors {
   name?: string;
   lastName?: string;
+  username?: string;
+  bio?: string;
 }
 
 /** Matches `SmartPlan-back`'s `update-profile.dto.ts`: `name`/`lastName`
@@ -30,6 +32,8 @@ function saveErrorMessage(error: ApiError): string {
   if (error.code === "VALIDATION_FAILED") {
     return "Revisá los datos ingresados.";
   }
+
+  if (error.code === "USERNAME_UNAVAILABLE") return "Ese username ya está en uso. Probá con otro.";
 
   if (error.isForbidden) {
     return "No tenés permiso para hacer esto.";
@@ -71,13 +75,17 @@ function fieldErrorsFrom(error: ApiError): FieldErrors {
       fieldErrors.name = message;
     } else if (detail.field === "lastName") {
       fieldErrors.lastName = message;
+    } else if (detail.field === "username") {
+      fieldErrors.username = message;
+    } else if (detail.field === "bio") {
+      fieldErrors.bio = message;
     }
   }
 
   return fieldErrors;
 }
 
-function validate(name: string, lastName: string): FieldErrors {
+function validate(name: string, lastName: string, username: string, bio: string): FieldErrors {
   const errors: FieldErrors = {};
 
   if (!name.trim()) {
@@ -91,6 +99,12 @@ function validate(name: string, lastName: string): FieldErrors {
   } else if (lastName.trim().length > MAX_NAME_LENGTH) {
     errors.lastName = `Máximo ${MAX_NAME_LENGTH} caracteres`;
   }
+
+  const normalizedUsername = username.trim().toLowerCase().replace(/^@/, "");
+  if (!/^[a-z0-9_]{3,24}$/.test(normalizedUsername)) {
+    errors.username = "Usá de 3 a 24 letras, números o guion bajo.";
+  }
+  if (bio.length > 160) errors.bio = "Máximo 160 caracteres.";
 
   return errors;
 }
@@ -110,6 +124,8 @@ export function ProfileForm() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
+  const [bio, setBio] = useState("");
   // Read-only until "Editar perfil" is clicked (CU5): landing on the screen
   // with the fields already open for editing made it too easy to change
   // something by accident while just checking your own data.
@@ -136,6 +152,8 @@ export function ProfileForm() {
         setProfile(loaded);
         setName(loaded.name);
         setLastName(loaded.lastName);
+        setUsername(loaded.username ?? `viajero${loaded.id}`);
+        setBio(loaded.bio ?? "");
         setStatus("loaded");
       } catch {
         // Same reasoning as the save path: whatever failed (network, 5xx,
@@ -157,6 +175,8 @@ export function ProfileForm() {
     if (!profile) return;
     setName(profile.name);
     setLastName(profile.lastName);
+    setUsername(profile.username ?? `viajero${profile.id}`);
+    setBio(profile.bio ?? "");
     setFieldErrors({});
     setFormError(null);
   }
@@ -173,7 +193,7 @@ export function ProfileForm() {
   async function submit() {
     setFormError(null);
 
-    const errors = validate(name, lastName);
+    const errors = validate(name, lastName, username, bio);
     setFieldErrors(errors);
     if (errors.name || errors.lastName) {
       return;
@@ -184,10 +204,14 @@ export function ProfileForm() {
       const updated = await updateProfile({
         name: name.trim(),
         lastName: lastName.trim(),
+        username: username.trim().toLowerCase().replace(/^@/, ""),
+        bio: bio.trim(),
       });
       setProfile(updated);
       setName(updated.name);
       setLastName(updated.lastName);
+      setUsername(updated.username ?? `viajero${updated.id}`);
+      setBio(updated.bio ?? "");
       setEditing(false);
       setToastState("visible");
       setTimeout(() => {
@@ -389,6 +413,31 @@ export function ProfileForm() {
           </div>
 
           <Field label="Email" type="email" value={profile.email} disabled />
+
+          <div className={styles.divider} />
+          <div className={styles.sectionHeader}>
+            <p className={`sp-label ${styles.sectionLabel}`}>Tu identidad en Comunidad</p>
+          </div>
+          <Field
+            label="Username"
+            type="text"
+            autoComplete="off"
+            value={username}
+            onChange={(event) => setUsername(event.target.value.replace(/^@/, "").slice(0, 24))}
+            error={fieldErrors.username}
+            disabled={!editing || saving}
+            required
+          />
+          <p className={styles.avatarHint}>Se muestra al compartir. Usá de 3 a 24 letras, números o guion bajo.</p>
+          <Field
+            label="Biografía (opcional)"
+            type="text"
+            value={bio}
+            onChange={(event) => setBio(event.target.value.slice(0, 160))}
+            error={fieldErrors.bio}
+            disabled={!editing || saving}
+          />
+          <p className={styles.avatarHint}>Tu nombre legal, email y teléfono no aparecen en tu perfil público.</p>
 
           <div className={styles.divider} />
 
