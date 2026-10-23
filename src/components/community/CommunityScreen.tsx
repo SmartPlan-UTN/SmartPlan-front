@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { AuthenticatedImage } from "@/components/media";
 import { FEEDBACK_TAG_LABELS } from "@/components/feedback";
 import { Button, Icon } from "@/components/ui";
 import { getCommunityExperiences, getCommunityPlans } from "@/lib/api";
-import { communityCreatorRoute, communityExperienceRoute, planDetailRoute } from "@/lib/routes";
+import { communityCreatorRoute, communityExperienceRoute, planDetailRoute, ROUTES } from "@/lib/routes";
 import type { CommunityExperience, CommunityPlan } from "@/types";
 import styles from "./community.module.css";
 
@@ -15,36 +15,46 @@ export function CommunityScreen() {
   const [plans, setPlans] = useState<CommunityPlan[]>([]);
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState("");
-  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+  const [storiesState, setStoriesState] = useState<"loading" | "ready" | "error">("loading");
+  const [plansState, setPlansState] = useState<"loading" | "ready" | "error">("loading");
+  const requestSequence = useRef(0);
 
-  const load = useCallback(async (search = "") => {
-    setState("loading");
-    try {
-      const [experiencePage, planPage] = await Promise.all([
-        getCommunityExperiences({ page: 1, limit: 8, q: search || undefined }),
-        getCommunityPlans({ page: 1, limit: 6, q: search || undefined }),
-      ]);
-      setStories(experiencePage.data);
-      setPlans(planPage.data);
-      setState("ready");
-    } catch {
-      setState("error");
+  const fetchResults = useCallback(async (search: string, sequence: number) => {
+    const results = await Promise.allSettled([
+      getCommunityExperiences({ page: 1, limit: 8, q: search || undefined }),
+      getCommunityPlans({ page: 1, limit: 6, q: search || undefined }),
+    ]);
+    if (sequence !== requestSequence.current) return;
+
+    const [experienceResult, planResult] = results;
+    if (experienceResult.status === "fulfilled") {
+      setStories(experienceResult.value.data);
+      setStoriesState("ready");
+    } else {
+      setStoriesState("error");
+    }
+    if (planResult.status === "fulfilled") {
+      setPlans(planResult.value.data);
+      setPlansState("ready");
+    } else {
+      setPlansState("error");
     }
   }, []);
 
+  const load = useCallback(async (search = "") => {
+    const sequence = ++requestSequence.current;
+    setStories([]);
+    setPlans([]);
+    setStoriesState("loading");
+    setPlansState("loading");
+    await fetchResults(search, sequence);
+  }, [fetchResults]);
+
   useEffect(() => {
-    let active = true;
-    Promise.all([
-      getCommunityExperiences({ page: 1, limit: 8 }),
-      getCommunityPlans({ page: 1, limit: 6 }),
-    ]).then(([experiencePage, planPage]) => {
-      if (!active) return;
-      setStories(experiencePage.data);
-      setPlans(planPage.data);
-      setState("ready");
-    }).catch(() => { if (active) setState("error"); });
-    return () => { active = false; };
-  }, []);
+    const sequence = ++requestSequence.current;
+    void Promise.resolve().then(() => fetchResults("", sequence));
+    return () => { requestSequence.current += 1; };
+  }, [fetchResults]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -66,19 +76,26 @@ export function CommunityScreen() {
         </form>
       </header>
 
-      {state === "error" ? <div className={styles.state}><p>No pudimos traer las historias ahora.</p><Button variant="secondary" onClick={() => void load(query)}>Reintentar</Button></div> : null}
-      {state === "loading" ? <div className={styles.state} role="status">Cargando la bitácora…</div> : null}
-
-      {state === "ready" ? <>
-        <section className={styles.section} aria-labelledby="stories-heading">
-          <div className={styles.sectionHead}><div><p className={styles.eyebrow}>VIVENCIAS</p><h2 id="stories-heading">Así se sintió estar ahí</h2></div><span className={styles.note}>Salidas completadas y compartidas</span></div>
-          {stories.length ? <div className={styles.storyGrid}>{stories.map((story, index) => <StoryCard key={story.id} story={story} featured={index === 0} />)}</div> : <p className={styles.empty}>Todavía no hay vivencias para esta búsqueda. Podés empezar con una idea.</p>}
-        </section>
-        <section className={styles.section} aria-labelledby="ideas-heading">
-          <div className={styles.sectionHead}><div><p className={styles.eyebrow}>IDEAS PARA HACER</p><h2 id="ideas-heading">Un buen plan empieza acá</h2></div><span className={styles.note}>Planes públicos de la comunidad</span></div>
-          {plans.length ? <div className={styles.planGrid}>{plans.map((plan) => <PlanCard key={plan.id} plan={plan} />)}</div> : <p className={styles.empty}>No encontramos ideas con ese criterio.</p>}
-        </section>
-      </> : null}
+      <section className={styles.section} aria-labelledby="stories-heading" aria-busy={storiesState === "loading"}>
+        <div className={styles.sectionHead}><div><p className={styles.eyebrow}>VIVENCIAS</p><h2 id="stories-heading">Así se sintió estar ahí</h2></div><span className={styles.note}>Salidas completadas y compartidas</span></div>
+        {storiesState === "loading" ? <p className={styles.empty} role="status">Buscando vivencias…</p> : null}
+        {storiesState === "error" ? <p className={styles.empty} role="alert">No pudimos cargar las vivencias. <button className={styles.emptyLink} type="button" onClick={() => void load(query)}>Reintentar</button></p> : null}
+        {storiesState === "ready" && stories.length > 0 ? <div className={styles.storyGrid}>{stories.map((story, index) => <StoryCard key={story.id} story={story} featured={index === 0} />)}</div> : null}
+        {storiesState === "ready" && stories.length === 0 ? <div className={styles.empty}>
+          <p>{query ? "No encontramos vivencias con esa búsqueda." : "Todavía no hay vivencias compartidas por acá."}</p>
+          {query ? <Link className={styles.emptyLink} href="#ideas-heading">Explorar ideas de la comunidad</Link> : <Link className={styles.emptyLink} href={ROUTES.outings}>¿Ya saliste? Compartí una vivencia desde Mis salidas</Link>}
+        </div> : null}
+      </section>
+      <section className={styles.section} aria-labelledby="ideas-heading" aria-busy={plansState === "loading"}>
+        <div className={styles.sectionHead}><div><p className={styles.eyebrow}>IDEAS PARA HACER</p><h2 id="ideas-heading">Un buen plan empieza acá</h2></div><span className={styles.note}>Planes públicos de la comunidad</span></div>
+        {plansState === "loading" ? <p className={styles.empty} role="status">Buscando ideas…</p> : null}
+        {plansState === "error" ? <p className={styles.empty} role="alert">No pudimos cargar las ideas. <button className={styles.emptyLink} type="button" onClick={() => void load(query)}>Reintentar</button></p> : null}
+        {plansState === "ready" && plans.length > 0 ? <div className={styles.planGrid}>{plans.map((plan) => <PlanCard key={plan.id} plan={plan} />)}</div> : null}
+        {plansState === "ready" && plans.length === 0 ? <div className={styles.empty}>
+          <p>{query ? "No encontramos planes con esa búsqueda." : "Cuando alguien comparta una idea, la vas a encontrar acá."}</p>
+          <Link className={styles.emptyLink} href={ROUTES.createPlan}>Crear un plan para la comunidad</Link>
+        </div> : null}
+      </section>
     </div>
   );
 }
