@@ -304,6 +304,42 @@
   font-size: var(--t-label);
 }
 
+.stepBody {
+  min-width: 0;
+  flex: 1 1 260px;
+}
+
+/* Planned start of the stop ("21:00"): the timeline reads at a glance. */
+.stepTime {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--r-chip);
+  background: var(--char);
+  color: var(--fg-on-dark);
+  font-size: var(--t-label);
+  font-weight: var(--w-heading);
+  font-variant-numeric: tabular-nums;
+}
+
+/* What backs the stop ("Precio oficial, verificado hace 3 días"). */
+.stepEvidence {
+  margin: var(--s-2) 0 0;
+  color: var(--fg-3);
+  font-size: var(--t-label);
+  line-height: 1.4;
+}
+
+/* What is still unconfirmed: calm, never alarming. */
+.stepCaveat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: var(--s-1) 0 0;
+  color: var(--warning-ink, var(--fg-3));
+  font-size: var(--t-label);
+}
+
 .stepName {
   margin: 0 0 var(--s-1);
   color: var(--fg-1);
@@ -326,11 +362,38 @@
   font-size: var(--t-small);
 }
 
+.stepCinemaMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin-top: var(--s-2);
+  color: var(--fg-3);
+  font-size: var(--t-small);
+}
+
+.stepCinemaLink {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ember);
+  font-weight: var(--w-heading);
+  text-decoration: none;
+}
+
+.stepCinemaLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .stepActions {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   flex-shrink: 0;
+  max-width: 100%;
   gap: var(--s-2);
 }
 
@@ -339,11 +402,15 @@
   color: var(--ember);
   font-size: var(--t-h4);
   font-weight: var(--w-heading);
-  line-height: 1;
+  line-height: 1.25;
+  text-align: right;
 }
 
 .stepLinks {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 100%;
   align-items: center;
   gap: var(--s-3);
 }

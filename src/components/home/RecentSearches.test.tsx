@@ -43,13 +43,18 @@ describe("RecentSearches", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("links each search to its results", () => {
+  it("shows only the newest search and keeps its full label available on hover", () => {
+    const query = "Una salida larguísima con amigos, buena comida y una sobremesa sin apuro";
     useRecentPlanRequests.mockReturnValue({
       status: "ready",
       requests: [
-        summary(42, { planTitles: ["Cena con vista", "Paseo y vino"] }),
-        summary(41, { mode: "surprise", query: null, planCount: 1 }),
-        summary(40, { statusKey: "processing", planCount: 0 }),
+        summary(42, { requestedAt: new Date(Date.now() - 86_400_000).toISOString() }),
+        summary(41, { requestedAt: today, query }),
+        summary(40, {
+          requestedAt: new Date(Date.now() - 2 * 86_400_000).toISOString(),
+          statusKey: "processing",
+          planCount: 0,
+        }),
       ],
       retry,
     });
@@ -57,18 +62,12 @@ describe("RecentSearches", () => {
     render(<RecentSearches />);
 
     const links = screen.getAllByRole("link");
-    expect(links.map((link) => link.getAttribute("href"))).toEqual([
-      "/plan-requests/42",
-      "/plan-requests/41",
-      "/plan-requests/40",
-    ]);
-    expect(links[0]).toHaveTextContent("«plan romántico con mi novia»");
-    expect(links[0]).toHaveTextContent("hoy · 4 planes");
-    expect(links[0]).toHaveAttribute("title", "Cena con vista · Paseo y vino");
-    expect(links[1]).not.toHaveAttribute("title");
-    expect(links[1]).toHaveTextContent("Sorpréndeme");
-    expect(links[1]).toHaveTextContent("1 plan");
-    expect(links[2]).toHaveTextContent("Generando…");
+    expect(links).toHaveLength(1);
+    expect(links[0]).toHaveAttribute("href", "/plan-requests/41");
+    expect(links[0]).toHaveAttribute("title", `«${query}»`);
+    expect(links[0]).toHaveTextContent("hoy");
+    expect(links[0]).toHaveTextContent("4 planes");
+    expect(screen.getByRole("heading", { name: "Tu última búsqueda" })).toBeInTheDocument();
   });
 
   it("offers a retry on error", async () => {

@@ -305,6 +305,7 @@ export function useRouteImprovement(
   }, [signature]);
 
   const request = useCallback(() => {
+    if (stops.some((stop) => stop.placeTarget)) return;
     const asked = latest.current;
     // A second press while one is in flight does nothing.
     if (
@@ -337,7 +338,7 @@ export function useRouteImprovement(
           state: { status: "unavailable" },
         }),
     );
-  }, [held]);
+  }, [held, stops]);
 
   const dismiss = useCallback(() => {
     cancelRef.current?.();

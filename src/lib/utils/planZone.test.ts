@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import type { PlanDetailResult } from "@/types";
+import type { PlanDetailResult, PlanItineraryActivity } from "@/types";
 
 import { getPlanZone } from "./planZone";
 
 function detail(
   order: number,
-  locations: PlanDetailResult["details"][number]["activity"]["locations"],
+  locations: PlanItineraryActivity["locations"],
 ): PlanDetailResult["details"][number] {
   return {
     id: order,
@@ -78,5 +78,38 @@ describe("getPlanZone", () => {
 
   it("returns null when no activity on the plan has a location", () => {
     expect(getPlanZone(plan([detail(1, []), detail(2, [])]))).toBeNull();
+  });
+
+  it("reads the department of a place-action stop (no activity behind it)", () => {
+    const placeStop: PlanDetailResult["details"][number] = {
+      id: 9,
+      order: 1,
+      estimatedCost: null,
+      estimatedDuration: 100,
+      activity: null,
+      stop: {
+        kind: "PLACE_ACTION",
+        label: "Cena en Anna Bistró",
+        action: "meal",
+        actionLabel: "Almuerzo o cena",
+        activityId: null,
+        place: {
+          id: 23,
+          name: "Anna Bistró",
+          address: null,
+          kind: "restaurant",
+          kindLabel: "Restaurante",
+          latitude: null,
+          longitude: null,
+          googlePlaceId: "ChIJ-anna",
+          departmentName: "Ciudad de Mendoza",
+        },
+        startMinute: 1260,
+        legTravelMinutes: null,
+        legDistanceMeters: null,
+        estimateBasis: null,
+      },
+    };
+    expect(getPlanZone(plan([placeStop]))).toBe("Ciudad de Mendoza");
   });
 });

@@ -118,6 +118,7 @@ export function useStopInfo(
     if (!enabled) return;
     let cancelled = false;
     for (const stop of stops) {
+      if (stop.placeTarget) continue;
       const id = stop.activity.id;
       if (details.has(id)) continue;
       void lookupActivityDetail(id).then(() => {
@@ -134,6 +135,10 @@ export function useStopInfo(
     void version;
     const known: Record<number, StopInfo> = {};
     for (const stop of stops) {
+      if (stop.placeTarget) {
+        known[stop.activity.id] = { coords: stop.coords ?? null, categories: [] };
+        continue;
+      }
       const info = stopInfoFor(stop.activity.id);
       if (info) known[stop.activity.id] = info;
     }

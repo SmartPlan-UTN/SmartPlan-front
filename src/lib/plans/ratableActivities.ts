@@ -23,9 +23,11 @@ export async function loadRatableActivities(
 ): Promise<RatableActivity[]> {
   const outing = await getOuting(outingId);
   const seen = new Set<number>();
+  // Ratings are per catalog activity: a place-action stop ("Cena en X") is
+  // not rated here (its experience is captured by the outing's feedback).
   const activities = [...outing.details]
     .sort((a, b) => a.order - b.order)
-    .map((detail) => detail.activity)
+    .flatMap((detail) => (detail.activity ? [detail.activity] : []))
     .filter((activity) => {
       if (seen.has(activity.id)) return false;
       seen.add(activity.id);

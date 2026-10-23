@@ -93,7 +93,7 @@ export const FEEDBACK_COPY = {
   share: {
     label: "Compartir mi experiencia con la comunidad",
     hint: "Opcional",
-    body: "Se va a ver en el plan con tu nombre y apellido abreviado y tu foto de perfil: tus estrellas, lo que destacaste, tu comentario y las fotos de la salida. Lo que gastaste nunca se muestra.",
+    body: "Se va a ver en Comunidad con tu username y tu foto de perfil: tus estrellas, lo que destacaste, tu comentario y las fotos de la salida. Tu nombre legal y lo que gastaste nunca se muestran.",
     later: "Podés hacerla privada cuando quieras desde Mis salidas.",
   },
   /** Public or private later, from the outing (#106). */
@@ -102,7 +102,7 @@ export const FEEDBACK_COPY = {
     publicTitle: "Visible en la comunidad",
     privateTitle: "Solo para vos",
     publicBody: (plan: string) =>
-      `Tu experiencia y las fotos de la salida se ven en "${plan}".`,
+      `Tu experiencia y las fotos de la salida se ven en Comunidad. El plan "${plan}" solo aparece si también es público.`,
     unpublishedTitle: "No se ve ahora",
     unpublishedBody: (plan: string) =>
       `"${plan}" ya no está publicado. Si vuelve a publicarse, tu experiencia se va a ver otra vez: hacela privada si no querés.`,

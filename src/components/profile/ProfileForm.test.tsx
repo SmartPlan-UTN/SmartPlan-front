@@ -103,6 +103,8 @@ describe("ProfileForm", () => {
     expect(updateProfile).toHaveBeenCalledWith({
       name: "Ana María",
       lastName: "Pérez",
+      username: "viajero1",
+      bio: "",
     });
     expect(
       await screen.findByText("Cambios guardados correctamente"),

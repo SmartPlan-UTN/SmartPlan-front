@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, type MouseEvent } from "react";
+import { useCallback, useMemo, useRef, type MouseEvent, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
 import { Icon } from "@/components/ui";
@@ -63,6 +63,7 @@ interface RoutePanelProps {
   /** The activity pointed at elsewhere (a row, a marker). */
   focusedActivityId: number | null;
   onPoint: (activityId: number | null) => void;
+  intelligence?: ReactNode;
 }
 
 const signed = (value: number, format: (n: number) => string) =>
@@ -146,6 +147,7 @@ export function RoutePanel({
   save,
   focusedActivityId,
   onPoint,
+  intelligence,
 }: RoutePanelProps) {
   const panelRef = useRef<HTMLElement>(null);
   useStickyOverflow(panelRef);
@@ -475,6 +477,7 @@ export function RoutePanel({
         </ul>
       ) : null}
 
+      {stage !== 'plan' ? intelligence : null}
       <AnimatePresence initial={false}>
         {stage === "plan" ? null : (
           <motion.footer key="footer" {...FADE} className={styles.footer}>

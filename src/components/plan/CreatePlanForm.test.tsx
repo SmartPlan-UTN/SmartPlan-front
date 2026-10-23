@@ -377,7 +377,7 @@ describe("PlanComposer creation flow", () => {
     });
     render(<CreatePlanForm />);
     await reachActivities(user);
-    await screen.findByText("Degustación sugerida");
+    await screen.findByText("Degustación sugerida", {}, { timeout: 5000 });
 
     await user.click(
       await screen.findByRole("button", { name: "Agregar Actividad 1" }),

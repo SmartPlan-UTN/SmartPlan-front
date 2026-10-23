@@ -239,6 +239,7 @@ describe("reporting a plan (#156)", () => {
 
 it("shows unrated plans and itinerary stops without fabricated zero scores", async () => {
   const unrated = plan({ averageRating: 0 });
+  if (!unrated.details[0].activity) throw new Error('The fixture needs an activity');
   unrated.details[0].activity.averageRating = 0;
   unrated.details[0].activity.ratingCount = 0;
   getPlan.mockResolvedValue(unrated);
@@ -246,6 +247,29 @@ it("shows unrated plans and itinerary stops without fabricated zero scores", asy
   expect(await screen.findAllByText("Sin reseñas")).toHaveLength(2);
   expect(screen.queryByText("0.0")).not.toBeInTheDocument();
   expect(screen.queryByRole("img", { name: "0 de 5 estrellas" })).not.toBeInTheDocument();
+});
+
+it("labels stale prices on public community ideas and hides their old total", async () => {
+  const communityIdea = plan();
+  communityIdea.details[0].price = {
+    kind: "FIXED",
+    min: 8500,
+    max: 8500,
+    unit: "PER_PERSON",
+    currency: "ARS",
+    source: "CURATED",
+    sourceRef: "https://example.test/old-price",
+    verifiedAt: "2026-01-05T00:00:00.000Z",
+    confidence: "HIGH",
+    stale: true,
+  };
+  getPlan.mockResolvedValue(communityIdea);
+  render(<PlanDetailView planId={7} />);
+
+  expect(await screen.findByText("Precios a confirmar")).toBeInTheDocument();
+  expect(screen.getByText("Valores a confirmar")).toBeInTheDocument();
+  expect(screen.getByText(/Precio de referencia de enero de 2026/)).toBeInTheDocument();
+  expect(screen.getByText(/conserva los valores registrados al compartirla/)).toBeInTheDocument();
 });
 
 async function renderDetail(
@@ -261,6 +285,18 @@ async function renderDetail(
 }
 
 const intendButton = { name: /^lo voy a hacer$/i } as const;
+
+it("keeps incomplete experiences and unconfirmed costs visible on direct detail visits", async () => {
+  await renderDetail("selectable", {
+    insight: {
+      role: "BEST", roleLabel: "La mejor opción", why: "Cena", difference: null,
+      uncertainties: ["Falta planificar cine con información suficiente", "Precio sin confirmar"],
+      budgetStatus: "UNKNOWN", travelMinutes: null, travelKm: null, stops: [],
+    },
+  });
+  expect(screen.getByRole("region", { name: "Antes de elegir este plan" })).toHaveTextContent("Falta planificar cine");
+  expect(screen.getByText("Precio sin confirmar")).toBeVisible();
+});
 
 describe("PlanDetailView — Lo voy a hacer (CU22, PAN 17, #130)", () => {
   it("offers 'Lo voy a hacer' when the viewer can choose the plan", async () => {

@@ -10,51 +10,76 @@ import type { PlanRequestSummary } from "@/types";
 import styles from "./recent-searches.module.css";
 
 /**
- * "Tus últimas búsquedas" under the hero composer (#189): a way back to
- * results already generated, so leaving them by mistake no longer means
- * asking again and getting different plans. Quiet by design — nothing at
- * all without a session or without searches, one line on error.
+ * The most recent search under the hero composer, kept compact so it is easy
+ * to resume without competing with the primary planning action.
  */
 export function RecentSearches() {
   const { status, requests, retry } = useRecentPlanRequests();
+  const latest = latestRequest(requests);
 
   if (status === "idle" || status === "empty") return null;
 
   return (
     <section className={styles.section} aria-labelledby="recent-searches-title">
       <h2 id="recent-searches-title" className={styles.title}>
-        Tus últimas búsquedas
+        Tu última búsqueda
       </h2>
       {status === "loading" ? (
-        <div className={styles.placeholder} aria-busy="true" aria-label="Cargando tus búsquedas" />
+        <div className={styles.placeholder} aria-busy="true" aria-label="Cargando tu última búsqueda" />
       ) : status === "error" ? (
         <p className={styles.error}>
-          No pudimos cargar tus búsquedas.{" "}
+          No pudimos cargar tu última búsqueda.{" "}
           <button type="button" className={styles.retry} onClick={retry}>
             Reintentar
           </button>
         </p>
       ) : (
         <ul className={styles.list}>
-          {requests.map((request) => (
-            <li key={request.id}>
-              <Link
-                href={planRequestRoute(request.id)}
-                className={styles.item}
-                title={request.planTitles.join(" · ") || undefined}
-              >
-                <Icon name="arrow-right" size={13} aria-hidden="true" className={styles.icon} />
-                <span className={styles.query}>{searchLabel(request)}</span>
-                <span className={styles.meta}>
-                  {relativeDay(request.requestedAt)} · {resultLabel(request)}
-                </span>
-              </Link>
+          {latest ? (
+            <li>
+              <RecentSearchLink request={latest} />
             </li>
-          ))}
+          ) : null}
         </ul>
       )}
     </section>
   );
+}
+
+function RecentSearchLink({ request }: { request: PlanRequestSummary }) {
+  const label = searchLabel(request);
+
+  return (
+    <Link
+      href={planRequestRoute(request.id)}
+      className={styles.item}
+      title={label}
+      aria-label={`${label}, ${relativeDay(request.requestedAt)}, ${resultLabel(request)}`}
+    >
+      <span className={styles.iconWrap} aria-hidden="true">
+        <Icon name="clock" size={17} className={styles.icon} />
+      </span>
+      <span className={styles.content}>
+        <span className={styles.query}>{label}</span>
+        <span className={styles.meta}>
+          {relativeDay(request.requestedAt)} <span aria-hidden="true">·</span> {resultLabel(request)}
+        </span>
+      </span>
+      <Icon name="arrow-right" size={16} aria-hidden="true" className={styles.arrow} />
+    </Link>
+  );
+}
+
+function latestRequest(requests: PlanRequestSummary[]): PlanRequestSummary | undefined {
+  return requests.reduce<PlanRequestSummary | undefined>((latest, request) => {
+    if (!latest) return request;
+    const requestTime = Date.parse(request.requestedAt);
+    const latestTime = Date.parse(latest.requestedAt);
+    if (requestTime > latestTime || (requestTime === latestTime && request.id > latest.id)) {
+      return request;
+    }
+    return latest;
+  }, undefined);
 }
 
 function searchLabel(request: PlanRequestSummary): string {

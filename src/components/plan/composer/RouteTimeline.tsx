@@ -58,6 +58,7 @@ const stopKey = (stop: ComposerStop) =>
   stop.detailId ?? `new-${stop.activity.id}`;
 
 function categoryOf(stop: ComposerStop): string {
+  if (stop.placeTarget) return stop.activity.description || 'Lugar';
   const raw = stop.activity.categories[0]?.name ?? stop.activity.type;
   return raw ? categoryLabel(raw) : "Experiencia";
 }

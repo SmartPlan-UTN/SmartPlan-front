@@ -2,12 +2,16 @@ import type {
   ActivitySearchResult,
   OwnPlanDetail,
   PlanVisibility,
+  PlanComposerStopDto,
+  PlanStopPlace,
 } from "@/types";
 import type { Price } from "@/types/pricing";
 
 import type { Coords } from "./routeDistance";
 
 export interface ComposerStop {
+  /** Place target is persisted as a Place Action, never as an Activity row. */
+  placeTarget?: { placeId: number; action: string };
   perPersonCost?: number | null;
   activity: ActivitySearchResult;
   detailId?: number;
@@ -31,32 +35,72 @@ export interface ComposerDraft {
   stops: ComposerStop[];
 }
 
+export function composerTarget(stop: ComposerStop): PlanComposerStopDto {
+  return {
+    ...(stop.placeTarget ?? { activityId: stop.activity.id }),
+  };
+}
+
+/** Adapt a place to the existing timeline's display model. Negative IDs are
+ * client-only row keys; only the explicit placeTarget is sent to the API. */
+export function placeComposerStop(
+  place: Pick<PlanStopPlace, 'id' | 'name' | 'latitude' | 'longitude'>,
+  action: { action: string; label: string; durationMinutes: number; price?: Price | null },
+): ComposerStop {
+  return {
+    placeTarget: { placeId: place.id, action: action.action },
+    estimatedCost: action.price?.kind === 'FREE' ? 0 : null,
+    price: action.price ?? null,
+    estimatedDuration: action.durationMinutes,
+    coords: place.latitude !== null && place.longitude !== null
+      ? { latitude: place.latitude, longitude: place.longitude } : null,
+    activity: {
+      id: -place.id, name: place.name, description: action.label,
+      estimatedCost: action.price?.kind === 'FREE' ? 0 : null,
+      price: action.price ?? null, estimatedDuration: action.durationMinutes,
+      type: action.action, averageRating: 0, ratingCount: 0, distanceKm: null, categories: [],
+    },
+  };
+}
+
 export function createInitialDraft(plan?: OwnPlanDetail): ComposerDraft {
   return {
     title: plan?.title ?? "",
     description: plan?.description ?? "",
     peopleCount: plan?.peopleCount ?? 2,
     visibility: plan?.visibility ?? "private",
-    stops: (plan?.details ?? []).map((detail) => ({
-      detailId: detail.id,
-      estimatedCost: detail.estimatedCost,
-      price: detail.price ?? null,
-      perPersonCost: detail.perPersonCost,
-      estimatedDuration: detail.estimatedDuration,
-      activity: {
-        id: detail.activity.id,
-        name: detail.activity.name,
-        description: detail.activity.description,
-        estimatedCost: detail.activity.estimatedCost,
-        price: detail.activity.price ?? null,
-        estimatedDuration: detail.activity.estimatedDuration,
-        type: detail.activity.type,
+    stops: (plan?.details ?? []).map((detail) => {
+      const activity = detail.activity;
+      if (!activity) {
+        const place = detail.stop?.place;
+        const action = detail.stop?.action;
+        if (!place || !action) throw new Error('A composer stop needs a valid target.');
+        return {
+          ...placeComposerStop(place, { action, label: detail.stop?.actionLabel ?? '', durationMinutes: detail.estimatedDuration, price: detail.price }),
+          detailId: detail.id, estimatedCost: detail.estimatedCost,
+        };
+      }
+      return {
+        detailId: detail.id,
+        estimatedCost: detail.estimatedCost,
+        price: detail.price ?? null,
+        perPersonCost: detail.perPersonCost,
+        estimatedDuration: detail.estimatedDuration,
+        activity: {
+        id: activity.id,
+        name: activity.name,
+        description: activity.description,
+        estimatedCost: activity.estimatedCost,
+        price: activity.price ?? null,
+        estimatedDuration: activity.estimatedDuration,
+        type: activity.type,
         averageRating: 0,
         ratingCount: 0,
         distanceKm: null,
         categories: [],
-      },
-    })),
+        },
+      };
+    }),
   };
 }
 
@@ -67,7 +111,7 @@ export function getDraftKey(draft: ComposerDraft): string {
     peopleCount: draft.peopleCount,
     visibility: draft.visibility,
     stops: draft.stops.map((stop) => ({
-      activityId: stop.activity.id,
+      target: composerTarget(stop),
       detailId: stop.detailId ?? null,
       estimatedCost: stop.estimatedCost,
       priceKind: stop.price?.kind ?? null,

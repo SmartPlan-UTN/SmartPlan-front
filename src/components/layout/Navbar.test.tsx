@@ -400,6 +400,7 @@ describe("Navbar", () => {
 
     expect(links.map((link) => link.textContent)).toEqual([
       "Explorar",
+      "Comunidad",
       "Mis planes",
       "Planificar",
       "Mis salidas",

@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ApiError, createPlanRequest, createSurprisePlanRequest, getPlanRequestStatus } from '@/lib/api';
+import { loadRequestContext, saveRequestContext } from '@/lib/plans/requestContext';
 import type {
   CreatePlanRequestPayload,
   CreateSurprisePlanRequestPayload,
   PlanDetailResult,
+  PlanFunnel,
   PlanRequestProgressStage,
   PlanRequestStatus,
+  PlanUnderstanding,
   ResolvedPlanContext,
   RequestStatusKey,
 } from '@/types';
@@ -44,6 +47,12 @@ export interface UsePlanRequestPollingResult {
   progressStageAt: string | null;
   estimatedRemainingSeconds: number | null;
   resolvedContext: ResolvedPlanContext | null;
+  /** "Entendimos …" from the planning engine (null for older requests). */
+  understanding: PlanUnderstanding | null;
+  /** Real counts of what the planner did (null until it ran). */
+  funnel: PlanFunnel | null;
+  /** Asked-for experiences SmartPlan cannot plan yet ("Cine"). */
+  unsupportedExperiences: string[];
   failure: PlanRequestFailure | null;
   submit: (payload: CreatePlanRequestPayload) => void;
   submitSurprise: (payload: CreateSurprisePlanRequestPayload) => void;
@@ -88,8 +97,16 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
   const [progressStageAt, setProgressStageAt] = useState<string | null>(null);
   const [estimatedRemainingSeconds, setEstimatedRemainingSeconds] = useState<number | null>(null);
   const [resolvedContext, setResolvedContext] = useState<ResolvedPlanContext | null>(null);
+  const [understanding, setUnderstanding] = useState<PlanUnderstanding | null>(null);
+  const [funnel, setFunnel] = useState<PlanFunnel | null>(null);
+  const [unsupportedExperiences, setUnsupportedExperiences] = useState<string[]>([]);
   const [failure, setFailure] = useState<PlanRequestFailure | null>(null);
-  const [lastSubmission, setLastSubmission] = useState<LastSubmission | null>(null);
+  // A results page opened by id recovers what the person explicitly chose.
+  const [lastSubmission, setLastSubmission] = useState<LastSubmission | null>(() => {
+    if (!initialRequestId || typeof window === 'undefined') return null;
+    const saved = loadRequestContext(initialRequestId);
+    return saved ? { kind: 'auto', payload: saved } : null;
+  });
 
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const displayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -125,6 +142,9 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
     setProgressStageAt(status.progressStageAt ?? null);
     setEstimatedRemainingSeconds(status.estimatedRemainingSeconds ?? null);
     setResolvedContext(status.resolvedContext ?? null);
+    setUnderstanding(status.understanding ?? null);
+    setFunnel(status.funnel ?? null);
+    setUnsupportedExperiences(status.unsupportedExperiences ?? []);
 
     if (status.statusKey === 'generated') {
       setPlans(status.plans ?? []);
@@ -200,6 +220,9 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
     setFailure(null);
     setPlans(null);
     setResolvedContext(null);
+    setUnderstanding(null);
+    setFunnel(null);
+    setUnsupportedExperiences([]);
     setProgressStage(null);
     setProgressStageAt(null);
     setEstimatedRemainingSeconds(null);
@@ -233,7 +256,11 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
     setLastSubmission({ kind: 'auto', payload });
     setQuery(payload.query);
     setMode('automatic');
-    void beginRequest(() => createPlanRequest(payload));
+    void beginRequest(async () => {
+      const accepted = await createPlanRequest(payload);
+      saveRequestContext(accepted.id, payload);
+      return accepted;
+    });
   }, [beginRequest]);
 
   const submitSurprise = useCallback((payload: CreateSurprisePlanRequestPayload) => {
@@ -248,7 +275,12 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
     if (lastSubmission.kind === 'surprise') {
       void beginRequest(() => createSurprisePlanRequest(lastSubmission.payload));
     } else {
-      void beginRequest(() => createPlanRequest(lastSubmission.payload));
+      const payload = lastSubmission.payload;
+      void beginRequest(async () => {
+        const accepted = await createPlanRequest(payload);
+        saveRequestContext(accepted.id, payload);
+        return accepted;
+      });
     }
   }, [beginRequest, lastSubmission]);
 
@@ -281,6 +313,9 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
     setProgressStageAt(null);
     setEstimatedRemainingSeconds(null);
     setResolvedContext(null);
+    setUnderstanding(null);
+    setFunnel(null);
+    setUnsupportedExperiences([]);
     setFailure(null);
     setPhase('idle');
   }, [clearTimers]);
@@ -312,6 +347,9 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
     progressStageAt,
     estimatedRemainingSeconds,
     resolvedContext,
+    understanding,
+    funnel,
+    unsupportedExperiences,
     failure,
     submit,
     submitSurprise,

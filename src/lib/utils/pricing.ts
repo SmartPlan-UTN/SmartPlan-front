@@ -125,6 +125,7 @@ export function formatPlanTotal(plan: PlanPriceSummary): string {
       return `Desde ${formatArs(min)}`;
     case "PARTIAL": {
       const count = plan.unpricedCount ?? 0;
+      if (min === 0 && count > 0) return NO_PRICE_TOTAL_LABEL;
       return count > 0
         ? `${formatArs(min)} + ${count} sin precio`
         : `Desde ${formatArs(min)}`;

@@ -1,5 +1,6 @@
 import { formatDuration, formatPlanTotal, formatPrice } from "@/lib/utils";
 import type { PlanDetailResult } from "@/types";
+import { stopLabel } from "@/lib/plans/stops";
 
 /**
  * The WhatsApp text for a published plan: enough to read the plan without
@@ -11,7 +12,7 @@ export function planShareMessage(plan: PlanDetailResult, url: string): string {
     .sort((left, right) => left.order - right.order)
     .map(
       (detail, index) =>
-        `${index + 1}. ${detail.activity.name} · ⏱️ ${formatDuration(detail.estimatedDuration)} · 💵 ${formatPrice(detail)}`,
+        `${index + 1}. ${stopLabel(detail)} · ⏱️ ${formatDuration(detail.estimatedDuration)} · 💵 ${formatPrice(detail)}`,
     );
 
   return [

@@ -19,6 +19,7 @@ import { ActivityDetailView } from "@/components/activity/ActivityDetailView";
 import { ExploreDetailHeader } from "./ExploreDetailHeader";
 
 import { LocationPreview } from "./LocationPreview";
+import { MenuContributionForm } from "./MenuContributionForm";
 import activityStyles from "../activity/activity.module.css";
 import styles from "./explore.module.css";
 
@@ -203,6 +204,7 @@ function PlaceDetailContent({ place }: { place: PlaceDetailResult }) {
           />
         </div>
       ) : null}
+      <MenuContributionForm placeId={place.id} placeName={place.name} />
       </div> : (
         <div className={activityStyles.tabContent}>
           <div className={activityStyles.ratingSummaryCard}>

@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { ActivitySearchResult } from "@/types";
 
-import type { ComposerStop } from "./draft";
+import { placeComposerStop, type ComposerStop } from "./draft";
 import { RouteTimeline } from "./RouteTimeline";
 
 function stop(id: number): ComposerStop {
@@ -23,6 +23,12 @@ function stop(id: number): ComposerStop {
 }
 
 describe("RouteTimeline linking", () => {
+  it('shows the place action label instead of its technical identifier', () => {
+    render(<RouteTimeline stops={[placeComposerStop({ id: 2, name: 'Un restaurante', latitude: null, longitude: null },
+      { action: 'meal', label: 'Comer', durationMinutes: 100 })]} />);
+    expect(screen.getByText('Comer')).toBeInTheDocument();
+    expect(screen.queryByText('meal')).not.toBeInTheDocument();
+  });
   it("reports the stop pointed at and marks the one pointed at elsewhere", () => {
     const onPoint = vi.fn();
     const { rerender } = render(

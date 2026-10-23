@@ -5,8 +5,14 @@ import type {
   CreateSurprisePlanRequestPayload,
   PlanRequestAccepted,
   PlanRequestStatus,
+  RefinePlanRequestPayload,
 } from '@/types';
 import { apiClient } from './client';
+
+// Creating a request persists it and publishes a job before returning 202.
+// Give the API's 30 s preparation deadline enough time to return the accepted
+// request ID so the UI can start polling instead of showing a false timeout.
+const PLAN_REQUEST_SUBMISSION_TIMEOUT_MS = 40_000;
 
 /**
  * Submits a natural-language plan request (CU17).
@@ -16,7 +22,9 @@ import { apiClient } from './client';
 export async function createPlanRequest(
   payload: CreatePlanRequestPayload
 ): Promise<PlanRequestAccepted> {
-  return apiClient.post<PlanRequestAccepted>('/plan-requests', payload);
+  return apiClient.post<PlanRequestAccepted>('/plan-requests', payload, {
+    timeout: PLAN_REQUEST_SUBMISSION_TIMEOUT_MS,
+  });
 }
 
 /**
@@ -28,7 +36,9 @@ export async function createPlanRequest(
 export async function createSurprisePlanRequest(
   payload: CreateSurprisePlanRequestPayload
 ): Promise<PlanRequestAccepted> {
-  return apiClient.post<PlanRequestAccepted>('/plan-requests/surprise', payload);
+  return apiClient.post<PlanRequestAccepted>('/plan-requests/surprise', payload, {
+    timeout: PLAN_REQUEST_SUBMISSION_TIMEOUT_MS,
+  });
 }
 
 /**
@@ -38,6 +48,12 @@ export async function createSurprisePlanRequest(
  */
 export async function getPlanRequestStatus(id: number): Promise<PlanRequestStatus> {
   return apiClient.get<PlanRequestStatus>(`/plan-requests/${id}`);
+}
+
+export async function refinePlanRequest(id: number, payload: RefinePlanRequestPayload): Promise<PlanRequestAccepted> {
+  return apiClient.post<PlanRequestAccepted>(`/plan-requests/${id}/refine`, payload, {
+    timeout: PLAN_REQUEST_SUBMISSION_TIMEOUT_MS,
+  });
 }
 
 /**

@@ -5,6 +5,7 @@ import { PlanDetailView } from "@/components/plan";
 import { fetchSharedPlan } from "@/lib/plans/sharedPlan";
 import { siteOrigin } from "@/lib/plans/siteOrigin";
 import { planDetailOrigin } from "@/lib/routes";
+import { stopLabel } from "@/lib/plans/stops";
 import { formatDuration, formatPlanTotal, parsePositiveIntId } from "@/lib/utils";
 
 /**
@@ -23,7 +24,7 @@ export async function generateMetadata({
 
   const stops = [...plan.details]
     .sort((left, right) => left.order - right.order)
-    .map((detail) => detail.activity.name)
+    .map(stopLabel)
     .join(" → ");
   const description = `${stops} · ${formatPlanTotal(plan)} · ${formatDuration(plan.estimatedTotalDuration)}`;
   const origin = await siteOrigin();

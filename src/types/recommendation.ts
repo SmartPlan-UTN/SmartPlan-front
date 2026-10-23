@@ -59,6 +59,14 @@ export interface CreateSurprisePlanRequestPayload {
  * `POST /plan-requests/surprise` (HTTP 202). Matches
  * `PlanRequestAcceptedDto` in `SmartPlan-back`.
  */
+export type PlanRefinementAction = 'CHEAPER' | 'MORE_ROMANTIC' | 'LESS_TRAVEL' | 'MORE_ORIGINAL' | 'MORE_CALM' | 'MORE_MODERN' | 'SWAP_STOP' | 'REMOVE_STOP';
+
+export interface RefinePlanRequestPayload {
+  planId: number;
+  action: PlanRefinementAction;
+  stopIndex?: number;
+}
+
 export interface PlanRequestAccepted {
   id: number;
   statusKey: 'pending';
@@ -117,7 +125,85 @@ export interface ResolvedPlanContext {
  * populated once `statusKey === 'failed'`. Matches `PlanRequestStatusDto`
  * in `SmartPlan-back`.
  */
+/** One editable piece of what SmartPlan understood ("Cita romántica"). */
+export interface UnderstandingChip {
+  key:
+    | 'occasion'
+    | 'party'
+    | 'when'
+    | 'budget'
+    | 'travel'
+    | 'experiences'
+    | 'facet'
+    | 'vibe'
+    | 'price'
+    | 'constraints';
+  label: string;
+  /**
+   * Where the value came from: `profile` means "de tu perfil", `inferred` a
+   * reasonable deduction the person did not say. A `default` is never shown.
+   */
+  source: 'explicit' | 'text' | 'model' | 'profile' | 'inferred' | 'default';
+  icon?: string;
+  /** `avoid` chips read "Sin boliche": something the person refused. */
+  polarity?: 'want' | 'avoid';
+  /** Stable id of what the chip stands for. */
+  id?: string;
+}
+
+/** Optional context SmartPlan has not been told. */
+export type MissingContext = 'when' | 'budget' | 'party';
+
+export interface PlanUnderstanding {
+  chips: UnderstandingChip[];
+  /** Context the person has not given ("+ Presupuesto"). */
+  missing?: MissingContext[];
+  /** The person's own words behind the style of the request ("fachero"). */
+  phrases?: string[];
+  /** Words smartplan could not place; said back, never guessed. */
+  unmapped?: string[];
+  values: {
+    occasion: string | null;
+    partySize: number;
+    date: string;
+    startMinutes: number | null;
+    now: boolean;
+    budget: number | null;
+    budgetStrict: boolean;
+    travelTolerance: 'low' | 'medium' | 'high';
+    experiences: string[];
+    vibe: string[];
+    pricePreference: 'cheap' | 'value' | 'premium' | null;
+    indoorOnly: boolean;
+    freeOnly: boolean;
+  };
+}
+
+/** Real counts of what the planner did; never animated or estimated. */
+export interface PlanFunnel {
+  experienceLabel: string;
+  places: number;
+  openAtTime: number;
+  confirmedOpenAtTime?: number;
+  knownWithinBudget: number | null;
+  /** Open places with some price information. */
+  withPrice?: number;
+  /** Open places whose own evidence supports the character asked for. */
+  fitsCharacter?: number;
+  /** The character in the person's words ("Fachero"). */
+  character?: string | null;
+  combinations: number;
+  proposals: number;
+  verifiedLive: number;
+}
+
 export interface PlanRequestStatus {
+  /** "Entendimos …" (planning engine); absent for older requests. */
+  understanding?: PlanUnderstanding | null;
+  funnel?: PlanFunnel | null;
+  /** Asked-for experiences the catalog cannot plan yet ("Cine"). */
+  unsupportedExperiences?: string[];
+  parentRequestId?: number | null;
   id: number;
   statusKey: RequestStatusKey;
   mode: 'automatic' | 'surprise';
@@ -246,11 +332,22 @@ export interface CreateFeedbackPayload {
    * `actualCost`, which is never split across activities.
    */
   activityCosts?: Array<{ activityId: number; amount: number }>;
+  stops?: StopFeedbackPayload[];
   /** How many people shared the reported cost. */
   partySize?: number;
   actualDuration?: number;
   /** Shares the experience with the community (#106); private when absent. */
   shared?: boolean;
+}
+
+export type StopFeedbackTag = 'romantic' | 'good_for_groups' | 'quiet' | 'lively' | 'good_value' | 'premium' | 'family_friendly' | 'view';
+export type StopFeedbackReport = 'CLOSED' | 'WRONG_HOURS' | 'WRONG_PRICE' | 'NO_LONGER_OFFERED';
+export interface StopFeedbackPayload {
+  detailId: number;
+  status?: 'DONE' | 'SKIPPED';
+  amount?: number;
+  report?: StopFeedbackReport;
+  tags?: StopFeedbackTag[];
 }
 
 /**

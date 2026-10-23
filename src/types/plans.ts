@@ -1,4 +1,35 @@
 import type { Price, PriceCompleteness } from './pricing';
+
+export interface ComposerCheckPayload {
+  stops: Array<{ activityId?: number; placeId?: number; action?: string; durationMinutes?: number }>;
+  date: string;
+  startTime: string;
+  peopleCount: number;
+  budget?: number;
+  travelMode?: 'drive' | 'walk' | 'bicycle';
+}
+
+export interface ComposerContinuation {
+  activityId: number | null;
+  placeId: number;
+  action: string;
+  name: string;
+  placeName: string;
+  experience: string;
+  startTime: string;
+  travelMinutes: number | null;
+  why: string;
+}
+
+export interface ComposerCheckResult {
+  stops: Array<{ index: number; name: string; startTime: string; endTime: string; travelMinutesFromPrevious: number | null;
+    hours: 'CONFIRMED_OPEN' | 'CLOSES_DURING' | 'CLOSED' | 'UNKNOWN'; closesAt: string | null }>;
+  totals: { min: number | null; max: number | null; unpriced: number; completeness: string };
+  budget: { status: 'WITHIN' | 'UNCERTAIN' | 'EXCEEDS' | 'NO_BUDGET'; remaining: number | null };
+  issues: Array<{ stopIndex: number | null; kind: 'CLOSED_AT_ARRIVAL' | 'CLOSES_DURING' | 'HOURS_UNKNOWN' | 'LONG_LEG' | 'OVER_BUDGET' | 'BUDGET_UNPROVEN';
+    message: string; actions: Array<'CHANGE_TIME' | 'FIND_ALTERNATIVE' | 'CHEAPER'>; alternative?: ComposerContinuation }>;
+  continuations: ComposerContinuation[];
+}
 import { BaseEntity, CatalogEntity } from "./common";
 import type { ExplorationQueryParams, SortDirection } from "./common";
 import type { User } from "./users";
@@ -114,6 +145,38 @@ export interface PlanItineraryActivity {
   locations: ActivityLocationSummary[];
 }
 
+/** The place of a stop. Coordinates are SmartPlan-owned only. */
+export interface PlanStopPlace {
+  id: number;
+  name: string;
+  address: string | null;
+  kind: string | null;
+  kindLabel: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  googlePlaceId: string | null;
+  departmentName: string | null;
+}
+
+/**
+ * One stop, whatever is behind it: a catalog activity (`OFFERING`) or the
+ * intrinsic action of a place (`PLACE_ACTION`, e.g. "Cena en Anna Bistró").
+ * Matches `PlanStopDto` in `SmartPlan-back`.
+ */
+export interface PlanStop {
+  kind: 'OFFERING' | 'PLACE_ACTION';
+  label: string;
+  action: string | null;
+  actionLabel: string | null;
+  activityId: number | null;
+  place: PlanStopPlace | null;
+  /** Planned local start in minutes from the plan date's midnight. */
+  startMinute: number | null;
+  legTravelMinutes: number | null;
+  legDistanceMeters: number | null;
+  estimateBasis: Record<string, unknown> | null;
+}
+
 /** One ordered stop in a plan's itinerary (CU13). */
 export interface PlanItineraryItem {
   id: number;
@@ -121,7 +184,79 @@ export interface PlanItineraryItem {
   estimatedCost: number | null;
   price?: Price | null;
   estimatedDuration: number;
-  activity: PlanItineraryActivity;
+  /** The catalog activity behind the stop; `null` for a place-action stop. */
+  activity: PlanItineraryActivity | null;
+  /** Unified view of the stop (always present from the current API). */
+  stop?: PlanStop;
+}
+
+/**
+ * Evidence-only facts about one stop of a generated plan ("Estimado para 2:
+ * $62.000–$69.000", "Abierto hasta las 02:00"). Matches `StopInsightDto`.
+ */
+export interface StopInsight {
+  /** "Tragos con onda": the stop's role in the plan. */
+  purpose: string;
+  price: string | null;
+  priceSource: string | null;
+  /** The price was checked live in Google Maps (only the verdict is saved). */
+  priceLive: boolean;
+  hours: string | null;
+  hoursSource: string | null;
+  /** "Buena opción para tragos y comida para compartir". */
+  fit: string | null;
+  /** A representative real order from the current official menu. */
+  order: {
+    name: string;
+    lines: { quantity: number; item: string; unitPrice: number }[];
+    total: number;
+    sourceUrl: string;
+    observedAt: string;
+  } | null;
+  attribution: 'Google Maps' | 'OpenStreetMap' | null;
+}
+
+export interface PlanDiscarded {
+  overBudget: number;
+  tooFar: number;
+  closedForGood: number;
+  closedAtTime: number;
+}
+
+/** Why the planner chose a plan, as the person sees it (never scores). */
+export interface PlanInsight {
+  role: 'BEST' | 'VALUE' | 'DIFFERENT' | 'ALTERNATIVE';
+  roleLabel: string;
+  why: string;
+  /** What the place is, in a line, from evidence only. */
+  tagline?: string | null;
+  /** The request said back ("Pediste algo fachero para tomar algo."). */
+  echo?: string | null;
+  difference: string | null;
+  uncertainties: string[];
+  budgetStatus:
+    | 'WITHIN'
+    | 'UNCERTAIN'
+    | 'EXCEEDS'
+    | 'MAY_EXCEED'
+    | 'UNKNOWN'
+    | 'NO_BUDGET';
+  travelMinutes: number | null;
+  travelKm: number | null;
+  stops: Array<{
+    label: string;
+    evidence: string[];
+    caveats: string[];
+    insight?: StopInsight | null;
+  }>;
+  /** Every stop has known hours and a usable price (and fits a strict budget). */
+  decisionGrade?: boolean;
+  /** Real counts of places SmartPlan ruled out (best plan only). */
+  discarded?: PlanDiscarded | null;
+  /** Some prices were checked live in Google Maps (only the verdict is saved). */
+  priceBasis?: 'PROVIDER_LIVE' | null;
+  /** When those live prices were checked (ISO); saved results are not rechecked. */
+  priceCheckedAt?: string | null;
 }
 
 /**
@@ -157,8 +292,48 @@ export interface PlanDetailResult extends PlanSearchResult {
   activeOutingId: number | null;
   kind: PlanKind;
   visibility: PlanVisibility;
+  inspiredBy?: { id: number; title: string; creatorUsername: string | null } | null;
   /** The caller owns this plan, result, or outing. */
   ownedByViewer: boolean;
+  /** When the plan starts, for plans the planner placed on a date. */
+  startsAt?: string | null;
+  /** The planner's explanation, for generated plans. */
+  insight?: PlanInsight | null;
+  /** People the plan (and its prices) is for. */
+  peopleCount?: number;
+  /** How prepared the outing is (suggested → ready). */
+  readiness?: PlanReadiness | null;
+}
+
+export type PlanReadinessStage =
+  | "SUGGESTED"
+  | "FEASIBLE"
+  | "VERIFIED"
+  | "PREPARATION_REQUIRED"
+  | "READY";
+
+export interface PlanPreparationTask {
+  detailId: number;
+  kind: "TICKET" | "RESERVATION";
+  required: boolean;
+  label: string;
+  /** `CONFIRMED` only when the person said so; a link never confirms. */
+  status: "PENDING" | "CONFIRMED";
+  confirmedAt: string | null;
+  /** Always the person: SmartPlan never books or buys for them. */
+  confirmedBy?: "USER" | null;
+  actionUrl: string | null;
+  actionLabel: string | null;
+}
+
+export interface PlanReadiness {
+  stage: PlanReadinessStage;
+  label: string;
+  summary: string;
+  ready: boolean;
+  verifiedStops: number;
+  totalStops: number;
+  tasks: PlanPreparationTask[];
 }
 
 /* ── Mis planes (CU24-CU30) ─────────────────────────────────────── */
@@ -241,6 +416,8 @@ export interface OutingSummary {
 
 /** `GET /users/me/outings/:id`: the frozen itinerary with its places. */
 export interface OutingDetail extends OutingSummary {
+  insight?: PlanInsight | null;
+  readiness?: PlanReadiness | null;
   travelDistanceMeters: number | null;
   travelDurationSeconds: number | null;
   details: PlanItineraryItem[];
@@ -380,6 +557,7 @@ export interface OwnPlanDetail extends OwnPlanSummary {
     estimatedCost: number | null;
     price?: Price | null;
     estimatedDuration: number;
+    stop?: PlanStop;
     activity: {
       id: number;
       name: string;
@@ -388,7 +566,7 @@ export interface OwnPlanDetail extends OwnPlanSummary {
       price?: Price | null;
       estimatedDuration: number;
       type: string | null;
-    };
+    } | null;
   }[];
 }
 
@@ -426,8 +604,7 @@ export interface CreatePlanDto {
   peopleCount: number;
 }
 
-export interface PlanComposerStopDto {
-  activityId: number;
+export type PlanComposerStopDto = ({ activityId: number; placeId?: never; action?: never } | { activityId?: never; placeId: number; action: string }) & {
   /** Sent only for a stop retained from the plan being edited. */
   detailId?: number;
 }
@@ -438,6 +615,7 @@ export interface CreatePlanComposerDto {
   description: string | null;
   peopleCount: number;
   visibility: PlanVisibility;
+  inspiredByPlanId?: number;
   stops: PlanComposerStopDto[];
 }
 
@@ -471,6 +649,7 @@ export interface OwnPlanCostSummary {
 }
 
 export interface OwnPlanDetailItem {
+  stop?: PlanStop;
   perPersonCost?: number | null;
   id: number;
   order: number;
@@ -485,5 +664,5 @@ export interface OwnPlanDetailItem {
     price?: Price | null;
     estimatedDuration: number;
     type: string | null;
-  };
+  } | null;
 }

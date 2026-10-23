@@ -16,6 +16,8 @@ import type {
   AssistantImproveResponse,
   AssistantSearchResponse,
   AssistantSuggestResponse,
+  ComposerCheckPayload,
+  ComposerCheckResult,
 } from "@/types";
 import { apiClient } from "./client";
 
@@ -53,6 +55,10 @@ export async function createPlanFromComposer(
   dto: CreatePlanComposerDto,
 ): Promise<OwnPlanDetail> {
   return apiClient.post<OwnPlanDetail>("/users/me/plans/composer", dto);
+}
+
+export async function checkPlanComposer(payload: ComposerCheckPayload, signal?: AbortSignal): Promise<ComposerCheckResult> {
+  return apiClient.post<ComposerCheckResult>('/users/me/plans/composer/check', payload, { signal });
 }
 
 /**

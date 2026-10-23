@@ -16,7 +16,8 @@ export interface CommunityExperience {
   isOwn: boolean;
   /** When the outing was done. */
   completedAt: string | null;
-  author: { alias: string; avatarUrl: string | null };
+  author: { alias: string; username?: string; avatarUrl: string | null };
+  inspiredBy?: { id: number; title: string; creatorUsername: string | null } | null;
   photos: MediaImage[];
 }
 
@@ -36,4 +37,24 @@ export interface CommunityPhoto extends MediaImage {
 /** `GET /plans/:id/experiences`: a page of experiences plus the summary. */
 export interface CommunityExperiencesPage extends PaginatedResult<CommunityExperience> {
   summary: CommunityExperiencesSummary;
+}
+
+export interface CommunityCreator {
+  username: string;
+  bio: string | null;
+  avatarUrl: string | null;
+  planCount: number;
+  experienceCount: number;
+}
+
+export interface CommunityPlan {
+  id: number;
+  title: string;
+  description: string | null;
+  estimatedTotalCost: number | null;
+  estimatedTotalCostMax: number | null;
+  priceCompleteness: string | null;
+  estimatedTotalDuration: number;
+  imageUrl: string | null;
+  authorUsername?: string | null;
 }
