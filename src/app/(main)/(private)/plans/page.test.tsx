@@ -6,7 +6,9 @@ import { ROUTES } from "@/lib/routes";
 import MyPlansPage from "./page";
 
 vi.mock("@/components/plan", () => ({
-  MyPlansPanel: () => <a href={ROUTES.createPlan}>Crear un plan (tarjeta)</a>,
+  MyPlansWorkspace: () => (
+    <a href={ROUTES.createPlan}>Crear un plan (tarjeta)</a>
+  ),
 }));
 
 describe("MyPlansPage", () => {
@@ -16,9 +18,10 @@ describe("MyPlansPage", () => {
     expect(
       screen.getByRole("heading", { name: "Mis planes", level: 1 }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Crear un plan" }),
-    ).toHaveAttribute("href", ROUTES.createPlan);
+    expect(screen.getByRole("link", { name: "Crear un plan" })).toHaveAttribute(
+      "href",
+      ROUTES.createPlan,
+    );
     expect(
       screen.getByRole("link", { name: "Crear un plan (tarjeta)" }),
     ).toHaveAttribute("href", ROUTES.createPlan);

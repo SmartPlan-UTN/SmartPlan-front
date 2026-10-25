@@ -63,13 +63,33 @@ export function planDetailRoute(id: number, returnTo?: string): string {
 }
 
 /** Only known plan entry screens can be used as a return destination. */
-export function planDetailOrigin(value: string | string[] | null | undefined): string {
+export function planDetailOrigin(
+  value: string | string[] | null | undefined,
+): string {
   if (typeof value !== "string") return ROUTES.explore;
-  if ([ROUTES.home, ROUTES.explore, ROUTES.plans, ROUTES.favorites].some((route) => route === value)) {
+  if (
+    [ROUTES.home, ROUTES.explore, ROUTES.plans, ROUTES.favorites].some(
+      (route) => route === value,
+    )
+  ) {
     return value;
   }
+  const history = /^\/plans\?tab=generated(?:&page=([1-9]\d*))?$/.exec(value);
+  if (
+    history &&
+    history[0] === value &&
+    (!history[1] || Number.isSafeInteger(Number(history[1])))
+  )
+    return value;
   const match = /^\/plan-requests\/([1-9]\d*)$/.exec(value);
-  return match && match[0] === value && Number.isSafeInteger(Number(match[1])) ? value : ROUTES.explore;
+  return match && match[0] === value && Number.isSafeInteger(Number(match[1]))
+    ? value
+    : ROUTES.explore;
+}
+
+/** The generated tab keeps its page when returning from a plan detail. */
+export function generatedPlansRoute(page = 1): string {
+  return `${ROUTES.plans}?tab=generated${page > 1 ? `&page=${page}` : ""}`;
 }
 
 /** `/plan-requests/:id` — durable generation and results route (CU17, CU19). */
@@ -168,8 +188,14 @@ export function accountDeletedLoginRoute(): string {
  * @param destination Value received from the query string, or `null` if none was provided.
  * @returns The internal route, or `null` if the value is not safe.
  */
-export function safeDestination(destination: string | null | undefined): string | null {
-  if (!destination || !destination.startsWith("/") || destination.startsWith("//")) {
+export function safeDestination(
+  destination: string | null | undefined,
+): string | null {
+  if (
+    !destination ||
+    !destination.startsWith("/") ||
+    destination.startsWith("//")
+  ) {
     return null;
   }
 
