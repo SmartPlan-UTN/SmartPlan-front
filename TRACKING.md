@@ -533,7 +533,7 @@ PR #199 integration validation: rebased onto current develop, preserving unknown
 
 ## 2026-10-25 — Generated plans in Mis planes (CU17/CU25/CU29)
 
-- In progress on `codex/generated-plans-history`; implementation and validation finished, PR to `develop` pending creation. Companion backend uses the same branch name.
+- In review on `codex/generated-plans-history`, [PR #207](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/207), targeting `develop`. Requires [SmartPlan-back#149](https://github.com/SmartPlan-UTN/SmartPlan-back/pull/149). Two approvals and merge pending.
 - Mis planes now has Creados por mí and Generados para mí sections. Generated history lists all saved alternatives with pagination, original itinerary links, dates and totals. The URL preserves the tab and page when returning from detail. Editing creates or resumes a private authored copy in the existing composer; its visibility flow allows publication while preserving the original result. History links back to existing editable copies and handles loading, empty, error and retry states.
 - Reuses EMBER tokens, card styles, Button, Badge, LoadingDots and Pagination, with responsive wrapping and visible keyboard focus.
 - Validation: formatting, lint, 153 test files / 1157 tests, and production build passed. Component tests cover pagination, copy/resume, duplicate clicks, failures and retry, empty pages, return destinations and tab restoration. No Docker, live database or production deployment was used.
