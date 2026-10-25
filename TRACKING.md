@@ -540,7 +540,7 @@ PR #199 integration validation: rebased onto current develop, preserving unknown
 
 ## 2026-10-25 — Reliable profile and navbar avatars (CU5)
 
-- In progress on `codex/fix-profile-avatar`; implementation and validation finished, PR to `develop` pending creation.
+- In review on `codex/fix-profile-avatar`, [PR #208](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/208), targeting `develop`. Two approvals and merge pending.
 - Profile uploads and removals immediately update both the profile and navbar through an in-tab notification scoped to the user id. Upload uses the confirmed avatar URL; removal clears it without a follow-up profile GET. The navbar ignores older profile responses after a mutation and never uses another account's cached photo.
 - Both avatars show initials while downloading, when there is no photo, and after download or browser decoding errors. A replacement image URL resets image/error state, ignores obsolete downloads and revokes the old blob URL. Existing gallery loading and provider credits remain unchanged. Avatar styles clip pictures inside the circle and remove duplicated rules.
 - Validation: Prettier write/check, pnpm lint, all 154 files / 1170 tests, and pnpm build passed. Added component coverage for upload/removal synchronization, failures and retry, initials, stale requests, account changes, replacement URL recovery and blob cleanup. The final integration-test import/dual-failure refinement also passed its 10 focused tests and targeted lint. No Docker, live database, storage service or deployment was used.
