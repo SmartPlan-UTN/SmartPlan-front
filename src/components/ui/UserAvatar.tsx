@@ -21,16 +21,29 @@ export function UserAvatar({
   tone = "palette",
   avatarUrl,
 }: UserAvatarProps) {
-  const initials = `${name.trim().charAt(0)}${lastName.trim().charAt(0)}`.toUpperCase();
+  const initials =
+    `${name.trim().charAt(0)}${lastName.trim().charAt(0)}`.toUpperCase();
   const palette = Math.abs(userId) % 6;
-  const toneClass = tone === "ember" ? styles.ember : styles[`avatar_${palette}`];
+  const toneClass =
+    tone === "ember" ? styles.ember : styles[`avatar_${palette}`];
 
   return (
     <span
       className={`${styles.avatar} ${styles[size]} ${toneClass}`}
       aria-hidden="true"
     >
-      {avatarUrl ? <AuthenticatedImage url={avatarUrl} alt={`Avatar de ${name}`} width={44} height={44} /> : initials}
+      {avatarUrl ? (
+        <AuthenticatedImage
+          url={avatarUrl}
+          alt={`Avatar de ${name}`}
+          width={44}
+          height={44}
+          fallback={initials}
+          loadingFallback={initials}
+        />
+      ) : (
+        initials
+      )}
     </span>
   );
 }

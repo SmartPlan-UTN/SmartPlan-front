@@ -10,6 +10,7 @@ import { getProfile } from "@/lib/api";
 import { useSession } from "@/lib/auth";
 import { loginRoute, ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
+import { subscribeAvatarChanges } from "@/lib/profile/avatarChanges";
 
 import { NavLink } from "./NavLink";
 import { ADMIN_USER_LINK, USER_LINKS } from "./links";
@@ -145,21 +146,39 @@ export function UserMenu() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [confirmingLogout, setConfirmingLogout] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatar, setAvatar] = useState<{
+    userId: number;
+    url: string | null;
+  } | null>(null);
+  const userId = status === "authenticated" ? user?.id : undefined;
+  const avatarUrl = avatar?.userId === userId ? (avatar?.url ?? null) : null;
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelId = useId();
 
   useEffect(() => {
-    if (status !== 'authenticated') return;
+    if (userId === undefined) return;
     let active = true;
-    getProfile().then((profile) => {
-      if (active) setAvatarUrl(profile.avatarUrl ?? null);
-    }).catch(() => {
-      if (active) setAvatarUrl(null);
+    let changed = false;
+    const unsubscribe = subscribeAvatarChanges((change) => {
+      if (change.userId !== userId) return;
+      // An earlier GET must not restore the old photo after an upload/removal.
+      changed = true;
+      setAvatar({ userId, url: change.avatarUrl });
     });
-    return () => { active = false; };
-  }, [status, currentRoute]);
+    getProfile()
+      .then((profile) => {
+        if (active && !changed && profile.id === userId)
+          setAvatar({ userId, url: profile.avatarUrl ?? null });
+      })
+      .catch(() => {
+        if (active && !changed) setAvatar({ userId, url: null });
+      });
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [userId, currentRoute]);
 
   const close = useCallback(() => {
     setOpen(false);
@@ -218,7 +237,11 @@ export function UserMenu() {
     return (
       <Link
         href={loginRoute(currentRoute)}
-        className={cn(styles.buttonLink, styles.sessionControl, styles.sessionLink)}
+        className={cn(
+          styles.buttonLink,
+          styles.sessionControl,
+          styles.sessionLink,
+        )}
         // The label is hidden on small viewports, same as on the trigger.
         aria-label="Iniciar sesión"
       >
