@@ -6,6 +6,7 @@ import { Icon } from "@/components/ui";
 import { ApiError, searchPlace } from "@/lib/api";
 import type { PreferredArea } from "@/types";
 
+import { PreferredAreaMap, type MapPick } from "./PreferredAreaMap";
 import styles from "./preferences.module.css";
 
 export type PreferredAreaStatus =
@@ -40,8 +41,9 @@ function matchesResolved(
 }
 
 /**
- * PAN 15 "ubicación preferida": free text the user confirms against
- * `GET /external-integration/places/search`. What gets stored is the
+ * PAN 15 "ubicación preferida": searched by name against
+ * `GET /external-integration/places/search`, or picked on the map below it
+ * (`PreferredAreaMap`). What gets stored is the
  * resolved `{ label, placeId, latitude, longitude }` — never raw text — so
  * CU19 can use it as a real search centre. An unconfirmed or unresolvable
  * value blocks saving (the parent reads `onStatusChange`).
@@ -121,6 +123,28 @@ export function PreferredAreaField({
     }
   }
 
+  function pickOnMap({ area, address }: MapPick) {
+    onTextChange(area.label);
+    onResolvedChange(area);
+    setResolvedAddress(address || null);
+    setMessage(null);
+    apply("resolved");
+  }
+
+  function mapError(text: string) {
+    setMessage(text);
+    if (!resolved) apply("error");
+  }
+
+  const map = (
+    <PreferredAreaMap
+      area={resolved}
+      disabled={disabled || status === "searching"}
+      onPick={pickOnMap}
+      onPickError={mapError}
+    />
+  );
+
   function reset() {
     onResolvedChange(null);
     onTextChange("");
@@ -132,30 +156,38 @@ export function PreferredAreaField({
 
   if (status === "resolved" && resolved) {
     return (
-      <div
-        className={styles.areaResolved}
-        role="group"
-        aria-label="Ubicación preferida"
-      >
-        <span className={styles.areaResolvedIcon} aria-hidden="true">
-          <Icon name="map-pin" size={18} />
-        </span>
-        <span className={styles.areaResolvedText}>
-          <strong>{resolved.label}</strong>
-          {resolvedAddress && resolvedAddress !== resolved.label ? (
-            <small>{resolvedAddress}</small>
-          ) : (
-            <small>Ubicación confirmada</small>
-          )}
-        </span>
-        <button
-          type="button"
-          className={styles.inlineAction}
-          onClick={reset}
-          disabled={disabled}
+      <div className={styles.areaField}>
+        <div
+          className={styles.areaResolved}
+          role="group"
+          aria-label="Ubicación preferida"
         >
-          Cambiar
-        </button>
+          <span className={styles.areaResolvedIcon} aria-hidden="true">
+            <Icon name="map-pin" size={18} />
+          </span>
+          <span className={styles.areaResolvedText}>
+            <strong>{resolved.label}</strong>
+            {resolvedAddress && resolvedAddress !== resolved.label ? (
+              <small>{resolvedAddress}</small>
+            ) : (
+              <small>Ubicación confirmada</small>
+            )}
+          </span>
+          <button
+            type="button"
+            className={styles.inlineAction}
+            onClick={reset}
+            disabled={disabled}
+          >
+            Quitar
+          </button>
+        </div>
+        {map}
+        {message ? (
+          <p className={styles.fieldError} role="alert">
+            {message}
+          </p>
+        ) : null}
       </div>
     );
   }
@@ -210,9 +242,10 @@ export function PreferredAreaField({
           ) : (
             <Icon name="search" size={16} />
           )}
-          {searching ? "Buscando…" : "Confirmar"}
+          {searching ? "Buscando…" : "Buscar"}
         </button>
       </div>
+      {map}
       <p
         id={helpId}
         className={invalid ? styles.fieldError : styles.fieldHelp}
@@ -220,8 +253,8 @@ export function PreferredAreaField({
       >
         {message ??
           (status === "unconfirmed"
-            ? "Confirmá la ubicación para guardarla."
-            : "Escribí un barrio, ciudad o zona y confirmala. Podés dejarla sin definir.")}
+            ? "Buscala o elegila en el mapa para guardarla."
+            : "Buscá un barrio o ciudad, o tocá el mapa. Podés dejarla sin definir.")}
       </p>
     </div>
   );

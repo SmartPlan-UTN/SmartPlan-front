@@ -22,6 +22,8 @@ export const ROUTES = {
   outings: "/outings",
   profile: "/profile",
   preferences: "/preferences",
+  /** Optional first preferences setup right after signing up (US02/US8). */
+  onboarding: "/onboarding",
   security: "/security",
   /** Help and support: user manual, FAQs, and contact. */
   help: "/help",

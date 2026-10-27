@@ -10,8 +10,12 @@ interface PreferencesActionsProps {
   busy: boolean;
   error: string | null;
   progress: ReactNode;
-  onDiscard: () => void;
-  onReset: () => void;
+  /** Editing only: restores the last saved profile. */
+  onDiscard?: () => void;
+  /** Editing only: opens the dialog that clears the whole profile. */
+  onReset?: () => void;
+  /** Onboarding only: leaves without saving what was entered. */
+  onSkip?: () => void;
 }
 
 export function PreferencesActions({
@@ -22,7 +26,10 @@ export function PreferencesActions({
   progress,
   onDiscard,
   onReset,
+  onSkip,
 }: PreferencesActionsProps) {
+  const idleLabel = onSkip ? "Todo es opcional" : "Preferencias guardadas";
+
   return (
     <div
       className={
@@ -44,27 +51,42 @@ export function PreferencesActions({
         <p className={styles.dirtyState} role="status">
           <Icon name="bookmark" size={16} />
           <span className={styles.dirtyDot} aria-hidden="true" />
-          {dirty ? "Cambios sin guardar" : "Preferencias guardadas"}
+          {dirty ? "Cambios sin guardar" : idleLabel}
         </p>
 
-        <button
-          type="button"
-          className={styles.discardButton}
-          onClick={onDiscard}
-          disabled={!dirty || busy}
-        >
-          Descartar cambios
-        </button>
+        {onDiscard ? (
+          <button
+            type="button"
+            className={styles.discardButton}
+            onClick={onDiscard}
+            disabled={!dirty || busy}
+          >
+            Descartar cambios
+          </button>
+        ) : null}
 
-        <button
-          type="button"
-          className={styles.resetButton}
-          onClick={onReset}
-          disabled={busy}
-        >
-          <Icon name="trash-2" size={14} />
-          Restablecer preferencias
-        </button>
+        {onSkip ? (
+          <button
+            type="button"
+            className={styles.discardButton}
+            onClick={onSkip}
+            disabled={busy}
+          >
+            Omitir por ahora
+          </button>
+        ) : null}
+
+        {onReset ? (
+          <button
+            type="button"
+            className={styles.resetButton}
+            onClick={onReset}
+            disabled={busy}
+          >
+            <Icon name="trash-2" size={14} />
+            Restablecer preferencias
+          </button>
+        ) : null}
       </div>
 
       <Button
