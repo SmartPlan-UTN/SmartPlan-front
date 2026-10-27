@@ -1185,6 +1185,19 @@
   background: var(--surface-card);
 }
 .areaMapCanvas { position: absolute; inset: 0; }
+/* The chosen point: ember on cream, centred on it like the "you are here"
+   dot of the other maps. */
+.areaPin {
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 50%;
+  background: var(--ember);
+  box-shadow:
+    0 0 0 3px var(--surface-card),
+    0 0 0 10px color-mix(in srgb, var(--ember) 18%, transparent);
+  pointer-events: none;
+}
 .areaMapHint,
 .areaMapLoading {
   position: absolute;

@@ -68,6 +68,8 @@ export function PreferredAreaField({
   // Kept apart from `message`: a map pick that fails leaves the field as it
   // was (often empty, which is valid), so it's a note, not a field error.
   const [mapMessage, setMapMessage] = useState<string | null>(null);
+  // Google bills each map load, so the map only loads once asked for.
+  const [mapOpen, setMapOpen] = useState(false);
   const [resolvedAddress, setResolvedAddress] = useState<string | null>(null);
 
   function apply(next: PreferredAreaStatus) {
@@ -145,7 +147,7 @@ export function PreferredAreaField({
     onLocatingChange(locating);
   }
 
-  const map = (
+  const map = mapOpen ? (
     <PreferredAreaMap
       area={resolved}
       disabled={disabled || status === "searching"}
@@ -153,6 +155,16 @@ export function PreferredAreaField({
       onPickError={setMapMessage}
       onLocatingChange={mapLocating}
     />
+  ) : (
+    <button
+      type="button"
+      className={styles.inlineAction}
+      onClick={() => setMapOpen(true)}
+      disabled={disabled}
+    >
+      <Icon name="map" size={16} />
+      {resolved ? "Cambiarla en el mapa" : "Elegir en el mapa"}
+    </button>
   );
 
   const mapNote = mapMessage ? (
@@ -268,7 +280,9 @@ export function PreferredAreaField({
         {message ??
           (status === "unconfirmed"
             ? "Buscala o elegila en el mapa para guardarla."
-            : "Buscá un barrio o ciudad, o tocá el mapa. Podés dejarla sin definir.")}
+            : mapOpen
+              ? "Buscá un barrio o ciudad, o tocá el mapa. Podés dejarla sin definir."
+              : "Buscá un barrio o ciudad, o elegila en el mapa. Podés dejarla sin definir.")}
       </p>
     </div>
   );

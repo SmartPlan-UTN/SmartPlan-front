@@ -5,6 +5,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/ui";
 import { BRANDED_MAP_STYLE } from "@/lib/maps/brandedMapStyle";
 import { DEFAULT_MAP_CENTER } from "@/lib/maps/defaultCenter";
+import {
+  createHtmlMarkerLayer,
+  type HtmlMarkerLayer,
+} from "@/lib/maps/htmlMarkerLayer";
 import { useGoogleMap } from "@/lib/maps/useGoogleMap";
 import type { PreferredArea } from "@/types";
 
@@ -60,6 +64,36 @@ export function areaResult(
   );
 }
 
+/**
+ * The chosen point, drawn with the product's HTML markers
+ * (`lib/maps/htmlMarkerLayer`): the classic `google.maps.Marker` is
+ * deprecated, and `AdvancedMarkerElement` would need a cloud map id that
+ * turns off the branded map style. It only marks the point; tapping the
+ * map moves it.
+ */
+function showPin(
+  layer: HtmlMarkerLayer | null,
+  position: google.maps.LatLngLiteral | null,
+) {
+  layer?.setMarkers(
+    position
+      ? [
+          {
+            key: "preferred-area",
+            lat: position.lat,
+            lng: position.lng,
+            signature: "pin",
+            interactive: false,
+            render: (element) => {
+              element.className = styles.areaPin;
+              element.setAttribute("aria-hidden", "true");
+            },
+          },
+        ]
+      : [],
+  );
+}
+
 export interface MapPick {
   area: PreferredArea;
   address: string;
@@ -70,14 +104,14 @@ interface PreferredAreaMapProps {
   disabled?: boolean;
   onPick: (pick: MapPick) => void;
   onPickError: (message: string) => void;
-  /** True from a tap or drag until its geocoding settles. */
+  /** True from a tap until its geocoding settles. */
   onLocatingChange: (locating: boolean) => void;
 }
 
 /**
- * PAN 15 preferred area, picked on a map: tapping the map or dragging the
- * pin reverse-geocodes that point into the same `{ label, placeId,
- * latitude, longitude }` the text search resolves to. The stored point is
+ * PAN 15 preferred area, picked on a map: tapping the map reverse-geocodes
+ * that point into the same `{ label, placeId, latitude, longitude }` the
+ * text search resolves to. The stored point is
  * where the user tapped; the geocoder only supplies its name and place id.
  *
  * Optional by design: without a Maps key or connection the field still
@@ -92,7 +126,7 @@ export function PreferredAreaMap({
 }: PreferredAreaMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const markerRef = useRef<google.maps.Marker | null>(null);
+  const layerRef = useRef<HtmlMarkerLayer | null>(null);
   const [locating, setLocating] = useState(false);
 
   // Built once: `useGoogleMap` re-creates the map whenever the centre
@@ -129,21 +163,17 @@ export function PreferredAreaMap({
       onLocatingChange,
     };
   });
-  // Each tap or drag supersedes the previous one; only the latest request
+  // Each tap supersedes the previous one; only the latest request
   // may apply its result, whatever order the geocoder answers in.
   const requestRef = useRef(0);
 
   /** Puts the pin back on the stored area (or hides it) after a failed pick. */
   const restoreMarker = useCallback(() => {
-    const marker = markerRef.current;
     const current = latest.current.area;
-    if (!marker) return;
-    if (!current) {
-      marker.setVisible(false);
-      return;
-    }
-    marker.setPosition({ lat: current.latitude, lng: current.longitude });
-    marker.setVisible(true);
+    showPin(
+      layerRef.current,
+      current ? { lat: current.latitude, lng: current.longitude } : null,
+    );
   }, []);
 
   const pickAt = useCallback(async (position: google.maps.LatLng) => {
@@ -153,8 +183,7 @@ export function PreferredAreaMap({
     }
     const request = ++requestRef.current;
     const startedFor = latest.current.areaKey;
-    markerRef.current?.setPosition(position);
-    markerRef.current?.setVisible(true);
+    showPin(layerRef.current, { lat: position.lat(), lng: position.lng() });
     setLocating(true);
     latest.current.onLocatingChange(true);
     try {
@@ -196,22 +225,13 @@ export function PreferredAreaMap({
 
   const onReady = useCallback(
     (instance: google.maps.Map) => {
-      const marker = new google.maps.Marker({
-        map: instance,
-        position: options.center,
-        visible: area !== null,
-        draggable: true,
-        title: "Zona preferida",
+      const layer = createHtmlMarkerLayer(instance, {
+        onActivate: () => undefined,
       });
-      markerRef.current = marker;
+      layerRef.current = layer;
+      if (area) showPin(layer, { lat: area.latitude, lng: area.longitude });
       const click = instance.addListener(
         "click",
-        (event: google.maps.MapMouseEvent) => {
-          if (event.latLng) void pickAt(event.latLng);
-        },
-      );
-      const drag = marker.addListener(
-        "dragend",
         (event: google.maps.MapMouseEvent) => {
           if (event.latLng) void pickAt(event.latLng);
         },
@@ -219,38 +239,32 @@ export function PreferredAreaMap({
       setMap(instance);
       return () => {
         click.remove();
-        drag.remove();
-        marker.setMap(null);
-        markerRef.current = null;
+        layer.destroy();
+        layerRef.current = null;
         setMap(null);
       };
     },
     // The map is created once with the initial options; see `options`.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `area` is only the initial marker state here; later changes go through the effect below.
-    [options, pickAt],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `area` is only the initial pin here; later changes go through the effect below.
+    [pickAt],
   );
 
   const { status } = useGoogleMap(containerRef, options, onReady);
 
   // Follow the area when it comes from the text search or is cleared.
   useEffect(() => {
-    const marker = markerRef.current;
-    if (!map || !marker) return;
+    const layer = layerRef.current;
+    if (!map || !layer) return;
     if (!area) {
-      marker.setVisible(false);
+      showPin(layer, null);
       return;
     }
     const position = { lat: area.latitude, lng: area.longitude };
-    marker.setPosition(position);
-    marker.setVisible(true);
+    showPin(layer, position);
     map.panTo(position);
     if ((map.getZoom() ?? 0) < AREA_ZOOM) map.setZoom(AREA_ZOOM);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed by coordinates, not by object identity.
   }, [map, areaKey]);
-
-  useEffect(() => {
-    markerRef.current?.setDraggable(!disabled);
-  }, [disabled, map]);
 
   if (status === "error") {
     return (
@@ -283,7 +297,7 @@ export function PreferredAreaMap({
             <>
               <Icon name="target" size={14} />
               {area
-                ? "Arrastrá el pin o tocá el mapa para cambiarla"
+                ? "Tocá otra parte del mapa para cambiarla"
                 : "Tocá el mapa para elegir tu zona"}
             </>
           )}
