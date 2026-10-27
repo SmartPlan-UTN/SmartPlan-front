@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { renderStopMarker } from "@/components/maps/markers";
 import { Icon } from "@/components/ui";
 import { COMPOSER_MAP_STYLE } from "@/lib/maps/brandedMapStyle";
+import { DEFAULT_MAP_CENTER } from "@/lib/maps/defaultCenter";
 import {
   createHtmlMarkerLayer,
   type HtmlMarkerLayer,
@@ -55,7 +56,7 @@ export function ReviewMap({
   const [options] = useState<google.maps.MapOptions>(() => ({
     center: first
       ? { lat: first.latitude, lng: first.longitude }
-      : { lat: -32.8895, lng: -68.8458 },
+      : DEFAULT_MAP_CENTER,
     zoom: 13,
     minZoom: 4,
     maxZoom: 18,

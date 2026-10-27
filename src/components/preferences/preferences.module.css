@@ -1174,3 +1174,59 @@
   .interestTile { opacity: 1; transform: none; }
   .interestTile:hover:not(:disabled), .interestTile:active:not(:disabled), .interestTileSelected .interestIcon, .saveButton:not(:disabled):hover .saveArrow { transform: none; }
 }
+
+/* Preferred area map picker */
+.areaMap {
+  position: relative;
+  height: 260px;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+}
+.areaMapCanvas { position: absolute; inset: 0; }
+/* The chosen point: ember on cream, centred on it like the "you are here"
+   dot of the other maps. */
+.areaPin {
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 50%;
+  background: var(--ember);
+  box-shadow:
+    0 0 0 3px var(--surface-card),
+    0 0 0 10px color-mix(in srgb, var(--ember) 18%, transparent);
+  pointer-events: none;
+}
+.areaMapHint,
+.areaMapLoading {
+  position: absolute;
+  left: 50%;
+  bottom: var(--s-3);
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-1) var(--s-3);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-card) 92%, transparent);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--fg-1) 12%, transparent);
+  color: var(--fg-2);
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.areaMapHint svg { color: var(--ember); }
+.areaMapLoading { top: 50%; bottom: auto; transform: translate(-50%, -50%); }
+.areaMapUnavailable {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0;
+  color: var(--fg-3);
+  font-size: 12px;
+}
+
+@media (max-width: 640px) {
+  .areaMap { height: 220px; }
+}

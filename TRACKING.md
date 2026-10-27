@@ -43,7 +43,7 @@ rereading the entire git history.
 |---|---|
 | **Phase** | Foundations — layout and navigation ready, no use cases implemented |
 | **Base branch** | `develop` |
-| **Last update** | 2026-10-12 |
+| **Last update** | 2026-10-27 |
 | **Completed use cases** | 0 / 62 |
 
 ---
@@ -544,3 +544,11 @@ PR #199 integration validation: rebased onto current develop, preserving unknown
 - Profile uploads and removals immediately update both the profile and navbar through an in-tab notification scoped to the user id. Upload uses the confirmed avatar URL; removal clears it without a follow-up profile GET. The navbar ignores older profile responses after a mutation and never uses another account's cached photo.
 - Both avatars show initials while downloading, when there is no photo, and after download or browser decoding errors. A replacement image URL resets image/error state, ignores obsolete downloads and revokes the old blob URL. Existing gallery loading and provider credits remain unchanged. Avatar styles clip pictures inside the circle and remove duplicated rules.
 - Validation: Prettier write/check, pnpm lint, all 154 files / 1170 tests, and pnpm build passed. Added component coverage for upload/removal synchronization, failures and retry, initials, stale requests, account changes, replacement URL recovery and blob cleanup. The final integration-test import/dual-failure refinement also passed its 10 focused tests and targeted lint. No Docker, live database, storage service or deployment was used.
+
+## 2026-10-27 — Optional preferences onboarding after sign-up (#209, US02/US8, CU2/CU8)
+
+- In review on `feature/preferences-onboarding`, [PR #211](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/211), targeting `develop`.
+- A successful sign-up continues to `/onboarding` (protected) instead of Inicio. It reuses `PreferencesForm` through an `onboarding` prop: same validation and payload, "Omitir por ahora" instead of discard/reset, no toast. Saving or skipping goes to Inicio with the session open; login is untouched.
+- Open questions resolved as the simplest option: reload shows it again, leaving counts as nothing, it is not offered again, an existing account can open it, and a load error offers retry and skip.
+- The preferred area can also be picked on a Google map (`PreferredAreaMap`): tap or drag the pin, reverse-geocoded client-side into the same `{ label, placeId, latitude, longitude }`. Applies to Preferencias too. Falls back to the name search when the map cannot load.
+- Validation: `pnpm lint`, `pnpm test` (156 files, 1183 tests) and `pnpm build` pass. Checked manually against a local backend with a real Google Maps key.

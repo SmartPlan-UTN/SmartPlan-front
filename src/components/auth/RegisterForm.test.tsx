@@ -2,6 +2,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ApiError } from "@/lib/api";
+
 import { RegisterForm } from "./RegisterForm";
 
 const register = vi.hoisted(() => vi.fn());
@@ -81,6 +83,27 @@ describe("RegisterForm", () => {
         password: "Abcdef1.",
       });
     });
-    expect(replace).toHaveBeenCalledWith("/");
+    expect(replace).toHaveBeenCalledWith("/onboarding");
+  });
+
+  it("stays on the form and never reaches onboarding when sign-up fails", async () => {
+    register.mockRejectedValueOnce(
+      new ApiError({
+        message: "Email already registered",
+        type: "HTTP",
+        status: 409,
+        code: "EMAIL_ALREADY_REGISTERED",
+      }),
+    );
+    const user = userEvent.setup();
+    renderForm();
+
+    await fillRegistration(user, "Abcdef1.");
+    await user.click(screen.getByRole("button", { name: "Crear cuenta" }));
+
+    await waitFor(() => expect(register).toHaveBeenCalled());
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Crear cuenta" })).toBeEnabled();
   });
 });
