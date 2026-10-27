@@ -5,7 +5,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 import { Badge, Button, ConfirmationDialog, Divider, FloatingBackLink, Icon, Stars } from "@/components/ui";
-import { AuthenticatedImage, MediaGallery } from "@/components/media";
+import { MediaGallery } from "@/components/media";
+import { PlanVisual } from "@/components/home/PlanVisual";
 import { useContentReporter } from "@/components/reports";
 import { useFavorites } from "@/context";
 import { useDetailFetch, usePlanSelection } from "@/hooks";
@@ -274,23 +275,7 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
       </p>
 
       <div className={styles.hero} ref={heroRef}>
-        {plan.imageUrl ? (
-          // An uploaded cover, or the Google Places photo of its first place
-          // with its full credit (SmartPlan-back#102).
-          <div className={styles.heroMedia}>
-            <AuthenticatedImage
-              url={plan.imageUrl}
-              alt={plan.title}
-              width={960}
-              height={300}
-              attribution="full"
-              attributionPlacement="top"
-              fallback={<Icon name="route" size={110} className={styles.heroIcon} />}
-            />
-          </div>
-        ) : (
-          <Icon name="route" size={110} className={styles.heroIcon} />
-        )}
+        <div className={styles.heroMedia}><PlanVisual key={plan.id} plan={plan} /></div>
         <Badge variant="cost" className={styles.heroCostBadge}>
           {communityPricesNeedConfirmation ? "Precios a confirmar" : formatPlanTotal(plan)}
         </Badge>

@@ -101,15 +101,17 @@ export function CommunityScreen() {
 }
 
 export function StoryCard({ story, featured = false }: { story: CommunityExperience; featured?: boolean }) {
-  const username = story.author.username ?? "viajero";
+  // Without a username there is no profile to open: never guess one.
+  const username = story.author.username ?? null;
+  const author = username ? `@${username}` : story.author.alias;
   const cover = story.photos[0];
   return <article className={`${styles.story} ${featured ? styles.featured : ""}`}>
-    <Link href={communityExperienceRoute(story.id)} className={styles.storyCover} aria-label={`Abrir vivencia de @${username}`}>
+    <Link href={communityExperienceRoute(story.id)} className={styles.storyCover} aria-label={`Abrir vivencia de ${author}`}>
       {cover ? <AuthenticatedImage url={cover.url} alt="Foto de una salida compartida" width={850} height={650} /> : <div className={styles.coverFallback}><Icon name="camera" size={30} /><span>Una salida para recordar</span></div>}
       <span className={styles.lived}>Vivida</span>
     </Link>
     <div className={styles.storyCopy}>
-      <Link href={communityCreatorRoute(username)} className={styles.byline}>@{username}</Link>
+      {username ? <Link href={communityCreatorRoute(username)} className={styles.byline}>{author}</Link> : <span className={styles.byline}>{author}</span>}
       {story.completedAt ? <p className={styles.note}>{new Intl.DateTimeFormat("es-AR", { day: "numeric", month: "long", year: "numeric" }).format(new Date(story.completedAt))}</p> : null}
       <div className={styles.rating} aria-label={`Calificación ${story.rating} de 5`}>{"★".repeat(story.rating)}<span>{"★".repeat(5 - story.rating)}</span></div>
       {story.comment ? <p className={styles.quote}>“{story.comment}”</p> : <p className={styles.quoteMuted}>Una experiencia compartida en SmartPlan.</p>}

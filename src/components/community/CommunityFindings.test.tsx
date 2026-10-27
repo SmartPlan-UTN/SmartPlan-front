@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CommunityExperience, CommunityPlan } from "@/types";
-import { CommunityFindings } from "./CommunityFindings";
+import { CommunityFindings, communitySearchQuery } from "./CommunityFindings";
 
 const getCommunityExperiences = vi.hoisted(() => vi.fn());
 const getCommunityPlans = vi.hoisted(() => vi.fn());
@@ -68,5 +68,22 @@ describe("CommunityFindings", () => {
 
     expect(screen.queryByText("La comunidad también encontró esto")).toBeNull();
     expect(screen.queryByText("Una tarde sin apuro")).toBeNull();
+  });
+});
+
+describe("communitySearchQuery", () => {
+  it.each([
+    ["Una cena tranquila en Mendoza", "Mendoza"],
+    ["Tengo ganas de salir esta noche, ¿qué hay para hacer por Mendoza?", "Mendoza"],
+    ["Salir en pareja en Godoy Cruz", "Godoy Cruz"],
+    ["Cena en Chacras con amigos", "Chacras"],
+    ["Algo en Maipú para hoy", "Maipú"],
+  ])("finds the destination in %j", (query, destination) => {
+    expect(communitySearchQuery(query)).toBe(destination);
+  });
+
+  it("keeps the whole idea when it names no place", () => {
+    expect(communitySearchQuery("Una salida en pareja")).toBe("Una salida en pareja");
+    expect(communitySearchQuery("Una cita con hasta $80.000")).toBe("Una cita con hasta $80.000");
   });
 });

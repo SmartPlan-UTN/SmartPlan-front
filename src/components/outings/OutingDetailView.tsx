@@ -180,6 +180,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
 
   async function handleRepeat() {
     if (mutating.current) return;
+    mutating.current = true;
     setBusy(true);
     setActionError(null);
     try {
@@ -187,6 +188,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
       router.push(outingDetailRoute(next.id));
     } catch {
       setActionError(OUTINGS_COPY.errors.repeat);
+      mutating.current = false;
       setBusy(false);
     }
   }

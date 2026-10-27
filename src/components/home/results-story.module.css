@@ -211,15 +211,9 @@
   outline-offset: 3px;
 }
 
-.tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding-top: var(--s-3);
-}
-
 .tab {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 8px;
   min-height: 38px;
@@ -318,25 +312,6 @@
   text-align: center;
 }
 
-/* ── Alternatives ──────────────────────────────────────────── */
-.alternatives {
-  margin-top: clamp(40px, 6vw, 80px);
-}
-
-.sectionTitle {
-  margin: 0 0 var(--s-4);
-  font-size: clamp(22px, 2.2vw, 28px);
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-}
-
-.altGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
-  gap: var(--s-4);
-}
-
 .footerActions {
   display: flex;
   flex-wrap: wrap;
@@ -365,5 +340,34 @@
 @media (max-width: 640px) {
   .stops {
     gap: 14px;
+  }
+}
+
+/* One compact switcher: the chosen option drives the card, route and map. */
+.switcher {
+  display: flex;
+  gap: 6px;
+  margin-bottom: var(--s-3);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabLabel {
+  white-space: nowrap;
+}
+
+.tabPlan {
+  overflow: hidden;
+  max-width: 22ch;
+  color: inherit;
+  font-weight: 500;
+  opacity: 0.8;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .tabPlan {
+    display: none;
   }
 }

@@ -20,7 +20,7 @@
 .visual {
   position: sticky;
   top: calc(var(--navbar-h, 64px) + 16px);
-  height: clamp(500px, 78vh, 760px);
+  height: clamp(420px, 64vh, 620px);
   border-radius: 22px;
   overflow: hidden;
   background: var(--char);
@@ -122,7 +122,7 @@
 .name {
   margin: 0;
   font-family: var(--font-display-serif);
-  font-size: clamp(36px, 4.4vw, 62px);
+  font-size: clamp(30px, 3.2vw, 46px);
   font-weight: 600;
   line-height: 1.02;
   letter-spacing: -0.02em;

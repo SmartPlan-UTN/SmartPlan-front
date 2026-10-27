@@ -109,6 +109,21 @@ const PLAN: PlanDetailResult = {
  * CU17 requires a generated plan to be actionable, adjustable or discardable.
  */
 describe("PlanResults (CU17)", () => {
+  it("previews another option without saving it, then selects the displayed plan", async () => {
+    const user = userEvent.setup();
+    const second = { ...PLAN, id: 8, title: "Otra salida" };
+    createOuting.mockResolvedValue(outingCreation());
+    render(<PlanResults plans={[PLAN, second]} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
+    const choices = within(screen.getByRole("region", { name: "Elegir un plan" })).getAllByRole("button");
+    await user.click(choices[1]);
+    expect(choices[1]).toHaveAttribute("aria-pressed", "true");
+    const hero = within(screen.getByTestId("hero-recommendation"));
+    expect(hero.getByRole("heading", { name: second.title })).toBeInTheDocument();
+    expect(createOuting).not.toHaveBeenCalled();
+    await user.click(hero.getByRole("button", { name: "Lo voy a hacer" }));
+    await waitFor(() => expect(createOuting).toHaveBeenCalledWith(8));
+  });
+
   it("links each alternative to its detail view", () => {
     render(<PlanResults plans={[PLAN]} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
 
@@ -145,7 +160,7 @@ describe("PlanResults (CU17)", () => {
     render(<PlanResults plans={[PLAN]} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
 
     expect(screen.getByTestId("hero-recommendation")).toBeInTheDocument();
-    expect(screen.getByText("2 actividades · 5h estimadas")).toBeInTheDocument();
+    expect(screen.getByText("2 paradas · 5h estimadas")).toBeInTheDocument();
     expect(screen.getByText("Dónde queda")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /ver recorrido/i })).toBeInTheDocument();
   });
@@ -155,6 +170,27 @@ describe("PlanResults (CU17)", () => {
 
     expect(screen.getByText("$ 24.000 – $ 30.000", { exact: false })).toBeInTheDocument();
     expect(screen.getByText("$ 12.000 – $ 15.000 por persona · 2 personas")).toBeInTheDocument();
+  });
+
+  it("never presents one stop's price as the price of a multi-stop plan", () => {
+    const stopInsight = {
+      purpose: "Cena", price: "Estimado para 2: $ 62.000", priceSource: "Carta oficial", priceLive: false,
+      hours: null, hoursSource: null, fit: null, order: null, attribution: null,
+    };
+    const plan: PlanDetailResult = {
+      ...PLAN,
+      estimatedTotalCost: null,
+      estimatedTotalCostMax: null,
+      priceCompleteness: "NONE",
+      insight: {
+        role: "BEST", roleLabel: "Mi elección", why: "", difference: null, uncertainties: [],
+        budgetStatus: "NO_BUDGET", travelMinutes: null, travelKm: null,
+        stops: PLAN.details.map(() => ({ label: "Parada", evidence: [], caveats: [], insight: stopInsight })),
+      },
+    };
+    render(<PlanResults plans={[plan]} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
+
+    expect(screen.queryByText("Estimado para 2: $ 62.000")).not.toBeInTheDocument();
   });
 
   it("shows the zone derived from the plan's first located stop", () => {
@@ -243,7 +279,7 @@ describe("PlanResults (CU17)", () => {
     expect(tabs[0]).toHaveAttribute("aria-pressed", "true");
     await user.click(tabs[1]);
     expect(tabs[1]).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("heading", { level: 2, name: secondPlan.title })).toBeInTheDocument();
+    expect(within(screen.getByTestId("hero-recommendation")).getByRole("heading", { level: 2, name: secondPlan.title })).toBeInTheDocument();
   });
 
   it("shows at most three options", () => {

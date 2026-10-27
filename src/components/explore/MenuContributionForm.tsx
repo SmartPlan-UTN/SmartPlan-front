@@ -1,7 +1,10 @@
 "use client";
 
+import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { Icon } from '@/components/ui';
+import { useSession } from '@/lib/auth';
+import { loginRoute, placeDetailRoute } from '@/lib/routes';
 import { submitMenuContribution, submitMenuContributionPhoto } from '@/lib/api/menu-contributions';
 import styles from './menu-contribution.module.css';
 
@@ -11,6 +14,7 @@ export function MenuContributionForm({ placeId, placeName }: { placeId: number; 
   const [menuText, setMenuText] = useState('');
   const [photo, setPhoto] = useState<File | null>(null);
   const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const { status } = useSession();
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -36,13 +40,15 @@ export function MenuContributionForm({ placeId, placeName }: { placeId: number; 
       <div className={styles.body}>
         <h2 id="menu-contribution-title">¿Tenés la carta de {placeName}?</h2>
         <p>Subí una foto, compartí el enlace o pegá el menú. SmartPlan puede leer la carta; un administrador revisa precios y lugar antes de publicarla.</p>
-        {!open ? <button className={styles.open} type="button" onClick={() => setOpen(true)}>Aportar carta <Icon name="arrow-right" size={15} /></button> : null}
+        {!open && status !== 'authenticated' ? <Link className={styles.open} href={loginRoute(placeDetailRoute(placeId))}>Iniciá sesión para aportar la carta <Icon name="arrow-right" size={15} /></Link> : null}
+        {!open && status === 'authenticated' ? <button className={styles.open} type="button" onClick={() => setOpen(true)}>Aportar carta <Icon name="arrow-right" size={15} /></button> : null}
         {open && state !== 'sent' ? (
           <form className={styles.form} onSubmit={(event) => void submit(event)}>
             <label>Foto del menú <span>JPG, PNG o WebP · hasta 8 MB</span><input className={styles.file} type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => setPhoto(event.target.files?.[0] ?? null)} /></label>
-            {photo ? <p className={styles.photoNote}><Icon name="check" size={14} /> SmartPlan leerá el texto y lo dejará pendiente de revisión.</p> : null}
-            <label>Enlace público <span>opcional</span><input type="url" value={sourceUrl} onChange={(event) => setSourceUrl(event.target.value)} placeholder="https://..." maxLength={500} /></label>
-            <label>Texto del menú <span>opcional</span><textarea value={menuText} onChange={(event) => setMenuText(event.target.value)} placeholder="Platos, bebidas y precios tal como aparecen en la carta" minLength={20} maxLength={80000} rows={5} /></label>
+            {/* The photo endpoint only takes the image: a link or text typed next to it would be lost. */}
+            {photo ? <p className={styles.photoNote}><Icon name="check" size={14} /> SmartPlan leerá el texto de la foto y lo dejará pendiente de revisión. Con foto no se envían el enlace ni el texto.</p> : null}
+            <label>Enlace público <span>opcional</span><input type="url" value={sourceUrl} onChange={(event) => setSourceUrl(event.target.value)} placeholder="https://..." maxLength={500} disabled={Boolean(photo)} /></label>
+            <label>Texto del menú <span>opcional</span><textarea value={menuText} onChange={(event) => setMenuText(event.target.value)} placeholder="Platos, bebidas y precios tal como aparecen en la carta" minLength={20} maxLength={80000} rows={5} disabled={Boolean(photo)} /></label>
             <p className={styles.note}>Usá información pública o que tengas autorización para compartir. El aporte queda pendiente y no cambia las recomendaciones hasta que se verifique.</p>
             {state === 'error' ? <p role="alert" className={styles.error}>No pudimos leer o enviar la carta. Probá con una foto más nítida o iniciá sesión.</p> : null}
             <div className={styles.actions}>

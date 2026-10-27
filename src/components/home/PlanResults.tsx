@@ -19,7 +19,6 @@ import type {
   ResolvedPlanContext,
 } from "@/types";
 
-import { AlternativeRow } from "./AlternativeRow";
 import { DecisionTrail } from "./DecisionTrail";
 import { HeroRecommendation } from "./HeroRecommendation";
 import { ResultsMap, type ResultsMapHandle } from "./ResultsMap";
@@ -69,12 +68,17 @@ export interface PlanResultsProps {
 /** CU17 and CU19 both surface at most three alternatives. */
 const MAX_VISIBLE_PLANS = 3;
 
-const FOCUS_LABEL: Record<string, string> = {
-  BEST: "Mi elección",
-  ALTERNATIVE: "Otra opción",
-  DIFFERENT: "Algo distinto",
-  VALUE: "Mejor precio",
-};
+/**
+ * What each option is, in one or two words. "Algo distinto" only when the
+ * planner says what actually differs; swapping one venue is "Otra opción".
+ */
+function optionLabel(plan: PlanDetailResult, index: number): string {
+  if (index === 0) return "Mi elección";
+  const role = plan.insight?.role;
+  if (role === "VALUE") return "Mejor precio";
+  if (role === "DIFFERENT" && plan.insight?.difference) return "Algo distinto";
+  return "Otra opción";
+}
 
 /** A real "cómo llegar": Google Maps directions to the place, from wherever they are. */
 function directionsLink(plan: PlanDetailResult): string | null {
@@ -146,7 +150,6 @@ export function PlanResults({
   }, [mapPins]);
 
   const hero = visiblePlans[0] ?? null;
-  const alternatives = visiblePlans.slice(1);
   const focused =
     visiblePlans.find((plan) => plan.id === focusedId) ?? hero;
   const focusedPins = mapPins.find((pin) => pin.planId === focused?.id);
@@ -244,7 +247,7 @@ export function PlanResults({
     registerRef: registerCardRef,
   });
 
-  const heroShared = shared(hero);
+  const displayed = focused ?? hero;
   const focusedItinerary = focused ? itineraryOf(focused) : [];
   const focusedAnchor = focused ? anchorOf(focused) : null;
   const fallbackLink = focused ? mapsLink(focused) : null;
@@ -287,15 +290,37 @@ export function PlanResults({
         </p>
       ) : null}
 
+      {visiblePlans.length > 1 ? (
+        <div className={styles.switcher} role="group" aria-label="Elegir un plan">
+          {visiblePlans.map((plan, index) => (
+            <button
+              key={plan.id}
+              type="button"
+              className={styles.tab}
+              aria-pressed={displayed.id === plan.id}
+              onClick={() => focusPlan(plan.id, false)}
+              style={{
+                ["--accent" as string]:
+                  planColors.get(plan.id) ?? "var(--ember)",
+              }}
+            >
+              <span className={styles.tabDot} aria-hidden="true" />
+              <span className={styles.tabLabel}>{optionLabel(plan, index)}</span>
+              <span className={styles.tabPlan}>{planHeadline(plan)}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       <HeroRecommendation
-        key={hero.id}
-        {...heroShared}
+        key={displayed.id}
+        {...shared(displayed)}
         mode={mode}
         funnel={funnel}
         refinement={
-          hero.viewerPlanState === "selected"
+          displayed.viewerPlanState === "selected"
             ? undefined
-            : renderRefinement?.(hero)
+            : renderRefinement?.(displayed)
         }
       />
 
@@ -364,26 +389,6 @@ export function PlanResults({
             </a>
           ) : null}
 
-          {visiblePlans.length > 1 ? (
-            <div className={styles.tabs} role="group" aria-label="Ver en el mapa">
-              {visiblePlans.map((plan) => (
-                <button
-                  key={plan.id}
-                  type="button"
-                  className={styles.tab}
-                  aria-pressed={focused?.id === plan.id}
-                  onClick={() => focusPlan(plan.id, false)}
-                  style={{
-                    ["--accent" as string]:
-                      planColors.get(plan.id) ?? "var(--ember)",
-                  }}
-                >
-                  <span className={styles.tabDot} aria-hidden="true" />
-                  {FOCUS_LABEL[plan.insight?.role ?? "BEST"]}
-                </button>
-              ))}
-            </div>
-          ) : null}
         </div>
 
         <div className={styles.mapFrame}>
@@ -391,7 +396,7 @@ export function PlanResults({
             <ResultsMap
               ref={mapRef}
               plans={mapPins}
-              focusPlanId={hero.id}
+              focusPlanId={displayed.id}
               activePlanId={hoverPlanId ?? focused?.id ?? null}
               onPinHover={setHoverPlanId}
               onPinClick={(planId) => focusPlan(planId, false)}
@@ -418,25 +423,6 @@ export function PlanResults({
 
       {funnel ? (
         <DecisionTrail funnel={funnel} finalists={visiblePlans.length} />
-      ) : null}
-
-      {alternatives.length ? (
-        <section className={styles.alternatives} aria-label="Otras opciones">
-          <h2 className={styles.sectionTitle}>
-            {alternatives.length === 1
-              ? "Otra que también vale la pena"
-              : "Otras que también valen la pena"}
-          </h2>
-          <div className={styles.altGrid}>
-            {alternatives.map((plan, index) => (
-              <AlternativeRow
-                key={plan.id}
-                {...shared(plan)}
-                index={index}
-              />
-            ))}
-          </div>
-        </section>
       ) : null}
 
       <div className={styles.footerActions}>

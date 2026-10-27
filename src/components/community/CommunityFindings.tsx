@@ -6,13 +6,28 @@ import type { CommunityExperience, CommunityPlan } from "@/types";
 import { PlanCard, StoryCard } from "./CommunityScreen";
 import styles from "./community.module.css";
 
-function communitySearchQuery(query: string) {
-  // Planning requests are natural language; prefer the explicit destination so
-  // community search can match place/city metadata instead of the whole prompt.
-  const destination = query.match(
-    /\b(?:en|por|cerca de|hasta|desde)\s+([\p{L}\p{M}\d][\p{L}\p{M}\d\s'-]*?)(?=[,?.!;:]|$)/iu,
-  )?.[1];
-  return destination?.trim() || query.trim();
+// Words after "en"/"por" that describe the outing, not where it happens.
+const NOT_A_PLACE =
+  /^(?:pareja|familia|grupo|equipo|auto|bici|bicicleta|moto|colectivo|casa|la (?:noche|tarde|mañana|semana)|el (?:finde|día)|un rato)\b/iu;
+// A destination ends where the sentence moves on to something else.
+const DESTINATION_END =
+  /\s+(?:con|para|y|que|pero|sin|a la|al|hoy|mañana|esta|este|de (?:noche|día|tarde))\b.*$/iu;
+
+/**
+ * Planning requests are natural language; prefer the explicit destination so
+ * community search can match place/city metadata instead of the whole prompt.
+ * The last candidate wins: "en pareja en Godoy Cruz" means Godoy Cruz.
+ */
+export function communitySearchQuery(query: string): string {
+  const candidates = [
+    ...query.matchAll(
+      /\b(?:en|por|cerca de|hasta|desde)\s+([\p{L}\p{M}\d][\p{L}\p{M}\d\s'-]*?)(?=[,?.!;:]|$)/giu,
+    ),
+  ]
+    .flatMap((match) => match[1].split(/\s+(?:en|por|cerca de|hasta|desde)\s+/iu))
+    .map((candidate) => candidate.replace(DESTINATION_END, "").trim())
+    .filter((candidate) => candidate && !NOT_A_PLACE.test(candidate) && !/^\$|^\d/.test(candidate));
+  return candidates.at(-1) ?? query.trim();
 }
 
 /** Community context beside generated recommendations, sourced from explicit public contributions. */

@@ -24,6 +24,8 @@ export interface PlaceMediaProps {
   fallback?: ReactNode;
   /** Usage-log label for Google UI Kit allowances. */
   screen?: string;
+  /** Called only after this place's available photo sources have failed. */
+  onUnavailable?: () => void;
 }
 
 function isHttpUrl(value: string | null | undefined): value is string {
@@ -205,16 +207,27 @@ export function PlaceMedia({
   artwork,
   variant = "card",
   fallback,
+  onUnavailable,
 }: PlaceMediaProps) {
+  const unavailableRef = useRef(onUnavailable);
+  useEffect(() => { unavailableRef.current = onUnavailable; }, [onUnavailable]);
+  const [ownFailedFor, setOwnFailedFor] = useState<string | null>(null);
   const [googleFailedFor, setGoogleFailedFor] = useState<string | null>(null);
   const [heroShownFor, setHeroShownFor] = useState<string | null>(null);
   const [brokenImageUrl, setBrokenImageUrl] = useState<string | null>(null);
   const googlePlaceId = place?.googlePlaceId ?? null;
+  const openImageUrl = place?.image?.url ?? null;
+  useEffect(() => {
+    if (ownImageUrl && ownImageUrl !== ownFailedFor) return;
+    if (openImageUrl && openImageUrl !== brokenImageUrl) return;
+    if (googlePlaceId && googlePlaceId !== googleFailedFor) return;
+    unavailableRef.current?.();
+  }, [ownImageUrl, ownFailedFor, openImageUrl, brokenImageUrl, googlePlaceId, googleFailedFor]);
 
-  if (ownImageUrl) {
+  if (ownImageUrl && ownImageUrl !== ownFailedFor) {
     return (
       <div className={variant === "hero" ? styles.ownImageHero : styles.ownImage}>
-        <AuthenticatedImage url={ownImageUrl} alt={alt} width={640} height={360} attribution="full" fallback={<>{fallback ?? <Artwork {...artwork} variant={variant} />}<span className="sp-sr-only">Sin imagen disponible</span></>} />
+        <AuthenticatedImage key={ownImageUrl} url={ownImageUrl} alt={alt} width={640} height={360} attribution="full" onUnavailable={() => setOwnFailedFor(ownImageUrl)} fallback={<>{fallback ?? <Artwork {...artwork} variant={variant} />}<span className="sp-sr-only">Sin imagen disponible</span></>} />
       </div>
     );
   }

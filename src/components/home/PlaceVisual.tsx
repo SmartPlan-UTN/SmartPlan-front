@@ -39,6 +39,8 @@ export interface PlaceVisualProps {
   googlePlaceId: string | null;
   /** `hero` fills a large frame; `thumb` is the small alternative image. */
   size?: "hero" | "thumb";
+  ownImageUrl?: string | null;
+  onUnavailable?: () => void;
 }
 
 /** The big first letter(s) of the venue, as an editorial mark. */
@@ -88,6 +90,8 @@ export function PlaceVisual({
   kindLabel,
   googlePlaceId,
   size = "hero",
+  ownImageUrl,
+  onUnavailable,
 }: PlaceVisualProps) {
   const place = googlePlaceId
     ? ({
@@ -109,6 +113,8 @@ export function PlaceVisual({
   return (
     <div className={styles.frame} data-size={size}>
       <PlaceMedia
+        ownImageUrl={ownImageUrl}
+        onUnavailable={onUnavailable}
         place={place}
         alt={`Foto de ${name}`}
         variant={size === "hero" ? "hero" : "card"}

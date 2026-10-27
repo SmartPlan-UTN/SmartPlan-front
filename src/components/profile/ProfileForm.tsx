@@ -195,7 +195,7 @@ export function ProfileForm() {
 
     const errors = validate(name, lastName, username, bio);
     setFieldErrors(errors);
-    if (errors.name || errors.lastName) {
+    if (Object.values(errors).some(Boolean)) {
       return;
     }
 

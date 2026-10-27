@@ -20,7 +20,7 @@ import { stopClock, stopLabel, stopPlace } from "@/lib/plans/stops";
 import { formatArs, formatDuration, observedWhen } from "@/lib/utils";
 import type { PlanDetailResult, PlanFunnel, StopInsight } from "@/types";
 
-import { PlaceVisual } from "./PlaceVisual";
+import { PlanVisual } from "./PlanVisual";
 import styles from "./hero-recommendation.module.css";
 
 export interface HeroRecommendationProps {
@@ -179,12 +179,7 @@ export function HeroRecommendation({
       aria-labelledby={`hero-${plan.id}`}
     >
       <div className={styles.visual}>
-        <PlaceVisual
-          name={place?.name ?? headline}
-          kind={place?.kind ?? null}
-          kindLabel={place?.kindLabel ?? null}
-          googlePlaceId={googlePlaceId}
-        />
+        <PlanVisual key={plan.id} plan={plan} />
         <span className={styles.badge}>
           <span className={styles.badgeDot} aria-hidden="true" />
           {kicker}
@@ -218,7 +213,7 @@ export function HeroRecommendation({
           <p className={styles.tagline}>{insight.tagline}</p>
         ) : null}
         <p className={styles.planShape}>
-          {itinerary.length} {itinerary.length === 1 ? "actividad" : "actividades"}
+          {itinerary.length} {itinerary.length === 1 ? "parada" : "paradas"}
           {plan.estimatedTotalDuration > 0 ? (
             <> · {formatDuration(plan.estimatedTotalDuration)} estimadas</>
           ) : null}
@@ -227,21 +222,21 @@ export function HeroRecommendation({
         <dl className={styles.ledger}>
           <Row
             label="Precio"
-            muted={!stopInsight?.price && !stopInsight?.priceLive && !(multi && money.note === "total estimado")}
+            muted={multi ? !hasMoneyToShow(plan) : !stopInsight?.price && !stopInsight?.priceLive}
           >
             {multi && money.note === "total estimado" ? (
               <>
                 {money.value}
                 <small>Total de las {itinerary.length} paradas</small>
               </>
-            ) : stopInsight?.price ? (
+            ) : !multi && stopInsight?.price ? (
               <>
                 {stopInsight.price}
                 {stopInsight.priceSource ? (
                   <small>{stopInsight.priceSource}</small>
                 ) : null}
               </>
-            ) : stopInsight?.priceLive && googlePlaceId ? (
+            ) : !multi && stopInsight?.priceLive && googlePlaceId ? (
               <GoogleUiKitMedia
                 googlePlaceId={googlePlaceId}
                 screen="plan-result"

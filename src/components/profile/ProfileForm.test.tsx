@@ -87,6 +87,21 @@ describe("ProfileForm", () => {
     expect(updateProfile).not.toHaveBeenCalled();
   });
 
+  it("does not save an invalid community username", async () => {
+    getProfile.mockResolvedValueOnce(profile);
+    const user = userEvent.setup();
+    render(<ProfileForm />);
+
+    await user.click(await screen.findByRole("button", { name: "Editar perfil" }));
+    const usernameInput = screen.getByLabelText("Username");
+    await user.clear(usernameInput);
+    await user.type(usernameInput, "ab");
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    expect(await screen.findByText("Usá de 3 a 24 letras, números o guion bajo.")).toBeInTheDocument();
+    expect(updateProfile).not.toHaveBeenCalled();
+  });
+
   it("saves the trimmed name and last name and shows a confirmation", async () => {
     getProfile.mockResolvedValueOnce(profile);
     updateProfile.mockResolvedValueOnce({ ...profile, name: "Ana María" });

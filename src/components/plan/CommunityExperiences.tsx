@@ -347,9 +347,13 @@ function ExperienceCard({
           avatarUrl={experience.author.avatarUrl}
         />
         <div className={styles.cardAuthor}>
-          <Link className={styles.authorName} href={communityCreatorRoute(experience.author.username ?? "viajero")}>
-            @{experience.author.username ?? "viajero"}
-          </Link>
+          {experience.author.username ? (
+            <Link className={styles.authorName} href={communityCreatorRoute(experience.author.username)}>
+              @{experience.author.username}
+            </Link>
+          ) : (
+            <span className={styles.authorName}>{experience.author.alias}</span>
+          )}
           {experience.completedAt ? (
             <span className={styles.cardDate}>
               {COMMUNITY_COPY.doneIn(monthFormatter.format(new Date(experience.completedAt)))}

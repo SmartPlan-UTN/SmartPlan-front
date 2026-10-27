@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui";
+import { Button, Icon, type IconName } from "@/components/ui";
 import type {
   PlanPreparationTask,
   PlanReadiness,
@@ -9,18 +9,13 @@ import type {
 
 import styles from "./readiness.module.css";
 
-const LADDER: { stage: PlanReadinessStage; label: string }[] = [
-  { stage: "SUGGESTED", label: "Sugerido" },
-  { stage: "FEASIBLE", label: "Viable" },
-  { stage: "VERIFIED", label: "Verificado" },
-  { stage: "READY", label: "Listo" },
-];
-
-/** Where the stage sits on the visible ladder (preparation sits at verified). */
-function rank(stage: PlanReadinessStage): number {
-  if (stage === "PREPARATION_REQUIRED") return 2;
-  return LADDER.findIndex((rung) => rung.stage === stage);
-}
+const STATUS: Record<PlanReadinessStage, { label: string; summary: string; icon: IconName }> = {
+  SUGGESTED: { label: "Tu idea de salida", summary: "Elegí cuándo ir para revisar los horarios.", icon: "circle-help" },
+  FEASIBLE: { label: "Algunos detalles por confirmar", summary: "Revisá los horarios y precios de las paradas antes de salir.", icon: "info" },
+  VERIFIED: { label: "Datos revisados", summary: "Revisá las aclaraciones del recorrido antes de elegirlo.", icon: "circle-check" },
+  PREPARATION_REQUIRED: { label: "Te queda algo por resolver", summary: "Completá los pasos pendientes antes de salir.", icon: "clock" },
+  READY: { label: "Todo listo para salir", summary: "Horarios y precios revisados, sin pasos obligatorios pendientes.", icon: "circle-check" },
+};
 
 export interface PlanReadinessPanelProps {
   readiness: PlanReadiness;
@@ -43,25 +38,18 @@ export function PlanReadinessPanel({
   disabled = false,
   error = null,
 }: PlanReadinessPanelProps) {
-  const reached = rank(readiness.stage);
+  const status = STATUS[readiness.ready ? "READY" : readiness.stage === "READY" ? "FEASIBLE" : readiness.stage];
+  const summary = /^(El costo|No podemos|El plan no cubre|Falta resolver)/.test(readiness.summary)
+    ? readiness.summary : status.summary;
   return (
-    <section className={styles.panel} aria-label="Estado de preparación">
+    <section className={styles.panel} aria-label="Antes de salir" data-ready={readiness.ready}>
       <div className={styles.head}>
-        <p className={styles.eyebrow}>Estado del plan</p>
-        <h2 className={styles.stage}>{readiness.label}</h2>
+        <span className={styles.indicator}><Icon name={status.icon} size={20} aria-hidden="true" /></span>
+        <div>
+          <h2 className={styles.stage}>{status.label}</h2>
+          <p className={styles.summary}>{summary}</p>
+        </div>
       </div>
-      <p className={styles.summary}>{readiness.summary}</p>
-
-      <ol className={styles.ladder} aria-hidden="true">
-        {LADDER.map((rung, index) => (
-          <li
-            key={rung.stage}
-            className={`${styles.rung} ${index <= reached ? styles.rungDone : ""}`}
-          >
-            {rung.label}
-          </li>
-        ))}
-      </ol>
 
       {readiness.tasks.length > 0 ? (
         <ul className={styles.tasks}>

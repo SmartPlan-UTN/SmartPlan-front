@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { downloadMedia } from '@/lib/api/media';
 import type { ImageAttribution } from '@/types';
 import styles from './media.module.css';
@@ -25,6 +25,7 @@ interface AuthenticatedImageProps {
   fallback?: ReactNode;
   /** Where the credit sits: `top` clears a hero whose title covers the bottom. */
   attributionPlacement?: 'bottom' | 'top';
+  onUnavailable?: () => void;
 }
 
 interface LoadedImage {
@@ -33,8 +34,10 @@ interface LoadedImage {
 }
 
 export function AuthenticatedImage({
-  url, alt, className, width = 320, height = 180, attribution = 'compact', fallback, attributionPlacement = 'bottom',
+  url, alt, className, width = 320, height = 180, attribution = 'compact', fallback, attributionPlacement = 'bottom', onUnavailable,
 }: AuthenticatedImageProps) {
+  const unavailableRef = useRef(onUnavailable);
+  useEffect(() => { unavailableRef.current = onUnavailable; }, [onUnavailable]);
   const [image, setImage] = useState<LoadedImage | null>(null);
   const [error, setError] = useState(false);
 
@@ -52,7 +55,7 @@ export function AuthenticatedImage({
       .catch(() => {
         // A missing provider photo (404), an exhausted quota or any other
         // failure all fall back to the same placeholder as no image at all.
-        if (active) setError(true);
+        if (active) { setError(true); unavailableRef.current?.(); }
       });
     return () => {
       active = false;
@@ -66,7 +69,7 @@ export function AuthenticatedImage({
   }
   if (!image) return <span className={styles.skeleton} role="status" aria-label={`Cargando imagen de ${alt}`} />;
 
-  const picture = <Image unoptimized src={image.source} alt={alt} width={width} height={height} className={className ?? styles.image} onError={() => setError(true)} />;
+  const picture = <Image unoptimized src={image.source} alt={alt} width={width} height={height} className={className ?? styles.image} onError={() => { setError(true); unavailableRef.current?.(); }} />;
   if (!image.attribution || attribution === 'external') return picture;
 
   const authors = attribution === 'full' ? image.attribution.authors : [];

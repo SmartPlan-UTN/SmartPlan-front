@@ -7,9 +7,20 @@
   /* Above the picture below: the context panel opens over it. */
   position: relative;
   z-index: 20;
+  /* One band: the sentence on the left, what I understood on the right. */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: end;
+  gap: var(--s-2) var(--s-6);
   width: min(100%, 1240px);
   margin: 0 auto;
-  padding: var(--s-3) 0 var(--s-5);
+  padding: 0 0 var(--s-3);
+}
+
+.back,
+.unmapped {
+  grid-column: 1 / -1;
+  justify-self: start;
 }
 
 .back {
@@ -46,7 +57,6 @@
 /* ── The sentence ───────────────────────────────────────────── */
 .request {
   position: relative;
-  margin-top: var(--s-2);
 }
 
 .requestInput {
@@ -60,7 +70,7 @@
   background: transparent;
   color: var(--fg-1);
   font: inherit;
-  font-size: clamp(30px, 4.6vw, 58px);
+  font-size: clamp(28px, 3.2vw, 44px);
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.035em;
@@ -80,7 +90,9 @@
 }
 
 .searchAgain {
-  display: inline-flex;
+  /* Block-level: an inline button keeps a line box even at height 0. */
+  display: flex;
+  width: fit-content;
   align-items: center;
   gap: 8px;
   height: 0;
@@ -115,7 +127,7 @@
 
 /* ── What I understood ─────────────────────────────────────── */
 .understanding {
-  margin-top: var(--s-5);
+  padding-bottom: 12px;
 }
 
 .eyebrow {
@@ -347,9 +359,18 @@
   }
 }
 
+@media (max-width: 860px) {
+  .header {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .understanding {
+    padding-bottom: 0;
+  }
+}
+
 @media (max-width: 640px) {
   .header {
-    padding-top: 0;
     padding-bottom: var(--s-4);
   }
 
@@ -385,10 +406,6 @@
   .requestInput {
     font-size: clamp(26px, 8vw, 34px);
     letter-spacing: -0.03em;
-  }
-
-  .understanding {
-    margin-top: var(--s-4);
   }
 
   .chip {
@@ -429,7 +446,7 @@
   align-items: flex-start;
   gap: 10px;
   max-width: 62ch;
-  margin: var(--s-4) 0 0;
+  margin: 0;
   padding: 12px 16px;
   border-left: 3px solid var(--gold);
   border-radius: 4px 12px 12px 4px;
