@@ -37,6 +37,8 @@ const SKELETON_TILE_COUNT = 10;
 const GENERIC_SAVE_ERROR =
   "No pudimos guardar tus preferencias. Intentá de nuevo.";
 const CONFIRM_AREA_ERROR = "Confirmá tu ubicación preferida antes de guardar.";
+const LOCATING_AREA_ERROR =
+  "Esperá a que terminemos de ubicar la zona en el mapa.";
 const TOTAL_FIELDS = 5;
 
 type LoadStatus = "loading" | "loaded" | "error";
@@ -73,8 +75,14 @@ function parseBudget(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+/** The stored point is where the user tapped, so it counts as well as the place. */
 function samePlace(a: PreferredArea | null, b: PreferredArea | null): boolean {
-  return (a?.placeId ?? null) === (b?.placeId ?? null);
+  if (a === null || b === null) return a === b;
+  return (
+    a.placeId === b.placeId &&
+    a.latitude === b.latitude &&
+    a.longitude === b.longitude
+  );
 }
 
 function PreferencesHeader({ onboarding }: { onboarding: boolean }) {
@@ -154,15 +162,17 @@ function LoadingState({ onboarding }: { onboarding: boolean }) {
 }
 
 function LoadErrorState({
+  onboarding,
   onRetry,
   onSkip,
 }: {
+  onboarding: boolean;
   onRetry: () => void;
   onSkip?: () => void;
 }) {
   return (
     <div className={styles.experience}>
-      <PreferencesHeader onboarding={onSkip !== undefined} />
+      <PreferencesHeader onboarding={onboarding} />
       <div className={styles.loadError} role="alert">
         <span className={styles.errorIcon} aria-hidden="true">
           <Icon name="circle-alert" size={24} />
@@ -215,6 +225,7 @@ export function PreferencesForm({ onboarding }: PreferencesFormProps = {}) {
   const [areaText, setAreaText] = useState("");
   const [area, setArea] = useState<PreferredArea | null>(null);
   const [areaStatus, setAreaStatus] = useState<PreferredAreaStatus>("empty");
+  const [areaLocating, setAreaLocating] = useState(false);
   const [savedUseDevice, setSavedUseDevice] = useState(false);
   const [useDevice, setUseDevice] = useState(false);
   const [savedMaxDistance, setSavedMaxDistance] = useState<number | null>(null);
@@ -424,6 +435,11 @@ export function PreferencesForm({ onboarding }: PreferencesFormProps = {}) {
       setActiveStep("outing");
       return;
     }
+    if (areaLocating) {
+      setActiveStep("location");
+      setFormError(LOCATING_AREA_ERROR);
+      return;
+    }
     if (areaPending) {
       setActiveStep("location");
       setFormError(CONFIRM_AREA_ERROR);
@@ -444,13 +460,12 @@ export function PreferencesForm({ onboarding }: PreferencesFormProps = {}) {
       },
       "Perfil de preferencias guardado",
     );
-    if (saved && onboarding) {
-      // Stay busy while navigating away so nothing can be sent twice.
-      onboarding.onSaved();
-      return;
-    }
+    // Released even when onboarding navigates away: the saved profile is no
+    // longer dirty, so Save stays disabled, and a navigation that doesn't
+    // happen must not leave the form locked.
     savingRef.current = false;
     setSaving(false);
+    if (saved && onboarding) onboarding.onSaved();
   }
 
   async function confirmReset() {
@@ -469,6 +484,7 @@ export function PreferencesForm({ onboarding }: PreferencesFormProps = {}) {
   if (status === "error") {
     return (
       <LoadErrorState
+        onboarding={!!onboarding}
         onRetry={() => setRetryToken((token) => token + 1)}
         onSkip={onboarding?.onSkip}
       />
@@ -639,6 +655,14 @@ export function PreferencesForm({ onboarding }: PreferencesFormProps = {}) {
                       setAreaStatus(next);
                       setFormError(null);
                     }}
+                    onLocatingChange={(locating) => {
+                      setAreaLocating(locating);
+                      if (!locating) {
+                        setFormError((current) =>
+                          current === LOCATING_AREA_ERROR ? null : current,
+                        );
+                      }
+                    }}
                   />
                 </div>
 
@@ -709,6 +733,7 @@ export function PreferencesForm({ onboarding }: PreferencesFormProps = {}) {
           </section>
         </div>
         <PreferencesActions
+          onboarding={!!onboarding}
           dirty={isDirty}
           saving={saving}
           busy={busy}

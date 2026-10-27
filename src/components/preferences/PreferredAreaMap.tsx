@@ -4,13 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Icon } from "@/components/ui";
 import { BRANDED_MAP_STYLE } from "@/lib/maps/brandedMapStyle";
+import { DEFAULT_MAP_CENTER } from "@/lib/maps/defaultCenter";
 import { useGoogleMap } from "@/lib/maps/useGoogleMap";
 import type { PreferredArea } from "@/types";
 
 import styles from "./preferences.module.css";
 
-/** Mendoza's city centre: where the map opens when nothing is chosen yet. */
-const MENDOZA = { lat: -32.8895, lng: -68.8458 };
 const OVERVIEW_ZOOM = 11;
 const AREA_ZOOM = 14;
 const LABEL_MAX_LENGTH = 160;
@@ -46,6 +45,21 @@ export function areaLabel(result: google.maps.GeocoderResult): string {
   return label.slice(0, LABEL_MAX_LENGTH);
 }
 
+/**
+ * The result that names the zone around the point. Reverse geocoding lists
+ * the street address first; storing its place id next to a "Barrio, Ciudad"
+ * label would make them describe different places.
+ */
+export function areaResult(
+  results: google.maps.GeocoderResult[],
+): google.maps.GeocoderResult | undefined {
+  return (
+    results.find((result) =>
+      result.types.some((type) => AREA_TYPES.includes(type)),
+    ) ?? results[0]
+  );
+}
+
 export interface MapPick {
   area: PreferredArea;
   address: string;
@@ -56,6 +70,8 @@ interface PreferredAreaMapProps {
   disabled?: boolean;
   onPick: (pick: MapPick) => void;
   onPickError: (message: string) => void;
+  /** True from a tap or drag until its geocoding settles. */
+  onLocatingChange: (locating: boolean) => void;
 }
 
 /**
@@ -72,6 +88,7 @@ export function PreferredAreaMap({
   disabled = false,
   onPick,
   onPickError,
+  onLocatingChange,
 }: PreferredAreaMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
@@ -81,7 +98,9 @@ export function PreferredAreaMap({
   // Built once: `useGoogleMap` re-creates the map whenever the centre
   // changes, and following the chosen area is done by panning instead.
   const [options] = useState<google.maps.MapOptions>(() => ({
-    center: area ? { lat: area.latitude, lng: area.longitude } : MENDOZA,
+    center: area
+      ? { lat: area.latitude, lng: area.longitude }
+      : DEFAULT_MAP_CENTER,
     zoom: area ? AREA_ZOOM : OVERVIEW_ZOOM,
     styles: BRANDED_MAP_STYLE,
     disableDefaultUI: true,
@@ -91,22 +110,67 @@ export function PreferredAreaMap({
   }));
 
   // Listeners are attached once; they read the latest props through refs.
-  const latest = useRef({ disabled, onPick, onPickError });
-  useEffect(() => {
-    latest.current = { disabled, onPick, onPickError };
+  const areaKey = area ? `${area.latitude},${area.longitude}` : null;
+  const latest = useRef({
+    area,
+    areaKey,
+    disabled,
+    onPick,
+    onPickError,
+    onLocatingChange,
   });
+  useEffect(() => {
+    latest.current = {
+      area,
+      areaKey,
+      disabled,
+      onPick,
+      onPickError,
+      onLocatingChange,
+    };
+  });
+  // Each tap or drag supersedes the previous one; only the latest request
+  // may apply its result, whatever order the geocoder answers in.
+  const requestRef = useRef(0);
+
+  /** Puts the pin back on the stored area (or hides it) after a failed pick. */
+  const restoreMarker = useCallback(() => {
+    const marker = markerRef.current;
+    const current = latest.current.area;
+    if (!marker) return;
+    if (!current) {
+      marker.setVisible(false);
+      return;
+    }
+    marker.setPosition({ lat: current.latitude, lng: current.longitude });
+    marker.setVisible(true);
+  }, []);
 
   const pickAt = useCallback(async (position: google.maps.LatLng) => {
-    if (latest.current.disabled) return;
+    if (latest.current.disabled) {
+      restoreMarker();
+      return;
+    }
+    const request = ++requestRef.current;
+    const startedFor = latest.current.areaKey;
     markerRef.current?.setPosition(position);
     markerRef.current?.setVisible(true);
     setLocating(true);
+    latest.current.onLocatingChange(true);
     try {
       const { results } = await new google.maps.Geocoder().geocode({
         location: position,
         language: "es",
       });
-      const result = results[0];
+      if (request !== requestRef.current) return;
+      // The area was removed or replaced by the text search meanwhile:
+      // that newer choice wins, and the marker already follows it.
+      if (latest.current.areaKey !== startedFor) return;
+      if (latest.current.disabled) {
+        restoreMarker();
+        return;
+      }
+      const result = areaResult(results);
       if (!result) throw new Error("No geocoding result");
       latest.current.onPick({
         area: {
@@ -118,11 +182,17 @@ export function PreferredAreaMap({
         address: result.formatted_address,
       });
     } catch {
+      if (request !== requestRef.current) return;
+      if (latest.current.areaKey !== startedFor) return;
+      restoreMarker();
       latest.current.onPickError(GEOCODE_ERROR);
     } finally {
-      setLocating(false);
+      if (request === requestRef.current) {
+        setLocating(false);
+        latest.current.onLocatingChange(false);
+      }
     }
-  }, []);
+  }, [restoreMarker]);
 
   const onReady = useCallback(
     (instance: google.maps.Map) => {
@@ -163,7 +233,6 @@ export function PreferredAreaMap({
   const { status } = useGoogleMap(containerRef, options, onReady);
 
   // Follow the area when it comes from the text search or is cleared.
-  const areaKey = area ? `${area.latitude},${area.longitude}` : null;
   useEffect(() => {
     const marker = markerRef.current;
     if (!map || !marker) return;

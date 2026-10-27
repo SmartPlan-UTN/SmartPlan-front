@@ -5,6 +5,7 @@ import { Button, Icon } from "@/components/ui";
 import styles from "./preferences.module.css";
 
 interface PreferencesActionsProps {
+  onboarding: boolean;
   dirty: boolean;
   saving: boolean;
   busy: boolean;
@@ -19,6 +20,7 @@ interface PreferencesActionsProps {
 }
 
 export function PreferencesActions({
+  onboarding,
   dirty,
   saving,
   busy,
@@ -28,7 +30,7 @@ export function PreferencesActions({
   onReset,
   onSkip,
 }: PreferencesActionsProps) {
-  const idleLabel = onSkip ? "Todo es opcional" : "Preferencias guardadas";
+  const idleLabel = onboarding ? "Todo es opcional" : "Preferencias guardadas";
 
   return (
     <div

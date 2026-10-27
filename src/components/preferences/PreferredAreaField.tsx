@@ -19,6 +19,8 @@ interface PreferredAreaFieldProps {
   onTextChange: (text: string) => void;
   onResolvedChange: (area: PreferredArea | null) => void;
   onStatusChange: (status: PreferredAreaStatus) => void;
+  /** True while a point picked on the map is still being named. */
+  onLocatingChange: (locating: boolean) => void;
 }
 
 const NOT_FOUND_MESSAGE =
@@ -55,6 +57,7 @@ export function PreferredAreaField({
   onTextChange,
   onResolvedChange,
   onStatusChange,
+  onLocatingChange,
 }: PreferredAreaFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const helpId = useId();
@@ -62,6 +65,9 @@ export function PreferredAreaField({
     resolved ? "resolved" : text.trim() ? "unconfirmed" : "empty",
   );
   const [message, setMessage] = useState<string | null>(null);
+  // Kept apart from `message`: a map pick that fails leaves the field as it
+  // was (often empty, which is valid), so it's a note, not a field error.
+  const [mapMessage, setMapMessage] = useState<string | null>(null);
   const [resolvedAddress, setResolvedAddress] = useState<string | null>(null);
 
   function apply(next: PreferredAreaStatus) {
@@ -72,6 +78,7 @@ export function PreferredAreaField({
   function handleText(value: string) {
     onTextChange(value);
     setMessage(null);
+    setMapMessage(null);
     if (matchesResolved(value, resolved)) {
       apply("resolved");
       return;
@@ -90,6 +97,7 @@ export function PreferredAreaField({
 
     apply("searching");
     setMessage(null);
+    setMapMessage(null);
     try {
       const place = await searchPlace(query);
       const label = toLabel(place.name, place.address, query);
@@ -128,12 +136,13 @@ export function PreferredAreaField({
     onResolvedChange(area);
     setResolvedAddress(address || null);
     setMessage(null);
+    setMapMessage(null);
     apply("resolved");
   }
 
-  function mapError(text: string) {
-    setMessage(text);
-    if (!resolved) apply("error");
+  function mapLocating(locating: boolean) {
+    if (locating) setMapMessage(null);
+    onLocatingChange(locating);
   }
 
   const map = (
@@ -141,15 +150,23 @@ export function PreferredAreaField({
       area={resolved}
       disabled={disabled || status === "searching"}
       onPick={pickOnMap}
-      onPickError={mapError}
+      onPickError={setMapMessage}
+      onLocatingChange={mapLocating}
     />
   );
+
+  const mapNote = mapMessage ? (
+    <p className={styles.fieldError} role="alert">
+      {mapMessage}
+    </p>
+  ) : null;
 
   function reset() {
     onResolvedChange(null);
     onTextChange("");
     setResolvedAddress(null);
     setMessage(null);
+    setMapMessage(null);
     apply("empty");
     window.requestAnimationFrame(() => inputRef.current?.focus());
   }
@@ -183,11 +200,7 @@ export function PreferredAreaField({
           </button>
         </div>
         {map}
-        {message ? (
-          <p className={styles.fieldError} role="alert">
-            {message}
-          </p>
-        ) : null}
+        {mapNote}
       </div>
     );
   }
@@ -246,6 +259,7 @@ export function PreferredAreaField({
         </button>
       </div>
       {map}
+      {mapNote}
       <p
         id={helpId}
         className={invalid ? styles.fieldError : styles.fieldHelp}
