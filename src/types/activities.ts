@@ -100,6 +100,12 @@ export interface ActivitySearchParams extends ExplorationQueryParams {
   /** "Localidad" filter: only activities with a meeting point in this
    * department. Sent alongside `cityId` once a department is chosen. */
   departmentId?: number;
+  /** Occasions (`Occasion` keys): activities that suit any of them. */
+  occasions?: string[];
+  /** Only games and plans at home (the Hogar). */
+  atHome?: boolean;
+  /** Only evidenced free prices; an unknown price never counts as free. */
+  free?: boolean;
 }
 
 /**

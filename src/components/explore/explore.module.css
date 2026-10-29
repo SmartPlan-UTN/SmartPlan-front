@@ -1011,3 +1011,17 @@
 .filterHint:empty {
   display: none;
 }
+
+/* "Ocasión" filter (#210): full pills, wrapped, no hover-only state. */
+.occasionGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: var(--s-2);
+}
+
+.occasionPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}

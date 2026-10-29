@@ -2,8 +2,9 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 
-import { Select } from "@/components/ui";
-import type { CategoryOption, LocationOption } from "@/types";
+import { Chip, Icon, Select } from "@/components/ui";
+import { OCCASIONS, OCCASION_GROUP_LABELS } from "@/lib/occasions";
+import type { CategoryOption, LocationOption, Occasion, OccasionGroup } from "@/types";
 
 import { priceRangeError } from "./searchState";
 import { getCategoriesOnce } from "./categoryCatalog";
@@ -72,6 +73,17 @@ export interface FiltersPanelProps {
   onClear: () => void;
   location?: LocationFilterProps;
   activityType?: { value: string; onChange: (value: string) => void };
+  /** "Ocasión" (#210): who it suits and its mood, plus "En casa" and "Gratis". */
+  occasion?: OccasionFilterProps;
+}
+
+export interface OccasionFilterProps {
+  occasions: Occasion[];
+  onToggleOccasion: (occasion: Occasion) => void;
+  atHome: boolean;
+  onAtHomeChange: (value: boolean) => void;
+  free: boolean;
+  onFreeChange: (value: boolean) => void;
 }
 
 /**
@@ -92,6 +104,7 @@ export function FiltersPanel({
   onClear,
   location,
   activityType,
+  occasion,
 }: FiltersPanelProps) {
   const ratingName = useId();
   const rangeError = priceRangeError(minPrice, maxPrice);
@@ -231,6 +244,43 @@ export function FiltersPanel({
               )}
             </p>
           </div>
+        </section>
+      ) : null}
+
+      {occasion ? (
+        <section className={styles.filterSection} aria-labelledby={`${ratingName}-occasion`}>
+          <h3 id={`${ratingName}-occasion`} className={styles.filterHeading}>
+            Ocasión
+          </h3>
+          <div className={styles.occasionPills} role="group" aria-label="Dónde y cuánto">
+            <Chip active={occasion.atHome} onClick={() => occasion.onAtHomeChange(!occasion.atHome)}>
+              <Icon name="house" size={13} aria-hidden="true" />
+              En casa
+            </Chip>
+            <Chip active={occasion.free} onClick={() => occasion.onFreeChange(!occasion.free)}>
+              <Icon name="tag" size={13} aria-hidden="true" />
+              Gratis
+            </Chip>
+          </div>
+          {(["who", "mood"] as OccasionGroup[]).map((group) => (
+            <div key={group} className={styles.occasionGroup}>
+              <span className={styles.fieldLabel}>{OCCASION_GROUP_LABELS[group]}</span>
+              <div className={styles.occasionPills} role="group" aria-label={OCCASION_GROUP_LABELS[group]}>
+                {OCCASIONS.filter((option) => option.group === group).map((option) => (
+                  <Chip
+                    key={option.key}
+                    active={occasion.occasions.includes(option.key)}
+                    onClick={() => occasion.onToggleOccasion(option.key)}
+                  >
+                    {option.short}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+          ))}
+          {occasion.free ? (
+            <p className={styles.fieldLabel}>Solo lo que tiene precio gratis confirmado.</p>
+          ) : null}
         </section>
       ) : null}
 

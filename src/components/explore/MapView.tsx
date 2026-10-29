@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { OCCASION_KEYS } from "@/types";
 
 import { getExploreMapMarkers } from "@/lib/api";
 import { DEFAULT_MAP_CENTER } from "@/lib/maps/defaultCenter";
@@ -62,6 +63,16 @@ function markerIcon(markerData: ExploreMapMarker): google.maps.Icon {
   };
 }
 
+/** A marker with real coordinates that is not the virtual Hogar (#210). */
+export function isMappableMarker(marker: ExploreMapMarker): boolean {
+  return (
+    Number.isFinite(marker.latitude) &&
+    Number.isFinite(marker.longitude) &&
+    marker.place?.kind !== "home" &&
+    !("kind" in marker && marker.kind === "home")
+  );
+}
+
 /** Reads the same filters `ActivitySearch` sends over as `?search=&categoryIds=&...` so the map shows the same subset the user was just browsing, instead of silently ignoring them. */
 function readFiltersFromSearchParams(
   searchParams: URLSearchParams,
@@ -80,6 +91,9 @@ function readFiltersFromSearchParams(
   const cityIdRaw = searchParams.get("cityId");
   const departmentIdRaw = searchParams.get("departmentId");
   const cityId = cityIdRaw ? Number(cityIdRaw) : undefined;
+  const occasions = (searchParams.get("occasions") ?? "")
+    .split(",")
+    .filter((key) => (OCCASION_KEYS as readonly string[]).includes(key));
   const departmentId = departmentIdRaw ? Number(departmentIdRaw) : undefined;
 
   return {
@@ -95,6 +109,9 @@ function readFiltersFromSearchParams(
       departmentId != null && Number.isInteger(departmentId) && departmentId > 0
         ? departmentId
         : undefined,
+    occasions: occasions.length > 0 ? occasions : undefined,
+    atHome: searchParams.get("atHome") === "true" || undefined,
+    free: searchParams.get("free") === "true" || undefined,
   };
 }
 
@@ -166,6 +183,8 @@ export function MapView() {
         });
         if (cancelled || currentRequestId !== requestIdRef.current) return;
         fitFilteredResults = false;
+        // The Hogar is "wherever you are": never a pin, even if one slipped in.
+        result.data = result.data.filter(isMappableMarker);
         setMarkerMessage(
           result.data.length === 0
             ? "No hay resultados en esta zona. Mové el mapa o volvé a la lista."

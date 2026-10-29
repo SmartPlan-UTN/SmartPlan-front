@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -65,6 +65,25 @@ beforeEach(() => {
 });
 
 describe("ActivitySearch", () => {
+  it("filters by occasion, at home and free, and keeps them in the URL (#210)", async () => {
+    searchExplore.mockResolvedValue(page([makeActivity()]));
+    const user = userEvent.setup();
+    render(<ActivitySearch />);
+    await screen.findByRole("heading", { name: "Ruta del vino" });
+    await user.click(screen.getByRole("button", { name: "En pareja" }));
+    await user.click(screen.getByRole("button", { name: "En casa" }));
+    await user.click(screen.getByRole("button", { name: "Gratis" }));
+    await waitFor(() =>
+      expect(searchExplore).toHaveBeenLastCalledWith(
+        expect.objectContaining({ occasions: ["romantic"], atHome: true, free: true }),
+      ),
+    );
+    await waitFor(() => expect(window.location.search).toContain("occasions=romantic"));
+    expect(window.location.search).toContain("atHome=true");
+    expect(window.location.search).toContain("free=true");
+    expect(screen.getByRole("link", { name: "Ver mapa" })).toHaveAttribute("href", expect.stringContaining("occasions=romantic"));
+  });
+
   it("filters a subtype and carries the activity and subtype selection to the map", async () => {
     searchExplore.mockResolvedValue(page([makeActivity()]));
     const user = userEvent.setup();

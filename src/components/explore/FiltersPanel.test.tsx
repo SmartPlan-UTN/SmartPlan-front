@@ -208,3 +208,33 @@ describe("FiltersPanel", () => {
     expect(screen.queryByLabelText("Provincia")).not.toBeInTheDocument();
   });
 });
+
+describe("FiltersPanel occasion section (#210)", () => {
+  it("toggles occasions, at home and free as full pills", async () => {
+    const user = userEvent.setup();
+    const occasion = {
+      occasions: ["romantic" as const],
+      onToggleOccasion: vi.fn(),
+      atHome: false,
+      onAtHomeChange: vi.fn(),
+      free: true,
+      onFreeChange: vi.fn(),
+    };
+    render(<FiltersPanel {...props({ occasion })} />);
+
+    expect(screen.getByRole("heading", { name: "Ocasión" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "En pareja" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Gratis" })).toHaveAttribute("aria-pressed", "true");
+    await user.click(screen.getByRole("button", { name: "Con niños" }));
+    await user.click(screen.getByRole("button", { name: "En casa" }));
+    await user.click(screen.getByRole("button", { name: "Gratis" }));
+    expect(occasion.onToggleOccasion).toHaveBeenCalledWith("kids");
+    expect(occasion.onAtHomeChange).toHaveBeenCalledWith(true);
+    expect(occasion.onFreeChange).toHaveBeenCalledWith(false);
+  });
+
+  it("does not render without the occasion prop (plan search)", () => {
+    render(<FiltersPanel {...props()} />);
+    expect(screen.queryByRole("heading", { name: "Ocasión" })).not.toBeInTheDocument();
+  });
+});

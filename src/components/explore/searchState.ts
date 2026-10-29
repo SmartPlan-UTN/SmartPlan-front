@@ -1,4 +1,4 @@
-import type { SortDirection } from "@/types";
+import { OCCASION_KEYS, type Occasion, type SortDirection } from "@/types";
 
 export type ExplorationSearchParams = Record<string, string | string[] | undefined>;
 
@@ -12,6 +12,12 @@ export interface ExplorationSearchState {
   minRating: string;
   cityId: number | null;
   departmentId: number | null;
+  /** "Ocasión" pills (#210): any of them. */
+  occasions: Occasion[];
+  /** "En casa": games and plans at home. */
+  atHome: boolean;
+  /** "Gratis": evidenced free prices only. */
+  free: boolean;
   sortBy: "relevance" | "price" | "rating";
   direction: SortDirection;
   page: number;
@@ -41,6 +47,9 @@ export function readExplorationState(params: ExplorationSearchParams = {}): Expl
     minRating: ["3", "4", "4.5"].includes(rating) ? rating : "",
     cityId,
     departmentId: cityId === null ? null : positiveId(value("departmentId")),
+    occasions: OCCASION_KEYS.filter((key) => value("occasions").split(",").includes(key)),
+    atHome: value("atHome") === "true",
+    free: value("free") === "true",
     sortBy: sortBy === "price" || sortBy === "rating" ? sortBy : "relevance",
     direction: value("direction") === "desc" ? "desc" : "asc",
     page: positiveId(value("page")) ?? 1,
@@ -58,6 +67,9 @@ export function explorationQuery(state: ExplorationSearchState): string {
   }
   if (state.cityId !== null) params.set("cityId", String(state.cityId));
   if (state.departmentId !== null) params.set("departmentId", String(state.departmentId));
+  if (state.occasions?.length) params.set("occasions", state.occasions.join(","));
+  if (state.atHome) params.set("atHome", "true");
+  if (state.free) params.set("free", "true");
   params.set("sortBy", state.sortBy);
   params.set("direction", state.direction);
   params.set("page", String(state.page));
