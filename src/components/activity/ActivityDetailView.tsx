@@ -377,6 +377,8 @@ function ActivityDetailContent({ activityId, placeContext, activityPicker, initi
                       Temporada: {season}
                       {activity.inSeason === false ? " (fuera de temporada ahora)" : ""}
                     </p>
+                  ) : atHome ? (
+                    <p className={styles.infoValue}>Cuando quieran: no necesita reserva.</p>
                   ) : (
                     <p className={styles.missing}>
                       Confirmá horarios y reserva con el lugar antes de ir.

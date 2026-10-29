@@ -95,7 +95,7 @@ export function ActivityCard({
                 <Icon name="house" size={11} aria-hidden="true" />
                 En casa
               </Badge>{" "}
-              {[activity.typeLabel, AT_HOME_LABEL].filter(Boolean).join(" · ")}
+              {activity.typeLabel ?? AT_HOME_LABEL}
             </p>
           ) : activity.typeLabel || place ? (
             <p className={exploreStyles.kicker}>
