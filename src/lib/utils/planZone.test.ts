@@ -79,4 +79,19 @@ describe("getPlanZone", () => {
   it("returns null when no activity on the plan has a location", () => {
     expect(getPlanZone(plan([detail(1, []), detail(2, [])]))).toBeNull();
   });
+
+  it("skips stops at the Hogar, which belong to no zone (#210)", () => {
+    const home = { id: 9, name: "En casa / donde estén", description: null, address: "", kind: "home", department: null };
+    expect(
+      getPlanZone(
+        plan([
+          detail(1, [{ id: 2, atHome: true, latitude: -32.9, longitude: -68.8, notes: null, place: home }]),
+          detail(2, [{ id: 3, latitude: null, longitude: null, notes: null, place: place("Maipú") }]),
+        ]),
+      ),
+    ).toBe("Maipú");
+    expect(
+      getPlanZone(plan([detail(1, [{ id: 2, atHome: true, latitude: null, longitude: null, notes: null, place: home }])])),
+    ).toBeNull();
+  });
 });

@@ -12,7 +12,16 @@ import {
   placeKindPresentation,
   seasonLabel,
 } from "@/lib/catalog/taxonomy";
-import { formatDuration, formatPrice, isPriceUnknown, priceCaveat } from "@/lib/utils";
+import {
+  AT_HOME_LABEL,
+  formatDuration,
+  formatPrice,
+  isAtHomeActivity,
+  isPriceUnknown,
+  priceCaveat,
+} from "@/lib/utils";
+
+import { OccasionPills } from "./OccasionPills";
 import type { ActivitySearchResult } from "@/types";
 
 import styles from "./activity.module.css";
@@ -41,6 +50,8 @@ export function ActivityCard({
     subtype.family !== "other" ? subtype : placeKindPresentation(place?.kind);
   const unknownPrice = isPriceUnknown(activity);
   const season = activity.inSeason === false ? seasonLabel(activity.availableMonths) : null;
+  // Games at home: no place line, distance or map (#210).
+  const atHome = isAtHomeActivity(activity);
 
   const handleToggleSave = () => {
     const nextSaved = !saved;
@@ -78,7 +89,15 @@ export function ActivityCard({
       >
         <div className={exploreStyles.body}>
           <h3 className={exploreStyles.name}>{activity.name}</h3>
-          {activity.typeLabel || place ? (
+          {atHome ? (
+            <p className={exploreStyles.kicker}>
+              <Badge variant="tag">
+                <Icon name="house" size={11} aria-hidden="true" />
+                En casa
+              </Badge>{" "}
+              {[activity.typeLabel, AT_HOME_LABEL].filter(Boolean).join(" · ")}
+            </p>
+          ) : activity.typeLabel || place ? (
             <p className={exploreStyles.kicker}>
               {[activity.typeLabel, place?.department]
                 .filter(Boolean)
@@ -98,7 +117,7 @@ export function ActivityCard({
               ratingCount={activity.ratingCount}
               externalRating={place?.externalRating}
             />
-            {activity.distanceKm != null ? (
+            {activity.distanceKm != null && !atHome ? (
               <span className={exploreStyles.metaItem}>
                 <Icon name="map-pin" size={12} />
                 {activity.distanceKm.toFixed(1)} km
@@ -111,6 +130,9 @@ export function ActivityCard({
             <p className={exploreStyles.seasonNote}>
               <Icon name="calendar" size={12} aria-hidden="true" /> Temporada: {season}
             </p>
+          ) : null}
+          {activity.occasions?.length ? (
+            <OccasionPills occasions={activity.occasions} max={2} />
           ) : null}
 
           {/* Always rendered, even empty: pinned to the bottom of the card

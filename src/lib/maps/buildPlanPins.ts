@@ -1,4 +1,5 @@
 import type { PlanDetailResult } from "@/types";
+import { isAtHomeLocation } from "@/lib/utils/home";
 
 import { PLAN_PIN_COLORS } from "./brandedMapStyle";
 
@@ -30,8 +31,13 @@ export function buildPlanPins(plans: PlanDetailResult[]): ResultsMapPlanPin[] {
     stops: [...plan.details]
       .sort((a, b) => a.order - b.order)
       .map((detail): ResultsMapStop | null => {
+        // A stop at the Hogar happens wherever the group is: no pin, even
+        // when it carries the starting point as its coordinates (#210).
         const location = detail.activity.locations.find(
-          (candidate) => candidate.latitude != null && candidate.longitude != null,
+          (candidate) =>
+            !isAtHomeLocation(candidate) &&
+            candidate.latitude != null &&
+            candidate.longitude != null,
         );
         if (!location || location.latitude == null || location.longitude == null) {
           return null;

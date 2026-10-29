@@ -169,4 +169,24 @@ describe("ActivityCard", () => {
     expect(saveBtn).toBeInTheDocument();
     expect(saveBtn).toHaveAttribute("aria-pressed", "true");
   });
+
+  it("shows a game at home as \"En casa\", without a distance (#210)", () => {
+    render(
+      <ActivityCard
+        activity={{ ...baseActivity, name: "El impostor", atHome: true, distanceKm: 4.2, place: { id: 1, name: "En casa / donde estén", kind: "home" } as never }}
+      />,
+    );
+    expect(screen.getByText("En casa")).toBeInTheDocument();
+    expect(screen.getByText("En casa / donde estén", { exact: false })).toBeInTheDocument();
+    expect(screen.queryByText("4.2 km")).not.toBeInTheDocument();
+  });
+
+  it("shows at most two occasions and counts the rest (#210)", () => {
+    render(<ActivityCard activity={{ ...baseActivity, occasions: ["quiet", "romantic", "friends", "special"] }} />);
+    const pills = screen.getByRole("list", { name: /Ideal para:/ });
+    expect(pills).toHaveTextContent("En pareja");
+    expect(pills).toHaveTextContent("Con amigos");
+    expect(pills).toHaveTextContent("+2");
+    expect(pills).not.toHaveTextContent("Tranquilo");
+  });
 });

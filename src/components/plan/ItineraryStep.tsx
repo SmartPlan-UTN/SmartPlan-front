@@ -4,7 +4,13 @@ import { Badge, Icon } from "@/components/ui";
 import { RatingBadge } from "@/components/media/RatingBadge";
 import { categoryLabel as labelCategory } from "@/lib/utils/catalogLabels";
 import { activityDetailRoute } from "@/lib/routes";
-import { formatDuration, googleMapsUrl, formatPrice } from "@/lib/utils";
+import {
+  AT_HOME_LABEL,
+  formatDuration,
+  formatPrice,
+  googleMapsUrl,
+  isAtHomeLocation,
+} from "@/lib/utils";
 import type { PlanItineraryItem } from "@/types";
 
 import styles from "./plan.module.css";
@@ -24,6 +30,8 @@ export function ItineraryStep({
 }) {
   const { activity } = detail;
   const location = activity.locations[0] ?? null;
+  // The Hogar has no address or map: it happens wherever the group is.
+  const atHome = isAtHomeLocation(location);
   const categoriesText =
     activity.categories.length > 0
       ? activity.categories.map((category) => labelCategory(category.name)).join(" · ")
@@ -64,7 +72,12 @@ export function ItineraryStep({
           <p className={styles.stepName}>{activity.name}</p>
 
           <div className={styles.stepMetaRow}>
-            {location ? (
+            {atHome ? (
+              <span className={styles.stepMetaItem}>
+                <Icon name="house" size={13} />
+                {AT_HOME_LABEL}
+              </span>
+            ) : location ? (
               <span className={styles.stepMetaItem}>
                 <Icon name="map-pin" size={13} />
                 {location.place.address}
@@ -81,7 +94,7 @@ export function ItineraryStep({
           <p className={styles.stepCost}>{formatPrice(detail)}</p>
 
           <div className={styles.stepLinks}>
-            {location ? (
+            {location && !atHome ? (
               <a
                 href={googleMapsUrl(
                   location.latitude,

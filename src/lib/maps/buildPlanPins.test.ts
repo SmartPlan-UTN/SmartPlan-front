@@ -147,4 +147,28 @@ describe("buildPlanPins", () => {
 
     expect(pins.map((pin) => pin.color)).toEqual([...PLAN_PIN_COLORS, PLAN_PIN_COLORS[0]]);
   });
+
+  it("never pins a stop at the Hogar, even with the starting point as coordinates (#210)", () => {
+    const pins = buildPlanPins([
+      plan({
+        details: [
+          {
+            id: 1,
+            order: 1,
+            estimatedCost: 0,
+            estimatedDuration: 0,
+            activity: { id: 10, name: "Museo", description: "", estimatedCost: 0, estimatedDuration: 0, type: null, averageRating: 0, ratingCount: 0, categories: [], locations: [activityLocation()] },
+          },
+          {
+            id: 2,
+            order: 2,
+            estimatedCost: 0,
+            estimatedDuration: 0,
+            activity: { id: 20, name: "El impostor", description: "", estimatedCost: 0, estimatedDuration: 0, type: null, averageRating: 0, ratingCount: 0, categories: [], locations: [{ ...activityLocation(), atHome: true }] },
+          },
+        ],
+      }),
+    ]);
+    expect(pins[0].stops.map((stop) => stop.name)).toEqual(["Museo"]);
+  });
 });

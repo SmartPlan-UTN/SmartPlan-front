@@ -1,3 +1,4 @@
+import { isAtHomeLocation } from "./home";
 import type { PlanDetailResult } from "@/types";
 
 /**
@@ -8,9 +9,12 @@ import type { PlanDetailResult } from "@/types";
  * the same optional-field pattern already used for `distanceKm`.
  */
 export function getPlanZone(plan: PlanDetailResult): string | null {
-  const withLocation = [...plan.details]
-    .sort((a, b) => a.order - b.order)
-    .find((detail) => detail.activity.locations.length > 0);
-
-  return withLocation?.activity.locations[0]?.place.department.name ?? null;
+  // A stop at the Hogar is "wherever you are": it never names the zone.
+  for (const detail of [...plan.details].sort((a, b) => a.order - b.order)) {
+    const located = detail.activity.locations.find(
+      (location) => !isAtHomeLocation(location) && location.place.department,
+    );
+    if (located) return located.place.department?.name ?? null;
+  }
+  return null;
 }

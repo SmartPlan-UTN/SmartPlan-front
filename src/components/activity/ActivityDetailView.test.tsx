@@ -195,3 +195,48 @@ describe("ActivityDetailView hero photo (SmartPlan-back#102)", () => {
     expect(downloadMedia).not.toHaveBeenCalled();
   });
 });
+
+describe("ActivityDetailView at the Hogar (#210)", () => {
+  it("shows rules, materials, age and people, and no address or map", async () => {
+    vi.mocked(getActivity).mockResolvedValue({
+      id: 77,
+      name: "El impostor",
+      description: "Todos reciben una palabra menos uno, que tiene que disimular.",
+      estimatedCost: 0,
+      estimatedDuration: 30,
+      type: null,
+      averageRating: null,
+      ratingCount: 0,
+      distanceKm: null,
+      categories: [{ id: 4, name: "Entertainment" }],
+      atHome: true,
+      occasions: ["friends", "big_group"],
+      minPeople: 4,
+      maxPeople: 12,
+      minAge: 8,
+      materials: ["solo celulares"],
+      rulesRef: "https://example.test/reglas",
+      locations: [
+        {
+          id: 5,
+          atHome: true,
+          latitude: null,
+          longitude: null,
+          notes: null,
+          place: { id: 1, name: "En casa / donde estén", description: null, address: "Donde estén", kind: "home", department: null },
+        },
+      ],
+    });
+
+    render(<ActivityDetailView activityId={77} />);
+
+    expect(await screen.findByText("En casa / donde estén")).toBeInTheDocument();
+    expect(screen.getByText("De 4 a 12 personas")).toBeInTheDocument();
+    expect(screen.getByText("Desde 8 años")).toBeInTheDocument();
+    expect(screen.getByText("solo celulares")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ver de dónde salen las reglas" })).toHaveAttribute("href", "https://example.test/reglas");
+    expect(screen.getByRole("list", { name: /Ideal para: Con amigos, Grupo grande/ })).toBeInTheDocument();
+    expect(screen.queryByText(/Ver en Google Maps/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Donde estén")).not.toBeInTheDocument();
+  });
+});
