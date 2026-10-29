@@ -79,7 +79,13 @@ export {
 } from "./outings";
 export { listNotifications, markNotificationAsRead } from "./notifications";
 export { listCategories } from "./categories";
-export { listCities, listDepartments, listPlaces, searchPlace } from "./places";
+export {
+  listAdminPlaces,
+  listCities,
+  listDepartments,
+  listPlaces,
+  searchPlace,
+} from "./places";
 export {
   getProfile,
   updateProfile,
@@ -155,3 +161,12 @@ export {
   updateRating,
 } from "./ratings";
 export { createMcpKey, listMcpKeys, listMcpTools, revokeMcpKey } from "./mcp";
+export {
+  approveCatalogCandidate,
+  bulkApproveCatalogCandidates,
+  discardCatalogCandidate,
+  getCatalogCandidate,
+  getCatalogCandidateCounts,
+  listCatalogCandidates,
+  updateCatalogCandidate,
+} from "./catalogCandidates";

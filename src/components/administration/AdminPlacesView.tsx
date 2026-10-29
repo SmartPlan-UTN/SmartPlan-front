@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Pagination } from "@/components/explore";
 import { Button, Icon } from "@/components/ui";
 import { useDebouncedValue } from "@/hooks";
-import { ApiError, listPlaces } from "@/lib/api";
+import { ApiError, listAdminPlaces } from "@/lib/api";
 import { googleMapsUrl } from "@/lib/utils";
 import type { PaginatedResult, PlaceOption } from "@/types";
 
@@ -40,7 +40,7 @@ export function AdminPlacesView() {
 
   useEffect(() => {
     let cancelled = false;
-    listPlaces({ search: debouncedSearch || undefined, page, limit: PAGE_SIZE })
+    listAdminPlaces({ search: debouncedSearch || undefined, page, limit: PAGE_SIZE })
       .then((data) => {
         if (!cancelled) {
           setResult(data);

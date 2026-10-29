@@ -17,6 +17,8 @@ interface ReasonDialogProps {
   /** Whose content and where, under the title. */
   subtitle: string;
   placeholder: string;
+  /** The textarea's label; defaults to the reason told to the author. */
+  reasonLabel?: string;
   /** What confirming does, said before it. */
   note: string;
   confirmLabel: string;
@@ -36,6 +38,7 @@ export function ReasonDialog({
   title,
   subtitle,
   placeholder,
+  reasonLabel = "Motivo para el autor",
   note,
   confirmLabel,
   confirmingLabel,
@@ -51,7 +54,7 @@ export function ReasonDialog({
     event.preventDefault();
     const trimmed = reason.trim();
     if (!trimmed) {
-      setValidationError("Ingresá el motivo para el autor.");
+      setValidationError(`Ingresá el ${reasonLabel.charAt(0).toLowerCase()}${reasonLabel.slice(1)}.`);
       return;
     }
     setValidationError(null);
@@ -67,7 +70,7 @@ export function ReasonDialog({
       onSubmit={(event) => void submit(event)}
     >
       <CountedTextarea
-        label="Motivo para el autor"
+        label={reasonLabel}
         value={reason}
         maxLength={MODERATION_TEXT_MAX_LENGTH}
         placeholder={placeholder}

@@ -10,9 +10,21 @@ import { ROUTES, isActiveRoute, type Route } from "@/lib/routes";
 
 import styles from "./AdminShell.module.css";
 
-const ADMIN_LINKS: Array<{ href: Route; label: string; icon: IconName }> = [
+const ADMIN_LINKS: Array<{
+  href: Route;
+  label: string;
+  icon: IconName;
+  /** Shown only to whoever holds it; the backend enforces it as well. */
+  permission?: string;
+}> = [
   { href: ROUTES.admin, label: "Inicio", icon: "layout-dashboard" },
   { href: ROUTES.adminActivities, label: "Actividades", icon: "sparkles" },
+  {
+    href: ROUTES.adminCatalogCandidates,
+    label: "Candidatos",
+    icon: "list-checks",
+    permission: "catalog.review",
+  },
   { href: ROUTES.adminPlaces, label: "Lugares", icon: "map-pin" },
   { href: ROUTES.adminPlans, label: "Planes", icon: "map" },
   { href: ROUTES.adminUsers, label: "Usuarios", icon: "users" },
@@ -42,9 +54,13 @@ function AdminIdentity() {
 }
 
 function AdminNavigation({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+  const { user } = useSession();
+  const links = ADMIN_LINKS.filter(
+    (item) => !item.permission || (user?.permissions.includes(item.permission) ?? false),
+  );
   return (
     <nav className={styles.nav} aria-label="Administración">
-      {ADMIN_LINKS.map((item) => {
+      {links.map((item) => {
         const active = isActiveRoute(pathname, item.href) &&
           (item.href !== ROUTES.admin || pathname === ROUTES.admin);
         return (

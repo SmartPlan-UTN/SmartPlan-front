@@ -100,6 +100,8 @@ import {
   Waves,
   Sun,
   Tent,
+  ListChecks,
+  Gamepad2,
 } from "lucide-react";
 
 /**
@@ -217,6 +219,8 @@ export const iconRegistry = {
   waves: Waves,
   sun: Sun,
   tent: Tent,
+  "list-checks": ListChecks,
+  "gamepad-2": Gamepad2,
   x: X,
 } satisfies Record<string, LucideIcon>;
 

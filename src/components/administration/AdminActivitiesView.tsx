@@ -11,7 +11,7 @@ import {
   deleteAdminActivity,
   listAdminActivities,
   listCategories,
-  listPlaces,
+  listAdminPlaces,
   updateAdminActivity,
 } from "@/lib/api";
 import { formatDuration, googleMapsUrl, formatPrice } from "@/lib/utils";
@@ -45,7 +45,7 @@ async function loadAllPlaces(): Promise<PlaceOption[]> {
   const items: PlaceOption[] = [];
   let page = 1;
   while (true) {
-    const result = await listPlaces({ page, limit: 100 });
+    const result = await listAdminPlaces({ page, limit: 100 });
     items.push(...result.data);
     if (page >= result.pagination.totalPages) return items;
     page += 1;
