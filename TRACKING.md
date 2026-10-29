@@ -552,3 +552,12 @@ PR #199 integration validation: rebased onto current develop, preserving unknown
 - Open questions resolved as the simplest option: reload shows it again, leaving counts as nothing, it is not offered again, an existing account can open it, and a load error offers retry and skip.
 - The preferred area can also be picked on a Google map (`PreferredAreaMap`): tap or drag the pin, reverse-geocoded client-side into the same `{ label, placeId, latitude, longitude }`. Applies to Preferencias too. Falls back to the name search when the map cannot load.
 - Validation: `pnpm lint`, `pnpm test` (156 files, 1183 tests) and `pnpm build` pass. Checked manually against a local backend with a real Google Maps key.
+
+## 2026-10-29 — Catalog candidates queue, "En casa / Gratis", occasions and the Hogar (#210)
+
+- Branch `feature/210-catalogo-ampliado`; requires the back branch `feature/catalogo-ampliado` (expanded catalog, SmartPlan-back). Exactly two PRs (front and back).
+- `/admin/catalog-candidates` (link only with `catalog.review`): Pendientes / Aprobados / Descartados with counts, origin/department/type filters, pagination; cards with place, price source and date, occasions, people, back warnings and on-demand detail (what the place offers, what review changed); edit form with vocabulary chips and per-field back errors; approve (409 duplicate → "Aprobar igual"); discard with a required reason; bulk approve within one place. Admin activity/place screens list places through `GET /admin/places`, and the activity form edits occasions.
+- Composer: "En casa" and "Gratis" send `atHome` / `freeOnly`; the landing hero, which hides the other chips, shows these two. The results header shows what the back resolved (occasions, En casa, Gratis). An all-free plan total reads "Gratis".
+- Explorar: "Ocasión" pills plus "En casa" and "Gratis", kept in the URL with `history.replaceState`, carried to the map.
+- The Hogar reads "En casa / donde estén" in the itinerary, cards and detail, with no address, map, pin or distance, and the plan zone skips it; the detail adds rules source, materials, age and people. Occasion pills on ActivityCard (two, then +n) and on the detail.
+- Validation: lint and build passed; 159 files / 1215 tests with one timing-sensitive composer test (`CreatePlanForm*`) failing only under the full parallel run and passing alone, file untouched here. Visual QA with headless Chrome against the local back, desktop and mobile: see SmartPlan-back `catalog-data/mendoza-v2/PRODUCT-QA.md`.
