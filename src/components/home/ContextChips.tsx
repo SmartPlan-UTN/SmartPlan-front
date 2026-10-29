@@ -243,8 +243,7 @@ export function ContextChips({ value, onChange }: ContextChipsProps) {
 
 /**
  * "En casa" and "Gratis" (#210): two toggles that send `atHome` and
- * `freeOnly`. Part of the context chips, and also shown alone where a
- * placement hides the rest (the landing hero).
+ * `freeOnly`, part of the context chips.
  */
 export function AtHomeFreeChips({ value, onChange }: ContextChipsProps) {
   return (
@@ -257,14 +256,24 @@ export function AtHomeFreeChips({ value, onChange }: ContextChipsProps) {
         <Icon name="house" size={13} aria-hidden="true" />
         En casa
       </Chip>
-      <Chip
-        className={styles.chipCompact}
-        active={value.freeOnly === true}
-        onClick={() => onChange({ ...value, freeOnly: value.freeOnly ? undefined : true })}
-      >
-        <Icon name="tag" size={13} aria-hidden="true" />
-        Gratis
-      </Chip>
+      <FreeChip value={value} onChange={onChange} />
     </>
+  );
+}
+
+/**
+ * "Gratis" alone, where a placement hides the rest (the landing hero). There
+ * "en casa" has no chip: the back reads it from what the user writes.
+ */
+export function FreeChip({ value, onChange }: ContextChipsProps) {
+  return (
+    <Chip
+      className={styles.chipCompact}
+      active={value.freeOnly === true}
+      onClick={() => onChange({ ...value, freeOnly: value.freeOnly ? undefined : true })}
+    >
+      <Icon name="tag" size={13} aria-hidden="true" />
+      Gratis
+    </Chip>
   );
 }

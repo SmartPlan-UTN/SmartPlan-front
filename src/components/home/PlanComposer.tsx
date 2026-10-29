@@ -13,7 +13,7 @@ import { useTypewriter } from "@/hooks";
 import { cn } from "@/lib/utils";
 import type { PlanRequestContext } from "@/types";
 
-import { AtHomeFreeChips, ContextChips } from "./ContextChips";
+import { ContextChips, FreeChip } from "./ContextChips";
 import styles from "./composer.module.css";
 
 const MIN_QUERY_LENGTH = 3;
@@ -261,11 +261,11 @@ export function PlanComposer({
         </button>
       </div>
 
-      {/* Without the full chips, "En casa" and "Gratis" still show: they change
-          what a plan can be, not just a constraint (#210). */}
+      {/* Without the full chips, "Gratis" still shows; "en casa" is read from
+          the text (#210). */}
       <div className={styles.rail}>
         {hideContext ? (
-          <AtHomeFreeChips value={context} onChange={setContext} />
+          <FreeChip value={context} onChange={setContext} />
         ) : (
           <ContextChips value={context} onChange={setContext} />
         )}
