@@ -20,7 +20,8 @@ const TIME_OF_DAY_OPTIONS: { value: TimeOfDay; label: string }[] = [
 ];
 
 /**
- * Budget / time-of-day / party-size context chips (CU17). Every field is
+ * Budget / time-of-day / party-size context chips (CU17), plus the "En casa"
+ * and "Gratis" toggles (#210) next to the budget. Every field is
  * genuinely optional and starts unset — a chip only enters `context` once
  * the user has actually set a value through it, never pre-filled with a
  * placeholder default. No location chip: `idDepartment` has no picker built
@@ -207,7 +208,7 @@ export function ContextChips({ value, onChange }: ContextChipsProps) {
           }}
         >
           <Icon name="wallet" size={13} aria-hidden="true" />
-          {value.budget != null ? `$${value.budget.toLocaleString("es-AR")}` : "Presupuesto"}
+          {value.budget != null ? `${value.budget.toLocaleString("es-AR")}` : "Presupuesto"}
         </Chip>
         {openChip === "budget" ? (
           <div className={styles.popover}>
@@ -234,6 +235,23 @@ export function ContextChips({ value, onChange }: ContextChipsProps) {
           </div>
         ) : null}
       </div>
+
+      <Chip
+        className={styles.chipCompact}
+        active={value.atHome === true}
+        onClick={() => onChange({ ...value, atHome: value.atHome ? undefined : true })}
+      >
+        <Icon name="house" size={13} aria-hidden="true" />
+        En casa
+      </Chip>
+      <Chip
+        className={styles.chipCompact}
+        active={value.freeOnly === true}
+        onClick={() => onChange({ ...value, freeOnly: value.freeOnly ? undefined : true })}
+      >
+        <Icon name="tag" size={13} aria-hidden="true" />
+        Gratis
+      </Chip>
     </div>
   );
 }

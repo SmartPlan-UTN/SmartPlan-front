@@ -42,4 +42,16 @@ describe('Generation constraints (CU17)', () => {
     await user.click(screen.getByRole('button', { name: 'Ubicación actual' }));
     expect(JSON.parse(screen.getByLabelText('Contexto de búsqueda').textContent ?? '{}')).toEqual({ budget: 5000 });
   });
+
+  it('toggles "En casa" and "Gratis" as atHome and freeOnly (#210)', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    const read = () => JSON.parse(screen.getByLabelText('Contexto de búsqueda').textContent ?? '{}');
+    await user.click(screen.getByRole('button', { name: 'En casa' }));
+    await user.click(screen.getByRole('button', { name: 'Gratis' }));
+    expect(read()).toEqual({ budget: 5000, atHome: true, freeOnly: true });
+    expect(screen.getByRole('button', { name: 'En casa' })).toHaveAttribute('aria-pressed', 'true');
+    await user.click(screen.getByRole('button', { name: 'En casa' }));
+    expect(read()).toEqual({ budget: 5000, freeOnly: true });
+  });
 });

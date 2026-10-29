@@ -3,6 +3,7 @@
 import { Badge, Icon } from "@/components/ui";
 import { formatArs, formatDuration } from "@/lib/utils";
 import { categoryLabel } from "@/lib/utils/catalogLabels";
+import { occasionLabel, sortOccasions } from "@/lib/occasions";
 import type { ResolvedPlanContext } from "@/types";
 
 import styles from "./generation.module.css";
@@ -73,12 +74,27 @@ function ContextBadges({ context }: { context: ResolvedPlanContext }) {
     context.budget != null ||
     context.partySize != null ||
     context.departmentName != null ||
-    context.categories.length > 0;
+    context.categories.length > 0 ||
+    Boolean(context.atHome) ||
+    Boolean(context.freeOnly) ||
+    (context.occasions?.length ?? 0) > 0;
 
   if (!hasAny) return null;
 
   return (
     <div className={styles.contextBadges}>
+      {context.atHome ? (
+        <Badge variant="tag">
+          <Icon name="house" size={11} aria-hidden="true" />
+          En casa
+        </Badge>
+      ) : null}
+      {context.freeOnly ? <Badge variant="cost">Gratis</Badge> : null}
+      {sortOccasions(context.occasions ?? []).map((occasion) => (
+        <Badge variant="tag" key={occasion}>
+          {occasionLabel(occasion)}
+        </Badge>
+      ))}
       {context.travelMode ? <Badge variant="tag">{{ drive: 'En auto', walk: 'Caminando', bicycle: 'En bicicleta' }[context.travelMode]}</Badge> : null}
       {context.timeOfDay ? <Badge variant="tag">{{ morning: "Mañana", afternoon: "Tarde", evening: "Noche", night: "Madrugada" }[context.timeOfDay]}</Badge> : null}
       {context.availableDuration != null ? <Badge variant="tag">Hasta {formatDuration(context.availableDuration)}</Badge> : null}

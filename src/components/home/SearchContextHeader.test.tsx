@@ -14,3 +14,26 @@ describe("SearchContextHeader applied preferences (CU18)", () => {
     expect(screen.queryByText(/Hasta .* km/)).not.toBeInTheDocument();
   });
 });
+
+describe("SearchContextHeader occasions, at home and free (#210)", () => {
+  it("shows what the plans respect", () => {
+    render(
+      <SearchContextHeader
+        mode="auto"
+        planCount={2}
+        resolvedContext={{ ...context, atHome: true, freeOnly: true, occasions: ["quiet", "romantic", "nope"] }}
+      />,
+    );
+    expect(screen.getByText("En casa")).toBeInTheDocument();
+    expect(screen.getByText("Gratis")).toBeInTheDocument();
+    expect(screen.getByText("En pareja")).toBeInTheDocument();
+    expect(screen.getByText("Tranquilo")).toBeInTheDocument();
+    expect(screen.queryByText("nope")).not.toBeInTheDocument();
+  });
+
+  it("shows nothing for a plain search", () => {
+    render(<SearchContextHeader mode="auto" planCount={1} resolvedContext={{ ...context, occasions: [], atHome: false, freeOnly: false }} />);
+    expect(screen.queryByText("En casa")).not.toBeInTheDocument();
+    expect(screen.queryByText("Gratis")).not.toBeInTheDocument();
+  });
+});

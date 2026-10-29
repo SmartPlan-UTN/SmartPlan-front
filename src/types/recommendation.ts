@@ -31,6 +31,12 @@ export interface PlanRequestContext {
   partySize?: number;
   timeOfDay?: TimeOfDay;
   availableDuration?: number;
+  /** "En casa": only games and plans at home (the Hogar). */
+  atHome?: boolean;
+  /** "Gratis": only evidenced free activities; an unknown price never counts. */
+  freeOnly?: boolean;
+  /** Explicit occasions (`Occasion` keys), added to what the text says. */
+  occasions?: string[];
 }
 
 /**
@@ -106,6 +112,12 @@ export interface ResolvedPlanContext {
   partySize: number | null;
   departmentName: string | null;
   categories: ActivityCategorySummary[];
+  /** Occasions the plans respect, read from the text and the chips. */
+  occasions?: string[];
+  /** Only games and plans at home. */
+  atHome?: boolean;
+  /** Only evidenced free activities. */
+  freeOnly?: boolean;
 }
 
 /**
