@@ -214,7 +214,12 @@
   font-weight: 700;
 }
 
+/* The reveal leaves a transform, which makes a stacking context: without a
+   z-index the result cards below would cover the open "Ordenar" list. Under
+   the pinned toolbar (5), so scrolled rows still slide beneath it. */
 .filters {
+  position: relative;
+  z-index: 4;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
