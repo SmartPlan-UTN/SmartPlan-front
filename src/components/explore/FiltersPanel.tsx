@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 
-import { Chip, Icon, Select } from "@/components/ui";
+import { Select } from "@/components/ui";
 import type { CategoryOption, LocationOption } from "@/types";
 
 import { priceRangeError } from "./searchState";
@@ -164,15 +164,15 @@ export function FiltersPanel({
             Ubicación
           </h3>
           {atHomeFree ? (
-            <div className={styles.filterPills}>
-              <Chip
-                active={atHomeFree.atHome}
-                onClick={() => atHomeFree.onAtHomeChange(!atHomeFree.atHome)}
-              >
-                <Icon name="house" size={13} aria-hidden="true" />
-                En casa
-              </Chip>
-            </div>
+            <label className={styles.option}>
+              <input
+                type="checkbox"
+                className={styles.checkbox}
+                checked={atHomeFree.atHome}
+                onChange={() => atHomeFree.onAtHomeChange(!atHomeFree.atHome)}
+              />
+              En casa
+            </label>
           ) : null}
           <div className={styles.field}>
             <span id={`${ratingName}-city`} className={styles.fieldLabel}>
@@ -267,15 +267,15 @@ export function FiltersPanel({
           Precio
         </h3>
         {atHomeFree ? (
-          <div className={styles.filterPills}>
-            <Chip
-              active={atHomeFree.free}
-              onClick={() => atHomeFree.onFreeChange(!atHomeFree.free)}
-            >
-              <Icon name="tag" size={13} aria-hidden="true" />
-              Gratis
-            </Chip>
-          </div>
+          <label className={styles.option}>
+            <input
+              type="checkbox"
+              className={styles.checkbox}
+              checked={atHomeFree.free}
+              onChange={() => atHomeFree.onFreeChange(!atHomeFree.free)}
+            />
+            Gratis
+          </label>
         ) : null}
         <div className={styles.priceRow}>
           <label className={styles.field}>

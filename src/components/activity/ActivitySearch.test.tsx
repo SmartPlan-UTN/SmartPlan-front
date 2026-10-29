@@ -71,8 +71,8 @@ describe("ActivitySearch", () => {
     render(<ActivitySearch />);
     await screen.findByRole("heading", { name: "Ruta del vino" });
     expect(screen.queryByRole("heading", { name: "Ocasión" })).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "En casa" }));
-    await user.click(screen.getByRole("button", { name: "Gratis" }));
+    await user.click(screen.getByRole("checkbox", { name: "En casa" }));
+    await user.click(screen.getByRole("checkbox", { name: "Gratis" }));
     await waitFor(() =>
       expect(searchExplore).toHaveBeenLastCalledWith(
         expect.objectContaining({ atHome: true, free: true }),

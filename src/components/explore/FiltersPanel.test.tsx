@@ -222,19 +222,19 @@ describe("FiltersPanel «En casa» and «Gratis» (#210)", () => {
 
     const locationSection = screen.getByRole("region", { name: "Ubicación" });
     const priceSection = screen.getByRole("region", { name: "Precio" });
-    expect(within(locationSection).getByRole("button", { name: "En casa" })).toHaveAttribute("aria-pressed", "false");
-    expect(within(priceSection).getByRole("button", { name: "Gratis" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(locationSection).getByRole("checkbox", { name: "En casa" })).not.toBeChecked();
+    expect(within(priceSection).getByRole("checkbox", { name: "Gratis" })).toBeChecked();
     expect(within(priceSection).getByText("Solo lo que tiene precio gratis confirmado.")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Ocasión" })).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "En casa" }));
-    await user.click(screen.getByRole("button", { name: "Gratis" }));
+    await user.click(screen.getByRole("checkbox", { name: "En casa" }));
+    await user.click(screen.getByRole("checkbox", { name: "Gratis" }));
     expect(atHomeFree.onAtHomeChange).toHaveBeenCalledWith(true);
     expect(atHomeFree.onFreeChange).toHaveBeenCalledWith(false);
   });
 
   it("does not render them without the prop (plan search)", () => {
     render(<FiltersPanel {...props()} />);
-    expect(screen.queryByRole("button", { name: "En casa" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Gratis" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: "En casa" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: "Gratis" })).not.toBeInTheDocument();
   });
 });

@@ -1012,9 +1012,4 @@
   display: none;
 }
 
-/* "En casa" and "Gratis" (#210): full pills, wrapped, no hover-only state. */
-.filterPills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
+
