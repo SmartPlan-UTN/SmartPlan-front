@@ -236,6 +236,19 @@ export function ContextChips({ value, onChange }: ContextChipsProps) {
         ) : null}
       </div>
 
+      <AtHomeFreeChips value={value} onChange={onChange} />
+    </div>
+  );
+}
+
+/**
+ * "En casa" and "Gratis" (#210): two toggles that send `atHome` and
+ * `freeOnly`. Part of the context chips, and also shown alone where a
+ * placement hides the rest (the landing hero).
+ */
+export function AtHomeFreeChips({ value, onChange }: ContextChipsProps) {
+  return (
+    <>
       <Chip
         className={styles.chipCompact}
         active={value.atHome === true}
@@ -252,6 +265,6 @@ export function ContextChips({ value, onChange }: ContextChipsProps) {
         <Icon name="tag" size={13} aria-hidden="true" />
         Gratis
       </Chip>
-    </div>
+    </>
   );
 }

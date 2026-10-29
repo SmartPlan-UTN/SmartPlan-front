@@ -13,7 +13,7 @@ import { useTypewriter } from "@/hooks";
 import { cn } from "@/lib/utils";
 import type { PlanRequestContext } from "@/types";
 
-import { ContextChips } from "./ContextChips";
+import { AtHomeFreeChips, ContextChips } from "./ContextChips";
 import styles from "./composer.module.css";
 
 const MIN_QUERY_LENGTH = 3;
@@ -261,19 +261,21 @@ export function PlanComposer({
         </button>
       </div>
 
-      {hideContext && !trailing ? null : (
-        <div className={styles.rail}>
-          {hideContext ? null : <ContextChips value={context} onChange={setContext} />}
-          {trailing ? (
-            <>
-              {hideContext ? null : (
-                <span className={styles.railSeparator} aria-hidden="true" />
-              )}
-              {trailing}
-            </>
-          ) : null}
-        </div>
-      )}
+      {/* Without the full chips, "En casa" and "Gratis" still show: they change
+          what a plan can be, not just a constraint (#210). */}
+      <div className={styles.rail}>
+        {hideContext ? (
+          <AtHomeFreeChips value={context} onChange={setContext} />
+        ) : (
+          <ContextChips value={context} onChange={setContext} />
+        )}
+        {trailing ? (
+          <>
+            <span className={styles.railSeparator} aria-hidden="true" />
+            {trailing}
+          </>
+        ) : null}
+      </div>
 
       <div className={styles.hintSlot}>
         {validationError ? (
