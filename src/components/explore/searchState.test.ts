@@ -11,15 +11,15 @@ describe("exploration URL state", () => {
   });
 });
 
-describe("occasion filters in the URL (#210)", () => {
-  it("round trips occasions, at home and free so a shared link keeps them", () => {
-    const state = readExplorationState({ occasions: "romantic,quiet", atHome: "true", free: "true" });
-    expect(state).toMatchObject({ occasions: ["romantic", "quiet"], atHome: true, free: true });
+describe("«En casa» and «Gratis» in the URL (#210)", () => {
+  it("round trips at home and free so a shared link keeps them", () => {
+    const state = readExplorationState({ atHome: "true", free: "true" });
+    expect(state).toMatchObject({ atHome: true, free: true });
     expect(readExplorationState(Object.fromEntries(new URLSearchParams(explorationQuery(state))))).toEqual(state);
   });
-  it("drops unknown occasions and leaves the flags off by default", () => {
-    expect(readExplorationState({ occasions: "cheap,romantic" })).toMatchObject({ occasions: ["romantic"], atHome: false, free: false });
-    expect(explorationQuery(readExplorationState({}))).not.toMatch(/occasions|atHome|free/);
+  it("leaves the flags off by default and ignores occasions", () => {
+    expect(readExplorationState({ occasions: "romantic" })).toMatchObject({ atHome: false, free: false });
+    expect(explorationQuery(readExplorationState({ occasions: "romantic" }))).not.toMatch(/occasions|atHome|free/);
   });
 });
 

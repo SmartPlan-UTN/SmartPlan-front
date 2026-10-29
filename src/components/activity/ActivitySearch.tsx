@@ -87,10 +87,8 @@ export function ActivitySearch({
     setSortBy,
     setDirection,
     toggleCategory,
-    occasions,
     atHome,
     free,
-    toggleOccasion,
     setAtHome,
     setFree,
     clear: clearFilters,
@@ -219,14 +217,12 @@ export function ActivitySearch({
       minRating: toNumber(debouncedMinRating),
       cityId: cityId ?? undefined,
       departmentId: departmentId ?? undefined,
-      occasions: occasions.length > 0 ? occasions : undefined,
       atHome: atHome || undefined,
       free: free || undefined,
       sortBy,
       direction,
     }),
     [
-      occasions,
       atHome,
       free,
       itemType,
@@ -255,7 +251,7 @@ export function ActivitySearch({
   const mapFiltersQuery = `${ROUTES.exploreMap}?${explorationQuery({
     type: activityType, itemType,
     search: query, categoryIds, minPrice, maxPrice, minRating,
-    cityId, departmentId, occasions, atHome, free,
+    cityId, departmentId, atHome, free,
     sortBy: sortBy === "distance" ? "relevance" : sortBy,
     direction,
     page: query !== effectiveQuery || minPrice !== debouncedMinPrice ||
@@ -289,7 +285,6 @@ export function ActivitySearch({
     (cityId !== null ? 1 : 0) +
     (activityType ? 1 : 0) +
     (departmentId !== null ? 1 : 0) +
-    occasions.length +
     (atHome ? 1 : 0) +
     (free ? 1 : 0);
 
@@ -299,7 +294,7 @@ export function ActivitySearch({
     type: activityType, itemType,
     search: effectiveQuery, categoryIds,
     minPrice: debouncedMinPrice, maxPrice: debouncedMaxPrice, minRating: debouncedMinRating,
-    cityId, departmentId, occasions, atHome, free,
+    cityId, departmentId, atHome, free,
     sortBy: sortBy === "distance" ? "relevance" : sortBy,
     direction, page,
   });
@@ -325,9 +320,7 @@ export function ActivitySearch({
           categoryIds={categoryIds}
           onToggleCategory={toggleCategory}
           activityType={{ value: activityType, onChange: (value) => { setActivityType(value); if (value) setItemType("ACTIVITY"); } }}
-          occasion={{
-            occasions,
-            onToggleOccasion: toggleOccasion,
+          atHomeFree={{
             atHome,
             onAtHomeChange: setAtHome,
             free,

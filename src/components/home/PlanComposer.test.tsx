@@ -124,15 +124,14 @@ describe("PlanComposer", () => {
     expect(screen.getByRole("button", { name: "Sorpréndeme" })).toBeInTheDocument();
   });
 
-  it('keeps only "Gratis" where the other chips are hidden; "en casa" comes from the text (#210)', async () => {
+  it('shows no "En casa" or "Gratis" chip where the context is hidden: the text says it (#210)', async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
     render(<PlanComposer submitting={false} hideContext onSubmit={onSubmit} />);
-    expect(screen.queryByRole("button", { name: "Presupuesto" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "En casa" })).not.toBeInTheDocument();
-    await user.type(screen.getByLabelText("Contale a smartplan qué querés hacer"), "noche de juegos en casa");
-    await user.click(screen.getByRole("button", { name: "Gratis" }));
+    expect(screen.queryByRole("button", { name: "Gratis" })).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText("Contale a smartplan qué querés hacer"), "noche de juegos gratis");
     await user.click(screen.getByRole("button", { name: "Planificar una salida" }));
-    expect(onSubmit).toHaveBeenCalledWith("noche de juegos en casa", { freeOnly: true });
+    expect(onSubmit).toHaveBeenCalledWith("noche de juegos gratis", {});
   });
 });

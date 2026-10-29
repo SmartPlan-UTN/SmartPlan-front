@@ -1012,15 +1012,8 @@
   display: none;
 }
 
-/* "Ocasión" filter (#210): full pills, wrapped, no hover-only state. */
-.occasionGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: var(--s-2);
-}
-
-.occasionPills {
+/* "En casa" and "Gratis" (#210): full pills, wrapped, no hover-only state. */
+.filterPills {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;

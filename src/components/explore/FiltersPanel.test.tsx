@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -209,32 +209,32 @@ describe("FiltersPanel", () => {
   });
 });
 
-describe("FiltersPanel occasion section (#210)", () => {
-  it("toggles occasions, at home and free as full pills", async () => {
+describe("FiltersPanel «En casa» and «Gratis» (#210)", () => {
+  it("puts «En casa» under the location and «Gratis» under the price", async () => {
     const user = userEvent.setup();
-    const occasion = {
-      occasions: ["romantic" as const],
-      onToggleOccasion: vi.fn(),
+    const atHomeFree = {
       atHome: false,
       onAtHomeChange: vi.fn(),
       free: true,
       onFreeChange: vi.fn(),
     };
-    render(<FiltersPanel {...props({ occasion })} />);
+    render(<FiltersPanel {...props({ atHomeFree })} />);
 
-    expect(screen.getByRole("heading", { name: "Ocasión" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "En pareja" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: "Gratis" })).toHaveAttribute("aria-pressed", "true");
-    await user.click(screen.getByRole("button", { name: "Con niños" }));
+    const locationSection = screen.getByRole("region", { name: "Ubicación" });
+    const priceSection = screen.getByRole("region", { name: "Precio" });
+    expect(within(locationSection).getByRole("button", { name: "En casa" })).toHaveAttribute("aria-pressed", "false");
+    expect(within(priceSection).getByRole("button", { name: "Gratis" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(priceSection).getByText("Solo lo que tiene precio gratis confirmado.")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Ocasión" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "En casa" }));
     await user.click(screen.getByRole("button", { name: "Gratis" }));
-    expect(occasion.onToggleOccasion).toHaveBeenCalledWith("kids");
-    expect(occasion.onAtHomeChange).toHaveBeenCalledWith(true);
-    expect(occasion.onFreeChange).toHaveBeenCalledWith(false);
+    expect(atHomeFree.onAtHomeChange).toHaveBeenCalledWith(true);
+    expect(atHomeFree.onFreeChange).toHaveBeenCalledWith(false);
   });
 
-  it("does not render without the occasion prop (plan search)", () => {
+  it("does not render them without the prop (plan search)", () => {
     render(<FiltersPanel {...props()} />);
-    expect(screen.queryByRole("heading", { name: "Ocasión" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "En casa" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Gratis" })).not.toBeInTheDocument();
   });
 });

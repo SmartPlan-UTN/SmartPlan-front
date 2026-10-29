@@ -13,7 +13,7 @@ import { useTypewriter } from "@/hooks";
 import { cn } from "@/lib/utils";
 import type { PlanRequestContext } from "@/types";
 
-import { ContextChips, FreeChip } from "./ContextChips";
+import { ContextChips } from "./ContextChips";
 import styles from "./composer.module.css";
 
 const MIN_QUERY_LENGTH = 3;
@@ -261,21 +261,19 @@ export function PlanComposer({
         </button>
       </div>
 
-      {/* Without the full chips, "Gratis" still shows; "en casa" is read from
-          the text (#210). */}
-      <div className={styles.rail}>
-        {hideContext ? (
-          <FreeChip value={context} onChange={setContext} />
-        ) : (
-          <ContextChips value={context} onChange={setContext} />
-        )}
-        {trailing ? (
-          <>
-            <span className={styles.railSeparator} aria-hidden="true" />
-            {trailing}
-          </>
-        ) : null}
-      </div>
+      {hideContext && !trailing ? null : (
+        <div className={styles.rail}>
+          {hideContext ? null : <ContextChips value={context} onChange={setContext} />}
+          {trailing ? (
+            <>
+              {hideContext ? null : (
+                <span className={styles.railSeparator} aria-hidden="true" />
+              )}
+              {trailing}
+            </>
+          ) : null}
+        </div>
+      )}
 
       <div className={styles.hintSlot}>
         {validationError ? (

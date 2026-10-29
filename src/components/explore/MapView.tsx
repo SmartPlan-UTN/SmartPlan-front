@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { OCCASION_KEYS } from "@/types";
 
 import { getExploreMapMarkers } from "@/lib/api";
 import { DEFAULT_MAP_CENTER } from "@/lib/maps/defaultCenter";
@@ -91,9 +90,6 @@ function readFiltersFromSearchParams(
   const cityIdRaw = searchParams.get("cityId");
   const departmentIdRaw = searchParams.get("departmentId");
   const cityId = cityIdRaw ? Number(cityIdRaw) : undefined;
-  const occasions = (searchParams.get("occasions") ?? "")
-    .split(",")
-    .filter((key) => (OCCASION_KEYS as readonly string[]).includes(key));
   const departmentId = departmentIdRaw ? Number(departmentIdRaw) : undefined;
 
   return {
@@ -109,7 +105,6 @@ function readFiltersFromSearchParams(
       departmentId != null && Number.isInteger(departmentId) && departmentId > 0
         ? departmentId
         : undefined,
-    occasions: occasions.length > 0 ? occasions : undefined,
     atHome: searchParams.get("atHome") === "true" || undefined,
     free: searchParams.get("free") === "true" || undefined,
   };
