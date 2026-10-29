@@ -103,11 +103,13 @@ function priceSourceLabel(price: CatalogCandidatePrice | null): string | null {
   return parts.filter(Boolean).join(" · ") || null;
 }
 
+const people = (count: number) => `${count} ${count === 1 ? "persona" : "personas"}`;
+
 function peopleLabel({ minPeople, maxPeople }: CatalogCandidateSummary): string | null {
   if (minPeople && maxPeople)
-    return minPeople === maxPeople ? `${minPeople} personas` : `${minPeople} a ${maxPeople} personas`;
-  if (maxPeople) return `Hasta ${maxPeople} personas`;
-  if (minPeople) return `Desde ${minPeople} personas`;
+    return minPeople === maxPeople ? people(minPeople) : `${minPeople} a ${people(maxPeople)}`;
+  if (maxPeople) return `Hasta ${people(maxPeople)}`;
+  if (minPeople) return `Desde ${people(minPeople)}`;
   return null;
 }
 

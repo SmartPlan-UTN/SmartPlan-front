@@ -12,7 +12,8 @@
 }
 
 .filters > * {
-  min-width: 200px;
+  flex: 1 1 220px;
+  max-width: 300px;
 }
 
 .bulkBar {
@@ -227,8 +228,8 @@
   }
 
   .filters > * {
-    min-width: 0;
     flex: 1 1 100%;
+    max-width: none;
   }
 }
 
