@@ -336,7 +336,7 @@ describe("PlanComposer creation flow", () => {
     await reachActivities(user);
 
     expect(
-      await screen.findByRole("heading", { name: "Ideas para tu plan" }),
+      await screen.findByRole("heading", { name: "Sábado entre viñas" }),
     ).toBeInTheDocument();
     expect(await screen.findByText("Degustación sugerida")).toBeInTheDocument();
     expect(suggestActivities).toHaveBeenCalledWith({
@@ -354,7 +354,7 @@ describe("PlanComposer creation flow", () => {
     );
     const stopList = screen.getByRole("list", { name: "Paradas en orden" });
     expect(within(stopList).getByText("Degustación sugerida")).toBeInTheDocument();
-    // It moved from the ideas to the route: it is no longer offered again.
+    // It moved from the suggestions to the route: it is not offered again.
     expect(
       screen.queryByRole("button", { name: "Agregar Degustación sugerida" }),
     ).not.toBeInTheDocument();
@@ -396,7 +396,7 @@ describe("PlanComposer creation flow", () => {
     );
     expect(
       screen.queryByRole("heading", {
-        name: /Ideas para tu plan|Para completar tu recorrido/,
+        name: /Sugerencias para tu plan|Para completar tu recorrido/,
       }),
     ).not.toBeInTheDocument();
   });

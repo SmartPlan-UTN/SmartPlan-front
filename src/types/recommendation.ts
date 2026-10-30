@@ -215,6 +215,10 @@ export interface PlanRequestStatus {
   /** Only present when there is enough same-mode production history. */
   estimatedRemainingSeconds?: number | null;
   plans?: PlanDetailResult[];
+  /** Public community plans scored against this request's resolved intent. */
+  communityRecommendations?: import("./experiences").CommunityPlanRecommendation[];
+  /** Compatibility field for the generated primary; community matches are supplementary. */
+  primaryRecommendation?: import("./experiences").ResultRecommendationSource | null;
   resolvedContext: ResolvedPlanContext;
   failedAt?: string | null;
   failureCode?: string | null;
@@ -299,6 +303,8 @@ export interface PlanFeedback {
   actualDuration: number | null;
   /** Whether the owner shares it with the plan's community (#106). */
   shared: boolean;
+  /** Existing public review to continue from after a repeated outing. */
+  existingCommunityExperienceId?: number;
   /**
    * `true` only when an administrator removed the comment after a report
    * (#156). The owner never sees any other moderation state.

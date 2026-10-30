@@ -961,9 +961,36 @@
 }
 
 .sharingError {
-  margin: 0;
   color: var(--error);
   font-size: var(--t-small);
+}
+.sharingError p {
+  margin: 0;
+}
+.sharingError a {
+  display: inline-block;
+  margin-top: 6px;
+  color: var(--fg-1);
+  font-weight: var(--w-heading);
+  text-underline-offset: 3px;
+}
+.sharingExisting {
+  padding: 12px 14px;
+  border-radius: var(--r-card-sm);
+  background: var(--cream);
+  color: var(--fg-2);
+  font-size: var(--t-small);
+  line-height: 1.5;
+}
+.sharingExisting p {
+  margin: 0;
+}
+.sharingExisting a {
+  display: inline-block;
+  margin-top: 6px;
+  color: var(--fg-1);
+  font-weight: var(--w-heading);
+  text-underline-offset: 3px;
 }
 
 .switch {
@@ -1238,3 +1265,8 @@
 .moneyRow label {
   font-size: 0.875rem;
 }
+.publicPreview { display: grid; gap: 12px; margin-top: 16px; padding: 18px; border: 1px solid var(--hairline); border-radius: var(--r-card); background: var(--surface-card); color: var(--fg-1); }
+.publicPreview p { margin: 0; font-size: var(--t-small); line-height: 1.6; overflow-wrap: anywhere; }
+.publicPreview p:last-child { color: var(--fg-2); font-size: var(--t-label); }
+.publicPreview summary { min-height: 44px; cursor: pointer; font-size: var(--t-small); font-weight: var(--w-heading); }
+.publicPreview summary:focus-visible { outline: 2px solid var(--ember); outline-offset: 3px; }

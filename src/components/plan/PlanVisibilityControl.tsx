@@ -19,7 +19,10 @@ export interface PlanVisibilityBadgeProps {
  * Says whether a plan the person created is public or private (#130), or
  * that moderation took it down (#156).
  */
-export function PlanVisibilityBadge({ visibility, removedByModeration = false }: PlanVisibilityBadgeProps) {
+export function PlanVisibilityBadge({
+  visibility,
+  removedByModeration = false,
+}: PlanVisibilityBadgeProps) {
   if (removedByModeration) {
     return (
       <span
@@ -130,6 +133,13 @@ export function PlanVisibilityControl({
           onCancel={() => setConfirming(false)}
           onConfirm={() => void confirm()}
         >
+          {next === "public" ? (
+            <div className={styles.publishPreview}>
+              <Icon name="route" size={22} />
+              <strong>{planTitle}</strong>
+              <span>Vista previa · Tu plan será público</span>
+            </div>
+          ) : null}
           <p>{dialog.body}</p>
         </ConfirmationDialog>
       ) : null}
@@ -138,7 +148,8 @@ export function PlanVisibilityControl({
 }
 
 function visibilityErrorMessage(err: unknown): string {
-  if (err instanceof ApiError && err.code === "PLAN_EMPTY") return VISIBILITY_COPY.errors.empty;
+  if (err instanceof ApiError && err.code === "PLAN_EMPTY")
+    return VISIBILITY_COPY.errors.empty;
   if (err instanceof ApiError && err.code === "PLAN_REMOVED_BY_MODERATION") {
     return VISIBILITY_COPY.errors.removed;
   }

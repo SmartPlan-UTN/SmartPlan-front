@@ -81,6 +81,11 @@ export async function getOwnPlan(id: number): Promise<OwnPlanDetail> {
   return apiClient.get<OwnPlanDetail>(`/users/me/plans/${id}`);
 }
 
+/** Creates or resumes a private editable copy; publishing is a separate choice. */
+export function copyGeneratedPlan(id: number): Promise<OwnPlanDetail> {
+  return apiClient.post<OwnPlanDetail>(`/users/me/plans/generated/${id}/copies`);
+}
+
 /**
  * Updates basic details of an owned plan (CU25).
  * Backend contract: `PATCH /users/me/plans/:id`.

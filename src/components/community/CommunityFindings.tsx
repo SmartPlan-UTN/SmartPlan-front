@@ -1,66 +1,146 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getCommunityExperiences, getCommunityPlans } from "@/lib/api";
-import type { CommunityExperience, CommunityPlan } from "@/types";
-import { PlanCard, StoryCard } from "./CommunityScreen";
-import styles from "./community.module.css";
+import Link from "next/link";
+import { Icon, Stars } from "@/components/ui";
+import { planDetailRoute, ROUTES } from "@/lib/routes";
+import { formatDuration } from "@/lib/utils";
+import type { CommunityPlanRecommendation } from "@/types";
+import { LazyImage } from "./LazyImage";
+import { PersonLink } from "./Person";
+import { RoutePreview } from "./cards";
+import { SavePlanButton } from "./PublicationActions";
+import styles from "./findings.module.css";
 
-// Words after "en"/"por" that describe the outing, not where it happens.
-const NOT_A_PLACE =
-  /^(?:pareja|familia|grupo|equipo|auto|bici|bicicleta|moto|colectivo|casa|la (?:noche|tarde|mañana|semana)|el (?:finde|día)|un rato)\b/iu;
-// A destination ends where the sentence moves on to something else.
-const DESTINATION_END =
-  /\s+(?:con|para|y|que|pero|sin|a la|al|hoy|mañana|esta|este|de (?:noche|día|tarde))\b.*$/iu;
-
-/**
- * Planning requests are natural language; prefer the explicit destination so
- * community search can match place/city metadata instead of the whole prompt.
- * The last candidate wins: "en pareja en Godoy Cruz" means Godoy Cruz.
- */
-export function communitySearchQuery(query: string): string {
-  const candidates = [
-    ...query.matchAll(
-      /\b(?:en|por|cerca de|hasta|desde)\s+([\p{L}\p{M}\d][\p{L}\p{M}\d\s'-]*?)(?=[,?.!;:]|$)/giu,
-    ),
-  ]
-    .flatMap((match) => match[1].split(/\s+(?:en|por|cerca de|hasta|desde)\s+/iu))
-    .map((candidate) => candidate.replace(DESTINATION_END, "").trim())
-    .filter((candidate) => candidate && !NOT_A_PLACE.test(candidate) && !/^\$|^\d/.test(candidate));
-  return candidates.at(-1) ?? query.trim();
+const REASONS: Record<string, string> = {
+  covers_experiences: "Incluye lo que buscabas",
+  fits_location: "En la zona que pediste",
+  fits_budget: "Dentro de tu presupuesto",
+  fits_party: "Para tu compañía",
+};
+function cost(plan: CommunityPlanRecommendation) {
+  if (plan.currentPriceMin === null || plan.currentPriceMax === null)
+    return "Costo por confirmar";
+  if (plan.currentPriceMin === 0 && plan.currentPriceMax === 0) return "Gratis";
+  if (plan.currentPriceMin === plan.currentPriceMax)
+    return `Aprox. $${plan.currentPriceMin.toLocaleString("es-AR")}`;
+  return `$${plan.currentPriceMin.toLocaleString("es-AR")}–$${plan.currentPriceMax.toLocaleString("es-AR")}`;
 }
 
-/** Community context beside generated recommendations, sourced from explicit public contributions. */
-export function CommunityFindings({ query }: { query: string | null }) {
-  const [matches, setMatches] = useState<{
-    query: string;
-    stories: CommunityExperience[];
-    plans: CommunityPlan[];
-  } | null>(null);
-  useEffect(() => {
-    if (!query?.trim()) return;
-    let active = true;
-    const searchQuery = communitySearchQuery(query);
-    Promise.all([
-      getCommunityExperiences({ q: searchQuery, limit: 2 }),
-      getCommunityPlans({ q: searchQuery, limit: 3 }),
-    ]).then(([experiencePage, planPage]) => {
-      if (!active) return;
-      setMatches({ query: query.trim(), stories: experiencePage.data, plans: planPage.data });
-    }).catch(() => {
-      if (active) setMatches({ query: query.trim(), stories: [], plans: [] });
-    });
-    return () => { active = false; };
-  }, [query]);
-  const currentQuery = query?.trim() ?? "";
-  const stories = matches?.query === currentQuery ? matches.stories : [];
-  const plans = matches?.query === currentQuery ? matches.plans : [];
-  const loaded = matches?.query === currentQuery;
-  if (!loaded || (!stories.length && !plans.length)) return null;
-  return <aside className={styles.findings} aria-labelledby="community-findings-title">
-    <div className={styles.sectionHead}><div><p className={styles.eyebrow}>OTRAS MIRADAS</p><h2 id="community-findings-title">La comunidad también encontró esto</h2></div><span className={styles.note}>Coincidencias con tu búsqueda</span></div>
-    <p className={styles.findingsNote}>Las vivencias cuentan salidas pasadas. SmartPlan no toma sus precios ni horarios como vigentes; revisalos antes de ir.</p>
-    {stories.length ? <div className={styles.storyGrid}>{stories.map((story) => <StoryCard key={story.id} story={story} />)}</div> : null}
-    {plans.length ? <div className={styles.planGrid}>{plans.map((plan) => <PlanCard key={plan.id} plan={plan} compact />)}</div> : null}
-  </aside>;
+/** Only the server's request-matched public plans enter this section. */
+export function CommunityFindings({
+  recommendations = [],
+  returnTo,
+}: {
+  recommendations?: CommunityPlanRecommendation[];
+  returnTo?: string;
+}) {
+  if (!recommendations.length) return null;
+  return (
+    <section
+      className={styles.findings}
+      aria-labelledby="community-findings-title"
+    >
+      <header className={styles.header}>
+        <div>
+          <h2 id="community-findings-title">Planes de la comunidad</h2>
+          <p>Planes compartidos por otras personas que encajan con lo que buscás.</p>
+        </div>
+        <Link href={ROUTES.community}>
+          Conocer la comunidad <Icon name="arrow-right" size={16} />
+        </Link>
+      </header>
+      <div
+        className={`${styles.grid} ${recommendations.length === 1 ? styles.single : ""}`}
+      >
+        {recommendations.slice(0, 3).map((plan) => (
+          <article className={styles.card} key={plan.id}>
+            <div className={styles.cover}>
+              {plan.imageUrl ? (
+                <LazyImage
+                  url={plan.imageUrl}
+                  alt=""
+                  width={640}
+                  height={400}
+                  attribution="compact"
+                  fallback={<RoutePreview stops={plan.stops ?? []} />}
+                />
+              ) : (
+                <RoutePreview stops={plan.stops ?? []} />
+              )}
+            </div>
+            <div className={styles.body}>
+              {plan.authorUsername ? (
+                <PersonLink
+                  username={plan.authorUsername}
+                  avatarUrl={plan.authorAvatarUrl}
+                  size={32}
+                  note="compartió este plan"
+                />
+              ) : null}
+              <h3>
+                <Link href={planDetailRoute(plan.id, returnTo)}>
+                  {plan.title}
+                </Link>
+              </h3>
+              {plan.description ? (
+                <p className={styles.description}>{plan.description}</p>
+              ) : null}
+              <div className={styles.meta}>
+                <span>
+                  <Icon name="clock" size={14} />
+                  {formatDuration(plan.estimatedTotalDuration)}
+                </span>
+                <span>{cost(plan)}</span>
+              </div>
+              <div className={styles.reasons}>
+                {plan.matchReasons
+                  .flatMap((reason) =>
+                    REASONS[reason]
+                      ? [
+                          <span key={reason}>
+                            <Icon name="check" size={13} />
+                            {REASONS[reason]}
+                          </span>,
+                        ]
+                      : [],
+                  )
+                  .slice(0, 2)}
+              </div>
+              {plan.sharedExperienceCount > 0 ? (
+                <Link
+                  className={styles.reviews}
+                  href={`${planDetailRoute(plan.id, returnTo)}#community-experiences`}
+                >
+                  {plan.sharedAverageRating !== null ? (
+                    <>
+                      <Stars rating={plan.sharedAverageRating} size={13} />
+                      <span>{plan.sharedAverageRating.toFixed(1)} / 5</span>
+                    </>
+                  ) : null}
+                  <span>
+                    {plan.sharedExperienceCount}{" "}
+                    {plan.sharedExperienceCount === 1
+                      ? "reseña"
+                      : "reseñas"}
+                  </span>
+                </Link>
+              ) : null}
+              {!plan.decisionGrade ? (
+                <p className={styles.uncertainty}>
+                  <Icon name="info" size={14} />
+                  Hay datos por confirmar antes de salir.
+                </p>
+              ) : null}
+              <div className={styles.actions}>
+                <SavePlanButton id={plan.id} title={plan.title} />
+                <Link href={planDetailRoute(plan.id, returnTo)}>
+                  Ver plan <Icon name="arrow-right" size={15} />
+                </Link>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
 }

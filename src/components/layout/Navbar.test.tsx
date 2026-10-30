@@ -99,7 +99,8 @@ describe("Navbar", () => {
       unobserve = vi.fn();
       disconnect = vi.fn();
     }
-    window.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+    window.ResizeObserver =
+      MockResizeObserver as unknown as typeof ResizeObserver;
   });
 
   afterEach(() => {
@@ -114,12 +115,14 @@ describe("Navbar", () => {
       name: "Navegación principal",
     });
 
-    expect(
-      within(nav).getByRole("link", { name: "Inicio" }),
-    ).toHaveAttribute("href", "/");
-    expect(
-      within(nav).getByRole("link", { name: "Explorar" }),
-    ).toHaveAttribute("href", "/explore");
+    expect(within(nav).getByRole("link", { name: "Inicio" })).toHaveAttribute(
+      "href",
+      "/",
+    );
+    expect(within(nav).getByRole("link", { name: "Explorar" })).toHaveAttribute(
+      "href",
+      "/explore",
+    );
     expect(
       within(nav).getByRole("link", { name: "Mis planes" }),
     ).toHaveAttribute("href", "/plans");
@@ -325,7 +328,9 @@ describe("Navbar", () => {
     await act(async () => {
       vi.advanceTimersByTime(1);
     });
-    expect(screen.queryByText("Armando tu plan perfecto...")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Armando tu plan perfecto..."),
+    ).not.toBeInTheDocument();
   });
 
   it("doesn't show the transition for a modified click (opening Explorar in a new tab)", async () => {
@@ -339,7 +344,9 @@ describe("Navbar", () => {
       metaKey: true,
     });
 
-    expect(screen.queryByText("Armando tu plan perfecto...")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Armando tu plan perfecto..."),
+    ).not.toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
   });
 
@@ -353,7 +360,9 @@ describe("Navbar", () => {
     });
     fireEvent.click(within(nav).getByRole("link", { name: "Explorar" }));
 
-    expect(screen.queryByText("Armando tu plan perfecto...")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Armando tu plan perfecto..."),
+    ).not.toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
   });
 
@@ -376,7 +385,11 @@ describe("Navbar", () => {
         <Navbar />
       </SessionProvider>,
     );
-    fireEvent.click(within(screen.getByRole("navigation", { name: "Navegación principal" })).getByRole("link", { name: "Explorar" }));
+    fireEvent.click(
+      within(
+        screen.getByRole("navigation", { name: "Navegación principal" }),
+      ).getByRole("link", { name: "Explorar" }),
+    );
 
     await act(async () => {
       vi.advanceTimersByTime(899);
@@ -386,7 +399,9 @@ describe("Navbar", () => {
     await act(async () => {
       vi.advanceTimersByTime(1);
     });
-    expect(screen.queryByText("Armando tu plan perfecto...")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Armando tu plan perfecto..."),
+    ).not.toBeInTheDocument();
   });
 
   it("lists the bottom bar's destinations with the same names as desktop", async () => {
@@ -401,7 +416,6 @@ describe("Navbar", () => {
     expect(links.map((link) => link.textContent)).toEqual([
       "Explorar",
       "Comunidad",
-      "Mis planes",
       "Planificar",
       "Mis salidas",
       "Favoritos",
@@ -442,7 +456,9 @@ describe("Navbar", () => {
     const mobileNav = await screen.findByRole("navigation", {
       name: "Navegación móvil",
     });
-    await user.click(within(mobileNav).getByRole("link", { name: "Planificar" }));
+    await user.click(
+      within(mobileNav).getByRole("link", { name: "Planificar" }),
+    );
 
     expect(onStart).toHaveBeenCalledOnce();
     window.removeEventListener("smartplan:start-composer", onStart);
@@ -469,7 +485,7 @@ describe("Navbar", () => {
     ).toHaveAttribute("aria-current", "page");
   });
 
-  it("keeps Mis planes current inside a plan's own screens", async () => {
+  it("keeps authored plan editing distinct from the central Planificar action", async () => {
     route.actual = "/plans/42/edit";
     mockAnonymousStartup();
     renderNavbar();
@@ -479,7 +495,9 @@ describe("Navbar", () => {
     });
 
     expect(
-      within(mobileNav).getByRole("link", { name: "Mis planes" }),
+      within(
+        screen.getByRole("navigation", { name: "Navegación principal" }),
+      ).getByRole("link", { name: "Mis planes" }),
     ).toHaveAttribute("aria-current", "page");
     expect(
       within(mobileNav).getByRole("link", { name: "Planificar" }),
@@ -503,6 +521,8 @@ describe("Navbar", () => {
     await act(async () => {
       vi.advanceTimersByTime(900);
     });
-    expect(screen.queryByText("Armando tu plan perfecto...")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Armando tu plan perfecto..."),
+    ).not.toBeInTheDocument();
   });
 });

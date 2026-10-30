@@ -47,6 +47,7 @@ export {
   checkPlanComposer,
   addPlanActivity,
   getOwnPlan,
+  copyGeneratedPlan,
   updateOwnPlan,
   updatePlanFromComposer,
   cancelOwnPlan,
@@ -110,7 +111,7 @@ export {
   updateFeedback,
   submitFeedback,
 } from './feedback';
-export { getPlanExperiences, getCommunityExperiences, getCommunityExperience, getCommunityCreator, getCreatorExperiences, getCommunityPlans, getCreatorPlans } from './experiences';
+export { getCommunityFeed, getPlanExperiences, getCommunityExperiences, getCommunityExperience, getCommunityCreator, getCreatorExperiences, getCommunityPlans, getCreatorPlans, getCommunityCreators, getPlanAdaptations, getCreatorInspired, likeCommunityExperience, unlikeCommunityExperience, addCommunityExperienceVisit } from './experiences';
 export { getPreferences, updatePreferences } from './users';
 export { createPlanRequest, createSurprisePlanRequest, getPlanRequestStatus, refinePlanRequest, listPlanRequests } from './plan-requests';
 export { getRecommendations, dismissRecommendation, undoDismissRecommendation } from './plan-recommendations';

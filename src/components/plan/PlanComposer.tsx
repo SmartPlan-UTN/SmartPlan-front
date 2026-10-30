@@ -25,6 +25,8 @@ import type {
 } from "@/types";
 
 import { ActivitiesStep, type ComposerPane } from "./composer/ActivitiesStep";
+import { AdaptBanner, type AdaptSource } from "./composer/AdaptBanner";
+import { AdaptStep, DEFAULT_ADAPT_CONTEXT, type AdaptContext } from "./composer/AdaptStep";
 import type { DiscoveryView } from "./composer/CatalogPanel";
 import { ComposerStepper } from "./composer/ComposerStepper";
 import {
@@ -37,6 +39,7 @@ import {
 } from "./composer/draft";
 import { IdeaStep } from "./composer/IdeaStep";
 import {
+  TITLE_MAX,
   validateDescription,
   validatePeople,
   validatePriceRange,
@@ -90,6 +93,11 @@ const STAGE_CLASS: Record<ComposerStep, string> = {
 };
 const HIGHLIGHT_MS = 1200;
 
+/** One identity per stop, in order, to tell an adaptation from its original. */
+function stopKeysOf(stops: ComposerStop[]): string[] {
+  return stops.map((stop) => stop.placeTarget ? `p${stop.placeTarget.placeId}:${stop.placeTarget.action}` : `a${stop.activity.id}`);
+}
+
 export function PlanComposer({
   mode,
   plan,
@@ -111,6 +119,8 @@ export function PlanComposer({
     initialDraftKeyRef.current = getDraftKey(draft);
   }
 
+  const [adaptSource, setAdaptSource] = useState<AdaptSource | null>(null);
+  const [adaptContext, setAdaptContext] = useState<AdaptContext>(DEFAULT_ADAPT_CONTEXT);
   const [step, setStep] = useState<ComposerStep>(initialActivityId ? 1 : 0);
   const [mobilePane, setMobilePane] = useState<ComposerPane>("catalog");
   // List or map: two views of the same search, kept across steps.
@@ -404,16 +414,27 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
           };
         });
         const adapted: ComposerDraft = {
-          title: source.title,
+          title: `Mi versión de ${source.title}`.slice(0, TITLE_MAX),
           description: source.description ?? "",
           peopleCount: source.peopleCount ?? 2,
           visibility: "private",
           stops,
         };
         setDraft(adapted);
-        setStep(1);
+        setAdaptSource({
+          id: source.id,
+          title: source.title,
+          authorUsername: source.author?.username ?? source.inspiredBy?.creatorUsername ?? null,
+          authorAvatarUrl: source.author?.avatarUrl ?? null,
+          peopleCount: adapted.peopleCount,
+          stopKeys: stopKeysOf(stops),
+          totalCost: computeDraftTotals(stops, adapted.peopleCount).estimatedTotalCost,
+          totalLabel: formatPlanTotal(source),
+          duration: source.estimatedTotalDuration,
+        });
+        setStep(0);
         initialDraftKeyRef.current = getDraftKey(adapted);
-        setAnnouncement(`Borrador inspirado en ${source.title}. Podés editarlo antes de guardar.`);
+        setAnnouncement(`Tu versión de ${source.title}. Contanos cuándo y con quién, y revisamos si te sirve.`);
       })
       .catch(() => {
         if (active) setPrefillError("No pudimos abrir el plan de inspiración. Podés armar el tuyo desde el catálogo.");
@@ -641,6 +662,20 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
     });
   }
 
+  // Opens the catalog sorted by price, to bring a plan back under budget.
+  function findCheaper() {
+    goToStep(1);
+    setMobilePane("catalog");
+    setDiscoveryView("list");
+    setAskedQuery(null);
+    setSearch("");
+    setCategoryIds([]);
+    setMinPrice("");
+    setMaxPrice("");
+    setUserSort("price");
+    setAnnouncement("Opciones ordenadas por precio. Elegí cuáles cambiar en tu recorrido.");
+  }
+
   function exitComposer() {
     if (isDirty) setShowExitDialog(true);
     else router.push(destination);
@@ -722,6 +757,7 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
           currentStep={step}
           disabled={isSaving}
           onStepChange={goToStep}
+          adapting={adaptSource !== null}
         />
         <Button
           type="button"
@@ -733,8 +769,56 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
         </Button>
       </div>
 
+      {adaptSource ? (
+        <AdaptBanner
+          source={adaptSource}
+          current={{
+            peopleCount: draft.peopleCount,
+            stopKeys: stopKeysOf(draft.stops),
+            totalCost: priceTotals.estimatedTotalCost,
+          }}
+        />
+      ) : null}
+
       <div className={`${styles.stage} ${STAGE_CLASS[step]}`}>
-        {step === 0 ? (
+        {step === 0 && adaptSource ? (
+          <AdaptStep
+            source={adaptSource}
+            title={draft.title}
+            titleError={titleError}
+            peopleCount={draft.peopleCount}
+            peopleError={peopleError}
+            stops={draft.stops}
+            totalLabel={totalCostLabel}
+            totalCost={priceTotals.estimatedTotalCost}
+            perPersonLabel={costPerPersonLabel}
+            duration={totals.duration}
+            context={adaptContext}
+            isSaving={isSaving}
+            onTitleChange={(value) => {
+              if (!validateTitle(value)) setTitleError(null);
+              updateDraft("title", value);
+            }}
+            onPeopleCountChange={(value) => {
+              if (!validatePeople(value)) setPeopleError(null);
+              updateDraft("peopleCount", value);
+            }}
+            onContextChange={setAdaptContext}
+            onRemoveStop={removeActivity}
+            onSwapStop={(activityId) => {
+              removeActivity(activityId);
+              goToStep(1);
+              setMobilePane("catalog");
+              setDiscoveryView("list");
+              setAnnouncement("Elegí otra opción para esa parada.");
+            }}
+            onFindCheaper={findCheaper}
+            onContinue={() => goToStep(1)}
+            onReview={() => goToStep(2)}
+          />
+        ) : null}
+
+        {step === 0 && !adaptSource ? (
           <IdeaStep
             title={draft.title}
             description={draft.description}
@@ -913,18 +997,8 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
               stops={draft.stops}
               peopleCount={draft.peopleCount}
               disabled={isSaving}
-              onFindCheaper={() => {
-                goToStep(1);
-                setMobilePane("catalog");
-                setDiscoveryView("list");
-                setAskedQuery(null);
-                setSearch("");
-                setCategoryIds([]);
-                setMinPrice("");
-                setMaxPrice("");
-                setUserSort("price");
-                setAnnouncement("Opciones ordenadas por precio. Elegí cuáles cambiar en tu recorrido.");
-              }}
+              onFindCheaper={findCheaper}
+              initial={adaptSource ? adaptContext : undefined}
             />
           ) : null}
         />

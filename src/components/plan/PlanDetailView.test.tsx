@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -41,6 +47,7 @@ vi.mock("@/context", () => ({
 }));
 
 const getPlan = vi.hoisted(() => vi.fn());
+const copyGeneratedPlan = vi.hoisted(() => vi.fn());
 const getOwnPlan = vi.hoisted(() => vi.fn());
 const createOuting = vi.hoisted(() => vi.fn());
 const setOwnPlanVisibility = vi.hoisted(() => vi.fn());
@@ -52,6 +59,7 @@ const updateFeedback = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/api", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/api")>()),
   getPlan,
+  copyGeneratedPlan,
   getOwnPlan,
   createOuting,
   setOwnPlanVisibility,
@@ -128,36 +136,58 @@ beforeEach(() => {
   vi.clearAllMocks();
   useSession.mockReturnValue({ status: "authenticated", authenticated: true });
   getOwnPlan.mockResolvedValue(ownPlan());
-  listOutings.mockResolvedValue({ data: [], pagination: { page: 1, total: 0, totalPages: 0 } });
+  listOutings.mockResolvedValue({
+    data: [],
+    pagination: { page: 1, total: 0, totalPages: 0 },
+  });
   createOuting.mockResolvedValue(outingCreation({ id: 40 }));
   getPlanExperiences.mockResolvedValue({
     data: [],
     pagination: { page: 1, limit: 6, total: 0, totalPages: 0 },
-    summary: { averageRating: 0, experienceCount: 0, photoCount: 0, photos: [] },
+    summary: {
+      averageRating: 0,
+      experienceCount: 0,
+      photoCount: 0,
+      photos: [],
+    },
   });
 });
 
 describe("sharing by WhatsApp", () => {
   it("drops an owner's private detail after session revocation", async () => {
-    getPlan.mockResolvedValue(plan({ visibility: "private", ownedByViewer: true }));
+    getPlan.mockResolvedValue(
+      plan({ visibility: "private", ownedByViewer: true }),
+    );
     const view = render(<PlanDetailView planId={7} />);
     await screen.findByRole("heading", { name: "Tarde de vinos", level: 1 });
-    getPlan.mockRejectedValue(new ApiError({ message: "Plan not found", type: "HTTP", status: 404 }));
+    getPlan.mockRejectedValue(
+      new ApiError({ message: "Plan not found", type: "HTTP", status: 404 }),
+    );
     useSession.mockReturnValue({ status: "anonymous", authenticated: false });
     view.rerender(<PlanDetailView planId={7} />);
-    await waitFor(() => expect(screen.queryByRole("heading", { name: "Tarde de vinos", level: 1 })).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", { name: "Tarde de vinos", level: 1 }),
+      ).not.toBeInTheDocument(),
+    );
   });
 
   it("reloads personal plan state when the authenticated account changes", async () => {
     useSession.mockReturnValue({ status: "authenticated", user: { id: 1 } });
-    getPlan.mockResolvedValueOnce(plan({ viewerPlanState: "selected", activeOutingId: 40 }));
+    getPlan.mockResolvedValueOnce(
+      plan({ viewerPlanState: "selected", activeOutingId: 40 }),
+    );
     const view = render(<PlanDetailView planId={7} />);
     await screen.findByRole("heading", { name: "Tarde de vinos", level: 1 });
-    getPlan.mockResolvedValueOnce(plan({ viewerPlanState: "selectable", activeOutingId: null }));
+    getPlan.mockResolvedValueOnce(
+      plan({ viewerPlanState: "selectable", activeOutingId: null }),
+    );
     useSession.mockReturnValue({ status: "authenticated", user: { id: 2 } });
     view.rerender(<PlanDetailView planId={7} />);
     await waitFor(() => expect(getPlan).toHaveBeenCalledTimes(2));
-    expect(await screen.findByRole("button", { name: "Lo voy a hacer" })).toBeEnabled();
+    expect(
+      await screen.findByRole("button", { name: "Lo voy a hacer" }),
+    ).toBeEnabled();
   });
 
   it("opens WhatsApp with the plan link for a published plan", async () => {
@@ -165,11 +195,15 @@ describe("sharing by WhatsApp", () => {
     getPlan.mockResolvedValue(plan());
     render(<PlanDetailView planId={7} />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Compartir por WhatsApp" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Compartir por WhatsApp" }),
+    );
 
     const [url] = open.mock.calls[0];
     expect(String(url)).toMatch(/^https:\/\/api\.whatsapp\.com\/send\?text=/);
-    expect(decodeURIComponent(String(url))).toContain(`${window.location.origin}/plans/7`);
+    expect(decodeURIComponent(String(url))).toContain(
+      `${window.location.origin}/plans/7`,
+    );
     // Emojis travel percent-encoded, intact (✨ is E2 9C A8).
     expect(String(url)).toContain("%E2%9C%A8");
     open.mockRestore();
@@ -180,7 +214,9 @@ describe("sharing by WhatsApp", () => {
     render(<PlanDetailView planId={7} />);
 
     await screen.findByText("Tarde de vinos", { selector: "h1" });
-    expect(screen.queryByRole("button", { name: "Compartir por WhatsApp" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Compartir por WhatsApp" }),
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -191,15 +227,29 @@ describe("reporting a plan (#156)", () => {
     getPlan.mockResolvedValue(plan());
     render(<PlanDetailView planId={7} />);
 
-    await user.click(await screen.findByRole("button", { name: "Denunciar Tarde de vinos" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Denunciar Tarde de vinos" }),
+    );
     const dialog = screen.getByRole("dialog", { name: "Denunciar plan" });
-    await user.click(within(dialog).getByRole("radio", { name: "Spam o publicidad" }));
+    await user.click(
+      within(dialog).getByRole("radio", { name: "Spam o publicidad" }),
+    );
     await user.click(within(dialog).getByRole("button", { name: "Denunciar" }));
 
-    expect(reportContent).toHaveBeenCalledWith({ contentType: "plan", contentId: 7, reason: "spam" });
-    expect(await screen.findByText("Gracias, lo vamos a revisar.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Plan denunciado" })).toBeDisabled();
-    expect(screen.getByRole("heading", { name: "Tarde de vinos", level: 1 })).toBeInTheDocument();
+    expect(reportContent).toHaveBeenCalledWith({
+      contentType: "plan",
+      contentId: 7,
+      reason: "spam",
+    });
+    expect(
+      await screen.findByText("Gracias, lo vamos a revisar."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Plan denunciado" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("heading", { name: "Tarde de vinos", level: 1 }),
+    ).toBeInTheDocument();
   });
 
   it("sends an anonymous visitor to sign in first", async () => {
@@ -208,7 +258,9 @@ describe("reporting a plan (#156)", () => {
     getPlan.mockResolvedValue(plan());
     render(<PlanDetailView planId={7} />);
 
-    await user.click(await screen.findByRole("button", { name: "Denunciar Tarde de vinos" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Denunciar Tarde de vinos" }),
+    );
 
     expect(push).toHaveBeenCalledWith(expect.stringContaining("/login"));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -218,40 +270,53 @@ describe("reporting a plan (#156)", () => {
     getPlan.mockResolvedValue(plan({ ownedByViewer: true }));
     const view = render(<PlanDetailView planId={7} />);
     await screen.findByRole("heading", { name: "Tarde de vinos", level: 1 });
-    expect(screen.queryByRole("button", { name: /^Denunciar/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^Denunciar/ }),
+    ).not.toBeInTheDocument();
     view.unmount();
 
     getPlan.mockResolvedValue(plan({ visibility: "private" }));
     render(<PlanDetailView planId={7} />);
     await screen.findByRole("heading", { name: "Tarde de vinos", level: 1 });
-    expect(screen.queryByRole("button", { name: /^Denunciar/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^Denunciar/ }),
+    ).not.toBeInTheDocument();
   });
 
   it("tells the author a removed plan cannot be published", async () => {
-    getPlan.mockResolvedValue(plan({ visibility: "private", ownedByViewer: true }));
-    getOwnPlan.mockResolvedValue(ownPlan({ visibility: "private", removedByModeration: true }));
+    getPlan.mockResolvedValue(
+      plan({ visibility: "private", ownedByViewer: true }),
+    );
+    getOwnPlan.mockResolvedValue(
+      ownPlan({ visibility: "private", removedByModeration: true }),
+    );
     render(<PlanDetailView planId={7} />);
 
     expect(await screen.findByText("Dado de baja")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^Publicar/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^Publicar/ }),
+    ).not.toBeInTheDocument();
   });
 });
 
 it("shows unrated plans and itinerary stops without fabricated zero scores", async () => {
   const unrated = plan({ averageRating: 0 });
-  if (!unrated.details[0].activity) throw new Error('The fixture needs an activity');
+  if (!unrated.details[0].activity)
+    throw new Error("The fixture needs an activity");
   unrated.details[0].activity.averageRating = 0;
   unrated.details[0].activity.ratingCount = 0;
   getPlan.mockResolvedValue(unrated);
   render(<PlanDetailView planId={7} />);
   expect(await screen.findAllByText("Sin reseñas")).toHaveLength(2);
   expect(screen.queryByText("0.0")).not.toBeInTheDocument();
-  expect(screen.queryByRole("img", { name: "0 de 5 estrellas" })).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("img", { name: "0 de 5 estrellas" }),
+  ).not.toBeInTheDocument();
 });
 
-it("labels stale prices on public community ideas and hides their old total", async () => {
-  const communityIdea = plan();
-  communityIdea.details[0].price = {
+it("labels stale prices on public community plans and hides their old total", async () => {
+  const communityPlan = plan();
+  communityPlan.details[0].price = {
     kind: "FIXED",
     min: 8500,
     max: 8500,
@@ -263,13 +328,17 @@ it("labels stale prices on public community ideas and hides their old total", as
     confidence: "HIGH",
     stale: true,
   };
-  getPlan.mockResolvedValue(communityIdea);
+  getPlan.mockResolvedValue(communityPlan);
   render(<PlanDetailView planId={7} />);
 
   expect(await screen.findByText("Precios a confirmar")).toBeInTheDocument();
   expect(screen.getByText("Valores a confirmar")).toBeInTheDocument();
-  expect(screen.getByText(/Precio de referencia de enero de 2026/)).toBeInTheDocument();
-  expect(screen.getByText(/conserva los valores registrados al compartirla/)).toBeInTheDocument();
+  expect(
+    screen.getByText(/Precio de referencia de enero de 2026/),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(/conserva los valores registrados al compartirlo/),
+  ).toBeInTheDocument();
 });
 
 async function renderDetail(
@@ -278,7 +347,11 @@ async function renderDetail(
   statusKey: PlanStatusKey = "confirmed",
 ) {
   getPlan.mockResolvedValue(
-    plan({ viewerPlanState, status: { key: statusKey, name: "x" }, ...overrides }),
+    plan({
+      viewerPlanState,
+      status: { key: statusKey, name: "x" },
+      ...overrides,
+    }),
   );
   render(<PlanDetailView planId={7} />);
   await screen.findByRole("heading", { name: "Tarde de vinos", level: 1 });
@@ -289,12 +362,23 @@ const intendButton = { name: /^lo voy a hacer$/i } as const;
 it("keeps incomplete experiences and unconfirmed costs visible on direct detail visits", async () => {
   await renderDetail("selectable", {
     insight: {
-      role: "BEST", roleLabel: "La mejor opción", why: "Cena", difference: null,
-      uncertainties: ["Falta planificar cine con información suficiente", "Precio sin confirmar"],
-      budgetStatus: "UNKNOWN", travelMinutes: null, travelKm: null, stops: [],
+      role: "BEST",
+      roleLabel: "La mejor opción",
+      why: "Cena",
+      difference: null,
+      uncertainties: [
+        "Falta planificar cine con información suficiente",
+        "Precio sin confirmar",
+      ],
+      budgetStatus: "UNKNOWN",
+      travelMinutes: null,
+      travelKm: null,
+      stops: [],
     },
   });
-  expect(screen.getByRole("region", { name: "Antes de elegir este plan" })).toHaveTextContent("Falta planificar cine");
+  expect(
+    screen.getByRole("region", { name: "Antes de elegir este plan" }),
+  ).toHaveTextContent("Falta planificar cine");
   expect(screen.getByText("Precio sin confirmar")).toBeVisible();
 });
 
@@ -322,7 +406,9 @@ describe("PlanDetailView — Lo voy a hacer (CU22, PAN 17, #130)", () => {
 
     await user.click(screen.getByRole("button", intendButton));
 
-    expect(await screen.findByText("Agregado a Mis salidas")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Agregado a Mis salidas"),
+    ).toBeInTheDocument();
     expect(createOuting).toHaveBeenCalledOnce();
     expect(createOuting).toHaveBeenCalledWith(7);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -412,7 +498,9 @@ describe("PlanDetailView — the author's plan (#130)", () => {
 
     expect(setOwnPlanVisibility).toHaveBeenCalledWith(7, "public");
     expect(await screen.findByText("Público")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /editar plan/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /editar plan/i }),
+    ).toBeInTheDocument();
   });
 
   it("shows the per-person cost from the author's own projection", async () => {
@@ -431,7 +519,10 @@ describe("PlanDetailView — the author's plan (#130)", () => {
     expect(getOwnPlan).not.toHaveBeenCalled();
   });
 
-  it("never offers publishing a generated result, not even to its requester", async () => {
+  it("prepares a private editable copy before the owner may publish a generated result", async () => {
+    copyGeneratedPlan.mockResolvedValue(
+      ownPlan({ id: 9, visibility: "private" }),
+    );
     await renderDetail("selectable", {
       kind: "generated",
       ownedByViewer: true,
@@ -441,6 +532,11 @@ describe("PlanDetailView — the author's plan (#130)", () => {
     expect(
       screen.queryByRole("button", { name: /publicar/i }),
     ).not.toBeInTheDocument();
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "Preparar para compartir" }));
+    await waitFor(() => expect(copyGeneratedPlan).toHaveBeenCalledWith(7));
+    expect(push).toHaveBeenCalledWith("/plans/9?from=%2Fplans");
   });
 });
 
@@ -479,16 +575,23 @@ describe("PlanDetailView — community experiences (#106)", () => {
     await renderDetail("selectable");
 
     expect(
-      await screen.findByRole("region", { name: "Cómo les fue a quienes lo hicieron" }),
+      await screen.findByRole("region", {
+        name: "Cómo les fue a quienes lo hicieron",
+      }),
     ).toBeInTheDocument();
     expect(getPlanExperiences).toHaveBeenCalledWith(7, { page: 1, limit: 6 });
   });
 
   it("has no community section on a private plan", async () => {
-    await renderDetail("selectable", { visibility: "private", ownedByViewer: true });
+    await renderDetail("selectable", {
+      visibility: "private",
+      ownedByViewer: true,
+    });
 
     expect(
-      screen.queryByRole("region", { name: "Cómo les fue a quienes lo hicieron" }),
+      screen.queryByRole("region", {
+        name: "Cómo les fue a quienes lo hicieron",
+      }),
     ).not.toBeInTheDocument();
     expect(getPlanExperiences).not.toHaveBeenCalled();
   });
@@ -497,60 +600,108 @@ describe("PlanDetailView — community experiences (#106)", () => {
     await renderDetail("view-only", {}, "cancelled");
 
     expect(
-      screen.queryByRole("region", { name: "Cómo les fue a quienes lo hicieron" }),
+      screen.queryByRole("region", {
+        name: "Cómo les fue a quienes lo hicieron",
+      }),
     ).not.toBeInTheDocument();
     expect(getPlanExperiences).not.toHaveBeenCalled();
   });
 });
 
-
-it.each(["/", "/explore", "/plans", "/favorites", "/plan-requests/42"])("returns to its explicit origin %s", async (returnTo) => {
-  getPlan.mockResolvedValue(plan());
-  render(<PlanDetailView planId={7} returnTo={returnTo} />);
-  const label = returnTo.startsWith("/plan-requests/") ? "Volver a los resultados" : "Volver";
-  expect(await screen.findByRole("link", { name: label })).toHaveAttribute("href", returnTo);
-});
+it.each(["/", "/explore", "/plans", "/favorites", "/plan-requests/42"])(
+  "returns to its explicit origin %s",
+  async (returnTo) => {
+    getPlan.mockResolvedValue(plan());
+    render(<PlanDetailView planId={7} returnTo={returnTo} />);
+    const label = returnTo.startsWith("/plan-requests/")
+      ? "Volver a los resultados"
+      : "Volver";
+    expect(await screen.findByRole("link", { name: label })).toHaveAttribute(
+      "href",
+      returnTo,
+    );
+  },
+);
 
 it("returns direct visitors to Explore", async () => {
   getPlan.mockResolvedValue(plan());
   render(<PlanDetailView planId={7} />);
-  expect(await screen.findByRole("link", { name: "Volver" })).toHaveAttribute("href", "/explore");
+  expect(await screen.findByRole("link", { name: "Volver" })).toHaveAttribute(
+    "href",
+    "/explore",
+  );
 });
 
 it("keeps the results destination when the plan no longer exists", async () => {
-  getPlan.mockRejectedValue(new ApiError({ type: "HTTP", status: 404, message: "Missing" }));
+  getPlan.mockRejectedValue(
+    new ApiError({ type: "HTTP", status: 404, message: "Missing" }),
+  );
   render(<PlanDetailView planId={7} returnTo="/plan-requests/42" />);
-  expect(await screen.findByRole("link", { name: "Volver a los resultados" })).toHaveAttribute("href", "/plan-requests/42");
+  expect(
+    await screen.findByRole("link", { name: "Volver a los resultados" }),
+  ).toHaveAttribute("href", "/plan-requests/42");
 });
 
 it("shares the canonical plan URL without navigation context", async () => {
   const user = userEvent.setup();
-  const writeText = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+  const writeText = vi
+    .spyOn(navigator.clipboard, "writeText")
+    .mockResolvedValue();
   window.history.replaceState(null, "", "/plans/7?from=%2Fplan-requests%2F42");
   getPlan.mockResolvedValue(plan());
   render(<PlanDetailView planId={7} returnTo="/plan-requests/42" />);
   await user.click(await screen.findByRole("button", { name: "Compartir" }));
-  expect(writeText).toHaveBeenCalledWith(new URL("/plans/7", window.location.origin).href);
+  expect(writeText).toHaveBeenCalledWith(
+    new URL("/plans/7", window.location.origin).href,
+  );
   window.history.replaceState(null, "", "/");
 });
 
 it("edits a shared experience on the original plan and refreshes the public summary", async () => {
   const user = userEvent.setup();
-  const feedback = { id: 3, rating: 4, tags: [], comment: "Antes", actualCost: null, actualDuration: null, shared: true, commentHidden: false, createdAt: "2026-10-19T12:00:00Z" };
-  listOutings.mockResolvedValue({ data: [outingDetail({ feedback })], pagination: { page: 1, totalPages: 1, total: 1 } });
-  updateFeedback.mockResolvedValue({ ...feedback, rating: 5, comment: "Excelente" });
+  const feedback = {
+    id: 3,
+    rating: 4,
+    tags: [],
+    comment: "Antes",
+    actualCost: null,
+    actualDuration: null,
+    shared: true,
+    commentHidden: false,
+    createdAt: "2026-10-19T12:00:00Z",
+  };
+  listOutings.mockResolvedValue({
+    data: [outingDetail({ feedback })],
+    pagination: { page: 1, totalPages: 1, total: 1 },
+  });
+  updateFeedback.mockResolvedValue({
+    ...feedback,
+    rating: 5,
+    comment: "Excelente",
+  });
   await renderDetail("selectable", { visibility: "public" });
-  await user.click(await screen.findByRole("button", { name: "Editar tu valoración" }));
+  await user.click(
+    await screen.findByRole("button", { name: "Editar tu valoración" }),
+  );
   const dialog = screen.getByRole("dialog");
-  const comment = within(dialog).getByRole("textbox", { name: "Tu comentario" });
+  const comment = within(dialog).getByRole("textbox", {
+    name: "Tu comentario",
+  });
   await user.clear(comment);
   await user.type(comment, "Excelente");
   await user.click(within(dialog).getAllByRole("radio")[4]);
   getPlan.mockResolvedValue(plan({ visibility: "public", averageRating: 5 }));
-  await user.click(within(dialog).getByRole("button", { name: "Guardar cambios" }));
-  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  await user.click(
+    within(dialog).getByRole("button", { name: "Guardar cambios" }),
+  );
+  await waitFor(() =>
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+  );
   expect(await screen.findByText("“Excelente”")).toBeInTheDocument();
   expect(await screen.findByText("5.0")).toBeInTheDocument();
-  expect(updateFeedback).toHaveBeenCalledWith(40, { rating: 5, comment: "Excelente" });
+  expect(updateFeedback).toHaveBeenCalledWith(40, {
+    rating: 5,
+    comment: "Excelente",
+  });
   expect(getPlanExperiences.mock.calls.length).toBeGreaterThan(1);
 });

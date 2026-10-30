@@ -1,4 +1,4 @@
-import type { CommunityCreator, CommunityExperience, CommunityExperiencesPage, CommunityPlan, PaginatedResult } from '@/types';
+import type { CommunityCreator, CommunityCreatorSummary, CommunityExperience, CommunityExperiencesPage, CommunityFeedFilter, CommunityFeedItem, CommunityPlan, CommunityPlanSort, PaginatedResult } from '@/types';
 import { apiClient } from './client';
 
 /**
@@ -13,7 +13,11 @@ export async function getPlanExperiences(
   return apiClient.get<CommunityExperiencesPage>(`/plans/${planId}/experiences`, { params });
 }
 
-type CommunityParams = { page?: number; limit?: number; q?: string };
+type CommunityParams = { page?: number; limit?: number; q?: string; sort?: CommunityPlanSort };
+
+export function getCommunityFeed(params: CommunityParams & { type?: CommunityFeedFilter } = {}) {
+  return apiClient.get<PaginatedResult<CommunityFeedItem>>('/community/feed', { params });
+}
 
 export function getCommunityExperiences(params: CommunityParams = {}) {
   return apiClient.get<PaginatedResult<CommunityExperience>>('/community/experiences', { params });
@@ -21,6 +25,18 @@ export function getCommunityExperiences(params: CommunityParams = {}) {
 
 export function getCommunityExperience(id: number) {
   return apiClient.get<CommunityExperience>(`/community/experiences/${id}`);
+}
+
+export function likeCommunityExperience(id: number) {
+  return apiClient.put<{ liked: boolean; likeCount: number }>(`/community/experiences/${id}/like`);
+}
+
+export function unlikeCommunityExperience(id: number) {
+  return apiClient.delete<{ liked: boolean; likeCount: number }>(`/community/experiences/${id}/like`);
+}
+
+export function addCommunityExperienceVisit(id: number) {
+  return apiClient.post<{ visitCount: number }>(`/community/experiences/${id}/visits`);
 }
 
 export function getCommunityCreator(username: string) {
@@ -40,5 +56,21 @@ export function getCommunityPlans(params: CommunityParams = {}) {
 export function getCreatorPlans(username: string, params: CommunityParams = {}) {
   return apiClient.get<PaginatedResult<CommunityPlan>>(
     `/community/creators/${encodeURIComponent(username)}/plans`, { params }
+  );
+}
+
+export function getCommunityCreators() {
+  return apiClient.get<CommunityCreatorSummary[]>('/community/creators');
+}
+
+/** Published plans other people adapted from this one: one level, flat. */
+export function getPlanAdaptations(planId: number, params: CommunityParams = {}) {
+  return apiClient.get<PaginatedResult<CommunityPlan>>(`/community/plans/${planId}/adaptations`, { params });
+}
+
+/** Published plans other people adapted from any of this person's plans. */
+export function getCreatorInspired(username: string, params: CommunityParams = {}) {
+  return apiClient.get<PaginatedResult<CommunityPlan>>(
+    `/community/creators/${encodeURIComponent(username)}/inspired`, { params }
   );
 }

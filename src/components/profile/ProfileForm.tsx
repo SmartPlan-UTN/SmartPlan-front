@@ -428,7 +428,7 @@ export function ProfileForm() {
             disabled={!editing || saving}
             required
           />
-          <p className={styles.avatarHint}>Se muestra al compartir. Usá de 3 a 24 letras, números o guion bajo.</p>
+          <p className={styles.fieldHint}>Se muestra al compartir. Usá de 3 a 24 letras, números o guion bajo.</p>
           <Field
             label="Biografía (opcional)"
             type="text"
@@ -437,7 +437,7 @@ export function ProfileForm() {
             error={fieldErrors.bio}
             disabled={!editing || saving}
           />
-          <p className={styles.avatarHint}>Tu nombre legal, email y teléfono no aparecen en tu perfil público.</p>
+          <p className={styles.fieldHint}>Tu nombre legal, email y teléfono no aparecen en tu perfil público.</p>
 
           <div className={styles.divider} />
 

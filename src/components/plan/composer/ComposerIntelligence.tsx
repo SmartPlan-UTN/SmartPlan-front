@@ -15,17 +15,25 @@ export function ComposerIntelligence({
   peopleCount,
   disabled = false,
   onFindCheaper,
+  initial,
 }: {
   stops: ComposerStop[];
   peopleCount: number;
   disabled?: boolean;
   onFindCheaper?: () => void;
+  /** What the person already told us (an adaptation asks it first). */
+  initial?: {
+    date: string;
+    startTime: string;
+    budget: string;
+    travelMode: "drive" | "walk" | "bicycle";
+  };
 }) {
-  const [date, setDate] = useState("");
-  const [startTime, setStartTime] = useState("19:00");
-  const [budgetRaw, setBudgetRaw] = useState("");
+  const [date, setDate] = useState(initial?.date ?? "");
+  const [startTime, setStartTime] = useState(initial?.startTime ?? "19:00");
+  const [budgetRaw, setBudgetRaw] = useState(initial?.budget ?? "");
   const [travelMode, setTravelMode] = useState<"drive" | "walk" | "bicycle">(
-    "drive",
+    initial?.travelMode ?? "drive",
   );
   const [retry, setRetry] = useState(0);
   const timeRef = useRef<HTMLInputElement>(null);
@@ -98,7 +106,11 @@ export function ComposerIntelligence({
       )
     : [];
   return (
-    <details id="composer-intelligence" className={styles.panel}>
+    <details
+      id="composer-intelligence"
+      className={styles.panel}
+      open={initial?.date ? true : undefined}
+    >
       <summary>Comprobar un horario</summary>
       <p className={styles.note}>
         Probá día, hora y presupuesto para revisar tu recorrido.

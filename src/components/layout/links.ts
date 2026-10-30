@@ -19,11 +19,31 @@ export interface NavigationLink {
  * would leave the application with no hints about what's behind the
  * account.
  */
-const HOME_LINK: NavigationLink = { href: ROUTES.home, label: "Inicio", icon: "house" };
-const EXPLORE_LINK: NavigationLink = { href: ROUTES.explore, label: "Explorar", icon: "search" };
-const COMMUNITY_LINK: NavigationLink = { href: ROUTES.community, label: "Comunidad", icon: "users" };
-const PLANS_LINK: NavigationLink = { href: ROUTES.plans, label: "Mis planes", icon: "route" };
-const FAVORITES_LINK: NavigationLink = { href: ROUTES.favorites, label: "Favoritos", icon: "heart" };
+const HOME_LINK: NavigationLink = {
+  href: ROUTES.home,
+  label: "Inicio",
+  icon: "house",
+};
+const EXPLORE_LINK: NavigationLink = {
+  href: ROUTES.explore,
+  label: "Explorar",
+  icon: "search",
+};
+const COMMUNITY_LINK: NavigationLink = {
+  href: ROUTES.community,
+  label: "Comunidad",
+  icon: "users",
+};
+const PLANS_LINK: NavigationLink = {
+  href: ROUTES.plans,
+  label: "Mis planes",
+  icon: "route",
+};
+const FAVORITES_LINK: NavigationLink = {
+  href: ROUTES.favorites,
+  label: "Favoritos",
+  icon: "heart",
+};
 
 const OUTINGS_LINK: NavigationLink = {
   href: ROUTES.outings,
@@ -55,13 +75,13 @@ export const MAIN_LINKS: readonly NavigationLink[] = [
  * Bottom bar below 900px: the five highest-frequency destinations kept
  * visible at thumb level. Built from the same entries as `MAIN_LINKS` so a
  * destination can't be named one way on desktop and another on mobile.
- * Inicio stays reachable through the brand logo; keeping it here as well as
- * Planificar duplicated the same screen and displaced Mis salidas.
+ * Inicio stays reachable through the brand logo. Authored plan management
+ * remains in the account menu; five tabs keep Planificar centered and leave
+ * comfortable targets for community discovery, outings and saved plans.
  */
 export const MOBILE_LINKS: readonly NavigationLink[] = [
   EXPLORE_LINK,
   COMMUNITY_LINK,
-  PLANS_LINK,
   PLAN_OUTING_LINK,
   OUTINGS_LINK,
   FAVORITES_LINK,
@@ -76,6 +96,7 @@ export const MOBILE_LINKS: readonly NavigationLink[] = [
  */
 export const USER_LINKS: readonly NavigationLink[] = [
   { href: ROUTES.profile, label: "Mi perfil", icon: "user" },
+  PLANS_LINK,
   { href: ROUTES.preferences, label: "Preferencias", icon: "settings" },
   { href: ROUTES.security, label: "Seguridad", icon: "lock" },
   { href: ROUTES.help, label: "Ayuda", icon: "circle-help" },

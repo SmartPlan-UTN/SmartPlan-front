@@ -9,6 +9,8 @@ import type {
   PlanFunnel,
   PlanRequestProgressStage,
   PlanRequestStatus,
+  CommunityPlanRecommendation,
+  ResultRecommendationSource,
   PlanUnderstanding,
   ResolvedPlanContext,
   RequestStatusKey,
@@ -53,6 +55,8 @@ export interface UsePlanRequestPollingResult {
   funnel: PlanFunnel | null;
   /** Asked-for experiences SmartPlan cannot plan yet ("Cine"). */
   unsupportedExperiences: string[];
+  communityRecommendations: CommunityPlanRecommendation[];
+  primaryRecommendation: ResultRecommendationSource | null;
   failure: PlanRequestFailure | null;
   submit: (payload: CreatePlanRequestPayload) => void;
   submitSurprise: (payload: CreateSurprisePlanRequestPayload) => void;
@@ -100,6 +104,8 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
   const [understanding, setUnderstanding] = useState<PlanUnderstanding | null>(null);
   const [funnel, setFunnel] = useState<PlanFunnel | null>(null);
   const [unsupportedExperiences, setUnsupportedExperiences] = useState<string[]>([]);
+  const [communityRecommendations, setCommunityRecommendations] = useState<CommunityPlanRecommendation[]>([]);
+  const [primaryRecommendation, setPrimaryRecommendation] = useState<ResultRecommendationSource | null>(null);
   const [failure, setFailure] = useState<PlanRequestFailure | null>(null);
   // A results page opened by id recovers what the person explicitly chose.
   const [lastSubmission, setLastSubmission] = useState<LastSubmission | null>(() => {
@@ -145,6 +151,8 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
     setUnderstanding(status.understanding ?? null);
     setFunnel(status.funnel ?? null);
     setUnsupportedExperiences(status.unsupportedExperiences ?? []);
+    setCommunityRecommendations(status.communityRecommendations ?? []);
+    setPrimaryRecommendation(status.primaryRecommendation ?? null);
 
     if (status.statusKey === 'generated') {
       setPlans(status.plans ?? []);
@@ -223,6 +231,8 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
     setUnderstanding(null);
     setFunnel(null);
     setUnsupportedExperiences([]);
+    setCommunityRecommendations([]);
+    setPrimaryRecommendation(null);
     setProgressStage(null);
     setProgressStageAt(null);
     setEstimatedRemainingSeconds(null);
@@ -316,6 +326,8 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
     setUnderstanding(null);
     setFunnel(null);
     setUnsupportedExperiences([]);
+    setCommunityRecommendations([]);
+    setPrimaryRecommendation(null);
     setFailure(null);
     setPhase('idle');
   }, [clearTimers]);
@@ -350,6 +362,8 @@ export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequest
     understanding,
     funnel,
     unsupportedExperiences,
+    communityRecommendations,
+    primaryRecommendation,
     failure,
     submit,
     submitSurprise,

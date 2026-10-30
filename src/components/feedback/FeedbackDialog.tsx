@@ -11,7 +11,7 @@ import {
 import { createPortal } from "react-dom";
 
 import { MediaGalleryManager } from "@/components/media";
-import { Button, Icon, RatingInput } from "@/components/ui";
+import { Button, Icon, RatingInput, Stars } from "@/components/ui";
 import { useFeedbackSubmit } from "@/hooks";
 import {
   loadRatableActivities,
@@ -19,7 +19,7 @@ import {
 } from "@/lib/plans/ratableActivities";
 import { formatArs, NO_PRICE_TOTAL_LABEL } from "@/lib/utils";
 import type { FeedbackTag, PlanFeedback, StopFeedbackPayload } from "@/types";
-import { StopFeedbackFields } from './StopFeedbackFields';
+import { StopFeedbackFields } from "./StopFeedbackFields";
 
 import { ActivityCostsField, parseCostAmount } from "./ActivityCostsField";
 import {
@@ -77,7 +77,8 @@ const dateFormatter = new Intl.DateTimeFormat("es-AR", {
 function formatCompletedAt(value: string): string {
   const parts = dateFormatter.formatToParts(new Date(value));
   const day = parts.find((part) => part.type === "day")?.value ?? "";
-  const month = parts.find((part) => part.type === "month")?.value.replace(".", "") ?? "";
+  const month =
+    parts.find((part) => part.type === "month")?.value.replace(".", "") ?? "";
   return `${day} ${month}`.trim();
 }
 
@@ -98,8 +99,13 @@ function sanitizeCostInput(raw: string): string {
   const integerDigits = integerSource.replace(/\D/g, "").slice(0, 10);
   const decimalDigits = decimalSource.replace(/\D/g, "").slice(0, 2);
   const normalizedInteger = integerDigits.replace(/^0+(?=\d)/, "") || "0";
-  const groupedInteger = normalizedInteger.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  return commaIndex >= 0 ? `${groupedInteger},${decimalDigits}` : groupedInteger;
+  const groupedInteger = normalizedInteger.replace(
+    /\B(?=(\d{3})+(?!\d))/g,
+    ".",
+  );
+  return commaIndex >= 0
+    ? `${groupedInteger},${decimalDigits}`
+    : groupedInteger;
 }
 
 function sanitizeComment(raw: string): string {
@@ -136,7 +142,9 @@ export function FeedbackDialog({
   const [costRaw, setCostRaw] = useState("");
   const [costInputError, setCostInputError] = useState<string | null>(null);
   const [partyRaw, setPartyRaw] = useState("");
-  const [activityCostsRaw, setActivityCostsRaw] = useState<Record<number, string>>({});
+  const [activityCostsRaw, setActivityCostsRaw] = useState<
+    Record<number, string>
+  >({});
   const [stopFeedback, setStopFeedback] = useState<StopFeedbackPayload[]>([]);
   const [stopFeedbackInvalid, setStopFeedbackInvalid] = useState(false);
   const [revealStopInvalid, setRevealStopInvalid] = useState(0);
@@ -152,7 +160,8 @@ export function FeedbackDialog({
   >("form");
   const [ratable, setRatable] = useState<RatableActivity[]>([]);
   const [ratingsBusy, setRatingsBusy] = useState(false);
-  const [ratingsResult, setRatingsResult] = useState<ActivityRatingsResult | null>(null);
+  const [ratingsResult, setRatingsResult] =
+    useState<ActivityRatingsResult | null>(null);
   const savedFeedback = useRef<PlanFeedback | null>(null);
   const activeRef = useRef(false);
   const [presence, setPresence] = useState<"open" | "closing">("open");
@@ -222,13 +231,15 @@ export function FeedbackDialog({
         ? window.innerWidth - document.documentElement.clientWidth
         : 0;
     document.body.style.overflow = "hidden";
-    if (scrollbarWidth > 0) document.body.style.paddingRight = `${scrollbarWidth}px`;
+    if (scrollbarWidth > 0)
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
 
     const raf = requestAnimationFrame(() => {
       const selected = dialogRef.current?.querySelector<HTMLElement>(
-        '[role="radio"][aria-checked="true"]'
+        '[role="radio"][aria-checked="true"]',
       );
-      const first = dialogRef.current?.querySelector<HTMLElement>('[role="radio"]');
+      const first =
+        dialogRef.current?.querySelector<HTMLElement>('[role="radio"]');
       (selected ?? first)?.focus();
     });
 
@@ -239,7 +250,9 @@ export function FeedbackDialog({
         return;
       }
       if (event.key !== "Tab" || !dialogRef.current) return;
-      const focusable = [...dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)];
+      const focusable = [
+        ...dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE),
+      ];
       if (focusable.length === 0) return;
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
@@ -260,8 +273,10 @@ export function FeedbackDialog({
       document.body.style.overflow = previousOverflow;
       document.body.style.paddingRight = previousPaddingRight;
       if (closeTimer.current != null) window.clearTimeout(closeTimer.current);
-      if (successTimer.current != null) window.clearTimeout(successTimer.current);
-      if (commentFocusFrame.current != null) cancelAnimationFrame(commentFocusFrame.current);
+      if (successTimer.current != null)
+        window.clearTimeout(successTimer.current);
+      if (commentFocusFrame.current != null)
+        cancelAnimationFrame(commentFocusFrame.current);
       previouslyFocused.current?.focus?.();
     };
     // Opening intentionally snapshots the rating and focus origin.
@@ -270,14 +285,19 @@ export function FeedbackDialog({
 
   // Each later step takes focus where its next action is.
   useEffect(() => {
-    if (phase !== "photos" && phase !== "offer" && phase !== "activities") return;
+    if (phase !== "photos" && phase !== "offer" && phase !== "activities")
+      return;
     const frame = requestAnimationFrame(() => {
       const target =
         phase === "photos"
           ? dialogRef.current?.querySelector<HTMLElement>("[data-photos-next]")
           : phase === "offer"
-          ? dialogRef.current?.querySelector<HTMLElement>("[data-offer-accept]")
-          : dialogRef.current?.querySelector<HTMLElement>('[role="radio"]:not(:disabled)');
+            ? dialogRef.current?.querySelector<HTMLElement>(
+                "[data-offer-accept]",
+              )
+            : dialogRef.current?.querySelector<HTMLElement>(
+                '[role="radio"]:not(:disabled)',
+              );
       target?.focus();
     });
     return () => cancelAnimationFrame(frame);
@@ -329,31 +349,40 @@ export function FeedbackDialog({
       return;
     }
     if (costFilledButInvalid) {
-      dialogRef.current?.querySelector<HTMLInputElement>("#feedback-cost")?.focus();
+      dialogRef.current
+        ?.querySelector<HTMLInputElement>("#feedback-cost")
+        ?.focus();
       return;
     }
     const activityCosts = Object.entries(activityCostsRaw)
-      .map(([id, raw]) => ({ activityId: Number(id), amount: parseCostAmount(raw) }))
+      .map(([id, raw]) => ({
+        activityId: Number(id),
+        amount: parseCostAmount(raw),
+      }))
       .filter(
         (item): item is { activityId: number; amount: number } =>
           item.amount !== null,
       );
     const partySize = Number.parseInt(partyRaw, 10);
-    const outcome = await submission.submit(planId, {
-      rating,
-      ...(activityCosts.length > 0 ? { activityCosts } : {}),
-      ...(stopFeedback.length ? { stops: stopFeedback } : {}),
-      ...(Number.isInteger(partySize) && partySize >= 1 && partySize <= 1000
-        ? { partySize }
-        : {}),
-      tags: tags.size > 0 ? [...tags] : undefined,
-      comment: comment.trim() || undefined,
-      shared: canShare && shared ? true : undefined,
-      actualCost:
-        parsedCost && parsedCost > 0 && !Number.isNaN(parsedCost)
-          ? Math.round(parsedCost * 100) / 100
-          : undefined,
-    }, editing);
+    const outcome = await submission.submit(
+      planId,
+      {
+        rating,
+        ...(activityCosts.length > 0 ? { activityCosts } : {}),
+        ...(stopFeedback.length ? { stops: stopFeedback } : {}),
+        ...(Number.isInteger(partySize) && partySize >= 1 && partySize <= 1000
+          ? { partySize }
+          : {}),
+        tags: tags.size > 0 ? [...tags] : undefined,
+        comment: comment.trim() || undefined,
+        shared: canShare && shared ? true : undefined,
+        actualCost:
+          parsedCost && parsedCost > 0 && !Number.isNaN(parsedCost)
+            ? Math.round(parsedCost * 100) / 100
+            : undefined,
+      },
+      editing,
+    );
     if (!outcome) return;
     if (!outcome.ok) {
       if (outcome.error.reconcile) onReconcile?.();
@@ -370,7 +399,7 @@ export function FeedbackDialog({
     // to rate activities follows only if there's something to rate.
     const startedAt = Date.now();
     const activities = await loadRatableActivities(planId).catch(
-      (): RatableActivity[] => []
+      (): RatableActivity[] => [],
     );
     if (!activeRef.current) return;
     setRatable(activities);
@@ -432,8 +461,18 @@ export function FeedbackDialog({
             onSaved={handleRatingsSaved}
           />
         ) : phase === "ratingsDone" ? (
-          <div className={ratingsResult && ratingsResult.ratings.length > 0 ? styles.followUp : styles.success}>
-            <div className={styles.successMessage} role="status" aria-live="polite">
+          <div
+            className={
+              ratingsResult && ratingsResult.ratings.length > 0
+                ? styles.followUp
+                : styles.success
+            }
+          >
+            <div
+              className={styles.successMessage}
+              role="status"
+              aria-live="polite"
+            >
               <span className={styles.successMark} aria-hidden="true">
                 <Icon name="check" size={28} />
               </span>
@@ -446,12 +485,18 @@ export function FeedbackDialog({
             </div>
             {ratingsResult && ratingsResult.ratings.length > 0 ? (
               <div className={styles.photoPanel}>
-                <p className={styles.offerQuestion}>{ACTIVITY_RATINGS_COPY.done.photosTitle}</p>
-                <p className={styles.offerBody}>{ACTIVITY_RATINGS_COPY.done.photosBody}</p>
+                <p className={styles.offerQuestion}>
+                  {ACTIVITY_RATINGS_COPY.done.photosTitle}
+                </p>
+                <p className={styles.offerBody}>
+                  {ACTIVITY_RATINGS_COPY.done.photosBody}
+                </p>
                 <ul className={styles.photoActivities}>
                   {ratingsResult.ratings.map((rated) => (
                     <li key={rated.ratingId} className={styles.photoActivity}>
-                      <p className={styles.photoActivityName}>{rated.activityName}</p>
+                      <p className={styles.photoActivityName}>
+                        {rated.activityName}
+                      </p>
                       <MediaGalleryManager
                         target="rating"
                         resourceId={rated.ratingId}
@@ -475,7 +520,11 @@ export function FeedbackDialog({
           </div>
         ) : phase === "photos" ? (
           <div className={styles.followUp}>
-            <div className={styles.successInline} role="status" aria-live="polite">
+            <div
+              className={styles.successInline}
+              role="status"
+              aria-live="polite"
+            >
               <span className={styles.successMarkSmall} aria-hidden="true">
                 <Icon name="check" size={18} />
               </span>
@@ -485,7 +534,9 @@ export function FeedbackDialog({
               <span className={styles.photoPanelIcon} aria-hidden="true">
                 <Icon name="camera" size={22} />
               </span>
-              <h2 id={titleId} className={styles.photoTitle}>{FEEDBACK_COPY.photos.title}</h2>
+              <h2 id={titleId} className={styles.photoTitle}>
+                {FEEDBACK_COPY.photos.title}
+              </h2>
               <p className={styles.offerBody}>{FEEDBACK_COPY.photos.body}</p>
               <div className={styles.photoManager}>
                 <MediaGalleryManager
@@ -504,7 +555,9 @@ export function FeedbackDialog({
                   data-photos-next=""
                   onClick={continueAfterPhotos}
                 >
-                  {ratable.length > 0 ? FEEDBACK_COPY.photos.next : FEEDBACK_COPY.photos.done}
+                  {ratable.length > 0
+                    ? FEEDBACK_COPY.photos.next
+                    : FEEDBACK_COPY.photos.done}
                 </Button>
                 <button
                   type="button"
@@ -519,18 +572,30 @@ export function FeedbackDialog({
         ) : phase === "success" || phase === "offer" ? (
           <div className={styles.success}>
             {phase === "success" ? (
-              <div className={styles.successMessage} role="status" aria-live="polite">
+              <div
+                className={styles.successMessage}
+                role="status"
+                aria-live="polite"
+              >
                 <span className={styles.successMark} aria-hidden="true">
                   <Icon name="check" size={28} />
                 </span>
-                <p id={titleId} className={styles.successTitle}>{FEEDBACK_COPY.success.title}</p>
-                <p className={styles.successBody}>{FEEDBACK_COPY.success.body}</p>
+                <p id={titleId} className={styles.successTitle}>
+                  {FEEDBACK_COPY.success.title}
+                </p>
+                <p className={styles.successBody}>
+                  {FEEDBACK_COPY.success.body}
+                </p>
               </div>
             ) : null}
             {phase === "offer" ? (
               <div className={styles.offer}>
-                <p id={titleId} className={styles.offerQuestion}>{ACTIVITY_RATINGS_COPY.offer.question}</p>
-                <p className={styles.offerBody}>{ACTIVITY_RATINGS_COPY.offer.body}</p>
+                <p id={titleId} className={styles.offerQuestion}>
+                  {ACTIVITY_RATINGS_COPY.offer.question}
+                </p>
+                <p className={styles.offerBody}>
+                  {ACTIVITY_RATINGS_COPY.offer.body}
+                </p>
                 <div className={styles.offerActions}>
                   <Button
                     type="button"
@@ -554,22 +619,34 @@ export function FeedbackDialog({
             ) : null}
           </div>
         ) : (
-          <form className={styles.form} onSubmit={(event) => void handleSubmit(event)} noValidate>
+          <form
+            className={styles.form}
+            onSubmit={(event) => void handleSubmit(event)}
+            noValidate
+          >
             <div className={styles.formScroll}>
               <header className={styles.head}>
-                <h2 id={titleId} className={styles.title}>{editing ? FEEDBACK_COPY.edit.heading : FEEDBACK_COPY.dialog.heading}</h2>
+                <h2 id={titleId} className={styles.title}>
+                  {editing
+                    ? FEEDBACK_COPY.edit.heading
+                    : FEEDBACK_COPY.dialog.heading}
+                </h2>
                 <div className={styles.planContext}>
                   <p className={styles.planName}>{planTitle}</p>
                   <p className={styles.planMeta}>
                     {dateLabel ? <span>{dateLabel}</span> : null}
-                    {dateLabel && activityLabel ? <span aria-hidden="true">·</span> : null}
+                    {dateLabel && activityLabel ? (
+                      <span aria-hidden="true">·</span>
+                    ) : null}
                     {activityLabel ? <span>{activityLabel}</span> : null}
                   </p>
                 </div>
               </header>
 
               <div className={styles.ratingBlock}>
-                <span id={ratingLabelId} className={styles.srOnly}>{FEEDBACK_COPY.dialog.ratingLabel}</span>
+                <span id={ratingLabelId} className={styles.srOnly}>
+                  {FEEDBACK_COPY.dialog.ratingLabel}
+                </span>
                 <RatingInput
                   value={rating}
                   onChange={setRating}
@@ -579,13 +656,18 @@ export function FeedbackDialog({
                   disabled={busy}
                   size={46}
                 />
-                <p className={styles.ratingCaption} aria-hidden={shownRating === 0}>
+                <p
+                  className={styles.ratingCaption}
+                  aria-hidden={shownRating === 0}
+                >
                   {shownRating > 0 ? RATING_LABELS[shownRating - 1] : " "}
                 </p>
                 <p className={styles.ratingGuidance} aria-live="polite">
-                  {editing ? FEEDBACK_COPY.edit.guidance : rating > 0
-                    ? FEEDBACK_COPY.dialog.ratingReady
-                    : FEEDBACK_COPY.dialog.ratingPrompt}
+                  {editing
+                    ? FEEDBACK_COPY.edit.guidance
+                    : rating > 0
+                      ? FEEDBACK_COPY.dialog.ratingReady
+                      : FEEDBACK_COPY.dialog.ratingPrompt}
                 </p>
               </div>
 
@@ -599,8 +681,12 @@ export function FeedbackDialog({
                         aria-labelledby={tagsLabelId}
                       >
                         <div id={tagsLabelId} className={styles.fieldLabel}>
-                          {rating <= 2 ? FEEDBACK_COPY.dialog.lowRatingTagsLabel : FEEDBACK_COPY.dialog.tagsLabel}
-                          <span className={styles.hint}>{FEEDBACK_COPY.dialog.tagsHint}</span>
+                          {rating <= 2
+                            ? FEEDBACK_COPY.dialog.lowRatingTagsLabel
+                            : FEEDBACK_COPY.dialog.tagsLabel}
+                          <span className={styles.hint}>
+                            {FEEDBACK_COPY.dialog.tagsHint}
+                          </span>
                         </div>
                         <div className={styles.chips}>
                           {FEEDBACK_TAG_ORDER.map((tag) => (
@@ -617,7 +703,10 @@ export function FeedbackDialog({
                                 if (event.detail === 0) toggleTag(tag);
                               }}
                             >
-                              <span className={styles.tagCheck} aria-hidden="true">
+                              <span
+                                className={styles.tagCheck}
+                                aria-hidden="true"
+                              >
                                 <Icon name="check" size={14} />
                               </span>
                               <span>{FEEDBACK_TAG_LABELS[tag]}</span>
@@ -629,17 +718,24 @@ export function FeedbackDialog({
                       <div className={`${styles.field} ${styles.costField}`}>
                         <div className={styles.fieldLabel}>
                           <span>Costo</span>
-                          <span className={styles.hint}>{FEEDBACK_COPY.dialog.costHint}</span>
+                          <span className={styles.hint}>
+                            {FEEDBACK_COPY.dialog.costHint}
+                          </span>
                         </div>
                         <div className={styles.estimated}>
-                          <span className={styles.estimatedLabel}>{FEEDBACK_COPY.dialog.estimatedLabel}</span>
+                          <span className={styles.estimatedLabel}>
+                            {FEEDBACK_COPY.dialog.estimatedLabel}
+                          </span>
                           <span className={styles.estimatedValue}>
                             {estimatedTotalCost === null
                               ? NO_PRICE_TOTAL_LABEL
                               : formatArs(estimatedTotalCost)}
                           </span>
                         </div>
-                        <label className={styles.realCostLabel} htmlFor="feedback-cost">
+                        <label
+                          className={styles.realCostLabel}
+                          htmlFor="feedback-cost"
+                        >
                           {FEEDBACK_COPY.dialog.costLabel}
                         </label>
                         <div className={styles.moneyInput}>
@@ -652,20 +748,30 @@ export function FeedbackDialog({
                             value={costRaw}
                             disabled={busy}
                             aria-invalid={costError != null}
-                            aria-describedby={costError != null ? costErrorId : undefined}
+                            aria-describedby={
+                              costError != null ? costErrorId : undefined
+                            }
                             maxLength={MAX_COST_INPUT_LENGTH}
                             onChange={(event) => {
                               const raw = event.target.value;
                               setCostRaw(sanitizeCostInput(raw));
                               setCostInputError(
-                                raw.includes("-") ? FEEDBACK_COPY.dialog.costError : null
+                                raw.includes("-")
+                                  ? FEEDBACK_COPY.dialog.costError
+                                  : null,
                               );
                             }}
                           />
                         </div>
                         <div className={styles.costStatus}>
                           {costError != null ? (
-                            <p id={costErrorId} className={styles.error} role="alert">{costError}</p>
+                            <p
+                              id={costErrorId}
+                              className={styles.error}
+                              role="alert"
+                            >
+                              {costError}
+                            </p>
                           ) : deltaLabel != null ? (
                             <p className={styles.delta}>{deltaLabel}</p>
                           ) : (
@@ -675,7 +781,10 @@ export function FeedbackDialog({
                       </div>
 
                       <div className={styles.field}>
-                        <label className={styles.realCostLabel} htmlFor="feedback-party">
+                        <label
+                          className={styles.realCostLabel}
+                          htmlFor="feedback-party"
+                        >
                           ¿Cuántas personas fueron? (opcional)
                         </label>
                         <div className={styles.moneyInput}>
@@ -688,7 +797,11 @@ export function FeedbackDialog({
                             disabled={busy}
                             maxLength={4}
                             onChange={(event) => {
-                              setPartyRaw(event.target.value.replace(/D/g, "").slice(0, 4));
+                              setPartyRaw(
+                                event.target.value
+                                  .replace(/D/g, "")
+                                  .slice(0, 4),
+                              );
                             }}
                           />
                         </div>
@@ -700,7 +813,13 @@ export function FeedbackDialog({
                         values={activityCostsRaw}
                         onChange={setActivityCostsRaw}
                       />
-                  <StopFeedbackFields outingId={planId} disabled={busy} onChange={setStopFeedback} onInvalidChange={setStopFeedbackInvalid} revealInvalid={revealStopInvalid} />
+                      <StopFeedbackFields
+                        outingId={planId}
+                        disabled={busy}
+                        onChange={setStopFeedback}
+                        onInvalidChange={setStopFeedbackInvalid}
+                        revealInvalid={revealStopInvalid}
+                      />
                     </>
                   ) : null}
 
@@ -727,7 +846,11 @@ export function FeedbackDialog({
                         <span className={styles.hint}>Opcional</span>
                       </button>
                     )}
-                    <div id="feedback-comment-panel" className={styles.commentPanel} data-open={commentOpen}>
+                    <div
+                      id="feedback-comment-panel"
+                      className={styles.commentPanel}
+                      data-open={commentOpen}
+                    >
                       {commentOpen ? (
                         <div>
                           <textarea
@@ -738,8 +861,12 @@ export function FeedbackDialog({
                             maxLength={MAX_COMMENT_LENGTH}
                             value={comment}
                             disabled={busy}
-                            placeholder={FEEDBACK_COPY.dialog.commentPlaceholder}
-                            onChange={(event) => setComment(sanitizeComment(event.target.value))}
+                            placeholder={
+                              FEEDBACK_COPY.dialog.commentPlaceholder
+                            }
+                            onChange={(event) =>
+                              setComment(sanitizeComment(event.target.value))
+                            }
                           />
                           {comment.length >= COMMENT_COUNTER_THRESHOLD ? (
                             <div className={styles.commentMeta}>
@@ -759,7 +886,10 @@ export function FeedbackDialog({
 
                   {canShare && !editing ? (
                     <div className={`${styles.field} ${styles.shareField}`}>
-                      <label className={styles.shareChoice} htmlFor="feedback-share">
+                      <label
+                        className={styles.shareChoice}
+                        htmlFor="feedback-share"
+                      >
                         <input
                           id="feedback-share"
                           type="checkbox"
@@ -776,19 +906,45 @@ export function FeedbackDialog({
                           <span className={styles.shareLabel}>
                             <Icon name="users" size={15} aria-hidden="true" />
                             {FEEDBACK_COPY.share.label}
-                            <span className={styles.hint}>{FEEDBACK_COPY.share.hint}</span>
+                            <span className={styles.hint}>
+                              {FEEDBACK_COPY.share.hint}
+                            </span>
                           </span>
-                          <span id="feedback-share-body" className={styles.shareBody}>
-                            {FEEDBACK_COPY.share.body} {FEEDBACK_COPY.share.later}
+                          <span
+                            id="feedback-share-body"
+                            className={styles.shareBody}
+                          >
+                            {FEEDBACK_COPY.share.body}{" "}
+                            {FEEDBACK_COPY.share.later}
                           </span>
                         </span>
                       </label>
+                      {shared ? (
+                        <div
+                          className={styles.publicPreview}
+                          role="region"
+                          aria-label="Vista previa de tu experiencia"
+                        >
+                          <strong>Así se verá tu experiencia</strong>
+                          <Stars rating={rating} size={16} />
+                          {comment.trim() ? <p>{comment.trim()}</p> : null}
+                          <p>
+                            Se publica con tu usuario, los detalles que
+                            destacaste y las fotos propias que decidas sumar. El
+                            recorrido solo se enlaza si es público.
+                          </p>
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
                 </div>
               ) : null}
 
-              {apiError != null ? <p className={styles.formError} role="alert">{apiError.message}</p> : null}
+              {apiError != null ? (
+                <p className={styles.formError} role="alert">
+                  {apiError.message}
+                </p>
+              ) : null}
             </div>
 
             <footer className={styles.actions}>
@@ -800,8 +956,17 @@ export function FeedbackDialog({
                 disabled={rating === 0 || busy || costFilledButInvalid}
               >
                 {busy ? (
-                  <><Icon name="loader-circle" size={17} className="sp-spin" />{editing ? FEEDBACK_COPY.edit.submitting : FEEDBACK_COPY.dialog.submitting}</>
-                ) : editing ? FEEDBACK_COPY.edit.submit : FEEDBACK_COPY.dialog.submit}
+                  <>
+                    <Icon name="loader-circle" size={17} className="sp-spin" />
+                    {editing
+                      ? FEEDBACK_COPY.edit.submitting
+                      : FEEDBACK_COPY.dialog.submitting}
+                  </>
+                ) : editing ? (
+                  FEEDBACK_COPY.edit.submit
+                ) : (
+                  FEEDBACK_COPY.dialog.submit
+                )}
               </Button>
               <button
                 type="button"
@@ -809,13 +974,15 @@ export function FeedbackDialog({
                 onClick={() => requestClose(onDismiss)}
                 disabled={busy}
               >
-                {editing ? FEEDBACK_COPY.edit.cancel : FEEDBACK_COPY.dialog.dismiss}
+                {editing
+                  ? FEEDBACK_COPY.edit.cancel
+                  : FEEDBACK_COPY.dialog.dismiss}
               </button>
             </footer>
           </form>
         )}
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

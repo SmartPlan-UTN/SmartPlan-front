@@ -22,7 +22,11 @@ vi.mock("@/lib/auth", async (importActual) => ({
   useSession,
 }));
 
-vi.mock("next/navigation", () => ({ usePathname: () => "/plans/7" }));
+const push = vi.hoisted(() => vi.fn());
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/plans/7",
+  useRouter: () => ({ push }),
+}));
 
 vi.mock("@/components/media", () => ({
   AuthenticatedImage: () => <span data-testid="photo" />,
@@ -91,14 +95,15 @@ describe("CommunityExperiences (#106)", () => {
     useSession.mockReturnValue({ status: "authenticated" });
   });
 
-  it("draws a compound first name's initials from the last-name initial", async () => {
+  it("draws the person's initial from their handle, the same as on their profile", async () => {
     getPlanExperiences.mockResolvedValue(
-      page([experience({ author: { alias: "María José P.", avatarUrl: null } })]),
+      page([experience({ author: { alias: "Viajero/a", username: "maria_jose", avatarUrl: null } })]),
     );
     render(<CommunityExperiences planId={7} planTitle="Bodegas de Maipú" />);
 
-    const card = await screen.findByRole("article", { name: "Experiencia de María José P." });
-    expect(within(card).getByText("MP")).toBeInTheDocument();
+    const card = await screen.findByRole("article", { name: "Experiencia de Viajero/a" });
+    expect(within(card).getByText("M")).toBeInTheDocument();
+    expect(within(card).getByRole("link", { name: "@maria_jose" })).toHaveAttribute("href", "/community/creators/maria_jose");
   });
 
   it("leads with the summary and the photos, then each person's story", async () => {
@@ -106,14 +111,14 @@ describe("CommunityExperiences (#106)", () => {
     render(<CommunityExperiences planId={7} planTitle="Bodegas de Maipú" />);
 
     expect(await screen.findByText("4.5")).toBeInTheDocument();
-    expect(screen.getByText("1 experiencia · 2 fotos")).toBeInTheDocument();
+    expect(screen.getByText("1 reseña · 2 fotos")).toBeInTheDocument();
     expect(
       screen.getByRole("list", { name: "Fotos de la comunidad en Bodegas de Maipú" }),
     ).toBeInTheDocument();
 
     const card = screen.getByRole("article", { name: "Experiencia de Lucía M." });
     expect(within(card).getByRole("link", { name: "@lucia" })).toBeInTheDocument();
-    expect(within(card).getByText("Lo hizo en septiembre de 2026")).toBeInTheDocument();
+    expect(within(card).getByText(/Salió el 14 de septiembre de 2026/)).toBeInTheDocument();
     expect(within(card).getByText("Lo recomendaría")).toBeInTheDocument();
     expect(within(card).getByText("“Imperdible al atardecer”")).toBeInTheDocument();
     expect(getPlanExperiences).toHaveBeenCalledWith(7, { page: 1, limit: 6 });
@@ -223,7 +228,7 @@ describe("CommunityExperiences (#106)", () => {
         contentId: 2,
         reason: "sexual_content",
       });
-      expect(await screen.findByText("1 experiencia · 1 foto")).toBeInTheDocument();
+      expect(await screen.findByText("1 reseña · 1 foto")).toBeInTheDocument();
       const card = screen.getByRole("article", { name: "Experiencia de Lucía M." });
       expect(within(card).getAllByTestId("photo")).toHaveLength(1);
     });

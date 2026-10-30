@@ -5,14 +5,13 @@ import { useRouter } from "next/navigation";
 
 import { GenerationState } from "@/components/home/GenerationState";
 import { PlanResults } from "@/components/home/PlanResults";
-import { CommunityFindings } from "@/components/community/CommunityFindings";
 import { ResultsHeader } from "@/components/home/ResultsHeader";
 import { usePlanRequestPolling } from "@/hooks";
 import { ROUTES, planRequestRoute } from "@/lib/routes";
-import { refinePlanRequest } from '@/lib/api';
-import { carryRequestContext } from '@/lib/plans/requestContext';
-import type { PlanRequestContext, RefinePlanRequestPayload } from '@/types';
-import { RefinementChips, StopAdjustments } from './PlanRefinementActions';
+import { refinePlanRequest } from "@/lib/api";
+import { carryRequestContext } from "@/lib/plans/requestContext";
+import type { PlanRequestContext, RefinePlanRequestPayload } from "@/types";
+import { RefinementChips, StopAdjustments } from "./PlanRefinementActions";
 
 import styles from "./plan-request.module.css";
 
@@ -28,7 +27,8 @@ function PlanRequestBody({ requestId }: { requestId: number }) {
   const refinementPending = useRef(false);
 
   useEffect(() => {
-    if (planning.planRequestId == null || planning.planRequestId === requestId) return;
+    if (planning.planRequestId == null || planning.planRequestId === requestId)
+      return;
     router.push(planRequestRoute(planning.planRequestId));
   }, [planning.planRequestId, requestId, router]);
 
@@ -68,15 +68,23 @@ function PlanRequestBody({ requestId }: { requestId: number }) {
       carryRequestContext(requestId, accepted.id);
       router.push(planRequestRoute(accepted.id));
     } catch {
-      setRefinementError('No pudimos ajustar este plan. Tu recorrido sigue disponible; podés volver a intentar.');
+      setRefinementError(
+        "No pudimos ajustar este plan. Tu recorrido sigue disponible; podés volver a intentar.",
+      );
       refinementPending.current = false;
       setRefining(false);
     }
   }
 
-  const plans = planning.phase === "generated" ? planning.plans : null;
+  const plans =
+    planning.phase === "generated" && planning.plans?.length
+      ? planning.plans
+      : null;
   const generated = plans !== null;
-  const failed = planning.phase === "failed" || planning.phase === "idle";
+  const failed =
+    planning.phase === "failed" ||
+    planning.phase === "idle" ||
+    (planning.phase === "generated" && !plans);
 
   return (
     <section className={styles.page} aria-label="Búsqueda de planes">
@@ -91,45 +99,68 @@ function PlanRequestBody({ requestId }: { requestId: number }) {
 
       {plans ? (
         <div className={styles.resultsContent}>
-          {refining ? <p role="status" className={styles.refiningNote}>Ajustando la recomendación…</p> : null}
-          {refinementError ? <p role="alert" className={styles.refiningNote}>{refinementError}</p> : null}
-          <PlanResults
-            returnTo={planRequestRoute(requestId)}
-            plans={plans}
-            query={planning.query}
-            resolvedContext={planning.resolvedContext}
-            understanding={planning.understanding}
-            funnel={planning.funnel}
-            unsupportedExperiences={planning.unsupportedExperiences}
-            mode={planning.mode === "surprise" ? "surprise" : "auto"}
-            hideHeader
-            canAdjust={false}
-            onAdjust={goHome}
-            onDiscard={goHome}
-            onRegenerate={planning.regenerate}
-            onPlanSelected={planning.applySelectionChange}
-            onSelectionReconcile={planning.refresh}
-            renderRefinement={(plan) =>
-              plan.insight ? (
-                <>
-                  <RefinementChips plan={plan} busy={refining} onRefine={(payload) => void refine(payload)} />
-                  {plan.details.length > 1 ? (
-                    <StopAdjustments plan={plan} busy={refining} onRefine={(payload) => void refine(payload)} />
-                  ) : null}
-                </>
-              ) : null
-            }
-          />
-          <CommunityFindings query={planning.query} />
+          {refining ? (
+            <p role="status" className={styles.refiningNote}>
+              Ajustando la recomendación…
+            </p>
+          ) : null}
+          {refinementError ? (
+            <p role="alert" className={styles.refiningNote}>
+              {refinementError}
+            </p>
+          ) : null}
+          {plans.length ? (
+            <PlanResults
+              returnTo={planRequestRoute(requestId)}
+              plans={plans}
+              communityRecommendations={planning.communityRecommendations}
+              query={planning.query}
+              resolvedContext={planning.resolvedContext}
+              understanding={planning.understanding}
+              funnel={planning.funnel}
+              unsupportedExperiences={planning.unsupportedExperiences}
+              mode={planning.mode === "surprise" ? "surprise" : "auto"}
+              hideHeader
+              canAdjust={false}
+              onAdjust={goHome}
+              onDiscard={goHome}
+              onRegenerate={planning.regenerate}
+              onPlanSelected={planning.applySelectionChange}
+              onSelectionReconcile={planning.refresh}
+              renderRefinement={(plan) =>
+                plan.insight ? (
+                  <>
+                    <RefinementChips
+                      plan={plan}
+                      busy={refining}
+                      onRefine={(payload) => void refine(payload)}
+                    />
+                    {plan.details.length > 1 ? (
+                      <StopAdjustments
+                        plan={plan}
+                        busy={refining}
+                        onRefine={(payload) => void refine(payload)}
+                      />
+                    ) : null}
+                  </>
+                ) : null
+              }
+            />
+          ) : null}
         </div>
       ) : (
         <div className={styles.waitContent}>
           <GenerationState
-            phase={planning.phase === "idle" ? "failed" : planning.phase}
-            failure={planning.failure ?? {
-              code: null,
-              message: "No pudimos recuperar esta búsqueda. Podés volver al inicio y probar otra vez.",
-            }}
+            phase={
+              failed || planning.phase === "idle" ? "failed" : planning.phase
+            }
+            failure={
+              planning.failure ?? {
+                code: null,
+                message:
+                  "No pudimos recuperar esta búsqueda. Podés volver al inicio y probar otra vez.",
+              }
+            }
             onKeepWaiting={planning.keepWaiting}
             onRetry={planning.retry}
             onDiscard={goHome}

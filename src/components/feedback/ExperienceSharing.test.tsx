@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { PlanFeedback } from "@/types";
+import { ApiError } from "@/lib/api";
 
 import { ExperienceSharing } from "./ExperienceSharing";
 import { ExperienceSummary } from "./ExperienceSummary";
@@ -79,8 +80,8 @@ describe("ExperienceSharing (#106)", () => {
       />,
     );
 
-    expect(screen.getByText("No se ve ahora")).toBeInTheDocument();
-    expect(screen.getByText(/ya no está publicado/)).toBeInTheDocument();
+    expect(screen.getByText("Visible en la comunidad")).toBeInTheDocument();
+    expect(screen.getByText(/solo aparece si también es público/)).toBeInTheDocument();
     await user.click(screen.getByRole("switch"));
     expect(setFeedbackSharing).toHaveBeenCalledWith(9, false);
   });
@@ -96,6 +97,46 @@ describe("ExperienceSharing (#106)", () => {
     await user.click(screen.getByRole("switch"));
     expect(await screen.findByRole("alert")).toHaveTextContent("No pudimos cambiarlo");
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("links to the existing public review when a repeat cannot become another review", async () => {
+    const user = userEvent.setup();
+    setFeedbackSharing.mockRejectedValue(
+      new ApiError({
+        message: "Already shared",
+        type: "HTTP",
+        status: 409,
+        code: "COMMUNITY_REVIEW_ALREADY_EXISTS",
+        data: { existingExperienceId: 42 },
+      }),
+    );
+    render(
+      <ExperienceSharing outingId={9} planTitle="Bodegas" feedback={feedback()} onChange={vi.fn()} />,
+    );
+
+    await user.click(screen.getByRole("switch"));
+    expect(await screen.findByRole("alert")).toHaveTextContent("No pudimos cambiarlo");
+    expect(screen.getByRole("link", { name: "Abrir tu reseña y sumar esta salida" })).toHaveAttribute(
+      "href",
+      "/community/experiences/42",
+    );
+  });
+
+  it("shows the existing review after a new outing was saved privately", () => {
+    render(
+      <ExperienceSharing
+        outingId={9}
+        planTitle="Bodegas"
+        feedback={feedback({ existingCommunityExperienceId: 42 })}
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(/Ya tenés una reseña pública de este plan/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Abrir tu reseña y sumar esta salida" })).toHaveAttribute(
+      "href",
+      "/community/experiences/42",
+    );
   });
 });
 

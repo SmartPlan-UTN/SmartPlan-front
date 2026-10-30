@@ -382,7 +382,7 @@
   left: max(var(--s-3), env(safe-area-inset-left));
   z-index: 55;
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: end;
   min-height: var(--mobile-nav-h);
   padding: 5px 6px;

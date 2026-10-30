@@ -7,5 +7,5 @@ export default async function CommunityExperiencePage({ params }: { params: Prom
   const { id } = await params;
   const experienceId = parsePositiveIntId(id);
   if (experienceId === null) notFound();
-  return <ExperienceDetailScreen id={experienceId} />;
+  return <ExperienceDetailScreen key={experienceId} id={experienceId} />;
 }

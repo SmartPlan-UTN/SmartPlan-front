@@ -6,12 +6,15 @@ import Link from "next/link";
 import { FEEDBACK_TAG_LABELS, FEEDBACK_TAG_ORDER, ratingLabel } from "@/components/feedback";
 import { AuthenticatedImage, MediaLightbox } from "@/components/media";
 import { ReportButton, useContentReporter, type ReportTarget } from "@/components/reports";
-import { Badge, Button, Icon, Stars, UserAvatar } from "@/components/ui";
+import { Badge, Button, Icon, Stars } from "@/components/ui";
+import { PersonAvatar } from "../community/Person";
 import { getPlanExperiences } from "@/lib/api";
 import type { CommunityExperience, CommunityExperiencesSummary, MediaImage } from "@/types";
 
 import { COMMUNITY_COPY } from "./communityContent";
+import { formatLongDate } from "../community/format";
 import { communityCreatorRoute } from "@/lib/routes";
+import { LikeExperienceButton } from "../community/PublicationActions";
 import styles from "./community.module.css";
 
 export interface CommunityExperiencesProps {
@@ -26,12 +29,6 @@ const PAGE_SIZE = 6;
  */
 const WALL_VISIBLE = 7;
 const CARD_PHOTOS_VISIBLE = 4;
-
-const monthFormatter = new Intl.DateTimeFormat("es-AR", {
-  month: "long",
-  year: "numeric",
-  timeZone: "America/Argentina/Mendoza",
-});
 
 interface Lightbox {
   images: MediaImage[];
@@ -78,11 +75,13 @@ export function CommunityExperiences({ planId, planTitle }: CommunityExperiences
     const withoutPhoto = <T extends MediaImage>(photos: T[]) =>
       photos.filter((photo) => photo.id !== contentId);
     setItems((current) => current.map((item) => ({ ...item, photos: withoutPhoto(item.photos) })));
-    setSummary((current) =>
-      current && current.photos.some((photo) => photo.id === contentId)
-        ? { ...current, photos: withoutPhoto(current.photos), photoCount: current.photoCount - 1 }
-        : current,
-    );
+    setSummary((current) => current && {
+      ...current,
+      photos: withoutPhoto(current.photos),
+      // The summary count covers every shared photo, while its gallery only
+      // keeps the latest twelve. A reported photo can be outside that window.
+      photoCount: Math.max(0, current.photoCount - 1),
+    });
   }, []);
   const reporter = useContentReporter(hideReported);
 
@@ -140,7 +139,7 @@ export function CommunityExperiences({ planId, planTitle }: CommunityExperiences
 
   if (state === "loading") {
     return (
-      <section className={styles.community} aria-labelledby={headingId} aria-busy="true">
+      <section id="community-experiences" className={styles.community} aria-labelledby={headingId} aria-busy="true">
         {heading}
         <div className={styles.wallSkeleton} role="status" aria-label={COMMUNITY_COPY.loading} />
       </section>
@@ -149,7 +148,7 @@ export function CommunityExperiences({ planId, planTitle }: CommunityExperiences
 
   if (state === "error" || summary === null) {
     return (
-      <section className={styles.community} aria-labelledby={headingId}>
+      <section id="community-experiences" className={styles.community} aria-labelledby={headingId}>
         {heading}
         <div className={styles.error} role="alert">
           <p>{COMMUNITY_COPY.error}</p>
@@ -170,7 +169,7 @@ export function CommunityExperiences({ planId, planTitle }: CommunityExperiences
 
   if (summary.experienceCount === 0) {
     return (
-      <section className={styles.community} aria-labelledby={headingId}>
+      <section id="community-experiences" className={styles.community} aria-labelledby={headingId}>
         {heading}
         <div className={styles.empty}>
           <Icon name="camera" size={22} aria-hidden="true" className={styles.emptyIcon} />
@@ -187,7 +186,7 @@ export function CommunityExperiences({ planId, planTitle }: CommunityExperiences
   const hiddenInWall = summary.photos.length - wall.length;
 
   return (
-    <section className={styles.community} aria-labelledby={headingId}>
+    <section id="community-experiences" className={styles.community} aria-labelledby={headingId}>
       {heading}
 
       <div className={styles.summary}>
@@ -307,16 +306,6 @@ export function CommunityExperiences({ planId, planTitle }: CommunityExperiences
   );
 }
 
-/**
- * A stable number for the avatar color. The community never sees an
- * author's id, so the same alias keeps one color across cards.
- */
-function aliasHash(alias: string): number {
-  let hash = 0;
-  for (const char of alias) hash = (hash * 31 + char.charCodeAt(0)) | 0;
-  return hash;
-}
-
 function ExperienceCard({
   experience,
   onOpenPhoto,
@@ -328,11 +317,6 @@ function ExperienceCard({
   onReportComment: () => void;
   onReportPhoto: (photoId: number) => void;
 }) {
-  // "María José P.": the first name and the last-name initial, whatever
-  // comes between them.
-  const words = experience.author.alias.split(" ");
-  const name = words[0];
-  const initial = words.length > 1 ? words[words.length - 1] : "";
   const tags = FEEDBACK_TAG_ORDER.filter((tag) => experience.tags.includes(tag));
   const photos = experience.photos.slice(0, CARD_PHOTOS_VISIBLE);
   const hiddenPhotos = experience.photos.length - photos.length;
@@ -340,12 +324,8 @@ function ExperienceCard({
   return (
     <article className={styles.card} aria-label={COMMUNITY_COPY.cardLabel(experience.author.alias)}>
       <header className={styles.cardHeader}>
-        <UserAvatar
-          name={name}
-          lastName={initial}
-          userId={aliasHash(experience.author.username ?? experience.author.alias)}
-          avatarUrl={experience.author.avatarUrl}
-        />
+        {/* The same person looks the same here as on their profile and in the feed. */}
+        <PersonAvatar username={experience.author.username ?? "viajero"} avatarUrl={experience.author.avatarUrl} size={40} />
         <div className={styles.cardAuthor}>
           {experience.author.username ? (
             <Link className={styles.authorName} href={communityCreatorRoute(experience.author.username)}>
@@ -356,8 +336,11 @@ function ExperienceCard({
           )}
           {experience.completedAt ? (
             <span className={styles.cardDate}>
-              {COMMUNITY_COPY.doneIn(monthFormatter.format(new Date(experience.completedAt)))}
+              {COMMUNITY_COPY.doneIn(formatLongDate(experience.completedAt))}
             </span>
+          ) : null}
+          {(experience.visitCount ?? 1) > 1 ? (
+            <span className={styles.cardDate}>La hizo {experience.visitCount} veces</span>
           ) : null}
         </div>
       </header>
@@ -417,6 +400,13 @@ function ExperienceCard({
           ))}
         </ul>
       ) : null}
+      <LikeExperienceButton
+        id={experience.id}
+        title={COMMUNITY_COPY.cardLabel(experience.author.alias)}
+        initialCount={experience.likeCount ?? 0}
+        initiallyLiked={experience.likedByViewer ?? false}
+        isOwn={experience.isOwn}
+      />
     </article>
   );
 }
