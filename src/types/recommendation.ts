@@ -65,7 +65,7 @@ export interface CreateSurprisePlanRequestPayload {
  * `POST /plan-requests/surprise` (HTTP 202). Matches
  * `PlanRequestAcceptedDto` in `SmartPlan-back`.
  */
-export type PlanRefinementAction = 'CHEAPER' | 'MORE_ROMANTIC' | 'LESS_TRAVEL' | 'MORE_ORIGINAL' | 'MORE_CALM' | 'MORE_MODERN' | 'SWAP_STOP' | 'REMOVE_STOP';
+export type PlanRefinementAction = 'CHEAPER' | 'MORE_ROMANTIC' | 'LESS_TRAVEL' | 'MORE_ORIGINAL' | 'MORE_CALM' | 'MORE_MODERN' | 'ADD_HOME_GAME' | 'SWAP_STOP' | 'REMOVE_STOP';
 
 export interface RefinePlanRequestPayload {
   planId: number;
