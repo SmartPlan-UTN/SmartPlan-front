@@ -11,6 +11,7 @@ import { CommunityScreen } from "./CommunityScreen";
 const getCommunityFeed = vi.hoisted(() => vi.fn());
 const getCommunityCreators = vi.hoisted(() => vi.fn());
 const getCommunityPlans = vi.hoisted(() => vi.fn());
+const session = vi.hoisted(() => ({status: "anonymous", user: null as {id: number} | null}));
 const push = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/api", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/api")>()),
@@ -23,7 +24,7 @@ vi.mock("@/context", () => ({
 }));
 vi.mock("@/lib/auth", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/auth")>()),
-  useSession: () => ({ status: "anonymous", user: null }),
+  useSession: () => session,
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 const plan: CommunityPlan = {
@@ -67,6 +68,24 @@ function page(
     },
   };
 }
+
+it("loads discovery only after restoring the session and reloads it for another viewer", async () => {
+  getCommunityFeed.mockClear();
+  session.status = "loading";
+  getCommunityFeed.mockResolvedValue(page([story]));
+  getCommunityCreators.mockResolvedValue([]);
+  const view = render(<CommunityScreen />);
+  expect(getCommunityFeed).not.toHaveBeenCalled();
+  session.status = "authenticated";
+  session.user = {id: 7};
+  view.rerender(<CommunityScreen />);
+  await screen.findByText("El atardecer estuvo buenísimo.");
+  session.user = {id: 8};
+  view.rerender(<CommunityScreen />);
+  await waitFor(() => expect(getCommunityFeed).toHaveBeenCalledTimes(2));
+  session.status = "anonymous";
+  session.user = null;
+});
 
 describe("CommunityScreen", () => {
   beforeEach(() => {

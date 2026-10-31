@@ -5,11 +5,13 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 
 import { Button, Icon } from "@/components/ui";
 import {
+  ApiError,
   getCommunityCreator,
   getCreatorExperiences,
   getCreatorInspired,
   getCreatorPlans,
 } from "@/lib/api";
+import { useSession } from "@/lib/auth";
 import { ROUTES } from "@/lib/routes";
 import { categoryLabel } from "@/lib/utils/catalogLabels";
 import type {
@@ -28,13 +30,21 @@ import styles from "./community.module.css";
 type TabId = "experiences" | "plans" | "inspired";
 
 export function CreatorProfileScreen({ username }: { username: string }) {
+  const { status, user } = useSession();
+  if (status === "loading") {
+    return <div className={styles.page}><p role="status">Abriendo perfil…</p></div>;
+  }
+  return <CreatorProfileBody key={`${username}:${user?.id ?? status}`} username={username} />;
+}
+
+function CreatorProfileBody({ username }: { username: string }) {
   const returnTo = useCommunityReturnPath();
   const [creator, setCreator] = useState<CommunityCreator | null>(null);
   const [stories, setStories] = useState<CommunityExperience[]>([]);
   const [plans, setPlans] = useState<CommunityPlan[]>([]);
   const [inspired, setInspired] = useState<CommunityPlan[]>([]);
   const [tab, setTab] = useState<TabId>("experiences");
-  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+  const [state, setState] = useState<"loading" | "ready" | "error" | "not-found">("loading");
   const tabRefs = useRef<Partial<Record<TabId, HTMLButtonElement | null>>>({});
   const ownUsername = useOwnUsername();
   const [pages, setPages] = useState<
@@ -47,6 +57,8 @@ export function CreatorProfileScreen({ username }: { username: string }) {
   const [errors, setErrors] = useState<Partial<Record<TabId, boolean>>>({});
   const [busyTab, setBusyTab] = useState<TabId | null>(null);
   const requestId = useRef(0);
+  const [retry, setRetry] = useState(0);
+  const [moreErrors, setMoreErrors] = useState<Partial<Record<TabId, boolean>>>({});
 
   useEffect(() => {
     let active = true;
@@ -86,14 +98,14 @@ export function CreatorProfileScreen({ username }: { username: string }) {
         );
         setState("ready");
       })
-      .catch(() => {
-        if (active) setState("error");
+      .catch((cause: unknown) => {
+        if (active) setState(cause instanceof ApiError && cause.status === 404 ? "not-found" : "error");
       });
     return () => {
       active = false;
       requestId.current += 1;
     };
-  }, [username]);
+  }, [username, retry]);
 
   async function loadTab(target: TabId, more = false) {
     const current = requestId.current;
@@ -132,9 +144,12 @@ export function CreatorProfileScreen({ username }: { username: string }) {
         setPages((previous) => ({ ...previous, [target]: result.pagination }));
       }
       setErrors((previous) => ({ ...previous, [target]: false }));
+      setMoreErrors((previous) => ({ ...previous, [target]: false }));
     } catch {
-      if (current === requestId.current)
+      if (current === requestId.current) {
         setErrors((previous) => ({ ...previous, [target]: true }));
+        setMoreErrors((previous) => ({ ...previous, [target]: more }));
+      }
     } finally {
       if (current === requestId.current) setBusyTab(null);
     }
@@ -154,11 +169,15 @@ export function CreatorProfileScreen({ username }: { username: string }) {
       </div>
     );
   }
-  if (state === "error" || !creator) {
+  if (state === "error" || state === "not-found" || !creator) {
     return (
       <div className={styles.page}>
         <div className={styles.state}>
-          <h1 className={styles.stateTitle}>No encontramos este perfil</h1>
+          <h1 className={styles.stateTitle}>{state === "not-found" ? "No encontramos este perfil" : "No pudimos cargar este perfil"}</h1>
+          {state === "error" ? <Button variant="ghostLight" onClick={() => {
+            setState("loading");
+            setRetry((value) => value + 1);
+          }}>Reintentar</Button> : null}
           <Link className={styles.textButton} href={ROUTES.community}>
             Volver a la comunidad
           </Link>
@@ -307,7 +326,7 @@ export function CreatorProfileScreen({ username }: { username: string }) {
             <Button
               variant="ghostLight"
               disabled={busyTab === tab}
-              onClick={() => void loadTab(tab)}
+              onClick={() => void loadTab(tab, moreErrors[tab] ?? false)}
             >
               Reintentar
             </Button>

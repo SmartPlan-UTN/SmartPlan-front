@@ -1,11 +1,14 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { ApiError } from "@/lib/api";
 import type { CommunityExperience } from "@/types";
 import { ExperienceDetailScreen } from "./ExperienceDetailScreen";
 import { StoryCard } from "./cards";
 
 const getCommunityExperience = vi.hoisted(() => vi.fn());
+const addCommunityExperienceVisit = vi.hoisted(() => vi.fn());
+const session = vi.hoisted(() => ({ status: "anonymous", user: null as { id: number } | null }));
 const downloadMedia = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api/media", () => ({ downloadMedia }));
@@ -21,12 +24,13 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/lib/auth", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/auth")>()),
-  useSession: () => ({ status: "anonymous", user: null }),
+  useSession: () => session,
 }));
 
 vi.mock("@/lib/api", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/api")>()),
   getCommunityExperience,
+  addCommunityExperienceVisit,
 }));
 
 const experience: CommunityExperience = {
@@ -45,6 +49,8 @@ const experience: CommunityExperience = {
 describe("ExperienceDetailScreen", () => {
   afterEach(() => {
     vi.clearAllMocks();
+    session.status = "anonymous";
+    session.user = null;
     vi.unstubAllGlobals();
   });
 
@@ -85,7 +91,7 @@ describe("ExperienceDetailScreen", () => {
     render(<ExperienceDetailScreen id={3} />);
 
     expect(
-      await screen.findByText(/El plan de origen ya no es pública/),
+      await screen.findByText(/El plan de origen ya no es público/),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: "Ver plan" }),
@@ -93,7 +99,7 @@ describe("ExperienceDetailScreen", () => {
   });
 
   it("offers a way back when the experience is gone", async () => {
-    getCommunityExperience.mockRejectedValue(new Error("gone"));
+    getCommunityExperience.mockRejectedValue(new ApiError({ message: "gone", type: "HTTP", status: 404 }));
 
     render(<ExperienceDetailScreen id={9} />);
 
@@ -106,6 +112,43 @@ describe("ExperienceDetailScreen", () => {
     expect(
       screen.getByRole("link", { name: "Volver a la comunidad" }),
     ).toHaveAttribute("href", "/community");
+  });
+
+  it("retries a network failure without claiming the experience was removed", async () => {
+    getCommunityExperience.mockRejectedValueOnce(new Error("offline")).mockResolvedValue(experience);
+    render(<ExperienceDetailScreen id={3} />);
+    await screen.findByRole("heading", { name: "No pudimos cargar esta experiencia" });
+    expect(screen.queryByText(/su autor la haya hecho privada/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Reintentar" }));
+    await screen.findByRole("heading", { name: "Versión de Lucía" });
+  });
+
+  it("waits for session restoration and reloads viewer data when the user changes", async () => {
+    session.status = "loading";
+    getCommunityExperience.mockResolvedValue(experience);
+    const view = render(<ExperienceDetailScreen id={3} />);
+    expect(getCommunityExperience).not.toHaveBeenCalled();
+    session.status = "authenticated";
+    session.user = { id: 7 };
+    getCommunityExperience.mockResolvedValue({ ...experience, isOwn: true });
+    view.rerender(<ExperienceDetailScreen id={3} />);
+    await screen.findByRole("button", { name: "Sumar otra salida completada" });
+    session.user = { id: 8 };
+    getCommunityExperience.mockResolvedValue({ ...experience, likedByViewer: true });
+    view.rerender(<ExperienceDetailScreen id={3} />);
+    await screen.findByRole("button", { name: /^Quitar me gusta:/ });
+    expect(screen.queryByRole("button", { name: "Sumar otra salida completada" })).toBeNull();
+    expect(getCommunityExperience).toHaveBeenCalledTimes(2);
+  });
+
+  it("adds a completed visit even when the source plan is no longer public", async () => {
+    getCommunityExperience.mockResolvedValue({ ...experience, isOwn: true, plan: null, inspiredBy: null, visitCount: 1 });
+    addCommunityExperienceVisit.mockResolvedValue({ visitCount: 2 });
+    render(<ExperienceDetailScreen id={3} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Sumar otra salida completada" }));
+    await waitFor(() => expect(screen.getByText("Salidas registradas: 2 de 100")).toBeInTheDocument());
+    expect(addCommunityExperienceVisit).toHaveBeenCalledWith(3);
+    expect(screen.queryByRole("link", { name: "Ver plan" })).toBeNull();
   });
 
   it("removes failed gallery photos while keeping other photos and the lightbox usable", async () => {

@@ -133,3 +133,16 @@ describe("Publication actions", () => {
     expect(like).toHaveTextContent("3");
   });
 });
+
+
+it("updates the viewer's like when refreshed publication data changes", async () => {
+  const user = userEvent.setup();
+  unlikeExperience.mockResolvedValue({ liked: false, likeCount: 6 });
+  const view = render(<LikeExperienceButton id={3} title="Una salida" initialCount={7} initiallyLiked={false} />);
+  view.rerender(<LikeExperienceButton id={3} title="Una salida" initialCount={7} initiallyLiked={true} />);
+  const button = screen.getByRole("button", {name: /^Quitar me gusta:/});
+  expect(button).toHaveAttribute("aria-pressed", "true");
+  await user.click(button);
+  expect(unlikeExperience).toHaveBeenCalledWith(3);
+  expect(likeExperience).not.toHaveBeenCalled();
+});

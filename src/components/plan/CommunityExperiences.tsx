@@ -8,6 +8,7 @@ import { AuthenticatedImage, MediaLightbox } from "@/components/media";
 import { ReportButton, useContentReporter, type ReportTarget } from "@/components/reports";
 import { Badge, Button, Icon, Stars } from "@/components/ui";
 import { PersonAvatar } from "../community/Person";
+import { useSession } from "@/lib/auth";
 import { getPlanExperiences } from "@/lib/api";
 import type { CommunityExperience, CommunityExperiencesSummary, MediaImage } from "@/types";
 
@@ -53,7 +54,13 @@ const PHOTO_REPORT_TITLE = "Denunciar foto";
  * the view at once, the comment alone or the photo alone, while the rest of
  * the experience and its score stay.
  */
-export function CommunityExperiences({ planId, planTitle }: CommunityExperiencesProps) {
+export function CommunityExperiences(props: CommunityExperiencesProps) {
+  const { status, user } = useSession();
+  if (status === "loading") return <p role="status">Cargando experiencias…</p>;
+  return <CommunityExperiencesBody key={`${props.planId}:${user?.id ?? status}`} {...props} />;
+}
+
+function CommunityExperiencesBody({ planId, planTitle }: CommunityExperiencesProps) {
   const headingId = useId();
   const [summary, setSummary] = useState<CommunityExperiencesSummary | null>(null);
   const [items, setItems] = useState<CommunityExperience[]>([]);

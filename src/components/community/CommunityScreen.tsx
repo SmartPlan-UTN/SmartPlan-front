@@ -9,7 +9,9 @@ import {
   type FormEvent,
 } from "react";
 import { Button, Icon } from "@/components/ui";
+import { PageKicker } from "@/components/layout/PageKicker";
 import { getCommunityCreators, getCommunityFeed, getCommunityPlans } from "@/lib/api";
+import { useSession } from "@/lib/auth";
 import { ROUTES } from "@/lib/routes";
 import type {
   CommunityCreatorSummary,
@@ -39,7 +41,20 @@ const itemKey = (item: CommunityFeedItem) =>
     : `experience:${item.experience.id}`;
 type Position = { q?: string; type?: string; sort?: CommunityPlanSort; page?: number; scroll?: number };
 
-export function CommunityScreen({
+export function CommunityScreen(props: {
+  initialQuery?: string;
+  initialFilter?: CommunityFeedFilter;
+  initialSort?: CommunityPlanSort;
+}) {
+  const { status, user } = useSession();
+  if (status === "loading") {
+    return <div className={styles.page}><p role="status">Cargando publicaciones…</p></div>;
+  }
+  // Viewer flags and likes must never survive a change of account.
+  return <CommunityScreenBody key={user?.id ?? status} {...props} />;
+}
+
+function CommunityScreenBody({
   initialQuery = "",
   initialFilter = "all",
   initialSort = "recent",
@@ -229,8 +244,9 @@ export function CommunityScreen({
     <div className={styles.page}>
       <header className={styles.masthead}>
         <div>
-          <h1 className={styles.title}>Salir se contagia.</h1>
-          <p className={styles.intro}>
+          <PageKicker>Comunidad</PageKicker>
+          <h1 className="sp-page-title">Salir <span className="sp-page-title-accent">se contagia.</span></h1>
+          <p className="sp-page-lead">
             Personas, planes y esas salidas que dan ganas de repetir.
           </p>
         </div>

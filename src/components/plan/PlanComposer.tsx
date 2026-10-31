@@ -7,6 +7,7 @@ import { Button, ConfirmationDialog } from "@/components/ui";
 import type { ComposerStep } from "@/components/plan/composer/ComposerStepper";
 import { useDebouncedValue, useExplorationSearch } from "@/hooks";
 import {
+  ApiError,
   createPlanFromComposer,
   getActivity,
   getPlan,
@@ -119,7 +120,11 @@ export function PlanComposer({
     initialDraftKeyRef.current = getDraftKey(draft);
   }
 
+  const nextPlaceRowIdRef = useRef(Math.min(0, ...draft.stops.map((stop) => stop.activity.id)));
+
   const [adaptSource, setAdaptSource] = useState<AdaptSource | null>(null);
+  const [inspirationId, setInspirationId] = useState(inspiredByPlanId);
+  const [inspirationUnavailable, setInspirationUnavailable] = useState(false);
   const [adaptContext, setAdaptContext] = useState<AdaptContext>(DEFAULT_ADAPT_CONTEXT);
   const [step, setStep] = useState<ComposerStep>(initialActivityId ? 1 : 0);
   const [mobilePane, setMobilePane] = useState<ComposerPane>("catalog");
@@ -389,7 +394,7 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
                 label: stop.actionLabel ?? stop.label,
                 durationMinutes: detail.estimatedDuration,
                 price: detail.price ?? null,
-              }),
+              }, -detail.id),
               estimatedCost: detail.estimatedCost,
             };
           }
@@ -420,6 +425,7 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
           visibility: "private",
           stops,
         };
+        nextPlaceRowIdRef.current = Math.min(nextPlaceRowIdRef.current, ...stops.map((stop) => stop.activity.id));
         setDraft(adapted);
         setAdaptSource({
           id: source.id,
@@ -437,7 +443,10 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
         setAnnouncement(`Tu versión de ${source.title}. Contanos cuándo y con quién, y revisamos si te sirve.`);
       })
       .catch(() => {
-        if (active) setPrefillError("No pudimos abrir el plan de inspiración. Podés armar el tuyo desde el catálogo.");
+        if (active) {
+          setInspirationUnavailable(true);
+          setPrefillError("No pudimos abrir el plan de inspiración.");
+        }
       })
       .finally(() => { if (active) setPrefillLoading(false); });
     return () => { active = false; };
@@ -682,6 +691,7 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
   }
 
   async function savePlan() {
+    if (inspirationUnavailable) return;
     if (prefillLoading) {
       setSubmitError(
         "Estamos cargando la actividad inicial. Esperá un momento para guardar.",
@@ -705,7 +715,7 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
       description: draft.description.trim() || null,
       peopleCount: draft.peopleCount,
       visibility: draft.visibility,
-      ...(mode === "create" && inspiredByPlanId ? { inspiredByPlanId } : {}),
+      ...(mode === "create" && inspirationId ? { inspiredByPlanId: inspirationId } : {}),
       stops: draft.stops.map((stop) => ({
         ...composerTarget(stop),
         ...(stop.detailId === undefined ? {} : { detailId: stop.detailId }),
@@ -732,6 +742,9 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
             : planDetailRoute(saved.id);
       router.push(afterSave);
     } catch (error) {
+      if (error instanceof ApiError && error.code === "INSPIRATION_NOT_AVAILABLE") {
+        setInspirationUnavailable(true);
+      }
       const failure = mapSaveError(error);
       if (failure.newRequestId) {
         createRequestIdRef.current = null;
@@ -768,6 +781,20 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
           Salir
         </Button>
       </div>
+
+      {inspirationUnavailable ? (
+        <div role="alert">
+          <p>No podemos usar el plan de inspiración. Podés continuar con tu borrador sin vincularlo a ese plan.</p>
+          <Button variant="ghostLight" onClick={() => {
+            setInspirationId(undefined);
+            setInspirationUnavailable(false);
+            setAdaptSource(null);
+            setPrefillError(null);
+            setSubmitError(null);
+            createRequestIdRef.current = null;
+          }}>Continuar sin inspiración</Button>
+        </div>
+      ) : null}
 
       {adaptSource ? (
         <AdaptBanner
@@ -846,8 +873,9 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
         {step === 1 ? (
           <ActivitiesStep
             places={<PlaceStopPicker stops={draft.stops} disabled={isSaving} onAdd={(stop) => {
-              if (stopsRef.current.some((current) => current.activity.id === stop.activity.id)) return;
-              setStops([...stopsRef.current, stop]);
+              if (stopsRef.current.some((current) => current.placeTarget?.placeId === stop.placeTarget?.placeId && current.placeTarget?.action === stop.placeTarget?.action)) return;
+              const rowId = --nextPlaceRowIdRef.current;
+              setStops([...stopsRef.current, { ...stop, activity: { ...stop.activity, id: rowId } }]);
               setAnnouncement(`${stop.activity.name} se agregó al recorrido.`);
             }} />}
             title={draft.title}
@@ -986,7 +1014,7 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
               : mode === "create"
                 ? "Crear plan"
                 : "Guardar cambios",
-            canSave: draft.stops.length > 0 && !prefillLoading,
+            canSave: draft.stops.length > 0 && !prefillLoading && !inspirationUnavailable,
             error: submitError,
             onSave: () => void savePlan(),
           }}

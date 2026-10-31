@@ -41,11 +41,13 @@ export function composerTarget(stop: ComposerStop): PlanComposerStopDto {
   };
 }
 
-/** Adapt a place to the existing timeline's display model. Negative IDs are
- * client-only row keys; only the explicit placeTarget is sent to the API. */
+/** Adapt a place to the timeline's display model. A persisted detail supplies
+ * its own negative row ID. The composer assigns new rows a decreasing ID so
+ * different actions and undo never share a key. Only placeTarget is persisted. */
 export function placeComposerStop(
   place: Pick<PlanStopPlace, 'id' | 'name' | 'latitude' | 'longitude'>,
   action: { action: string; label: string; durationMinutes: number; price?: Price | null },
+  rowId = -place.id,
 ): ComposerStop {
   return {
     placeTarget: { placeId: place.id, action: action.action },
@@ -55,7 +57,7 @@ export function placeComposerStop(
     coords: place.latitude !== null && place.longitude !== null
       ? { latitude: place.latitude, longitude: place.longitude } : null,
     activity: {
-      id: -place.id, name: place.name, description: action.label,
+      id: rowId, name: place.name, description: action.label,
       estimatedCost: action.price?.kind === 'FREE' ? 0 : null,
       price: action.price ?? null, estimatedDuration: action.durationMinutes,
       type: action.action, averageRating: 0, ratingCount: 0, distanceKm: null, categories: [],
@@ -76,7 +78,7 @@ export function createInitialDraft(plan?: OwnPlanDetail): ComposerDraft {
         const action = detail.stop?.action;
         if (!place || !action) throw new Error('A composer stop needs a valid target.');
         return {
-          ...placeComposerStop(place, { action, label: detail.stop?.actionLabel ?? '', durationMinutes: detail.estimatedDuration, price: detail.price }),
+          ...placeComposerStop(place, { action, label: detail.stop?.actionLabel ?? '', durationMinutes: detail.estimatedDuration, price: detail.price }, -detail.id),
           detailId: detail.id, estimatedCost: detail.estimatedCost,
         };
       }

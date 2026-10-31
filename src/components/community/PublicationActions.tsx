@@ -105,7 +105,18 @@ export function SharePublicationButton({
   );
 }
 
-export function LikeExperienceButton({
+export function LikeExperienceButton(props: {
+  id: number;
+  title: string;
+  initialCount: number;
+  initiallyLiked: boolean;
+  isOwn?: boolean;
+}) {
+  const { status, user } = useSession();
+  return <LikeExperienceBody key={`${props.id}:${user?.id ?? status}:${props.initiallyLiked}:${props.initialCount}`} {...props} />;
+}
+
+function LikeExperienceBody({
   id,
   title,
   initialCount,

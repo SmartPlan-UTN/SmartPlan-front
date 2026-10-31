@@ -9,13 +9,14 @@ import {
   type ReportTarget,
 } from "@/components/reports";
 import { FEEDBACK_TAG_LABELS } from "@/components/feedback";
-import { Badge, Icon, Stars } from "@/components/ui";
+import { Badge, Button, Icon, Stars } from "@/components/ui";
 import { addCommunityExperienceVisit, ApiError, getCommunityExperience } from "@/lib/api";
 import {
   communityExperienceRoute,
   planDetailRoute,
   ROUTES,
 } from "@/lib/routes";
+import { useSession } from "@/lib/auth";
 import type { CommunityExperience } from "@/types";
 import { formatLongDate, storyOrigins } from "./format";
 import { InspiredByChip } from "./InspiredByChip";
@@ -25,11 +26,20 @@ import { useCommunityReturnPath } from "./useCommunityReturnPath";
 import styles from "./community.module.css";
 
 export function ExperienceDetailScreen({ id }: { id: number }) {
+  const { status, user } = useSession();
+  if (status === "loading") {
+    return <div className={styles.page}><p role="status">Abriendo esta experiencia…</p></div>;
+  }
+  return <ExperienceDetailBody key={`${id}:${user?.id ?? status}`} id={id} />;
+}
+
+function ExperienceDetailBody({ id }: { id: number }) {
   const returnTo = useCommunityReturnPath();
   const [experience, setExperience] = useState<CommunityExperience | null>(
     null,
   );
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<"not-found" | "error" | null>(null);
+  const [retry, setRetry] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [unavailablePhotos, setUnavailablePhotos] = useState<number[]>([]);
   const [addingVisit, setAddingVisit] = useState(false);
@@ -71,9 +81,11 @@ export function ExperienceDetailScreen({ id }: { id: number }) {
       setVisitError(
         apiError?.code === "NO_UNCOUNTED_COMPLETED_OUTING"
           ? "Todavía no hay otra salida completada para sumar. Cuando completes este plan, vas a poder registrarla acá."
-          : apiError?.code === "EXPERIENCE_VISIT_LIMIT_REACHED"
-            ? "Esta experiencia ya alcanzó el máximo de 100 salidas registradas."
-            : "No pudimos guardar esta salida. Probá de nuevo.",
+          : apiError?.code === "EXPERIENCE_NOT_FOUND"
+            ? "Esta experiencia no tiene un plan de origen disponible para sumar salidas."
+            : apiError?.code === "EXPERIENCE_VISIT_LIMIT_REACHED"
+              ? "Esta experiencia ya alcanzó el máximo de 100 salidas registradas."
+              : "No pudimos guardar esta salida. Probá de nuevo.",
       );
     } finally {
       setAddingVisit(false);
@@ -85,13 +97,13 @@ export function ExperienceDetailScreen({ id }: { id: number }) {
       .then((item) => {
         if (active) setExperience(item);
       })
-      .catch(() => {
-        if (active) setFailed(true);
+      .catch((cause: unknown) => {
+        if (active) setFailed(cause instanceof ApiError && cause.status === 404 ? "not-found" : "error");
       });
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [id, retry]);
   if (!experience && !failed)
     return (
       <div className={styles.page}>
@@ -108,11 +120,15 @@ export function ExperienceDetailScreen({ id }: { id: number }) {
   if (failed || !experience)
     return (
       <div className={styles.page}>
-        <div className={styles.state}>
+        <div className={styles.state} role={failed === "error" ? "alert" : undefined}>
           <h1 className={styles.stateTitle}>
-            Esta experiencia ya no está disponible
+            {failed === "not-found" ? "Esta experiencia ya no está disponible" : "No pudimos cargar esta experiencia"}
           </h1>
-          <p>Puede que su autor la haya hecho privada.</p>
+          <p>{failed === "not-found" ? "Puede que su autor la haya hecho privada." : "Revisá tu conexión y probá otra vez."}</p>
+          {failed === "error" ? <Button variant="ghostLight" onClick={() => {
+            setFailed(null);
+            setRetry((value) => value + 1);
+          }}>Reintentar</Button> : null}
           <Link className={styles.textButton} href={ROUTES.community}>
             Volver a la comunidad
           </Link>
@@ -251,25 +267,25 @@ export function ExperienceDetailScreen({ id }: { id: number }) {
                 </Link>
               </div>
               <SavePlanButton id={sourcePlan.id} title={sourcePlan.title} />
-              {experience.isOwn ? (
-                <div className={styles.repeatPanel}>
-                  <p className={styles.repeatCount}>Salidas registradas: {experience.visitCount ?? 1} de 100</p>
-                  {(experience.visitCount ?? 1) < 100 ? (
-                    <button className={styles.repeatAction} type="button" disabled={addingVisit} onClick={() => void addVisit()}>
-                      {addingVisit ? "Sumando salida…" : "Sumar otra salida completada"}
-                    </button>
-                  ) : null}
-                  {visitError ? <p className={styles.repeatError} role="alert">{visitError}</p> : null}
-                </div>
-              ) : null}
             </section>
           ) : (
             <p className={styles.sidebarNote}>
-              El plan de origen ya no es pública o esta experiencia se compartió
+              El plan de origen ya no es público o esta experiencia se compartió
               sin publicar un plan. La experiencia sigue siendo de quien la
               vivió.
             </p>
           )}
+          {experience.isOwn ? (
+            <div className={styles.repeatPanel}>
+              <p className={styles.repeatCount}>Salidas registradas: {experience.visitCount ?? 1} de 100</p>
+              {(experience.visitCount ?? 1) < 100 ? (
+                <button className={styles.repeatAction} type="button" disabled={addingVisit} onClick={() => void addVisit()}>
+                  {addingVisit ? "Sumando salida…" : "Sumar otra salida completada"}
+                </button>
+              ) : null}
+              {visitError ? <p className={styles.repeatError} role="alert">{visitError}</p> : null}
+            </div>
+          ) : null}
           <div className={styles.actions}>
             <LikeExperienceButton
               id={experience.id}
