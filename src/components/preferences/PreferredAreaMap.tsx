@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { Icon } from "@/components/ui";
+import { Button, Icon } from "@/components/ui";
 import { BRANDED_MAP_STYLE } from "@/lib/maps/brandedMapStyle";
 import { DEFAULT_MAP_CENTER } from "@/lib/maps/defaultCenter";
 import {
@@ -10,6 +10,7 @@ import {
   type HtmlMarkerLayer,
 } from "@/lib/maps/htmlMarkerLayer";
 import { useGoogleMap } from "@/lib/maps/useGoogleMap";
+import { readDeviceCoordinates } from "@/lib/location/deviceCoordinates";
 import type { PreferredArea } from "@/types";
 
 import styles from "./preferences.module.css";
@@ -101,6 +102,7 @@ export interface MapPick {
 
 interface PreferredAreaMapProps {
   area: PreferredArea | null;
+  selectionKey?: string;
   disabled?: boolean;
   onPick: (pick: MapPick) => void;
   onPickError: (message: string) => void;
@@ -119,6 +121,7 @@ interface PreferredAreaMapProps {
  */
 export function PreferredAreaMap({
   area,
+  selectionKey,
   disabled = false,
   onPick,
   onPickError,
@@ -148,6 +151,7 @@ export function PreferredAreaMap({
   const latest = useRef({
     area,
     areaKey,
+    selectionKey: selectionKey ?? areaKey,
     disabled,
     onPick,
     onPickError,
@@ -157,6 +161,7 @@ export function PreferredAreaMap({
     latest.current = {
       area,
       areaKey,
+      selectionKey: selectionKey ?? areaKey,
       disabled,
       onPick,
       onPickError,
@@ -182,7 +187,7 @@ export function PreferredAreaMap({
       return;
     }
     const request = ++requestRef.current;
-    const startedFor = latest.current.areaKey;
+    const startedFor = latest.current.selectionKey;
     showPin(layerRef.current, { lat: position.lat(), lng: position.lng() });
     setLocating(true);
     latest.current.onLocatingChange(true);
@@ -194,7 +199,7 @@ export function PreferredAreaMap({
       if (request !== requestRef.current) return;
       // The area was removed or replaced by the text search meanwhile:
       // that newer choice wins, and the marker already follows it.
-      if (latest.current.areaKey !== startedFor) return;
+      if (latest.current.selectionKey !== startedFor) return;
       if (latest.current.disabled) {
         restoreMarker();
         return;
@@ -212,7 +217,7 @@ export function PreferredAreaMap({
       });
     } catch {
       if (request !== requestRef.current) return;
-      if (latest.current.areaKey !== startedFor) return;
+      if (latest.current.selectionKey !== startedFor) return;
       restoreMarker();
       latest.current.onPickError(GEOCODE_ERROR);
     } finally {
@@ -266,6 +271,39 @@ export function PreferredAreaMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed by coordinates, not by object identity.
   }, [map, areaKey]);
 
+  async function locateDevice() {
+    if (disabled || locating || status !== "ready") return;
+    const request = ++requestRef.current;
+    const startedFor = latest.current.selectionKey;
+    setLocating(true);
+    latest.current.onLocatingChange(true);
+    try {
+      const coordinates = await readDeviceCoordinates();
+      if (request !== requestRef.current || latest.current.disabled || latest.current.selectionKey !== startedFor) return;
+      const position = new google.maps.LatLng(coordinates.latitude, coordinates.longitude);
+      map?.panTo(position);
+      map?.setZoom(AREA_ZOOM);
+      await pickAt(position);
+    } catch (error) {
+      if (request !== requestRef.current) return;
+      const denied = typeof error === "object" && error !== null && "code" in error && error.code === 1;
+      latest.current.onPickError(denied
+        ? "No tenemos permiso para usar tu ubicación. Habilitalo en el navegador o elegí la zona en el mapa."
+        : "No pudimos obtener tu ubicación. Intentá de nuevo o elegí la zona en el mapa.");
+    } finally {
+      // pickAt owns the next request after coordinates have been obtained.
+      if (request === requestRef.current) {
+        setLocating(false);
+        latest.current.onLocatingChange(false);
+      }
+    }
+  }
+
+  useEffect(() => () => {
+    requestRef.current += 1;
+    latest.current.onLocatingChange(false);
+  }, []);
+
   if (status === "error") {
     return (
       <p className={styles.areaMapUnavailable}>
@@ -278,6 +316,11 @@ export function PreferredAreaMap({
   return (
     <div className={styles.areaMap}>
       <div ref={containerRef} className={styles.areaMapCanvas} />
+      <Button type="button" variant="ghostLight" size="sm" className={styles.areaLocateButton}
+        disabled={disabled || locating || status !== "ready"} onClick={() => void locateDevice()}>
+        <Icon name={locating ? "loader-circle" : "locate-fixed"} size={16} aria-hidden="true" />
+        {locating ? "Ubicando…" : "Usar mi ubicación"}
+      </Button>
       {status === "loading" ? (
         <span className={styles.areaMapLoading} role="status">
           Cargando el mapa…

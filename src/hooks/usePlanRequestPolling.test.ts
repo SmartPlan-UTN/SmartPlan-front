@@ -1,6 +1,8 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import * as requestLocation from "@/lib/recommendation/requestLocation";
+import { loadRequestContext } from "@/lib/plans/requestContext";
 import { ApiError } from "@/lib/api";
 import type { PlanRequestAccepted, PlanRequestStatus } from "@/types";
 
@@ -71,6 +73,29 @@ describe("usePlanRequestPolling", () => {
     await waitFor(() => expect(result.current.phase).toBe("failed"));
     expect(result.current.failure?.message).toBe("No pudimos generar tu plan. Intentá de nuevo.");
     expect(result.current.lastSubmission?.kind).toBe("auto");
+  });
+
+  it("sends fresh device coordinates but stores only the explicitly chosen context", async () => {
+    vi.spyOn(requestLocation, "withRequestLocation").mockResolvedValue({ query: "Juntada con amigos", context: { latitude: -32.9, longitude: -68.8, freeOnly: true } });
+    createPlanRequest.mockResolvedValue(accepted());
+    getPlanRequestStatus.mockResolvedValue(status({ statusKey: "generated", plans: [] }));
+    const { result } = renderHook(() => usePlanRequestPolling());
+    act(() => result.current.submit({ query: "Juntada con amigos", context: { freeOnly: true } }));
+    await waitFor(() => expect(result.current.phase).toBe("generated"));
+    expect(createPlanRequest).toHaveBeenCalledWith({ query: "Juntada con amigos", context: { latitude: -32.9, longitude: -68.8, freeOnly: true } });
+    expect(loadRequestContext(42)).toEqual({ query: "Juntada con amigos", context: { freeOnly: true } });
+    expect(result.current.lastSubmission).toEqual({ kind: "auto", payload: { query: "Juntada con amigos", context: { freeOnly: true } } });
+  });
+
+  it("does not submit a discarded request after a slow location lookup finishes", async () => {
+    let resolveLocation: (payload: import("@/types").CreatePlanRequestPayload) => void = () => undefined;
+    vi.spyOn(requestLocation, "withRequestLocation").mockReturnValue(new Promise((resolve) => { resolveLocation = resolve; }));
+    const { result } = renderHook(() => usePlanRequestPolling());
+    act(() => result.current.submit({ query: "Una juntada" }));
+    act(() => result.current.discard());
+    await act(async () => { resolveLocation({ query: "Una juntada", context: { latitude: -32.9, longitude: -68.8 } }); });
+    expect(createPlanRequest).not.toHaveBeenCalled();
+    expect(result.current.phase).toBe("idle");
   });
 
   it("starts idle", () => {

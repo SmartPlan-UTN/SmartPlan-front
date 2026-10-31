@@ -7,12 +7,13 @@ import { useGeolocationPermission } from "./useGeolocationPermission";
 
 interface DeviceLocationFieldProps {
   value: boolean;
+  saved?: boolean;
   disabled?: boolean;
   onChange: (value: boolean) => void;
 }
 
 const PERMISSION_COPY: Record<string, string> = {
-  granted: "Listo. Usaremos tu ubicación actual cuando generes un plan.",
+  granted: "La ubicación está habilitada. La obtendremos al generar cada plan.",
   prompt:
     "Te pediremos permiso para acceder a tu ubicación la próxima vez que generes un plan.",
   denied:
@@ -31,6 +32,7 @@ const PERMISSION_COPY: Record<string, string> = {
  */
 export function DeviceLocationField({
   value,
+  saved = value,
   disabled = false,
   onChange,
 }: DeviceLocationFieldProps) {
@@ -47,8 +49,9 @@ export function DeviceLocationField({
             Usar la ubicación de mi dispositivo
           </span>
           <span className={styles.toggleHint}>
-            Cuando esté disponible, la tomamos como centro de búsqueda en vez de
-            tu zona preferida.
+            Al generar un plan, usamos el GPS como centro de búsqueda. No necesitás
+            definir una zona preferida; si el GPS no está disponible, usamos esa zona si la guardaste.
+            Este cambio se aplica al guardar las preferencias.
           </span>
         </span>
 
@@ -89,7 +92,9 @@ export function DeviceLocationField({
             }
             size={15}
           />
-          {PERMISSION_COPY[permission] ?? PERMISSION_COPY.unknown}
+          {permission === "granted" && !saved
+            ? "El navegador permite usar tu ubicación. Guardá las preferencias para aplicar este cambio."
+            : PERMISSION_COPY[permission] ?? PERMISSION_COPY.unknown}
           {showProbe ? (
             <button
               type="button"

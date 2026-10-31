@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
 
 import { PageKicker } from "@/components/layout";
 import { Button, Icon } from "@/components/ui";
@@ -18,6 +18,8 @@ import type {
 } from "@/types";
 
 import { categoryPresentation } from "./categoryPresentation";
+import { LeavePreferencesDialog } from "./LeavePreferencesDialog";
+import { usePreferencesNavigation } from "./usePreferencesNavigation";
 import { DeviceLocationField } from "./DeviceLocationField";
 import { InterestTile } from "./InterestTile";
 import { MaxDistanceField } from "./MaxDistanceField";
@@ -211,6 +213,7 @@ interface PreferencesFormProps {
 
 /** CU8/CU18 · PAN 15 — Edit and personalize user preferences. */
 export function PreferencesForm({ onboarding }: PreferencesFormProps = {}) {
+  const formId = useId();
   const [status, setStatus] = useState<LoadStatus>("loading");
   const [retryToken, setRetryToken] = useState(0);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
@@ -366,10 +369,11 @@ export function PreferencesForm({ onboarding }: PreferencesFormProps = {}) {
     (selectedIds.size > 0 ? 1 : 0) +
     (parsedBudget !== null && parsedBudget > 0 ? 1 : 0) +
     (people !== null ? 1 : 0) +
-    (area !== null ? 1 : 0) +
+    (area !== null || useDevice ? 1 : 0) +
     (maxDistance !== null ? 1 : 0);
 
   const busy = saving || resetting;
+  const navigation = usePreferencesNavigation(status === "loaded" && isDirty && !onboarding, busy);
 
   function toggleCategory(categoryId: number) {
     setFormError(null);
@@ -428,25 +432,25 @@ export function PreferencesForm({ onboarding }: PreferencesFormProps = {}) {
     }
   }
 
-  async function submit() {
+  async function submit(): Promise<boolean> {
     setFormError(null);
-    if (!isDirty) return;
+    if (!isDirty) return true;
     if (budgetError) {
       setActiveStep("outing");
-      return;
+      return false;
     }
     if (areaLocating) {
       setActiveStep("location");
       setFormError(LOCATING_AREA_ERROR);
-      return;
+      return false;
     }
     if (areaPending) {
       setActiveStep("location");
       setFormError(CONFIRM_AREA_ERROR);
-      return;
+      return false;
     }
 
-    if (savingRef.current) return;
+    if (savingRef.current) return false;
     savingRef.current = true;
     setSaving(true);
     const saved = await persist(
@@ -466,6 +470,7 @@ export function PreferencesForm({ onboarding }: PreferencesFormProps = {}) {
     savingRef.current = false;
     setSaving(false);
     if (saved && onboarding) onboarding.onSaved();
+    return saved;
   }
 
   async function confirmReset() {
@@ -498,7 +503,7 @@ export function PreferencesForm({ onboarding }: PreferencesFormProps = {}) {
 
   return (
     <>
-      <form className={styles.experience} onSubmit={handleSubmit} noValidate>
+      <form id={formId} className={styles.experience} onSubmit={handleSubmit} noValidate>
         <PreferencesHeader onboarding={!!onboarding} />
         <div className={styles.workflow}>
           <PreferenceSteps
@@ -507,7 +512,7 @@ export function PreferencesForm({ onboarding }: PreferencesFormProps = {}) {
             interestCount={selectedIds.size}
             budgetValue={parsedBudget}
             peopleValue={people}
-            areaLabel={area?.label ?? null}
+            areaLabel={area?.label ?? (useDevice ? "Ubicación del dispositivo" : null)}
             maxDistanceKm={maxDistance}
             onChange={setActiveStep}
           />
@@ -672,6 +677,7 @@ export function PreferencesForm({ onboarding }: PreferencesFormProps = {}) {
                   </span>
                   <DeviceLocationField
                     value={useDevice}
+                    saved={savedUseDevice}
                     disabled={busy}
                     onChange={(value) => {
                       setUseDevice(value);
@@ -726,13 +732,17 @@ export function PreferencesForm({ onboarding }: PreferencesFormProps = {}) {
               ) : (
                 <p className={styles.readyMessage}>
                   <Icon name="circle-check" size={18} />
-                  Ya podés guardar tu perfil.
+                  {areaLocating ? "Esperá mientras ubicamos tu zona."
+                    : areaPending ? "Confirmá la zona para poder guardar."
+                    : isDirty ? "Guardá los cambios para aplicarlos."
+                    : "Tus preferencias están guardadas."}
                 </p>
               )}
             </div>
           </section>
         </div>
         <PreferencesActions
+          formId={formId}
           onboarding={!!onboarding}
           dirty={isDirty}
           saving={saving}
@@ -752,6 +762,12 @@ export function PreferencesForm({ onboarding }: PreferencesFormProps = {}) {
               })}
         />
       </form>
+
+      {navigation.pending ? (
+        <LeavePreferencesDialog busy={busy} error={formError ?? budgetError}
+          onCancel={navigation.cancel} onDiscard={navigation.proceed}
+          onSave={() => { void submit().then((saved) => { if (saved) navigation.proceed(); }); }} />
+      ) : null}
 
       <ResetPreferencesDialog
         open={resetOpen}

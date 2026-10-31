@@ -108,7 +108,7 @@ Verification: `pnpm lint`, `pnpm test --maxWorkers=4` (864 passed), `pnpm build`
 | CU5 | Edit profile | PAN 14 | `Completed` | `SMART-18-cu6-cambiar-contrasena` | #92 |
 | CU6 | Change password | PAN 14 | `Completed` | `SMART-18-cu6-cambiar-contrasena` | #92 |
 | CU7 | Delete account | PAN 14 | `Completed` | `SMART-19-cu7-eliminar-cuenta` | #112 |
-| CU8 | Edit preferences | PAN 15 | `Not started` | | |
+| CU8 | Edit preferences | PAN 15 | `In review` | `review/pr212` | #212 |
 
 ### Search and discovery
 
@@ -128,7 +128,7 @@ Verification: `pnpm lint`, `pnpm test --maxWorkers=4` (864 passed), `pnpm build`
 | CU | Feature | Screen | Status | Branch | PR |
 |---|---|---|---|---|---|
 | CU17 | Generate automatic plan | PAN 07 | `In review` | `feature/rediseno-hero` | #117 |
-| CU18 | Customize user preferences | PAN 15 | `In review` | `7-epica-recomendacion` | #117 |
+| CU18 | Customize user preferences | PAN 15 | `In review` | `review/pr212` | #212 |
 | CU19 | Generate surprise plan | PAN 09 | `In review` | `7-epica-recomendacion` | #117 |
 | CU20 | Show recommendations | PAN 10 | `In review` | `7-epica-recomendacion` | #117 |
 | CU21 | Adjust recommendations based on history | — | `In review` | `7-epica-recomendacion` | #117 |
@@ -602,3 +602,10 @@ PR #199 integration validation: rebased onto current develop, preserving unknown
 - Translate missing/inaccessible request errors and keep unknown API/provider diagnostics out of user-facing generation failures.
 - Browser QA includes real map/house pins, switching alternatives, filter URL persistence/reset, invalid price ranges, selection/cancellation and injected selection/refinement failures. Desktop WCAG AA automated audits on seven pages and mobile audits on three key pages have no reported violations after fixes; this is scoped automated coverage, not a certification of every screen.
 - Final lint, complete test suite, isolated production build, evidence paths and commit hash are recorded in the parent workspace's `planes/handoff-codex-front-212.RESULT.md`. No push or backend code changes.
+
+## 2026-10-31 — Make preference saving and device location explicit (CU8, CU18, CU17)
+
+- Branch `review/pr212`, PR #212; status: In review. Add an explicit device-location button to the preferred-area map, with permission errors and stale-result protection. A fixed action bar keeps save/discard and the unsaved status visible on every preference step, including mobile.
+- Guard application links with save-and-leave, discard-and-leave and continue-editing choices. Failed saves retain the draft and destination. Reload/close uses the native browser warning; internal preference steps retain the same draft. Browser history traversal is outside the custom link guard.
+- Automatic plan generation and retry now read the saved device-location preference and send fresh GPS coordinates without requiring a preferred area. Keep explicit request coordinates, preserve other request context and fall back to normal backend resolution when GPS is unavailable. Transient GPS is not persisted as an explicit context override; abandoned location requests cannot create a plan.
+- Validation: `pnpm test --maxWorkers=3` passed (186 files, 1383 tests), isolated `pnpm build` passed. Lint and final commit details are recorded in the parent workspace report `planes/handoff-codex-front-212.RESULT.md`. Browser checks cover 320/375/390/768/1440px without horizontal overflow, map GPS, both save actions, cancel/discard navigation and an automatic request with GPS and no preferred area. Save browser checks use intercepted preference responses to avoid changing the shared test account.
