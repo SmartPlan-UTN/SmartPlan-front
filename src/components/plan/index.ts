@@ -5,4 +5,5 @@ export { CreatePlanForm } from "./CreatePlanForm";
 export { PlanComposer, type PlanComposerProps } from "./PlanComposer";
 export { EditPlanForm, type EditPlanFormProps } from "./EditPlanForm";
 export { MyPlansPanel } from "./MyPlansPanel";
+export { MyPlansWorkspace } from "./MyPlansWorkspace";
 export { AddToPlanDialog, type AddToPlanDialogProps } from "./AddToPlanDialog";

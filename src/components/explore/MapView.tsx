@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { getExploreMapMarkers } from "@/lib/api";
+import { DEFAULT_MAP_CENTER } from "@/lib/maps/defaultCenter";
 import { markerIconUrl, markerPresentation } from "@/lib/maps/markerIcon";
 import { useGoogleMap } from "@/lib/maps/useGoogleMap";
 import type { ExploreSearchParams, ExploreMapMarker } from "@/types";
@@ -13,11 +14,9 @@ import type { ExploreSearchParams, ExploreMapMarker } from "@/types";
 import { MapMarkerCard } from "./MapMarkerCard";
 import styles from "./explore.module.css";
 
-// Mendoza, the product's default location (see skills/06-design-system).
-const DEFAULT_CENTER = { lat: -32.8895, lng: -68.8458 };
 const DEFAULT_ZOOM = 12;
 const MAP_OPTIONS: google.maps.MapOptions = {
-  center: DEFAULT_CENTER,
+  center: DEFAULT_MAP_CENTER,
   zoom: DEFAULT_ZOOM,
   // Google's own businesses and stops would compete with SmartPlan's
   // markers; park and plaza areas stay as context.

@@ -43,7 +43,7 @@ rereading the entire git history.
 |---|---|
 | **Phase** | Foundations — layout and navigation ready, no use cases implemented |
 | **Base branch** | `develop` |
-| **Last update** | 2026-10-12 |
+| **Last update** | 2026-10-27 |
 | **Completed use cases** | 0 / 62 |
 
 ---
@@ -544,6 +544,28 @@ PR #199 integration validation: rebased onto current develop, preserving unknown
 2026-10-20 — `fix/auth-layout-espacio`, [PR #205](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/205) (CU1/CU2, PAN 04): the signup card was 420px wide inside a ~780px form panel and ~1000px tall, so it scrolled on every laptop and the photo panel's headline scrolled away with it. The register card is now 560px wide; password and confirmation sit side by side with the strength meter and requirements spanning both columns (a container query on the card, so phones and tablets keep one column). The photo panel is sticky, and screens up to 820px/760px tall get tighter padding, slimmer inputs (`--field-padding-block` in `Field`) and a smaller title. Login and signup both fit without scrolling at 1440×790, 1536×750, 1366×657 and 1280×650 browser viewports; a signup submitted empty on a ~657px viewport still scrolls ~30px. `pnpm lint`, `pnpm test` (1122) and `pnpm build` pass.
 
 2026-10-20 — `mcp`, admin "MCP" section (`/admin/mcp`), companion [SmartPlan-back#148](https://github.com/SmartPlan-UTN/SmartPlan-back/pull/148); no CU assigned yet. Admin-only (inherits the `admin/` layout guard; the backend authorizes). Generates MCP keys by bot name (`POST /admin/mcp-keys`), shows the key once with a copy button and a "no se vuelve a ver" notice, keeping it only in component state (never in any storage); lists keys (name, prefix, status, created, last use, revoked) and revokes them with confirmation (`DELETE /admin/mcp-keys/:id`); lists the exposed tools (`GET /admin/mcp-tools`) with description and parameters (type, required, nested properties) read from their JSON Schema; shows connection info (`POST <API>/mcp`, `X-MCP-Key` header). `pnpm lint`, `pnpm test` (151 files / 1136 tests) and `pnpm build` pass. Not checked against a running backend or in a browser. Two approvals and merge pending.
+
+## 2026-10-25 — Generated plans in Mis planes (CU17/CU25/CU29)
+
+- In review on `codex/generated-plans-history`, [PR #207](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/207), targeting `develop`. Requires [SmartPlan-back#149](https://github.com/SmartPlan-UTN/SmartPlan-back/pull/149). Two approvals and merge pending.
+- Mis planes now has Creados por mí and Generados para mí sections. Generated history lists all saved alternatives with pagination, original itinerary links, dates and totals. The URL preserves the tab and page when returning from detail. Editing creates or resumes a private authored copy in the existing composer; its visibility flow allows publication while preserving the original result. History links back to existing editable copies and handles loading, empty, error and retry states.
+- Reuses EMBER tokens, card styles, Button, Badge, LoadingDots and Pagination, with responsive wrapping and visible keyboard focus.
+- Validation: formatting, lint, 153 test files / 1157 tests, and production build passed. Component tests cover pagination, copy/resume, duplicate clicks, failures and retry, empty pages, return destinations and tab restoration. No Docker, live database or production deployment was used.
+
+## 2026-10-25 — Reliable profile and navbar avatars (CU5)
+
+- In review on `codex/fix-profile-avatar`, [PR #208](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/208), targeting `develop`. Two approvals and merge pending.
+- Profile uploads and removals immediately update both the profile and navbar through an in-tab notification scoped to the user id. Upload uses the confirmed avatar URL; removal clears it without a follow-up profile GET. The navbar ignores older profile responses after a mutation and never uses another account's cached photo.
+- Both avatars show initials while downloading, when there is no photo, and after download or browser decoding errors. A replacement image URL resets image/error state, ignores obsolete downloads and revokes the old blob URL. Existing gallery loading and provider credits remain unchanged. Avatar styles clip pictures inside the circle and remove duplicated rules.
+- Validation: Prettier write/check, pnpm lint, all 154 files / 1170 tests, and pnpm build passed. Added component coverage for upload/removal synchronization, failures and retry, initials, stale requests, account changes, replacement URL recovery and blob cleanup. The final integration-test import/dual-failure refinement also passed its 10 focused tests and targeted lint. No Docker, live database, storage service or deployment was used.
+
+## 2026-10-27 — Optional preferences onboarding after sign-up (#209, US02/US8, CU2/CU8)
+
+- In review on `feature/preferences-onboarding`, [PR #211](https://github.com/SmartPlan-UTN/SmartPlan-front/pull/211), targeting `develop`.
+- A successful sign-up continues to `/onboarding` (protected) instead of Inicio. It reuses `PreferencesForm` through an `onboarding` prop: same validation and payload, "Omitir por ahora" instead of discard/reset, no toast. Saving or skipping goes to Inicio with the session open; login is untouched.
+- Open questions resolved as the simplest option: reload shows it again, leaving counts as nothing, it is not offered again, an existing account can open it, and a load error offers retry and skip.
+- The preferred area can also be picked on a Google map (`PreferredAreaMap`): tap or drag the pin, reverse-geocoded client-side into the same `{ label, placeId, latitude, longitude }`. Applies to Preferencias too. Falls back to the name search when the map cannot load.
+- Validation: `pnpm lint`, `pnpm test` (156 files, 1183 tests) and `pnpm build` pass. Checked manually against a local backend with a real Google Maps key.
 
 
 2026-10-30 — `fix/community-pr196-pr213-review`, local follow-up to PRs #196/#213 (CU13, CU23, CU24/CU25, #106/#191). Status: In progress, local changes only; no new PR or remote publication. Recover unavailable inspirations through an explicit detach action that preserves the draft; isolate place-action row IDs including undo; wait for session restoration and reset viewer projections on account changes; distinguish 404 from retryable profile/experience failures; keep private-origin visit actions, discovery ordering and failed pagination context; correct primary-action hover contrast and omit missing contribution authors. The pagination limitation of standalone #196 was already resolved by #213. Validation results are recorded in the local review follow-up report under `planes/arreglos-front-pr196-pr213-2026-10-30.md`. No backend migration or deployment.

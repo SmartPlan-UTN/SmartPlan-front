@@ -167,7 +167,7 @@ describe("PreferencesForm", () => {
       screen.getByRole("textbox", { name: /preferred-area|Zona preferida/ }),
       "Godoy Cruz",
     );
-    await user.click(screen.getByRole("button", { name: /Confirmar/ }));
+    await user.click(screen.getByRole("button", { name: "Buscar" }));
     const resolved = await screen.findByRole("group", {
       name: "Ubicación preferida",
     });
@@ -260,7 +260,7 @@ describe("PreferencesForm", () => {
     await screen.findByRole("button", { name: "Gastronomía" });
     await openStep(user, /Zona y distancia/);
     await user.type(screen.getByRole("textbox"), "Lugar inexistente 123");
-    await user.click(screen.getByRole("button", { name: /Confirmar/ }));
+    await user.click(screen.getByRole("button", { name: "Buscar" }));
 
     expect(
       await screen.findByText(/No pudimos encontrar esa ubicación/),

@@ -10,6 +10,7 @@ import type {
   UpdatePlanComposerDto,
   OwnPlanDetail,
   OwnPlanSummary,
+  GeneratedPlanSummary,
   PlanVisibility,
   ActivitySuggestion,
   ActivitySuggestionsParams,
@@ -73,17 +74,28 @@ export async function listOwnPlans(
   });
 }
 
+export async function listGeneratedPlans(
+  params: ListOwnPlansParams = {},
+): Promise<PaginatedResult<GeneratedPlanSummary>> {
+  return apiClient.get<PaginatedResult<GeneratedPlanSummary>>(
+    "/users/me/plans/generated",
+    { params },
+  );
+}
+
+/** Creates or resumes a private authored copy, preserving the original result. */
+export async function copyGeneratedPlan(id: number): Promise<OwnPlanDetail> {
+  return apiClient.post<OwnPlanDetail>(
+    `/users/me/plans/generated/${id}/copies`,
+  );
+}
+
 /**
  * Fetches the details of an owned plan (CU25, CU29).
  * Backend contract: `GET /users/me/plans/:id`.
  */
 export async function getOwnPlan(id: number): Promise<OwnPlanDetail> {
   return apiClient.get<OwnPlanDetail>(`/users/me/plans/${id}`);
-}
-
-/** Creates or resumes a private editable copy; publishing is a separate choice. */
-export function copyGeneratedPlan(id: number): Promise<OwnPlanDetail> {
-  return apiClient.post<OwnPlanDetail>(`/users/me/plans/generated/${id}/copies`);
 }
 
 /**
@@ -113,15 +125,18 @@ export async function suggestActivities({
   description,
   excludeActivityIds = [],
 }: ActivitySuggestionsParams): Promise<{ data: ActivitySuggestion[] }> {
-  return apiClient.get<{ data: ActivitySuggestion[] }>("/activity-suggestions", {
-    params: {
-      title,
-      ...(description ? { description } : {}),
-      ...(excludeActivityIds.length > 0
-        ? { excludeActivityIds: excludeActivityIds.join(",") }
-        : {}),
+  return apiClient.get<{ data: ActivitySuggestion[] }>(
+    "/activity-suggestions",
+    {
+      params: {
+        title,
+        ...(description ? { description } : {}),
+        ...(excludeActivityIds.length > 0
+          ? { excludeActivityIds: excludeActivityIds.join(",") }
+          : {}),
+      },
     },
-  });
+  );
 }
 
 /**

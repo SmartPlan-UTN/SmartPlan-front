@@ -6,21 +6,19 @@ import Link from "next/link";
 import { useGoogleMap } from "@/lib/maps/useGoogleMap";
 import { frameResultsMap } from "@/lib/maps/frameResultsMap";
 import { BRANDED_MAP_STYLE } from "@/lib/maps/brandedMapStyle";
+import { DEFAULT_MAP_CENTER } from "@/lib/maps/defaultCenter";
 import type { ResultsMapPlanPin } from "@/lib/maps/buildPlanPins";
 import { useReducedMotion } from "@/hooks";
 
 import styles from "./results-layout.module.css";
 
-// Mendoza, the product's default location (see skills/06-design-system,
-// and MapView.tsx's own DEFAULT_CENTER for the CU16 map).
-const DEFAULT_CENTER = { lat: -32.8895, lng: -68.8458 };
 const DEFAULT_ZOOM = 12;
 const PIN_SIZE = 30;
 const PIN_SIZE_ACTIVE = 38;
 const PIN_ASPECT = 42 / 32;
 
 const MAP_OPTIONS: google.maps.MapOptions = {
-  center: DEFAULT_CENTER,
+  center: DEFAULT_MAP_CENTER,
   zoom: DEFAULT_ZOOM,
   styles: BRANDED_MAP_STYLE,
   disableDefaultUI: true,

@@ -183,7 +183,7 @@ export function RegisterForm() {
         email: email.trim(),
         password,
       });
-      router.replace(ROUTES.home);
+      router.replace(ROUTES.onboarding);
     } catch (error) {
       if (error instanceof ApiError) {
         setFormError(registerErrorMessage(error));

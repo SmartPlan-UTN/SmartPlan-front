@@ -4,9 +4,16 @@ import { useEffect, useState, type FormEvent } from "react";
 
 import { Button, Field, Icon } from "@/components/ui";
 import { AuthenticatedImage } from "@/components/media";
-import { ApiError, deleteAvatar, getProfile, updateProfile, uploadAvatar } from "@/lib/api";
+import {
+  ApiError,
+  deleteAvatar,
+  getProfile,
+  updateProfile,
+  uploadAvatar,
+} from "@/lib/api";
 import { REQUIRED_MESSAGE } from "@/lib/utils";
 import type { UserProfile } from "@/types";
+import { publishAvatarChange } from "@/lib/profile/avatarChanges";
 
 import { AvatarCropDialog } from "./AvatarCropDialog";
 import styles from "./profile.module.css";
@@ -136,9 +143,9 @@ export function ProfileForm() {
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [avatarDraft, setAvatarDraft] = useState<File | null>(null);
-  const [toastState, setToastState] = useState<"hidden" | "visible" | "leaving">(
-    "hidden",
-  );
+  const [toastState, setToastState] = useState<
+    "hidden" | "visible" | "leaving"
+  >("hidden");
 
   useEffect(() => {
     let ignore = false;
@@ -249,7 +256,9 @@ export function ProfileForm() {
     return (
       <div className={styles.loadError} role="alert">
         <Icon name="circle-alert" size={24} />
-        <p className="sp-body">No pudimos cargar tu perfil. Intentá de nuevo.</p>
+        <p className="sp-body">
+          No pudimos cargar tu perfil. Intentá de nuevo.
+        </p>
         <Button
           type="button"
           variant="ghostLight"
@@ -263,12 +272,16 @@ export function ProfileForm() {
     );
   }
 
-  const initials = `${profile.name[0] ?? ""}${profile.lastName[0] ?? ""}`.toUpperCase();
+  const initials =
+    `${profile.name[0] ?? ""}${profile.lastName[0] ?? ""}`.toUpperCase();
 
   function selectAvatar(file: File | undefined) {
     if (!file) return;
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
-      setAvatarError('Usá JPG, PNG o WebP de hasta 5 MB.');
+    if (
+      !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
+      file.size > 5 * 1024 * 1024
+    ) {
+      setAvatarError("Usá JPG, PNG o WebP de hasta 5 MB.");
       return;
     }
     setAvatarError(null);
@@ -282,27 +295,35 @@ export function ProfileForm() {
   }
 
   async function saveAvatar(file: File) {
+    if (!profile || avatarBusy) return;
     setAvatarBusy(true);
     setAvatarError(null);
     try {
-      await uploadAvatar(file);
-      setProfile(await getProfile());
+      const avatar = await uploadAvatar(file);
+      setProfile((current) =>
+        current ? { ...current, avatarUrl: avatar.url } : current,
+      );
+      publishAvatarChange(profile.id, avatar.url);
       setAvatarDraft(null);
     } catch {
-      setAvatarError('No pudimos guardar tu foto. Intentá de nuevo.');
+      setAvatarError("No pudimos guardar tu foto. Intentá de nuevo.");
     } finally {
       setAvatarBusy(false);
     }
   }
 
   async function removeAvatar() {
+    if (!profile || avatarBusy) return;
     setAvatarBusy(true);
     setAvatarError(null);
     try {
       await deleteAvatar();
-      setProfile(await getProfile());
+      setProfile((current) =>
+        current ? { ...current, avatarUrl: null } : current,
+      );
+      publishAvatarChange(profile.id, null);
     } catch {
-      setAvatarError('No pudimos quitar tu foto. Intentá de nuevo.');
+      setAvatarError("No pudimos quitar tu foto. Intentá de nuevo.");
     } finally {
       setAvatarBusy(false);
     }
@@ -315,7 +336,14 @@ export function ProfileForm() {
 
         <div className={styles.identity}>
           <div className={styles.avatar}>
-            {profile.avatarUrl ? <AuthenticatedImage url={profile.avatarUrl} alt={`Avatar de ${profile.name}`} width={72} height={72} /> : <span aria-hidden="true">{initials}</span>}
+            <AuthenticatedImage
+              url={profile.avatarUrl}
+              alt={`Avatar de ${profile.name}`}
+              width={72}
+              height={72}
+              fallback={<span aria-hidden="true">{initials}</span>}
+              loadingFallback={<span aria-hidden="true">{initials}</span>}
+            />
           </div>
           <div className={styles.identityText}>
             <p className={`sp-h3 ${styles.name}`}>
@@ -369,7 +397,9 @@ export function ProfileForm() {
           <div className={styles.divider} />
 
           <div className={styles.sectionHeader}>
-            <p className={`sp-label ${styles.sectionLabel}`}>Información personal</p>
+            <p className={`sp-label ${styles.sectionLabel}`}>
+              Información personal
+            </p>
             {!editing ? (
               <Button type="button" variant="ghostLight" onClick={startEditing}>
                 <Icon name="pencil" size={14} aria-hidden="true" />

@@ -16,6 +16,7 @@ import {
 } from "@/components/maps/markers";
 import { Icon } from "@/components/ui";
 import { COMPOSER_MAP_STYLE } from "@/lib/maps/brandedMapStyle";
+import { DEFAULT_MAP_CENTER } from "@/lib/maps/defaultCenter";
 import {
   createHtmlMarkerLayer,
   type HtmlMarker,
@@ -42,11 +43,9 @@ import { useAssistantCandidates, useMapMarkers } from "./useMapMarkers";
 import { prefetchActivityDetail, type StopInfo } from "./useStopInfo";
 import styles from "./DiscoveryMap.module.css";
 
-// Mendoza, the product's default location (see skills/06-design-system).
-const DEFAULT_CENTER = { lat: -32.8895, lng: -68.8458 };
 const EMBER = "#E85D20"; // --ember
 const MAP_OPTIONS: google.maps.MapOptions = {
-  center: DEFAULT_CENTER,
+  center: DEFAULT_MAP_CENTER,
   zoom: 13,
   minZoom: 4,
   maxZoom: 18,

@@ -21,8 +21,9 @@ type LoadStatus = "loading" | "idle" | "error";
 /**
  * The plans the user created (CU29, #130), with the create-plan entry point
  * as the first cell of the grid — same shape as `CollectionsPanel`, so both
- * private listings read alike. Only authored plans: results of "Planificar"
- * and the outings the person chose live in Mis salidas, never here.
+ * private listings read alike. This panel lists authored plans; results of
+ * "Planificar" have their own generated-history tab in MyPlansWorkspace,
+ * while the outings the person chose remain in Mis salidas.
  *
  * Each card says whether the plan is public or private and lets its author
  * publish it or make it private again.
@@ -42,8 +43,9 @@ export function MyPlansPanel() {
   const [plans, setPlans] = useState<OwnPlanSummary[]>([]);
   const [status, setStatus] = useState<LoadStatus>("loading");
   const [reloadSequence, setReloadSequence] = useState(0);
-  const [pendingDeletion, setPendingDeletion] =
-    useState<OwnPlanSummary | null>(null);
+  const [pendingDeletion, setPendingDeletion] = useState<OwnPlanSummary | null>(
+    null,
+  );
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -61,9 +63,7 @@ export function MyPlansPanel() {
           direction: "desc",
         });
         if (ignore) return;
-        setPlans(
-          result.data.filter((plan) => plan.status.key !== "cancelled"),
-        );
+        setPlans(result.data.filter((plan) => plan.status.key !== "cancelled"));
         setStatus("idle");
       } catch (_error) {
         if (!ignore) setStatus("error");
@@ -260,7 +260,8 @@ export function MyPlansPanel() {
           onConfirm={() => void deletePendingPlan()}
         >
           <p>
-            El plan se eliminará de tus planes y ya no estará disponible en tu lista.
+            El plan se eliminará de tus planes y ya no estará disponible en tu
+            lista.
           </p>
         </ConfirmationDialog>
       ) : null}

@@ -6,6 +6,7 @@ import { Icon } from "@/components/ui";
 import { ApiError, searchPlace } from "@/lib/api";
 import type { PreferredArea } from "@/types";
 
+import { PreferredAreaMap, type MapPick } from "./PreferredAreaMap";
 import styles from "./preferences.module.css";
 
 export type PreferredAreaStatus =
@@ -18,6 +19,8 @@ interface PreferredAreaFieldProps {
   onTextChange: (text: string) => void;
   onResolvedChange: (area: PreferredArea | null) => void;
   onStatusChange: (status: PreferredAreaStatus) => void;
+  /** True while a point picked on the map is still being named. */
+  onLocatingChange: (locating: boolean) => void;
 }
 
 const NOT_FOUND_MESSAGE =
@@ -40,8 +43,9 @@ function matchesResolved(
 }
 
 /**
- * PAN 15 "ubicación preferida": free text the user confirms against
- * `GET /external-integration/places/search`. What gets stored is the
+ * PAN 15 "ubicación preferida": searched by name against
+ * `GET /external-integration/places/search`, or picked on the map below it
+ * (`PreferredAreaMap`). What gets stored is the
  * resolved `{ label, placeId, latitude, longitude }` — never raw text — so
  * CU19 can use it as a real search centre. An unconfirmed or unresolvable
  * value blocks saving (the parent reads `onStatusChange`).
@@ -53,6 +57,7 @@ export function PreferredAreaField({
   onTextChange,
   onResolvedChange,
   onStatusChange,
+  onLocatingChange,
 }: PreferredAreaFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const helpId = useId();
@@ -60,6 +65,11 @@ export function PreferredAreaField({
     resolved ? "resolved" : text.trim() ? "unconfirmed" : "empty",
   );
   const [message, setMessage] = useState<string | null>(null);
+  // Kept apart from `message`: a map pick that fails leaves the field as it
+  // was (often empty, which is valid), so it's a note, not a field error.
+  const [mapMessage, setMapMessage] = useState<string | null>(null);
+  // Google bills each map load, so the map only loads once asked for.
+  const [mapOpen, setMapOpen] = useState(false);
   const [resolvedAddress, setResolvedAddress] = useState<string | null>(null);
 
   function apply(next: PreferredAreaStatus) {
@@ -70,6 +80,7 @@ export function PreferredAreaField({
   function handleText(value: string) {
     onTextChange(value);
     setMessage(null);
+    setMapMessage(null);
     if (matchesResolved(value, resolved)) {
       apply("resolved");
       return;
@@ -88,6 +99,7 @@ export function PreferredAreaField({
 
     apply("searching");
     setMessage(null);
+    setMapMessage(null);
     try {
       const place = await searchPlace(query);
       const label = toLabel(place.name, place.address, query);
@@ -121,41 +133,86 @@ export function PreferredAreaField({
     }
   }
 
+  function pickOnMap({ area, address }: MapPick) {
+    onTextChange(area.label);
+    onResolvedChange(area);
+    setResolvedAddress(address || null);
+    setMessage(null);
+    setMapMessage(null);
+    apply("resolved");
+  }
+
+  function mapLocating(locating: boolean) {
+    if (locating) setMapMessage(null);
+    onLocatingChange(locating);
+  }
+
+  const map = mapOpen ? (
+    <PreferredAreaMap
+      area={resolved}
+      disabled={disabled || status === "searching"}
+      onPick={pickOnMap}
+      onPickError={setMapMessage}
+      onLocatingChange={mapLocating}
+    />
+  ) : (
+    <button
+      type="button"
+      className={styles.inlineAction}
+      onClick={() => setMapOpen(true)}
+      disabled={disabled}
+    >
+      <Icon name="map" size={16} />
+      {resolved ? "Cambiarla en el mapa" : "Elegir en el mapa"}
+    </button>
+  );
+
+  const mapNote = mapMessage ? (
+    <p className={styles.fieldError} role="alert">
+      {mapMessage}
+    </p>
+  ) : null;
+
   function reset() {
     onResolvedChange(null);
     onTextChange("");
     setResolvedAddress(null);
     setMessage(null);
+    setMapMessage(null);
     apply("empty");
     window.requestAnimationFrame(() => inputRef.current?.focus());
   }
 
   if (status === "resolved" && resolved) {
     return (
-      <div
-        className={styles.areaResolved}
-        role="group"
-        aria-label="Ubicación preferida"
-      >
-        <span className={styles.areaResolvedIcon} aria-hidden="true">
-          <Icon name="map-pin" size={18} />
-        </span>
-        <span className={styles.areaResolvedText}>
-          <strong>{resolved.label}</strong>
-          {resolvedAddress && resolvedAddress !== resolved.label ? (
-            <small>{resolvedAddress}</small>
-          ) : (
-            <small>Ubicación confirmada</small>
-          )}
-        </span>
-        <button
-          type="button"
-          className={styles.inlineAction}
-          onClick={reset}
-          disabled={disabled}
+      <div className={styles.areaField}>
+        <div
+          className={styles.areaResolved}
+          role="group"
+          aria-label="Ubicación preferida"
         >
-          Cambiar
-        </button>
+          <span className={styles.areaResolvedIcon} aria-hidden="true">
+            <Icon name="map-pin" size={18} />
+          </span>
+          <span className={styles.areaResolvedText}>
+            <strong>{resolved.label}</strong>
+            {resolvedAddress && resolvedAddress !== resolved.label ? (
+              <small>{resolvedAddress}</small>
+            ) : (
+              <small>Ubicación confirmada</small>
+            )}
+          </span>
+          <button
+            type="button"
+            className={styles.inlineAction}
+            onClick={reset}
+            disabled={disabled}
+          >
+            Quitar
+          </button>
+        </div>
+        {map}
+        {mapNote}
       </div>
     );
   }
@@ -210,9 +267,11 @@ export function PreferredAreaField({
           ) : (
             <Icon name="search" size={16} />
           )}
-          {searching ? "Buscando…" : "Confirmar"}
+          {searching ? "Buscando…" : "Buscar"}
         </button>
       </div>
+      {map}
+      {mapNote}
       <p
         id={helpId}
         className={invalid ? styles.fieldError : styles.fieldHelp}
@@ -220,8 +279,10 @@ export function PreferredAreaField({
       >
         {message ??
           (status === "unconfirmed"
-            ? "Confirmá la ubicación para guardarla."
-            : "Escribí un barrio, ciudad o zona y confirmala. Podés dejarla sin definir.")}
+            ? "Buscala o elegila en el mapa para guardarla."
+            : mapOpen
+              ? "Buscá un barrio o ciudad, o tocá el mapa. Podés dejarla sin definir."
+              : "Buscá un barrio o ciudad, o elegila en el mapa. Podés dejarla sin definir.")}
       </p>
     </div>
   );

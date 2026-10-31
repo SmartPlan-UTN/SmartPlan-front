@@ -4,32 +4,43 @@
  * Import only from `@/lib/api`.
  */
 
-export { apiClient } from './client';
-export type { RequestConfig } from './client';
+export { apiClient } from "./client";
+export type { RequestConfig } from "./client";
 
-export { ApiError, normalizeError } from './errors';
+export { ApiError, normalizeError } from "./errors";
 export type {
   ApiErrorType,
   ErrorResponseData,
   ApiErrorOptions,
-} from './errors';
+} from "./errors";
 
-export { getToken, setTokenGetter } from './token-provider';
-export type { TokenGetter } from './token-provider';
+export { getToken, setTokenGetter } from "./token-provider";
+export type { TokenGetter } from "./token-provider";
 
-export { onUnauthorized, notifyUnauthorized } from './auth-events';
-export type { UnauthorizedListener } from './auth-events';
+export { onUnauthorized, notifyUnauthorized } from "./auth-events";
+export type { UnauthorizedListener } from "./auth-events";
 
-export { setSessionRefresher, refreshSessionOnce } from './session-refresher';
-export type { SessionRefresher } from './session-refresher';
+export { setSessionRefresher, refreshSessionOnce } from "./session-refresher";
+export type { SessionRefresher } from "./session-refresher";
 
-export { getApiBaseUrl } from './config';
+export { getApiBaseUrl } from "./config";
 export {
-  mediaRequestPath, listMedia, uploadMedia, updateMedia, deleteMedia,
-  uploadAvatar, deleteAvatar, downloadMedia, readImageAttribution,
-} from './media';
+  mediaRequestPath,
+  listMedia,
+  uploadMedia,
+  updateMedia,
+  deleteMedia,
+  uploadAvatar,
+  deleteAvatar,
+  downloadMedia,
+  readImageAttribution,
+} from "./media";
 
-export { searchActivities, getActivity, getActivityMapMarkers } from './activities';
+export {
+  searchActivities,
+  getActivity,
+  getActivityMapMarkers,
+} from "./activities";
 export {
   searchExplore,
   getExploreMapMarkers,
@@ -37,17 +48,18 @@ export {
   ensurePlaceVisit,
   claimUiKitElements,
   getPlacePhotoMedia,
-} from './explore';
+} from "./explore";
 export {
   searchPlans,
   getPlan,
   listOwnPlans,
+  listGeneratedPlans,
+  copyGeneratedPlan,
   createPlan,
   createPlanFromComposer,
   checkPlanComposer,
   addPlanActivity,
   getOwnPlan,
-  copyGeneratedPlan,
   updateOwnPlan,
   updatePlanFromComposer,
   cancelOwnPlan,
@@ -57,7 +69,7 @@ export {
   assistantSuggest,
   assistantImprove,
   removePlanActivity,
-} from './plans';
+} from "./plans";
 export {
   cancelOuting,
   completeOuting,
@@ -66,12 +78,21 @@ export {
   listOutings,
   repeatOuting,
   setOutingPreparation,
-} from './outings';
-export { listNotifications, markNotificationAsRead } from './notifications';
-export { listCategories } from './categories';
-export { listCities, listDepartments, listPlaces, searchPlace } from './places';
-export { getProfile, updateProfile, changePassword, deleteAccount } from './users';
-export type { UpdateProfileData, ChangePasswordData, DeleteAccountData } from './users';
+} from "./outings";
+export { listNotifications, markNotificationAsRead } from "./notifications";
+export { listCategories } from "./categories";
+export { listCities, listDepartments, listPlaces, searchPlace } from "./places";
+export {
+  getProfile,
+  updateProfile,
+  changePassword,
+  deleteAccount,
+} from "./users";
+export type {
+  UpdateProfileData,
+  ChangePasswordData,
+  DeleteAccountData,
+} from "./users";
 export {
   changeAdminUserStatus,
   createAdminUser,
@@ -89,14 +110,14 @@ export {
   listAdminPlans,
   updateAdminActivity,
   updateAdminPlan,
-} from './administration';
+} from "./administration";
 export {
   getContentReport,
   getContentReportCounts,
   listContentReports,
   reportContent,
   resolveContentReport,
-} from './contentReports';
+} from "./contentReports";
 export {
   addActivityToCollection,
   createCollection,
@@ -105,16 +126,37 @@ export {
   listCollections,
   removeActivityFromCollection,
   updateCollection,
-} from './collections';
+} from "./collections";
+export { setFeedbackSharing, updateFeedback, submitFeedback } from "./feedback";
 export {
-  setFeedbackSharing,
-  updateFeedback,
-  submitFeedback,
-} from './feedback';
-export { getCommunityFeed, getPlanExperiences, getCommunityExperiences, getCommunityExperience, getCommunityCreator, getCreatorExperiences, getCommunityPlans, getCreatorPlans, getCommunityCreators, getPlanAdaptations, getCreatorInspired, likeCommunityExperience, unlikeCommunityExperience, addCommunityExperienceVisit } from './experiences';
-export { getPreferences, updatePreferences } from './users';
-export { createPlanRequest, createSurprisePlanRequest, getPlanRequestStatus, refinePlanRequest, listPlanRequests } from './plan-requests';
-export { getRecommendations, dismissRecommendation, undoDismissRecommendation } from './plan-recommendations';
+  getCommunityFeed,
+  getPlanExperiences,
+  getCommunityExperiences,
+  getCommunityExperience,
+  getCommunityCreator,
+  getCreatorExperiences,
+  getCommunityPlans,
+  getCreatorPlans,
+  getCommunityCreators,
+  getPlanAdaptations,
+  getCreatorInspired,
+  likeCommunityExperience,
+  unlikeCommunityExperience,
+  addCommunityExperienceVisit,
+} from "./experiences";
+export { getPreferences, updatePreferences } from "./users";
+export {
+  createPlanRequest,
+  createSurprisePlanRequest,
+  getPlanRequestStatus,
+  refinePlanRequest,
+  listPlanRequests,
+} from "./plan-requests";
+export {
+  getRecommendations,
+  dismissRecommendation,
+  undoDismissRecommendation,
+} from "./plan-recommendations";
 export {
   listFavoriteActivities,
   removeFavoriteActivity,
@@ -122,12 +164,12 @@ export {
   listFavoritePlans,
   removeFavoritePlan,
   saveFavoritePlan,
-} from './favorites';
+} from "./favorites";
 export {
   createRating,
   deleteRating,
   getOwnRating,
   listRatings,
   updateRating,
-} from './ratings';
-export { createMcpKey, listMcpKeys, listMcpTools, revokeMcpKey } from './mcp';
+} from "./ratings";
+export { createMcpKey, listMcpKeys, listMcpTools, revokeMcpKey } from "./mcp";

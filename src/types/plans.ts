@@ -1,4 +1,18 @@
-import type { Price, PriceCompleteness } from './pricing';
+import type { Price, PriceCompleteness } from "./pricing";
+import { BaseEntity, CatalogEntity } from "./common";
+import type { ExplorationQueryParams, SortDirection } from "./common";
+import type { User } from "./users";
+import type {
+  FeedbackState,
+  PlanFeedback,
+  PlanRequest,
+} from "./recommendation";
+import type {
+  Activity,
+  ActivityCategorySummary,
+  ActivityLocationSummary,
+  ActivitySearchResult,
+} from "./activities";
 
 export interface ComposerCheckPayload {
   stops: Array<{ activityId?: number; placeId?: number; action?: string; durationMinutes?: number }>;
@@ -6,7 +20,7 @@ export interface ComposerCheckPayload {
   startTime: string;
   peopleCount: number;
   budget?: number;
-  travelMode?: 'drive' | 'walk' | 'bicycle';
+  travelMode?: "drive" | "walk" | "bicycle";
 }
 
 export interface ComposerContinuation {
@@ -23,27 +37,13 @@ export interface ComposerContinuation {
 
 export interface ComposerCheckResult {
   stops: Array<{ index: number; name: string; startTime: string; endTime: string; travelMinutesFromPrevious: number | null;
-    hours: 'CONFIRMED_OPEN' | 'CLOSES_DURING' | 'CLOSED' | 'UNKNOWN'; closesAt: string | null }>;
+    hours: "CONFIRMED_OPEN" | "CLOSES_DURING" | "CLOSED" | "UNKNOWN"; closesAt: string | null }>;
   totals: { min: number | null; max: number | null; unpriced: number; completeness: string };
-  budget: { status: 'WITHIN' | 'UNCERTAIN' | 'EXCEEDS' | 'NO_BUDGET'; remaining: number | null };
-  issues: Array<{ stopIndex: number | null; kind: 'CLOSED_AT_ARRIVAL' | 'CLOSES_DURING' | 'HOURS_UNKNOWN' | 'LONG_LEG' | 'OVER_BUDGET' | 'BUDGET_UNPROVEN';
-    message: string; actions: Array<'CHANGE_TIME' | 'FIND_ALTERNATIVE' | 'CHEAPER'>; alternative?: ComposerContinuation }>;
+  budget: { status: "WITHIN" | "UNCERTAIN" | "EXCEEDS" | "NO_BUDGET"; remaining: number | null };
+  issues: Array<{ stopIndex: number | null; kind: "CLOSED_AT_ARRIVAL" | "CLOSES_DURING" | "HOURS_UNKNOWN" | "LONG_LEG" | "OVER_BUDGET" | "BUDGET_UNPROVEN";
+    message: string; actions: Array<"CHANGE_TIME" | "FIND_ALTERNATIVE" | "CHEAPER">; alternative?: ComposerContinuation }>;
   continuations: ComposerContinuation[];
 }
-import { BaseEntity, CatalogEntity } from "./common";
-import type { ExplorationQueryParams, SortDirection } from "./common";
-import type { User } from "./users";
-import type {
-  FeedbackState,
-  PlanFeedback,
-  PlanRequest,
-} from "./recommendation";
-import type {
-  Activity,
-  ActivityCategorySummary,
-  ActivityLocationSummary,
-  ActivitySearchResult,
-} from "./activities";
 
 /**
  * Plan made up of activities (CU12, CU13, CU17, CU24-CU31, CU60).
@@ -107,7 +107,7 @@ export interface PlanSearchResult {
   id: number;
   imageUrl?: string | null;
   /** `google_maps` when `imageUrl` is a Google Places photo (SmartPlan-back#102). */
-  imageSource?: import('./media').ImageSource | null;
+  imageSource?: import("./media").ImageSource | null;
   title: string;
   description: string | null;
   estimatedTotalCost: number | null;
@@ -275,17 +275,17 @@ export type ViewerPlanState = "selectable" | "selected" | "view-only";
  *  - `generated`: one alternative of a "Planificar" request, private to it;
  *  - `outing`: a person's frozen copy of a plan they chose ("Mis salidas").
  */
-export type PlanKind = 'authored' | 'generated' | 'outing';
+export type PlanKind = "authored" | "generated" | "outing";
 
 /** Only an author publishes a plan; everything starts `private`. */
-export type PlanVisibility = 'private' | 'public';
+export type PlanVisibility = "private" | "public";
 
 /**
  * Plan detail returned by `GET /plans/:id` (CU13): the search summary plus
  * its ordered itinerary.
  */
 export interface PlanDetailResult extends PlanSearchResult {
-  images?: import('./media').MediaImage[];
+  images?: import("./media").MediaImage[];
   details: PlanItineraryItem[];
   /** Selection affordance for the caller (CU22). */
   viewerPlanState: ViewerPlanState;
@@ -368,10 +368,16 @@ export interface OwnPlanSummary {
   updatedAt: string;
 }
 
+/** A saved alternative from the current user's generation history. */
+export interface GeneratedPlanSummary extends OwnPlanSummary {
+  planRequestId: number | null;
+  editablePlanId: number | null;
+}
+
 /* ── Mis salidas (CU22, CU23) ───────────────────────────────────── */
 
 /** `to_do` until the person marks it done, then `completed`. */
-export type OutingStatus = 'to_do' | 'completed';
+export type OutingStatus = "to_do" | "completed";
 
 /**
  * The plan an outing was copied from. `available` is `false` once its author
@@ -394,7 +400,7 @@ export interface OutingSummary {
   id: number;
   imageUrl?: string | null;
   /** `google_maps` when `imageUrl` is a Google Places photo (SmartPlan-back#102). */
-  imageSource?: import('./media').ImageSource | null;
+  imageSource?: import("./media").ImageSource | null;
   title: string;
   description: string | null;
   estimatedTotalCost: number | null;
@@ -546,7 +552,12 @@ export interface AppNotification {
 
 export interface NotificationList {
   data: AppNotification[];
-  pagination: { page: number; limit: number; total: number; totalPages: number };
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
   unreadCount: number;
 }
 

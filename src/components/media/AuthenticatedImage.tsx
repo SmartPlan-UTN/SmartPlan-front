@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { downloadMedia } from '@/lib/api/media';
-import type { ImageAttribution } from '@/types';
-import styles from './media.module.css';
+import Image from "next/image";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { downloadMedia } from "@/lib/api/media";
+import type { ImageAttribution } from "@/types";
+import styles from "./media.module.css";
 
 interface AuthenticatedImageProps {
   url: string | null | undefined;
@@ -20,13 +20,13 @@ interface AuthenticatedImageProps {
    * `external` draws no credit over the photo: only for spots too small to
    * hold it, whose caller must name Google Maps right beside the image.
    */
-  attribution?: 'compact' | 'full' | 'external';
+  attribution?: "compact" | "full" | "external";
   /** Drawn instead of the neutral placeholder when there is no image to show. */
   fallback?: ReactNode;
-  /** Useful content while downloading, for surfaces that already have a route preview. */
+  /** Optional compact content while downloading, e.g. an avatar's initials. */
   loadingFallback?: ReactNode;
   /** Where the credit sits: `top` clears a hero whose title covers the bottom. */
-  attributionPlacement?: 'bottom' | 'top';
+  attributionPlacement?: "bottom" | "top";
   onUnavailable?: () => void;
 }
 
@@ -35,11 +35,28 @@ interface LoadedImage {
   attribution: ImageAttribution | null;
 }
 
-export function AuthenticatedImage({
-  url, alt, className, width = 320, height = 180, attribution = 'compact', fallback, loadingFallback, attributionPlacement = 'bottom', onUnavailable,
+export function AuthenticatedImage(props: AuthenticatedImageProps) {
+  // A replacement URL starts fresh, including image/decode failures. The old
+  // request and its blob URL are cleaned up before the new photo is displayed.
+  return <AuthenticatedImageContent key={props.url ?? ""} {...props} />;
+}
+
+function AuthenticatedImageContent({
+  url,
+  alt,
+  className,
+  width = 320,
+  height = 180,
+  attribution = "compact",
+  fallback,
+  loadingFallback,
+  attributionPlacement = "bottom",
+  onUnavailable,
 }: AuthenticatedImageProps) {
   const unavailableRef = useRef(onUnavailable);
-  useEffect(() => { unavailableRef.current = onUnavailable; }, [onUnavailable]);
+  useEffect(() => {
+    unavailableRef.current = onUnavailable;
+  }, [onUnavailable]);
   const [image, setImage] = useState<LoadedImage | null>(null);
   const [error, setError] = useState(false);
 
@@ -57,44 +74,82 @@ export function AuthenticatedImage({
       .catch(() => {
         // A missing provider photo (404), an exhausted quota or any other
         // failure all fall back to the same placeholder as no image at all.
-        if (active) { setError(true); unavailableRef.current?.(); }
+        if (active) {
+          setError(true);
+          unavailableRef.current?.();
+        }
       });
     return () => {
       active = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
-      setImage(null);
     };
   }, [url]);
 
   if (!url || error) {
-    return fallback ?? <span className={styles.placeholder} role="img" aria-label={`Sin imagen de ${alt}`} />;
+    return (
+      fallback ?? (
+        <span
+          className={styles.placeholder}
+          role="img"
+          aria-label={`Sin imagen de ${alt}`}
+        />
+      )
+    );
   }
-  if (!image) return loadingFallback ?? <span className={styles.skeleton} role="status" aria-label={`Cargando imagen de ${alt}`} />;
+  if (!image)
+    return (
+      loadingFallback ?? (
+        <span
+          className={styles.skeleton}
+          role="status"
+          aria-label={`Cargando imagen de ${alt}`}
+        />
+      )
+    );
 
-  const picture = <Image unoptimized src={image.source} alt={alt} width={width} height={height} className={className ?? styles.image} onError={() => { setError(true); unavailableRef.current?.(); }} />;
-  if (!image.attribution || attribution === 'external') return picture;
+  const picture = (
+    <Image
+      unoptimized
+      src={image.source}
+      alt={alt}
+      width={width}
+      height={height}
+      className={className ?? styles.image}
+      onError={() => {
+        setError(true);
+        unavailableRef.current?.();
+      }}
+    />
+  );
+  if (!image.attribution || attribution === "external") return picture;
 
-  const authors = attribution === 'full' ? image.attribution.authors : [];
+  const authors = attribution === "full" ? image.attribution.authors : [];
   return (
     <span className={styles.attributed}>
       {picture}
       <span
         className={
-          attributionPlacement === 'top'
+          attributionPlacement === "top"
             ? `${styles.attribution} ${styles.attributionTop}`
             : styles.attribution
         }
       >
         {/* Google's text attribution: never translated, wrapped or restyled. */}
-        <span className={styles.attributionProvider} translate="no">Google Maps</span>
+        <span className={styles.attributionProvider} translate="no">
+          Google Maps
+        </span>
         {authors.length > 0 ? (
           <span className={styles.attributionAuthors}>
-            {'Foto: '}
+            {"Foto: "}
             {authors.map((author, index) => (
               <span key={`${author.displayName}-${index}`}>
-                {index > 0 ? ', ' : null}
+                {index > 0 ? ", " : null}
                 {author.uri ? (
-                  <a href={author.uri} target="_blank" rel="noopener noreferrer">
+                  <a
+                    href={author.uri}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     {author.displayName}
                   </a>
                 ) : (

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { PageKicker, Screen } from "@/components/layout";
-import { MyPlansPanel } from "@/components/plan";
-import { Icon } from "@/components/ui";
+import { MyPlansWorkspace } from "@/components/plan";
+import { Icon, LoadingDots } from "@/components/ui";
 import { ROUTES } from "@/lib/routes";
 
 import styles from "./plans.module.css";
@@ -18,13 +19,13 @@ export default function MyPlansPage() {
       <header className={styles.header}>
         <div className={styles.headerRow}>
           <div className="sp-page-intro">
-            <PageKicker>Lo que creaste</PageKicker>
+            <PageKicker>Tus ideas y tus planes</PageKicker>
             <h1 id="my-plans-title" className="sp-page-title">
               Mis <span className="sp-page-title-accent">planes</span>
             </h1>
             <p className="sp-page-lead">
-              Los planes que creaste vos, privados o públicos. Los que elegiste
-              hacer están en Mis salidas.
+              Los planes que creaste y las ideas que generamos para vos. Los que
+              elegiste hacer están en Mis salidas.
             </p>
           </div>
           <Link href={ROUTES.createPlan} className={styles.createButton}>
@@ -34,7 +35,9 @@ export default function MyPlansPage() {
         </div>
       </header>
 
-      <MyPlansPanel />
+      <Suspense fallback={<LoadingDots label="Cargando tus planes..." />}>
+        <MyPlansWorkspace />
+      </Suspense>
     </Screen>
   );
 }
