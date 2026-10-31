@@ -125,6 +125,7 @@ const eslintConfig = defineConfig([
   //    Código generado o de terceros: no se analiza.
   // --------------------------------------------------------------------
   globalIgnores([
+    ".next-*/**", // isolated local QA builds
     ".next/**", // build de desarrolelo/producción de Next.js
     "out/**", // export estático
     "build/**", // artefactos de compilación

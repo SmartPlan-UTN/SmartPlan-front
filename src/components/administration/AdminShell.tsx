@@ -26,6 +26,7 @@ const ADMIN_LINKS: Array<{
     permission: "catalog.review",
   },
   { href: ROUTES.adminPlaces, label: "Lugares", icon: "map-pin" },
+  { href: ROUTES.adminMenus, label: "Cartas", icon: "utensils" },
   { href: ROUTES.adminPlans, label: "Planes", icon: "map" },
   { href: ROUTES.adminUsers, label: "Usuarios", icon: "users" },
   { href: ROUTES.adminReports, label: "Denuncias", icon: "flag" },

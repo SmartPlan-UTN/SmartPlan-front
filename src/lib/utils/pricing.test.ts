@@ -105,6 +105,7 @@ describe("formatPlanTotal", () => {
   });
 
   it("never shows an unpriced plan as $0", () => {
+    expect(formatPlanTotal({ estimatedTotalCost: 0, priceCompleteness: "PARTIAL", unpricedCount: 2 })).toBe(NO_PRICE_TOTAL_LABEL);
     expect(formatPlanTotal({ estimatedTotalCost: null })).toBe(NO_PRICE_TOTAL_LABEL);
     expect(
       formatPlanTotal({ estimatedTotalCost: 0, priceCompleteness: "NONE" }),

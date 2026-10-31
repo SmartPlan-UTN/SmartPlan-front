@@ -1,5 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { PlanRefinementActions } from "@/components/plan-request/PlanRefinementActions";
+import { refinePlanRequest } from "@/lib/api";
+import { carryRequestContext } from "@/lib/plans/requestContext";
+import type { RefinePlanRequestPayload } from "@/types";
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "motion/react";
@@ -117,7 +122,30 @@ export function LandingHero({
     lastSubmission,
     applySelectionChange,
     refresh,
+    planRequestId,
+    understanding,
+    funnel,
+    unsupportedExperiences,
   } = planning;
+  const router = useRouter();
+  const [refining, setRefining] = useState(false);
+  const [refinementError, setRefinementError] = useState<string | null>(null);
+  // Refining keeps the plan's structure (only the asked-for change moves);
+  // the refined request continues on its own page.
+  async function refine(payload: RefinePlanRequestPayload) {
+    if (refining || planRequestId == null) return;
+    setRefining(true);
+    setRefinementError(null);
+    try {
+      const accepted = await refinePlanRequest(planRequestId, payload);
+      // Same as the results page: the explicit context travels with the refinement.
+      carryRequestContext(planRequestId, accepted.id);
+      router.push(planRequestRoute(accepted.id));
+    } catch {
+      setRefinementError("No pudimos ajustar este plan. Tu recorrido sigue disponible; podés volver a intentar.");
+      setRefining(false);
+    }
+  }
   const canRepeat = lastSubmission?.kind === "auto";
   const generationMode = lastSubmission?.kind === "surprise" ? "surprise" : "auto";
   const submittedQuery = lastSubmission?.kind === "auto" ? lastSubmission.payload.query : null;
@@ -283,6 +311,17 @@ export function LandingHero({
                 plans={plans ?? []}
                 query={submittedQuery}
                 resolvedContext={resolvedContext}
+                understanding={understanding}
+                funnel={funnel}
+                unsupportedExperiences={unsupportedExperiences}
+                renderRefinement={(plan) =>
+                  plan.insight && planRequestId != null ? (
+                    <>
+                      <PlanRefinementActions plan={plan} busy={refining} onRefine={(payload) => void refine(payload)} />
+                      {refinementError ? <p role="alert" className="sp-small">{refinementError}</p> : null}
+                    </>
+                  ) : null
+                }
                 onAdjust={onAdjust}
                 onDiscard={discard}
                 canAdjust={canRepeat}

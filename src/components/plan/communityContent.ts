@@ -1,6 +1,5 @@
 /**
- * Spanish copy for the community experiences section (#106). Tone: people
- * telling how it went, as proof the plan is worth it — never a review site.
+ * Spanish copy for the community experiences and review section (#106).
  * Reporting (#156) only ever shows as a discreet flag.
  */
 export const COMMUNITY_COPY = {
@@ -14,9 +13,9 @@ export const COMMUNITY_COPY = {
     body: "Si hacés este plan, al dejar tu opinión podés compartir tu experiencia y tus fotos acá.",
   },
   counts: (experiences: number, photos: number) => {
-    const people = experiences === 1 ? "1 experiencia" : `${experiences} experiencias`;
-    if (photos === 0) return people;
-    return `${people} · ${photos === 1 ? "1 foto" : `${photos} fotos`}`;
+    const reviews = experiences === 1 ? "1 reseña" : `${experiences} reseñas`;
+    if (photos === 0) return reviews;
+    return `${reviews} · ${photos === 1 ? "1 foto" : `${photos} fotos`}`;
   },
   wallLabel: (plan: string) => `Fotos de la comunidad en ${plan}`,
   listLabel: "Experiencias compartidas",
@@ -27,7 +26,7 @@ export const COMMUNITY_COPY = {
   reportPhoto: (position: number, owner: string) => `Denunciar foto ${position} de ${owner}`,
   wallOwner: "la comunidad",
   reportComment: (author: string) => `Denunciar comentario de ${author}`,
-  doneIn: (month: string) => `Lo hizo en ${month}`,
+  doneIn: (date: string) => `Salió el ${date}`,
   loadMore: "Ver más experiencias",
   loadingMore: "Cargando…",
   moreError: "No pudimos cargar más. Intentá de nuevo.",

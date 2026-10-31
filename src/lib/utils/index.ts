@@ -36,3 +36,4 @@ export {
 export { EMAIL_PATTERN, REQUIRED_MESSAGE } from "./validation";
 export { formatRelativeTime } from "./relative-time";
 export { AT_HOME_LABEL, isAtHomeActivity, isAtHomeLocation } from "./home";
+export { observedWhen } from './freshness';

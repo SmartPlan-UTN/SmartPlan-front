@@ -33,8 +33,9 @@ export async function listDepartments(
 /** Lists registered places that can be associated with an activity. */
 export async function listPlaces(
   params: PlaceListParams = {},
+  options: { signal?: AbortSignal } = {},
 ): Promise<PaginatedResult<PlaceOption>> {
-  return apiClient.get<PaginatedResult<PlaceOption>>('/places', { params });
+  return apiClient.get<PaginatedResult<PlaceOption>>('/places', { params, signal: options.signal });
 }
 
 /**

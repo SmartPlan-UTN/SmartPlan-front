@@ -1,0 +1,89 @@
+.banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3) var(--s-5);
+  margin-bottom: var(--s-4);
+  padding: var(--s-3) var(--s-4);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+}
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.lead {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0;
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+}
+
+.lead svg {
+  flex-shrink: 0;
+  color: var(--ember);
+}
+
+.origin {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-3);
+  min-width: 0;
+}
+
+.changes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.changes li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 28px;
+  padding: 0 12px;
+  border: 1px dashed var(--hairline);
+  border-radius: var(--r-chip);
+  color: var(--fg-3);
+  font-size: var(--t-label);
+  font-weight: var(--w-heading);
+  transition: background-color var(--d-fast) var(--ease-out), color var(--d-fast) var(--ease-out);
+}
+
+.changes li[data-changed="true"] {
+  border-style: solid;
+  border-color: var(--char);
+  background: var(--char);
+  color: var(--cream);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .changes li {
+    transition: none;
+  }
+}

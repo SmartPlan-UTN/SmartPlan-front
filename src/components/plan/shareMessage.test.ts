@@ -35,6 +35,11 @@ const plan = {
 } as unknown as PlanDetailResult;
 
 describe("planShareMessage", () => {
+  it("shares a real place stop without assuming an Activity exists", () => {
+    const detail = { ...stop(1, 'Unused', 0, 60), activity: null, stop: { label: 'Café en el barrio' } };
+    const message = planShareMessage({ ...plan, details: [detail] } as unknown as PlanDetailResult, 'u');
+    expect(message).toContain('1. Café en el barrio');
+  });
   it("tells the plan in order, with its cost, time and link", () => {
     const message = planShareMessage(plan, "https://smartplan.app/plans/7");
     const lines = message.split("\n");

@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { ImageResponse } from "next/og";
 
 import { fetchSharedPlan } from "@/lib/plans/sharedPlan";
+import { stopLabel } from "@/lib/plans/stops";
 import { formatDuration, formatPlanTotal, parsePositiveIntId } from "@/lib/utils";
 
 /**
@@ -35,7 +36,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const logoSrc = `data:image/png;base64,${logo.toString("base64")}`;
 
   const stops = plan
-    ? [...plan.details].sort((left, right) => left.order - right.order).map((detail) => detail.activity.name)
+    ? [...plan.details].sort((left, right) => left.order - right.order).map(stopLabel)
     : [];
   const hiddenStops = stops.length - MAX_STOPS;
 

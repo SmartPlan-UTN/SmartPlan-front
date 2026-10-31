@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { downloadMedia } from "@/lib/api/media";
 import type { ImageAttribution } from "@/types";
 import styles from "./media.module.css";
@@ -27,6 +27,7 @@ interface AuthenticatedImageProps {
   loadingFallback?: ReactNode;
   /** Where the credit sits: `top` clears a hero whose title covers the bottom. */
   attributionPlacement?: "bottom" | "top";
+  onUnavailable?: () => void;
 }
 
 interface LoadedImage {
@@ -50,7 +51,12 @@ function AuthenticatedImageContent({
   fallback,
   loadingFallback,
   attributionPlacement = "bottom",
+  onUnavailable,
 }: AuthenticatedImageProps) {
+  const unavailableRef = useRef(onUnavailable);
+  useEffect(() => {
+    unavailableRef.current = onUnavailable;
+  }, [onUnavailable]);
   const [image, setImage] = useState<LoadedImage | null>(null);
   const [error, setError] = useState(false);
 
@@ -68,7 +74,10 @@ function AuthenticatedImageContent({
       .catch(() => {
         // A missing provider photo (404), an exhausted quota or any other
         // failure all fall back to the same placeholder as no image at all.
-        if (active) setError(true);
+        if (active) {
+          setError(true);
+          unavailableRef.current?.();
+        }
       });
     return () => {
       active = false;
@@ -106,7 +115,10 @@ function AuthenticatedImageContent({
       width={width}
       height={height}
       className={className ?? styles.image}
-      onError={() => setError(true)}
+      onError={() => {
+        setError(true);
+        unavailableRef.current?.();
+      }}
     />
   );
   if (!image.attribution || attribution === "external") return picture;

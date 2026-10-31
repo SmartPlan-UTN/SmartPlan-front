@@ -57,3 +57,19 @@ export async function repeatOuting(id: number): Promise<OutingCreationResult> {
 export async function cancelOuting(id: number): Promise<void> {
   return apiClient.delete<void>(`/users/me/outings/${id}`);
 }
+
+/**
+ * The person says a pending ticket or reservation is handled (or undoes it).
+ * SmartPlan never buys or books. Backend contract:
+ * `PATCH /users/me/outings/:id/details/:detailId/preparation`.
+ */
+export async function setOutingPreparation(
+  id: number,
+  detailId: number,
+  confirmed: boolean
+): Promise<OutingDetail> {
+  return apiClient.patch<OutingDetail>(
+    `/users/me/outings/${id}/details/${detailId}/preparation`,
+    { confirmed }
+  );
+}

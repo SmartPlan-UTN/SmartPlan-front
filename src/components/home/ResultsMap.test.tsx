@@ -5,7 +5,10 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ResultsMapPlanPin } from "@/lib/maps/buildPlanPins";
 import { ResultsMap, type ResultsMapHandle } from "./ResultsMap";
 
-vi.mock("@/lib/maps/loadGoogleMaps", () => ({ loadGoogleMaps: async () => undefined }));
+vi.mock("@/lib/maps/loadGoogleMaps", () => ({
+  loadGoogleMaps: async () => undefined,
+  GOOGLE_MAPS_AUTH_FAILURE_EVENT: 'smartplan:maps-auth-failure',
+}));
 vi.mock("@/hooks", () => ({ useReducedMotion: () => true }));
 
 class Bounds {

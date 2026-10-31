@@ -5,7 +5,7 @@ import type { PlanItineraryItem } from "@/types";
 
 import { ItineraryStep } from "./ItineraryStep";
 
-function step(location: PlanItineraryItem["activity"]["locations"][number]): PlanItineraryItem {
+function step(location: NonNullable<PlanItineraryItem["activity"]>["locations"][number]): PlanItineraryItem {
   return {
     id: 1,
     order: 1,

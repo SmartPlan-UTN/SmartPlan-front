@@ -208,7 +208,7 @@ export function ContextChips({ value, onChange }: ContextChipsProps) {
           }}
         >
           <Icon name="wallet" size={13} aria-hidden="true" />
-          {value.budget != null ? `${value.budget.toLocaleString("es-AR")}` : "Presupuesto"}
+          {value.budget != null ? `$${value.budget.toLocaleString("es-AR")}` : "Presupuesto"}
         </Chip>
         {openChip === "budget" ? (
           <div className={styles.popover}>

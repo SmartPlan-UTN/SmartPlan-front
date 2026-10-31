@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import type { PlanDetailResult } from "@/types";
+import type { PlanDetailResult, PlanItineraryActivity } from "@/types";
 
 import { getPlanZone } from "./planZone";
 
 function detail(
   order: number,
-  locations: PlanDetailResult["details"][number]["activity"]["locations"],
+  locations: PlanItineraryActivity["locations"],
 ): PlanDetailResult["details"][number] {
   return {
     id: order,
@@ -80,18 +80,36 @@ describe("getPlanZone", () => {
     expect(getPlanZone(plan([detail(1, []), detail(2, [])]))).toBeNull();
   });
 
-  it("skips stops at the Hogar, which belong to no zone (#210)", () => {
-    const home = { id: 9, name: "En casa / donde estén", description: null, address: "", kind: "home", department: null };
-    expect(
-      getPlanZone(
-        plan([
-          detail(1, [{ id: 2, atHome: true, latitude: -32.9, longitude: -68.8, notes: null, place: home }]),
-          detail(2, [{ id: 3, latitude: null, longitude: null, notes: null, place: place("Maipú") }]),
-        ]),
-      ),
-    ).toBe("Maipú");
-    expect(
-      getPlanZone(plan([detail(1, [{ id: 2, atHome: true, latitude: null, longitude: null, notes: null, place: home }])])),
-    ).toBeNull();
+  it("reads the department of a place-action stop (no activity behind it)", () => {
+    const placeStop: PlanDetailResult["details"][number] = {
+      id: 9,
+      order: 1,
+      estimatedCost: null,
+      estimatedDuration: 100,
+      activity: null,
+      stop: {
+        kind: "PLACE_ACTION",
+        label: "Cena en Anna Bistró",
+        action: "meal",
+        actionLabel: "Almuerzo o cena",
+        activityId: null,
+        place: {
+          id: 23,
+          name: "Anna Bistró",
+          address: null,
+          kind: "restaurant",
+          kindLabel: "Restaurante",
+          latitude: null,
+          longitude: null,
+          googlePlaceId: "ChIJ-anna",
+          departmentName: "Ciudad de Mendoza",
+        },
+        startMinute: 1260,
+        legTravelMinutes: null,
+        legDistanceMeters: null,
+        estimateBasis: null,
+      },
+    };
+    expect(getPlanZone(plan([placeStop]))).toBe("Ciudad de Mendoza");
   });
 });

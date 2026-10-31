@@ -7,3 +7,4 @@ export { AdminReportsView } from "./AdminReportsView";
 export { AdminPlacesView } from "./AdminPlacesView";
 export { AdminMcpView } from "./AdminMcpView";
 export { AdminCatalogCandidatesView } from "./AdminCatalogCandidatesView";
+export { AdminMenuContributionsView } from "./AdminMenuContributionsView";

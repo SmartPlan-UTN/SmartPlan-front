@@ -379,3 +379,7 @@
   background: color-mix(in srgb, var(--error) 12%, transparent);
   color: var(--error);
 }
+.publishPreview { display: grid; gap: 10px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--hairline); border-radius: var(--r-card); background: var(--cream); }
+.publishPreview > svg { color: var(--ember); }
+.publishPreview strong { color: var(--fg-1); font-size: 21px; line-height: 1.2; overflow-wrap: anywhere; }
+.publishPreview span { color: var(--fg-2); font-size: var(--t-small); }

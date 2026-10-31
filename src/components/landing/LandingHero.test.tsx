@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { UsePlanRequestPollingResult } from "@/hooks";
 
 import { LandingHero } from "./LandingHero";
-import { HERO } from "./landingContent";
+import { HERO, INTENTS } from "./landingContent";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
@@ -85,7 +85,9 @@ describe("LandingHero", () => {
     await user.click(screen.getByRole("button", { name: "Aire libre" }));
 
     const field = screen.getByLabelText(FIELD);
-    expect(field).toHaveValue("Un plan al aire libre, con caminata y buen clima");
+    expect(INTENTS.find((intent) => intent.label === "Aire libre")?.queries).toContain(
+      (field as HTMLInputElement).value,
+    );
     expect(field).toHaveFocus();
     expect(field.closest("section")).toHaveAttribute("data-writing", "true");
     expect(onSubmit).not.toHaveBeenCalled();

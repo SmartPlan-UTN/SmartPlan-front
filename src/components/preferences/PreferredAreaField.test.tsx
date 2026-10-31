@@ -8,7 +8,10 @@ const loadGoogleMaps = vi.hoisted(() =>
   vi.fn(() => Promise.reject(new Error("No Maps key in tests"))),
 );
 
-vi.mock("@/lib/maps/loadGoogleMaps", () => ({ loadGoogleMaps }));
+vi.mock("@/lib/maps/loadGoogleMaps", () => ({
+  GOOGLE_MAPS_AUTH_FAILURE_EVENT: "smartplan:maps-auth-failure",
+  loadGoogleMaps,
+}));
 
 function renderField() {
   render(
