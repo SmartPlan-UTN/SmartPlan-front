@@ -71,3 +71,20 @@ describe("ItineraryStep at the Hogar (#210)", () => {
     expect(screen.getByRole("link", { name: /Ver en mapa/ })).toBeInTheDocument();
   });
 });
+
+
+it.each([true, false])("omits travel time for a leg to or from an unlocated home (destination home: %s)", (destinationHome) => {
+  const stop = (home: boolean): PlanItineraryItem => ({
+    id: home ? 1 : 2, order: 2, activity: null, estimatedCost: 0, estimatedDuration: 60,
+    stop: {
+      kind: "PLACE_ACTION", label: home ? "Truco" : "Café", action: null, actionLabel: null,
+      activityId: null, startMinute: null, legTravelMinutes: 15,
+      legDistanceMeters: null, estimateBasis: null,
+      place: { id: 1, name: home ? "Hogar" : "Café", address: null,
+        kind: home ? "home" : "cafe", atHome: home, kindLabel: null,
+        latitude: null, longitude: null, googlePlaceId: null, departmentName: null },
+    },
+  });
+  render(<ItineraryStep detail={stop(destinationHome)} previousDetail={stop(!destinationHome)} isFirst={false} isLast />);
+  expect(screen.queryByText(/min desde la anterior/)).not.toBeInTheDocument();
+});

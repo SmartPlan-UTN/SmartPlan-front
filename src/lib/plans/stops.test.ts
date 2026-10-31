@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { stopScreening } from "./stops";
+import { isHomeStop, stopCoordinates, stopScreening } from "./stops";
 import type { PlanItineraryItem } from "@/types/plans";
 
 const screeningItem = (screening: Record<string, unknown>) =>
@@ -42,4 +42,14 @@ describe("stopScreening", () => {
       )?.bookingUrl,
     ).toBeNull();
   });
+});
+
+
+it.each([{ kind: "home" }, { atHome: true }])("never exposes map coordinates for a unified home stop: %j", (home) => {
+  const item = {
+    activity: null,
+    stop: { place: { latitude: -32.9, longitude: -68.8, ...home } },
+  } as PlanItineraryItem;
+  expect(isHomeStop(item)).toBe(true);
+  expect(stopCoordinates(item)).toBeNull();
 });

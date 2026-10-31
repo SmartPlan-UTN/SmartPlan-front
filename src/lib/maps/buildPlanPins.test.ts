@@ -207,3 +207,32 @@ describe("buildPlanPins", () => {
     });
   });
 });
+
+
+it("uses the unified home contract without an activity and preserves itinerary positions", () => {
+  const outside = {
+    id: 2, order: 2, activity: null, estimatedCost: null, estimatedDuration: 60,
+    stop: {
+      kind: "PLACE_ACTION" as const, label: "Café", action: "coffee", actionLabel: null,
+      activityId: null, startMinute: null, legTravelMinutes: null,
+      legDistanceMeters: null, estimateBasis: null,
+      place: { id: 1, name: "Café", address: null, kind: "cafe", kindLabel: null,
+        latitude: -32.9, longitude: -68.8, googlePlaceId: null, departmentName: "Capital" },
+    },
+  };
+  const home = {
+    ...outside, id: 3, order: 3,
+    stop: { ...outside.stop, label: "Truco", place: { ...outside.stop.place,
+      kind: "home", atHome: true, latitude: null, longitude: null,
+    } },
+  };
+  const unlocated = { ...outside, id: 1, order: 1, stop: { ...outside.stop,
+    place: { ...outside.stop.place, latitude: null, longitude: null },
+  } };
+  const start = { latitude: -32.89, longitude: -68.84 };
+  expect(buildPlanPins([plan({ details: [home, outside, unlocated] })], start)[0].stops).toEqual([
+    { activityId: null, name: "Café", lat: -32.9, lng: -68.8, order: 2 },
+    { activityId: null, name: "Truco", lat: start.latitude, lng: start.longitude, order: 3, atHome: true },
+  ]);
+  expect(buildPlanPins([plan({ details: [home] })], start)[0].stops).toEqual([]);
+});

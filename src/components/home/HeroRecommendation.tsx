@@ -258,7 +258,7 @@ export function HeroRecommendation({
               </>
             ) : !multi && stopInsight?.price ? (
               <>
-                {stopInsight.price}
+                {money.value === "Gratis" ? money.value : stopInsight.price}
                 {stopInsight.priceSource ? (
                   <small>{stopInsight.priceSource}</small>
                 ) : null}
