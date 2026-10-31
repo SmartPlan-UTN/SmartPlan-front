@@ -57,6 +57,7 @@ export {
   copyGeneratedPlan,
   createPlan,
   createPlanFromComposer,
+  checkPlanComposer,
   addPlanActivity,
   getOwnPlan,
   updateOwnPlan,
@@ -76,6 +77,7 @@ export {
   getOuting,
   listOutings,
   repeatOuting,
+  setOutingPreparation,
 } from "./outings";
 export { listNotifications, markNotificationAsRead } from "./notifications";
 export { listCategories } from "./categories";
@@ -126,12 +128,28 @@ export {
   updateCollection,
 } from "./collections";
 export { setFeedbackSharing, updateFeedback, submitFeedback } from "./feedback";
-export { getPlanExperiences } from "./experiences";
+export {
+  getCommunityFeed,
+  getPlanExperiences,
+  getCommunityExperiences,
+  getCommunityExperience,
+  getCommunityCreator,
+  getCreatorExperiences,
+  getCommunityPlans,
+  getCreatorPlans,
+  getCommunityCreators,
+  getPlanAdaptations,
+  getCreatorInspired,
+  likeCommunityExperience,
+  unlikeCommunityExperience,
+  addCommunityExperienceVisit,
+} from "./experiences";
 export { getPreferences, updatePreferences } from "./users";
 export {
   createPlanRequest,
   createSurprisePlanRequest,
   getPlanRequestStatus,
+  refinePlanRequest,
   listPlanRequests,
 } from "./plan-requests";
 export {

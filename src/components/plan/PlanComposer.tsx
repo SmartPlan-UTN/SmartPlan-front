@@ -7,8 +7,10 @@ import { Button, ConfirmationDialog } from "@/components/ui";
 import type { ComposerStep } from "@/components/plan/composer/ComposerStepper";
 import { useDebouncedValue, useExplorationSearch } from "@/hooks";
 import {
+  ApiError,
   createPlanFromComposer,
   getActivity,
+  getPlan,
   searchActivities,
   updatePlanFromComposer,
 } from "@/lib/api";
@@ -17,22 +19,28 @@ import { activityDetailRoute, planDetailRoute, ROUTES } from "@/lib/routes";
 import type {
   ActivitySearchParams,
   ActivitySearchResult,
+  PlanDetailResult,
   AssistantProposal,
   OwnPlanDetail,
   PlanVisibility,
 } from "@/types";
 
 import { ActivitiesStep, type ComposerPane } from "./composer/ActivitiesStep";
+import { AdaptBanner, type AdaptSource } from "./composer/AdaptBanner";
+import { AdaptStep, DEFAULT_ADAPT_CONTEXT, type AdaptContext } from "./composer/AdaptStep";
 import type { DiscoveryView } from "./composer/CatalogPanel";
 import { ComposerStepper } from "./composer/ComposerStepper";
 import {
   createInitialDraft,
+  composerTarget,
   getDraftKey,
   type ComposerDraft,
   type ComposerStop,
+  placeComposerStop,
 } from "./composer/draft";
 import { IdeaStep } from "./composer/IdeaStep";
 import {
+  TITLE_MAX,
   validateDescription,
   validatePeople,
   validatePriceRange,
@@ -52,6 +60,8 @@ import {
   useRouteImprovement,
 } from "./composer/useAssistant";
 import styles from "./PlanComposer.module.css";
+import { ComposerIntelligence } from './composer/ComposerIntelligence';
+import { PlaceStopPicker } from './composer/PlaceStopPicker';
 
 type ComposerMode =
   | {
@@ -59,12 +69,14 @@ type ComposerMode =
       plan?: never;
       initialActivityId?: number;
       returnToActivity?: boolean;
+      inspiredByPlanId?: number;
     }
   | {
       mode: "edit";
       plan: OwnPlanDetail;
       initialActivityId?: never;
       returnToActivity?: never;
+      inspiredByPlanId?: never;
     };
 
 export type PlanComposerProps = ComposerMode;
@@ -82,11 +94,17 @@ const STAGE_CLASS: Record<ComposerStep, string> = {
 };
 const HIGHLIGHT_MS = 1200;
 
+/** One identity per stop, in order, to tell an adaptation from its original. */
+function stopKeysOf(stops: ComposerStop[]): string[] {
+  return stops.map((stop) => stop.placeTarget ? `p${stop.placeTarget.placeId}:${stop.placeTarget.action}` : `a${stop.activity.id}`);
+}
+
 export function PlanComposer({
   mode,
   plan,
   initialActivityId,
   returnToActivity = false,
+  inspiredByPlanId,
 }: PlanComposerProps) {
   const router = useRouter();
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -102,6 +120,12 @@ export function PlanComposer({
     initialDraftKeyRef.current = getDraftKey(draft);
   }
 
+  const nextPlaceRowIdRef = useRef(Math.min(0, ...draft.stops.map((stop) => stop.activity.id)));
+
+  const [adaptSource, setAdaptSource] = useState<AdaptSource | null>(null);
+  const [inspirationId, setInspirationId] = useState(inspiredByPlanId);
+  const [inspirationUnavailable, setInspirationUnavailable] = useState(false);
+  const [adaptContext, setAdaptContext] = useState<AdaptContext>(DEFAULT_ADAPT_CONTEXT);
   const [step, setStep] = useState<ComposerStep>(initialActivityId ? 1 : 0);
   const [mobilePane, setMobilePane] = useState<ComposerPane>("catalog");
   // List or map: two views of the same search, kept across steps.
@@ -129,7 +153,7 @@ export function PlanComposer({
   const [pinnedStopId, setPinnedStopId] = useState<number | null>(null);
   const linkedActivityId = focusedActivityId ?? pinnedStopId;
   const [prefillLoading, setPrefillLoading] = useState(
-    Boolean(initialActivityId),
+    Boolean(initialActivityId || inspiredByPlanId),
   );
   const [prefillError, setPrefillError] = useState<string | null>(null);
   const [notice, setNotice] = useState<UndoNotice | null>(null);
@@ -153,7 +177,7 @@ export function PlanComposer({
   const isSearchSettling =
     trimmedSearch.length >= 2 && trimmedSearch !== trimmedDebouncedSearch;
   const stopIds = useMemo(
-    () => draft.stops.map((stop) => stop.activity.id),
+    () => draft.stops.filter((stop) => !stop.placeTarget).map((stop) => stop.activity.id),
     [draft.stops],
   );
   const assistantSearch = useAssistantSearch(askedQuery, stopIds);
@@ -233,7 +257,7 @@ export function PlanComposer({
     title: draft.title,
     description: draft.description,
     stops: draft.stops,
-    enabled: step === 1,
+    enabled: step === 1 && !draft.stops.some((stop) => stop.placeTarget),
   });
   const showAssistance =
     trimmedSearch.length === 0 &&
@@ -351,6 +375,82 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
       active = false;
     };
   }, [initialActivityId]);
+
+  useEffect(() => {
+    if (!inspiredByPlanId) return;
+    let active = true;
+    getPlan(inspiredByPlanId)
+      .then((source: PlanDetailResult) => {
+        if (!active) return;
+        const stops: ComposerStop[] = source.details.map((detail) => {
+          if (!detail.activity) {
+            const stop = detail.stop;
+            const place = stop?.place;
+            const action = stop?.action;
+            if (!stop || !place || !action) throw new Error("A public plan stop has no available place.");
+            return {
+              ...placeComposerStop(place, {
+                action,
+                label: stop.actionLabel ?? stop.label,
+                durationMinutes: detail.estimatedDuration,
+                price: detail.price ?? null,
+              }, -detail.id),
+              estimatedCost: detail.estimatedCost,
+            };
+          }
+          const activity: ActivitySearchResult = {
+            id: detail.activity.id,
+            name: detail.activity.name,
+            description: detail.activity.description,
+            estimatedCost: detail.activity.estimatedCost,
+            price: detail.activity.price ?? detail.price ?? null,
+            estimatedDuration: detail.activity.estimatedDuration,
+            type: detail.activity.type,
+            averageRating: detail.activity.averageRating,
+            ratingCount: detail.activity.ratingCount,
+            distanceKm: null,
+            categories: detail.activity.categories,
+          };
+          return {
+            activity: { ...activity },
+            estimatedCost: detail.estimatedCost,
+            price: detail.price ?? activity.price ?? null,
+            estimatedDuration: detail.estimatedDuration,
+          };
+        });
+        const adapted: ComposerDraft = {
+          title: `Mi versión de ${source.title}`.slice(0, TITLE_MAX),
+          description: source.description ?? "",
+          peopleCount: source.peopleCount ?? 2,
+          visibility: "private",
+          stops,
+        };
+        nextPlaceRowIdRef.current = Math.min(nextPlaceRowIdRef.current, ...stops.map((stop) => stop.activity.id));
+        setDraft(adapted);
+        setAdaptSource({
+          id: source.id,
+          title: source.title,
+          authorUsername: source.author?.username ?? source.inspiredBy?.creatorUsername ?? null,
+          authorAvatarUrl: source.author?.avatarUrl ?? null,
+          peopleCount: adapted.peopleCount,
+          stopKeys: stopKeysOf(stops),
+          totalCost: computeDraftTotals(stops, adapted.peopleCount).estimatedTotalCost,
+          totalLabel: formatPlanTotal(source),
+          duration: source.estimatedTotalDuration,
+        });
+        setStep(0);
+        initialDraftKeyRef.current = getDraftKey(adapted);
+        setAnnouncement(`Tu versión de ${source.title}. Contanos cuándo y con quién, y revisamos si te sirve.`);
+      })
+      .catch(() => {
+        if (active) {
+          setInspirationUnavailable(true);
+          setPrefillError("No pudimos abrir el plan de inspiración.");
+        }
+      })
+      .finally(() => { if (active) setPrefillLoading(false); });
+    return () => { active = false; };
+  }, [inspiredByPlanId]);
 
   function updateDraft<Key extends keyof ComposerDraft>(
     field: Key,
@@ -571,12 +671,27 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
     });
   }
 
+  // Opens the catalog sorted by price, to bring a plan back under budget.
+  function findCheaper() {
+    goToStep(1);
+    setMobilePane("catalog");
+    setDiscoveryView("list");
+    setAskedQuery(null);
+    setSearch("");
+    setCategoryIds([]);
+    setMinPrice("");
+    setMaxPrice("");
+    setUserSort("price");
+    setAnnouncement("Opciones ordenadas por precio. Elegí cuáles cambiar en tu recorrido.");
+  }
+
   function exitComposer() {
     if (isDirty) setShowExitDialog(true);
     else router.push(destination);
   }
 
   async function savePlan() {
+    if (inspirationUnavailable) return;
     if (prefillLoading) {
       setSubmitError(
         "Estamos cargando la actividad inicial. Esperá un momento para guardar.",
@@ -600,8 +715,9 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
       description: draft.description.trim() || null,
       peopleCount: draft.peopleCount,
       visibility: draft.visibility,
+      ...(mode === "create" && inspirationId ? { inspiredByPlanId: inspirationId } : {}),
       stops: draft.stops.map((stop) => ({
-        activityId: stop.activity.id,
+        ...composerTarget(stop),
         ...(stop.detailId === undefined ? {} : { detailId: stop.detailId }),
       })),
     };
@@ -626,6 +742,9 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
             : planDetailRoute(saved.id);
       router.push(afterSave);
     } catch (error) {
+      if (error instanceof ApiError && error.code === "INSPIRATION_NOT_AVAILABLE") {
+        setInspirationUnavailable(true);
+      }
       const failure = mapSaveError(error);
       if (failure.newRequestId) {
         createRequestIdRef.current = null;
@@ -651,6 +770,7 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
           currentStep={step}
           disabled={isSaving}
           onStepChange={goToStep}
+          adapting={adaptSource !== null}
         />
         <Button
           type="button"
@@ -662,8 +782,70 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
         </Button>
       </div>
 
+      {inspirationUnavailable ? (
+        <div role="alert">
+          <p>No podemos usar el plan de inspiración. Podés continuar con tu borrador sin vincularlo a ese plan.</p>
+          <Button variant="ghostLight" onClick={() => {
+            setInspirationId(undefined);
+            setInspirationUnavailable(false);
+            setAdaptSource(null);
+            setPrefillError(null);
+            setSubmitError(null);
+            createRequestIdRef.current = null;
+          }}>Continuar sin inspiración</Button>
+        </div>
+      ) : null}
+
+      {adaptSource ? (
+        <AdaptBanner
+          source={adaptSource}
+          current={{
+            peopleCount: draft.peopleCount,
+            stopKeys: stopKeysOf(draft.stops),
+            totalCost: priceTotals.estimatedTotalCost,
+          }}
+        />
+      ) : null}
+
       <div className={`${styles.stage} ${STAGE_CLASS[step]}`}>
-        {step === 0 ? (
+        {step === 0 && adaptSource ? (
+          <AdaptStep
+            source={adaptSource}
+            title={draft.title}
+            titleError={titleError}
+            peopleCount={draft.peopleCount}
+            peopleError={peopleError}
+            stops={draft.stops}
+            totalLabel={totalCostLabel}
+            totalCost={priceTotals.estimatedTotalCost}
+            perPersonLabel={costPerPersonLabel}
+            duration={totals.duration}
+            context={adaptContext}
+            isSaving={isSaving}
+            onTitleChange={(value) => {
+              if (!validateTitle(value)) setTitleError(null);
+              updateDraft("title", value);
+            }}
+            onPeopleCountChange={(value) => {
+              if (!validatePeople(value)) setPeopleError(null);
+              updateDraft("peopleCount", value);
+            }}
+            onContextChange={setAdaptContext}
+            onRemoveStop={removeActivity}
+            onSwapStop={(activityId) => {
+              removeActivity(activityId);
+              goToStep(1);
+              setMobilePane("catalog");
+              setDiscoveryView("list");
+              setAnnouncement("Elegí otra opción para esa parada.");
+            }}
+            onFindCheaper={findCheaper}
+            onContinue={() => goToStep(1)}
+            onReview={() => goToStep(2)}
+          />
+        ) : null}
+
+        {step === 0 && !adaptSource ? (
           <IdeaStep
             title={draft.title}
             description={draft.description}
@@ -690,6 +872,12 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
 
         {step === 1 ? (
           <ActivitiesStep
+            places={<PlaceStopPicker stops={draft.stops} disabled={isSaving} onAdd={(stop) => {
+              if (stopsRef.current.some((current) => current.placeTarget?.placeId === stop.placeTarget?.placeId && current.placeTarget?.action === stop.placeTarget?.action)) return;
+              const rowId = --nextPlaceRowIdRef.current;
+              setStops([...stopsRef.current, { ...stop, activity: { ...stop.activity, id: rowId } }]);
+              setAnnouncement(`${stop.activity.name} se agregó al recorrido.`);
+            }} />}
             title={draft.title}
             headingRef={headingRef}
             health={health}
@@ -801,7 +989,13 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
           isSaving={isSaving}
           visibleOnMobile={mobilePane === "itinerary"}
           improvement={improvement.state}
-          onImprove={improvement.request}
+          onImprove={() => {
+            if (draft.stops.some((stop) => stop.placeTarget)) {
+              const panel = document.getElementById('composer-intelligence');
+              panel?.setAttribute('open', '');
+              panel?.querySelector('input')?.focus();
+            } else improvement.request();
+          }}
           onDismissImprovement={improvement.dismiss}
           onApplyProposal={applyProposal}
           onRemove={removeActivity}
@@ -820,12 +1014,21 @@ perPersonCost: activity.costBasis === 'per_person' ? activity.estimatedCost : nu
               : mode === "create"
                 ? "Crear plan"
                 : "Guardar cambios",
-            canSave: draft.stops.length > 0 && !prefillLoading,
+            canSave: draft.stops.length > 0 && !prefillLoading && !inspirationUnavailable,
             error: submitError,
             onSave: () => void savePlan(),
           }}
           focusedActivityId={linkedActivityId}
           onPoint={setFocusedActivityId}
+          intelligence={draft.stops.length > 0 ? (
+            <ComposerIntelligence
+              stops={draft.stops}
+              peopleCount={draft.peopleCount}
+              disabled={isSaving}
+              onFindCheaper={findCheaper}
+              initial={adaptSource ? adaptContext : undefined}
+            />
+          ) : null}
         />
       </div>
 

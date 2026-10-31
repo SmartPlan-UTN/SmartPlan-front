@@ -15,6 +15,7 @@
 /* ── Tab switch: Actividades / Planes ────────────────────────── */
 .tabRow {
   display: flex;
+  align-items: center;
   gap: var(--s-2);
 }
 

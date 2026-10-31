@@ -859,7 +859,7 @@ export function CatalogPanel({
                   <Icon name="sparkles" size={14} />
                   {stopNumbers.size > 0
                     ? "Para completar tu recorrido"
-                    : "Ideas para tu plan"}
+                    : "Sugerencias para tu plan"}
                 </p>
                 <ul className={`${styles.rail} ${styles.railPending}`}>
                   {Array.from({ length: MAX_SUGGESTIONS_SHOWN }, (_, index) => (
@@ -879,7 +879,7 @@ export function CatalogPanel({
                   <Icon name="sparkles" size={14} aria-hidden="true" />
                   {stopNumbers.size > 0
                     ? "Para completar tu recorrido"
-                    : "Ideas para tu plan"}
+                    : "Sugerencias para tu plan"}
                 </h4>
                 <ul className={styles.rail}>
                   {visibleSuggestions.map(({ activity, reason }, index) => (

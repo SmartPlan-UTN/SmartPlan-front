@@ -1,0 +1,88 @@
+.panel {
+  border-top: 1px solid var(--hairline-dark);
+  padding-block: var(--s-4);
+  color: var(--fg-on-dark);
+  font-size: 0.875rem;
+}
+.panel summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.panel summary:focus-visible,
+.panel input:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 3px;
+}
+.note {
+  margin-block: var(--s-3);
+  color: var(--route-ink-2, var(--fg-on-dark));
+  font-size: 0.8125rem;
+}
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-3);
+}
+.fields label {
+  display: grid;
+  gap: var(--s-2);
+  min-width: 0;
+  font-size: 0.8125rem;
+}
+.fields input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--hairline-dark);
+  border-radius: var(--r-btn);
+  padding: var(--s-2);
+  background: var(--char-surface);
+  color: var(--fg-on-dark);
+  color-scheme: dark;
+}
+.wide {
+  grid-column: 1 / -1;
+}
+.result {
+  display: grid;
+  gap: var(--s-3);
+  margin-top: var(--s-4);
+}
+.result p {
+  margin: 0;
+  line-height: 1.5;
+}
+.schedule {
+  padding-left: var(--s-4);
+  margin: 0;
+}
+.schedule li {
+  margin-block: var(--s-2);
+}
+.schedule span {
+  font-variant-numeric: tabular-nums;
+  color: var(--route-ink-2, var(--fg-on-dark));
+}
+.issue {
+  display: grid;
+  gap: var(--s-2);
+}
+.panel a {
+  color: var(--ember);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.continuations h4 {
+  margin: 0 0 var(--s-2);
+  font-size: 0.875rem;
+}
+.continuations ul {
+  padding-left: var(--s-4);
+  margin: 0;
+}
+.continuations li {
+  margin-top: var(--s-3);
+}
+.continuations p {
+  font-size: 0.8125rem;
+  color: var(--route-ink-2, var(--fg-on-dark));
+}

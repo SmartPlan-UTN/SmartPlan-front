@@ -58,7 +58,7 @@ export function ActivityCostsField({
         const seen = new Set<number>();
         const list = [...outing.details]
           .sort((a, b) => a.order - b.order)
-          .map((detail) => detail.activity)
+          .flatMap((detail) => (detail.activity ? [detail.activity] : []))
           .filter((activity) => {
             if (seen.has(activity.id)) return false;
             seen.add(activity.id);

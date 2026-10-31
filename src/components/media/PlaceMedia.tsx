@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { Icon, type IconName } from "@/components/ui";
 import { getPlacePhotoMedia } from "@/lib/api";
@@ -20,8 +20,12 @@ export interface PlaceMediaProps {
   artwork: { family: ArtworkFamily; icon: IconName; label?: string | null };
   /** `card`: Explore/map cards. `hero`: a detail page header. */
   variant?: "card" | "hero";
+  /** Replaces the generic artwork when there is no real photo. */
+  fallback?: ReactNode;
   /** Usage-log label for Google UI Kit allowances. */
   screen?: string;
+  /** Called only after this place's available photo sources have failed. */
+  onUnavailable?: () => void;
 }
 
 function isHttpUrl(value: string | null | undefined): value is string {
@@ -202,16 +206,28 @@ export function PlaceMedia({
   alt,
   artwork,
   variant = "card",
+  fallback,
+  onUnavailable,
 }: PlaceMediaProps) {
+  const unavailableRef = useRef(onUnavailable);
+  useEffect(() => { unavailableRef.current = onUnavailable; }, [onUnavailable]);
+  const [ownFailedFor, setOwnFailedFor] = useState<string | null>(null);
   const [googleFailedFor, setGoogleFailedFor] = useState<string | null>(null);
   const [heroShownFor, setHeroShownFor] = useState<string | null>(null);
   const [brokenImageUrl, setBrokenImageUrl] = useState<string | null>(null);
   const googlePlaceId = place?.googlePlaceId ?? null;
+  const openImageUrl = place?.image?.url ?? null;
+  useEffect(() => {
+    if (ownImageUrl && ownImageUrl !== ownFailedFor) return;
+    if (openImageUrl && openImageUrl !== brokenImageUrl) return;
+    if (googlePlaceId && googlePlaceId !== googleFailedFor) return;
+    unavailableRef.current?.();
+  }, [ownImageUrl, ownFailedFor, openImageUrl, brokenImageUrl, googlePlaceId, googleFailedFor]);
 
-  if (ownImageUrl) {
+  if (ownImageUrl && ownImageUrl !== ownFailedFor) {
     return (
       <div className={variant === "hero" ? styles.ownImageHero : styles.ownImage}>
-        <AuthenticatedImage url={ownImageUrl} alt={alt} width={640} height={360} attribution="full" fallback={<><Artwork {...artwork} variant={variant} /><span className="sp-sr-only">Sin imagen disponible</span></>} />
+        <AuthenticatedImage key={ownImageUrl} url={ownImageUrl} alt={alt} width={640} height={360} attribution="full" onUnavailable={() => setOwnFailedFor(ownImageUrl)} fallback={<>{fallback ?? <Artwork {...artwork} variant={variant} />}<span className="sp-sr-only">Sin imagen disponible</span></>} />
       </div>
     );
   }
@@ -227,7 +243,7 @@ export function PlaceMedia({
   if (variant === "hero") {
     return (
       <div className={styles.heroMedia}>
-        {heroShownFor !== googlePlaceId || !googleAvailable ? <><Artwork {...artwork} variant="hero" /><span className="sp-sr-only">Sin imagen disponible</span></> : null}
+        {heroShownFor !== googlePlaceId || !googleAvailable ? <>{fallback ?? <Artwork {...artwork} variant="hero" />}<span className="sp-sr-only">Sin imagen disponible</span></> : null}
         {googleAvailable ? (
           <GoogleHeroPhoto
             googlePlaceId={googlePlaceId}
@@ -242,7 +258,7 @@ export function PlaceMedia({
 
   return (
     <div className={styles.cardMedia} data-media={heroShownFor === googlePlaceId && googleAvailable ? "google" : "artwork"}>
-      {heroShownFor !== googlePlaceId || !googleAvailable ? <Artwork {...artwork} variant="card" /> : null}
+      {heroShownFor !== googlePlaceId || !googleAvailable ? (fallback ?? <Artwork {...artwork} variant="card" />) : null}
       {googleAvailable ? (
           <GoogleHeroPhoto
             key={googlePlaceId}

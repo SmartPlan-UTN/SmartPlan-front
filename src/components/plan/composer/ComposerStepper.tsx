@@ -5,22 +5,27 @@ import styles from "./ComposerStepper.module.css";
 export type ComposerStep = 0 | 1 | 2;
 
 const STEP_LABELS = ["Plan", "Recorrido", "Revisión"] as const;
+/** The first step of an adaptation is about the person's own outing. */
+const ADAPT_LABELS = ["Tu versión", "Recorrido", "Revisión"] as const;
 
 interface ComposerStepperProps {
   currentStep: ComposerStep;
   disabled: boolean;
   onStepChange: (step: ComposerStep) => void;
+  adapting?: boolean;
 }
 
 export function ComposerStepper({
   currentStep,
   disabled,
   onStepChange,
+  adapting = false,
 }: ComposerStepperProps) {
+  const labels = adapting ? ADAPT_LABELS : STEP_LABELS;
   return (
     <nav className={styles.stepper} aria-label="Progreso de creación">
       <ol>
-        {STEP_LABELS.map((label, index) => {
+        {labels.map((label, index) => {
           const itemStep = index as ComposerStep;
           const complete = itemStep < currentStep;
           const current = itemStep === currentStep;
@@ -44,7 +49,7 @@ export function ComposerStepper({
                 </span>
                 <span className={styles.label}>{label}</span>
               </button>
-              {index < STEP_LABELS.length - 1 ? (
+              {index < labels.length - 1 ? (
                 <span
                   className={`${styles.line} ${complete ? styles.lineComplete : ""}`}
                   aria-hidden="true"

@@ -4,15 +4,42 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
-import { Badge, Button, ConfirmationDialog, Divider, FloatingBackLink, Icon, Stars } from "@/components/ui";
-import { AuthenticatedImage, MediaGallery } from "@/components/media";
+import {
+  Badge,
+  Button,
+  ConfirmationDialog,
+  Divider,
+  FloatingBackLink,
+  Icon,
+  Stars,
+} from "@/components/ui";
+import { MediaGallery } from "@/components/media";
+import { PlanVisual } from "@/components/home/PlanVisual";
 import { useContentReporter } from "@/components/reports";
 import { useFavorites } from "@/context";
 import { useDetailFetch, usePlanSelection } from "@/hooks";
-import { ApiError, cancelOwnPlan, getOwnPlan, getPlan } from "@/lib/api";
+import {
+  ApiError,
+  cancelOwnPlan,
+  copyGeneratedPlan,
+  getOwnPlan,
+  getPlan,
+} from "@/lib/api";
 import { useSession } from "@/lib/auth";
-import { loginRoute, outingDetailRoute, planDetailRoute, planEditRoute, ROUTES } from "@/lib/routes";
-import { formatDuration, formatPrice, formatPlanTotal, formatPerPerson } from "@/lib/utils";
+import {
+  loginRoute,
+  outingDetailRoute,
+  planDetailRoute,
+  planEditRoute,
+  ROUTES,
+} from "@/lib/routes";
+import { stopLabel } from "@/lib/plans/stops";
+import {
+  formatDuration,
+  formatPrice,
+  formatPlanTotal,
+  formatPerPerson,
+} from "@/lib/utils";
 import type {
   OwnPlanDetail,
   PlanDetailResult,
@@ -21,8 +48,14 @@ import type {
 } from "@/types";
 
 import { PlanOwnExperiences } from "./PlanOwnExperiences";
+import { PlanAdaptations } from "../community/PlanAdaptations";
 import { CommunityExperiences } from "./CommunityExperiences";
 import { ItineraryStep } from "./ItineraryStep";
+import { InspiredByChip } from "../community/InspiredByChip";
+import { PersonLink } from "../community/Person";
+import { useCommunityReturnPath } from "../community/useCommunityReturnPath";
+import { PlanReadinessPanel } from "./PlanReadinessPanel";
+import { PlanUncertainties } from "./PlanUncertainties";
 import { PlanIntentionPanel } from "./PlanIntentionPanel";
 import {
   PlanVisibilityBadge,
@@ -33,6 +66,7 @@ import { planShareMessage } from "./shareMessage";
 import { planStatusPresentation } from "./statusPresentation";
 import { VISIBILITY_COPY } from "./visibilityContent";
 import styles from "./plan.module.css";
+import communityStyles from "../community/community.module.css";
 import activityStyles from "../activity/activity.module.css";
 
 export interface PlanDetailViewProps {
@@ -71,13 +105,26 @@ export function PlanDetailView(props: PlanDetailViewProps) {
   const { status, user } = useSession();
   // Session changes discard private data, pending reads and personal overrides
   // together, before the new viewer's detail is loaded.
-  return <PlanDetailContent key={`${props.planId}:${status}:${user?.id ?? "anonymous"}`} {...props} />;
+  return (
+    <PlanDetailContent
+      key={`${props.planId}:${status}:${user?.id ?? "anonymous"}`}
+      {...props}
+    />
+  );
 }
 
-function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailViewProps) {
+function PlanDetailContent({
+  planId,
+  returnTo: initialReturnTo = ROUTES.explore,
+}: PlanDetailViewProps) {
+  const communityReturnTo = useCommunityReturnPath();
+  const returnTo =
+    initialReturnTo === ROUTES.community ? communityReturnTo : initialReturnTo;
   const router = useRouter();
   const pathname = usePathname();
-  const backLabel = returnTo.startsWith(`${ROUTES.planRequests}/`) ? "Volver a los resultados" : "Volver";
+  const backLabel = returnTo.startsWith(`${ROUTES.planRequests}/`)
+    ? "Volver a los resultados"
+    : "Volver";
   const { status: sessionStatus } = useSession();
   const {
     data: plan,
@@ -94,6 +141,9 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
   const saved = isPlanSaved(planId);
   const [experienceVersion, setExperienceVersion] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [shareError, setShareError] = useState(false);
+  const [preparing, setPreparing] = useState(false);
+  const [prepareError, setPrepareError] = useState<string | null>(null);
   const [ownPlan, setOwnPlan] = useState<OwnPlanDetail | null>(null);
   const [visibilityOverride, setVisibilityOverride] =
     useState<PlanVisibility | null>(null);
@@ -178,19 +228,42 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
     const text = planShareMessage(shared, planUrl());
     // Straight to api.whatsapp.com: the wa.me redirect turns every emoji
     // into "�" on its way there.
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+    window.open(
+      `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
   }
 
   async function handleShare() {
+    setShareError(false);
     try {
+      if (navigator.share) {
+        await navigator.share({ title: plan?.title, url: planUrl() });
+        return;
+      }
       await navigator.clipboard.writeText(planUrl());
       setCopied(true);
       setTimeout(() => {
         setCopied(false);
       }, 2000);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setShareError(true);
+    }
+  }
+
+  async function prepareForCommunity() {
+    setPreparing(true);
+    setPrepareError(null);
+    try {
+      const editable = await copyGeneratedPlan(planId);
+      router.push(planDetailRoute(editable.id, ROUTES.plans));
     } catch {
-      // Clipboard access can be denied by the browser; the button just
-      // stays as "Compartir" instead of throwing at the user.
+      setPrepareError(
+        "No pudimos preparar tu versión. Podés volver a intentar.",
+      );
+      setPreparing(false);
     }
   }
 
@@ -241,16 +314,18 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
   if (status === "error" || plan == null) {
     return (
       <div className={activityStyles.stateBlock} role="alert">
-        <Icon name="triangle-alert" size={32} className={activityStyles.errorIcon} />
+        <Icon
+          name="triangle-alert"
+          size={32}
+          className={activityStyles.errorIcon}
+        />
         <h1 className="sp-h3">Algo salió mal</h1>
         <p className="sp-body">{errorMessage}</p>
       </div>
     );
   }
 
-  const routeSummary = plan.details
-    .map((detail) => detail.activity.name)
-    .join(" → ");
+  const routeSummary = plan.details.map(stopLabel).join(" → ");
 
   const viewerPlanState = override?.viewerPlanState ?? plan.viewerPlanState;
   const activeOutingId =
@@ -259,7 +334,158 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
   const statusInfo = planStatusPresentation(plan.status.key);
   const removedByModeration = ownPlan?.removedByModeration === true;
   const published =
-    plan.kind === "authored" && visibility === "public" && plan.status.key !== "cancelled";
+    plan.kind === "authored" &&
+    visibility === "public" &&
+    plan.status.key !== "cancelled";
+  const communityPlan = plan.kind === "authored" && visibility === "public";
+  const communityPricesNeedConfirmation =
+    communityPlan &&
+    plan.details.some((detail) => detail.price?.stale === true);
+
+  // A visitor to somebody else's public plan finds the actions at the top;
+  // owners and private plans keep them after the itinerary.
+  const communityVisitor = published && !plan.ownedByViewer;
+  const actionBar = (
+    <div className={styles.actionBar}>
+      <div className={styles.actionMain}>
+        {/* Personal state on the plan (CU22) — carries the visual weight. */}
+        <PlanIntentionPanel
+          viewerPlanState={viewerPlanState}
+          activeOutingId={activeOutingId}
+          busy={selection.status === "working"}
+          onIntend={() => {
+            // Someone who opened a shared link signs in first, then returns.
+            if (sessionStatus === "anonymous") {
+              router.push(loginRoute(pathname));
+              return;
+            }
+            void chooseOuting();
+          }}
+        />
+        {published && !plan.ownedByViewer ? (
+          <Link
+            href={`${ROUTES.createPlan}?inspiredBy=${plan.id}`}
+            className={communityStyles.secondaryAction}
+          >
+            <Icon name="sparkles" size={16} aria-hidden="true" />
+            Hacerlo a mi manera
+          </Link>
+        ) : null}
+      </div>
+      <div className={styles.actionQuiet}>
+        {sessionStatus === "authenticated" &&
+        isAuthor &&
+        plan.status.key !== "cancelled" ? (
+          <>
+            <Link
+              href={planEditRoute(planId)}
+              className={styles.ownerActionLink}
+            >
+              <Icon name="pencil" size={16} aria-hidden="true" />
+              Editar plan
+            </Link>
+            <Button
+              variant="ghostLight"
+              size="sm"
+              className={styles.ownerActionButton}
+              onClick={() => setShowCancelModal(true)}
+            >
+              <Icon name="trash-2" size={14} aria-hidden="true" />
+              Eliminar plan
+            </Button>
+          </>
+        ) : null}
+        {/* Guardar + Compartir — secondary. Each control reserves its
+                widest label so a state swap never changes its box. */}
+        <Button
+          variant="ghostLight"
+          size="sm"
+          className={styles.saveButton}
+          aria-pressed={saved}
+          aria-label={saved ? "Quitar de guardados" : "Guardar plan"}
+          onClick={() => {
+            // Optimistic rollback is handled inside FavoritesContext (CU43).
+            void toggleSavePlan(planId).catch(() =>
+              setLiveMessage(
+                "No pudimos guardar el plan. Podés volver a intentar.",
+              ),
+            );
+          }}
+        >
+          <Icon
+            name="bookmark"
+            size={16}
+            aria-hidden="true"
+            className={saved ? styles.saveIconOn : undefined}
+          />
+          {saved ? "Guardado" : "Guardar plan"}
+        </Button>
+        {published ? (
+          <Button
+            variant="ghostLight"
+            size="sm"
+            className={styles.shareButton}
+            onClick={() => {
+              void handleShare();
+            }}
+          >
+            <Icon name="share-2" size={16} aria-hidden="true" />
+            {copied ? "¡Copiado!" : "Compartir"}
+          </Button>
+        ) : null}
+        {shareError ? (
+          <label className={styles.shareFallback}>
+            Copiá el enlace
+            <input
+              aria-label="Enlace para compartir"
+              value={planUrl()}
+              readOnly
+              onFocus={(event) => event.target.select()}
+            />
+          </label>
+        ) : null}
+        {/* Only a published plan opens for whoever gets the link. */}
+        {published ? (
+          <Button
+            variant="ghostLight"
+            size="sm"
+            className={styles.shareButton}
+            aria-label="Compartir por WhatsApp"
+            onClick={() => handleWhatsAppShare(plan)}
+          >
+            <Icon name="message-circle" size={16} aria-hidden="true" />
+            WhatsApp
+          </Button>
+        ) : null}
+        {published && !plan.ownedByViewer && sessionStatus !== "loading" ? (
+          <Button
+            variant="ghostLight"
+            size="sm"
+            className={styles.shareButton}
+            disabled={reported}
+            aria-label={
+              reported ? "Plan denunciado" : `Denunciar ${plan.title}`
+            }
+            onClick={() => {
+              // Reporting needs a session; come back here after it.
+              if (sessionStatus === "anonymous") {
+                router.push(loginRoute(pathname));
+                return;
+              }
+              reporter.request({
+                contentType: "plan",
+                contentId: plan.id,
+                title: "Denunciar plan",
+              });
+            }}
+          >
+            <Icon name="flag" size={16} aria-hidden="true" />
+            {reported ? "Denunciado" : "Denunciar"}
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  );
 
   return (
     <div>
@@ -270,25 +496,13 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
       </p>
 
       <div className={styles.hero} ref={heroRef}>
-        {plan.imageUrl ? (
-          // An uploaded cover, or the Google Places photo of its first place
-          // with its full credit (SmartPlan-back#102).
-          <div className={styles.heroMedia}>
-            <AuthenticatedImage
-              url={plan.imageUrl}
-              alt={plan.title}
-              width={960}
-              height={300}
-              attribution="full"
-              attributionPlacement="top"
-              fallback={<Icon name="route" size={110} className={styles.heroIcon} />}
-            />
-          </div>
-        ) : (
-          <Icon name="route" size={110} className={styles.heroIcon} />
-        )}
+        <div className={styles.heroMedia}>
+          <PlanVisual key={plan.id} plan={plan} />
+        </div>
         <Badge variant="cost" className={styles.heroCostBadge}>
-          {formatPlanTotal(plan)}
+          {communityPricesNeedConfirmation
+            ? "Precios a confirmar"
+            : formatPlanTotal(plan)}
         </Badge>
 
         <div className={styles.heroTitleBlock}>
@@ -300,8 +514,13 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
               </>
             ) : null}
             {plan.averageRating > 0 ? (
-              <><Stars rating={plan.averageRating} size={14} /><span>{plan.averageRating.toFixed(1)}</span></>
-            ) : <span>Sin reseñas</span>}
+              <>
+                <Stars rating={plan.averageRating} size={14} />
+                <span>{plan.averageRating.toFixed(1)}</span>
+              </>
+            ) : (
+              <span>Sin reseñas</span>
+            )}
             <span className={styles.heroMetaDot}>·</span>
             <span>{formatDuration(plan.estimatedTotalDuration)}</span>
           </div>
@@ -316,6 +535,25 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
       </div>
 
       <div className={styles.content}>
+        {plan.author || plan.inspiredBy ? (
+          <div className={styles.provenance}>
+            {plan.author ? (
+              <PersonLink
+                username={plan.author.username}
+                avatarUrl={plan.author.avatarUrl}
+                size={36}
+                note={published ? "Compartió este plan" : undefined}
+              />
+            ) : null}
+            {plan.inspiredBy ? (
+              <InspiredByChip
+                plan={plan.inspiredBy}
+                creatorUsername={plan.inspiredBy.creatorUsername}
+              />
+            ) : null}
+          </div>
+        ) : null}
+        {communityVisitor ? actionBar : null}
         {plan.status.key === "cancelled" ? (
           <div className={styles.cancelledBanner} role="status">
             <Icon name="triangle-alert" size={20} aria-hidden="true" />
@@ -331,7 +569,16 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
           </p>
         ) : null}
 
-        <MediaGallery target="plan" resourceId={plan.id} resourceName={plan.title} />
+        {plan.readiness ? (
+          <PlanReadinessPanel readiness={plan.readiness} />
+        ) : null}
+        <PlanUncertainties insight={plan.insight} />
+
+        <MediaGallery
+          target="plan"
+          resourceId={plan.id}
+          resourceName={plan.title}
+        />
         <div className={styles.section}>
           <p className={activityStyles.sectionLabel}>itinerario</p>
           {plan.details.map((detail, index) => (
@@ -345,13 +592,21 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
         </div>
 
         <div className={styles.costBox}>
-          <p className={styles.costBoxLabel}>estimación de costos</p>
+          <p className={styles.costBoxLabel}>
+            {communityPlan ? "referencias de costos" : "estimación de costos"}
+          </p>
+          {communityPlan ? (
+            <p className="sp-small">
+              Este plan conserva los valores registrados al compartirlo.
+              Confirmá precios y horarios antes de salir.
+            </p>
+          ) : null}
           <div className={styles.costBreakdown}>
             {plan.details.map((detail) => (
               <div className={styles.costRow} key={detail.id}>
-                <span className={styles.costRowLabel}>{detail.activity.name}</span>
+                <span className={styles.costRowLabel}>{stopLabel(detail)}</span>
                 <span className={styles.costRowValue}>
-                  {formatPrice(detail)}
+                  {formatPrice(detail, { withUnit: true })}
                 </span>
               </div>
             ))}
@@ -360,7 +615,9 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
           <div className={styles.costTotalRow}>
             <span className={styles.costRowLabel}>Total</span>
             <span className={styles.costTotalValue}>
-              {formatPlanTotal(plan)}
+              {communityPricesNeedConfirmation
+                ? "Valores a confirmar"
+                : formatPlanTotal(plan)}
             </span>
           </div>
           {ownPlan && ownPlan.peopleCount > 0 ? (
@@ -390,9 +647,38 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
         {/* Experiences of people who did it (#106): only a published plan
             that is still on has a community to show. */}
         {published ? (
-          <CommunityExperiences key={experienceVersion} planId={plan.id} planTitle={plan.title} />
+          <>
+            <CommunityExperiences
+              key={experienceVersion}
+              planId={plan.id}
+              planTitle={plan.title}
+            />
+            <PlanAdaptations planId={plan.id} />
+          </>
         ) : null}
 
+        {plan.kind === "generated" && plan.ownedByViewer ? (
+          <section
+            className={styles.visibilityBox}
+            aria-label="Compartir este recorrido"
+          >
+            <div>
+              <h2 className="sp-h4">¿Este plan merece compartirse?</h2>
+              <p className={styles.visibilityHint}>
+                Prepará tu versión, revisala y elegí si querés publicarla en
+                Comunidad. Se guarda privada hasta que vos decidas.
+              </p>
+            </div>
+            <Button
+              variant="ghostEmber"
+              disabled={preparing}
+              onClick={() => void prepareForCommunity()}
+            >
+              {preparing ? "Preparando…" : "Preparar para compartir"}
+            </Button>
+            {prepareError ? <p role="alert">{prepareError}</p> : null}
+          </section>
+        ) : null}
         {isAuthor ? (
           <div className={styles.visibilityBox}>
             <div>
@@ -420,105 +706,7 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
           </div>
         ) : null}
 
-        <div className={styles.actionBar}>
-          {sessionStatus === "authenticated" && isAuthor && plan.status.key !== "cancelled" ? (
-            <>
-              <Link href={planEditRoute(planId)} className={styles.ownerActionLink}>
-                <Icon name="pencil" size={16} aria-hidden="true" />
-                Editar plan
-              </Link>
-              <Button
-                variant="ghostLight"
-                size="sm"
-                className={styles.ownerActionButton}
-                onClick={() => setShowCancelModal(true)}
-              >
-                <Icon name="trash-2" size={14} aria-hidden="true" />
-                Eliminar plan
-              </Button>
-            </>
-          ) : null}
-          {/* Guardar + Compartir — secondary. Each control reserves its
-              widest label so a state swap never changes its box. */}
-          <Button
-            variant="ghostLight"
-            size="sm"
-            className={styles.saveButton}
-            aria-pressed={saved}
-            aria-label={saved ? "Quitar de guardados" : "Guardar plan"}
-            onClick={() => {
-              // Optimistic rollback is handled inside FavoritesContext (CU43).
-              void toggleSavePlan(planId);
-            }}
-          >
-            <Icon
-              name="bookmark"
-              size={16}
-              aria-hidden="true"
-              className={saved ? styles.saveIconOn : undefined}
-            />
-            {saved ? "Guardado" : "Guardar plan"}
-          </Button>
-          <Button
-            variant="ghostLight"
-            size="sm"
-            className={styles.shareButton}
-            onClick={() => {
-              void handleShare();
-            }}
-          >
-            <Icon name="share-2" size={16} aria-hidden="true" />
-            {copied ? "¡Copiado!" : "Compartir"}
-          </Button>
-          {/* Only a published plan opens for whoever gets the link. */}
-          {published ? (
-            <Button
-              variant="ghostLight"
-              size="sm"
-              className={styles.shareButton}
-              aria-label="Compartir por WhatsApp"
-              onClick={() => handleWhatsAppShare(plan)}
-            >
-              <Icon name="message-circle" size={16} aria-hidden="true" />
-              WhatsApp
-            </Button>
-          ) : null}
-          {published && !plan.ownedByViewer && sessionStatus !== "loading" ? (
-            <Button
-              variant="ghostLight"
-              size="sm"
-              className={styles.shareButton}
-              disabled={reported}
-              aria-label={reported ? "Plan denunciado" : `Denunciar ${plan.title}`}
-              onClick={() => {
-                // Reporting needs a session; come back here after it.
-                if (sessionStatus === "anonymous") {
-                  router.push(loginRoute(pathname));
-                  return;
-                }
-                reporter.request({ contentType: "plan", contentId: plan.id, title: "Denunciar plan" });
-              }}
-            >
-              <Icon name="flag" size={16} aria-hidden="true" />
-              {reported ? "Denunciado" : "Denunciar"}
-            </Button>
-          ) : null}
-
-          {/* Personal state on the plan (CU22) — carries the visual weight. */}
-          <PlanIntentionPanel
-            viewerPlanState={viewerPlanState}
-            activeOutingId={activeOutingId}
-            busy={selection.status === "working"}
-            onIntend={() => {
-              // Someone who opened a shared link signs in first, then returns.
-              if (sessionStatus === "anonymous") {
-                router.push(loginRoute(pathname));
-                return;
-              }
-              void chooseOuting();
-            }}
-          />
-        </div>
+        {communityVisitor ? null : actionBar}
       </div>
 
       {showCancelModal ? (
@@ -537,7 +725,6 @@ function PlanDetailContent({ planId, returnTo = ROUTES.explore }: PlanDetailView
       ) : null}
 
       {reporter.element}
-
     </div>
   );
 }

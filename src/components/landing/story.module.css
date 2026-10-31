@@ -416,6 +416,69 @@
 
 /* ── Short viewports ────────────────────────────────────────────────── */
 
+@media (max-width: 900px) {
+  .staticScene {
+    padding: 24px 20px 20px;
+  }
+
+  .staticWords {
+    gap: 10px 14px;
+    margin: 18px 0;
+  }
+
+  .staticWords li[data-keeps="true"] {
+    font-size: clamp(20px, 5.5vw, 26px);
+  }
+
+  .staticMoments {
+    gap: 12px;
+    padding-left: 16px;
+    border-left: 1px solid var(--hairline);
+  }
+
+  .staticMoments > li {
+    position: relative;
+  }
+
+  .staticMoments > li::before {
+    position: absolute;
+    top: 24px;
+    left: -20px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ember);
+    box-shadow: 0 0 0 4px var(--cream);
+    content: "";
+  }
+
+  .staticMoment {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(96px, 36%);
+    align-items: center;
+    gap: 12px;
+  }
+
+  .staticMoment .caption {
+    min-width: 0;
+  }
+
+  .staticMoment .name {
+    font-size: clamp(19px, 4.8vw, 24px);
+    line-height: 1.15;
+  }
+
+  .staticMoment .frame {
+    height: clamp(88px, 14vw, 120px);
+    margin-top: 0;
+  }
+
+  .staticScene .payoff {
+    margin-top: 20px;
+    font-size: clamp(40px, 10vw, 56px);
+  }
+}
+
 @media (max-height: 760px) and (min-width: 901px) {
   .track { height: 220svh; }
 }

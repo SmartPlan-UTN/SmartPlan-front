@@ -6,3 +6,4 @@ export { AdminPlansView } from "./AdminPlansView";
 export { AdminReportsView } from "./AdminReportsView";
 export { AdminPlacesView } from "./AdminPlacesView";
 export { AdminMcpView } from "./AdminMcpView";
+export { AdminMenuContributionsView } from "./AdminMenuContributionsView";

@@ -60,6 +60,7 @@ export interface ResultsMapHandle {
 
 export interface ResultsMapProps {
   plans: ResultsMapPlanPin[];
+  focusPlanId?: number | null;
   activePlanId: number | null;
   onPinHover: (planId: number | null) => void;
   onPinClick: (planId: number) => void;
@@ -79,6 +80,7 @@ export interface ResultsMapProps {
  */
 export function ResultsMap({
   plans,
+  focusPlanId = null,
   activePlanId,
   onPinHover,
   onPinClick,
@@ -154,7 +156,7 @@ export function ResultsMap({
       }
     }
 
-    const requested = plans.filter((plan) => plan.planId === requestedPlanRef.current);
+    const requested = plans.filter((plan) => plan.planId === (requestedPlanRef.current ?? focusPlanId));
     frame(map, requested.length ? requested : plans, requested.length ? 64 : 48);
 
     return () => {
@@ -201,7 +203,7 @@ export function ResultsMap({
     if (!visible || !mapRef.current) return;
     const map = mapRef.current;
     google.maps.event.trigger(map, "resize");
-    const requested = plans.filter((plan) => plan.planId === requestedPlanRef.current);
+    const requested = plans.filter((plan) => plan.planId === (requestedPlanRef.current ?? focusPlanId));
     frame(map, requested.length ? requested : plans, requested.length ? 64 : 48);
     requestedPlanRef.current = null;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- coordinate signature tracks framing data without reacting to equivalent array identities.

@@ -121,6 +121,7 @@ export interface PlaceActivity {
 
 /** `GET /places/:id`: the place, its live context and its real offer. */
 export interface PlaceDetailResult {
+  actions?: { action: string; label: string; durationMinutes: number; price: Price }[];
   id: number;
   name: string;
   description: string | null;

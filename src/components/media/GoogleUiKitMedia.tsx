@@ -13,6 +13,12 @@ interface GoogleUiKitMediaProps {
   screen?: string;
   /** Called once Google rendered (or could not render) the element. */
   onSettled?: (shown: boolean) => void;
+  /**
+   * Which Google content to show (default: the photo). Google's values
+   * (price, rating, open status) are rendered by Google, never stored.
+   */
+  content?: Array<"media" | "rating" | "price" | "open-now-status" | "type">;
+  orientation?: "vertical" | "horizontal";
 }
 
 type MapsWithImport = typeof google.maps & {
@@ -32,10 +38,13 @@ export function GoogleUiKitMedia({
   googlePlaceId,
   screen = "explore",
   onSettled,
+  content = ["media"],
+  orientation = "vertical",
 }: GoogleUiKitMediaProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const [near, setNear] = useState(false);
   const settledRef = useRef(onSettled);
+  const contentKey = content.join(",");
   useEffect(() => {
     settledRef.current = onSettled;
   }, [onSettled]);
@@ -82,12 +91,13 @@ export function GoogleUiKitMedia({
       if (cancelled) return;
 
       const element = document.createElement("gmp-place-details-compact");
-      element.setAttribute("orientation", "vertical");
+      element.setAttribute("orientation", orientation);
       element.className = styles.uiKitElement;
       const request = document.createElement("gmp-place-details-place-request");
       request.setAttribute("place", googlePlaceId);
       const config = document.createElement("gmp-place-content-config");
-      config.appendChild(document.createElement("gmp-place-media"));
+      for (const part of contentKey.split(","))
+        config.appendChild(document.createElement(`gmp-place-${part}`));
       const attribution = document.createElement("gmp-place-attribution");
       attribution.setAttribute("light-scheme-color", "gray");
       attribution.setAttribute("dark-scheme-color", "white");
@@ -111,7 +121,7 @@ export function GoogleUiKitMedia({
       cancelled = true;
       host.replaceChildren();
     };
-  }, [near, googlePlaceId, screen]);
+  }, [near, googlePlaceId, screen, contentKey, orientation]);
 
   return <div ref={hostRef} className={styles.uiKitHost} />;
 }

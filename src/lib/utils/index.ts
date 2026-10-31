@@ -35,3 +35,4 @@ export {
 } from "./password-policy";
 export { EMAIL_PATTERN, REQUIRED_MESSAGE } from "./validation";
 export { formatRelativeTime } from "./relative-time";
+export { observedWhen } from './freshness';

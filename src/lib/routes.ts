@@ -12,6 +12,7 @@ export const ROUTES = {
   home: "/",
   planRequests: "/plan-requests",
   explore: "/explore",
+  community: "/community",
   exploreMap: "/explore/map",
   plans: "/plans",
   createPlan: "/plans/create",
@@ -38,10 +39,19 @@ export const ROUTES = {
   adminActivities: "/admin/activities",
   adminMcp: "/admin/mcp",
   adminPlaces: "/admin/places",
+  adminMenus: "/admin/menus",
   adminPlans: "/admin/plans",
   adminReports: "/admin/reports",
   adminUsers: "/admin/users",
 } as const;
+
+export function communityCreatorRoute(username: string): string {
+  return `${ROUTES.community}/creators/${encodeURIComponent(username)}`;
+}
+
+export function communityExperienceRoute(id: number): string {
+  return `${ROUTES.community}/experiences/${id}`;
+}
 
 export type Route = (typeof ROUTES)[keyof typeof ROUTES];
 
@@ -70,9 +80,13 @@ export function planDetailOrigin(
 ): string {
   if (typeof value !== "string") return ROUTES.explore;
   if (
-    [ROUTES.home, ROUTES.explore, ROUTES.plans, ROUTES.favorites].some(
-      (route) => route === value,
-    )
+    [
+      ROUTES.home,
+      ROUTES.explore,
+      ROUTES.community,
+      ROUTES.plans,
+      ROUTES.favorites,
+    ].some((route) => route === value)
   ) {
     return value;
   }

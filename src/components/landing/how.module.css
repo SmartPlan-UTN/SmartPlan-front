@@ -791,3 +791,23 @@
     font-size: 12px;
   }
 }
+
+@media (max-width: 900px) {
+  .staticScene {
+    padding: 20px 20px 36px;
+  }
+
+  .staticHead .title {
+    max-width: 22ch;
+    font-size: clamp(26px, 6vw, 38px);
+    line-height: 1.05;
+  }
+
+  .staticComposer {
+    margin: 20px 0 24px;
+  }
+
+  .staticSteps {
+    margin-top: 14px;
+  }
+}

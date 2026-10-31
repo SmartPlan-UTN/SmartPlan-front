@@ -6,6 +6,7 @@ import {
   useRef,
   type KeyboardEvent,
   type Ref,
+  type ReactNode,
 } from "react";
 
 import { Icon } from "@/components/ui";
@@ -29,6 +30,7 @@ export type ComposerPane = "catalog" | "itinerary";
 type ActivitySortBy = NonNullable<ActivitySearchParams["sortBy"]>;
 
 interface ActivitiesStepProps {
+  places?: ReactNode;
   title: string;
   headingRef: Ref<HTMLHeadingElement>;
   health: DurationHealth;
@@ -77,6 +79,7 @@ interface ActivitiesStepProps {
  * route too) and each keeps its own state while the other is shown.
  */
 export function ActivitiesStep({
+  places,
   title,
   headingRef,
   health,
@@ -240,6 +243,7 @@ export function ActivitiesStep({
           </button>
         </div>
 
+        {mobilePane === 'catalog' ? places : null}
         <CatalogPanel
           catalog={catalog}
           stopNumbers={stopNumbers}
