@@ -1,100 +1,262 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
-import type { CommunityExperience, CommunityPlan, PaginatedResult } from "@/types";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type {
+  CommunityFeedItem,
+  CommunityPlan,
+  PaginatedResult,
+} from "@/types";
 import { CommunityScreen } from "./CommunityScreen";
 
-const getCommunityExperiences = vi.hoisted(() => vi.fn());
+const getCommunityFeed = vi.hoisted(() => vi.fn());
+const getCommunityCreators = vi.hoisted(() => vi.fn());
 const getCommunityPlans = vi.hoisted(() => vi.fn());
-
+const session = vi.hoisted(() => ({status: "anonymous", user: null as {id: number} | null}));
+const push = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/api", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/api")>()),
-  getCommunityExperiences,
+  getCommunityFeed,
+  getCommunityCreators,
   getCommunityPlans,
 }));
-
-const story: CommunityExperience = {
-  id: 3,
-  rating: 5,
-  tags: [],
-  comment: "El atardecer estuvo buenísimo.",
-  isOwn: false,
-  completedAt: "2026-10-01T12:00:00.000Z",
-  author: { alias: "Viajero/a", username: "lucia", avatarUrl: null },
-  photos: [],
+vi.mock("@/context", () => ({
+  useFavorites: () => ({ isPlanSaved: () => false, toggleSavePlan: vi.fn() }),
+}));
+vi.mock("@/lib/auth", async (importActual) => ({
+  ...(await importActual<typeof import("@/lib/auth")>()),
+  useSession: () => session,
+}));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+const plan: CommunityPlan = {
+  id: 8,
+  title: "Una tarde en Mendoza",
+  description: "Un museo y un café.",
+  estimatedTotalCost: null,
+  estimatedTotalCostMax: null,
+  priceCompleteness: "NONE",
+  estimatedTotalDuration: 120,
+  imageUrl: null,
+  authorUsername: "lucia",
+  stops: ["Museo", "Café"],
 };
-
-function plan(title: string): CommunityPlan {
+const planItem: CommunityFeedItem = { kind: "plan", plan };
+const story: CommunityFeedItem = {
+  kind: "experience",
+  experience: {
+    id: 3,
+    rating: 5,
+    tags: [],
+    comment: "El atardecer estuvo buenísimo.",
+    isOwn: false,
+    completedAt: "2026-10-01T12:00:00.000Z",
+    author: { alias: "Viajero/a", username: "lucia", avatarUrl: null },
+    photos: [],
+  },
+};
+function page(
+  data: CommunityFeedItem[],
+  current = 1,
+  totalPages = 1,
+): PaginatedResult<CommunityFeedItem> {
   return {
-    id: title === "En Mendoza" ? 8 : 9,
-    title,
-    description: "Una idea para la próxima salida.",
-    estimatedTotalCost: null,
-    estimatedTotalCostMax: null,
-    priceCompleteness: null,
-    estimatedTotalDuration: 120,
-    imageUrl: null,
-    authorUsername: "lucia",
+    data,
+    pagination: {
+      page: current,
+      limit: 12,
+      total: 12 * totalPages,
+      totalPages,
+    },
   };
 }
 
-function page<T>(data: T[]): PaginatedResult<T> {
-  return { data, pagination: { page: 1, limit: 8, total: data.length, totalPages: 1 } };
-}
-
-function deferred<T>() {
-  let resolve!: (value: T) => void;
-  const promise = new Promise<T>((resolvePromise) => { resolve = resolvePromise; });
-  return { promise, resolve };
-}
+it("loads discovery only after restoring the session and reloads it for another viewer", async () => {
+  getCommunityFeed.mockClear();
+  session.status = "loading";
+  getCommunityFeed.mockResolvedValue(page([story]));
+  getCommunityCreators.mockResolvedValue([]);
+  const view = render(<CommunityScreen />);
+  expect(getCommunityFeed).not.toHaveBeenCalled();
+  session.status = "authenticated";
+  session.user = {id: 7};
+  view.rerender(<CommunityScreen />);
+  await screen.findByText("El atardecer estuvo buenísimo.");
+  session.user = {id: 8};
+  view.rerender(<CommunityScreen />);
+  await waitFor(() => expect(getCommunityFeed).toHaveBeenCalledTimes(2));
+  session.status = "anonymous";
+  session.user = null;
+});
 
 describe("CommunityScreen", () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+    window.history.replaceState(null, "", "/community");
+    getCommunityCreators.mockResolvedValue([]);
+    getCommunityFeed.mockResolvedValue(page([planItem, story]));
+    getCommunityPlans.mockResolvedValue({
+      data: [plan],
+      pagination: { page: 1, limit: 12, total: 1, totalPages: 1 },
+    });
+  });
   afterEach(() => vi.clearAllMocks());
 
-  it("keeps plans discoverable when the lived experiences endpoint fails, with a focused retry", async () => {
-    getCommunityExperiences
-      .mockRejectedValueOnce(new Error("Experiences unavailable"))
-      .mockResolvedValueOnce(page([story]));
-    getCommunityPlans.mockResolvedValue(page([plan("Una tarde en Mendoza")]));
-
-    const user = userEvent.setup();
+  it("shows people, plans and experiences in one feed, including a real route without photos", async () => {
     render(<CommunityScreen />);
-
-    expect(await screen.findByRole("alert")).toHaveTextContent("No pudimos cargar las vivencias");
-    expect(screen.getByRole("link", { name: "Una tarde en Mendoza" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Reintentar" }));
-    expect(await screen.findByText(/El atardecer estuvo buenísimo/)).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: plan.title }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Recorrido" })).toHaveTextContent(
+      "Museo",
+    );
+    expect(screen.getByRole("list", { name: "Recorrido" })).toHaveTextContent(
+      "Café",
+    );
+    expect(
+      screen.getByText("El atardecer estuvo buenísimo."),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /@lucia/ })).toHaveLength(2);
   });
 
-  it("ignores an older search response when a newer search finishes first", async () => {
-    const older = deferred<PaginatedResult<CommunityPlan>>();
-    const newer = deferred<PaginatedResult<CommunityPlan>>();
-    getCommunityExperiences.mockResolvedValue(page([]));
-    getCommunityPlans.mockImplementation(({ q }: { q?: string }) => {
-      if (q === "Mendoza") return older.promise;
-      if (q === "Potrerillos") return newer.promise;
-      return Promise.resolve(page([]));
-    });
-
+  it("filters the whole feed and keeps its query in the shareable URL", async () => {
     const user = userEvent.setup();
     render(<CommunityScreen />);
-    await screen.findByRole("heading", { name: "Así se sintió estar ahí" });
-
-    const search = screen.getByRole("textbox", { name: "Buscar experiencias o planes" });
-    await user.type(search, "Mendoza");
+    await screen.findByRole("heading", { name: plan.title });
+    await user.type(
+      screen.getByRole("textbox", { name: "Buscar experiencias o planes" }),
+      "Potrerillos",
+    );
     await user.click(screen.getByRole("button", { name: "Buscar" }));
-    await user.clear(search);
-    await user.type(search, "Potrerillos");
-    await user.click(screen.getByRole("button", { name: "Buscar" }));
+    await user.click(screen.getByRole("button", { name: "Planes" }));
+    await waitFor(() =>
+      expect(getCommunityPlans).toHaveBeenLastCalledWith({
+        q: "Potrerillos",
+        page: 1,
+        limit: 12,
+        sort: "popular",
+      }),
+    );
+    expect(window.location.search).toBe(
+      "?q=Potrerillos&type=plans&sort=popular",
+    );
+  });
 
-    newer.resolve(page([plan("Una tarde en Potrerillos")]));
-    expect(await screen.findByRole("link", { name: "Una tarde en Potrerillos" })).toBeInTheDocument();
-    older.resolve(page([plan("En Mendoza")]));
-
-    await waitFor(() => {
-      expect(screen.getByRole("link", { name: "Una tarde en Potrerillos" })).toBeInTheDocument();
-      expect(screen.queryByRole("link", { name: "En Mendoza" })).not.toBeInTheDocument();
+  it("does not let an older request replace a newer search", async () => {
+    let resolveOlder!: (result: PaginatedResult<CommunityFeedItem>) => void;
+    getCommunityFeed.mockImplementation(({ q }: { q?: string }) =>
+      q === "Mendoza"
+        ? new Promise((resolve) => {
+            resolveOlder = resolve;
+          })
+        : Promise.resolve(
+            page(
+              q === "Potrerillos"
+                ? [
+                    {
+                      kind: "plan",
+                      plan: {
+                        ...plan,
+                        id: 9,
+                        title: "Una tarde en Potrerillos",
+                      },
+                    },
+                  ]
+                : [],
+            ),
+          ),
+    );
+    const user = userEvent.setup();
+    render(<CommunityScreen />);
+    const input = screen.getByRole("textbox", {
+      name: "Buscar experiencias o planes",
     });
+    await user.type(input, "Mendoza");
+    await user.click(screen.getByRole("button", { name: "Buscar" }));
+    await user.clear(input);
+    await user.type(input, "Potrerillos");
+    await user.click(screen.getByRole("button", { name: "Buscar" }));
+    expect(
+      await screen.findByRole("heading", { name: "Una tarde en Potrerillos" }),
+    ).toBeInTheDocument();
+    await act(async () => {
+      resolveOlder(page([planItem]));
+    });
+    expect(screen.queryByRole("heading", { name: plan.title })).toBeNull();
+  });
+
+  it("retries a failed feed while the discovery sidebar remains usable", async () => {
+    getCommunityFeed.mockRejectedValueOnce(new Error("offline"));
+    getCommunityCreators.mockResolvedValue([
+      {
+        username: "ana",
+        avatarUrl: null,
+        bio: "Siempre al aire libre",
+        planCount: 2,
+        experienceCount: 1,
+      },
+    ]);
+    const user = userEvent.setup();
+    render(<CommunityScreen />);
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "No pudimos cargar",
+    );
+    expect(screen.getByRole("link", { name: /@ana/ })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Reintentar" }));
+    expect(
+      await screen.findByRole("heading", { name: plan.title }),
+    ).toBeInTheDocument();
+  });
+
+  it("loads the next page without duplicating publications already seen", async () => {
+    getCommunityFeed
+      .mockResolvedValueOnce(page([planItem], 1, 2))
+      .mockResolvedValueOnce(page([planItem, story], 2, 2));
+    const user = userEvent.setup();
+    render(<CommunityScreen />);
+    await user.click(
+      await screen.findByRole("button", { name: "Ver más publicaciones" }),
+    );
+    expect(
+      await screen.findByText("El atardecer estuvo buenísimo."),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: plan.title })).toHaveLength(
+      1,
+    );
+  });
+
+  it("offers a useful first contribution without inventing public activity", async () => {
+    getCommunityFeed.mockResolvedValue(page([]));
+    render(<CommunityScreen />);
+    expect(
+      await screen.findByRole("heading", {
+        name: "El próximo buen plan puede ser tuyo",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Crear un plan" })).toHaveAttribute(
+      "href",
+      "/plans/create",
+    );
+    expect(
+      screen.getByRole("link", { name: /Compartir una experiencia/ }),
+    ).toHaveAttribute("href", "/outings");
+  });
+
+  it("does not show an empty ranking while the people request is still pending", async () => {
+    let resolvePeople!: (people: []) => void;
+    getCommunityCreators.mockReturnValue(
+      new Promise((resolve) => {
+        resolvePeople = resolve;
+      }),
+    );
+    render(<CommunityScreen />);
+
+    expect(screen.getByRole("status", { name: "Cargando personas" })).toBeInTheDocument();
+    expect(
+      screen.queryByText(/me gusta en experiencias/),
+    ).toBeNull();
+
+    resolvePeople([]);
+    expect(
+      await screen.findByText(/me gusta en experiencias/),
+    ).toBeInTheDocument();
   });
 });

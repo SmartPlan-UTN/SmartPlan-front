@@ -16,6 +16,7 @@ import {
   assistantSuggest,
   createPlanFromComposer,
   getActivity,
+  getPlan,
   listCategories,
   searchActivities,
   suggestActivities,
@@ -45,6 +46,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
     listCategories: vi.fn(),
     suggestActivities: vi.fn(),
     getActivity: vi.fn(),
+    getPlan: vi.fn(),
     assistantSearch: vi.fn(),
     assistantSuggest: vi.fn(),
     assistantImprove: vi.fn(),
@@ -166,6 +168,56 @@ describe("PlanComposer creation flow", () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it("can save a new draft after explicitly detaching an unavailable inspiration", async () => {
+    const user = userEvent.setup();
+    vi.mocked(getPlan).mockRejectedValueOnce(new ApiError({ type: "HTTP", status: 404, message: "gone" }));
+    render(<CreatePlanForm inspiredByPlanId={123} />);
+    await user.click(await screen.findByRole("button", { name: "Continuar sin inspiración" }));
+    await reachActivities(user);
+    await user.click(await screen.findByRole("button", { name: "Agregar Actividad 1" }));
+    await user.click(screen.getByRole("button", { name: /Revisar plan/ }));
+    await user.click(screen.getByRole("button", { name: /Crear plan/ }));
+    await waitFor(() => expect(createPlanFromComposer).toHaveBeenCalledOnce());
+    expect(vi.mocked(createPlanFromComposer).mock.calls[0][0]).not.toHaveProperty("inspiredByPlanId");
+    expect(vi.mocked(createPlanFromComposer).mock.calls[0][0].stops).toEqual([{activityId: 1}]);
+  });
+
+  it("preserves the adapted draft when inspiration becomes unavailable during save", async () => {
+    const user = userEvent.setup();
+    const source = { ...canonicalPlan(), details: [{ ...canonicalPlan().details[0], activity: { ...activity(15), locations: [] } }] };
+    vi.mocked(getPlan).mockResolvedValueOnce(source as unknown as Awaited<ReturnType<typeof getPlan>>);
+    render(<CreatePlanForm inspiredByPlanId={123} />);
+    await screen.findByLabelText("Nombre de tu versión");
+    await user.click(screen.getByRole("button", { name: "Así está bien, revisar" }));
+    vi.mocked(createPlanFromComposer).mockRejectedValueOnce(new ApiError({ type: "HTTP", status: 400, code: "INSPIRATION_NOT_AVAILABLE", message: "gone" }));
+    await user.click(screen.getByRole("button", { name: /Crear plan/ }));
+    await user.click(await screen.findByRole("button", { name: "Continuar sin inspiración" }));
+    await user.click(screen.getByRole("button", { name: /Crear plan/ }));
+    await waitFor(() => expect(createPlanFromComposer).toHaveBeenCalledTimes(2));
+    expect(vi.mocked(createPlanFromComposer).mock.calls[0][0]).toHaveProperty("inspiredByPlanId", 123);
+    expect(vi.mocked(createPlanFromComposer).mock.calls[1][0]).not.toHaveProperty("inspiredByPlanId");
+    expect(vi.mocked(createPlanFromComposer).mock.calls[1][0].stops).toEqual([{activityId: 15}]);
+    expect(vi.mocked(createPlanFromComposer).mock.calls[1][0].title).toBe("Mi versión de Sábado entre viñas");
+  });
+
+  it("removes and restores only the selected action when two stops share a place", async () => {
+    const user = userEvent.setup();
+    const place = { id: 42, name: "Un café", latitude: null, longitude: null };
+    const plan = { ...canonicalPlan(), details: ["coffee", "meal"].map((action, index) => ({
+      id: 501 + index, order: index + 1, activity: null, estimatedCost: null, estimatedDuration: 60,
+      stop: {place, action, actionLabel: action},
+    })) } as unknown as OwnPlanDetail;
+    render(<PlanComposer mode="edit" plan={plan} />);
+    await user.click(screen.getByRole("button", {name: /Elegir actividades/}));
+    const rows = screen.getByRole("list", {name: "Paradas en orden"});
+    await user.click(within(rows).getAllByRole("button", {name: "Opciones de Un café"})[0]);
+    await user.click(screen.getByRole("menuitem", {name: /Quitar del recorrido/}));
+    await waitFor(() => expect(within(rows).getAllByRole("listitem")).toHaveLength(1));
+    expect(within(rows).getByText("meal")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", {name: /Deshacer/}));
+    await waitFor(() => expect(within(rows).getAllByRole("listitem")).toHaveLength(2));
   });
 
   it("waits until Recorrido to load the catalog and focuses its headline", async () => {
@@ -336,7 +388,7 @@ describe("PlanComposer creation flow", () => {
     await reachActivities(user);
 
     expect(
-      await screen.findByRole("heading", { name: "Ideas para tu plan" }),
+      await screen.findByRole("heading", { name: "Sábado entre viñas" }),
     ).toBeInTheDocument();
     expect(await screen.findByText("Degustación sugerida")).toBeInTheDocument();
     expect(suggestActivities).toHaveBeenCalledWith({
@@ -354,7 +406,7 @@ describe("PlanComposer creation flow", () => {
     );
     const stopList = screen.getByRole("list", { name: "Paradas en orden" });
     expect(within(stopList).getByText("Degustación sugerida")).toBeInTheDocument();
-    // It moved from the ideas to the route: it is no longer offered again.
+    // It moved from the suggestions to the route: it is not offered again.
     expect(
       screen.queryByRole("button", { name: "Agregar Degustación sugerida" }),
     ).not.toBeInTheDocument();
@@ -396,7 +448,7 @@ describe("PlanComposer creation flow", () => {
     );
     expect(
       screen.queryByRole("heading", {
-        name: /Ideas para tu plan|Para completar tu recorrido/,
+        name: /Sugerencias para tu plan|Para completar tu recorrido/,
       }),
     ).not.toBeInTheDocument();
   });

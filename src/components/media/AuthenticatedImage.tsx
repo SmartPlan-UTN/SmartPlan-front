@@ -23,6 +23,8 @@ interface AuthenticatedImageProps {
   attribution?: 'compact' | 'full' | 'external';
   /** Drawn instead of the neutral placeholder when there is no image to show. */
   fallback?: ReactNode;
+  /** Useful content while downloading, for surfaces that already have a route preview. */
+  loadingFallback?: ReactNode;
   /** Where the credit sits: `top` clears a hero whose title covers the bottom. */
   attributionPlacement?: 'bottom' | 'top';
   onUnavailable?: () => void;
@@ -34,7 +36,7 @@ interface LoadedImage {
 }
 
 export function AuthenticatedImage({
-  url, alt, className, width = 320, height = 180, attribution = 'compact', fallback, attributionPlacement = 'bottom', onUnavailable,
+  url, alt, className, width = 320, height = 180, attribution = 'compact', fallback, loadingFallback, attributionPlacement = 'bottom', onUnavailable,
 }: AuthenticatedImageProps) {
   const unavailableRef = useRef(onUnavailable);
   useEffect(() => { unavailableRef.current = onUnavailable; }, [onUnavailable]);
@@ -67,7 +69,7 @@ export function AuthenticatedImage({
   if (!url || error) {
     return fallback ?? <span className={styles.placeholder} role="img" aria-label={`Sin imagen de ${alt}`} />;
   }
-  if (!image) return <span className={styles.skeleton} role="status" aria-label={`Cargando imagen de ${alt}`} />;
+  if (!image) return loadingFallback ?? <span className={styles.skeleton} role="status" aria-label={`Cargando imagen de ${alt}`} />;
 
   const picture = <Image unoptimized src={image.source} alt={alt} width={width} height={height} className={className ?? styles.image} onError={() => { setError(true); unavailableRef.current?.(); }} />;
   if (!image.attribution || attribution === 'external') return picture;

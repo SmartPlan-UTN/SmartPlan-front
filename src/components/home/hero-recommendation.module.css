@@ -101,6 +101,10 @@
   text-transform: uppercase;
 }
 
+.sourceLabel {
+  color: var(--ember);
+}
+
 .kickerLine > span + span::before {
   content: "·";
   margin-right: 10px;

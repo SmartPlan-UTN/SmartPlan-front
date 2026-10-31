@@ -10,7 +10,7 @@ export const VISIBILITY_COPY = {
     private: "Privado",
   } satisfies Record<PlanVisibility, string>,
   hint: {
-    public: "Cualquiera puede encontrarlo en Explorar y elegirlo.",
+    public: "Cualquiera puede encontrarlo en Comunidad, en Explorar y en búsquedas que coincidan.",
     private: "Solo vos lo ves.",
   } satisfies Record<PlanVisibility, string>,
   action: {
@@ -20,13 +20,13 @@ export const VISIBILITY_COPY = {
   dialog: {
     publish: {
       title: "¿Publicar este plan?",
-      body: "Va a aparecer en Explorar y en las recomendaciones, y otras personas van a poder elegirlo. Podés volverlo privado cuando quieras.",
+      body: "Se va a compartir con tu usuario y foto de perfil en Comunidad, Explorar y búsquedas que coincidan. Otras personas podrán guardarlo, elegirlo o crear su versión con crédito a tu plan. Podés volverlo privado cuando quieras.",
       confirm: "Sí, publicar",
       confirming: "Publicando…",
     },
     unpublish: {
       title: "¿Hacer privado este plan?",
-      body: "Deja de aparecer en Explorar y en las recomendaciones. Las salidas que otras personas ya eligieron no cambian.",
+      body: "Deja de aparecer en Comunidad, Explorar y las recomendaciones. Las salidas que otras personas ya eligieron y las experiencias que compartieron no cambian.",
       confirm: "Sí, hacer privado",
       confirming: "Guardando…",
     },

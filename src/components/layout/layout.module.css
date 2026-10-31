@@ -163,6 +163,66 @@
   gap: var(--s-2);
   min-width: 0;
 }
+.mobileCreatePlan {
+  display: none;
+}
+@media (max-width: 359px) {
+  .mobileCreatePlanWord {
+    display: none;
+  }
+}
+
+@media (max-width: 899px) {
+  .navbarInner {
+    column-gap: var(--s-2);
+  }
+  .mobileCreatePlan {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 4px 10px 4px 5px;
+    border: 1px solid var(--ember-20);
+    border-radius: var(--r-chip);
+    background: var(--surface-card);
+    color: var(--char);
+    font-size: var(--t-label);
+    font-weight: var(--w-heading);
+    text-decoration: none;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--char) 5%, transparent);
+  }
+  .mobileCreatePlanIcon {
+    display: grid;
+    flex: 0 0 28px;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--ember);
+    color: var(--char);
+  }
+  .mobileCreatePlan:hover {
+    border-color: var(--ember);
+    background: var(--ember-04);
+    box-shadow: 0 3px 10px var(--ember-10);
+  }
+  .mobileCreatePlan:active {
+    background: var(--ember-10);
+  }
+  .mobileCreatePlan:focus-visible {
+    outline: 2px solid var(--ember);
+    outline-offset: 2px;
+  }
+}
+
+@media (max-width: 899px) and (prefers-reduced-motion: no-preference) {
+  .mobileCreatePlan {
+    transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+  }
+}
 
 /* ── Navbar links ─────────────────────────────────────────────── */
 .link {
@@ -382,7 +442,7 @@
   left: max(var(--s-3), env(safe-area-inset-left));
   z-index: 55;
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: end;
   min-height: var(--mobile-nav-h);
   padding: 5px 6px;

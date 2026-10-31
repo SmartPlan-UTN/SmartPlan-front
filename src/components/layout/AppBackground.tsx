@@ -15,6 +15,11 @@ function isComposerRoute(pathname: string): boolean {
   );
 }
 
+/** Community is content-first: photographs and people, no decorative canvas. */
+function isCommunityRoute(pathname: string): boolean {
+  return isActiveRoute(pathname, ROUTES.community);
+}
+
 const AUTH_ROUTES = [
   ROUTES.login,
   ROUTES.signup,
@@ -41,7 +46,7 @@ export function AppBackground() {
   // The composer is a working surface: dense, interactive, and read for long
   // stretches. The waves stay out of it entirely; its identity comes from the
   // route itself, type, motion and the terracotta accents.
-  if (isComposerRoute(pathname)) return null;
+  if (isComposerRoute(pathname) || isCommunityRoute(pathname)) return null;
 
   // The landing owns its own quiet cream-to-sand surface. Keeping the shared
   // canvas out of this route preserves the composer hierarchy and avoids

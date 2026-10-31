@@ -1,89 +1,58 @@
 import { render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import type { CommunityExperience, CommunityPlan } from "@/types";
-import { CommunityFindings, communitySearchQuery } from "./CommunityFindings";
+import { describe, expect, it } from "vitest";
+import type { CommunityPlanRecommendation } from "@/types";
+import { CommunityFindings } from "./CommunityFindings";
 
-const getCommunityExperiences = vi.hoisted(() => vi.fn());
-const getCommunityPlans = vi.hoisted(() => vi.fn());
-vi.mock("@/lib/api", async (importActual) => ({
-  ...(await importActual<typeof import("@/lib/api")>()),
-  getCommunityExperiences,
-  getCommunityPlans,
-}));
-
-const experience: CommunityExperience = {
-  id: 12,
-  rating: 5,
-  tags: [],
-  comment: "La plaza se disfruta mejor al atardecer.",
-  isOwn: false,
-  completedAt: "2026-10-01T12:00:00.000Z",
-  author: { alias: "Viajero/a", username: "lucia", avatarUrl: null },
-  inspiredBy: { id: 43, title: "Una tarde sin apuro", creatorUsername: "viajero1" },
-  photos: [],
-};
-
-const idea: CommunityPlan = {
+const plan: CommunityPlanRecommendation = {
   id: 43,
   title: "Una tarde sin apuro",
   description: "Un recorrido para inspirar una salida.",
   estimatedTotalCost: 37000,
-  estimatedTotalCostMax: 37000,
-  priceCompleteness: "EXACT",
+  estimatedTotalCostMax: 42000,
+  currentPriceMin: 37000,
+  currentPriceMax: 42000,
+  priceCompleteness: "RANGE",
   estimatedTotalDuration: 360,
   imageUrl: null,
+  imageSource: null,
   authorUsername: "viajero1",
+  authorAvatarUrl: null,
+  peopleCount: 2,
+  stops: ["Museo", "Café"],
+  experienceCount: 2,
+  adaptationCount: 1,
+  sharedAverageRating: 4.5,
+  sharedExperienceCount: 2,
+  latestExperienceAt: "2026-10-01T12:00:00.000Z",
+  decisionGrade: true,
+  matchReasons: ["covers_experiences", "fits_location"],
+  uncertainties: [],
+  inspiredBy: null,
 };
 
-function page<T>(data: T[]) {
-  return { data, pagination: { page: 1, limit: 3, total: data.length, totalPages: 1 } };
-}
-
 describe("CommunityFindings", () => {
-  afterEach(() => vi.clearAllMocks());
-
-  it("shows lived stories separately from ideas and marks old experience context", async () => {
-    getCommunityExperiences.mockResolvedValue(page([experience]));
-    getCommunityPlans.mockResolvedValue(page([idea]));
-
+  it("shows matching public plans without promoting them above the generated proposals", () => {
     render(
-      <CommunityFindings query="Tengo ganas de salir esta noche, ¿qué hay para hacer por Mendoza?" />,
+      <CommunityFindings
+        recommendations={[plan]}
+        returnTo="/plan-requests/15"
+      />,
     );
 
-    expect(await screen.findByText("La comunidad también encontró esto")).toBeInTheDocument();
-    expect(getCommunityPlans).toHaveBeenCalledWith({ q: "Mendoza", limit: 3 });
-    expect(screen.getByText("Las vivencias cuentan salidas pasadas. SmartPlan no toma sus precios ni horarios como vigentes; revisalos antes de ir.")).toBeInTheDocument();
-    expect(screen.getByText("Vivida")).toBeInTheDocument();
-    expect(screen.getByText("Idea", { selector: "span" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Inspirado en · Una tarde sin apuro" })).toHaveAttribute("href", "/plans/43");
+    expect(
+      screen.getByRole("heading", { name: "Planes de la comunidad" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("La mejor para esta búsqueda")).toBeNull();
+    expect(screen.getByText("Incluye lo que buscabas")).toBeInTheDocument();
+    expect(screen.getByText("4.5 / 5")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Ver plan/ })).toHaveAttribute(
+      "href",
+      "/plans/43?from=%2Fplan-requests%2F15",
+    );
   });
 
-  it("does not leave stale matches visible after a new query has no results", async () => {
-    getCommunityExperiences.mockResolvedValueOnce(page([experience])).mockResolvedValueOnce(page([]));
-    getCommunityPlans.mockResolvedValueOnce(page([idea])).mockResolvedValueOnce(page([]));
-    const { rerender } = render(<CommunityFindings query="una tarde" />);
-
-    expect(await screen.findByText("La comunidad también encontró esto")).toBeInTheDocument();
-    rerender(<CommunityFindings query="otra cosa" />);
-
-    expect(screen.queryByText("La comunidad también encontró esto")).toBeNull();
-    expect(screen.queryByText("Una tarde sin apuro")).toBeNull();
-  });
-});
-
-describe("communitySearchQuery", () => {
-  it.each([
-    ["Una cena tranquila en Mendoza", "Mendoza"],
-    ["Tengo ganas de salir esta noche, ¿qué hay para hacer por Mendoza?", "Mendoza"],
-    ["Salir en pareja en Godoy Cruz", "Godoy Cruz"],
-    ["Cena en Chacras con amigos", "Chacras"],
-    ["Algo en Maipú para hoy", "Maipú"],
-  ])("finds the destination in %j", (query, destination) => {
-    expect(communitySearchQuery(query)).toBe(destination);
-  });
-
-  it("keeps the whole idea when it names no place", () => {
-    expect(communitySearchQuery("Una salida en pareja")).toBe("Una salida en pareja");
-    expect(communitySearchQuery("Una cita con hasta $80.000")).toBe("Una cita con hasta $80.000");
+  it("renders no editorial section when ranking has no relevant public plans", () => {
+    const { container } = render(<CommunityFindings recommendations={[]} />);
+    expect(container.firstChild).toBeNull();
   });
 });

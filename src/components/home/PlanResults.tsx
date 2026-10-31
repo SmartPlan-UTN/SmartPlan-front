@@ -6,11 +6,7 @@ import { PLAN_SELECTION } from "@/components/plan/planSelectionContent";
 import { Button, Icon } from "@/components/ui";
 import { usePlanSelection, useReducedMotion } from "@/hooks";
 import { buildPlanPins } from "@/lib/maps/buildPlanPins";
-import {
-  anchorOf,
-  itineraryOf,
-  planHeadline,
-} from "@/lib/plans/story";
+import { anchorOf, itineraryOf, planHeadline } from "@/lib/plans/story";
 import { stopClock, stopLabel, stopPlace } from "@/lib/plans/stops";
 import type {
   PlanDetailResult,
@@ -20,6 +16,7 @@ import type {
 } from "@/types";
 
 import { DecisionTrail } from "./DecisionTrail";
+import { CommunityFindings } from "@/components/community/CommunityFindings";
 import { HeroRecommendation } from "./HeroRecommendation";
 import { ResultsMap, type ResultsMapHandle } from "./ResultsMap";
 import { UnderstandingChips } from "./ResultsHeader";
@@ -28,17 +25,17 @@ import styles from "./results-story.module.css";
 export interface PlanResultsProps {
   plans: PlanDetailResult[];
   returnTo?: string;
-  /** The free-text idea that produced these plans. `null`/absent for surprise mode. */
+  /** The person's request that produced these plans. `null`/absent for surprise mode. */
   query?: string | null;
   /** What the system understood from the request (budget/location/party size/categories). */
   resolvedContext?: ResolvedPlanContext | null;
-  /** "Entendí la idea" from the planning engine. */
+  /** "Entendí lo que buscás" from the planning engine. */
   understanding?: PlanUnderstanding | null;
   /** Real counts of what the planner did. */
   funnel?: PlanFunnel | null;
   /** Asked-for experiences SmartPlan cannot plan yet ("Cine"). */
   unsupportedExperiences?: string[];
-  /** Back to the composer with the previous idea loaded, ready to edit. */
+  /** Back to the composer with the previous request loaded, ready to edit. */
   onAdjust: () => void;
   onDiscard: () => void;
   /** Hidden when there is nothing to adjust (a surprise plan has no query). */
@@ -47,7 +44,7 @@ export interface PlanResultsProps {
   mode?: "auto" | "surprise";
   /** One-line note under the header (e.g. fallback / no-preferences, CU19). */
   note?: string | null;
-  /** The screen already shows its own header (editable idea + chips). */
+  /** The screen already shows its own header (editable request + chips). */
   hideHeader?: boolean;
   /** Creates a fresh surprise request from the same coordinates (CU19). */
   onRegenerate?: () => void;
@@ -63,6 +60,8 @@ export interface PlanResultsProps {
   onSelectionReconcile?: () => void;
   /** Adjustments under the recommendation ("Más tranqui", change a stop…). */
   renderRefinement?: (plan: PlanDetailResult) => ReactNode;
+  /** Matching public plans appear below the itinerary and map, before the footer. */
+  communityRecommendations?: import("@/types").CommunityPlanRecommendation[];
 }
 
 /** CU17 and CU19 both surface at most three alternatives. */
@@ -88,7 +87,9 @@ function directionsLink(plan: PlanDetailResult): string | null {
   const destination =
     place.latitude != null && place.longitude != null
       ? `${place.latitude},${place.longitude}`
-      : [place.name, place.address, place.departmentName ?? "Mendoza"].filter(Boolean).join(" ");
+      : [place.name, place.address, place.departmentName ?? "Mendoza"]
+          .filter(Boolean)
+          .join(" ");
   return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
 }
 
@@ -124,9 +125,13 @@ export function PlanResults({
   onPlanSelected,
   onSelectionReconcile,
   renderRefinement,
+  communityRecommendations = [],
 }: PlanResultsProps) {
   const surprise = mode === "surprise";
-  const visiblePlans = useMemo(() => plans.slice(0, MAX_VISIBLE_PLANS), [plans]);
+  const visiblePlans = useMemo(
+    () => plans.slice(0, MAX_VISIBLE_PLANS),
+    [plans],
+  );
   const reducedMotion = useReducedMotion();
 
   const selection = usePlanSelection();
@@ -150,8 +155,7 @@ export function PlanResults({
   }, [mapPins]);
 
   const hero = visiblePlans[0] ?? null;
-  const focused =
-    visiblePlans.find((plan) => plan.id === focusedId) ?? hero;
+  const focused = visiblePlans.find((plan) => plan.id === focusedId) ?? hero;
   const focusedPins = mapPins.find((pin) => pin.planId === focused?.id);
   const anyPins = mapPins.some((pin) => pin.stops.length > 0);
 
@@ -213,7 +217,7 @@ export function PlanResults({
           <div className={styles.footerActions}>
             {canAdjust ? (
               <Button variant="ghostEmber" onClick={onAdjust}>
-                Ajustar la idea
+                Ajustar la búsqueda
               </Button>
             ) : null}
             {surprise && onRegenerate ? (
@@ -283,7 +287,8 @@ export function PlanResults({
           No encontramos opciones verificables para{" "}
           {unsupportedExperiences
             .map((experience) => experience.toLocaleLowerCase("es-AR"))
-            .join(", ")}. Estas propuestas son alternativas y no incluyen{" "}
+            .join(", ")}
+          . Estas propuestas son alternativas y no incluyen{" "}
           {unsupportedExperiences.length === 1
             ? "esa experiencia."
             : "esas experiencias."}
@@ -291,7 +296,11 @@ export function PlanResults({
       ) : null}
 
       {visiblePlans.length > 1 ? (
-        <div className={styles.switcher} role="group" aria-label="Elegir un plan">
+        <div
+          className={styles.switcher}
+          role="group"
+          aria-label="Elegir un plan"
+        >
           {visiblePlans.map((plan, index) => (
             <button
               key={plan.id}
@@ -305,7 +314,9 @@ export function PlanResults({
               }}
             >
               <span className={styles.tabDot} aria-hidden="true" />
-              <span className={styles.tabLabel}>{optionLabel(plan, index)}</span>
+              <span className={styles.tabLabel}>
+                {optionLabel(plan, index)}
+              </span>
               <span className={styles.tabPlan}>{planHeadline(plan)}</span>
             </button>
           ))}
@@ -337,14 +348,17 @@ export function PlanResults({
               {focusedItinerary.length > 1 ? (
                 <ol className={styles.stops}>
                   {focusedItinerary.map((item, index) => {
-                    const leg = focusedItinerary[index + 1]?.stop?.legTravelMinutes;
+                    const leg =
+                      focusedItinerary[index + 1]?.stop?.legTravelMinutes;
                     return (
                       <li key={item.id}>
                         <span className={styles.stopNumber} aria-hidden="true">
                           {index + 1}
                         </span>
                         <span className={styles.stopText}>
-                          <strong>{stopPlace(item)?.name ?? stopLabel(item)}</strong>
+                          <strong>
+                            {stopPlace(item)?.name ?? stopLabel(item)}
+                          </strong>
                           <small>
                             {[stopClock(item), stopLabel(item)]
                               .filter(Boolean)
@@ -364,7 +378,10 @@ export function PlanResults({
                 </ol>
               ) : (
                 <p className={styles.address}>
-                  {[focusedAnchor?.place?.address, focusedAnchor?.place?.departmentName]
+                  {[
+                    focusedAnchor?.place?.address,
+                    focusedAnchor?.place?.departmentName,
+                  ]
                     .filter(Boolean)
                     .join(" · ") || "Ubicación a confirmar"}
                 </p>
@@ -382,13 +399,17 @@ export function PlanResults({
           ) : null}
 
           {directions ? (
-            <a className={styles.directions} href={directions} target="_blank" rel="noreferrer">
+            <a
+              className={styles.directions}
+              href={directions}
+              target="_blank"
+              rel="noreferrer"
+            >
               <Icon name="route" size={15} aria-hidden="true" />
               Cómo llegar
               <Icon name="external-link" size={13} aria-hidden="true" />
             </a>
           ) : null}
-
         </div>
 
         <div className={styles.mapFrame}>
@@ -421,8 +442,16 @@ export function PlanResults({
         </div>
       </section>
 
+      <CommunityFindings
+        recommendations={communityRecommendations}
+        returnTo={returnTo}
+      />
+
       {funnel ? (
-        <DecisionTrail funnel={funnel} finalists={visiblePlans.length} />
+        <details className={styles.decisionDetails}>
+          <summary>Cómo elegimos estos planes</summary>
+          <DecisionTrail funnel={funnel} finalists={visiblePlans.length} />
+        </details>
       ) : null}
 
       <div className={styles.footerActions}>

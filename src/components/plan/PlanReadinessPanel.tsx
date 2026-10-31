@@ -10,7 +10,7 @@ import type {
 import styles from "./readiness.module.css";
 
 const STATUS: Record<PlanReadinessStage, { label: string; summary: string; icon: IconName }> = {
-  SUGGESTED: { label: "Tu idea de salida", summary: "Elegí cuándo ir para revisar los horarios.", icon: "circle-help" },
+  SUGGESTED: { label: "Tu plan para salir", summary: "Elegí cuándo ir para revisar los horarios.", icon: "circle-help" },
   FEASIBLE: { label: "Algunos detalles por confirmar", summary: "Revisá los horarios y precios de las paradas antes de salir.", icon: "info" },
   VERIFIED: { label: "Datos revisados", summary: "Revisá las aclaraciones del recorrido antes de elegirlo.", icon: "circle-check" },
   PREPARATION_REQUIRED: { label: "Te queda algo por resolver", summary: "Completá los pasos pendientes antes de salir.", icon: "clock" },

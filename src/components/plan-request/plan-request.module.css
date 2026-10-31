@@ -17,6 +17,14 @@
   width: 100%;
 }
 
+.otherProposals {
+  width: min(100%, 1240px);
+  margin: var(--s-7) auto var(--s-4);
+  color: var(--fg-2);
+  font-size: var(--t-h3);
+  font-weight: var(--w-display);
+}
+
 .refiningNote {
   width: min(100%, 1240px);
   margin: 0 auto var(--s-4);

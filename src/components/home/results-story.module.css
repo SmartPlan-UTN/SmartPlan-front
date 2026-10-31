@@ -371,3 +371,7 @@
     display: none;
   }
 }
+.decisionDetails { width: min(100%, 1240px); margin: 28px auto 0; color: var(--fg-2); font-size: var(--t-small); }
+.decisionDetails > summary { display: list-item; width: fit-content; min-height: 44px; padding-block: 12px; cursor: pointer; }
+.decisionDetails > summary:focus-visible { outline: 2px solid var(--ember); outline-offset: 4px; border-radius: 4px; }
+.decisionDetails > section { margin-top: 12px; }

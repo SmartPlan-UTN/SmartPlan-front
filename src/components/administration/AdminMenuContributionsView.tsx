@@ -33,7 +33,7 @@ export function AdminMenuContributionsView() {
       {!loading && !items.length && !error ? <div className={styles.empty}><span><Icon name="check" size={20} /></span><h2>Todo revisado</h2><p>Los nuevos aportes van a aparecer acá.</p></div> : null}
       <div className={styles.list}>{items.map((item) => (
         <article className={styles.card} key={item.id}>
-          <div className={styles.cardTop}><div><span className={styles.place}>{item.placeName}</span><span className={styles.meta}>Aportó {item.contributor} · {new Date(item.submittedAt).toLocaleDateString('es-AR')}</span></div><span className={styles.pending}>pendiente</span></div>
+          <div className={styles.cardTop}><div><span className={styles.place}>{item.placeName}</span><span className={styles.meta}>{item.contributor ? `Aportó ${item.contributor} · ` : ''}{new Date(item.submittedAt).toLocaleDateString('es-AR')}</span></div><span className={styles.pending}>pendiente</span></div>
           {item.sourceUrl ? <a className={styles.source} href={item.sourceUrl} target="_blank" rel="noreferrer">Abrir carta o fuente <Icon name="external-link" size={14} /></a> : null}
           {!item.sourceUrl ? <label className={styles.sourceInput}>Enlace público que confirma esta carta<input type="url" value={sourceUrls[item.id] ?? ''} onChange={(event) => setSourceUrls((current) => ({ ...current, [item.id]: event.target.value }))} placeholder="https://sitio-oficial/..." /></label> : null}
           {item.menuText ? <pre className={styles.text}>{item.menuText}</pre> : null}

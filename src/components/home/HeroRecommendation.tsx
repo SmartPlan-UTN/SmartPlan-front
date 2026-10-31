@@ -7,7 +7,11 @@ import { GoogleUiKitMedia } from "@/components/media/GoogleUiKitMedia";
 import { PLAN_SELECTION } from "@/components/plan/planSelectionContent";
 import { Button, Icon } from "@/components/ui";
 import { outingDetailRoute, planDetailRoute, ROUTES } from "@/lib/routes";
-import { hasMoneyToShow, planMoneyLine, planPerPersonLine } from "@/lib/plans/planMoney";
+import {
+  hasMoneyToShow,
+  planMoneyLine,
+  planPerPersonLine,
+} from "@/lib/plans/planMoney";
 import {
   anchorOf,
   compactHours,
@@ -42,15 +46,20 @@ export interface HeroRecommendationProps {
   refinement?: ReactNode;
 }
 
-const KICKER: Record<NonNullable<PlanDetailResult["insight"]>["role"], string> = {
-  BEST: "Este es el que elegiría",
-  VALUE: "Lo mejor para tu bolsillo",
-  DIFFERENT: "Una apuesta distinta",
-  ALTERNATIVE: "Mi recomendación",
-};
+const KICKER: Record<NonNullable<PlanDetailResult["insight"]>["role"], string> =
+  {
+    BEST: "Este es el que elegiría",
+    VALUE: "Lo mejor para tu bolsillo",
+    DIFFERENT: "Una apuesta distinta",
+    ALTERNATIVE: "Mi recomendación",
+  };
 
 /** A representative order from the official menu, expandable. */
-function OrderSuggestion({ order }: { order: NonNullable<StopInsight["order"]> }) {
+function OrderSuggestion({
+  order,
+}: {
+  order: NonNullable<StopInsight["order"]>;
+}) {
   const [open, setOpen] = useState(false);
   const [now] = useState(() => new Date());
   const when = observedWhen(order.observedAt, now);
@@ -89,8 +98,7 @@ function OrderSuggestion({ order }: { order: NonNullable<StopInsight["order"]> }
             <a href={order.sourceUrl} target="_blank" rel="noreferrer">
               carta oficial
             </a>
-            {when ? `, revisada ${when}` : ""}
-            . Extras y propina aparte.
+            {when ? `, revisada ${when}` : ""}. Extras y propina aparte.
           </p>
         </div>
       ) : null}
@@ -108,7 +116,11 @@ function Row({
   muted?: boolean;
 }) {
   return (
-    <div className={[styles.row, muted ? styles.rowMuted : ""].filter(Boolean).join(" ")}>
+    <div
+      className={[styles.row, muted ? styles.rowMuted : ""]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <dt>{label}</dt>
       <dd>{children}</dd>
     </div>
@@ -172,7 +184,11 @@ export function HeroRecommendation({
       onMouseLeave={() => onDeactivate(plan.id)}
       onFocus={() => onActivate(plan.id)}
       onBlur={() => onDeactivate(plan.id)}
-      className={[styles.hero, active ? styles.heroActive : "", intended ? styles.heroChosen : ""]
+      className={[
+        styles.hero,
+        active ? styles.heroActive : "",
+        intended ? styles.heroChosen : "",
+      ]
         .filter(Boolean)
         .join(" ")}
       style={{ ["--accent" as string]: accentColor }}
@@ -194,6 +210,7 @@ export function HeroRecommendation({
 
       <div className={styles.story}>
         <p className={styles.kickerLine}>
+          <span className={styles.sourceLabel}>Propuesta de SmartPlan</span>
           {place?.name ? <span>{place.name}</span> : null}
           {place?.departmentName ? <span>{place.departmentName}</span> : null}
           {insight?.decisionGrade ? (
@@ -205,7 +222,10 @@ export function HeroRecommendation({
         </p>
 
         <h2 id={`hero-${plan.id}`} className={styles.name}>
-          <Link href={planDetailRoute(plan.id, returnTo)} className={styles.nameLink}>
+          <Link
+            href={planDetailRoute(plan.id, returnTo)}
+            className={styles.nameLink}
+          >
             {headline}
           </Link>
         </h2>
@@ -222,7 +242,11 @@ export function HeroRecommendation({
         <dl className={styles.ledger}>
           <Row
             label="Precio"
-            muted={multi ? !hasMoneyToShow(plan) : !stopInsight?.price && !stopInsight?.priceLive}
+            muted={
+              multi
+                ? !hasMoneyToShow(plan)
+                : !stopInsight?.price && !stopInsight?.priceLive
+            }
           >
             {multi && money.note === "total estimado" ? (
               <>
@@ -271,14 +295,12 @@ export function HeroRecommendation({
               </>
             )}
           </Row>
-          {place?.address ? (
-            <Row label="Dónde">
-              {place.address}
-            </Row>
-          ) : null}
+          {place?.address ? <Row label="Dónde">{place.address}</Row> : null}
         </dl>
 
-        {stopInsight?.order ? <OrderSuggestion order={stopInsight.order} /> : null}
+        {stopInsight?.order ? (
+          <OrderSuggestion order={stopInsight.order} />
+        ) : null}
 
         <section className={styles.why} aria-label="Por qué encaja">
           <p className={styles.whyLabel}>Por qué encaja</p>
@@ -321,8 +343,8 @@ export function HeroRecommendation({
         {prep.length ? (
           <p className={styles.note}>
             <Icon name="calendar-check" size={13} aria-hidden="true" />
-            Antes de salir: {prep.map((task) => task.label).join(", ")}.
-            Vas a poder confirmarlo en tu salida.
+            Antes de salir: {prep.map((task) => task.label).join(", ")}. Vas a
+            poder confirmarlo en tu salida.
           </p>
         ) : null}
 

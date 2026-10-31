@@ -21,6 +21,8 @@ export function mapSaveError(error: unknown): SaveFailure {
   if (!(error instanceof ApiError)) return { message: GENERIC };
 
   switch (error.code) {
+    case "INSPIRATION_NOT_AVAILABLE":
+      return { message: "El plan de inspiración ya no está disponible. Podés continuar sin vincularlo; tu borrador sigue acá." };
     case "PLAN_COMPOSER_REQUEST_REUSED":
       return {
         message:

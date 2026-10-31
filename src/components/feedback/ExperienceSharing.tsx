@@ -1,9 +1,11 @@
 "use client";
 
 import { useId, useState } from "react";
+import Link from "next/link";
 
-import { Icon } from "@/components/ui";
-import { setFeedbackSharing } from "@/lib/api";
+import { Icon, Stars } from "@/components/ui";
+import { ApiError, setFeedbackSharing } from "@/lib/api";
+import { communityExperienceRoute } from "@/lib/routes";
 import type { PlanFeedback } from "@/types";
 
 import { FEEDBACK_COPY } from "./feedbackContent";
@@ -14,8 +16,8 @@ export interface ExperienceSharingProps {
   planTitle: string;
   feedback: PlanFeedback;
   /**
-   * Whether the plan is still published. When it is not, a shared
-   * experience is hidden but can come back, so it can only be made private.
+   * Legacy caller compatibility. Global experience consent is independent
+   * of whether the source plan is published.
    */
   published?: boolean;
   onChange: (feedback: PlanFeedback) => void;
@@ -30,21 +32,26 @@ export function ExperienceSharing({
   outingId,
   planTitle,
   feedback,
-  published = true,
   onChange,
 }: ExperienceSharingProps) {
   const descriptionId = useId();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [existingReviewId, setExistingReviewId] = useState<number | null>(null);
   const copy = FEEDBACK_COPY.sharing;
-  const dormant = feedback.shared && !published;
 
   async function toggle() {
     setBusy(true);
     setError(null);
+    setExistingReviewId(null);
     try {
       onChange(await setFeedbackSharing(outingId, !feedback.shared));
-    } catch {
+    } catch (cause) {
+      const apiError = cause instanceof ApiError ? cause : null;
+      const existingId = apiError?.data?.existingExperienceId;
+      if (apiError?.code === "COMMUNITY_REVIEW_ALREADY_EXISTS" && typeof existingId === "number") {
+        setExistingReviewId(existingId);
+      }
       setError(copy.error);
     } finally {
       setBusy(false);
@@ -57,22 +64,14 @@ export function ExperienceSharing({
         <div className={styles.sharingText}>
           <span className={styles.sharingTitle}>
             <Icon
-              name={dormant ? "eye-off" : feedback.shared ? "users" : "lock"}
+              name={feedback.shared ? "users" : "lock"}
               size={15}
               aria-hidden="true"
             />
-            {dormant
-              ? copy.unpublishedTitle
-              : feedback.shared
-                ? copy.publicTitle
-                : copy.privateTitle}
+            {feedback.shared ? copy.publicTitle : copy.privateTitle}
           </span>
           <span id={descriptionId} className={styles.sharingBody}>
-            {dormant
-              ? copy.unpublishedBody(planTitle)
-              : feedback.shared
-                ? copy.publicBody(planTitle)
-                : copy.privateBody}
+            {feedback.shared ? copy.publicBody(planTitle) : copy.privateBody}
           </span>
         </div>
         <button
@@ -88,10 +87,34 @@ export function ExperienceSharing({
           <span className={styles.switchThumb} aria-hidden="true" />
         </button>
       </div>
+      {!feedback.shared ? (
+        <details className={styles.publicPreview}>
+          <summary>Vista previa de tu experiencia</summary>
+          <Stars rating={feedback.rating} size={16} />
+          {feedback.comment ? <p>{feedback.comment}</p> : null}
+          <p>
+            Tu usuario, tu puntuación y las fotos propias de la salida. No se
+            publica lo que gastaste ni un recorrido privado.
+          </p>
+        </details>
+      ) : null}
+      {feedback.existingCommunityExperienceId ? (
+        <div className={styles.sharingExisting} role="status">
+          <p>Ya tenés una reseña pública de este plan. Esta salida quedó guardada en privado.</p>
+          <Link href={communityExperienceRoute(feedback.existingCommunityExperienceId)}>
+            Abrir tu reseña y sumar esta salida
+          </Link>
+        </div>
+      ) : null}
       {error ? (
-        <p className={styles.sharingError} role="alert">
-          {error}
-        </p>
+        <div className={styles.sharingError} role="alert">
+          <p>{error}</p>
+          {existingReviewId ? (
+            <Link href={communityExperienceRoute(existingReviewId)}>
+              Abrir tu reseña y sumar esta salida
+            </Link>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );
