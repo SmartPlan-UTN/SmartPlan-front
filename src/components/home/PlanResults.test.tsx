@@ -208,6 +208,38 @@ describe("PlanResults (CU17)", () => {
     expect(sheet).toHaveTextContent(secondPlan.title);
   });
 
+  describe("plans at home (#210)", () => {
+    const hogar = location({
+      latitude: null,
+      longitude: null,
+      atHome: true,
+      place: { ...location().place, name: "En casa / donde estén", department: null, kind: "home" },
+    } as never);
+    const truco = {
+      ...PLAN.details[0],
+      id: 3,
+      activity: { ...PLAN.details[0].activity, id: 103, name: "Truco", locations: [hogar] },
+    };
+    const atHome: PlanDetailResult = { ...PLAN, id: 9, title: "Noche de truco", details: [truco] };
+
+    it("shows a note instead of an empty map when every plan is at home", () => {
+      render(<PlanResults plans={[atHome]} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
+
+      expect(screen.getByText("Estos planes son en casa")).toBeInTheDocument();
+      expect(screen.queryByTestId("results-map-stub")).not.toBeInTheDocument();
+      expect(screen.queryByRole("tab", { name: /mapa/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /ver recorrido/i })).not.toBeInTheDocument();
+    });
+
+    it("keeps the map and the route only for the plans that go out", () => {
+      render(<PlanResults plans={[PLAN, atHome]} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
+
+      expect(screen.getByTestId("results-map-stub")).toBeInTheDocument();
+      expect(screen.getAllByRole("button", { name: /ver recorrido/i })).toHaveLength(1);
+      expect(screen.queryByText("Estos planes son en casa")).not.toBeInTheDocument();
+    });
+  });
+
   it("shows at most three alternatives", () => {
     const many = Array.from({ length: 5 }, (_, index) => ({
       ...PLAN,

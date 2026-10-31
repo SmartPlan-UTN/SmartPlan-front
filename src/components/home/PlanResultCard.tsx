@@ -24,7 +24,8 @@ export interface PlanResultCardProps {
   selectionWorking: boolean;
   onActivate: (id: number) => void;
   onDeactivate: (id: number) => void;
-  onViewRoute: (id: number) => void;
+  /** Absent for a plan entirely at home: it has no route to show (#210). */
+  onViewRoute?: (id: number) => void;
   onIntend: (plan: PlanDetailResult) => void;
   registerRef: (id: number, el: HTMLElement | null) => void;
 }
@@ -132,10 +133,12 @@ export function PlanResultCard({
         ) : null}
 
         <div className={styles.ctaRow}>
-          <Button variant="ghostEmber" size="sm" onClick={() => onViewRoute(plan.id)}>
-            <Icon name="map-pin" size={14} aria-hidden="true" />
-            Ver recorrido
-          </Button>
+          {onViewRoute ? (
+            <Button variant="ghostEmber" size="sm" onClick={() => onViewRoute(plan.id)}>
+              <Icon name="map-pin" size={14} aria-hidden="true" />
+              Ver recorrido
+            </Button>
+          ) : null}
 
           {intended ? (
             <span className={styles.chosenGroup}>

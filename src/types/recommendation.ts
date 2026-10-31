@@ -118,6 +118,11 @@ export interface ResolvedPlanContext {
   atHome?: boolean;
   /** Only evidenced free activities. */
   freeOnly?: boolean;
+  /**
+   * Where the plans start (device or preferred area), only when it lies in
+   * the resolved department. Stops at the Hogar happen here.
+   */
+  startingPoint?: { latitude: number; longitude: number } | null;
 }
 
 /**

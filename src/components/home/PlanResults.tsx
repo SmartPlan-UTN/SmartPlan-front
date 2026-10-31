@@ -47,6 +47,12 @@ export interface PlanResultsProps {
   onSelectionReconcile?: () => void;
 }
 
+/** When every alternative happens at home there is no route to map (#210). */
+const AT_HOME_RESULTS = {
+  title: "Estos planes son en casa",
+  body: "Se hacen donde estén, así que no hay recorrido para mostrar en el mapa.",
+};
+
 /** CU17 and CU19 both surface at most three alternatives. */
 const MAX_VISIBLE_PLANS = 3;
 
@@ -94,7 +100,18 @@ export function PlanResults({
   const mapRef = useRef<ResultsMapHandle>(null);
   const cardRefs = useRef(new Map<number, HTMLElement>());
 
-  const mapPins = useMemo(() => buildPlanPins(visiblePlans), [visiblePlans]);
+  const startingPoint = resolvedContext?.startingPoint ?? null;
+  const mapPins = useMemo(
+    () => buildPlanPins(visiblePlans, startingPoint),
+    [visiblePlans, startingPoint],
+  );
+  // A plan entirely at home has no route (#210): no "Ver recorrido", and no
+  // map at all when no alternative goes out.
+  const routable = useMemo(
+    () => new Set(mapPins.filter((pin) => pin.stops.length > 0).map((pin) => pin.planId)),
+    [mapPins],
+  );
+  const hasMap = routable.size > 0;
   const planColors = useMemo(() => {
     const byId = new Map<number, string>();
     mapPins.forEach((pin) => byId.set(pin.planId, pin.color));
@@ -210,34 +227,36 @@ export function PlanResults({
         </>
       ) : null}
 
-      <div className={layoutStyles.viewToggle} data-view={mobileView} role="tablist" aria-label="Vista de resultados">
-        <span
-          className={[layoutStyles.viewTogglePill, mobileView === "map" ? layoutStyles.viewTogglePillMap : ""]
-            .filter(Boolean)
-            .join(" ")}
-          aria-hidden="true"
-        />
-        <button
-          type="button"
-          role="tab"
-          aria-selected={mobileView === "list"}
-          className={layoutStyles.viewToggleTab}
-          onClick={() => setMobileView("list")}
-        >
-          <Icon name="list" size={14} aria-hidden="true" />
-          Lista
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={mobileView === "map"}
-          className={layoutStyles.viewToggleTab}
-          onClick={() => setMobileView("map")}
-        >
-          <Icon name="map" size={14} aria-hidden="true" />
-          Mapa
-        </button>
-      </div>
+      {hasMap ? (
+        <div className={layoutStyles.viewToggle} data-view={mobileView} role="tablist" aria-label="Vista de resultados">
+          <span
+            className={[layoutStyles.viewTogglePill, mobileView === "map" ? layoutStyles.viewTogglePillMap : ""]
+              .filter(Boolean)
+              .join(" ")}
+            aria-hidden="true"
+          />
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mobileView === "list"}
+            className={layoutStyles.viewToggleTab}
+            onClick={() => setMobileView("list")}
+          >
+            <Icon name="list" size={14} aria-hidden="true" />
+            Lista
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mobileView === "map"}
+            className={layoutStyles.viewToggleTab}
+            onClick={() => setMobileView("map")}
+          >
+            <Icon name="map" size={14} aria-hidden="true" />
+            Mapa
+          </button>
+        </div>
+      ) : null}
 
       <div className={layoutStyles.resultsLayout} data-mobile-view={mobileView}>
         <div className={layoutStyles.resultsListCol} data-mobile-hidden={mobileView !== "list"}>
@@ -256,7 +275,7 @@ export function PlanResults({
                 selectionWorking={selection.status === "working"}
                 onActivate={setActivePlanId}
                 onDeactivate={(id) => setActivePlanId((current) => (current === id ? null : current))}
-                onViewRoute={handleViewRoute}
+                onViewRoute={routable.has(plan.id) ? handleViewRoute : undefined}
                 onIntend={(target) => void intend(target)}
                 registerRef={registerCardRef}
               />
@@ -264,27 +283,35 @@ export function PlanResults({
           })}
         </div>
 
-        <div className={layoutStyles.resultsMapCol} data-mobile-hidden={mobileView !== "map"}>
-          <ResultsMap
-            ref={mapRef}
-            plans={mapPins}
-            activePlanId={activePlanId}
-            onPinHover={setActivePlanId}
-            onPinClick={handlePinClick}
-            visible={mobileView === "map"}
-          />
-          {mobileView === "map" && visiblePlans.length > 0 ? (
-            <MobilePlanSheet
-              returnTo={returnTo}
-              plans={visiblePlans}
-              selectedPlanId={activePlanId ?? visiblePlans[0].id}
-              onSelect={(id) => {
-                setActivePlanId(id);
-                mapRef.current?.panToPlan(id);
-              }}
+        {hasMap ? (
+          <div className={layoutStyles.resultsMapCol} data-mobile-hidden={mobileView !== "map"}>
+            <ResultsMap
+              ref={mapRef}
+              plans={mapPins}
+              activePlanId={activePlanId}
+              onPinHover={setActivePlanId}
+              onPinClick={handlePinClick}
+              visible={mobileView === "map"}
             />
-          ) : null}
-        </div>
+            {mobileView === "map" && visiblePlans.length > 0 ? (
+              <MobilePlanSheet
+                returnTo={returnTo}
+                plans={visiblePlans}
+                selectedPlanId={activePlanId ?? visiblePlans[0].id}
+                onSelect={(id) => {
+                  setActivePlanId(id);
+                  mapRef.current?.panToPlan(id);
+                }}
+              />
+            ) : null}
+          </div>
+        ) : (
+          <aside className={layoutStyles.atHomeNote}>
+            <Icon name="house" size={22} aria-hidden="true" />
+            <p className="sp-h4">{AT_HOME_RESULTS.title}</p>
+            <p className="sp-body">{AT_HOME_RESULTS.body}</p>
+          </aside>
+        )}
       </div>
 
       <div className={styles.resultsFooter}>

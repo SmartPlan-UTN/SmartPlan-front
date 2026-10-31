@@ -148,27 +148,62 @@ describe("buildPlanPins", () => {
     expect(pins.map((pin) => pin.color)).toEqual([...PLAN_PIN_COLORS, PLAN_PIN_COLORS[0]]);
   });
 
-  it("never pins a stop at the Hogar, even with the starting point as coordinates (#210)", () => {
-    const pins = buildPlanPins([
-      plan({
-        details: [
-          {
-            id: 1,
-            order: 1,
-            estimatedCost: 0,
-            estimatedDuration: 0,
-            activity: { id: 10, name: "Museo", description: "", estimatedCost: 0, estimatedDuration: 0, type: null, averageRating: 0, ratingCount: 0, categories: [], locations: [activityLocation()] },
-          },
-          {
-            id: 2,
-            order: 2,
-            estimatedCost: 0,
-            estimatedDuration: 0,
-            activity: { id: 20, name: "El impostor", description: "", estimatedCost: 0, estimatedDuration: 0, type: null, averageRating: 0, ratingCount: 0, categories: [], locations: [{ ...activityLocation(), atHome: true }] },
-          },
+  describe("the Hogar (#210)", () => {
+    const stop = (id: number, order: number, name: string, atHome: boolean) => ({
+      id,
+      order,
+      estimatedCost: 0,
+      estimatedDuration: 0,
+      activity: {
+        id: id * 10,
+        name,
+        description: "",
+        estimatedCost: 0,
+        estimatedDuration: 0,
+        type: null,
+        averageRating: 0,
+        ratingCount: 0,
+        categories: [],
+        locations: [
+          atHome
+            ? { ...activityLocation({ latitude: null, longitude: null }), atHome: true }
+            : activityLocation({ latitude: -32.9 - id / 100, longitude: -68.8 }),
         ],
-      }),
-    ]);
-    expect(pins[0].stops.map((stop) => stop.name)).toEqual(["Museo"]);
+      },
+    });
+    const start = { latitude: -32.89, longitude: -68.84 };
+
+    it("numbers pins by their place in the itinerary, skipping an unpinned Hogar", () => {
+      const pins = buildPlanPins([
+        plan({ details: [stop(1, 1, "Museo", false), stop(2, 2, "Truco", true), stop(3, 3, "Cena", false)] }),
+      ]);
+      expect(pins[0].stops.map(({ name, order }) => [name, order])).toEqual([
+        ["Museo", 1],
+        ["Cena", 3],
+      ]);
+    });
+
+    it("pins the Hogar at the starting point when the plan also goes out", () => {
+      const pins = buildPlanPins(
+        [plan({ details: [stop(1, 1, "Museo", false), stop(2, 2, "Truco", true)] })],
+        start,
+      );
+      expect(pins[0].stops.at(-1)).toEqual({
+        activityId: 20,
+        name: "Truco",
+        lat: start.latitude,
+        lng: start.longitude,
+        order: 2,
+        atHome: true,
+      });
+    });
+
+    it("leaves a plan entirely at home without pins, even with a starting point", () => {
+      const pins = buildPlanPins(
+        [plan({ details: [stop(1, 1, "Truco", true), stop(2, 2, "Rummy", true)] })],
+        start,
+      );
+      expect(pins[0].stops).toEqual([]);
+    });
   });
 });

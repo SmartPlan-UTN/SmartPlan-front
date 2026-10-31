@@ -269,3 +269,8 @@
     animation-duration: 1600ms;
   }
 }
+
+/* A plan entirely at home has no "Ver recorrido": keep the CTA on the right. */
+.ctaRow > :only-child {
+  margin-left: auto;
+}
