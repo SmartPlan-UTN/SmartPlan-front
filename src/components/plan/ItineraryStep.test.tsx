@@ -88,3 +88,14 @@ it.each([true, false])("omits travel time for a leg to or from an unlocated home
   render(<ItineraryStep detail={stop(destinationHome)} previousDetail={stop(!destinationHome)} isFirst={false} isLast />);
   expect(screen.queryByText(/min desde la anterior/)).not.toBeInTheDocument();
 });
+
+
+it("labels a home's reference as a source instead of a published price", () => {
+  const detail = step({ id: 2, atHome: true, latitude: null, longitude: null, notes: null,
+    place: { id: 1, name: "Hogar", description: null, address: "", department: null } });
+  detail.price = { kind: "FREE", min: 0, max: 0, unit: "UNSPECIFIED", currency: "ARS", source: "CURATED",
+    sourceRef: "https://example.test/reglas", verifiedAt: null, confidence: "HIGH", stale: false };
+  render(<ItineraryStep detail={detail} isFirst isLast />);
+  expect(screen.getByRole("link", { name: "Ver fuente de la actividad" })).toHaveAttribute("href", "https://example.test/reglas");
+  expect(screen.queryByRole("link", { name: "Ver precio publicado" })).not.toBeInTheDocument();
+});

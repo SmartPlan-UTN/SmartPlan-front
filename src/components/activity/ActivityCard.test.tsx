@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { getPlacePhotoMedia } from "@/lib/api";
 import type { ActivitySearchResult } from "@/types";
 
 import { ActivityCard } from "./ActivityCard";
@@ -16,6 +17,11 @@ vi.mock("@/context", () => ({
     savedActivityIds: new Set(),
     loading: false,
   }),
+}));
+
+vi.mock("@/lib/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/api")>()),
+  getPlacePhotoMedia: vi.fn(),
 }));
 
 const baseActivity: ActivitySearchResult = {
@@ -189,4 +195,13 @@ describe("ActivityCard", () => {
     expect(pills).toHaveTextContent("+2");
     expect(pills).not.toHaveTextContent("Tranquilo");
   });
+});
+
+
+it("does not fetch a place photo for an activity explicitly marked at home", () => {
+  render(<ActivityCard activity={{ ...baseActivity, atHome: true,
+    place: { id: 1, name: "Legacy place", kind: "cafe", kindLabel: null, address: "", department: null,
+      googlePlaceId: "stale-place", latitude: null, longitude: null, coordinatesOwned: false,
+      externalRating: null, externalPrice: null, image: null } }} />);
+  expect(getPlacePhotoMedia).not.toHaveBeenCalled();
 });

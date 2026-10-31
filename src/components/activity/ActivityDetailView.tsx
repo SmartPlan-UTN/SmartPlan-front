@@ -197,7 +197,7 @@ function ActivityDetailContent({ activityId, placeContext, activityPicker, initi
       <ExploreDetailHeader
         media={{
           ownImageUrl: activity.imageUrl,
-          place: hasOwnImages ? null : place,
+          place: atHome || hasOwnImages ? null : place,
           alt: activity.name,
           artwork: { family: artwork.family, icon: artwork.icon, label: activity.typeLabel ?? null },
         }}

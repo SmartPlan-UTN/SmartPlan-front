@@ -7,7 +7,7 @@ import { Button, Icon } from "@/components/ui";
 import { usePlanSelection, useReducedMotion } from "@/hooks";
 import { buildPlanPins } from "@/lib/maps/buildPlanPins";
 import { anchorOf, itineraryOf, planHeadline } from "@/lib/plans/story";
-import { isHomeStop, stopClock, stopLabel, stopPlace } from "@/lib/plans/stops";
+import { isHomePlan, isHomeStop, stopClock, stopLabel, stopPlace } from "@/lib/plans/stops";
 import { AT_HOME_LABEL } from "@/lib/utils";
 import type {
   PlanDetailResult,
@@ -160,7 +160,7 @@ export function PlanResults({
   const hero = visiblePlans[0] ?? null;
   const focused = visiblePlans.find((plan) => plan.id === focusedId) ?? hero;
   const focusedPins = mapPins.find((pin) => pin.planId === focused?.id);
-  const allAtHome = visiblePlans.length > 0 && visiblePlans.every((plan) => plan.details.length > 0 && plan.details.every(isHomeStop));
+  const allAtHome = visiblePlans.length > 0 && visiblePlans.every(isHomePlan);
   const anyPins = mapPins.some((pin) => pin.stops.length > 0);
 
   function registerCardRef(id: number, el: HTMLElement | null) {
@@ -259,7 +259,7 @@ export function PlanResults({
   const displayed = focused ?? hero;
   const focusedItinerary = focused ? itineraryOf(focused) : [];
   const focusedAnchor = focused ? anchorOf(focused) : null;
-  const focusedAtHome = Boolean(focused && focused.details.length > 0 && focused.details.every(isHomeStop));
+  const focusedAtHome = Boolean(focused && isHomePlan(focused));
   const fallbackLink = focused ? mapsLink(focused) : null;
   const directions = focused ? directionsLink(focused) : null;
 

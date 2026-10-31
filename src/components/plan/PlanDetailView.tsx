@@ -33,7 +33,7 @@ import {
   planEditRoute,
   ROUTES,
 } from "@/lib/routes";
-import { stopLabel } from "@/lib/plans/stops";
+import { isHomePlan, stopLabel } from "@/lib/plans/stops";
 import {
   formatDuration,
   formatPrice,
@@ -570,7 +570,7 @@ function PlanDetailContent({
         ) : null}
 
         {plan.readiness ? (
-          <PlanReadinessPanel readiness={plan.readiness} />
+          <PlanReadinessPanel readiness={plan.readiness} atHome={isHomePlan(plan)} />
         ) : null}
         <PlanUncertainties insight={plan.insight} />
 

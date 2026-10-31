@@ -75,7 +75,7 @@ export function ActivityCard({
     <article className={exploreStyles.card} data-catalog-card>
         <PlaceMedia
           ownImageUrl={activity.imageUrl}
-          place={place}
+          place={atHome ? null : place}
           alt={activity.name}
           artwork={{
             family: artwork.family,

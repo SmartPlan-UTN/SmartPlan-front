@@ -17,8 +17,17 @@ const STATUS: Record<PlanReadinessStage, { label: string; summary: string; icon:
   READY: { label: "Todo listo para salir", summary: "Horarios y precios revisados, sin pasos obligatorios pendientes.", icon: "circle-check" },
 };
 
+const HOME_STATUS: typeof STATUS = {
+  SUGGESTED: { label: "Tu plan en casa", summary: "Elegí cuándo hacerlo y revisá qué necesitan.", icon: "house" },
+  FEASIBLE: { label: "Algunos detalles por confirmar", summary: "Revisá los materiales y costos de las actividades antes de empezar.", icon: "info" },
+  VERIFIED: { label: "Datos revisados", summary: "Revisá las aclaraciones de las actividades antes de elegir el plan.", icon: "circle-check" },
+  PREPARATION_REQUIRED: { label: "Te queda algo por resolver", summary: "Completá los pasos pendientes antes de empezar.", icon: "clock" },
+  READY: { label: "Todo listo para empezar", summary: "Sin pasos obligatorios pendientes para hacer el plan en casa.", icon: "circle-check" },
+};
+
 export interface PlanReadinessPanelProps {
   readiness: PlanReadiness;
+  atHome?: boolean;
   /** Present only where the person can act (their own outing to do). */
   onToggleTask?: (task: PlanPreparationTask, confirmed: boolean) => void;
   busyDetailId?: number | null;
@@ -33,16 +42,17 @@ export interface PlanReadinessPanelProps {
  */
 export function PlanReadinessPanel({
   readiness,
+  atHome = false,
   onToggleTask,
   busyDetailId = null,
   disabled = false,
   error = null,
 }: PlanReadinessPanelProps) {
-  const status = STATUS[readiness.ready ? "READY" : readiness.stage === "READY" ? "FEASIBLE" : readiness.stage];
+  const status = (atHome ? HOME_STATUS : STATUS)[readiness.ready ? "READY" : readiness.stage === "READY" ? "FEASIBLE" : readiness.stage];
   const summary = /^(El costo|No podemos|El plan no cubre|Falta resolver)/.test(readiness.summary)
     ? readiness.summary : status.summary;
   return (
-    <section className={styles.panel} aria-label="Antes de salir" data-ready={readiness.ready}>
+    <section className={styles.panel} aria-label={atHome ? "Antes de empezar" : "Antes de salir"} data-ready={readiness.ready}>
       <div className={styles.head}>
         <span className={styles.indicator}><Icon name={status.icon} size={20} aria-hidden="true" /></span>
         <div>
@@ -63,7 +73,7 @@ export function PlanReadinessPanel({
                     {confirmed
                       ? "Lo marcaste como resuelto."
                       : task.required
-                        ? "Necesario para salir tranquilo."
+                        ? atHome ? "Necesario para empezar." : "Necesario para salir tranquilo."
                         : "Recomendado, no obligatorio."}
                   </span>
                 </div>

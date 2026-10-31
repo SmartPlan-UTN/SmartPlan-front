@@ -705,3 +705,16 @@ it("edits a shared experience on the original plan and refreshes the public summ
   });
   expect(getPlanExperiences.mock.calls.length).toBeGreaterThan(1);
 });
+
+
+it("uses home preparation copy in the generated plan detail", async () => {
+  const home = plan({ readiness: { stage: "READY", ready: true, label: "Listo", summary: "Listo", verifiedStops: 1, totalStops: 1, tasks: [] } });
+  const activity = home.details[0].activity;
+  if (!activity) throw new Error("Expected the activity fixture");
+  activity.locations = [{ id: 1, atHome: true, latitude: null, longitude: null, notes: null,
+    place: { id: 1, name: "Hogar", kind: "home", description: null, address: "", department: null } }];
+  getPlan.mockResolvedValue(home);
+  render(<PlanDetailView planId={7} />);
+  expect(await screen.findByRole("heading", { name: "Todo listo para empezar" })).toBeInTheDocument();
+  expect(screen.queryByRole("region", { name: "Antes de salir" })).not.toBeInTheDocument();
+});

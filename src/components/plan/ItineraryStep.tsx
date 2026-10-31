@@ -171,7 +171,7 @@ export function ItineraryStep({
           <div className={styles.stepLinks}>
             {sourceUrl ? (
               <a href={sourceUrl} target="_blank" rel="noreferrer" className={styles.stepMapLink}>
-                Ver precio publicado
+                {atHome ? "Ver fuente de la actividad" : "Ver precio publicado"}
               </a>
             ) : null}
             {place && !atHome ? (

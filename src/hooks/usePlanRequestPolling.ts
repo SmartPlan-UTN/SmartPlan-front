@@ -72,7 +72,14 @@ export interface UsePlanRequestPollingResult {
 
 function toFailure(error: unknown): PlanRequestFailure {
   if (error instanceof ApiError) {
-    return { code: error.code, message: error.message || GENERIC_ERROR };
+    // API messages may be technical or in English; the screen owns its copy.
+    const messages: Record<number, string> = {
+      401: 'Tu sesión venció. Volvé a iniciar sesión.',
+      403: 'No tenés acceso a ese pedido.',
+      404: 'No encontramos ese pedido. Volvé al buscador para crear uno nuevo.',
+      429: 'Hay demasiados pedidos en curso. Esperá un momento antes de volver a intentar.',
+    };
+    return { code: error.code, message: messages[error.status ?? 0] ?? GENERIC_ERROR };
   }
   return { code: null, message: GENERIC_ERROR };
 }

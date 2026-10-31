@@ -593,3 +593,12 @@ PR #199 integration validation: rebased onto current develop, preserving unknown
 - Understanding chips remain backend-owned. Restored the budget currency prefix; single-stop recommendations use the confirmed free total instead of a saved `$0` insight. Zone lookup supports place-action stops and legacy locations while skipping home.
 - Regression coverage includes unified home payloads without activities, starting-point propagation, switching home/mixed alternatives, free single-stop prices, photo suppression and legs to/from home. Validation: `pnpm lint`, `pnpm test --maxWorkers=2` (183 files, 1352 tests) and `pnpm build` pass before the local port commit; final counts and QA limitations are recorded in `planes/handoff-codex-front-212.RESULT.md` in the parent workspace.
 - No push. Integrated backend/browser QA remains with the backend agent before publication.
+
+## 2026-10-31 — Frontend QA follow-up to #212 (CU13, CU17, CU22)
+
+- Branch `review/pr212`; status: In review, local commits only. Reviewed home, mixed and place-action results against the local API in real desktop/mobile Chromium, plus details, Explore, private navigation and missing resources.
+- Keep home preparation language indoors in recommendation, plan and outing detail. Label home references as activity sources, suppress stale provider photos in home cards/details, and avoid physical-place links for a virtual home without an activity.
+- Correct tab semantics in the shared Chip primitive. Add accessible ember action/ink tokens, retaining the brand hue while improving contrast for action buttons, avatar initials, price badges, occasion overflow counts and auxiliary labels. Update the design-system guidance for these tokens.
+- Translate missing/inaccessible request errors and keep unknown API/provider diagnostics out of user-facing generation failures.
+- Browser QA includes real map/house pins, switching alternatives, filter URL persistence/reset, invalid price ranges, selection/cancellation and injected selection/refinement failures. Desktop WCAG AA automated audits on seven pages and mobile audits on three key pages have no reported violations after fixes; this is scoped automated coverage, not a certification of every screen.
+- Final lint, complete test suite, isolated production build, evidence paths and commit hash are recorded in the parent workspace's `planes/handoff-codex-front-212.RESULT.md`. No push or backend code changes.

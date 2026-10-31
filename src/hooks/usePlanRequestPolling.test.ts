@@ -53,6 +53,26 @@ describe("usePlanRequestPolling", () => {
     vi.useRealTimers();
   });
 
+  it("explains a missing request without exposing the English API message", async () => {
+    getPlanRequestStatus.mockRejectedValue(new ApiError({ type: "HTTP", status: 404,
+      code: "PLAN_REQUEST_NOT_FOUND", message: "The requested plan request does not exist" }));
+    const { result } = renderHook(() => usePlanRequestPolling(999999));
+    await waitFor(() => expect(result.current.phase).toBe("failed"));
+    expect(result.current.failure).toEqual({ code: "PLAN_REQUEST_NOT_FOUND",
+      message: "No encontramos ese pedido. Volvé al buscador para crear uno nuevo." });
+    expect(createPlanRequest).not.toHaveBeenCalled();
+  });
+
+  it("does not expose provider diagnostics when submission fails", async () => {
+    createPlanRequest.mockRejectedValue(new ApiError({ type: "HTTP", status: 502,
+      code: "EXTERNAL_SERVICE_ERROR", message: "Internal provider diagnostic" }));
+    const { result } = renderHook(() => usePlanRequestPolling());
+    act(() => result.current.submit({ query: "Una juntada en casa" }));
+    await waitFor(() => expect(result.current.phase).toBe("failed"));
+    expect(result.current.failure?.message).toBe("No pudimos generar tu plan. Intentá de nuevo.");
+    expect(result.current.lastSubmission?.kind).toBe("auto");
+  });
+
   it("starts idle", () => {
     const { result } = renderHook(() => usePlanRequestPolling());
     expect(result.current.phase).toBe("idle");

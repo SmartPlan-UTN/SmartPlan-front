@@ -750,3 +750,14 @@ it("passes the resolved starting point to the mixed plan's home pin", () => {
     ]) }),
   ]));
 });
+
+
+it("keeps preparation copy at home while exposing the required task", () => {
+  const home = homePlan();
+  home.readiness = { stage: "PREPARATION_REQUIRED", ready: false, label: "Preparar", summary: "Preparar materiales",
+    verifiedStops: 1, totalStops: 1, tasks: [{ detailId: 90, kind: "RESERVATION", required: true,
+      label: "Preparar los materiales", status: "PENDING", confirmedAt: null, actionUrl: null, actionLabel: null }] };
+  render(<PlanResults plans={[home]} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
+  expect(screen.getByText(/Antes de empezar: Preparar los materiales/)).toBeInTheDocument();
+  expect(screen.queryByText(/Antes de salir:/)).not.toBeInTheDocument();
+});

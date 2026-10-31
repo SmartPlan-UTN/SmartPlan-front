@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getActivity } from "@/lib/api";
+import { getActivity, getPlacePhotoMedia } from "@/lib/api";
 import { downloadMedia } from "@/lib/api/media";
 
 import { ActivityDetailView } from "./ActivityDetailView";
@@ -21,7 +21,7 @@ vi.mock("@/context", () => ({
 
 vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
-  return { ...actual, getActivity: vi.fn() };
+  return { ...actual, getActivity: vi.fn(), getPlacePhotoMedia: vi.fn() };
 });
 
 vi.mock("@/lib/api/media", async (importOriginal) => {
@@ -210,6 +210,9 @@ describe("ActivityDetailView at the Hogar (#210)", () => {
       distanceKm: null,
       categories: [{ id: 4, name: "Entertainment" }],
       atHome: true,
+      place: { id: 1, name: "Legacy home", kind: "home", kindLabel: null, address: "", department: null,
+        googlePlaceId: "stale-place", latitude: null, longitude: null, coordinatesOwned: false,
+        externalRating: null, externalPrice: null, image: null },
       occasions: ["friends", "big_group"],
       minPeople: 4,
       maxPeople: 12,
@@ -238,5 +241,6 @@ describe("ActivityDetailView at the Hogar (#210)", () => {
     expect(screen.getByRole("list", { name: /Ideal para: Con amigos, Grupo grande/ })).toBeInTheDocument();
     expect(screen.queryByText(/Ver en Google Maps/)).not.toBeInTheDocument();
     expect(screen.queryByText("Donde estén")).not.toBeInTheDocument();
+    expect(getPlacePhotoMedia).not.toHaveBeenCalled();
   });
 });

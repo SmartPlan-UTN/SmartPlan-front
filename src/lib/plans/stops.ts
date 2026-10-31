@@ -43,6 +43,11 @@ export function isHomeStop(item: PlanItineraryItem): boolean {
     Boolean(item.activity && isAtHomeActivity(item.activity));
 }
 
+/** Empty or mixed itineraries are not plans entirely at home. */
+export function isHomePlan(plan: { details: PlanItineraryItem[] }): boolean {
+  return plan.details.length > 0 && plan.details.every(isHomeStop);
+}
+
 /** A point to draw the stop on a map, when SmartPlan knows one. */
 export function stopCoordinates(
   item: PlanItineraryItem,
@@ -62,6 +67,7 @@ export function stopCoordinates(
 /** Where tapping the stop leads: the activity, or the place. */
 export function stopHref(item: PlanItineraryItem): string | null {
   if (item.activity) return activityDetailRoute(item.activity.id);
+  if (isHomeStop(item)) return null;
   const place = stopPlace(item);
   return place ? placeDetailRoute(place.id) : null;
 }

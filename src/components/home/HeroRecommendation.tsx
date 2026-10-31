@@ -20,7 +20,7 @@ import {
   planNote,
   reasonsOf,
 } from "@/lib/plans/story";
-import { isHomeStop, stopClock, stopLabel, stopPlace } from "@/lib/plans/stops";
+import { isHomePlan, isHomeStop, stopClock, stopLabel, stopPlace } from "@/lib/plans/stops";
 import { AT_HOME_LABEL, formatArs, formatDuration, observedWhen } from "@/lib/utils";
 import type { PlanDetailResult, PlanFunnel, StopInsight } from "@/types";
 
@@ -155,6 +155,7 @@ export function HeroRecommendation({
   const anchor = anchorOf(plan);
   const itinerary = itineraryOf(plan);
   const multi = itinerary.length > 1;
+  const entirelyAtHome = isHomePlan(plan);
   const atHome = Boolean(anchor && isHomeStop(anchor.item));
   const place = anchor?.place ?? null;
   const stopInsight = anchor?.insight ?? null;
@@ -346,7 +347,7 @@ export function HeroRecommendation({
         {prep.length ? (
           <p className={styles.note}>
             <Icon name="calendar-check" size={13} aria-hidden="true" />
-            Antes de salir: {prep.map((task) => task.label).join(", ")}. Vas a
+            {entirelyAtHome ? "Antes de empezar" : "Antes de salir"}: {prep.map((task) => task.label).join(", ")}. Vas a
             poder confirmarlo en tu salida.
           </p>
         ) : null}
