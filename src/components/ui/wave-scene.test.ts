@@ -1,11 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  boundedSwellStrength,
-  createWaveScene,
-  type Mood,
-} from "./wave-scene";
-import { WAVE_PALETTES } from "@/styles/wave-palettes";
+import { boundedSwellStrength, createWaveScene } from "./wave-scene";
+import { WAVE_PALETTE } from "@/styles/wave-palettes";
 
 interface Point {
   x: number;
@@ -37,11 +33,10 @@ class RecordingContext {
   }
 }
 
-function setupScene(mood: Mood = "idle") {
+function setupScene() {
   const context = new RecordingContext();
   const scene = createWaveScene(
     context as unknown as CanvasRenderingContext2D,
-    mood,
   );
   scene.resize(1000, 800, 1);
   return { context, scene };
@@ -88,30 +83,20 @@ describe("createWaveScene", () => {
     expect(expired.context.paths).toEqual(settled.context.paths);
   });
 
-  it("continues a palette fade from the visible intermediate color", () => {
+  it("fills every layer with the single wave palette, swell or not", () => {
     const { context, scene } = setupScene();
+    const expected = [
+      WAVE_PALETTE.wave1,
+      WAVE_PALETTE.wave2,
+      WAVE_PALETTE.wave3,
+      WAVE_PALETTE.wave4,
+    ];
 
-    scene.setMood("cultural", 0);
-    scene.draw(700);
-    const intermediate = context.fills.slice(-4);
+    scene.draw(0);
+    expect(context.fills).toEqual(expected);
 
-    scene.setMood("gastronomia", 700);
-    scene.draw(700);
-
-    expect(context.fills.slice(-4)).toEqual(intermediate);
-  });
-
-  it("applies a palette immediately when animation is disabled", () => {
-    const { context, scene } = setupScene();
-
-    scene.setMood("cultural", 100, false);
-    scene.draw(100);
-
-    expect(context.fills.slice(-4)).toEqual([
-      WAVE_PALETTES.cultural.wave1,
-      WAVE_PALETTES.cultural.wave2,
-      WAVE_PALETTES.cultural.wave3,
-      WAVE_PALETTES.cultural.wave4,
-    ]);
+    scene.tide(0);
+    scene.draw(320);
+    expect(context.fills.slice(-4)).toEqual(expected);
   });
 });

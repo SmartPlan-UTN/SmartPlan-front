@@ -1,28 +1,103 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@/lib/api";
-import type { PlanRequestPlanSummary, PlanSelectionResult } from "@/types";
+import { outingCreation } from "@/test/fixtures/outings";
+import type { PlanDetailResult, PlanItineraryActivity } from "@/types";
 
 import { PlanResults } from "./PlanResults";
 
-const selectPlan = vi.hoisted(() => vi.fn());
-const deselectPlan = vi.hoisted(() => vi.fn());
+it("places matching community plans below the map and before starting over", () => {
+  render(
+    <PlanResults
+      plans={[PLAN]}
+      onAdjust={vi.fn()}
+      onDiscard={vi.fn()}
+      communityRecommendations={[
+        {
+          id: 43,
+          title: "Una idea de Lucía",
+          description: null,
+          estimatedTotalCost: null,
+          estimatedTotalCostMax: null,
+          estimatedTotalDuration: 90,
+          imageUrl: null,
+          authorUsername: "lucia",
+          currentPriceMin: null,
+          currentPriceMax: null,
+          sharedAverageRating: null,
+          sharedExperienceCount: 0,
+          latestExperienceAt: null,
+          decisionGrade: false,
+          matchReasons: ["covers_experiences"],
+          uncertainties: ["hours_unknown"],
+        },
+      ]}
+    />,
+  );
+  const section = screen.getByRole("region", {
+    name: "Planes de la comunidad",
+  });
+  expect(
+    screen.getByTestId("results-map-stub").compareDocumentPosition(section) &
+      Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+  expect(
+    section.compareDocumentPosition(
+      screen.getByRole("button", { name: "Empezar de nuevo" }),
+    ) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+});
+
+const createOuting = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/api")>()),
-  selectPlan,
-  deselectPlan,
+  createOuting,
 }));
 
-const PLAN: PlanRequestPlanSummary = {
+// The real map loads the Google Maps JS API from a CDN script — not
+// available (and not the point) in a jsdom unit test. PlanResults' own
+// tests are about the header/cards/CU22 wiring; ResultsMap gets its own
+// coverage (buildPlanPins.test.ts) for the data it's actually built from.
+vi.mock("./ResultsMap", () => ({
+  ResultsMap: () => <div data-testid="results-map-stub" />,
+}));
+
+function location(
+  overrides: Partial<PlanItineraryActivity["locations"][number]> = {},
+) {
+  return {
+    id: 1,
+    latitude: -32.9,
+    longitude: -68.8,
+    notes: null,
+    place: {
+      id: 1,
+      name: "Bodega Central",
+      description: null,
+      address: "Calle 1",
+      department: {
+        id: 1,
+        name: "Luján de Cuyo",
+        city: { id: 1, name: "Mendoza", country: { id: 1, name: "Argentina" } },
+      },
+    },
+    ...overrides,
+  };
+}
+
+const PLAN: PlanDetailResult = {
   id: 7,
   title: "Tarde de vinos sin manejar",
-  description: null,
+  description: "Recorrido por bodegas con almuerzo incluido.",
   estimatedTotalDuration: 300,
   estimatedTotalCost: 24000,
+  estimatedTotalCostMax: 30000,
+  priceCompleteness: "RANGE",
+  peopleCount: 2,
   activityCount: 2,
   averageRating: 4.5,
   distanceKm: 12.4,
@@ -30,14 +105,83 @@ const PLAN: PlanRequestPlanSummary = {
   activityNames: ["Degustación guiada", "Almuerzo entre viñedos"],
   status: { key: "generated", name: "Generated" },
   viewerPlanState: "selectable",
+  activeOutingId: null,
+  kind: "generated",
+  visibility: "private",
+  ownedByViewer: true,
+  details: [
+    {
+      id: 1,
+      order: 1,
+      estimatedCost: 15000,
+      estimatedDuration: 150,
+      activity: {
+        id: 101,
+        name: "Degustación guiada",
+        description: "desc",
+        estimatedCost: 15000,
+        estimatedDuration: 150,
+        type: null,
+        averageRating: 4.5,
+        ratingCount: 10,
+        categories: [{ id: 1, name: "Vinos" }],
+        locations: [location()],
+      },
+    },
+    {
+      id: 2,
+      order: 2,
+      estimatedCost: 9000,
+      estimatedDuration: 150,
+      activity: {
+        id: 102,
+        name: "Almuerzo entre viñedos",
+        description: "desc",
+        estimatedCost: 9000,
+        estimatedDuration: 150,
+        type: null,
+        averageRating: 0,
+        ratingCount: 0,
+        categories: [],
+        locations: [],
+      },
+    },
+  ],
 };
 
 /**
  * CU17 requires a generated plan to be actionable, adjustable or discardable.
  */
 describe("PlanResults (CU17)", () => {
+  it("previews another option without saving it, then selects the displayed plan", async () => {
+    const user = userEvent.setup();
+    const second = { ...PLAN, id: 8, title: "Otra salida" };
+    createOuting.mockResolvedValue(outingCreation());
+    render(
+      <PlanResults
+        plans={[PLAN, second]}
+        onAdjust={vi.fn()}
+        onDiscard={vi.fn()}
+      />,
+    );
+    const choices = within(
+      screen.getByRole("group", { name: "Elegir un plan" }),
+    ).getAllByRole("button");
+    await user.click(choices[1]);
+    expect(choices[1]).toHaveAttribute("aria-pressed", "true");
+    const hero = within(screen.getByTestId("hero-recommendation"));
+    expect(
+      hero.getByRole("heading", { name: second.title }),
+    ).toBeInTheDocument();
+    expect(createOuting).not.toHaveBeenCalled();
+    await user.click(hero.getByRole("button", { name: "Lo voy a hacer" }));
+    await waitFor(() => expect(createOuting).toHaveBeenCalledWith(8));
+  });
+
   it("links each alternative to its detail view", () => {
-    render(<PlanResults plans={[PLAN]} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
+    render(
+      <PlanResults plans={[PLAN]} onAdjust={vi.fn()} onDiscard={vi.fn()} />,
+    );
 
     const link = screen.getByRole("link", {
       name: /tarde de vinos sin manejar/i,
@@ -48,33 +192,16 @@ describe("PlanResults (CU17)", () => {
     ).toBeInTheDocument();
   });
 
-  it("offers adjusting the search and reports it", async () => {
-    const user = userEvent.setup();
-    const onAdjust = vi.fn();
-    render(<PlanResults plans={[PLAN]} onAdjust={onAdjust} onDiscard={vi.fn()} />);
-
-    await user.click(screen.getByRole("button", { name: /ajustar la búsqueda/i }));
-
-    expect(onAdjust).toHaveBeenCalledOnce();
-  });
-
-  it("offers discarding the result", async () => {
+  it("offers starting again", async () => {
     const user = userEvent.setup();
     const onDiscard = vi.fn();
-    render(<PlanResults plans={[PLAN]} onAdjust={vi.fn()} onDiscard={onDiscard} />);
-
-    await user.click(screen.getByRole("button", { name: /descartar/i }));
-
-    expect(onDiscard).toHaveBeenCalledOnce();
-  });
-
-  it("hides adjusting when there is no query to adjust", () => {
     render(
-      <PlanResults plans={[PLAN]} onAdjust={vi.fn()} onDiscard={vi.fn()} canAdjust={false} />,
+      <PlanResults plans={[PLAN]} onAdjust={vi.fn()} onDiscard={onDiscard} />,
     );
 
-    expect(screen.queryByRole("button", { name: /ajustar/i })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /descartar/i })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /empezar de nuevo/i }));
+
+    expect(onDiscard).toHaveBeenCalledOnce();
   });
 
   it("still offers a way forward when the backend returned no plans", async () => {
@@ -82,20 +209,212 @@ describe("PlanResults (CU17)", () => {
     const onAdjust = vi.fn();
     render(<PlanResults plans={[]} onAdjust={onAdjust} onDiscard={vi.fn()} />);
 
-    expect(screen.getByText(/no encontramos un plan/i)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /ajustar la idea/i }));
+    expect(
+      screen.getByText("No hay planes disponibles para esa consulta"),
+    ).toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: /ajustar la búsqueda/i }),
+    );
     expect(onAdjust).toHaveBeenCalledOnce();
   });
 
-  it("names each option's activities (CU19)", () => {
-    render(<PlanResults plans={[PLAN]} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
+  it("leads with one recommendation and a way to see its route on the map", () => {
+    render(
+      <PlanResults plans={[PLAN]} onAdjust={vi.fn()} onDiscard={vi.fn()} />,
+    );
 
+    expect(screen.getByTestId("hero-recommendation")).toBeInTheDocument();
+    expect(screen.getByText("2 paradas · 5h estimadas")).toBeInTheDocument();
+    expect(screen.getByText("Dónde queda")).toBeInTheDocument();
     expect(
-      screen.getByText("Degustación guiada · Almuerzo entre viñedos"),
+      screen.getByRole("button", { name: /ver recorrido/i }),
     ).toBeInTheDocument();
   });
 
-  it("shows at most three alternatives", () => {
+  it("shows the group total and the matching per-person range", () => {
+    render(
+      <PlanResults plans={[PLAN]} onAdjust={vi.fn()} onDiscard={vi.fn()} />,
+    );
+
+    expect(
+      screen.getByText("$ 24.000 – $ 30.000", { exact: false }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("$ 12.000 – $ 15.000 por persona · 2 personas"),
+    ).toBeInTheDocument();
+  });
+
+  it("never presents one stop's price as the price of a multi-stop plan", () => {
+    const stopInsight = {
+      purpose: "Cena",
+      price: "Estimado para 2: $ 62.000",
+      priceSource: "Carta oficial",
+      priceLive: false,
+      hours: null,
+      hoursSource: null,
+      fit: null,
+      order: null,
+      attribution: null,
+    };
+    const plan: PlanDetailResult = {
+      ...PLAN,
+      estimatedTotalCost: null,
+      estimatedTotalCostMax: null,
+      priceCompleteness: "NONE",
+      insight: {
+        role: "BEST",
+        roleLabel: "Mi elección",
+        why: "",
+        difference: null,
+        uncertainties: [],
+        budgetStatus: "NO_BUDGET",
+        travelMinutes: null,
+        travelKm: null,
+        stops: PLAN.details.map(() => ({
+          label: "Parada",
+          evidence: [],
+          caveats: [],
+          insight: stopInsight,
+        })),
+      },
+    };
+    render(
+      <PlanResults plans={[plan]} onAdjust={vi.fn()} onDiscard={vi.fn()} />,
+    );
+
+    expect(
+      screen.queryByText("Estimado para 2: $ 62.000"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the zone derived from the plan's first located stop", () => {
+    render(
+      <PlanResults plans={[PLAN]} onAdjust={vi.fn()} onDiscard={vi.fn()} />,
+    );
+
+    expect(screen.getByText("Luján de Cuyo")).toBeInTheDocument();
+  });
+
+  it("names a single-stop plan by the experience and shows its venue separately", () => {
+    const firstStop = PLAN.details[0];
+    if (!firstStop?.activity) throw new Error("The fixture needs an activity");
+    const singleStop: PlanDetailResult = {
+      ...PLAN,
+      details: [
+        {
+          ...firstStop,
+          activity: {
+            ...firstStop.activity,
+            name: "Almorzar entre viñedos",
+          },
+        },
+      ],
+    };
+
+    render(
+      <PlanResults
+        plans={[singleStop]}
+        onAdjust={vi.fn()}
+        onDiscard={vi.fn()}
+      />,
+    );
+
+    expect(
+      within(screen.getByTestId("hero-recommendation")).getByRole("heading", {
+        level: 2,
+        name: "Almorzar entre viñedos",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Bodega Central")).toBeInTheDocument();
+  });
+
+  it("explains when generated alternatives omit an unavailable experience", () => {
+    render(
+      <PlanResults
+        plans={[PLAN]}
+        unsupportedExperiences={["Cine"]}
+        onAdjust={vi.fn()}
+        onDiscard={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByText(/no encontramos opciones verificables para cine/i),
+    ).toHaveAttribute("role", "status");
+    expect(
+      screen.getByText(/no incluyen esa experiencia/i),
+    ).toBeInTheDocument();
+  });
+
+  it("shows what was understood, with the person's own words and without defaults", () => {
+    render(
+      <PlanResults
+        plans={[PLAN]}
+        understanding={{
+          chips: [
+            {
+              key: "experiences",
+              label: "Tomar algo",
+              source: "text",
+              icon: "🍸",
+            },
+            { key: "facet", label: "Fachero", source: "text", icon: "✨" },
+          ],
+          missing: ["when", "budget", "party"],
+          values: {
+            occasion: null,
+            partySize: 1,
+            date: "2026-10-17",
+            startMinutes: null,
+            now: false,
+            budget: null,
+            budgetStrict: false,
+            travelTolerance: "medium",
+            experiences: ["drinks"],
+            vibe: [],
+            pricePreference: null,
+            indoorOnly: false,
+            freeOnly: false,
+          },
+        }}
+        onAdjust={vi.fn()}
+        onDiscard={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Fachero")).toBeInTheDocument();
+    expect(screen.getByText("Tomar algo")).toBeInTheDocument();
+    expect(screen.queryByText(/1 persona/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/mañana/i)).not.toBeInTheDocument();
+  });
+
+  it("lets the person move the map between the options", async () => {
+    const user = userEvent.setup();
+    const secondPlan = { ...PLAN, id: 8, title: "Paseo por el parque" };
+    render(
+      <PlanResults
+        plans={[PLAN, secondPlan]}
+        onAdjust={vi.fn()}
+        onDiscard={vi.fn()}
+      />,
+    );
+
+    const tabs = within(
+      screen.getByRole("group", { name: /elegir un plan/i }),
+    ).getAllByRole("button");
+    expect(tabs).toHaveLength(2);
+    expect(tabs[0]).toHaveAttribute("aria-pressed", "true");
+    await user.click(tabs[1]);
+    expect(tabs[1]).toHaveAttribute("aria-pressed", "true");
+    expect(
+      within(screen.getByTestId("hero-recommendation")).getByRole("heading", {
+        level: 2,
+        name: secondPlan.title,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows at most three options", () => {
     const many = Array.from({ length: 5 }, (_, index) => ({
       ...PLAN,
       id: index + 1,
@@ -103,7 +422,11 @@ describe("PlanResults (CU17)", () => {
     }));
     render(<PlanResults plans={many} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
 
-    expect(screen.getAllByRole("link")).toHaveLength(3);
+    expect(
+      within(
+        screen.getByRole("group", { name: "Elegir un plan" }),
+      ).getAllByRole("button"),
+    ).toHaveLength(3);
   });
 });
 
@@ -123,8 +446,10 @@ describe("PlanResults (CU19 surprise)", () => {
       />,
     );
 
-    expect(screen.getByText(/elegimos estas ideas para vos/i)).toBeInTheDocument();
-    expect(screen.getByText("Usamos tu ubicación preferida.")).toBeInTheDocument();
+    expect(screen.getByText(/te sorprendo con este/i)).toBeInTheDocument();
+    expect(
+      screen.getByText("Usamos tu ubicación preferida."),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /ajustar/i }),
     ).not.toBeInTheDocument();
@@ -135,54 +460,44 @@ describe("PlanResults (CU19 surprise)", () => {
     expect(onRegenerate).toHaveBeenCalledOnce();
   });
 
-  it("maps the not-enough-activities case to the spec copy", () => {
-    render(
-      <PlanResults
-        plans={[]}
-        mode="surprise"
-        canAdjust={false}
-        onRegenerate={vi.fn()}
-        onAdjust={vi.fn()}
-        onDiscard={vi.fn()}
-      />,
-    );
+  it.each(["auto", "surprise"] as const)(
+    "shows an empty result for %s queries (CU17/CU19)",
+    (mode) => {
+      render(
+        <PlanResults
+          plans={[]}
+          mode={mode}
+          canAdjust={false}
+          onRegenerate={vi.fn()}
+          onAdjust={vi.fn()}
+          onDiscard={vi.fn()}
+        />,
+      );
 
-    expect(
-      screen.getByText(/no encontramos suficientes actividades cerca/i),
-    ).toBeInTheDocument();
-  });
+      expect(
+        screen.getByText("No hay planes disponibles para esa consulta"),
+      ).toBeInTheDocument();
+    },
+  );
 });
 
 /**
- * CU22 — marking (and un-marking) the intent to do a plan. Reversible, no
- * modal: "Lo voy a hacer" fires the PATCH directly; "Ya no lo voy a hacer"
- * fires the DELETE. `selected` shows only after the backend confirms.
+ * CU22, #130 — "Lo voy a hacer" adds the result to Mis salidas once. No
+ * modal, no undo on the card: the button is disabled while it saves, then
+ * the card reads "Agregado a Mis salidas" with a link to the outing.
  */
-describe("PlanResults (CU22 — plan intent)", () => {
-  const selectedResult: PlanSelectionResult = {
-    id: 7,
-    planRequestId: 3,
-    status: { key: "selected", name: "Elegido" },
-    viewerPlanState: "selected",
-  };
-  const generatedResult: PlanSelectionResult = {
-    id: 7,
-    planRequestId: 3,
-    status: { key: "generated", name: "Generado" },
-    viewerPlanState: "selectable",
-  };
-
-  const twoPlans: PlanRequestPlanSummary[] = [
+describe("PlanResults (CU22 — Lo voy a hacer)", () => {
+  const twoPlans: PlanDetailResult[] = [
     PLAN,
     { ...PLAN, id: 8, title: "Otra tarde" },
   ];
 
-  /** Mirrors what LandingHero does: applies the backend result in place. */
+  /** Mirrors what LandingHero does: applies the outing in place. */
   function Harness({
     initial,
     onReconcile,
   }: {
-    initial: PlanRequestPlanSummary[];
+    initial: PlanDetailResult[];
     onReconcile?: () => void;
   }) {
     const [plans, setPlans] = useState(initial);
@@ -191,17 +506,17 @@ describe("PlanResults (CU22 — plan intent)", () => {
         plans={plans}
         onAdjust={vi.fn()}
         onDiscard={vi.fn()}
-        onPlanSelected={(result) =>
+        onPlanSelected={(planId, outingId) =>
           setPlans((current) =>
-            current.map((plan) => {
-              if (plan.id === result.id)
-                return {
-                  ...plan,
-                  status: result.status,
-                  viewerPlanState: result.viewerPlanState,
-                };
-              return plan;
-            }),
+            current.map((plan) =>
+              plan.id === planId
+                ? {
+                    ...plan,
+                    viewerPlanState: "selected",
+                    activeOutingId: outingId,
+                  }
+                : plan,
+            ),
           )
         }
         onSelectionReconcile={onReconcile ?? vi.fn()}
@@ -211,11 +526,10 @@ describe("PlanResults (CU22 — plan intent)", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    selectPlan.mockResolvedValue(selectedResult);
-    deselectPlan.mockResolvedValue(generatedResult);
+    createOuting.mockResolvedValue(outingCreation({ id: 40 }));
   });
 
-  it("marks a plan with one direct PATCH — no modal — and shows the resolved state", async () => {
+  it("adds the plan to Mis salidas with one direct call — no modal", async () => {
     const user = userEvent.setup();
     render(<Harness initial={twoPlans} />);
 
@@ -224,62 +538,59 @@ describe("PlanResults (CU22 — plan intent)", () => {
     );
 
     await waitFor(() =>
-      expect(screen.getByText("Lo vas a hacer")).toBeInTheDocument(),
+      expect(screen.getByText("Agregado a Mis salidas")).toBeInTheDocument(),
     );
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(selectPlan).toHaveBeenCalledOnce();
-    expect(selectPlan).toHaveBeenCalledWith(7);
+    expect(createOuting).toHaveBeenCalledOnce();
+    expect(createOuting).toHaveBeenCalledWith(7);
     expect(
-      screen.getByText(/marcamos .* como uno que vas a hacer/i),
+      screen.getByRole("link", { name: /ver en mis salidas/i }),
+    ).toHaveAttribute("href", "/outings/40");
+    expect(screen.getByText(/agregamos .* a mis salidas/i)).toBeInTheDocument();
+    // The other alternative stays selectable and becomes actionable when shown.
+    const choices = within(
+      screen.getByRole("group", { name: "Elegir un plan" }),
+    ).getAllByRole("button");
+    await user.click(choices[1]);
+    expect(
+      within(screen.getByTestId("hero-recommendation")).getByRole("button", {
+        name: /^lo voy a hacer$/i,
+      }),
     ).toBeInTheDocument();
-    // The other alternative is untouched — still its own "Lo voy a hacer".
+    // No way back from the card: that is Mis salidas' job.
     expect(
-      screen.getAllByRole("button", { name: /^lo voy a hacer$/i }),
-    ).toHaveLength(1);
-    expect(
-      screen.getByRole("button", { name: /ya no lo voy a hacer/i }),
-    ).toBeInTheDocument();
+      screen.queryByRole("button", { name: /ya no lo voy a hacer/i }),
+    ).not.toBeInTheDocument();
   });
 
-  it("un-marks a plan with a direct DELETE", async () => {
-    const user = userEvent.setup();
-    render(
-      <Harness
-        initial={[{ ...PLAN, viewerPlanState: "selected" }]}
-      />,
+  it("disables the button while saving and never double-submits", async () => {
+    let release!: () => void;
+    createOuting.mockReturnValue(
+      new Promise((resolve) => {
+        release = () => resolve(outingCreation({ id: 40 }));
+      }),
     );
-
-    await user.click(
-      screen.getByRole("button", { name: /ya no lo voy a hacer/i }),
-    );
-
-    await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: /^lo voy a hacer$/i }),
-      ).toBeInTheDocument(),
-    );
-    expect(deselectPlan).toHaveBeenCalledOnce();
-    expect(deselectPlan).toHaveBeenCalledWith(7);
-  });
-
-  it("does not double-submit on a double click", async () => {
     const user = userEvent.setup();
     render(<Harness initial={[PLAN]} />);
 
     const button = screen.getByRole("button", { name: /^lo voy a hacer$/i });
     await user.dblClick(button);
 
-    await waitFor(() => expect(selectPlan).toHaveBeenCalled());
-    expect(selectPlan).toHaveBeenCalledTimes(1);
+    expect(button).toBeDisabled();
+    expect(createOuting).toHaveBeenCalledTimes(1);
+    release();
+    await waitFor(() =>
+      expect(screen.getByText("Agregado a Mis salidas")).toBeInTheDocument(),
+    );
   });
 
   it("reconciles from the server on a 409 and reports it", async () => {
-    selectPlan.mockRejectedValue(
+    createOuting.mockRejectedValue(
       new ApiError({
         message: "x",
         type: "HTTP",
         status: 409,
-        code: "PLAN_REQUEST_ALREADY_ADVANCED",
+        code: "PLAN_NOT_ACTIONABLE",
       }),
     );
     const onReconcile = vi.fn();
@@ -293,7 +604,7 @@ describe("PlanResults (CU22 — plan intent)", () => {
   });
 
   it("reports a network error without changing the card", async () => {
-    selectPlan.mockRejectedValue(
+    createOuting.mockRejectedValue(
       new ApiError({ message: "sin red", type: "NETWORK" }),
     );
     const user = userEvent.setup();
@@ -303,30 +614,55 @@ describe("PlanResults (CU22 — plan intent)", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText(/no pudimos guardar el cambio/i),
+        screen.getByText(/no pudimos agregarlo a mis salidas/i),
       ).toBeInTheDocument(),
     );
-    // Still offering to mark it — nothing was applied.
     expect(
       screen.getByRole("button", { name: /^lo voy a hacer$/i }),
-    ).toBeInTheDocument();
+    ).toBeEnabled();
   });
 
-  it("shows the resolved state for an alternative that is already marked", () => {
+  it("shows an alternative already chosen as added, linking to its outing", () => {
     render(
       <PlanResults
-        plans={[{ ...PLAN, viewerPlanState: "selected" }]}
+        plans={[{ ...PLAN, viewerPlanState: "selected", activeOutingId: 55 }]}
         onAdjust={vi.fn()}
         onDiscard={vi.fn()}
       />,
     );
 
-    expect(screen.getByText("Lo vas a hacer")).toBeInTheDocument();
+    expect(screen.getByText("Agregado a Mis salidas")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /ver en mis salidas/i }),
+    ).toHaveAttribute("href", "/outings/55");
     expect(
       screen.queryByRole("button", { name: /^lo voy a hacer$/i }),
     ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /ya no lo voy a hacer/i }),
-    ).toBeInTheDocument();
   });
+});
+
+it("carries the request origin in hero and alternative detail links", async () => {
+  render(
+    <PlanResults
+      plans={[PLAN, { ...PLAN, id: 8, title: "Otra salida" }]}
+      returnTo="/plan-requests/42"
+      onAdjust={vi.fn()}
+      onDiscard={vi.fn()}
+    />,
+  );
+  expect(screen.getByRole("link", { name: PLAN.title })).toHaveAttribute(
+    "href",
+    "/plans/7?from=%2Fplan-requests%2F42",
+  );
+  await userEvent
+    .setup()
+    .click(
+      within(
+        screen.getByRole("group", { name: "Elegir un plan" }),
+      ).getAllByRole("button")[1],
+    );
+  expect(screen.getByRole("link", { name: "Otra salida" })).toHaveAttribute(
+    "href",
+    "/plans/8?from=%2Fplan-requests%2F42",
+  );
 });

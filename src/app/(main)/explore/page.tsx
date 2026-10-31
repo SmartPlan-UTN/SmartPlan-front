@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 
+import { explorationQuery, readExplorationState, type ExplorationSearchParams } from "@/components/explore";
 import { ExploreTabs } from "@/components/explore";
-import { Container } from "@/components/layout";
+import { Container, PageKicker } from "@/components/layout";
 
 import styles from "./explore.module.css";
 
@@ -9,16 +10,31 @@ export const metadata: Metadata = {
   title: "Explorar",
 };
 
-export default function ExplorePage() {
+export default async function ExplorePage({ searchParams }: { searchParams: Promise<ExplorationSearchParams> }) {
+  const initialState = readExplorationState(await searchParams);
   return (
     <div className={styles.backdrop}>
       <Container>
         <div className={styles.page}>
-          {/* SmartPlanSystemDesign's Results screen has no visible page
-              title — it goes straight from the navbar into the search bar
-              — but a page still needs a heading landmark. */}
-          <h1 className="sp-sr-only">Explorar</h1>
-          <ExploreTabs />
+          <ExploreTabs
+            key={explorationQuery(initialState)}
+            initialState={initialState}
+            intro={
+              <header className="sp-page-intro">
+                <PageKicker>Explorá a tu manera</PageKicker>
+                <h1 className={`sp-page-title ${styles.title}`}>
+                  Encontrá algo
+                  <span className="sp-page-title-accent">
+                    {" "}que te guste.
+                  </span>
+                </h1>
+                <p className="sp-page-lead">
+                  Buscá una experiencia o descubrí recorridos que ya tienen
+                  sentido juntos.
+                </p>
+              </header>
+            }
+          />
         </div>
       </Container>
     </div>

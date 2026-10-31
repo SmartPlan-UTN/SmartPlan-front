@@ -13,6 +13,79 @@
   font-weight: var(--w-label);
 }
 
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: var(--s-5);
+  padding-bottom: var(--s-3);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.tab {
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-chip);
+  color: var(--fg-2);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+  text-decoration: none;
+}
+
+.tab:hover {
+  background: var(--ember-04);
+  color: var(--ember);
+}
+
+.tab[aria-current="page"] {
+  background: var(--ember);
+  color: var(--white);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.historyHint {
+  max-width: 65ch;
+  margin-top: var(--s-4);
+  color: var(--fg-2);
+  font-size: var(--t-small);
+  line-height: 1.5;
+}
+
+.historyDate {
+  color: var(--fg-2);
+  font-size: var(--t-label);
+}
+
+.historyActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  font-size: var(--t-small);
+}
+
+.historyError {
+  margin-top: var(--s-4);
+  color: var(--error);
+  font-size: var(--t-small);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .planCard,
+  .createCard {
+    transition: none;
+  }
+
+  .planCard:hover,
+  .createCard:hover {
+    transform: none;
+  }
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 280px));
@@ -41,7 +114,8 @@
   font-weight: var(--w-heading);
   text-align: center;
   text-decoration: none;
-  transition: border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+  transition:
+    border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
     background 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
     transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
@@ -104,7 +178,8 @@
   border: 1px solid var(--hairline);
   background: var(--surface-card);
   box-shadow: var(--shadow-card);
-  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+  transition:
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
     border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -153,7 +228,10 @@
   background: transparent;
   color: var(--fg-2);
   cursor: pointer;
-  transition: background 160ms, color 160ms, border-color 160ms;
+  transition:
+    background 160ms,
+    color 160ms,
+    border-color 160ms;
 }
 
 .iconAction:hover {
@@ -222,7 +300,22 @@
   }
 
   .createCard {
-    min-height: 150px;
+    min-height: 76px;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--s-3);
+    padding: var(--s-4);
+    text-align: left;
+  }
+
+  .createIcon {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+  }
+
+  .createHint {
+    display: none;
   }
 
   /* Title and actions stop competing for one line: on a narrow card the
@@ -254,3 +347,39 @@
     gap: var(--s-2);
   }
 }
+
+/* ── Visibility (#130) ─────────────────────────────────────── */
+.visibilityRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+
+.visibilityBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: var(--r-chip);
+  background: color-mix(in srgb, var(--fg-3) 16%, transparent);
+  color: var(--fg-2);
+  font-size: var(--t-label);
+  font-weight: var(--w-label);
+  letter-spacing: 0.02em;
+}
+
+.visibilityPublic {
+  background: var(--success-15);
+  color: var(--success);
+}
+
+.visibilityRemoved {
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+  color: var(--error);
+}
+.publishPreview { display: grid; gap: 10px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--hairline); border-radius: var(--r-card); background: var(--cream); }
+.publishPreview > svg { color: var(--ember); }
+.publishPreview strong { color: var(--fg-1); font-size: 21px; line-height: 1.2; overflow-wrap: anywhere; }
+.publishPreview span { color: var(--fg-2); font-size: var(--t-small); }

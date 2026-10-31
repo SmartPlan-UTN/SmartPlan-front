@@ -52,6 +52,7 @@ export interface LocationOption {
 }
 /** Place catalog projection returned by `GET /places`. */
 export interface PlaceOption {
+  images?: import('./media').MediaImage[];
   id: number;
   name: string;
   description: string | null;
@@ -68,6 +69,7 @@ export interface PlaceOption {
 }
 
 export interface PlaceListParams {
+  scope?: 'plannable';
   search?: string;
   departmentId?: number;
   page?: number;

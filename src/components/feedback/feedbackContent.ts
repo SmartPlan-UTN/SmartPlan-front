@@ -49,6 +49,13 @@ export const FEEDBACK_COPY = {
     subtitle: "Contanos tu experiencia",
     dismiss: "Ahora no",
   },
+  edit: {
+    heading: "Editar tu valoración",
+    guidance: "Cambiá el puntaje o el comentario y guardá los cambios.",
+    submit: "Guardar cambios",
+    submitting: "Guardando…",
+    cancel: "Cancelar",
+  },
   dialog: {
     heading: "¿Cómo estuvo tu plan?",
     ratingLabel: "Tu calificación",
@@ -74,11 +81,81 @@ export const FEEDBACK_COPY = {
     title: "¡Gracias por tu opinión!",
     body: "Esto nos ayuda a mejorar tus próximos planes.",
   },
+  /** Right after the feedback: the photos of the whole outing (optional). */
+  photos: {
+    title: "¿Sumás fotos de la salida?",
+    body: "Quedan guardadas en Mis salidas. La que elijas de portada es la que se ve en la tarjeta.",
+    next: "Seguir",
+    done: "Listo",
+    skip: "Ahora no",
+  },
+  /** Opting in to the plan's community section (#106). Never on by default. */
+  share: {
+    label: "Compartir mi experiencia con la comunidad",
+    hint: "Opcional",
+    body: "Se va a ver en Comunidad con tu username y tu foto de perfil: tus estrellas, lo que destacaste, tu comentario y las fotos de la salida. Tu nombre legal y lo que gastaste nunca se muestran.",
+    later: "Podés hacerla privada cuando quieras desde Mis salidas.",
+  },
+  /** Public or private later, from the outing (#106). */
+  sharing: {
+    switchLabel: "Compartir con la comunidad",
+    publicTitle: "Visible en la comunidad",
+    privateTitle: "Solo para vos",
+    publicBody: (plan: string) =>
+      `Tu experiencia y las fotos de la salida se ven en Comunidad. El plan "${plan}" solo aparece si también es público.`,
+    privateBody:
+      "Compartila para que otras personas vean cómo te fue. No se muestra lo que gastaste.",
+    error: "No pudimos cambiarlo. Intentá de nuevo.",
+    commentHidden:
+      "Un administrador eliminó tu comentario de la comunidad por una denuncia: no cumple las normas de convivencia.",
+  },
   experience: {
     heading: "Tu experiencia",
     costHeading: "Costo",
     estimatedLabel: "Estimado por SmartPlan",
     realLabel: "Lo que gastaste",
+  },
+} as const;
+
+/**
+ * The optional step after the feedback (CU23 → CU44). Same tone: an offer,
+ * never a pending task — "Ahora no" is as visible as the way in.
+ */
+export const ACTIVITY_RATINGS_COPY = {
+  offer: {
+    question: "¿Querés valorar las actividades que hiciste?",
+    body: "Es opcional. Tus valoraciones ayudan a otras personas a elegir.",
+    accept: "Valorar actividades",
+    decline: "Ahora no",
+  },
+  heading: "Valorá las actividades",
+  lead: "Solo las que quieras. Las que dejes sin estrellas no se envían.",
+  currentRating: "Tu valoración actual",
+  saved: "Guardada",
+  commentToggle: "Agregar un comentario",
+  commentLabel: (activity: string) => `Tu comentario sobre ${activity}`,
+  commentPlaceholder: "Qué te gustó, qué no…",
+  submit: "Guardar valoraciones",
+  submitting: "Guardando…",
+  skip: "Omitir",
+  done: {
+    title: "¡Gracias por valorar!",
+    body: "Tus valoraciones ayudan a otras personas a elegir.",
+    photosTitle: "¿Tenés fotos de alguna actividad?",
+    photosBody: "Es opcional. Se ven junto a tu valoración, en la página de cada actividad.",
+    finish: "Listo",
+  },
+  errors: {
+    generic: "No pudimos guardarla. Intentá de nuevo.",
+    experience: "No pudimos verificar esta actividad en tu salida.",
+    activityGone: "Esta actividad ya no está disponible.",
+    validation: "Revisá el comentario.",
+    partial: (failed: number, attempted: number) =>
+      failed === attempted
+        ? "No pudimos guardar tus valoraciones. Intentá de nuevo."
+        : failed === 1
+          ? "No pudimos guardar una valoración. Las demás quedaron guardadas."
+          : `No pudimos guardar ${failed} valoraciones. Las demás quedaron guardadas.`,
   },
 } as const;
 

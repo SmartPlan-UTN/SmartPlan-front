@@ -2,6 +2,13 @@ const SCRIPT_ID = "smartplan-google-maps-script";
 const LOAD_TIMEOUT_MS = 10000;
 
 let loadPromise: Promise<void> | null = null;
+export const GOOGLE_MAPS_AUTH_FAILURE_EVENT = 'smartplan:maps-auth-failure';
+let authenticationFailed = false;
+let authenticationHandlerInstalled = false;
+
+declare global {
+  interface Window { gm_authFailure?: () => void; }
+}
 
 /**
  * Loads the Google Maps JavaScript API once, however many components ask
@@ -26,6 +33,21 @@ export function loadGoogleMaps(): Promise<void> {
   loadPromise = new Promise((resolve, reject) => {
     if (typeof window === "undefined") {
       reject(new Error("Google Maps solo puede cargarse en el navegador."));
+      return;
+    }
+
+    if (!authenticationHandlerInstalled) {
+      authenticationHandlerInstalled = true;
+      const previous = window.gm_authFailure;
+      window.gm_authFailure = () => {
+        authenticationFailed = true;
+        loadPromise = null;
+        window.dispatchEvent(new Event(GOOGLE_MAPS_AUTH_FAILURE_EVENT));
+        previous?.();
+      };
+    }
+    if (authenticationFailed) {
+      reject(new Error('No pudimos cargar el mapa.'));
       return;
     }
 

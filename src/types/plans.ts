@@ -1,8 +1,49 @@
-import { BaseEntity, CatalogEntity } from './common';
-import type { ExplorationQueryParams, SortDirection } from './common';
-import type { User } from './users';
-import type { FeedbackState, PlanFeedback, PlanRequest } from './recommendation';
-import type { Activity, ActivityCategorySummary, ActivityLocationSummary } from './activities';
+import type { Price, PriceCompleteness } from "./pricing";
+import { BaseEntity, CatalogEntity } from "./common";
+import type { ExplorationQueryParams, SortDirection } from "./common";
+import type { User } from "./users";
+import type {
+  FeedbackState,
+  PlanFeedback,
+  PlanRequest,
+} from "./recommendation";
+import type {
+  Activity,
+  ActivityCategorySummary,
+  ActivityLocationSummary,
+  ActivitySearchResult,
+} from "./activities";
+
+export interface ComposerCheckPayload {
+  stops: Array<{ activityId?: number; placeId?: number; action?: string; durationMinutes?: number }>;
+  date: string;
+  startTime: string;
+  peopleCount: number;
+  budget?: number;
+  travelMode?: "drive" | "walk" | "bicycle";
+}
+
+export interface ComposerContinuation {
+  activityId: number | null;
+  placeId: number;
+  action: string;
+  name: string;
+  placeName: string;
+  experience: string;
+  startTime: string;
+  travelMinutes: number | null;
+  why: string;
+}
+
+export interface ComposerCheckResult {
+  stops: Array<{ index: number; name: string; startTime: string; endTime: string; travelMinutesFromPrevious: number | null;
+    hours: "CONFIRMED_OPEN" | "CLOSES_DURING" | "CLOSED" | "UNKNOWN"; closesAt: string | null }>;
+  totals: { min: number | null; max: number | null; unpriced: number; completeness: string };
+  budget: { status: "WITHIN" | "UNCERTAIN" | "EXCEEDS" | "NO_BUDGET"; remaining: number | null };
+  issues: Array<{ stopIndex: number | null; kind: "CLOSED_AT_ARRIVAL" | "CLOSES_DURING" | "HOURS_UNKNOWN" | "LONG_LEG" | "OVER_BUDGET" | "BUDGET_UNPROVEN";
+    message: string; actions: Array<"CHANGE_TIME" | "FIND_ALTERNATIVE" | "CHEAPER">; alternative?: ComposerContinuation }>;
+  continuations: ComposerContinuation[];
+}
 
 /**
  * Plan made up of activities (CU12, CU13, CU17, CU24-CU31, CU60).
@@ -13,7 +54,10 @@ export interface Plan extends BaseEntity {
   idUser: number;
   idPlanRequest: number | null;
   idPlanStatus: number;
-  estimatedTotalCost: number;
+  estimatedTotalCost: number | null;
+  estimatedTotalCostMax?: number | null;
+  unpricedCount?: number;
+  priceCompleteness?: PriceCompleteness;
   estimatedTotalDuration: number;
   user?: User;
   request?: PlanRequest | null;
@@ -27,7 +71,8 @@ export interface PlanDetail extends BaseEntity {
   idPlan: number;
   idActivity: number;
   order: number;
-  estimatedCost: number;
+  estimatedCost: number | null;
+  price?: Price | null;
   estimatedDuration: number;
   note: string | null;
   plan?: Plan;
@@ -40,11 +85,11 @@ export interface PlanDetail extends BaseEntity {
  * (`src/database/seeds/definitions.ts`).
  */
 export type PlanStatusKey =
-  | 'generated'
-  | 'selected'
-  | 'confirmed'
-  | 'completed'
-  | 'cancelled';
+  | "generated"
+  | "selected"
+  | "confirmed"
+  | "completed"
+  | "cancelled";
 
 /**
  * Status of a plan (CU22, CU26, CU60).
@@ -60,9 +105,15 @@ export interface PlanStatus extends CatalogEntity<PlanStatusKey> {
  */
 export interface PlanSearchResult {
   id: number;
+  imageUrl?: string | null;
+  /** `google_maps` when `imageUrl` is a Google Places photo (SmartPlan-back#102). */
+  imageSource?: import("./media").ImageSource | null;
   title: string;
   description: string | null;
-  estimatedTotalCost: number;
+  estimatedTotalCost: number | null;
+  estimatedTotalCostMax?: number | null;
+  unpricedCount?: number;
+  priceCompleteness?: PriceCompleteness;
   estimatedTotalDuration: number;
   activityCount: number;
   averageRating: number;
@@ -72,6 +123,11 @@ export interface PlanSearchResult {
   activityNames: string[];
   status: { key: PlanStatusKey; name: string };
   viewerPlanState?: ViewerPlanState;
+  /**
+   * The viewer's outing still to do that was copied from this plan (CU22), so
+   * "Lo voy a hacer" becomes "Ver en Mis salidas"; `null` otherwise.
+   */
+  activeOutingId?: number | null;
 }
 
 /** Activity as embedded in a plan's itinerary (CU13). */
@@ -79,7 +135,8 @@ export interface PlanItineraryActivity {
   id: number;
   name: string;
   description: string;
-  estimatedCost: number;
+  estimatedCost: number | null;
+  price?: Price | null;
   estimatedDuration: number;
   type: string | null;
   averageRating: number;
@@ -88,88 +145,441 @@ export interface PlanItineraryActivity {
   locations: ActivityLocationSummary[];
 }
 
+/** The place of a stop. Coordinates are SmartPlan-owned only. */
+export interface PlanStopPlace {
+  id: number;
+  name: string;
+  address: string | null;
+  kind: string | null;
+  kindLabel: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  googlePlaceId: string | null;
+  departmentName: string | null;
+}
+
+/**
+ * One stop, whatever is behind it: a catalog activity (`OFFERING`) or the
+ * intrinsic action of a place (`PLACE_ACTION`, e.g. "Cena en Anna Bistró").
+ * Matches `PlanStopDto` in `SmartPlan-back`.
+ */
+export interface PlanStop {
+  kind: 'OFFERING' | 'PLACE_ACTION';
+  label: string;
+  action: string | null;
+  actionLabel: string | null;
+  activityId: number | null;
+  place: PlanStopPlace | null;
+  /** Planned local start in minutes from the plan date's midnight. */
+  startMinute: number | null;
+  legTravelMinutes: number | null;
+  legDistanceMeters: number | null;
+  estimateBasis: Record<string, unknown> | null;
+}
+
 /** One ordered stop in a plan's itinerary (CU13). */
 export interface PlanItineraryItem {
   id: number;
   order: number;
-  estimatedCost: number;
+  estimatedCost: number | null;
+  price?: Price | null;
   estimatedDuration: number;
-  activity: PlanItineraryActivity;
+  /** The catalog activity behind the stop; `null` for a place-action stop. */
+  activity: PlanItineraryActivity | null;
+  /** Unified view of the stop (always present from the current API). */
+  stop?: PlanStop;
+}
+
+/**
+ * Evidence-only facts about one stop of a generated plan ("Estimado para 2:
+ * $62.000–$69.000", "Abierto hasta las 02:00"). Matches `StopInsightDto`.
+ */
+export interface StopInsight {
+  /** "Tragos con onda": the stop's role in the plan. */
+  purpose: string;
+  price: string | null;
+  priceSource: string | null;
+  /** The price was checked live in Google Maps (only the verdict is saved). */
+  priceLive: boolean;
+  hours: string | null;
+  hoursSource: string | null;
+  /** "Buena opción para tragos y comida para compartir". */
+  fit: string | null;
+  /** A representative real order from the current official menu. */
+  order: {
+    name: string;
+    lines: { quantity: number; item: string; unitPrice: number }[];
+    total: number;
+    sourceUrl: string;
+    observedAt: string;
+  } | null;
+  attribution: 'Google Maps' | 'OpenStreetMap' | null;
+}
+
+export interface PlanDiscarded {
+  overBudget: number;
+  tooFar: number;
+  closedForGood: number;
+  closedAtTime: number;
+}
+
+/** Why the planner chose a plan, as the person sees it (never scores). */
+export interface PlanInsight {
+  role: 'BEST' | 'VALUE' | 'DIFFERENT' | 'ALTERNATIVE';
+  roleLabel: string;
+  why: string;
+  /** What the place is, in a line, from evidence only. */
+  tagline?: string | null;
+  /** The request said back ("Pediste algo fachero para tomar algo."). */
+  echo?: string | null;
+  difference: string | null;
+  uncertainties: string[];
+  budgetStatus:
+    | 'WITHIN'
+    | 'UNCERTAIN'
+    | 'EXCEEDS'
+    | 'MAY_EXCEED'
+    | 'UNKNOWN'
+    | 'NO_BUDGET';
+  travelMinutes: number | null;
+  travelKm: number | null;
+  stops: Array<{
+    label: string;
+    evidence: string[];
+    caveats: string[];
+    insight?: StopInsight | null;
+  }>;
+  /** Every stop has known hours and a usable price (and fits a strict budget). */
+  decisionGrade?: boolean;
+  /** Real counts of places SmartPlan ruled out (best plan only). */
+  discarded?: PlanDiscarded | null;
+  /** Some prices were checked live in Google Maps (only the verdict is saved). */
+  priceBasis?: 'PROVIDER_LIVE' | null;
+  /** When those live prices were checked (ISO); saved results are not rechecked. */
+  priceCheckedAt?: string | null;
 }
 
 /**
  * What a plan means for the current viewer (CU22, PAN 17). Computed
- * server-side; the frontend never infers it. Any authenticated viewer of a
- * non-`cancelled` plan is `selectable` (or `selected` once they hold an
- * intention) — ownership and visibility don't matter. An anonymous viewer is
- * always `view-only`.
+ * server-side; the frontend never infers it:
+ *  - `selectable`: the viewer may choose it ("Lo voy a hacer");
+ *  - `selected`: the viewer already has an outing to do from it;
+ *  - `view-only`: anonymous, cancelled, an outing, or not choosable.
  * Matches `ViewerPlanState` in `SmartPlan-back` (`src/plans/plan-selectability.ts`).
  */
-export type ViewerPlanState = 'selectable' | 'selected' | 'view-only';
+export type ViewerPlanState = "selectable" | "selected" | "view-only";
+
+/**
+ * What a plan row is (SmartPlan-back#98):
+ *  - `authored`: created by a person; lives in "Mis planes" and can be published;
+ *  - `generated`: one alternative of a "Planificar" request, private to it;
+ *  - `outing`: a person's frozen copy of a plan they chose ("Mis salidas").
+ */
+export type PlanKind = "authored" | "generated" | "outing";
+
+/** Only an author publishes a plan; everything starts `private`. */
+export type PlanVisibility = "private" | "public";
 
 /**
  * Plan detail returned by `GET /plans/:id` (CU13): the search summary plus
  * its ordered itinerary.
  */
 export interface PlanDetailResult extends PlanSearchResult {
+  images?: import("./media").MediaImage[];
   details: PlanItineraryItem[];
   /** Selection affordance for the caller (CU22). */
   viewerPlanState: ViewerPlanState;
+  activeOutingId: number | null;
+  kind: PlanKind;
+  visibility: PlanVisibility;
+  inspiredBy?: { id: number; title: string; creatorUsername: string | null } | null;
+  /** Who published it; `null` unless it is a published authored plan. */
+  author?: { username: string; avatarUrl: string | null } | null;
+  /** The caller owns this plan, result, or outing. */
+  ownedByViewer: boolean;
+  /** When the plan starts, for plans the planner placed on a date. */
+  startsAt?: string | null;
+  /** The planner's explanation, for generated plans. */
+  insight?: PlanInsight | null;
+  /** People the plan (and its prices) is for. */
+  peopleCount?: number;
+  /** How prepared the outing is (suggested → ready). */
+  readiness?: PlanReadiness | null;
 }
 
-/**
- * Result of `PATCH /plans/:id/select` (CU22). The plan always belongs to a
- * request on success, so `planRequestId` is never null.
- * Matches `PlanSelectionResponseDto` in `SmartPlan-back`.
- */
-export interface PlanSelectionResult {
-  id: number;
-  planRequestId: number | null;
-  status: { key: PlanStatusKey; name: string };
-  viewerPlanState?: ViewerPlanState;
+export type PlanReadinessStage =
+  | "SUGGESTED"
+  | "FEASIBLE"
+  | "VERIFIED"
+  | "PREPARATION_REQUIRED"
+  | "READY";
+
+export interface PlanPreparationTask {
+  detailId: number;
+  kind: "TICKET" | "RESERVATION";
+  required: boolean;
+  label: string;
+  /** `CONFIRMED` only when the person said so; a link never confirms. */
+  status: "PENDING" | "CONFIRMED";
+  confirmedAt: string | null;
+  /** Always the person: SmartPlan never books or buys for them. */
+  confirmedBy?: "USER" | null;
+  actionUrl: string | null;
+  actionLabel: string | null;
 }
 
-/* ── CU23 · Plan history (PAN 13) ────────────────────────────────── */
+export interface PlanReadiness {
+  stage: PlanReadinessStage;
+  label: string;
+  summary: string;
+  ready: boolean;
+  verifiedStops: number;
+  totalStops: number;
+  tasks: PlanPreparationTask[];
+}
+
+/* ── Mis planes (CU24-CU30) ─────────────────────────────────────── */
 
 /**
- * A plan in the signed-in user's own history, from `GET /users/me/plans`
- * (list) and `GET /users/me/plans/:id` (detail). Matches `OwnPlanSummaryDto`
- * in `SmartPlan-back`. Carries the CU23 feedback layer that the public
- * projections never expose.
+ * A plan the signed-in user authored, from `GET /users/me/plans` (list) and
+ * `GET /users/me/plans/:id` (detail). Matches `OwnPlanSummaryDto` in
+ * `SmartPlan-back`. Generated results and outings are never listed here.
  */
 export interface OwnPlanSummary {
   id: number;
   title: string;
   description: string | null;
-  estimatedTotalCost: number;
+  visibility: PlanVisibility;
+  /**
+   * An administrator took it down after a report (#156): it stays private
+   * and cannot be published again.
+   */
+  removedByModeration: boolean;
+  estimatedTotalCost: number | null;
+  estimatedTotalCostMax?: number | null;
+  unpricedCount?: number;
+  priceCompleteness?: PriceCompleteness;
   estimatedTotalDuration: number;
   peopleCount: number;
-  estimatedCostPerPerson: number;
+  estimatedCostPerPerson: number | null;
   activityCount: number;
   status: { key: PlanStatusKey; name: string };
-  /** ISO date the plan was marked `completed`, or `null`. */
-  completedAt: string | null;
-  feedbackState: FeedbackState;
-  feedback: PlanFeedback | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/** A saved alternative from the current user's generation history. */
+export interface GeneratedPlanSummary extends OwnPlanSummary {
+  planRequestId: number | null;
+  editablePlanId: number | null;
+}
+
+/* ── Mis salidas (CU22, CU23) ───────────────────────────────────── */
+
+/** `to_do` until the person marks it done, then `completed`. */
+export type OutingStatus = "to_do" | "completed";
+
+/**
+ * The plan an outing was copied from. `available` is `false` once its author
+ * made it private or cancelled it; the outing itself never changes.
+ */
+export interface OutingSource {
+  id: number;
+  kind: PlanKind;
+  title: string;
+  available: boolean;
+  /**
+   * A published plan: a shared experience of this outing shows in its
+   * community section (#106).
+   */
+  hasCommunity: boolean;
+}
+
+/** One entry of "Mis salidas" — `GET /users/me/outings`. */
+export interface OutingSummary {
+  id: number;
+  imageUrl?: string | null;
+  /** `google_maps` when `imageUrl` is a Google Places photo (SmartPlan-back#102). */
+  imageSource?: import("./media").ImageSource | null;
+  title: string;
+  description: string | null;
+  estimatedTotalCost: number | null;
+  estimatedTotalCostMax?: number | null;
+  unpricedCount?: number;
+  priceCompleteness?: PriceCompleteness;
+  estimatedTotalDuration: number;
+  peopleCount: number;
+  estimatedCostPerPerson: number | null;
+  activityCount: number;
+  activityNames: string[];
+  status: OutingStatus;
+  /** ISO date the outing was marked done, or `null` while to do. */
+  completedAt: string | null;
+  /** Opens as soon as the outing is done and never closes (CU23). */
+  feedbackState: FeedbackState;
+  feedback: PlanFeedback | null;
+  source: OutingSource | null;
+  createdAt: string;
+}
+
+/** `GET /users/me/outings/:id`: the frozen itinerary with its places. */
+export interface OutingDetail extends OutingSummary {
+  insight?: PlanInsight | null;
+  readiness?: PlanReadiness | null;
+  travelDistanceMeters: number | null;
+  travelDurationSeconds: number | null;
+  details: PlanItineraryItem[];
+}
+
+/**
+ * Result of "Lo voy a hacer" (`POST /users/me/outings`) and "Volver a hacer
+ * este plan" (`POST /users/me/outings/:id/repeat`). `created` is `false` when
+ * an outing to do already existed and was returned instead of a duplicate.
+ */
+export interface OutingCreationResult {
+  created: boolean;
+  outing: OutingDetail;
+}
+
+/** Order of "Mis salidas"; `recent` is the default (#134). */
+export type OutingSort = "recent" | "oldest" | "cost_desc" | "cost_asc";
+
+/** What "Mis salidas" can be narrowed by (#134). Dates are `YYYY-MM-DD`. */
+export interface OutingFilters {
+  /** In the title or the name of any activity. */
+  search?: string;
+  from?: string;
+  to?: string;
+  sort?: OutingSort;
+  /** Only done outings with (`true`) or without (`false`) feedback. */
+  rated?: boolean;
+}
+
+export interface ListOutingsParams extends OutingFilters {
+  sourcePlanId?: number;
+  status?: OutingStatus;
+  page?: number;
+  limit?: number;
+}
+
+/** One catalog activity suggested for the plan being edited (#98). */
+export interface ActivitySuggestion {
+  id: number;
+  name: string;
+  description: string;
+  estimatedCost: number | null;
+  price?: Price | null;
+  estimatedDuration: number;
+  type: string | null;
+  categories: string[];
+}
+
+/**
+ * The composer's assistant (`/users/me/plans/assistant/*`). Gemini judges
+ * meaning; every activity here is a real catalog row and every number
+ * (distance, minutes, cost) was computed by the API. Nothing in these
+ * answers changes a plan: the person accepts or ignores each proposal.
+ */
+export interface AssistantSearchResponse {
+  interpretation: { chips: string[]; nearName: string | null };
+  results: Array<{ activity: ActivitySearchResult; reason: string | null }>;
+}
+
+export interface AssistantSuggestResponse {
+  suggestions: Array<{
+    activity: ActivitySearchResult;
+    reason: string | null;
+  }>;
+  /** A kind of activity the route lacks, when one clearly does. */
+  gap: { categoryName: string; message: string } | null;
+}
+
+export interface AssistantProposalEffect {
+  minutes: number;
+  /** Known cost change; `null` when the activity's price is unknown. */
+  cost: number | null;
+  /** Change in straight-line km; null when any position is unknown. */
+  km: number | null;
+}
+
+export type AssistantProposal =
+  | {
+      kind: "reorder";
+      reason: string;
+      orderedActivityIds: number[];
+      effect: AssistantProposalEffect;
+    }
+  | {
+      kind: "add";
+      reason: string;
+      activity: ActivitySearchResult;
+      /** Zero-based slot in the route; null appends. */
+      position: number | null;
+      effect: AssistantProposalEffect;
+    }
+  | {
+      kind: "remove";
+      reason: string;
+      activityId: number;
+      effect: AssistantProposalEffect;
+    };
+
+export interface AssistantImproveResponse {
+  proposals: AssistantProposal[];
+}
+
+export interface ActivitySuggestionsParams {
+  title: string;
+  description?: string;
+  excludeActivityIds?: number[];
+}
+
+/* ── In-app notifications ───────────────────────────────────────── */
+
+/**
+ * A personal in-app notification. `resourceType: 'outing'` is the 24 h
+ * feedback reminder and `resourceId` the outing it opens (CU23).
+ */
+export interface AppNotification {
+  id: number;
+  title: string;
+  message: string;
+  resourceType: string | null;
+  resourceId: number | null;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface NotificationList {
+  data: AppNotification[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  unreadCount: number;
 }
 
 /** Own plan plus its ordered itinerary — `GET /users/me/plans/:id`. */
 export interface OwnPlanDetail extends OwnPlanSummary {
   details: {
+    perPersonCost?: number | null;
     id: number;
     order: number;
-    estimatedCost: number;
+    estimatedCost: number | null;
+    price?: Price | null;
     estimatedDuration: number;
+    stop?: PlanStop;
     activity: {
       id: number;
       name: string;
       description: string;
-      estimatedCost: number;
+      estimatedCost: number | null;
+      price?: Price | null;
       estimatedDuration: number;
       type: string | null;
-    };
+    } | null;
   }[];
 }
 
@@ -181,7 +591,7 @@ export interface MyPlansParams {
 }
 
 /** Sortable fields accepted by `GET /plans`. */
-export type PlanSortField = 'relevance' | 'price' | 'rating' | 'distance';
+export type PlanSortField = "relevance" | "price" | "rating" | "distance";
 
 /**
  * Query params accepted by `GET /plans` (CU12's search box only sends
@@ -197,7 +607,7 @@ export interface PlanSearchParams extends ExplorationQueryParams {
 export interface ListOwnPlansParams {
   page?: number;
   limit?: number;
-  sortBy?: 'createdAt';
+  sortBy?: "createdAt";
   direction?: SortDirection;
 }
 
@@ -205,6 +615,30 @@ export interface CreatePlanDto {
   title: string;
   description?: string | null;
   peopleCount: number;
+}
+
+export type PlanComposerStopDto = ({ activityId: number; placeId?: never; action?: never } | { activityId?: never; placeId: number; action: string }) & {
+  /** Sent only for a stop retained from the plan being edited. */
+  detailId?: number;
+}
+
+export interface CreatePlanComposerDto {
+  requestId: string;
+  title: string;
+  description: string | null;
+  peopleCount: number;
+  visibility: PlanVisibility;
+  inspiredByPlanId?: number;
+  stops: PlanComposerStopDto[];
+}
+
+export interface UpdatePlanComposerDto {
+  requestId: string;
+  title: string;
+  description: string | null;
+  peopleCount: number;
+  visibility: PlanVisibility;
+  stops: PlanComposerStopDto[];
 }
 
 export interface UpdatePlanDto {
@@ -218,37 +652,30 @@ export interface AddPlanDetailDto {
 }
 
 export interface OwnPlanCostSummary {
-  estimatedTotalCost: number;
+  estimatedTotalCost: number | null;
+  estimatedTotalCostMax?: number | null;
+  unpricedCount?: number;
+  priceCompleteness?: PriceCompleteness;
   peopleCount: number;
-  estimatedCostPerPerson: number;
+  estimatedCostPerPerson: number | null;
   estimatedTotalDuration: number;
 }
 
 export interface OwnPlanDetailItem {
+  stop?: PlanStop;
+  perPersonCost?: number | null;
   id: number;
   order: number;
-  estimatedCost: number;
+  estimatedCost: number | null;
+  price?: Price | null;
   estimatedDuration: number;
   activity: {
     id: number;
     name: string;
     description: string;
-    estimatedCost: number;
+    estimatedCost: number | null;
+    price?: Price | null;
     estimatedDuration: number;
     type: string | null;
-  };
-}
-
-/**
- * Payload for requesting a suggested plan (CU31).
- * Backend contract: `POST /api/plan-suggestions`.
- */
-export interface PlanSuggestionDto {
-  budget: number;
-  latitude: number;
-  longitude: number;
-  peopleCount: number;
-  availableDurationMinutes: number;
-  preferences?: string[];
-  notes?: string;
+  } | null;
 }

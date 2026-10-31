@@ -2,11 +2,6 @@
   border-bottom: 1px solid var(--hairline);
 }
 
-.eyebrow {
-  margin-bottom: var(--s-2);
-  color: var(--ember);
-}
-
 .sectionNav {
   margin-top: var(--s-5);
 }

@@ -5,13 +5,15 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { Button, Icon } from "@/components/ui";
+import { Button, Icon, UserAvatar } from "@/components/ui";
+import { getProfile } from "@/lib/api";
 import { useSession } from "@/lib/auth";
 import { loginRoute, ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
+import { subscribeAvatarChanges } from "@/lib/profile/avatarChanges";
 
 import { NavLink } from "./NavLink";
-import { USER_LINKS } from "./links";
+import { ADMIN_USER_LINK, USER_LINKS } from "./links";
 import styles from "./layout.module.css";
 
 interface LogoutConfirmModalProps {
@@ -125,9 +127,9 @@ function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
  * - `loading`: a same-sized placeholder, so the navbar doesn't jump once
  *   the token resolves.
  * - `anonymous`: link to log in.
- * - `authenticated`: dropdown with Mi perfil, Preferencias, and Cerrar sesión.
- *   The trigger is a circular avatar, not a text pill — there's no user
- *   name or photo yet, so it shows the `user` icon.
+ * - `authenticated`: dropdown with Mi perfil, Preferencias, Seguridad, and
+ *   Cerrar sesión.
+ *   The trigger is a circular avatar with the authenticated user's initials.
  *
  * It's a *disclosure* pattern, not an ARIA `menu`: the dropdown is regular
  * links navigated with Tab. It closes on Escape —returning focus to the
@@ -139,14 +141,44 @@ function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
  * `SessionProvider.logout`) and replaces the current entry with `/login`.
  */
 export function UserMenu() {
-  const { status, logout } = useSession();
+  const { status, user, logout } = useSession();
   const currentRoute = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const [avatar, setAvatar] = useState<{
+    userId: number;
+    url: string | null;
+  } | null>(null);
+  const userId = status === "authenticated" ? user?.id : undefined;
+  const avatarUrl = avatar?.userId === userId ? (avatar?.url ?? null) : null;
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelId = useId();
+
+  useEffect(() => {
+    if (userId === undefined) return;
+    let active = true;
+    let changed = false;
+    const unsubscribe = subscribeAvatarChanges((change) => {
+      if (change.userId !== userId) return;
+      // An earlier GET must not restore the old photo after an upload/removal.
+      changed = true;
+      setAvatar({ userId, url: change.avatarUrl });
+    });
+    getProfile()
+      .then((profile) => {
+        if (active && !changed && profile.id === userId)
+          setAvatar({ userId, url: profile.avatarUrl ?? null });
+      })
+      .catch(() => {
+        if (active && !changed) setAvatar({ userId, url: null });
+      });
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [userId, currentRoute]);
 
   const close = useCallback(() => {
     setOpen(false);
@@ -205,7 +237,11 @@ export function UserMenu() {
     return (
       <Link
         href={loginRoute(currentRoute)}
-        className={cn(styles.buttonLink, styles.sessionControl, styles.sessionLink)}
+        className={cn(
+          styles.buttonLink,
+          styles.sessionControl,
+          styles.sessionLink,
+        )}
         // The label is hidden on small viewports, same as on the trigger.
         aria-label="Iniciar sesión"
       >
@@ -214,6 +250,15 @@ export function UserMenu() {
           Iniciar sesión
         </span>
       </Link>
+    );
+  }
+
+  if (!user) {
+    return (
+      <span
+        className={cn(styles.sessionPlaceholder, styles.sessionControl)}
+        aria-hidden="true"
+      />
     );
   }
 
@@ -226,7 +271,7 @@ export function UserMenu() {
         ref={triggerRef}
         type="button"
         className={styles.trigger}
-        // Icon-only: without this aria-label the button would have no name.
+        // The initials are decorative, so this label remains the button's name.
         aria-label="Mi cuenta"
         aria-expanded={open}
         aria-controls={panelId}
@@ -234,7 +279,14 @@ export function UserMenu() {
           setOpen((isOpen) => !isOpen);
         }}
       >
-        <Icon name="user" size={16} />
+        <UserAvatar
+          name={user.name}
+          lastName={user.lastName}
+          userId={user.id}
+          avatarUrl={avatarUrl}
+          size="large"
+          tone="ember"
+        />
       </button>
 
       {open ? (
@@ -249,6 +301,16 @@ export function UserMenu() {
               onNavigate={close}
             />
           ))}
+
+          {user.role.key === "admin" ? (
+            <NavLink
+              href={ADMIN_USER_LINK.href}
+              label={ADMIN_USER_LINK.label}
+              icon={ADMIN_USER_LINK.icon}
+              variant="option"
+              onNavigate={close}
+            />
+          ) : null}
 
           <hr className={styles.divider} />
 

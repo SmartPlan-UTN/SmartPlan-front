@@ -1,9 +1,10 @@
+import type { Price, PriceCompleteness, PriceInput } from './pricing';
 import { BaseEntity } from './common';
 import type { PaginatedResult, SortDirection } from './common';
 import type { User } from './users';
 import type { RoleKey, UserStatusKey } from './users';
-import type { PlanStatusKey } from './plans';
-import type { RatingModerationStatus } from './ratings';
+import type { PlanKind, PlanStatusKey, PlanVisibility } from './plans';
+import type { TimeOfDay } from './recommendation';
 
 /**
  * Possible actions recorded in the audit log.
@@ -14,6 +15,7 @@ export type AuditAction =
   | 'create'
   | 'update'
   | 'delete'
+  | 'export'
   | 'start_session'
   | 'end_session';
 
@@ -94,7 +96,8 @@ export interface DashboardMetrics {
     totalUsers: number;
     activePlans: number;
     catalogActivities: number;
-    pendingRatings: number;
+    /** Content with open reports waiting for a decision (#156). */
+    openReports: number;
   };
   acceptanceRate: number;
   averageRating: number;
@@ -130,13 +133,46 @@ export interface AdminUsersQuery {
 }
 
 /** Header values for REP-02, assembled from the current users listing contract. */
+export interface AdminUsersBreakdownEntry {
+  key: string;
+  name: string;
+  count: number;
+}
+
+/** `GET /admin/users/metrics` (REP-02), computed by the backend for a range. */
 export interface AdminUserMetrics {
+  range: { key: DashboardRange; from: string; to: string };
   totalUsers: number;
   activeUsers: number;
-  newUsersThisWeek: number;
+  suspendedUsers: number;
+  administrators: number;
+  /** Accounts created within the range. */
+  newUsers: number;
+  byStatus: AdminUsersBreakdownEntry[];
+  byRole: AdminUsersBreakdownEntry[];
+}
+
+export type AdminUsersReportFormat = "pdf" | "csv";
+
+/** `GET /admin/users/export`: the range plus the table's own filters. */
+export interface AdminUsersReportQuery {
+  range: DashboardRange;
+  format: AdminUsersReportFormat;
+  search?: string;
+  status?: UserStatusKey;
 }
 
 /** Editable fields accepted by `PATCH /admin/users/:id`. */
+/** `POST /admin/users` (CU57): an account created from the panel. */
+export interface CreateAdminUserInput {
+  name: string;
+  lastName: string;
+  email: string;
+  password: string;
+  role: RoleKey;
+  status: UserStatusKey;
+}
+
 export interface UpdateAdminUserInput {
   name?: string;
   lastName?: string;
@@ -149,12 +185,25 @@ export type AdminUsersResult = PaginatedResult<AdminUser>;
 
 /** Activity projection used by PAN 21 (CU53). */
 export interface AdminActivity {
+  costBasis?: 'per_party' | 'per_person';
+  availableTimesOfDay?: TimeOfDay[];
+  minPeople?: number | null;
+  maxPeople?: number | null;
   id: number;
   name: string;
   description: string;
-  estimatedCost: number;
+  estimatedCost: number | null;
+  price?: Price | null;
   estimatedDuration: number;
   type: string | null;
+  /** Where the activity may appear, and why not (catalog eligibility). */
+  eligibility?: {
+    status: 'draft' | 'in_review' | 'published' | 'archived';
+    discoverable: boolean;
+    planEligible: boolean;
+    autoRecommendEligible: boolean;
+    reasons: string[];
+  };
   categories: Array<{ id: number; name: string }>;
   places: Array<{ id: number; name: string; address: string }>;
   createdAt: string;
@@ -172,9 +221,14 @@ export interface AdminActivitiesQuery {
 }
 
 export interface AdminActivityInput {
+  costBasis?: 'per_party' | 'per_person';
+  availableTimesOfDay?: TimeOfDay[];
+  minPeople?: number | null;
+  maxPeople?: number | null;
   name: string;
   description: string;
-  estimatedCost: number;
+  /** Structured price. Omitted means UNKNOWN: never send 0 for "no price". */
+  price?: PriceInput;
   estimatedDuration: number;
   type?: string | null;
   categoryIds: number[];
@@ -184,15 +238,31 @@ export interface AdminActivityInput {
 export type UpdateAdminActivityInput = Partial<AdminActivityInput>;
 export type AdminActivitiesResult = PaginatedResult<AdminActivity>;
 
+/** Why Explorar leaves a plan out. Matches `ExploreHiddenCause` in SmartPlan-back. */
+export type ExploreHiddenCause = 'generated' | 'outing' | 'private' | 'cancelled';
+
 /** Plan projection used by PAN 22 (CU60). */
 export interface AdminPlan {
   id: number;
   title: string;
   description: string | null;
-  estimatedTotalCost: number;
+  estimatedTotalCost: number | null;
+  estimatedTotalCostMax?: number | null;
+  unpricedCount?: number;
+  priceCompleteness?: PriceCompleteness;
   estimatedTotalDuration: number;
   peopleCount: number;
   activityCount: number;
+  /**
+   * Where the plan comes from; only `authored` plans can reach Explorar (#160).
+   * Optional because back versions before SmartPlan-back#124 don't send it.
+   */
+  kind?: PlanKind;
+  visibility?: PlanVisibility;
+  /** Whether Explorar > Planes lists it right now, as SmartPlan-back decides. */
+  listedInExplore?: boolean;
+  /** Why Explorar leaves it out; `null` when listed. */
+  exploreHiddenCause?: ExploreHiddenCause | null;
   owner: { id: number; name: string; lastName: string; email: string };
   status: { key: PlanStatusKey; name: string };
   createdAt: string;
@@ -202,6 +272,12 @@ export interface AdminPlan {
 export interface AdminPlansQuery {
   search?: string;
   status?: PlanStatusKey;
+  kind?: PlanKind;
+  visibility?: PlanVisibility;
+  /** Whether Explorar > Planes lists it right now, as SmartPlan-back decides. */
+  listedInExplore?: boolean;
+  /** Why Explorar leaves it out; `null` when listed. */
+  exploreHiddenCause?: ExploreHiddenCause | null;
   page?: number;
   limit?: number;
   sortBy?: 'createdAt' | 'title' | 'status' | 'cost';
@@ -216,55 +292,3 @@ export interface UpdateAdminPlanInput {
 }
 
 export type AdminPlansResult = PaginatedResult<AdminPlan>;
-
-/**
- * A rating as PAN 20 sees it (CU55) — the only projection that pairs
- * moderation state with the author's real identity, and the only one that
- * names the rated activity and the plan it came from.
- *
- * `authorAlias` ("Ana P.") stays in the payload because the administrative
- * row extends the public one, but the moderation tray shows `author`: an
- * administrator deciding on a comment is entitled to know who wrote it.
- * Matches `AdminRatingDto` in `SmartPlan-back`.
- */
-export interface AdminRating {
-  id: number;
-  score: number;
-  comment: string | null;
-  authorAlias: string;
-  createdAt: string;
-  updatedAt: string;
-  activityId: number;
-  planId: number;
-  moderationStatus: RatingModerationStatus;
-  moderationReason: string | null;
-  author: { id: number; name: string; lastName: string };
-  activity: { id: number; name: string };
-  plan: { id: number; title: string };
-}
-
-/** Filters and pagination accepted by `GET /admin/ratings`. */
-export interface AdminRatingsQuery {
-  status?: RatingModerationStatus;
-  page?: number;
-  limit?: number;
-  sortBy?: 'createdAt' | 'score';
-  direction?: SortDirection;
-}
-
-export type AdminRatingsResult = PaginatedResult<AdminRating>;
-
-/**
- * Payload for `PATCH /admin/ratings/:id/moderation` (CU55).
- *
- * A discriminated union rather than `{ status, reason? }`: `SmartPlan-back`'s
- * `ModerateRatingDto` requires a non-empty reason only when rejecting
- * (`ValidateIf`), and this shape makes a rejection without one impossible to
- * build instead of a `400` discovered at runtime.
- */
-export type ModerateRatingInput =
-  | { status: 'approved' }
-  | { status: 'rejected'; reason: string };
-
-/** How many ratings sit in each moderation state, for PAN 20's tab counters. */
-export type AdminRatingCounts = Record<RatingModerationStatus, number>;

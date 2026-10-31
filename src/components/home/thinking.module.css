@@ -1,0 +1,266 @@
+/* ================================================================
+   Thinking — the wait, told with the planner's real stages and the
+   silhouette of the answer being made. No fake numbers, no logs.
+   ================================================================ */
+
+.thinking {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: clamp(28px, 5vw, 72px);
+  align-items: center;
+  width: min(100%, 1240px);
+  min-height: min(56vh, 520px);
+  margin: var(--s-6) auto 0;
+}
+
+.copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--ember);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.headline {
+  margin: 0;
+  max-width: 16ch;
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+  animation: headline-in 360ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.note {
+  margin: 0;
+  color: var(--fg-2);
+}
+
+.steps {
+  display: grid;
+  gap: 10px;
+  margin: var(--s-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.steps li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--fg-3);
+  font-size: 15px;
+  font-weight: 600;
+  transition: color 240ms ease;
+}
+
+.steps li[data-state="done"] {
+  color: var(--fg-2);
+}
+
+.steps li[data-state="active"] {
+  color: var(--fg-1);
+}
+
+.mark {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  place-items: center;
+  border: 1.5px solid var(--hairline);
+  border-radius: 50%;
+  color: var(--white);
+  transition: background-color 240ms ease, border-color 240ms ease;
+}
+
+.steps li[data-state="done"] .mark {
+  border-color: var(--ember);
+  background: var(--ember);
+}
+
+.steps li[data-state="active"] .mark {
+  border-color: var(--ember);
+  box-shadow: 0 0 0 0 rgba(232, 93, 32, 0.5);
+  animation: stage-pulse 1.6s ease-out infinite;
+}
+
+.delayed {
+  padding: var(--s-3) var(--s-4);
+  border-left: 3px solid var(--gold);
+  border-radius: 4px;
+  background: var(--gold-15);
+}
+
+.delayed p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.delayed p:first-child {
+  font-weight: 700;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+}
+
+/* The silhouette of what is coming: a picture, a name, two lines. */
+.sketch {
+  display: grid;
+  gap: 14px;
+}
+
+.sketchImage {
+  display: block;
+  aspect-ratio: 4 / 3;
+  border-radius: 22px;
+  background:
+    linear-gradient(
+        100deg,
+        transparent 25%,
+        rgba(232, 93, 32, 0.14) 45%,
+        transparent 65%
+      )
+      0 0 / 220% 100%,
+    color-mix(in srgb, var(--char) 7%, var(--cream));
+  animation: sketch-shimmer 1.8s ease-in-out infinite;
+}
+
+.sketchLine {
+  display: block;
+  width: 62%;
+  height: 22px;
+  border-radius: 8px;
+  background:
+    linear-gradient(
+        100deg,
+        transparent 25%,
+        rgba(232, 93, 32, 0.12) 45%,
+        transparent 65%
+      )
+      0 0 / 220% 100%,
+    color-mix(in srgb, var(--char) 6%, var(--cream));
+  animation: sketch-shimmer 1.8s ease-in-out infinite;
+}
+
+.sketchLine[data-wide="true"] {
+  width: 84%;
+  height: 34px;
+}
+
+.sketchLine[data-short="true"] {
+  width: 38%;
+}
+
+@keyframes headline-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes stage-pulse {
+  to {
+    box-shadow: 0 0 0 9px rgba(232, 93, 32, 0);
+  }
+}
+
+@keyframes sketch-shimmer {
+  from {
+    background-position: 120% 0, 0 0;
+  }
+  to {
+    background-position: -120% 0, 0 0;
+  }
+}
+
+@media (max-width: 860px) {
+  .thinking {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+    margin-top: var(--s-4);
+  }
+
+  .headline {
+    max-width: none;
+    font-size: clamp(28px, 8vw, 38px);
+  }
+
+  .sketch {
+    order: -1;
+  }
+
+  .sketchImage {
+    aspect-ratio: 16 / 9;
+    border-radius: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .headline,
+  .sketchImage,
+  .sketchLine,
+  .steps li[data-state="active"] .mark {
+    animation: none;
+  }
+
+  .steps li,
+  .mark {
+    transition: none;
+  }
+}
+
+/* A hairline that keeps moving: the wait is alive, not stuck. */
+.line {
+  position: relative;
+  width: min(100%, 320px);
+  height: 2px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--hairline);
+}
+
+.line span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 38%;
+  background: var(--ember);
+  animation: line-run 1.5s ease-in-out infinite;
+}
+
+@keyframes line-run {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(270%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .line span {
+    width: 100%;
+    animation: none;
+    opacity: 0.5;
+  }
+}

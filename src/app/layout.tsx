@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 
 import { AppBackground } from "@/components/layout";
@@ -37,6 +37,18 @@ export const metadata: Metadata = {
   },
   description:
     "Armá tu plan según tu presupuesto, tu tiempo y tus ganas. Recomendaciones de salidas en Mendoza.",
+};
+
+/**
+ * `viewportFit: "cover"` is what makes `env(safe-area-inset-*)` report real
+ * values on notched phones — without it they are always 0 and the fixed
+ * mobile bar sits on top of the iOS home indicator. The shell pads the
+ * navbar, `<main>` and the bottom bar with those insets.
+ */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

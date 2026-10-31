@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -89,6 +89,19 @@ describe("AdminActivitiesView", () => {
     expect(screen.getByRole("button", { name: "Página siguiente" })).toBeEnabled();
   });
 
+  it("opens a read-only view from the activity row and edits from it", async () => {
+    const user = userEvent.setup();
+    render(<AdminActivitiesView />);
+    await user.click(await screen.findByText("Paseo cultural"));
+
+    const dialog = screen.getByRole("dialog", { name: "Paseo cultural" });
+    expect(within(dialog).getByText("Cultura & Arte")).toBeInTheDocument();
+    expect(within(dialog).getByRole("link", { name: /Parque Central/ })).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("button", { name: "Editar" }));
+    expect(screen.queryByRole("dialog", { name: "Paseo cultural" })).not.toBeInTheDocument();
+  });
+
   it("creates an activity without a physical location", async () => {
     const user = userEvent.setup();
     render(<AdminActivitiesView />);
@@ -97,18 +110,64 @@ describe("AdminActivitiesView", () => {
     await user.click(screen.getByRole("button", { name: /Nueva actividad/ }));
     await user.type(screen.getByLabelText("Nombre"), "Juegos de mesa en casa");
     await user.type(screen.getByLabelText("Descripción"), "Una tarde de juegos para compartir.");
-    await user.type(screen.getByLabelText("Costo estimado"), "0");
     await user.type(screen.getByLabelText("Duración en minutos"), "90");
     await user.click(screen.getByRole("button", { name: "Guardar actividad" }));
 
+    // No price was entered: it is sent as UNKNOWN, never as a cost of 0.
     await waitFor(() => expect(createAdminActivity).toHaveBeenCalledWith(
       expect.objectContaining({
         name: "Juegos de mesa en casa",
-        estimatedCost: 0,
+        price: { kind: "UNKNOWN" },
         estimatedDuration: 90,
         placeIds: [],
       }),
     ));
+    expect(createAdminActivity).not.toHaveBeenCalledWith(
+      expect.objectContaining({ estimatedCost: 0 }),
+    );
+  });
+
+  it("sends a structured fixed price with its unit and source", async () => {
+    const user = userEvent.setup();
+    render(<AdminActivitiesView />);
+    await screen.findByText("Paseo cultural");
+
+    await user.click(screen.getByRole("button", { name: /Nueva actividad/ }));
+    await user.type(screen.getByLabelText("Nombre"), "Visita guiada");
+    await user.type(screen.getByLabelText("Descripción"), "Recorrido con guía.");
+    await user.selectOptions(screen.getByLabelText("Tipo de precio"), "FIXED");
+    await user.type(screen.getByLabelText("Monto (ARS)"), "4500");
+    await user.selectOptions(screen.getByLabelText("Fuente"), "OFFICIAL");
+    await user.type(screen.getByLabelText("Duración en minutos"), "60");
+    await user.click(screen.getByRole("button", { name: "Guardar actividad" }));
+
+    await waitFor(() => expect(createAdminActivity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        price: expect.objectContaining({
+          kind: "FIXED",
+          min: 4500,
+          unit: "PER_PERSON",
+          source: "OFFICIAL",
+        }),
+      }),
+    ));
+  });
+
+  it("requires an amount for a fixed price instead of saving it as zero", async () => {
+    const user = userEvent.setup();
+    render(<AdminActivitiesView />);
+    await screen.findByText("Paseo cultural");
+
+    await user.click(screen.getByRole("button", { name: /Nueva actividad/ }));
+    vi.mocked(createAdminActivity).mockClear();
+    await user.type(screen.getByLabelText("Nombre"), "Sin monto");
+    await user.type(screen.getByLabelText("Descripción"), "Falta el monto.");
+    await user.selectOptions(screen.getByLabelText("Tipo de precio"), "FIXED");
+    await user.type(screen.getByLabelText("Duración en minutos"), "60");
+    await user.click(screen.getByRole("button", { name: "Guardar actividad" }));
+
+    expect(await screen.findByText("Ingresá un monto mayor a cero.")).toBeInTheDocument();
+    expect(createAdminActivity).not.toHaveBeenCalled();
   });
 
   it("keeps the current place and can associate another one while editing", async () => {

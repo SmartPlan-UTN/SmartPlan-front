@@ -1,15 +1,15 @@
 import { ApiError, normalizeError } from "@/lib/api";
 
 /**
- * How selecting a plan (CU22) can fail. Each case has its own copy and its
- * own recovery: a domain change (403/404/409) means the plan's real state
- * moved on and the surface should reconcile with the server; a network or
- * unknown failure just needs another try.
+ * How "Lo voy a hacer" (CU22) can fail. Each case has its own copy and its
+ * own recovery: a domain change (404/409) means the plan's real state moved
+ * on — it was unpublished, cancelled, or is not choosable — and the surface
+ * should reconcile with the server; a network or unknown failure just needs
+ * another try.
  */
 export type PlanSelectionErrorKind =
   | "not-found"
-  | "not-yours"
-  | "request-advanced"
+  | "not-actionable"
   | "network"
   | "unknown";
 
@@ -24,7 +24,7 @@ export interface PlanSelectionError {
 }
 
 const DOMAIN: Record<
-  "not-found" | "not-yours" | "request-advanced",
+  "not-found" | "not-actionable",
   Omit<PlanSelectionError, "kind">
 > = {
   "not-found": {
@@ -32,27 +32,21 @@ const DOMAIN: Record<
     recoverable: false,
     reconcile: true,
   },
-  "not-yours": {
-    message: "Este plan no es tuyo.",
-    recoverable: false,
-    reconcile: true,
-  },
-  "request-advanced": {
+  "not-actionable": {
     message: "Este plan ya no se puede elegir.",
     recoverable: false,
     reconcile: true,
   },
 };
 
-/** Maps any thrown value from `selectPlan` into a typed, displayable error. */
+/** Maps any thrown value from `createOuting` into a typed, displayable error. */
 export function toPlanSelectionError(error: unknown): PlanSelectionError {
   const api: ApiError =
     error instanceof ApiError ? error : normalizeError(error);
 
   if (api.status === 404) return { kind: "not-found", ...DOMAIN["not-found"] };
-  if (api.status === 403) return { kind: "not-yours", ...DOMAIN["not-yours"] };
-  if (api.code === "PLAN_REQUEST_ALREADY_ADVANCED" || api.status === 409) {
-    return { kind: "request-advanced", ...DOMAIN["request-advanced"] };
+  if (api.status === 409) {
+    return { kind: "not-actionable", ...DOMAIN["not-actionable"] };
   }
   if (api.isNetworkError) {
     return {

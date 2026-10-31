@@ -2,7 +2,12 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
-import { Button, ConfirmationDialog, Icon } from "@/components/ui";
+import {
+  Button,
+  ConfirmationDialog,
+  Icon,
+  UserAvatar,
+} from "@/components/ui";
 import { ApiError } from "@/lib/api";
 import type {
   AdminUser,
@@ -10,8 +15,8 @@ import type {
   UpdateAdminUserInput,
   UserStatusKey,
 } from "@/types";
+import { useScrollLock } from "@/hooks";
 
-import { UserAvatar } from "./UserAvatar";
 import { UserStatusBadge } from "./UserStatusBadge";
 
 import styles from "./administration.module.css";
@@ -31,7 +36,6 @@ const ROLE_OPTIONS: Array<{ value: RoleKey; label: string }> = [
 const STATUS_OPTIONS: Array<{ value: UserStatusKey; label: string }> = [
   { value: "active", label: "Activo" },
   { value: "suspended", label: "Suspendido" },
-  { value: "banned", label: "Baneado" },
 ];
 
 export interface UserReadDialogProps {
@@ -39,6 +43,8 @@ export interface UserReadDialogProps {
   onClose: () => void;
   onSave: (id: number, input: UpdateAdminUserInput) => Promise<AdminUser>;
   onDelete: (id: number) => Promise<void>;
+  /** Opens straight into the edit form, as "Editar usuario" in the row menu does. */
+  startEditing?: boolean;
 }
 
 export function UserReadDialog({
@@ -46,10 +52,12 @@ export function UserReadDialog({
   onClose,
   onSave,
   onDelete,
+  startEditing = false,
 }: UserReadDialogProps) {
+  useScrollLock();
   const dialogRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(startEditing);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);

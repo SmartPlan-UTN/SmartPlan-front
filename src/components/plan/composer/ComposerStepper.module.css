@@ -1,0 +1,112 @@
+/* Where you are, in one quiet line. The headline below says what to do; this
+   only says how far along you are. */
+.stepper ol {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+}
+
+.step {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg-3);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.step:disabled {
+  cursor: default;
+}
+
+.step:focus-visible {
+  border-radius: 8px;
+  outline: 2px solid var(--ember);
+  outline-offset: 3px;
+}
+
+.current {
+  color: var(--fg-1);
+  font-weight: 700;
+}
+
+.complete {
+  color: var(--fg-2);
+}
+
+.complete:hover {
+  color: var(--fg-1);
+}
+
+.number {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1.5px solid color-mix(in srgb, var(--fg-1) 22%, transparent);
+  border-radius: 50%;
+  color: var(--fg-3);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+
+.current .number {
+  border-color: var(--ember);
+  background: var(--ember);
+  color: var(--white);
+}
+
+.complete .number {
+  border-color: var(--fg-1);
+  background: var(--fg-1);
+  color: var(--cream);
+}
+
+.line {
+  display: block;
+  width: 28px;
+  height: 1.5px;
+  margin: 0 10px;
+  background: color-mix(in srgb, var(--fg-1) 16%, transparent);
+}
+
+.lineComplete {
+  background: var(--fg-1);
+}
+
+@media (max-width: 480px) {
+  /* The current step keeps its name; the others are just their number. */
+  .step:not(.current) .label {
+    display: none;
+  }
+
+  .line {
+    width: 18px;
+    margin: 0 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .number {
+    transition-duration: 0.01ms;
+  }
+}

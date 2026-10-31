@@ -1,88 +1,72 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { ApiError, createPlanRequest, createSurprisePlanRequest, getPlanRequestStatus } from "@/lib/api";
+import { ApiError, createPlanRequest, createSurprisePlanRequest, getPlanRequestStatus } from '@/lib/api';
+import { loadRequestContext, saveRequestContext } from '@/lib/plans/requestContext';
 import type {
   CreatePlanRequestPayload,
   CreateSurprisePlanRequestPayload,
-  PlanRequestPlanSummary,
-  PlanSelectionResult,
+  PlanDetailResult,
+  PlanFunnel,
+  PlanRequestProgressStage,
+  PlanRequestStatus,
+  CommunityPlanRecommendation,
+  ResultRecommendationSource,
+  PlanUnderstanding,
+  ResolvedPlanContext,
   RequestStatusKey,
-} from "@/types";
+} from '@/types';
 
-const POLL_INTERVAL_MS = 2000;
-// A frontend-only display timeout: the request keeps existing and keeps
-// being processed by the backend regardless of this. Timing out only stops
-// this hook's own polling loop and shows a "still waiting" state — it never
-// discards `planRequestId` or implies the request itself failed.
-const DISPLAY_TIMEOUT_MS = 90000;
-
-const GENERIC_ERROR = "No pudimos generar tu plan. Intentá de nuevo.";
+const DISPLAY_TIMEOUT_MS = 15_000;
+const GENERIC_ERROR = 'No pudimos generar tu plan. Intentá de nuevo.';
 
 export type PlanRequestPhase =
-  | "idle"
-  | "submitting"
-  | "pending"
-  | "processing"
-  | "timedOut"
-  | "generated"
-  | "failed";
+  | 'idle'
+  | 'submitting'
+  | 'submissionDelayed'
+  | 'pending'
+  | 'processing'
+  | 'timedOut'
+  | 'generated'
+  | 'failed';
 
 export interface PlanRequestFailure {
   code: string | null;
   message: string;
 }
 
-/**
- * The last request this hook issued, kept so the UI can offer the two
- * things CU17 asks for after a result or a failure: adjusting the idea
- * instead of retyping it, and retrying the very same request.
- *
- * A surprise request has no query — it is coordinates — which is why the
- * kind is carried alongside the payload rather than inferred.
- */
 export type LastSubmission =
-  | { kind: "auto"; payload: CreatePlanRequestPayload }
-  | { kind: "surprise"; payload: CreateSurprisePlanRequestPayload };
+  | { kind: 'auto'; payload: CreatePlanRequestPayload }
+  | { kind: 'surprise'; payload: CreateSurprisePlanRequestPayload };
 
 export interface UsePlanRequestPollingResult {
   phase: PlanRequestPhase;
   planRequestId: number | null;
-  plans: PlanRequestPlanSummary[] | null;
+  plans: PlanDetailResult[] | null;
+  query: string | null;
+  mode: 'automatic' | 'surprise' | null;
+  requestedAt: string | null;
+  progressStage: PlanRequestProgressStage | null;
+  progressStageAt: string | null;
+  estimatedRemainingSeconds: number | null;
+  resolvedContext: ResolvedPlanContext | null;
+  /** "Entendimos …" from the planning engine (null for older requests). */
+  understanding: PlanUnderstanding | null;
+  /** Real counts of what the planner did (null until it ran). */
+  funnel: PlanFunnel | null;
+  /** Asked-for experiences SmartPlan cannot plan yet ("Cine"). */
+  unsupportedExperiences: string[];
+  communityRecommendations: CommunityPlanRecommendation[];
+  primaryRecommendation: ResultRecommendationSource | null;
   failure: PlanRequestFailure | null;
   submit: (payload: CreatePlanRequestPayload) => void;
   submitSurprise: (payload: CreateSurprisePlanRequestPayload) => void;
-  /** Resumes polling the same request after a display timeout. Never issues a new POST. */
   keepWaiting: () => void;
-  /** Local reset to `idle`. Does not call the backend and does not resubmit. */
   discard: () => void;
-  /**
-   * Issues the same request again after a failure. This *is* a new POST —
-   * a failed request is terminal on the backend, so there is nothing left
-   * to resume. Distinct from `keepWaiting`, which never posts.
-   */
   retry: () => void;
-  /**
-   * "Sorprendeme de nuevo" (CU19): creates a brand-new surprise request from
-   * the same coordinates, only from an explicit user action on a generated
-   * result. A no-op while a generation is in flight (guards double clicks)
-   * and for automatic submissions (those adjust the query instead).
-   */
   regenerate: () => void;
-  /** What was asked for last, so the UI can offer to adjust it. */
   lastSubmission: LastSubmission | null;
-  /**
-   * Reflects a plan-intent change (CU22) in the in-memory alternatives from the
-   * backend result: the target plan takes the returned status, and — only when
-   * the result is `selected` — any sibling that was `selected` returns to
-   * `generated` (the 0-or-1 rule the backend enforces). A `generated` result
-   * (a withdrawn intent) just updates the target. No refetch.
-   */
-  applySelectionChange: (result: PlanSelectionResult) => void;
-  /**
-   * Re-reads the plan request from the backend and replaces the alternatives
-   * with the authoritative state. Used to reconcile after a selection was
-   * rejected because the request had advanced (409).
-   */
+  /** "Lo voy a hacer" succeeded: mark that alternative as chosen, with its outing. */
+  applySelectionChange: (planId: number, outingId: number) => void;
   refresh: () => void;
 }
 
@@ -97,196 +81,289 @@ function statusKeyToPhase(statusKey: RequestStatusKey): PlanRequestPhase {
   return statusKey;
 }
 
-/**
- * Owns the CU17/CU19 plan-request lifecycle: submit (automatic or
- * surprise), then poll `GET /plan-requests/:id` until the backend reports
- * a terminal `statusKey` (`generated` or `failed`). `pending`/`processing`
- * are the only in-flight states the backend reports — this hook never
- * invents finer-grained progress.
- *
- * A display timeout moves the UI to `timedOut` without touching the
- * underlying request: `planRequestId` is retained, polling can resume via
- * `keepWaiting`, and no new request is ever created automatically. Only an
- * explicit `submit`/`submitSurprise` call issues a new `POST`.
- */
-export function usePlanRequestPolling(): UsePlanRequestPollingResult {
-  const [phase, setPhase] = useState<PlanRequestPhase>("idle");
-  const [planRequestId, setPlanRequestId] = useState<number | null>(null);
-  const [plans, setPlans] = useState<PlanRequestPlanSummary[] | null>(null);
-  const [failure, setFailure] = useState<PlanRequestFailure | null>(null);
-  const [lastSubmission, setLastSubmission] = useState<LastSubmission | null>(null);
+function phaseForStatus(status: PlanRequestStatus): PlanRequestPhase {
+  return statusKeyToPhase(status.statusKey);
+}
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const activeRequestId = useRef<number | null>(null);
+/**
+ * Owns the request lifecycle and can start from a durable ID supplied by a
+ * result route. Polls never overlap, slow stages back off gently, and only
+ * backend terminal statuses finish the request.
+ */
+export function usePlanRequestPolling(initialRequestId?: number): UsePlanRequestPollingResult {
+  const [phase, setPhase] = useState<PlanRequestPhase>(initialRequestId ? 'pending' : 'idle');
+  const [planRequestId, setPlanRequestId] = useState<number | null>(initialRequestId ?? null);
+  const [plans, setPlans] = useState<PlanDetailResult[] | null>(null);
+  const [query, setQuery] = useState<string | null>(null);
+  const [mode, setMode] = useState<'automatic' | 'surprise' | null>(null);
+  const [requestedAt, setRequestedAt] = useState<string | null>(null);
+  const [progressStage, setProgressStage] = useState<PlanRequestProgressStage | null>(null);
+  const [progressStageAt, setProgressStageAt] = useState<string | null>(null);
+  const [estimatedRemainingSeconds, setEstimatedRemainingSeconds] = useState<number | null>(null);
+  const [resolvedContext, setResolvedContext] = useState<ResolvedPlanContext | null>(null);
+  const [understanding, setUnderstanding] = useState<PlanUnderstanding | null>(null);
+  const [funnel, setFunnel] = useState<PlanFunnel | null>(null);
+  const [unsupportedExperiences, setUnsupportedExperiences] = useState<string[]>([]);
+  const [communityRecommendations, setCommunityRecommendations] = useState<CommunityPlanRecommendation[]>([]);
+  const [primaryRecommendation, setPrimaryRecommendation] = useState<ResultRecommendationSource | null>(null);
+  const [failure, setFailure] = useState<PlanRequestFailure | null>(null);
+  // A results page opened by id recovers what the person explicitly chose.
+  const [lastSubmission, setLastSubmission] = useState<LastSubmission | null>(() => {
+    if (!initialRequestId || typeof window === 'undefined') return null;
+    const saved = loadRequestContext(initialRequestId);
+    return saved ? { kind: 'auto', payload: saved } : null;
+  });
+
+  const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const displayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeRequestId = useRef<number | null>(initialRequestId ?? null);
+  const pollStartedAt = useRef(0);
+  const generation = useRef(0);
+  const delayedRef = useRef(false);
+  const delayNoticeDismissedRef = useRef(false);
 
   const clearTimers = useCallback(() => {
-    if (intervalRef.current !== null) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+    if (pollTimeoutRef.current !== null) {
+      clearTimeout(pollTimeoutRef.current);
+      pollTimeoutRef.current = null;
     }
-    if (timeoutRef.current !== null) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
+    if (displayTimeoutRef.current !== null) {
+      clearTimeout(displayTimeoutRef.current);
+      displayTimeoutRef.current = null;
     }
   }, []);
 
-  useEffect(() => clearTimers, [clearTimers]);
+  useEffect(() => () => {
+    generation.current += 1;
+    activeRequestId.current = null;
+    clearTimers();
+  }, [clearTimers]);
 
-  const startPolling = useCallback(
-    (id: number) => {
-      clearTimers();
+  const applyStatus = useCallback((status: PlanRequestStatus) => {
+    // Older API responses omit query; keep the accepted POST value visible.
+    setQuery((current) => status.query ?? current);
+    setMode(status.mode);
+    setRequestedAt(status.requestedAt);
+    setProgressStage(status.progressStage ?? null);
+    setProgressStageAt(status.progressStageAt ?? null);
+    setEstimatedRemainingSeconds(status.estimatedRemainingSeconds ?? null);
+    setResolvedContext(status.resolvedContext ?? null);
+    setUnderstanding(status.understanding ?? null);
+    setFunnel(status.funnel ?? null);
+    setUnsupportedExperiences(status.unsupportedExperiences ?? []);
+    setCommunityRecommendations(status.communityRecommendations ?? []);
+    setPrimaryRecommendation(status.primaryRecommendation ?? null);
 
-      timeoutRef.current = setTimeout(() => {
-        if (activeRequestId.current !== id) return;
-        if (intervalRef.current !== null) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
+    if (status.statusKey === 'generated') {
+      setPlans(status.plans ?? []);
+      setFailure(null);
+    } else if (status.statusKey === 'failed') {
+      setFailure({ code: status.failureCode ?? null, message: GENERIC_ERROR });
+    }
+    if (status.statusKey !== 'failed') setFailure(null);
+    setPhase(delayedRef.current && ['pending', 'processing'].includes(status.statusKey) ? 'timedOut' : phaseForStatus(status));
+  }, []);
+
+  const startPolling = useCallback((id: number, startedAt = Date.now(), noticeDismissed = false) => {
+    const epoch = ++generation.current;
+    delayedRef.current = false;
+    delayNoticeDismissedRef.current = noticeDismissed;
+    clearTimers();
+    activeRequestId.current = id;
+    pollStartedAt.current = startedAt;
+
+    if (!noticeDismissed) displayTimeoutRef.current = setTimeout(() => {
+      if (generation.current !== epoch || activeRequestId.current !== id) return;
+      delayedRef.current = true;
+      setPhase('timedOut');
+    }, Math.max(0, DISPLAY_TIMEOUT_MS - (Date.now() - startedAt)));
+
+    let firstPoll = true;
+    const poll = async () => {
+      try {
+        const status = await getPlanRequestStatus(id);
+        if (generation.current !== epoch || activeRequestId.current !== id) return;
+        if (firstPoll && !delayNoticeDismissedRef.current && Date.now() - new Date(status.requestedAt).getTime() >= DISPLAY_TIMEOUT_MS) delayedRef.current = true;
+        firstPoll = false;
+        applyStatus(status);
+
+        if (status.statusKey === 'generated' || status.statusKey === 'failed') {
+          clearTimers();
+          return;
         }
-        setPhase("timedOut");
-      }, DISPLAY_TIMEOUT_MS);
 
-      const poll = async () => {
-        try {
-          const status = await getPlanRequestStatus(id);
-          if (activeRequestId.current !== id) return;
-
-          if (status.statusKey === "generated") {
-            clearTimers();
-            setPlans(status.plans ?? []);
-            setPhase("generated");
-            return;
-          }
-
-          if (status.statusKey === "failed") {
-            clearTimers();
-            setFailure({
-              code: status.failureCode ?? null,
-              message: GENERIC_ERROR,
-            });
-            setPhase("failed");
-            return;
-          }
-
-          setPhase(statusKeyToPhase(status.statusKey));
-        } catch (error) {
-          if (activeRequestId.current !== id) return;
+        const age = Date.now() - pollStartedAt.current;
+        const delay = age < 8_000 ? 1_200 : age < 30_000 ? 2_000 : 3_500;
+        pollTimeoutRef.current = setTimeout(() => void poll(), delay);
+      } catch (error) {
+        if (generation.current !== epoch || activeRequestId.current !== id) return;
+        if (error instanceof ApiError && !error.isNetworkError && error.status !== null && error.status < 500 && error.status !== 408 && error.status !== 429) {
           clearTimers();
           setFailure(toFailure(error));
-          setPhase("failed");
+          setPhase('failed');
+          return;
         }
-      };
-
-      void poll();
-      intervalRef.current = setInterval(() => {
-        void poll();
-      }, POLL_INTERVAL_MS);
-    },
-    [clearTimers],
-  );
-
-  const beginRequest = useCallback(
-    async (accept: () => Promise<{ id: number }>) => {
-      setFailure(null);
-      setPlans(null);
-      setPhase("submitting");
-
-      try {
-        const accepted = await accept();
-        activeRequestId.current = accepted.id;
-        setPlanRequestId(accepted.id);
-        setPhase("pending");
-        startPolling(accepted.id);
-      } catch (error) {
-        setFailure(toFailure(error));
-        setPhase("failed");
+        setFailure({ code: 'STATUS_UNAVAILABLE', message: 'No podemos consultar el estado de tu pedido.' });
+        setPhase('timedOut');
+        pollTimeoutRef.current = setTimeout(() => void poll(), 3_500);
       }
-    },
-    [startPolling],
-  );
+    };
 
-  const submit = useCallback(
-    (payload: CreatePlanRequestPayload) => {
-      setLastSubmission({ kind: "auto", payload });
-      void beginRequest(() => createPlanRequest(payload));
-    },
-    [beginRequest],
-  );
+    void poll();
+  }, [applyStatus, clearTimers]);
 
-  const submitSurprise = useCallback(
-    (payload: CreateSurprisePlanRequestPayload) => {
-      setLastSubmission({ kind: "surprise", payload });
-      void beginRequest(() => createSurprisePlanRequest(payload));
-    },
-    [beginRequest],
-  );
+  useEffect(() => {
+    if (initialRequestId == null) return;
+    startPolling(initialRequestId);
+  }, [initialRequestId, startPolling]);
+
+  const beginRequest = useCallback(async (
+    accept: () => Promise<{ id: number; mode?: 'automatic' | 'surprise'; requestedAt?: string }>,
+  ) => {
+    clearTimers();
+    activeRequestId.current = null;
+    setPlanRequestId(null);
+    delayedRef.current = false;
+    delayNoticeDismissedRef.current = false;
+    setFailure(null);
+    setPlans(null);
+    setResolvedContext(null);
+    setUnderstanding(null);
+    setFunnel(null);
+    setUnsupportedExperiences([]);
+    setCommunityRecommendations([]);
+    setPrimaryRecommendation(null);
+    setProgressStage(null);
+    setProgressStageAt(null);
+    setEstimatedRemainingSeconds(null);
+    setPhase('submitting');
+    const epoch = ++generation.current;
+    const startedAt = Date.now();
+    displayTimeoutRef.current = setTimeout(() => {
+      if (generation.current !== epoch) return;
+      delayedRef.current = true;
+      setPhase('submissionDelayed');
+    }, DISPLAY_TIMEOUT_MS);
+
+    try {
+      const accepted = await accept();
+      if (generation.current !== epoch) return;
+      activeRequestId.current = accepted.id;
+      setPlanRequestId(accepted.id);
+      if (accepted.mode) setMode(accepted.mode);
+      if (accepted.requestedAt) setRequestedAt(accepted.requestedAt);
+      setPhase('pending');
+      startPolling(accepted.id, startedAt, delayNoticeDismissedRef.current);
+    } catch (error) {
+      if (generation.current !== epoch) return;
+      clearTimers();
+      setFailure(toFailure(error));
+      setPhase('failed');
+    }
+  }, [clearTimers, startPolling]);
+
+  const submit = useCallback((payload: CreatePlanRequestPayload) => {
+    setLastSubmission({ kind: 'auto', payload });
+    setQuery(payload.query);
+    setMode('automatic');
+    void beginRequest(async () => {
+      const accepted = await createPlanRequest(payload);
+      saveRequestContext(accepted.id, payload);
+      return accepted;
+    });
+  }, [beginRequest]);
+
+  const submitSurprise = useCallback((payload: CreateSurprisePlanRequestPayload) => {
+    setLastSubmission({ kind: 'surprise', payload });
+    setQuery(null);
+    setMode('surprise');
+    void beginRequest(() => createSurprisePlanRequest(payload));
+  }, [beginRequest]);
 
   const retry = useCallback(() => {
     if (!lastSubmission) return;
-    if (lastSubmission.kind === "surprise") {
+    if (lastSubmission.kind === 'surprise') {
       void beginRequest(() => createSurprisePlanRequest(lastSubmission.payload));
-      return;
+    } else {
+      const payload = lastSubmission.payload;
+      void beginRequest(async () => {
+        const accepted = await createPlanRequest(payload);
+        saveRequestContext(accepted.id, payload);
+        return accepted;
+      });
     }
-    void beginRequest(() => createPlanRequest(lastSubmission.payload));
   }, [beginRequest, lastSubmission]);
 
   const regenerate = useCallback(() => {
-    if (!lastSubmission || lastSubmission.kind !== "surprise") return;
-    if (phase === "submitting" || phase === "pending" || phase === "processing") {
-      return;
-    }
-    const { payload } = lastSubmission;
-    void beginRequest(() => createSurprisePlanRequest(payload));
+    if (!lastSubmission || lastSubmission.kind !== 'surprise') return;
+    if (['submitting', 'submissionDelayed', 'pending', 'processing', 'timedOut'].includes(phase)) return;
+    void beginRequest(() => createSurprisePlanRequest(lastSubmission.payload));
   }, [beginRequest, lastSubmission, phase]);
 
   const keepWaiting = useCallback(() => {
-    if (planRequestId === null) return;
-    setPhase("processing");
-    startPolling(planRequestId);
-  }, [planRequestId, startPolling]);
+    if (phase !== 'submissionDelayed' && phase !== 'timedOut') return;
+    delayedRef.current = false;
+    delayNoticeDismissedRef.current = true;
+    setFailure(null);
+    setPhase(activeRequestId.current === null ? 'submitting' : 'pending');
+    // Polling continues on the same request; this only dismisses the notice.
+    if (displayTimeoutRef.current !== null) clearTimeout(displayTimeoutRef.current);
+  }, [phase]);
 
   const discard = useCallback(() => {
+    generation.current += 1;
     clearTimers();
     activeRequestId.current = null;
     setPlanRequestId(null);
     setPlans(null);
+    setQuery(null);
+    setMode(null);
+    setRequestedAt(null);
+    setProgressStage(null);
+    setProgressStageAt(null);
+    setEstimatedRemainingSeconds(null);
+    setResolvedContext(null);
+    setUnderstanding(null);
+    setFunnel(null);
+    setUnsupportedExperiences([]);
+    setCommunityRecommendations([]);
+    setPrimaryRecommendation(null);
     setFailure(null);
-    setPhase("idle");
-    // `lastSubmission` deliberately survives: going back to the composer
-    // is exactly when the previous idea is worth having around.
+    setPhase('idle');
   }, [clearTimers]);
 
-  const applySelectionChange = useCallback((result: PlanSelectionResult) => {
-    setPlans((current) => {
-      if (!current) return current;
-      return current.map((plan) => {
-        if (plan.id === result.id)
-          return {
-            ...plan,
-            status: result.status,
-            viewerPlanState: result.viewerPlanState,
-          };
-        return plan;
-      });
-    });
+  const applySelectionChange = useCallback((planId: number, outingId: number) => {
+    setPlans((current) => current?.map((plan) => plan.id === planId
+      ? { ...plan, viewerPlanState: 'selected' as const, activeOutingId: outingId }
+      : plan) ?? current);
   }, []);
 
   const refresh = useCallback(() => {
     if (planRequestId === null) return;
+    const epoch = generation.current;
     void getPlanRequestStatus(planRequestId)
-      .then((status) => {
-        if (status.statusKey === "generated") setPlans(status.plans ?? []);
-      })
+      .then(status => { if (generation.current === epoch) applyStatus(status); })
       .catch(() => {
-        // A failed reconcile leaves the current view untouched; the user can
-        // retry the selection, which will surface the error again.
+        // Leave the visible result intact; the next normal poll can reconcile it.
       });
-  }, [planRequestId]);
+  }, [applyStatus, planRequestId]);
 
   return {
     phase,
     planRequestId,
     plans,
+    query,
+    mode,
+    requestedAt,
+    progressStage,
+    progressStageAt,
+    estimatedRemainingSeconds,
+    resolvedContext,
+    understanding,
+    funnel,
+    unsupportedExperiences,
+    communityRecommendations,
+    primaryRecommendation,
     failure,
     submit,
     submitSurprise,

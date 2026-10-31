@@ -356,6 +356,50 @@
   }
 }
 
+@media (max-width: 900px) {
+  .section {
+    margin-top: 0;
+  }
+
+  .staticScene {
+    padding: 0 20px 28px;
+  }
+
+  .staticTile[data-role="lead"] .frame {
+    height: auto;
+    max-height: 340px;
+    aspect-ratio: 16 / 10;
+  }
+
+  .staticCopy {
+    padding: 24px 0;
+  }
+
+  .staticGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 12px;
+    align-items: start;
+  }
+
+  .staticGrid li[data-role="second"] {
+    grid-column: auto;
+  }
+
+  .staticGrid li[data-role] .staticTile .frame {
+    height: auto;
+    aspect-ratio: 4 / 3;
+  }
+
+  .staticGrid .label {
+    min-height: 2.6em;
+    margin-top: 8px;
+    font-size: 10.5px;
+    line-height: 1.3;
+    letter-spacing: 0.045em;
+    overflow-wrap: anywhere;
+  }
+}
+
 /* ── Reduced motion ─────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {

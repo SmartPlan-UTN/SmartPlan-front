@@ -1,19 +1,28 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 
 import {
-  CategoryChips,
+  ExploreLayout,
   FiltersPanel,
   Pagination,
+  SortControl,
   type SortOption,
 } from "@/components/explore";
-import { Button, Icon, LoadingDots } from "@/components/ui";
+import { PlaceCard } from "@/components/explore/PlaceCard";
+import { Button, Chip, Icon, LoadingDots } from "@/components/ui";
+import { priceRangeError, explorationQuery, readExplorationState, type ExplorationSearchState } from "@/components/explore";
+
 import { useDebouncedValue, useExplorationFilters, useExplorationSearch } from "@/hooks";
-import { listCities, listDepartments, searchActivities } from "@/lib/api";
+import { listCities, listDepartments, searchExplore } from "@/lib/api";
 import { ROUTES } from "@/lib/routes";
-import type { ActivitySearchParams, ActivitySortField, LocationOption } from "@/types";
+import type {
+  ActivitySortField,
+  ExploreItemType,
+  ExploreSearchParams,
+  LocationOption,
+} from "@/types";
 
 import { ActivityCard } from "./ActivityCard";
 import styles from "./activity.module.css";
@@ -33,6 +42,12 @@ const SORT_OPTIONS: SortOption<ActivitySortField>[] = [
   { value: "rating", label: "Rating" },
 ];
 
+const ITEM_TYPES: Array<{ value: ExploreItemType; label: string }> = [
+  { value: "ALL", label: "Todo" },
+  { value: "ACTIVITY", label: "Actividades" },
+  { value: "PLACE", label: "Lugares" },
+];
+
 function toNumber(value: string): number | undefined {
   if (value.trim() === "") return undefined;
   const parsed = Number(value);
@@ -44,8 +59,14 @@ function toNumber(value: string): number | undefined {
  * Debounces the query, renders loading/empty/error states, and paginates
  * page by page (not infinite scroll).
  */
-export function ActivitySearch() {
-  const [query, setQuery] = useState("");
+export function ActivitySearch({
+  head,
+  initialState = readExplorationState(),
+}: {
+  head?: ReactNode;
+  initialState?: ExplorationSearchState;
+}) {
+  const [query, setQuery] = useState(initialState.search);
   const debouncedQuery = useDebouncedValue(query, DEBOUNCE_MS);
   // Set by the "Buscar" button or Enter, to search immediately instead of
   // waiting out the debounce. Cleared on the next keystroke so debounce
@@ -53,7 +74,6 @@ export function ActivitySearch() {
   const [manualQuery, setManualQuery] = useState<string | null>(null);
   const effectiveQuery = manualQuery ?? debouncedQuery;
 
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const {
     categoryIds,
     minPrice,
@@ -68,15 +88,23 @@ export function ActivitySearch() {
     setDirection,
     toggleCategory,
     clear: clearFilters,
-  } = useExplorationFilters<ActivitySortField>("relevance");
+  } = useExplorationFilters<ActivitySortField>("relevance", initialState);
 
   // "Provincia"/"Localidad" (CU10): kept outside `useExplorationFilters`
   // since it's shared with `PlanSearch`, which has no location to filter by.
   const [cities, setCities] = useState<LocationOption[]>([]);
-  const [cityId, setCityId] = useState<number | null>(null);
+  const [cityId, setCityId] = useState<number | null>(initialState.cityId);
   const [departments, setDepartments] = useState<LocationOption[]>([]);
-  const [departmentId, setDepartmentId] = useState<number | null>(null);
-  const [departmentsLoading, setDepartmentsLoading] = useState(false);
+  const [departmentId, setDepartmentId] = useState<number | null>(initialState.departmentId);
+  // Starts loading when the URL already brings a province, so "Localidad"
+  // doesn't flash "no hay localidades" before the first fetch.
+  const [departmentsLoading, setDepartmentsLoading] = useState(initialState.cityId !== null);
+  const [departmentsError, setDepartmentsError] = useState(false);
+  const [departmentsAttempt, setDepartmentsAttempt] = useState(0);
+  // Activities are things to do; places (wineries, parks...) without a
+  // verified activity yet are discoverable too, but shown as places.
+  const [itemType, setItemType] = useState<ExploreItemType>(initialState.itemType ?? "ALL");
+  const [activityType, setActivityType] = useState(initialState.type ?? "");
 
   useEffect(() => {
     let active = true;
@@ -107,11 +135,27 @@ export function ActivitySearch() {
 
     async function run() {
       setDepartmentsLoading(true);
+      setDepartmentsError(false);
       try {
         const result = await listDepartments(selectedCityId);
-        if (active) setDepartments(result.data);
+        if (active) {
+          setDepartments(result.data);
+          // A locality restored from the URL that this province doesn't
+          // offer would keep filtering with no option to show or clear it.
+          setDepartmentId((current) =>
+            current !== null && !result.data.some((department) => department.id === current)
+              ? null
+              : current,
+          );
+        }
       } catch {
-        if (active) setDepartments([]);
+        if (active) {
+          setDepartments([]);
+          // Same reason: without the list, "Localidad" can't show which one
+          // is applied, so the results shouldn't stay filtered by it.
+          setDepartmentId(null);
+          setDepartmentsError(true);
+        }
       } finally {
         if (active) setDepartmentsLoading(false);
       }
@@ -121,15 +165,26 @@ export function ActivitySearch() {
     return () => {
       active = false;
     };
-  }, [cityId]);
+  }, [cityId, departmentsAttempt]);
 
   const handleCityIdChange = useCallback((value: number | null) => {
+    // Picking the province already selected changes nothing: resetting below
+    // would clear its localities without the effect ever fetching them again.
+    if (value !== null && value === cityId) return;
     setCityId(value);
     // A department only makes sense within its own city: switching
     // "Provincia" without resetting it would silently keep filtering by a
     // locality that isn't even offered as an option anymore.
     setDepartmentId(null);
     setDepartments([]);
+    setDepartmentsError(false);
+    // Same render as the new province, so "Localidad" goes straight to
+    // "cargando" instead of passing through "no hay localidades" first.
+    setDepartmentsLoading(value !== null);
+  }, [cityId]);
+
+  const retryDepartments = useCallback(() => {
+    setDepartmentsAttempt((attempt) => attempt + 1);
   }, []);
 
   const handleQueryChange = useCallback((value: string) => {
@@ -147,9 +202,11 @@ export function ActivitySearch() {
   const debouncedMaxPrice = useDebouncedValue(maxPrice, DEBOUNCE_MS);
   const debouncedMinRating = useDebouncedValue(minRating, DEBOUNCE_MS);
 
-  const params = useMemo<ActivitySearchParams>(
+  const params = useMemo<ExploreSearchParams>(
     () => ({
       search: effectiveQuery.trim() || undefined,
+      type: activityType || undefined,
+      itemType: itemType === "ALL" ? undefined : itemType,
       categoryIds: categoryIds.length > 0 ? categoryIds : undefined,
       minPrice: toNumber(debouncedMinPrice),
       maxPrice: toNumber(debouncedMaxPrice),
@@ -160,6 +217,8 @@ export function ActivitySearch() {
       direction,
     }),
     [
+      itemType,
+      activityType,
       effectiveQuery,
       categoryIds,
       debouncedMinPrice,
@@ -172,99 +231,58 @@ export function ActivitySearch() {
     ],
   );
 
-  const mapFiltersQuery = useMemo(() => {
-    const searchParams = new URLSearchParams();
-    if (params.search) searchParams.set("search", params.search);
-    if (params.categoryIds && params.categoryIds.length > 0) {
-      searchParams.set("categoryIds", params.categoryIds.join(","));
-    }
-    if (params.minPrice != null) searchParams.set("minPrice", String(params.minPrice));
-    if (params.maxPrice != null) searchParams.set("maxPrice", String(params.maxPrice));
-    if (params.minRating != null) searchParams.set("minRating", String(params.minRating));
-    if (params.cityId != null) searchParams.set("cityId", String(params.cityId));
-    if (params.departmentId != null) {
-      searchParams.set("departmentId", String(params.departmentId));
-    }
-    const query = searchParams.toString();
-    return query ? `${ROUTES.exploreMap}?${query}` : ROUTES.exploreMap;
-  }, [params]);
-
+  const rangeError = priceRangeError(minPrice, maxPrice);
+  const canSearch =
+    rangeError === null &&
+    priceRangeError(debouncedMinPrice, debouncedMaxPrice) === null;
   const { items, pagination, status, errorMessage, hasResults, page, goToPage, retry } =
-    useExplorationSearch(searchActivities, params, PAGE_SIZE);
+    useExplorationSearch(searchExplore, params, PAGE_SIZE, canSearch, {
+      initialPage: initialState.page,
+    });
+  // Carry the current controls, including edits still waiting for debounce.
+  const mapFiltersQuery = `${ROUTES.exploreMap}?${explorationQuery({
+    type: activityType, itemType,
+    search: query, categoryIds, minPrice, maxPrice, minRating,
+    cityId, departmentId,
+    sortBy: sortBy === "distance" ? "relevance" : sortBy,
+    direction,
+    page: query !== effectiveQuery || minPrice !== debouncedMinPrice ||
+      maxPrice !== debouncedMaxPrice || minRating !== debouncedMinRating ? 1 : page,
+  })}`;
 
   const resultsCountLabel =
     pagination != null
-      ? pagination.total === 1
-        ? "actividad encontrada"
-        : "actividades encontradas"
+      ? itemType === "ACTIVITY"
+        ? pagination.total === 1
+          ? "actividad en Mendoza"
+          : "actividades en Mendoza"
+        : itemType === "PLACE"
+          ? pagination.total === 1
+            ? "lugar en Mendoza"
+            : "lugares en Mendoza"
+          : pagination.total === 1
+            ? "resultado en Mendoza"
+            : "actividades y lugares en Mendoza"
       : null;
   // Once there's a grid on screen, a refetch (chip, filter, page) dims it
   // in place instead of swapping it for the big loading state — that swap
   // is what caused the flash on every click.
-  const isRefetching = status === "loading" && hasResults;
+  const isRefetching = status === "loading" && hasResults && canSearch;
+
+  // Shown on the narrow-screen "Filtros" toggle, so a folded sidebar never
+  // filters silently.
+  const activeFilters =
+    categoryIds.length +
+    [minPrice, maxPrice, minRating].filter((value) => value.trim() !== "").length +
+    (cityId !== null ? 1 : 0) +
+    (activityType ? 1 : 0) +
+    (departmentId !== null ? 1 : 0);
 
   return (
-    <div className={exploreStyles.searchScreen}>
-      <div className={styles.searchField}>
-        <Icon
-          name="search"
-          size={18}
-          className={styles.searchIcon}
-          aria-hidden="true"
-        />
-        <input
-          type="search"
-          className={styles.searchInput}
-          placeholder="Buscá una actividad, lugar o experiencia"
-          aria-label="Buscar actividades"
-          value={query}
-          onChange={(event) => {
-            handleQueryChange(event.target.value);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              searchNow();
-            }
-          }}
-        />
-        <Button variant="primary" size="sm" onClick={searchNow}>
-          Buscar
-        </Button>
-      </div>
-
-      <CategoryChips selectedIds={categoryIds} onToggle={toggleCategory} />
-
-      {pagination != null ? (
-        <div className={exploreStyles.toolbar}>
-          {hasResults ? (
-            <p className={`sp-body ${styles.resultsLabel}`}>
-              <strong>{pagination.total}</strong> {resultsCountLabel} cerca tuyo
-            </p>
-          ) : (
-            <span />
-          )}
-
-          <div className={exploreStyles.toolbarActions}>
-            <Link href={mapFiltersQuery} className={exploreStyles.toolbarLink}>
-              <Icon name="map" size={14} aria-hidden="true" />
-              Ver mapa
-            </Link>
-            <Button
-              variant="ghostLight"
-              size="sm"
-              aria-expanded={filtersOpen}
-              onClick={() => {
-                setFiltersOpen((open) => !open);
-              }}
-            >
-              <Icon name="sliders-horizontal" size={14} aria-hidden="true" />
-              Filtros
-            </Button>
-          </div>
-        </div>
-      ) : null}
-
-      {filtersOpen ? (
+    <ExploreLayout
+      head={head}
+      activeFilters={activeFilters}
+      filters={
         <FiltersPanel
           minPrice={minPrice}
           onMinPriceChange={setMinPrice}
@@ -272,13 +290,12 @@ export function ActivitySearch() {
           onMaxPriceChange={setMaxPrice}
           minRating={minRating}
           onMinRatingChange={setMinRating}
-          sortBy={sortBy}
-          onSortByChange={setSortBy}
-          sortOptions={SORT_OPTIONS}
-          direction={direction}
-          onDirectionChange={setDirection}
+          categoryIds={categoryIds}
+          onToggleCategory={toggleCategory}
+          activityType={{ value: activityType, onChange: (value) => { setActivityType(value); if (value) setItemType("ACTIVITY"); } }}
           onClear={() => {
             clearFilters();
+            setActivityType("");
             handleCityIdChange(null);
           }}
           location={{
@@ -289,68 +306,149 @@ export function ActivitySearch() {
             departmentId,
             onDepartmentIdChange: setDepartmentId,
             departmentsLoading,
+            departmentsError,
+            onRetryDepartments: retryDepartments,
           }}
         />
-      ) : null}
-
-      {status === "loading" && !hasResults ? (
-        <div className={styles.stateBlock}>
-          <LoadingDots label="Buscando lo mejor cerca tuyo..." />
-        </div>
-      ) : null}
-
-      {status === "error" && !hasResults ? (
-        <div className={styles.stateBlock} role="alert">
-          <Icon
-            name="triangle-alert"
-            size={32}
-            className={styles.errorIcon}
-          />
-          <h2 className="sp-h3">Algo salió mal</h2>
-          <p className="sp-body">{errorMessage}</p>
-          <Button variant="ghostEmber" onClick={retry}>
-            Reintentar
-          </Button>
-        </div>
-      ) : null}
-
-      {status === "idle" && !hasResults ? (
-        <div className={styles.stateBlock}>
-          <Icon name="inbox" size={32} className={styles.stateIcon} />
-          <h2 className="sp-h3">Sin resultados</h2>
-          <p className="sp-body">
-            No encontramos actividades para tu búsqueda. Probá con otras
-            palabras o ajustando los filtros.
-          </p>
-        </div>
-      ) : null}
-
-      {hasResults ? (
-        <div
-          className={`${exploreStyles.resultsFade} ${isRefetching ? exploreStyles.resultsFadeLoading : ""}`}
-        >
-          <div className={exploreStyles.grid}>
-            {items.map((activity) => (
-              <ActivityCard activity={activity} key={activity.id} />
-            ))}
-          </div>
-
-          {pagination ? (
-            <Pagination
-              page={page}
-              totalPages={pagination.totalPages}
-              onPageChange={goToPage}
-              disabled={isRefetching}
+      }
+    >
+      <div className={exploreStyles.searchScreen}>
+        <div className={exploreStyles.searchRow}>
+          <div className={styles.searchField}>
+            <Icon
+              name="search"
+              size={18}
+              className={styles.searchIcon}
+              aria-hidden="true"
             />
-          ) : null}
-
-          {status === "error" ? (
-            <p className={`sp-small ${styles.errorIcon}`} role="alert">
-              {errorMessage}
-            </p>
-          ) : null}
+            <input
+              type="search"
+              className={styles.searchInput}
+              placeholder="Buscá una actividad, lugar o experiencia"
+              aria-label="Buscar actividades y lugares"
+              value={query}
+              onChange={(event) => {
+                handleQueryChange(event.target.value);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  searchNow();
+                }
+              }}
+            />
+            <Button variant="primary" size="sm" onClick={searchNow}>
+              Buscar
+            </Button>
+          </div>
+          <Link
+            href={mapFiltersQuery}
+            aria-disabled={!canSearch}
+            onClick={(event) => {
+              if (!canSearch) event.preventDefault();
+            }}
+            className={exploreStyles.searchMapLink}
+          >
+            <Icon name="map" size={16} aria-hidden="true" />
+            Ver mapa
+          </Link>
         </div>
-      ) : null}
-    </div>
+
+        <div
+          className={exploreStyles.itemTypeRow}
+          role="group"
+          aria-label="Qué mostrar"
+        >
+          {ITEM_TYPES.map((option) => (
+            <Chip
+              key={option.value}
+              active={itemType === option.value}
+              onClick={() => { setItemType(option.value); if (option.value === "PLACE") setActivityType(""); }}
+            >
+              {option.label}
+            </Chip>
+          ))}
+        </div>
+
+        <div className={exploreStyles.toolbar}>
+          {pagination != null && hasResults ? (
+            <p className={`sp-body ${styles.resultsLabel}`}>
+              <strong>{pagination.total}</strong> {resultsCountLabel}
+            </p>
+          ) : (
+            <span />
+          )}
+          <SortControl
+            sortBy={sortBy}
+            onSortByChange={setSortBy}
+            sortOptions={SORT_OPTIONS}
+            direction={direction}
+            onDirectionChange={setDirection}
+          />
+        </div>
+
+        {status === "loading" && !hasResults ? (
+          <div className={styles.stateBlock}>
+            <LoadingDots label="Buscando lo mejor cerca tuyo..." />
+          </div>
+        ) : null}
+
+        {status === "error" && !hasResults ? (
+          <div className={styles.stateBlock} role="alert">
+            <Icon
+              name="triangle-alert"
+              size={32}
+              className={styles.errorIcon}
+            />
+            <h2 className="sp-h3">Algo salió mal</h2>
+            <p className="sp-body">{errorMessage}</p>
+            <Button variant="ghostEmber" onClick={retry}>
+              Reintentar
+            </Button>
+          </div>
+        ) : null}
+
+        {status === "idle" && !hasResults && canSearch ? (
+          <div className={styles.stateBlock}>
+            <Icon name="inbox" size={32} className={styles.stateIcon} />
+            <h2 className="sp-h3">Sin resultados</h2>
+            <p className="sp-body">
+              No encontramos actividades ni lugares para tu búsqueda. Probá
+              con otras palabras o ajustando los filtros.
+            </p>
+          </div>
+        ) : null}
+
+        {hasResults ? (
+          <div
+            className={`${exploreStyles.resultsFade} ${isRefetching ? exploreStyles.resultsFadeLoading : ""}`}
+          >
+            <div className={exploreStyles.grid}>
+              {items.map((item) =>
+                item.itemType === "PLACE" ? (
+                  <PlaceCard item={item} key={`place-${item.id}`} />
+                ) : (
+                  <ActivityCard activity={item} key={`activity-${item.id}`} />
+                ),
+              )}
+            </div>
+
+            {pagination ? (
+              <Pagination
+                page={page}
+                totalPages={pagination.totalPages}
+                onPageChange={goToPage}
+                disabled={isRefetching || !canSearch}
+              />
+            ) : null}
+
+            {status === "error" ? (
+              <p className={`sp-small ${styles.errorIcon}`} role="alert">
+                {errorMessage}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    </ExploreLayout>
   );
 }

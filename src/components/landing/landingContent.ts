@@ -59,14 +59,74 @@ export const PLACEHOLDER_PHRASES = [
  * demonstration, that the field wants a sentence — which is the single
  * thing a first-time visitor has to learn here.
  */
-export const INTENTS: readonly { label: string; icon: IconName; query: string }[] = [
-  { label: "Hoy a la noche", icon: "moon", query: "Algo para hacer hoy a la noche, cerca del centro" },
-  { label: "Con amigos", icon: "users", query: "Una salida con amigos, para juntarnos y comer algo" },
-  { label: "Cita", icon: "heart", query: "Una cita al atardecer, con buena comida y vista" },
-  { label: "Comer algo", icon: "utensils", query: "Salir a comer algo rico, sin que sea una producción" },
-  { label: "Aire libre", icon: "trees", query: "Un plan al aire libre, con caminata y buen clima" },
-  { label: "Barato", icon: "wallet", query: "Un plan barato para el fin de semana, sin gastar mucho" },
-  { label: "Cerca mío", icon: "map-pin", query: "Algo cerca de donde estoy, que no me lleve todo el día" },
+export const INTENTS: readonly {
+  label: string;
+  icon: IconName;
+  queries: readonly string[];
+}[] = [
+  {
+    label: "Hoy a la noche",
+    icon: "moon",
+    queries: [
+      "¿Hacemos algo hoy a la noche? No tengo nada en mente.",
+      "Tengo ganas de salir esta noche, ¿qué hay para hacer por Mendoza?",
+      "Quiero una salida tranquila hoy a la noche.",
+    ],
+  },
+  {
+    label: "Con amigos",
+    icon: "users",
+    queries: [
+      "Che, juntada con amigos hoy a la noche. ¿Qué se te ocurre?",
+      "Somos varios y queremos comer algo rico, ¿a dónde podemos ir?",
+      "Tenemos ganas de tomar algo y charlar tranqui.",
+    ],
+  },
+  {
+    label: "Cita",
+    icon: "heart",
+    queries: [
+      "Quiero invitar a alguien a salir y no se me ocurre nada.",
+      "Una cita linda para dos, con hasta $80.000 entre los dos. ¿Qué puede funcionar?",
+      "Cena y cine esta noche. Elegí vos una peli de la cartelera y decime qué horarios hay y cuánto sale.",
+    ],
+  },
+  {
+    label: "Comer algo",
+    icon: "utensils",
+    queries: [
+      "Me dio hambre: quiero comer algo rico y sin tantas vueltas.",
+      "Tengo ganas de una buena pizza esta noche, ¿qué me recomendás?",
+      "¿Un lugar lindo para merendar y después dar una vuelta?",
+    ],
+  },
+  {
+    label: "Aire libre",
+    icon: "trees",
+    queries: [
+      "Necesito salir un rato, ¿qué lugar lindo hay al aire libre?",
+      "¿Dónde podemos ver el atardecer hoy?",
+      "Algo para hacer afuera este finde, tranqui.",
+    ],
+  },
+  {
+    label: "Barato",
+    icon: "wallet",
+    queries: [
+      "No quiero gastar mucho, pero sí salir. ¿Qué hacemos?",
+      "¿Un plan lindo y barato para este finde?",
+      "Tenemos poca plata para salir los dos; ¿qué puede salir?",
+    ],
+  },
+  {
+    label: "Cerca mío",
+    icon: "map-pin",
+    queries: [
+      "¿Qué hay cerca para hacer ahora?",
+      "Tengo ganas de salir, pero no quiero irme lejos.",
+      "¿Qué hay cerca para hacer hoy? No tengo ganas de manejar.",
+    ],
+  },
 ] as const;
 
 /* ── Inspiration scene ────────────────────────────────────────────── */
@@ -123,7 +183,7 @@ export const INSPIRATION = {
 export const STORY = {
   kicker: "smartplan ordena la salida",
   title: ["Las ganas no vienen ordenadas.", "El plan sí."],
-  lead: "Decís lo que te pinta. smartplan encuentra la forma de hacerlo cerrar.",
+  lead: "Contás qué querés hacer. smartplan encuentra la mejor forma de organizarlo.",
   /**
    * The scene's accessible equivalent, rendered visually hidden. A scrubbed
    * composition of words and photographs says nothing to a screen reader, so
@@ -182,7 +242,7 @@ export const HOW = {
   summary:
     "Escribís una frase suelta, por ejemplo «algo tranqui hoy a la noche con amigos», y smartplan la entiende, te devuelve recorridos completos y te quedás con el que más te cierra. El único paso tuyo es el primero.",
   steps: [
-    { n: "01", label: "Contás qué te pinta" },
+    { n: "01", label: "Contás qué querés hacer" },
     { n: "02", label: "smartplan entiende" },
     { n: "03", label: "Recibís opciones" },
     { n: "04", label: "Elegís y salís" },
@@ -193,7 +253,7 @@ export const HOW = {
   options: [
     {
       id: "feria-noche",
-      title: "Feria de noche y algo rápido para comer",
+      title: "Feria nocturna y cena al paso",
       duration: "3 h",
       budget: 1,
       tone: "electric",
@@ -201,11 +261,11 @@ export const HOW = {
     },
     {
       id: "patio-birra",
-      title: "Birra en un patio y sobremesa larga",
+      title: "Cena en una bodega y sobremesa sin apuro",
       duration: "5 h",
       budget: 2,
       tone: "gold",
-      media: "patioCerveza",
+      media: "bodegaParral",
     },
   ] satisfies HowOption[],
 } as const;
@@ -241,18 +301,18 @@ export const SHOWCASE = {
        * just watched win is the same object they now read in full.
        */
       id: "noche-amigos",
-      title: "Noche tranqui con amigos, sin gastar de más",
+      title: "Cena tranquila con amigos, a buen precio",
       duration: "4 h",
       budget: 1,
-      tags: ["Noche", "Con amigos", "Barato"],
+      tags: ["Noche", "Con amigos", "Económico"],
       moments: [
-        { time: "21:00", label: "Algo para picar en el medio de la mesa" },
-        { time: "23:00", label: "Barra con música baja, para charlar" },
-        { time: "00:30", label: "Vuelta a pie, todo cerca" },
+        { time: "21:00", label: "Cena para compartir en una mesa larga" },
+        { time: "23:00", label: "Un bar con música tranquila para conversar" },
+        { time: "00:30", label: "Regreso a pie, todo a pocas cuadras" },
       ],
-      icon: "pizza",
+      icon: "utensils",
       tone: "char",
-      media: "amigosCerveza",
+      media: "mesaNoche",
     },
     {
       id: "cafe-tarde",
