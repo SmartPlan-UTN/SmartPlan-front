@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -12,6 +13,9 @@ import type {
 } from "@/types";
 
 import { PreferencesForm } from "./PreferencesForm";
+
+const navigate = vi.hoisted(() => vi.fn());
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: navigate }) }));
 
 const listCategories = vi.hoisted(() => vi.fn());
 const getPreferences = vi.hoisted(() => vi.fn());
@@ -488,4 +492,69 @@ describe("PreferencesForm", () => {
       await screen.findByRole("button", { name: "Gastronomía" }),
     ).toBeInTheDocument();
   });
+});
+
+
+it("keeps navigation on the page until dirty preferences are saved or discarded", async () => {
+  navigate.mockClear();
+  listCategories.mockResolvedValue(catalogResult(CATALOG));
+  getPreferences.mockResolvedValue(preferencesFrom([]));
+  const user = userEvent.setup();
+  render(<><Link href="/explore">Ir a Explorar</Link><PreferencesForm /></>);
+  await user.click(await screen.findByRole("button", { name: "Gastronomía" }));
+  expect(screen.getByText(/Cambios sin guardar/)).toBeInTheDocument();
+  await user.click(screen.getByRole("link", { name: "Ir a Explorar" }));
+  expect(screen.getByRole("dialog", { name: /guardar tus preferencias antes de salir/ })).toBeInTheDocument();
+  expect(navigate).not.toHaveBeenCalled();
+  await user.click(screen.getByRole("button", { name: "Seguir editando" }));
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  await user.click(screen.getByRole("link", { name: "Ir a Explorar" }));
+  updatePreferences.mockResolvedValue(preferencesFrom([1]));
+  await user.click(screen.getByRole("button", { name: "Guardar y salir" }));
+  expect(updatePreferences).toHaveBeenCalledWith(expect.objectContaining({ categoryIds: [1] }));
+  await screen.findByText("Perfil de preferencias guardado");
+  expect(navigate).toHaveBeenCalledWith("/explore");
+});
+
+it("can leave without saving and does not call the preferences API", async () => {
+  navigate.mockClear(); updatePreferences.mockClear();
+  listCategories.mockResolvedValue(catalogResult(CATALOG));
+  getPreferences.mockResolvedValue(preferencesFrom([]));
+  const user = userEvent.setup();
+  render(<><Link href="/plans">Ir a planes</Link><PreferencesForm /></>);
+  await user.click(await screen.findByRole("button", { name: "Gastronomía" }));
+  await user.click(screen.getByRole("link", { name: "Ir a planes" }));
+  await user.click(screen.getByRole("button", { name: "Salir sin guardar" }));
+  expect(updatePreferences).not.toHaveBeenCalled();
+  expect(navigate).toHaveBeenCalledWith("/plans");
+});
+
+it("stays on the page when saving from the leave dialog fails", async () => {
+  navigate.mockClear();
+  listCategories.mockResolvedValue(catalogResult(CATALOG));
+  getPreferences.mockResolvedValue(preferencesFrom([]));
+  updatePreferences.mockRejectedValue(new Error("Unavailable"));
+  const user = userEvent.setup();
+  render(<><Link href="/plans">Ir a planes</Link><PreferencesForm /></>);
+  await user.click(await screen.findByRole("button", { name: "Gastronomía" }));
+  await user.click(screen.getByRole("link", { name: "Ir a planes" }));
+  await user.click(screen.getByRole("button", { name: "Guardar y salir" }));
+  expect(await within(screen.getByRole("dialog")).findByRole("alert")).toHaveTextContent(GENERIC_SAVE_ERROR);
+  expect(navigate).not.toHaveBeenCalled();
+  expect(screen.getByRole("button", { name: "Guardar y salir" })).toBeEnabled();
+});
+
+it("warns on browser reload only while preferences have unsaved changes", async () => {
+  listCategories.mockResolvedValue(catalogResult(CATALOG));
+  getPreferences.mockResolvedValue(preferencesFrom([]));
+  const user = userEvent.setup();
+  render(<PreferencesForm />);
+  await user.click(await screen.findByRole("button", { name: "Gastronomía" }));
+  const dirty = new Event("beforeunload", { cancelable: true });
+  window.dispatchEvent(dirty);
+  expect(dirty.defaultPrevented).toBe(true);
+  await user.click(screen.getByRole("button", { name: "Descartar cambios" }));
+  const clean = new Event("beforeunload", { cancelable: true });
+  window.dispatchEvent(clean);
+  expect(clean.defaultPrevented).toBe(false);
 });

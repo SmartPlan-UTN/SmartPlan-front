@@ -31,6 +31,12 @@ export interface PlanRequestContext {
   partySize?: number;
   timeOfDay?: TimeOfDay;
   availableDuration?: number;
+  /** "En casa": only games and plans at home (the Hogar). */
+  atHome?: boolean;
+  /** "Gratis": only evidenced free activities; an unknown price never counts. */
+  freeOnly?: boolean;
+  /** Explicit occasions (`Occasion` keys), added to what the text says. */
+  occasions?: string[];
 }
 
 /**
@@ -59,7 +65,7 @@ export interface CreateSurprisePlanRequestPayload {
  * `POST /plan-requests/surprise` (HTTP 202). Matches
  * `PlanRequestAcceptedDto` in `SmartPlan-back`.
  */
-export type PlanRefinementAction = 'CHEAPER' | 'MORE_ROMANTIC' | 'LESS_TRAVEL' | 'MORE_ORIGINAL' | 'MORE_CALM' | 'MORE_MODERN' | 'SWAP_STOP' | 'REMOVE_STOP';
+export type PlanRefinementAction = 'CHEAPER' | 'MORE_ROMANTIC' | 'LESS_TRAVEL' | 'MORE_ORIGINAL' | 'MORE_CALM' | 'MORE_MODERN' | 'ADD_HOME_GAME' | 'SWAP_STOP' | 'REMOVE_STOP';
 
 export interface RefinePlanRequestPayload {
   planId: number;
@@ -114,6 +120,17 @@ export interface ResolvedPlanContext {
   partySize: number | null;
   departmentName: string | null;
   categories: ActivityCategorySummary[];
+  /** Occasions the plans respect, read from the text and the chips. */
+  occasions?: string[];
+  /** Only games and plans at home. */
+  atHome?: boolean;
+  /** Only evidenced free activities. */
+  freeOnly?: boolean;
+  /**
+   * Where the plans start (device or preferred area), only when it lies in
+   * the resolved department. Stops at the Hogar happen here.
+   */
+  startingPoint?: { latitude: number; longitude: number } | null;
 }
 
 /**

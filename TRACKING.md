@@ -108,7 +108,7 @@ Verification: `pnpm lint`, `pnpm test --maxWorkers=4` (864 passed), `pnpm build`
 | CU5 | Edit profile | PAN 14 | `Completed` | `SMART-18-cu6-cambiar-contrasena` | #92 |
 | CU6 | Change password | PAN 14 | `Completed` | `SMART-18-cu6-cambiar-contrasena` | #92 |
 | CU7 | Delete account | PAN 14 | `Completed` | `SMART-19-cu7-eliminar-cuenta` | #112 |
-| CU8 | Edit preferences | PAN 15 | `Not started` | | |
+| CU8 | Edit preferences | PAN 15 | `In review` | `review/pr212` | #212 |
 
 ### Search and discovery
 
@@ -128,7 +128,7 @@ Verification: `pnpm lint`, `pnpm test --maxWorkers=4` (864 passed), `pnpm build`
 | CU | Feature | Screen | Status | Branch | PR |
 |---|---|---|---|---|---|
 | CU17 | Generate automatic plan | PAN 07 | `In review` | `feature/rediseno-hero` | #117 |
-| CU18 | Customize user preferences | PAN 15 | `In review` | `7-epica-recomendacion` | #117 |
+| CU18 | Customize user preferences | PAN 15 | `In review` | `review/pr212` | #212 |
 | CU19 | Generate surprise plan | PAN 09 | `In review` | `7-epica-recomendacion` | #117 |
 | CU20 | Show recommendations | PAN 10 | `In review` | `7-epica-recomendacion` | #117 |
 | CU21 | Adjust recommendations based on history | — | `In review` | `7-epica-recomendacion` | #117 |
@@ -567,6 +567,14 @@ PR #199 integration validation: rebased onto current develop, preserving unknown
 - The preferred area can also be picked on a Google map (`PreferredAreaMap`): tap or drag the pin, reverse-geocoded client-side into the same `{ label, placeId, latitude, longitude }`. Applies to Preferencias too. Falls back to the name search when the map cannot load.
 - Validation: `pnpm lint`, `pnpm test` (156 files, 1183 tests) and `pnpm build` pass. Checked manually against a local backend with a real Google Maps key.
 
+## 2026-10-29 — Catalog candidates queue, "En casa / Gratis", occasions and the Hogar (#210)
+
+- Branch `feature/210-catalogo-ampliado`; requires the back branch `feature/catalogo-ampliado` (expanded catalog, SmartPlan-back). Exactly two PRs (front and back).
+- `/admin/catalog-candidates` (link only with `catalog.review`): Pendientes / Aprobados / Descartados with counts, origin/department/type filters, pagination; cards with place, price source and date, occasions, people, back warnings and on-demand detail (what the place offers, what review changed); edit form with vocabulary chips and per-field back errors; approve (409 duplicate → "Aprobar igual"); discard with a required reason; bulk approve within one place. Admin activity/place screens list places through `GET /admin/places`, and the activity form edits occasions.
+- Composer: "En casa" and "Gratis" send `atHome` / `freeOnly`; the landing hero, which hides the other chips, shows these two. The results header shows what the back resolved (occasions, En casa, Gratis). An all-free plan total reads "Gratis".
+- Explorar: "Ocasión" pills plus "En casa" and "Gratis", kept in the URL with `history.replaceState`, carried to the map.
+- The Hogar reads "En casa / donde estén" in the itinerary, cards and detail, with no address, map, pin or distance, and the plan zone skips it; the detail adds rules source, materials, age and people. Occasion pills on ActivityCard (two, then +n) and on the detail.
+- Validation: lint and build passed; 159 files / 1215 tests with one timing-sensitive composer test (`CreatePlanForm*`) failing only under the full parallel run and passing alone, file untouched here. Visual QA with headless Chrome against the local back, desktop and mobile: see SmartPlan-back `catalog-data/mendoza-v2/PRODUCT-QA.md`.
 
 2026-10-30 — `fix/community-pr196-pr213-review`, local follow-up to PRs #196/#213 (CU13, CU23, CU24/CU25, #106/#191). Status: In progress, local changes only; no new PR or remote publication. Recover unavailable inspirations through an explicit detach action that preserves the draft; isolate place-action row IDs including undo; wait for session restoration and reset viewer projections on account changes; distinguish 404 from retryable profile/experience failures; keep private-origin visit actions, discovery ordering and failed pagination context; correct primary-action hover contrast and omit missing contribution authors. The pagination limitation of standalone #196 was already resolved by #213. Validation results are recorded in the local review follow-up report under `planes/arreglos-front-pr196-pr213-2026-10-30.md`. No backend migration or deployment.
 
@@ -577,3 +585,27 @@ PR #199 integration validation: rebased onto current develop, preserving unknown
 2026-10-31 — Landing mobile responsive follow-up on the active 3200 preview. Below 900px, the inspiration photos use a landscape lead and a balanced 2x2 grid with consistent aspect ratios. The example itinerary uses compact photo/text rows, and the payoff and next heading have a 39px gap. At 375px the gallery shrank from 1773px to 798px and the story from 1680px to 657px; all photos, stop labels and times remain available. Checked 320/375/768/1440px without horizontal overflow; desktop keeps its animated layout. Updated static image sizes. Landing regression suites: 16 tests passed; lint passed.
 
 2026-10-31 — Polish the global mobile create-plan action as a light pill with a subtle ember border and a circular orange plus badge. Preserve the 44px touch target, accessible name, small-screen label and route. Navbar regressions: 28 tests passed; lint and production build passed.
+
+## 2026-10-31 — Port home stops to the new recommendation results (#210, PR #212, CU17)
+
+- Branch `review/pr212`, tracking `feature/210-catalogo-ampliado`; status: In review. Integrated `origin/develop` locally, preserving its new result story and unified place-action stops.
+- Home detection accepts `stop.place.kind`, `stop.place.atHome` and legacy activity locations. All-home plans show the home note without map actions; mixed plans pin the home at `resolvedContext.startingPoint` and keep itinerary numbering. Home stops omit physical addresses, Google photos, unknown opening hours and unlocated travel legs.
+- Understanding chips remain backend-owned. Restored the budget currency prefix; single-stop recommendations use the confirmed free total instead of a saved `$0` insight. Zone lookup supports place-action stops and legacy locations while skipping home.
+- Regression coverage includes unified home payloads without activities, starting-point propagation, switching home/mixed alternatives, free single-stop prices, photo suppression and legs to/from home. Validation: `pnpm lint`, `pnpm test --maxWorkers=2` (183 files, 1352 tests) and `pnpm build` pass before the local port commit; final counts and QA limitations are recorded in `planes/handoff-codex-front-212.RESULT.md` in the parent workspace.
+- No push. Integrated backend/browser QA remains with the backend agent before publication.
+
+## 2026-10-31 — Frontend QA follow-up to #212 (CU13, CU17, CU22)
+
+- Branch `review/pr212`; status: In review, local commits only. Reviewed home, mixed and place-action results against the local API in real desktop/mobile Chromium, plus details, Explore, private navigation and missing resources.
+- Keep home preparation language indoors in recommendation, plan and outing detail. Label home references as activity sources, suppress stale provider photos in home cards/details, and avoid physical-place links for a virtual home without an activity.
+- Correct tab semantics in the shared Chip primitive. Add accessible ember action/ink tokens, retaining the brand hue while improving contrast for action buttons, avatar initials, price badges, occasion overflow counts and auxiliary labels. Update the design-system guidance for these tokens.
+- Translate missing/inaccessible request errors and keep unknown API/provider diagnostics out of user-facing generation failures.
+- Browser QA includes real map/house pins, switching alternatives, filter URL persistence/reset, invalid price ranges, selection/cancellation and injected selection/refinement failures. Desktop WCAG AA automated audits on seven pages and mobile audits on three key pages have no reported violations after fixes; this is scoped automated coverage, not a certification of every screen.
+- Final lint, complete test suite, isolated production build, evidence paths and commit hash are recorded in the parent workspace's `planes/handoff-codex-front-212.RESULT.md`. No push or backend code changes.
+
+## 2026-10-31 — Make preference saving and device location explicit (CU8, CU18, CU17)
+
+- Branch `review/pr212`, PR #212; status: In review. Add an explicit device-location button to the preferred-area map, with permission errors and stale-result protection. A fixed action bar keeps save/discard and the unsaved status visible on every preference step, including mobile.
+- Guard application links with save-and-leave, discard-and-leave and continue-editing choices. Failed saves retain the draft and destination. Reload/close uses the native browser warning; internal preference steps retain the same draft. Browser history traversal is outside the custom link guard.
+- Automatic plan generation and retry now read the saved device-location preference and send fresh GPS coordinates without requiring a preferred area. Keep explicit request coordinates, preserve other request context and fall back to normal backend resolution when GPS is unavailable. Transient GPS is not persisted as an explicit context override; abandoned location requests cannot create a plan.
+- Validation: `pnpm test --maxWorkers=3` passed (186 files, 1383 tests), isolated `pnpm build` passed. Lint and final commit details are recorded in the parent workspace report `planes/handoff-codex-front-212.RESULT.md`. Browser checks cover 320/375/390/768/1440px without horizontal overflow, map GPS, both save actions, cancel/discard navigation and an automatic request with GPS and no preferred area. Save browser checks use intercepted preference responses to avoid changing the shared test account.

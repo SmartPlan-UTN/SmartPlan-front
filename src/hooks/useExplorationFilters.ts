@@ -9,6 +9,10 @@ export interface UseExplorationFiltersResult<TSortField extends string> {
   minRating: string;
   sortBy: TSortField;
   direction: SortDirection;
+  atHome: boolean;
+  free: boolean;
+  setAtHome: (value: boolean) => void;
+  setFree: (value: boolean) => void;
   setMinPrice: (value: string) => void;
   setMaxPrice: (value: string) => void;
   setMinRating: (value: string) => void;
@@ -26,7 +30,7 @@ export interface UseExplorationFiltersResult<TSortField extends string> {
  */
 export function useExplorationFilters<TSortField extends string>(
   defaultSort: TSortField,
-  initial: Partial<Pick<UseExplorationFiltersResult<TSortField>, "categoryIds" | "minPrice" | "maxPrice" | "minRating" | "sortBy" | "direction">> = {},
+  initial: Partial<Pick<UseExplorationFiltersResult<TSortField>, "categoryIds" | "minPrice" | "maxPrice" | "minRating" | "sortBy" | "direction" | "atHome" | "free">> = {},
 ): UseExplorationFiltersResult<TSortField> {
   const [categoryIds, setCategoryIds] = useState<number[]>(initial.categoryIds ?? []);
   const [minPrice, setMinPrice] = useState(initial.minPrice ?? "");
@@ -34,6 +38,8 @@ export function useExplorationFilters<TSortField extends string>(
   const [minRating, setMinRating] = useState(initial.minRating ?? "");
   const [sortBy, setSortBy] = useState<TSortField>(initial.sortBy ?? defaultSort);
   const [direction, setDirection] = useState<SortDirection>(initial.direction ?? "asc");
+  const [atHome, setAtHome] = useState(initial.atHome ?? false);
+  const [free, setFree] = useState(initial.free ?? false);
 
   const toggleCategory = useCallback((categoryId: number) => {
     setCategoryIds((current) =>
@@ -50,6 +56,8 @@ export function useExplorationFilters<TSortField extends string>(
     setMinRating("");
     setSortBy(defaultSort);
     setDirection("asc");
+    setAtHome(false);
+    setFree(false);
   }, [defaultSort]);
 
   return {
@@ -59,6 +67,10 @@ export function useExplorationFilters<TSortField extends string>(
     minRating,
     sortBy,
     direction,
+    atHome,
+    free,
+    setAtHome,
+    setFree,
     setMinPrice,
     setMaxPrice,
     setMinRating,

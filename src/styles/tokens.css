@@ -17,6 +17,10 @@
   --gold:     #FFD166;
   --white:    #FFFFFF;
 
+  /* Accessible ember variants for small text and white action labels. */
+  --ember-action: color-mix(in srgb, var(--ember) 80%, var(--char));
+  --ember-ink: color-mix(in srgb, var(--ember) 65%, var(--char));
+
   /* ── Semantic status ─────────────────────────────── */
   --success:  #22C06B;
   --error:    #F04040;
@@ -206,7 +210,7 @@ input::placeholder { color: var(--fg-3); }
   align-items: center;
   gap: var(--s-2);
   margin: 0 0 var(--s-3);
-  color: var(--ember);
+  color: var(--ember-ink);
 }
 .sp-page-kicker-mark {
   flex: none;

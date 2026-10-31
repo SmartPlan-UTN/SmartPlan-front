@@ -1,4 +1,4 @@
-import { stopCoordinates, stopLabel } from "@/lib/plans/stops";
+import { isHomeStop, stopCoordinates, stopLabel } from "@/lib/plans/stops";
 import type { PlanDetailResult } from "@/types";
 
 import { PLAN_PIN_COLORS } from "./brandedMapStyle";
@@ -10,6 +10,7 @@ export interface ResultsMapStop {
   lat: number;
   lng: number;
   order: number;
+  atHome?: boolean;
 }
 
 export interface ResultsMapPlanPin {
@@ -25,21 +26,27 @@ export interface ResultsMapPlanPin {
  * SmartPlan-owned position. A stop SmartPlan only knows approximately is
  * not drawn: a pin is never placed where the stop is not.
  */
-export function buildPlanPins(plans: PlanDetailResult[]): ResultsMapPlanPin[] {
+export function buildPlanPins(
+  plans: PlanDetailResult[],
+  startingPoint: { latitude: number; longitude: number } | null = null,
+): ResultsMapPlanPin[] {
   return plans.map((plan, index) => ({
     planId: plan.id,
     color: PLAN_PIN_COLORS[index % PLAN_PIN_COLORS.length],
     stops: [...plan.details]
       .sort((a, b) => a.order - b.order)
-      .map((detail): ResultsMapStop | null => {
-        const point = stopCoordinates(detail);
+      .map((detail, stopIndex): ResultsMapStop | null => {
+        const atHome = isHomeStop(detail);
+        const goesOut = plan.details.some((item) => !isHomeStop(item));
+        const point = atHome ? (goesOut ? startingPoint : null) : stopCoordinates(detail);
         if (!point) return null;
         return {
           activityId: detail.activity?.id ?? null,
           name: stopLabel(detail),
           lat: point.latitude,
           lng: point.longitude,
-          order: detail.order,
+          order: stopIndex + 1,
+          ...(atHome ? { atHome: true } : {}),
         };
       })
       .filter((stop): stop is ResultsMapStop => stop !== null),

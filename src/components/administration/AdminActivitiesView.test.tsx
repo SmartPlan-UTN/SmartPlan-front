@@ -7,7 +7,7 @@ import {
   deleteAdminActivity,
   listAdminActivities,
   listCategories,
-  listPlaces,
+  listAdminPlaces,
   updateAdminActivity,
 } from "@/lib/api";
 import type { AdminActivity, AdminActivitiesResult, PlaceOption } from "@/types";
@@ -20,7 +20,7 @@ vi.mock("@/lib/api", () => ({
   deleteAdminActivity: vi.fn(),
   listAdminActivities: vi.fn(),
   listCategories: vi.fn(),
-  listPlaces: vi.fn(),
+  listAdminPlaces: vi.fn(),
   updateAdminActivity: vi.fn(),
 }));
 
@@ -67,7 +67,7 @@ describe("AdminActivitiesView", () => {
       data: [{ id: 2, name: "Cultura & Arte", description: null }],
       pagination: { page: 1, limit: 100, total: 1, totalPages: 1 },
     });
-    vi.mocked(listPlaces).mockResolvedValue({
+    vi.mocked(listAdminPlaces).mockResolvedValue({
       data: places,
       pagination: { page: 1, limit: 100, total: 2, totalPages: 1 },
     });

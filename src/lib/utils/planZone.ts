@@ -1,4 +1,5 @@
-import { stopPlace } from "@/lib/plans/stops";
+import { isAtHomeLocation } from "./home";
+import { isHomeStop, stopPlace } from "@/lib/plans/stops";
 import type { PlanDetailResult } from "@/types";
 
 /**
@@ -9,8 +10,13 @@ import type { PlanDetailResult } from "@/types";
  */
 export function getPlanZone(plan: PlanDetailResult): string | null {
   for (const detail of [...plan.details].sort((a, b) => a.order - b.order)) {
+    if (isHomeStop(detail)) continue;
     const department = stopPlace(detail)?.departmentName;
     if (department) return department;
+    const located = (detail.activity?.locations ?? []).find(
+      (location) => !isAtHomeLocation(location) && location.place.department,
+    );
+    if (located) return located.place.department?.name ?? null;
   }
   return null;
 }

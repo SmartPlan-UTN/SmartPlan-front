@@ -23,9 +23,9 @@ export function Chip({
     .filter(Boolean)
     .join(" ");
 
-  // aria-pressed goes before the spread so a chip that doesn't toggle state
-  // (for example, one that navigates) can remove it with aria-pressed={undefined}.
+  // Tabs expose aria-selected rather than the toggle-button aria-pressed.
+  // Callers may also remove aria-pressed for chips that only navigate.
   return (
-    <button type={type} className={classes} aria-pressed={active} {...props} />
+    <button type={type} className={classes} aria-pressed={props.role === "tab" ? undefined : active} {...props} />
   );
 }

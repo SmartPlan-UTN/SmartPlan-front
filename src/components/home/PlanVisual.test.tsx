@@ -49,3 +49,14 @@ describe("PlanVisual", () => {
     expect(photo).not.toHaveBeenCalled();
   });
 });
+
+
+it("uses the home poster without requesting Google photos even with a stale place ID", () => {
+  const home = plan();
+  home.details = [home.details[0]];
+  home.details[0].stop!.place!.kind = "home";
+  home.details[0].stop!.place!.atHome = true;
+  render(<PlanVisual plan={home} />);
+  expect(screen.getByText("En casa")).toBeInTheDocument();
+  expect(photo).not.toHaveBeenCalled();
+});

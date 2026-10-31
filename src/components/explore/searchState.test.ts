@@ -11,6 +11,18 @@ describe("exploration URL state", () => {
   });
 });
 
+describe("«En casa» and «Gratis» in the URL (#210)", () => {
+  it("round trips at home and free so a shared link keeps them", () => {
+    const state = readExplorationState({ atHome: "true", free: "true" });
+    expect(state).toMatchObject({ atHome: true, free: true });
+    expect(readExplorationState(Object.fromEntries(new URLSearchParams(explorationQuery(state))))).toEqual(state);
+  });
+  it("leaves the flags off by default and ignores occasions", () => {
+    expect(readExplorationState({ occasions: "romantic" })).toMatchObject({ atHome: false, free: false });
+    expect(explorationQuery(readExplorationState({ occasions: "romantic" }))).not.toMatch(/occasions|atHome|free/);
+  });
+});
+
 describe("price ranges", () => {
   it.each([["", ""], ["0", ""], ["", "100"], ["20", "20"], ["10", "20"]])("accepts valid or open ranges %s–%s", (min, max) => {
     expect(priceRangeError(min, max)).toBeNull();

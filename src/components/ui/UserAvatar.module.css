@@ -28,12 +28,12 @@
 
 .ember {
   background: var(--ember-15);
-  color: var(--ember);
+  color: var(--ember-ink);
 }
 
 .avatar_0 {
   background: var(--ember-15);
-  color: var(--ember);
+  color: var(--ember-ink);
 }
 
 .avatar_1 {

@@ -72,6 +72,15 @@ export interface FiltersPanelProps {
   onClear: () => void;
   location?: LocationFilterProps;
   activityType?: { value: string; onChange: (value: string) => void };
+  /** "En casa" goes with the location and "Gratis" with the price (#210). */
+  atHomeFree?: AtHomeFreeFilterProps;
+}
+
+export interface AtHomeFreeFilterProps {
+  atHome: boolean;
+  onAtHomeChange: (value: boolean) => void;
+  free: boolean;
+  onFreeChange: (value: boolean) => void;
 }
 
 /**
@@ -92,6 +101,7 @@ export function FiltersPanel({
   onClear,
   location,
   activityType,
+  atHomeFree,
 }: FiltersPanelProps) {
   const ratingName = useId();
   const rangeError = priceRangeError(minPrice, maxPrice);
@@ -153,6 +163,17 @@ export function FiltersPanel({
           <h3 id={`${ratingName}-location`} className={styles.filterHeading}>
             Ubicación
           </h3>
+          {atHomeFree ? (
+            <label className={styles.option}>
+              <input
+                type="checkbox"
+                className={styles.checkbox}
+                checked={atHomeFree.atHome}
+                onChange={() => atHomeFree.onAtHomeChange(!atHomeFree.atHome)}
+              />
+              En casa
+            </label>
+          ) : null}
           <div className={styles.field}>
             <span id={`${ratingName}-city`} className={styles.fieldLabel}>
               Provincia
@@ -245,6 +266,17 @@ export function FiltersPanel({
         <h3 id={`${ratingName}-price`} className={styles.filterHeading}>
           Precio
         </h3>
+        {atHomeFree ? (
+          <label className={styles.option}>
+            <input
+              type="checkbox"
+              className={styles.checkbox}
+              checked={atHomeFree.free}
+              onChange={() => atHomeFree.onFreeChange(!atHomeFree.free)}
+            />
+            Gratis
+          </label>
+        ) : null}
         <div className={styles.priceRow}>
           <label className={styles.field}>
             <span className={styles.fieldLabel}>Mínimo</span>
@@ -283,6 +315,9 @@ export function FiltersPanel({
           <p id={priceErrorId} role="alert" className={styles.filterError}>
             {rangeError}
           </p>
+        ) : null}
+        {atHomeFree?.free ? (
+          <p className={styles.fieldLabel}>Solo lo que tiene precio gratis confirmado.</p>
         ) : null}
         {minPrice.trim() !== "" || maxPrice.trim() !== "" ? (
           <p className={styles.fieldLabel}>Las actividades sin precio confirmado no aparecen al filtrar por precio.</p>

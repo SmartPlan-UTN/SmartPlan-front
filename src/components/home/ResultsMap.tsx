@@ -29,6 +29,7 @@ const MAP_OPTIONS: google.maps.MapOptions = {
   gestureHandling: "cooperative",
 };
 
+/** A stop's pin: its itinerary number, or a house (`"home"`) at the starting point (#210). */
 function pinIcon(color: string, label: string, active: boolean): google.maps.Icon {
   const size = active ? PIN_SIZE_ACTIVE : PIN_SIZE;
   const svg = [
@@ -42,7 +43,9 @@ function pinIcon(color: string, label: string, active: boolean): google.maps.Ico
       : "",
     `<path d="M16 0C7.163 0 0 7.163 0 16c0 11.5 16 26 16 26s16-14.5 16-26C32 7.163 24.837 0 16 0z" fill="${color}"/>`,
     `<circle cx="16" cy="16" r="10.5" fill="#FFFCF8"/>`,
-    `<text x="16" y="20.5" font-size="12" font-family="system-ui,sans-serif" font-weight="700" text-anchor="middle" fill="${color}">${label}</text>`,
+    label === "home"
+      ? `<path d="M10.5 16.5 16 11.5l5.5 5M12.5 15v5.5h7V15" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`
+      : `<text x="16" y="20.5" font-size="12" font-family="system-ui,sans-serif" font-weight="700" text-anchor="middle" fill="${color}">${label}</text>`,
     `</svg>`,
   ].join("");
 
@@ -93,7 +96,7 @@ export function ResultsMap({
   const onPinHoverRef = useRef(onPinHover);
   const onPinClickRef = useRef(onPinClick);
   const markersRef = useRef(
-    new Map<number, { marker: google.maps.Marker; color: string; order: number }[]>(),
+    new Map<number, { marker: google.maps.Marker; color: string; label: string }[]>(),
   );
   const polylinesRef = useRef(new Map<number, google.maps.Polyline>());
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -123,23 +126,24 @@ export function ResultsMap({
     mapRef.current = map;
 
     for (const plan of plans) {
-      const planMarkers: { marker: google.maps.Marker; color: string; order: number }[] = [];
+      const planMarkers: { marker: google.maps.Marker; color: string; label: string }[] = [];
 
-      plan.stops.forEach((stop, index) => {
+      plan.stops.forEach((stop) => {
         const position = { lat: stop.lat, lng: stop.lng };
+        const label = stop.atHome ? "home" : String(stop.order);
 
         const marker = new google.maps.Marker({
           position,
           map,
-          title: stop.name,
-          icon: pinIcon(plan.color, String(index + 1), false),
+          title: stop.atHome ? `${stop.name} · En casa` : stop.name,
+          icon: pinIcon(plan.color, label, false),
           zIndex: 1,
         });
         marker.addListener("mouseover", () => onPinHoverRef.current(plan.planId));
         marker.addListener("mouseout", () => onPinHoverRef.current(null));
         marker.addListener("click", () => onPinClickRef.current(plan.planId));
 
-        planMarkers.push({ marker, color: plan.color, order: index + 1 });
+        planMarkers.push({ marker, color: plan.color, label });
       });
 
       markersRef.current.set(plan.planId, planMarkers);
@@ -178,8 +182,8 @@ export function ResultsMap({
     markersRef.current.forEach((planMarkers, planId) => {
       const active = activePlanId === planId;
       const dimmed = activePlanId !== null && !active;
-      planMarkers.forEach(({ marker, color, order }) => {
-        marker.setIcon(pinIcon(color, String(order), active));
+      planMarkers.forEach(({ marker, color, label }) => {
+        marker.setIcon(pinIcon(color, label, active));
         marker.setOpacity(dimmed ? 0.45 : 1);
         marker.setZIndex(active ? 10 : 1);
       });

@@ -87,6 +87,10 @@ export function ActivitySearch({
     setSortBy,
     setDirection,
     toggleCategory,
+    atHome,
+    free,
+    setAtHome,
+    setFree,
     clear: clearFilters,
   } = useExplorationFilters<ActivitySortField>("relevance", initialState);
 
@@ -213,10 +217,14 @@ export function ActivitySearch({
       minRating: toNumber(debouncedMinRating),
       cityId: cityId ?? undefined,
       departmentId: departmentId ?? undefined,
+      atHome: atHome || undefined,
+      free: free || undefined,
       sortBy,
       direction,
     }),
     [
+      atHome,
+      free,
       itemType,
       activityType,
       effectiveQuery,
@@ -243,7 +251,7 @@ export function ActivitySearch({
   const mapFiltersQuery = `${ROUTES.exploreMap}?${explorationQuery({
     type: activityType, itemType,
     search: query, categoryIds, minPrice, maxPrice, minRating,
-    cityId, departmentId,
+    cityId, departmentId, atHome, free,
     sortBy: sortBy === "distance" ? "relevance" : sortBy,
     direction,
     page: query !== effectiveQuery || minPrice !== debouncedMinPrice ||
@@ -276,7 +284,26 @@ export function ActivitySearch({
     [minPrice, maxPrice, minRating].filter((value) => value.trim() !== "").length +
     (cityId !== null ? 1 : 0) +
     (activityType ? 1 : 0) +
-    (departmentId !== null ? 1 : 0);
+    (departmentId !== null ? 1 : 0) +
+    (atHome ? 1 : 0) +
+    (free ? 1 : 0);
+
+  // The URL mirrors what is applied, so reloading or sharing the link keeps
+  // the same search (#210). replaceState: filters are not history entries.
+  const shareableQuery = explorationQuery({
+    type: activityType, itemType,
+    search: effectiveQuery, categoryIds,
+    minPrice: debouncedMinPrice, maxPrice: debouncedMaxPrice, minRating: debouncedMinRating,
+    cityId, departmentId, atHome, free,
+    sortBy: sortBy === "distance" ? "relevance" : sortBy,
+    direction, page,
+  });
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const next = `${window.location.pathname}?${shareableQuery}`;
+    if (`${window.location.pathname}${window.location.search}` !== next)
+      window.history.replaceState(window.history.state, "", next);
+  }, [shareableQuery]);
 
   return (
     <ExploreLayout
@@ -293,6 +320,12 @@ export function ActivitySearch({
           categoryIds={categoryIds}
           onToggleCategory={toggleCategory}
           activityType={{ value: activityType, onChange: (value) => { setActivityType(value); if (value) setItemType("ACTIVITY"); } }}
+          atHomeFree={{
+            atHome,
+            onAtHomeChange: setAtHome,
+            free,
+            onFreeChange: setFree,
+          }}
           onClear={() => {
             clearFilters();
             setActivityType("");

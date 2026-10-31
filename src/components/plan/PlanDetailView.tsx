@@ -33,7 +33,7 @@ import {
   planEditRoute,
   ROUTES,
 } from "@/lib/routes";
-import { stopLabel } from "@/lib/plans/stops";
+import { isHomePlan, stopLabel } from "@/lib/plans/stops";
 import {
   formatDuration,
   formatPrice,
@@ -570,7 +570,7 @@ function PlanDetailContent({
         ) : null}
 
         {plan.readiness ? (
-          <PlanReadinessPanel readiness={plan.readiness} />
+          <PlanReadinessPanel readiness={plan.readiness} atHome={isHomePlan(plan)} />
         ) : null}
         <PlanUncertainties insight={plan.insight} />
 
@@ -584,6 +584,7 @@ function PlanDetailContent({
           {plan.details.map((detail, index) => (
             <ItineraryStep
               detail={detail}
+              previousDetail={plan.details[index - 1]}
               isFirst={index === 0}
               isLast={index === plan.details.length - 1}
               key={detail.id}

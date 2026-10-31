@@ -58,6 +58,13 @@ function PlanRequestBody({ requestId }: { requestId: number }) {
   );
 
   const goHome = useCallback(() => router.push(ROUTES.home), [router]);
+  // Free or about $6000 per person (as the back closes plans at home).
+  const context = planning.resolvedContext;
+  const canAddHomeGame = Boolean(
+    context &&
+      (context.freeOnly ||
+        (context.budget !== null && context.budget / Math.max(1, context.partySize ?? 1) <= 6000)),
+  );
   async function refine(payload: RefinePlanRequestPayload) {
     if (refinementPending.current) return;
     refinementPending.current = true;
@@ -132,6 +139,7 @@ function PlanRequestBody({ requestId }: { requestId: number }) {
                   <>
                     <RefinementChips
                       plan={plan}
+                      canAddHomeGame={canAddHomeGame}
                       busy={refining}
                       onRefine={(payload) => void refine(payload)}
                     />

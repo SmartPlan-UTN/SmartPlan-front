@@ -147,6 +147,7 @@ export interface PlanItineraryActivity {
 
 /** The place of a stop. Coordinates are SmartPlan-owned only. */
 export interface PlanStopPlace {
+  atHome?: boolean;
   id: number;
   name: string;
   address: string | null;

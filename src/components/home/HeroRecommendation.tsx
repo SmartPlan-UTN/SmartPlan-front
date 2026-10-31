@@ -20,8 +20,8 @@ import {
   planNote,
   reasonsOf,
 } from "@/lib/plans/story";
-import { stopClock, stopLabel, stopPlace } from "@/lib/plans/stops";
-import { formatArs, formatDuration, observedWhen } from "@/lib/utils";
+import { isHomePlan, isHomeStop, stopClock, stopLabel, stopPlace } from "@/lib/plans/stops";
+import { AT_HOME_LABEL, formatArs, formatDuration, observedWhen } from "@/lib/utils";
 import type { PlanDetailResult, PlanFunnel, StopInsight } from "@/types";
 
 import { PlanVisual } from "./PlanVisual";
@@ -39,7 +39,7 @@ export interface HeroRecommendationProps {
   selectionWorking: boolean;
   onActivate: (id: number) => void;
   onDeactivate: (id: number) => void;
-  onViewRoute: (id: number) => void;
+  onViewRoute?: (id: number) => void;
   onIntend: (plan: PlanDetailResult) => void;
   registerRef: (id: number, el: HTMLElement | null) => void;
   /** "Más tranqui · Más moderno…" and per-stop changes. */
@@ -155,6 +155,8 @@ export function HeroRecommendation({
   const anchor = anchorOf(plan);
   const itinerary = itineraryOf(plan);
   const multi = itinerary.length > 1;
+  const entirelyAtHome = isHomePlan(plan);
+  const atHome = Boolean(anchor && isHomeStop(anchor.item));
   const place = anchor?.place ?? null;
   const stopInsight = anchor?.insight ?? null;
   const headline = planHeadline(plan);
@@ -164,10 +166,10 @@ export function HeroRecommendation({
   const prep = (plan.readiness?.tasks ?? []).filter(
     (task) => task.required && task.status === "PENDING",
   );
-  const hours = compactHours(stopInsight?.hours ?? null);
+  const hours = atHome ? null : compactHours(stopInsight?.hours ?? null);
   const note = planNote(plan);
   const googlePlaceId =
-    place?.googlePlaceId ??
+    atHome ? null : place?.googlePlaceId ??
     (typeof anchor?.item.stop?.estimateBasis?.googlePlaceId === "string"
       ? anchor.item.stop.estimateBasis.googlePlaceId
       : null);
@@ -211,8 +213,10 @@ export function HeroRecommendation({
       <div className={styles.story}>
         <p className={styles.kickerLine}>
           <span className={styles.sourceLabel}>Propuesta de SmartPlan</span>
-          {place?.name ? <span>{place.name}</span> : null}
-          {place?.departmentName ? <span>{place.departmentName}</span> : null}
+          {atHome ? <span>{AT_HOME_LABEL}</span> : <>
+            {place?.name ? <span>{place.name}</span> : null}
+            {place?.departmentName ? <span>{place.departmentName}</span> : null}
+          </>}
           {insight?.decisionGrade ? (
             <span className={styles.seal}>
               <Icon name="circle-check" size={13} aria-hidden="true" />
@@ -255,7 +259,7 @@ export function HeroRecommendation({
               </>
             ) : !multi && stopInsight?.price ? (
               <>
-                {stopInsight.price}
+                {money.value === "Gratis" ? money.value : stopInsight.price}
                 {stopInsight.priceSource ? (
                   <small>{stopInsight.priceSource}</small>
                 ) : null}
@@ -280,7 +284,7 @@ export function HeroRecommendation({
             )}
             {perPerson ? <small>{perPerson}</small> : null}
           </Row>
-          <Row label="Horario" muted={!stopInsight?.hours}>
+          {!atHome ? <Row label="Horario" muted={!stopInsight?.hours}>
             {stopInsight?.hours ? (
               <>
                 {stopInsight.hours}
@@ -294,8 +298,8 @@ export function HeroRecommendation({
                 <small>Revisalo antes de salir</small>
               </>
             )}
-          </Row>
-          {place?.address ? <Row label="Dónde">{place.address}</Row> : null}
+          </Row> : null}
+          {place?.address && !atHome ? <Row label="Dónde">{place.address}</Row> : null}
         </dl>
 
         {stopInsight?.order ? (
@@ -332,7 +336,7 @@ export function HeroRecommendation({
               <li key={item.id}>
                 {stopClock(item) ? <time>{stopClock(item)}</time> : null}
                 <span>
-                  {stopPlace(item)?.name ?? stopLabel(item)}
+                  {isHomeStop(item) ? AT_HOME_LABEL : stopPlace(item)?.name ?? stopLabel(item)}
                   <small>{stopLabel(item)}</small>
                 </span>
               </li>
@@ -343,7 +347,7 @@ export function HeroRecommendation({
         {prep.length ? (
           <p className={styles.note}>
             <Icon name="calendar-check" size={13} aria-hidden="true" />
-            Antes de salir: {prep.map((task) => task.label).join(", ")}. Vas a
+            {entirelyAtHome ? "Antes de empezar" : "Antes de salir"}: {prep.map((task) => task.label).join(", ")}. Vas a
             poder confirmarlo en tu salida.
           </p>
         ) : null}
@@ -390,7 +394,7 @@ export function HeroRecommendation({
               {PLAN_SELECTION.intend}
             </Button>
           )}
-          <Button
+          {onViewRoute ? <Button
             variant="ghostEmber"
             size="lg"
             className={styles.secondary}
@@ -398,7 +402,7 @@ export function HeroRecommendation({
           >
             <Icon name="map-pin" size={16} aria-hidden="true" />
             {multi ? "Ver recorrido" : "Ver en el mapa"}
-          </Button>
+          </Button> : null}
         </div>
 
         {refinement ? (

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui";
-import { stopLabel } from "@/lib/plans/stops";
-import type { PlanDetailResult, RefinePlanRequestPayload } from "@/types";
+import { isHomeStop, stopLabel } from "@/lib/plans/stops";
+import type { PlanDetailResult, PlanRefinementAction, RefinePlanRequestPayload } from "@/types";
 import styles from "./refinement.module.css";
 
 /** Whole-plan adjustments, in the person's words. */
@@ -16,13 +16,19 @@ interface RefinementProps {
   plan: Pick<PlanDetailResult, "id" | "details">;
   busy: boolean;
   onRefine: (payload: RefinePlanRequestPayload) => void;
+  /** A free or low-budget search: a game at home can close the plan. */
+  canAddHomeGame?: boolean;
 }
 
 /** "Más tranqui · Más moderno · Más barato…": one tap changes the idea, not the search. */
-export function RefinementChips({ plan, busy, onRefine }: RefinementProps) {
+export function RefinementChips({ plan, busy, onRefine, canAddHomeGame = false }: RefinementProps) {
+  const chips: readonly (readonly [PlanRefinementAction, string])[] =
+    canAddHomeGame && !plan.details.some(isHomeStop)
+      ? [["ADD_HOME_GAME", "Sumar un juego en casa"], ...REFINEMENT_CHIPS]
+      : REFINEMENT_CHIPS;
   return (
     <ul className={styles.chips} aria-label="Ajustar la recomendación">
-      {REFINEMENT_CHIPS.map(([action, label]) => (
+      {chips.map(([action, label]) => (
         <li key={action}>
           <button
             type="button"

@@ -94,3 +94,13 @@ describe("Explore map", () => {
     expect(screen.getByRole("status")).toHaveTextContent("No hay resultados");
   });
 });
+
+describe("map markers (#210)", () => {
+  it("never pins the Hogar or a marker without coordinates", async () => {
+    const { isMappableMarker } = await import("./MapView");
+    const base = { itemType: "ACTIVITY", latitude: -32.9, longitude: -68.8, place: { kind: "park" } };
+    expect(isMappableMarker(base as never)).toBe(true);
+    expect(isMappableMarker({ ...base, place: { kind: "home" } } as never)).toBe(false);
+    expect(isMappableMarker({ ...base, latitude: Number.NaN } as never)).toBe(false);
+  });
+});

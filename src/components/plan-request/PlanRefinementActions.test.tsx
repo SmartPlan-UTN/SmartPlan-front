@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { PlanDetailResult } from '@/types';
-import { PlanRefinementActions } from './PlanRefinementActions';
+import { PlanRefinementActions, RefinementChips } from './PlanRefinementActions';
 
 const plan: Pick<PlanDetailResult, 'id' | 'details'> = {
   id: 42,
@@ -30,5 +30,24 @@ describe('plan refinement actions', () => {
     expect(screen.getByRole('button', { name: 'Cambiar A' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Más barato' })).toBeDisabled();
     expect(screen.queryByRole('button', { name: 'Quitar A' })).not.toBeInTheDocument();
+  });
+
+  it('offers a game at home only on a free plan that does not end there', async () => {
+    const onRefine = vi.fn();
+    const user = userEvent.setup();
+    const { rerender } = render(<RefinementChips plan={plan} busy={false} onRefine={onRefine} />);
+    expect(screen.queryByRole('button', { name: 'Sumar un juego en casa' })).not.toBeInTheDocument();
+    rerender(<RefinementChips plan={plan} busy={false} onRefine={onRefine} canAddHomeGame />);
+    await user.click(screen.getByRole('button', { name: 'Sumar un juego en casa' }));
+    expect(onRefine).toHaveBeenCalledWith({ planId: 42, action: 'ADD_HOME_GAME' });
+    const atHome = {
+      ...plan,
+      details: plan.details.map((detail) => ({
+        ...detail,
+        stop: { ...detail.stop!, place: { kind: 'home', atHome: true } as never },
+      })),
+    };
+    rerender(<RefinementChips plan={atHome} busy={false} onRefine={onRefine} canAddHomeGame />);
+    expect(screen.queryByRole('button', { name: 'Sumar un juego en casa' })).not.toBeInTheDocument();
   });
 });

@@ -62,6 +62,16 @@ function markerIcon(markerData: ExploreMapMarker): google.maps.Icon {
   };
 }
 
+/** A marker with real coordinates that is not the virtual Hogar (#210). */
+export function isMappableMarker(marker: ExploreMapMarker): boolean {
+  return (
+    Number.isFinite(marker.latitude) &&
+    Number.isFinite(marker.longitude) &&
+    marker.place?.kind !== "home" &&
+    !("kind" in marker && marker.kind === "home")
+  );
+}
+
 /** Reads the same filters `ActivitySearch` sends over as `?search=&categoryIds=&...` so the map shows the same subset the user was just browsing, instead of silently ignoring them. */
 function readFiltersFromSearchParams(
   searchParams: URLSearchParams,
@@ -95,6 +105,8 @@ function readFiltersFromSearchParams(
       departmentId != null && Number.isInteger(departmentId) && departmentId > 0
         ? departmentId
         : undefined,
+    atHome: searchParams.get("atHome") === "true" || undefined,
+    free: searchParams.get("free") === "true" || undefined,
   };
 }
 
@@ -166,6 +178,8 @@ export function MapView() {
         });
         if (cancelled || currentRequestId !== requestIdRef.current) return;
         fitFilteredResults = false;
+        // The Hogar is "wherever you are": never a pin, even if one slipped in.
+        result.data = result.data.filter(isMappableMarker);
         setMarkerMessage(
           result.data.length === 0
             ? "No hay resultados en esta zona. Mové el mapa o volvé a la lista."

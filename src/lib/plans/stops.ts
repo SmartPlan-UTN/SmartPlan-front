@@ -1,3 +1,4 @@
+import { isAtHomeActivity } from "@/lib/utils/home";
 import { activityDetailRoute, placeDetailRoute } from "@/lib/routes";
 import type { PlanItineraryItem, PlanStopPlace } from "@/types/plans";
 
@@ -22,6 +23,7 @@ export function stopPlace(item: PlanItineraryItem): PlanStopPlace | null {
   const location = item.activity?.locations?.[0];
   if (!location) return null;
   return {
+    atHome: location.atHome,
     id: location.place.id,
     name: location.place.name,
     address: location.place.address ?? null,
@@ -34,10 +36,23 @@ export function stopPlace(item: PlanItineraryItem): PlanStopPlace | null {
   };
 }
 
+/** The virtual home has no physical address, even in legacy payloads. */
+export function isHomeStop(item: PlanItineraryItem): boolean {
+  const place = stopPlace(item);
+  return place?.kind === "home" || place?.atHome === true ||
+    Boolean(item.activity && isAtHomeActivity(item.activity));
+}
+
+/** Empty or mixed itineraries are not plans entirely at home. */
+export function isHomePlan(plan: { details: PlanItineraryItem[] }): boolean {
+  return plan.details.length > 0 && plan.details.every(isHomeStop);
+}
+
 /** A point to draw the stop on a map, when SmartPlan knows one. */
 export function stopCoordinates(
   item: PlanItineraryItem,
 ): { latitude: number; longitude: number } | null {
+  if (isHomeStop(item)) return null;
   const location = item.activity?.locations?.find(
     (candidate) => candidate.latitude != null && candidate.longitude != null,
   );
@@ -52,6 +67,7 @@ export function stopCoordinates(
 /** Where tapping the stop leads: the activity, or the place. */
 export function stopHref(item: PlanItineraryItem): string | null {
   if (item.activity) return activityDetailRoute(item.activity.id);
+  if (isHomeStop(item)) return null;
   const place = stopPlace(item);
   return place ? placeDetailRoute(place.id) : null;
 }
