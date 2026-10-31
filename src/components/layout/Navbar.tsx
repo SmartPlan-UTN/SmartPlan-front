@@ -158,6 +158,17 @@ export function Navbar() {
           </nav>
 
           <div className={styles.actions}>
+            <Link
+              href={ROUTES.createPlan}
+              className={styles.mobileCreatePlan}
+              aria-label="Crear un plan"
+              title="Crear un plan"
+            >
+              <span className={styles.mobileCreatePlanIcon} aria-hidden="true">
+                <Icon name="plus" size={16} stroke={2.4} />
+              </span>
+              <span>Crear<span className={styles.mobileCreatePlanWord}> plan</span></span>
+            </Link>
             <NotificationBell />
             <UserMenu />
           </div>

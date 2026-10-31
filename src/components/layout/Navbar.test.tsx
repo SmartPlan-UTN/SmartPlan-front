@@ -107,7 +107,7 @@ describe("Navbar", () => {
     vi.useRealTimers();
   });
 
-  it("offers the five main navigation destinations, and no create CTA", async () => {
+  it("keeps the desktop destinations and exposes a separate mobile create action", async () => {
     mockAnonymousStartup();
     renderNavbar();
 
@@ -133,8 +133,20 @@ describe("Navbar", () => {
       within(nav).getByRole("link", { name: "Favoritos" }),
     ).toHaveAttribute("href", "/favorites");
     expect(screen.queryByRole("link", { name: "Historial" })).toBeNull();
-    // Creating lives inside Mis planes; the bar keeps no duplicate of it.
-    expect(screen.queryByRole("link", { name: /crear/i })).toBeNull();
+    expect(within(nav).queryByRole("link", { name: /crear/i })).toBeNull();
+    expect(within(screen.getByRole("banner")).getByRole("link", { name: "Crear un plan" }))
+      .toHaveAttribute("href", "/plans/create");
+  });
+
+  it.each(["/", "/explore", "/community", "/plans", "/outings", "/favorites"])("keeps manual plan creation reachable from %s", async (path) => {
+    route.actual = path;
+    mockAnonymousStartup();
+    renderNavbar();
+    const link = within(screen.getByRole("banner")).getByRole("link", {name: "Crear un plan"});
+    expect(link).toHaveAttribute("href", "/plans/create");
+    expect(within(screen.getByRole("navigation", {name: "Navegación móvil"})).getByRole("link", {name: "Planificar"}))
+      .toHaveAttribute("href", "/?startComposer=1");
+    await screen.findByRole("link", {name: "Iniciar sesión"});
   });
 
   it("marks the current route's destination with aria-current", async () => {

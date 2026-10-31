@@ -62,20 +62,51 @@
   flex-shrink: 0;
 }
 .routeFallback {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 12px;
   width: 100%;
   height: auto;
-  padding: 20px 24px;
-  background: var(--cream);
+  min-height: 220px;
+  padding: 28px;
+  color: var(--fg-on-dark);
+  background-color: var(--char);
+  background-image:
+    radial-gradient(ellipse at 100% 0%, var(--ember-20), transparent 65%),
+    radial-gradient(var(--white-15) 1px, transparent 1px);
+  background-size: auto, 22px 22px;
+}
+.routeArtwork {
+  position: absolute;
+  z-index: -1;
+  right: -24px;
+  top: 0;
+  width: 65%;
+  height: 100%;
+  opacity: 0.45;
+  stroke: var(--white-18);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+.routeArtwork .routeTrail {
+  stroke: var(--ember);
+  stroke-width: 2;
+  stroke-dasharray: 5 7;
+}
+.routeArtwork circle {
+  fill: var(--char);
+  stroke: var(--gold);
+  stroke-width: 2;
 }
 .routeLabel {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--fg-2);
+  color: var(--fg-on-dark);
   font-size: var(--t-small);
 }
 .routePreview {
@@ -101,7 +132,7 @@
   bottom: calc(50% + 14px);
   width: 1px;
   height: 16px;
-  background: var(--hairline);
+  background: var(--white-18);
 }
 .routePreview li > span {
   flex: 0 0 28px;
@@ -109,16 +140,16 @@
   place-items: center;
   width: 28px;
   height: 28px;
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--white-18);
   border-radius: 50%;
-  background: var(--surface-card);
-  color: var(--ember);
+  background: var(--char-surface2);
+  color: var(--gold);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
 .routePreview .routeMore {
   padding-left: 42px;
-  color: var(--fg-2);
+  color: var(--fg-on-dark);
   font-size: var(--t-small);
   font-weight: var(--w-body);
 }

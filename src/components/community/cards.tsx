@@ -27,6 +27,14 @@ export type CardLayout = "card" | "wide";
 export function RoutePreview({ stops, maxStops = 4 }: { stops: string[]; maxStops?: number }) {
   return (
     <div className={styles.routeFallback} data-route-preview>
+      <svg className={styles.routeArtwork} viewBox="0 0 400 260" fill="none" aria-hidden="true" focusable="false">
+        <path d="M-20 220C70 220 15 65 120 65S230 240 320 170S340 5 440 25" />
+        <path d="M-20 250C95 250 55 100 140 100S220 265 340 205S365 35 440 55" />
+        <path className={styles.routeTrail} d="M75 220C150 220 130 50 235 65S265 190 340 120" />
+        <circle cx="75" cy="220" r="7" />
+        <circle cx="235" cy="65" r="7" />
+        <circle cx="340" cy="120" r="7" />
+      </svg>
       <span className={styles.routeLabel}>
         <Icon name="route" size={17} />
         El recorrido
