@@ -87,6 +87,21 @@
 
 /* ── Mobile: List/Map toggle ─────────────────────────────────────── */
 
+/* Every alternative is at home (#210): a quiet note where the map would be. */
+.atHomeNote {
+  position: sticky;
+  top: calc(var(--navbar-h) + var(--s-5));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-2);
+  padding: var(--s-5);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+  color: var(--fg-2);
+}
+
 .viewToggle {
   display: none;
 }
@@ -98,6 +113,11 @@
 
   .resultsListCol {
     display: flex;
+  }
+
+  .atHomeNote {
+    position: static;
+    margin-top: var(--s-4);
   }
 
   .resultsMapCol {

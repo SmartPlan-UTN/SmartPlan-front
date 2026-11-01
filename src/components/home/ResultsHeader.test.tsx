@@ -58,6 +58,14 @@ describe("ResultsHeader", () => {
     expect(props.onAddContext).toHaveBeenCalledWith({ timeOfDay: "evening" });
   });
 
+  it("lets the budget be nothing at all", async () => {
+    const user = userEvent.setup();
+    const props = setup();
+    await user.click(screen.getByRole("button", { name: /presupuesto/i }));
+    await user.click(screen.getByRole("button", { name: "Gratis" }));
+    expect(props.onAddContext).toHaveBeenCalledWith({ freeOnly: true });
+  });
+
   it("runs the edited sentence again, and only when it changed", async () => {
     const user = userEvent.setup();
     const props = setup({ query: "una birra" });

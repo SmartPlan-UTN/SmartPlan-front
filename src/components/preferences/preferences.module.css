@@ -1230,3 +1230,57 @@
 @media (max-width: 640px) {
   .areaMap { height: 220px; }
 }
+
+/* The action bar is portaled so page entrance transforms cannot trap it. */
+.experience {
+  padding-bottom: 140px;
+}
+
+.saveDock {
+  position: fixed;
+  z-index: 60;
+  left: var(--s-4);
+  right: var(--s-4);
+  bottom: calc(var(--bottom-nav-space, 0px) + var(--s-3));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  width: min(calc(100% - var(--s-4) * 2), var(--max-w));
+  margin-inline: auto;
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card-sm);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
+}
+
+.saveDock .dirtyState {
+  flex: 1 1 200px;
+}
+
+.leaveActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--s-2);
+}
+
+.areaLocateButton {
+  position: absolute;
+  top: var(--s-3);
+  left: var(--s-3);
+  z-index: 2;
+  min-height: 44px;
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
+}
+
+@media (max-width: 640px) {
+  .experience { padding-bottom: 190px; }
+  .saveDock { gap: var(--s-2); padding: var(--s-3); }
+  .saveDock .dirtyState { flex: 1 1 100%; font-size: 12px; }
+  .saveDock .saveButton { order: 2; flex: 1 1 auto; width: auto; min-width: 0; }
+  .saveDock .discardButton { order: 1; font-size: 12px; min-height: 44px; }
+  .leaveActions > button { flex: 1 1 100%; min-height: 44px; }
+}

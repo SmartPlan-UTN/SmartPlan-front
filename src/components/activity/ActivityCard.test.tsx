@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { getPlacePhotoMedia } from "@/lib/api";
 import type { ActivitySearchResult } from "@/types";
 
 import { ActivityCard } from "./ActivityCard";
@@ -16,6 +17,11 @@ vi.mock("@/context", () => ({
     savedActivityIds: new Set(),
     loading: false,
   }),
+}));
+
+vi.mock("@/lib/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/api")>()),
+  getPlacePhotoMedia: vi.fn(),
 }));
 
 const baseActivity: ActivitySearchResult = {
@@ -169,4 +175,33 @@ describe("ActivityCard", () => {
     expect(saveBtn).toBeInTheDocument();
     expect(saveBtn).toHaveAttribute("aria-pressed", "true");
   });
+
+  it("shows a game at home as \"En casa\", without a distance (#210)", () => {
+    render(
+      <ActivityCard
+        activity={{ ...baseActivity, name: "El impostor", atHome: true, distanceKm: 4.2, place: { id: 1, name: "En casa / donde estén", kind: "home" } as never }}
+      />,
+    );
+    expect(screen.getByText("En casa")).toBeInTheDocument();
+    expect(screen.getByText("En casa / donde estén", { exact: false })).toBeInTheDocument();
+    expect(screen.queryByText("4.2 km")).not.toBeInTheDocument();
+  });
+
+  it("shows at most two occasions and counts the rest (#210)", () => {
+    render(<ActivityCard activity={{ ...baseActivity, occasions: ["quiet", "romantic", "friends", "special"] }} />);
+    const pills = screen.getByRole("list", { name: /Ideal para:/ });
+    expect(pills).toHaveTextContent("En pareja");
+    expect(pills).toHaveTextContent("Con amigos");
+    expect(pills).toHaveTextContent("+2");
+    expect(pills).not.toHaveTextContent("Tranquilo");
+  });
+});
+
+
+it("does not fetch a place photo for an activity explicitly marked at home", () => {
+  render(<ActivityCard activity={{ ...baseActivity, atHome: true,
+    place: { id: 1, name: "Legacy place", kind: "cafe", kindLabel: null, address: "", department: null,
+      googlePlaceId: "stale-place", latitude: null, longitude: null, coordinatesOwned: false,
+      externalRating: null, externalPrice: null, image: null } }} />);
+  expect(getPlacePhotoMedia).not.toHaveBeenCalled();
 });

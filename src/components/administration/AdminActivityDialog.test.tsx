@@ -19,4 +19,26 @@ describe('Activity compatibility metadata (CU53)', () => {
     await user.click(screen.getByRole('button', { name: /crear|guardar/i }));
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ costBasis: 'per_person', availableTimesOfDay: ['morning'], minPeople: 2, maxPeople: 8 }));
   });
+
+  it('edits the occasions with vocabulary chips, never free text (#210)', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    render(
+      <AdminActivityDialog
+        activity={{ id: 3, name: 'Cata', description: 'Degustación', estimatedCost: null, estimatedDuration: 60, type: null, categories: [], places: [], occasions: ['romantic'] } as never}
+        categories={[]}
+        places={[]}
+        saving={false}
+        error={null}
+        onClose={vi.fn()}
+        onSave={onSave}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Romántico / en pareja' })).toHaveAttribute('aria-pressed', 'true');
+    await user.click(screen.getByRole('button', { name: 'Romántico / en pareja' }));
+    await user.click(screen.getByRole('button', { name: 'Con amigos' }));
+    await user.click(screen.getByRole('button', { name: 'Tranquilo' }));
+    await user.click(screen.getByRole('button', { name: /crear|guardar/i }));
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ occasions: ['friends', 'quiet'] }));
+  });
 });

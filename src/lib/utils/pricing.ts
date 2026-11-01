@@ -131,7 +131,8 @@ export function formatPlanTotal(plan: PlanPriceSummary): string {
         : `Desde ${formatArs(min)}`;
     }
     default:
-      return formatArs(min);
+      // An exact zero means every stop has a confirmed free price (#210).
+      return min === 0 ? "Gratis" : formatArs(min);
   }
 }
 

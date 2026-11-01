@@ -21,3 +21,5 @@ export * from './experiences';
 export * from './explore';
 export * from './contentReports';
 export * from './mcp';
+export * from './occasions';
+export * from './catalogCandidates';

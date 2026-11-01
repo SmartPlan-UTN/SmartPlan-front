@@ -2,7 +2,8 @@
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 
-import { Button, Icon } from "@/components/ui";
+import { Button, Chip, Icon } from "@/components/ui";
+import { OCCASIONS, OCCASION_GROUP_LABELS } from "@/lib/occasions";
 import { MediaGalleryManager } from "@/components/media";
 import type {
   AdminActivity,
@@ -113,6 +114,7 @@ export function AdminActivityDialog({
     ? activity.costBasis
     : ["PER_PERSON", "ENTRY", "CONSUMPTION"].includes(priceUnit) ? "per_person" : "per_party";
   const [availableTimesOfDay, setAvailableTimesOfDay] = useState<TimeOfDay[]>(activity?.availableTimesOfDay ?? []);
+  const [occasions, setOccasions] = useState<string[]>(activity?.occasions ?? []);
   const [minPeople, setMinPeople] = useState(activity?.minPeople == null ? '' : String(activity.minPeople));
   const [maxPeople, setMaxPeople] = useState(activity?.maxPeople == null ? '' : String(activity.maxPeople));
   const [categoryIds, setCategoryIds] = useState(
@@ -220,6 +222,7 @@ export function AdminActivityDialog({
     await onSave({
       costBasis,
       availableTimesOfDay,
+      occasions,
       minPeople: minimum,
       maxPeople: maximum,
       name: name.trim(),
@@ -392,6 +395,30 @@ export function AdminActivityDialog({
                 {{ morning: 'Mañana', afternoon: 'Tarde', evening: 'Noche', night: 'Madrugada' }[period]}
               </label>)}
             </div>
+          </fieldset>
+
+          <fieldset className={styles.choiceGroup}>
+            <legend>Ocasiones</legend>
+            <p className="sp-small">Para quién y qué ambiente. Sin ocasiones la actividad nunca se recomienda sola.</p>
+            {(["who", "mood"] as const).map((group) => (
+              <div key={group} className={styles.choiceList} role="group" aria-label={OCCASION_GROUP_LABELS[group]}>
+                {OCCASIONS.filter((occasion) => occasion.group === group).map((occasion) => (
+                  <Chip
+                    key={occasion.key}
+                    active={occasions.includes(occasion.key)}
+                    onClick={() =>
+                      setOccasions((current) =>
+                        current.includes(occasion.key)
+                          ? current.filter((value) => value !== occasion.key)
+                          : [...current, occasion.key],
+                      )
+                    }
+                  >
+                    {occasion.label}
+                  </Chip>
+                ))}
+              </div>
+            ))}
           </fieldset>
 
           <fieldset className={styles.choiceGroup}>

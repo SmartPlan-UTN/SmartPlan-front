@@ -97,6 +97,13 @@ describe("priceCaveat", () => {
 });
 
 describe("formatPlanTotal", () => {
+  it("calls an exact zero total free, never a partial one (#210)", () => {
+    expect(formatPlanTotal({ estimatedTotalCost: 0, priceCompleteness: "EXACT" })).toBe("Gratis");
+    expect(
+      formatPlanTotal({ estimatedTotalCost: 0, priceCompleteness: "PARTIAL", unpricedCount: 1 }),
+    ).not.toBe("Gratis");
+  });
+
   it("never shows an unpriced plan as $0", () => {
     expect(formatPlanTotal({ estimatedTotalCost: 0, priceCompleteness: "PARTIAL", unpricedCount: 2 })).toBe(NO_PRICE_TOTAL_LABEL);
     expect(formatPlanTotal({ estimatedTotalCost: null })).toBe(NO_PRICE_TOTAL_LABEL);

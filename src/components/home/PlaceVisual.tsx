@@ -17,6 +17,7 @@ const KIND_TONE: Record<string, Tone> = {
 };
 
 const KIND_ICON: Record<string, IconName> = {
+  home: "house",
   bar: "martini",
   brewery: "beer",
   nightclub: "music-2",
@@ -70,10 +71,10 @@ export function PlacePoster({
     <div className={styles.poster} data-tone={tone} aria-hidden="true">
       <span className={styles.contours} />
       <span className={styles.glyph}>{glyphOf(name)}</span>
-      {kindLabel ? (
+      {kindLabel || kind === "home" ? (
         <span className={styles.kind}>
           <Icon name={icon} size={14} aria-hidden="true" />
-          {kindLabel}
+          {kind === "home" ? "En casa" : kindLabel}
         </span>
       ) : null}
     </div>
@@ -93,7 +94,7 @@ export function PlaceVisual({
   ownImageUrl,
   onUnavailable,
 }: PlaceVisualProps) {
-  const place = googlePlaceId
+  const place = kind !== "home" && googlePlaceId
     ? ({
         id: 0,
         name,

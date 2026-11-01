@@ -39,7 +39,7 @@ import {
   ROUTES,
 } from "@/lib/routes";
 import { formatDuration, formatPrice, formatPlanTotal, formatPerPerson } from "@/lib/utils";
-import { stopLabel } from "@/lib/plans/stops";
+import { isHomePlan, stopLabel } from "@/lib/plans/stops";
 import type {
   OutingDetail,
   PlanFeedback,
@@ -264,6 +264,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
         {current.readiness ? (
           <PlanReadinessPanel
             readiness={current.readiness}
+            atHome={isHomePlan(current)}
             onToggleTask={done ? undefined : (task, confirmed) => void handlePreparation(task, confirmed)}
             busyDetailId={preparingId}
             disabled={locked}
@@ -298,6 +299,7 @@ export function OutingDetailView({ outingId }: OutingDetailViewProps) {
           {current.details.map((detail, index) => (
             <ItineraryStep
               detail={detail}
+              previousDetail={current.details[index - 1]}
               isFirst={index === 0}
               isLast={index === current.details.length - 1}
               key={detail.id}

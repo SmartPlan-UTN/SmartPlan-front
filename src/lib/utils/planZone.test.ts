@@ -113,3 +113,14 @@ describe("getPlanZone", () => {
     expect(getPlanZone(plan([placeStop]))).toBe("Ciudad de Mendoza");
   });
 });
+
+it("skips the home and reads a later legacy location with a department", () => {
+  const home = detail(1, [{ id: 1, latitude: null, longitude: null, notes: null,
+    atHome: true, place: { ...place("Wrong zone"), kind: "home" } }]);
+  const outside = detail(2, [
+    { id: 2, latitude: null, longitude: null, notes: null, place: { ...place(""), department: null } },
+    { id: 3, latitude: null, longitude: null, notes: null, place: place("Capital") },
+  ]);
+  expect(getPlanZone(plan([home]))).toBeNull();
+  expect(getPlanZone(plan([home, outside]))).toBe("Capital");
+});

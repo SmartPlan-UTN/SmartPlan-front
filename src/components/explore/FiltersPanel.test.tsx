@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -206,5 +206,35 @@ describe("FiltersPanel", () => {
     render(<FiltersPanel {...props({ location: undefined })} />);
 
     expect(screen.queryByLabelText("Provincia")).not.toBeInTheDocument();
+  });
+});
+
+describe("FiltersPanel «En casa» and «Gratis» (#210)", () => {
+  it("puts «En casa» under the location and «Gratis» under the price", async () => {
+    const user = userEvent.setup();
+    const atHomeFree = {
+      atHome: false,
+      onAtHomeChange: vi.fn(),
+      free: true,
+      onFreeChange: vi.fn(),
+    };
+    render(<FiltersPanel {...props({ atHomeFree })} />);
+
+    const locationSection = screen.getByRole("region", { name: "Ubicación" });
+    const priceSection = screen.getByRole("region", { name: "Precio" });
+    expect(within(locationSection).getByRole("checkbox", { name: "En casa" })).not.toBeChecked();
+    expect(within(priceSection).getByRole("checkbox", { name: "Gratis" })).toBeChecked();
+    expect(within(priceSection).getByText("Solo lo que tiene precio gratis confirmado.")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Ocasión" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("checkbox", { name: "En casa" }));
+    await user.click(screen.getByRole("checkbox", { name: "Gratis" }));
+    expect(atHomeFree.onAtHomeChange).toHaveBeenCalledWith(true);
+    expect(atHomeFree.onFreeChange).toHaveBeenCalledWith(false);
+  });
+
+  it("does not render them without the prop (plan search)", () => {
+    render(<FiltersPanel {...props()} />);
+    expect(screen.queryByRole("checkbox", { name: "En casa" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: "Gratis" })).not.toBeInTheDocument();
   });
 });

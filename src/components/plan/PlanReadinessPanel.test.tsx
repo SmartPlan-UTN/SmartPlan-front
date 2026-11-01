@@ -71,3 +71,20 @@ describe("PlanReadinessPanel", () => {
     expect(screen.queryByRole("button")).toBeNull();
   });
 });
+
+
+it("keeps home preparation copy indoors and preserves outstanding tasks", () => {
+  const { rerender } = render(<PlanReadinessPanel readiness={pending} atHome />);
+  expect(screen.getByRole("region", { name: "Antes de empezar" })).toBeInTheDocument();
+  expect(screen.getByText("Necesario para empezar.")).toBeInTheDocument();
+  expect(screen.getByText("Completá los pasos pendientes antes de empezar.")).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /Comprar en el sitio del cine/ })).toBeInTheDocument();
+  rerender(<PlanReadinessPanel readiness={{ ...pending, stage: "READY", ready: true, tasks: [] }} atHome />);
+  expect(screen.getByRole("heading", { name: "Todo listo para empezar" })).toBeInTheDocument();
+  expect(screen.queryByText(/salir|horarios/i)).not.toBeInTheDocument();
+});
+
+it("preserves budget warnings for a home plan", () => {
+  render(<PlanReadinessPanel readiness={{ ...pending, summary: "No podemos asegurar que el plan entre en tu presupuesto.", tasks: [] }} atHome />);
+  expect(screen.getByText("No podemos asegurar que el plan entre en tu presupuesto.")).toBeInTheDocument();
+});

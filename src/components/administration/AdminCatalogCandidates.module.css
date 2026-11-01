@@ -1,0 +1,240 @@
+/*
+ * "Candidatos del catálogo" (RF44, CU50). The queue reuses the reports feed
+ * (tabs, cards, detail toggle) and the management screen states; only what
+ * the candidates add lives here. Flat surfaces, full pills, and the only
+ * terracota voice per card is "Aprobar".
+ */
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+}
+
+.filters > * {
+  flex: 1 1 220px;
+  max-width: 300px;
+}
+
+.bulkBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card-sm);
+  background: var(--surface-card);
+}
+
+.bulkBar > span {
+  flex: 1;
+  min-width: 180px;
+  color: var(--fg-2);
+  font-size: var(--t-small);
+}
+
+.notice {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: var(--t-small);
+}
+
+.card {
+  /* The reports card lifts on hover; candidates stay flat (Flat-by-Default). */
+  box-shadow: none;
+}
+
+.card:hover {
+  box-shadow: none;
+}
+
+.select {
+  display: inline-flex;
+  padding-top: 4px;
+}
+
+.select input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--ember);
+}
+
+.name {
+  margin: 2px 0 4px;
+  color: var(--fg-1);
+  font-size: var(--t-body-lg, 1.06rem);
+  font-weight: var(--w-display);
+  line-height: 1.3;
+}
+
+.place {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 var(--s-2);
+  color: var(--fg-2);
+  font-size: var(--t-small);
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-5);
+  margin: var(--s-3) 0;
+}
+
+.facts div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.facts dt {
+  color: var(--fg-3);
+  font-size: 12px;
+}
+
+.facts dd {
+  margin: 0;
+  color: var(--fg-1);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+}
+
+.factNote {
+  color: var(--fg-3);
+  font-size: var(--t-small);
+  font-weight: normal;
+}
+
+.sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: var(--s-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sources a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--fg-2);
+  font-size: 12px;
+}
+
+.reason {
+  margin: var(--s-2) 0 0;
+  color: var(--fg-2);
+  font-size: var(--t-small);
+}
+
+.appliedLink {
+  display: inline-block;
+  margin-top: var(--s-2);
+  font-size: var(--t-small);
+}
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+  color: var(--fg-2);
+  font-size: var(--t-small);
+}
+
+.detail p {
+  margin: 0;
+}
+
+.existing {
+  margin: 0;
+  padding-left: var(--s-4);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  align-items: stretch;
+}
+
+.fieldError {
+  color: var(--danger, #b3261e);
+  font-size: 12px;
+  font-weight: normal;
+}
+
+.placeResults {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.placeOption {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card-sm);
+  background: var(--surface-card);
+  color: var(--fg-1);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.placeOption span {
+  color: var(--fg-3);
+  font-size: 12px;
+}
+
+.placeOption:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.occasionGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.occasionGroupLabel {
+  color: var(--fg-3);
+  font-size: 12px;
+  font-weight: var(--w-label);
+}
+
+.occasionChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+@media (max-width: 720px) {
+  .actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .filters > * {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}

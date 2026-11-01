@@ -266,3 +266,19 @@ it("edits a completed outing directly from its detail stars", async () => {
   expect(screen.getByText("“Excelente”")).toBeInTheDocument();
   expect(updateFeedback).toHaveBeenCalledWith(40, { rating: 5, comment: "Excelente" });
 });
+
+
+it("uses home preparation copy in a frozen outing", async () => {
+  getOuting.mockResolvedValue(outingDetail({
+    readiness: { stage: "READY", ready: true, label: "Listo", summary: "Listo", verifiedStops: 1, totalStops: 1, tasks: [] },
+    details: [{ id: 1, order: 1, estimatedCost: 0, estimatedDuration: 30, activity: {
+      id: 1, name: "El impostor", description: "", estimatedCost: 0, estimatedDuration: 30,
+      type: "game", averageRating: null, ratingCount: 0, categories: [],
+      locations: [{ id: 1, atHome: true, latitude: null, longitude: null, notes: null,
+        place: { id: 1, name: "Hogar", kind: "home", description: null, address: "", department: null } }],
+    } }],
+  }));
+  render(<OutingDetailView outingId={40} />);
+  expect(await screen.findByRole("heading", { name: "Todo listo para empezar" })).toBeInTheDocument();
+  expect(screen.queryByRole("region", { name: "Antes de salir" })).not.toBeInTheDocument();
+});

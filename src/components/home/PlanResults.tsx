@@ -7,7 +7,8 @@ import { Button, Icon } from "@/components/ui";
 import { usePlanSelection, useReducedMotion } from "@/hooks";
 import { buildPlanPins } from "@/lib/maps/buildPlanPins";
 import { anchorOf, itineraryOf, planHeadline } from "@/lib/plans/story";
-import { stopClock, stopLabel, stopPlace } from "@/lib/plans/stops";
+import { isHomePlan, isHomeStop, stopClock, stopLabel, stopPlace } from "@/lib/plans/stops";
+import { AT_HOME_LABEL } from "@/lib/utils";
 import type {
   PlanDetailResult,
   PlanFunnel,
@@ -83,7 +84,7 @@ function optionLabel(plan: PlanDetailResult, index: number): string {
 function directionsLink(plan: PlanDetailResult): string | null {
   const anchor = anchorOf(plan);
   const place = anchor?.place;
-  if (!place) return null;
+  if (!place || (anchor && isHomeStop(anchor.item))) return null;
   const destination =
     place.latitude != null && place.longitude != null
       ? `${place.latitude},${place.longitude}`
@@ -96,7 +97,7 @@ function directionsLink(plan: PlanDetailResult): string | null {
 function mapsLink(plan: PlanDetailResult): string | null {
   const anchor = anchorOf(plan);
   const place = anchor?.place;
-  if (!place) return null;
+  if (!place || (anchor && isHomeStop(anchor.item))) return null;
   const query = [place.name, place.address, place.departmentName ?? "Mendoza"]
     .filter(Boolean)
     .join(" ");
@@ -112,6 +113,7 @@ function mapsLink(plan: PlanDetailResult): string | null {
 export function PlanResults({
   plans,
   returnTo,
+  resolvedContext,
   understanding = null,
   funnel = null,
   unsupportedExperiences = [],
@@ -147,7 +149,8 @@ export function PlanResults({
   const mapSectionRef = useRef<HTMLElement>(null);
   const cardRefs = useRef(new Map<number, HTMLElement>());
 
-  const mapPins = useMemo(() => buildPlanPins(visiblePlans), [visiblePlans]);
+  const startingPoint = resolvedContext?.startingPoint ?? null;
+  const mapPins = useMemo(() => buildPlanPins(visiblePlans, startingPoint), [visiblePlans, startingPoint]);
   const planColors = useMemo(() => {
     const byId = new Map<number, string>();
     mapPins.forEach((pin) => byId.set(pin.planId, pin.color));
@@ -157,6 +160,7 @@ export function PlanResults({
   const hero = visiblePlans[0] ?? null;
   const focused = visiblePlans.find((plan) => plan.id === focusedId) ?? hero;
   const focusedPins = mapPins.find((pin) => pin.planId === focused?.id);
+  const allAtHome = visiblePlans.length > 0 && visiblePlans.every(isHomePlan);
   const anyPins = mapPins.some((pin) => pin.stops.length > 0);
 
   function registerCardRef(id: number, el: HTMLElement | null) {
@@ -246,7 +250,8 @@ export function PlanResults({
     onActivate: setHoverPlanId,
     onDeactivate: (id: number) =>
       setHoverPlanId((current) => (current === id ? null : current)),
-    onViewRoute: (id: number) => focusPlan(id, true),
+    onViewRoute: mapPins.some((pin) => pin.planId === plan.id && pin.stops.length > 0)
+      ? (id: number) => focusPlan(id, true) : undefined,
     onIntend: (target: PlanDetailResult) => void intend(target),
     registerRef: registerCardRef,
   });
@@ -254,6 +259,7 @@ export function PlanResults({
   const displayed = focused ?? hero;
   const focusedItinerary = focused ? itineraryOf(focused) : [];
   const focusedAnchor = focused ? anchorOf(focused) : null;
+  const focusedAtHome = Boolean(focused && isHomePlan(focused));
   const fallbackLink = focused ? mapsLink(focused) : null;
   const directions = focused ? directionsLink(focused) : null;
 
@@ -348,8 +354,9 @@ export function PlanResults({
               {focusedItinerary.length > 1 ? (
                 <ol className={styles.stops}>
                   {focusedItinerary.map((item, index) => {
-                    const leg =
-                      focusedItinerary[index + 1]?.stop?.legTravelMinutes;
+                    const next = focusedItinerary[index + 1];
+                    const leg = isHomeStop(item) || (next && isHomeStop(next))
+                      ? null : next?.stop?.legTravelMinutes;
                     return (
                       <li key={item.id}>
                         <span className={styles.stopNumber} aria-hidden="true">
@@ -357,7 +364,7 @@ export function PlanResults({
                         </span>
                         <span className={styles.stopText}>
                           <strong>
-                            {stopPlace(item)?.name ?? stopLabel(item)}
+                            {isHomeStop(item) ? AT_HOME_LABEL : stopPlace(item)?.name ?? stopLabel(item)}
                           </strong>
                           <small>
                             {[stopClock(item), stopLabel(item)]
@@ -376,7 +383,7 @@ export function PlanResults({
                     );
                   })}
                 </ol>
-              ) : (
+              ) : !focusedAtHome ? (
                 <p className={styles.address}>
                   {[
                     focusedAnchor?.place?.address,
@@ -385,8 +392,8 @@ export function PlanResults({
                     .filter(Boolean)
                     .join(" · ") || "Ubicación a confirmar"}
                 </p>
-              )}
-              {focused.insight?.travelMinutes != null &&
+              ) : null}
+              {!focusedAtHome && focused.insight?.travelMinutes != null &&
               focusedItinerary.length > 1 ? (
                 <p className={styles.travel}>
                   <Icon name="car" size={14} aria-hidden="true" />
@@ -422,6 +429,12 @@ export function PlanResults({
               onPinHover={setHoverPlanId}
               onPinClick={(planId) => focusPlan(planId, false)}
             />
+          ) : allAtHome ? (
+            <div className={styles.noMap}>
+              <Icon name="house" size={26} aria-hidden="true" />
+              <h3>Estos planes son en casa</h3>
+              <p>Se hacen donde estén, así que no hay recorrido para mostrar en el mapa.</p>
+            </div>
           ) : (
             <div className={styles.noMap}>
               <Icon name="map-pin" size={26} aria-hidden="true" />
@@ -434,7 +447,7 @@ export function PlanResults({
               ) : null}
             </div>
           )}
-          {anyPins && focused && !focusedPins?.stops.length ? (
+          {anyPins && focused && !focusedAtHome && !focusedPins?.stops.length ? (
             <p className={styles.mapHint}>
               Este lugar no se dibuja todavía: no tenemos su ubicación exacta.
             </p>

@@ -150,6 +150,7 @@ export function PreferredAreaField({
   const map = mapOpen ? (
     <PreferredAreaMap
       area={resolved}
+      selectionKey={text}
       disabled={disabled || status === "searching"}
       onPick={pickOnMap}
       onPickError={setMapMessage}

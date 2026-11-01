@@ -78,6 +78,13 @@ export interface ActivitySearchResult {
   categories: ActivityCategorySummary[];
   /** The place the card refers to, with live attributed Google context. */
   place?: PlaceSummary | null;
+  /**
+   * At the virtual Hogar ("En casa / donde estén"): no address, map or
+   * distance (#210).
+   */
+  atHome?: boolean;
+  /** `Occasion` keys: who it suits and its mood. */
+  occasions?: string[];
 }
 
 /**
@@ -100,6 +107,12 @@ export interface ActivitySearchParams extends ExplorationQueryParams {
   /** "Localidad" filter: only activities with a meeting point in this
    * department. Sent alongside `cityId` once a department is chosen. */
   departmentId?: number;
+  /** Occasions (`Occasion` keys): activities that suit any of them. */
+  occasions?: string[];
+  /** Only games and plans at home (the Hogar). */
+  atHome?: boolean;
+  /** Only evidenced free prices; an unknown price never counts as free. */
+  free?: boolean;
 }
 
 /**
@@ -115,6 +128,11 @@ export interface ActivityLocationSummary {
   latitude: number | null;
   longitude: number | null;
   notes: string | null;
+  /**
+   * The virtual Hogar: "En casa / donde estén", never an address or a map.
+   * Its coordinates, when present, are the request's starting point.
+   */
+  atHome?: boolean;
   /** Google Place ID (identity link): lets the UI request a live photo. */
   googlePlaceId?: string | null;
   /** Temporary Google rating of the place: attribute it to Google Maps. */
@@ -137,6 +155,7 @@ export interface ActivityLocationSummary {
     description: string | null;
     address: string;
     kind?: string | null;
+    /** `null` for the Hogar, which belongs to no department. */
     department: {
       id: number;
       name: string;
@@ -145,7 +164,7 @@ export interface ActivityLocationSummary {
         name: string;
         country: { id: number; name: string };
       };
-    };
+    } | null;
   };
 }
 
@@ -162,6 +181,12 @@ export interface ActivityDetailResult extends ActivitySearchResult {
   locations: ActivityLocationSummary[];
   /** False when it cannot be added to a plan (e.g. no exact location). */
   planEligible?: boolean;
+  /** Minimum age it suits; `null` when it does not depend on age. */
+  minAge?: number | null;
+  /** What it needs, in plain words ("solo celulares", "papel y lápiz"). */
+  materials?: string[];
+  /** Where the rules of a game come from. */
+  rulesRef?: string | null;
 }
 
 /**

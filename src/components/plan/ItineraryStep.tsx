@@ -4,6 +4,8 @@ import { Badge, Icon } from "@/components/ui";
 import { RatingBadge } from "@/components/media/RatingBadge";
 import { categoryLabel as labelCategory } from "@/lib/utils/catalogLabels";
 import {
+  isHomeStop,
+  stopCoordinates,
   stopCaveats,
   stopClock,
   stopEvidence,
@@ -12,7 +14,7 @@ import {
   stopPlace,
   stopScreening,
 } from "@/lib/plans/stops";
-import { formatDuration, googleMapsUrl, formatPrice, priceCaveat } from "@/lib/utils";
+import { AT_HOME_LABEL, formatDuration, googleMapsUrl, formatPrice, priceCaveat } from "@/lib/utils";
 import type { PlanItineraryItem } from "@/types";
 
 import styles from "./plan.module.css";
@@ -28,12 +30,18 @@ export function ItineraryStep({
   detail,
   isFirst,
   isLast,
+  previousDetail,
 }: {
   detail: PlanItineraryItem;
   isFirst: boolean;
   isLast: boolean;
+  previousDetail?: PlanItineraryItem;
 }) {
   const { activity } = detail;
+  const atHome = isHomeStop(detail);
+  const homeLegWithoutPosition =
+    (atHome && !stopCoordinates(detail)) ||
+    Boolean(previousDetail && isHomeStop(previousDetail) && !stopCoordinates(previousDetail));
   const place = stopPlace(detail);
   const label = stopLabel(detail);
   const href = stopHref(detail);
@@ -97,17 +105,17 @@ export function ItineraryStep({
           <p className={styles.stepName}>{label}</p>
 
           <div className={styles.stepMetaRow}>
-            {place?.address ? (
+            {atHome || place?.address ? (
               <span className={styles.stepMetaItem}>
-                <Icon name="map-pin" size={13} />
-                {place.address}
+                <Icon name={atHome ? "house" : "map-pin"} size={13} />
+                {atHome ? AT_HOME_LABEL : place?.address}
               </span>
             ) : null}
             <span className={styles.stepMetaItem}>
               <Icon name="clock" size={13} />
               {formatDuration(detail.estimatedDuration)}
             </span>
-            {!isFirst && leg != null && leg > 0 ? (
+            {!isFirst && !homeLegWithoutPosition && leg != null && leg > 0 ? (
               <span className={styles.stepMetaItem}>
                 <Icon name="car" size={13} />
                 {`${leg} min desde la anterior`}
@@ -163,10 +171,10 @@ export function ItineraryStep({
           <div className={styles.stepLinks}>
             {sourceUrl ? (
               <a href={sourceUrl} target="_blank" rel="noreferrer" className={styles.stepMapLink}>
-                Ver precio publicado
+                {atHome ? "Ver fuente de la actividad" : "Ver precio publicado"}
               </a>
             ) : null}
-            {place ? (
+            {place && !atHome ? (
               <a
                 href={googleMapsUrl(
                   place.latitude,

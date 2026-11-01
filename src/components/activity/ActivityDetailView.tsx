@@ -29,7 +29,17 @@ import {
   placeKindPresentation,
   seasonLabel,
 } from "@/lib/catalog/taxonomy";
-import { formatDuration, formatPrice, googleMapsUrl, isPriceUnknown, priceCaveat } from "@/lib/utils";
+import {
+  AT_HOME_LABEL,
+  formatDuration,
+  formatPrice,
+  googleMapsUrl,
+  isAtHomeActivity,
+  isPriceUnknown,
+  priceCaveat,
+} from "@/lib/utils";
+
+import { OccasionPills } from "./OccasionPills";
 import type { ActivityDetailResult, PlaceDetailResult, RatingSummary } from "@/types";
 
 import { ExploreDetailHeader } from "@/components/explore/ExploreDetailHeader";
@@ -160,7 +170,19 @@ function ActivityDetailContent({ activityId, placeContext, activityPicker, initi
       ratingCount: activity.ratingCount,
     };
   const hasOwnRatings = displayRatingSummary.ratingCount > 0;
-  const address = firstLocation?.place.address ?? null;
+  // Games and plans at home have no address, map or distance (#210).
+  const atHome = isAtHomeActivity(activity);
+  const address = atHome ? null : (firstLocation?.place.address ?? null);
+  const peopleText =
+    activity.minPeople && activity.maxPeople
+      ? activity.minPeople === activity.maxPeople
+        ? `${activity.minPeople} personas`
+        : `De ${activity.minPeople} a ${activity.maxPeople} personas`
+      : activity.maxPeople
+        ? `Hasta ${activity.maxPeople} personas`
+        : activity.minPeople
+          ? `Desde ${activity.minPeople} personas`
+          : null;
   const subtype = activitySubtypePresentation(activity.type);
   const artwork =
     subtype.family !== "other"
@@ -175,7 +197,7 @@ function ActivityDetailContent({ activityId, placeContext, activityPicker, initi
       <ExploreDetailHeader
         media={{
           ownImageUrl: activity.imageUrl,
-          place: hasOwnImages ? null : place,
+          place: atHome || hasOwnImages ? null : place,
           alt: activity.name,
           artwork: { family: artwork.family, icon: artwork.icon, label: activity.typeLabel ?? null },
         }}
@@ -210,7 +232,16 @@ function ActivityDetailContent({ activityId, placeContext, activityPicker, initi
         </div>
 
         <h1 className={styles.title}>{activity.name}</h1>
-        {firstLocation ? (
+        {activity.occasions?.length ? <OccasionPills occasions={activity.occasions} /> : null}
+        {atHome ? (
+          <p className={styles.placeLine}>
+            <Badge variant="tag">
+              <Icon name="house" size={11} aria-hidden="true" />
+              En casa
+            </Badge>{" "}
+            {AT_HOME_LABEL}
+          </p>
+        ) : firstLocation ? (
           <p className={styles.placeLine}>
             En{" "}
             <a href="#activity-location" onClick={() => {
@@ -227,15 +258,17 @@ function ActivityDetailContent({ activityId, placeContext, activityPicker, initi
           price={isPriceUnknown(activity) ? (firstLocation?.externalPrice ?? place?.externalPrice) : null}
         />
 
-        <div className={styles.addressRow}>
-          <Icon name="map-pin" size={14} className={styles.addressIcon} />
-          {address ? (
-            <span>{address}</span>
-          ) : (
-            <span className={styles.missing}>Sin información disponible</span>
-          )}
-        </div>
-        {firstLocation ? (
+        {atHome ? null : (
+          <div className={styles.addressRow}>
+            <Icon name="map-pin" size={14} className={styles.addressIcon} />
+            {address ? (
+              <span>{address}</span>
+            ) : (
+              <span className={styles.missing}>Sin información disponible</span>
+            )}
+          </div>
+        )}
+        {firstLocation && !atHome ? (
           <p className={styles.mapsLink}>
             <a href={googleMapsUrl(firstLocation.latitude, firstLocation.longitude, firstLocation.place.address)} target="_blank" rel="noopener noreferrer">
               <Icon name="external-link" size={13} aria-hidden="true" /> Ver en Google Maps (horarios, cómo llegar)
@@ -344,6 +377,8 @@ function ActivityDetailContent({ activityId, placeContext, activityPicker, initi
                       Temporada: {season}
                       {activity.inSeason === false ? " (fuera de temporada ahora)" : ""}
                     </p>
+                  ) : atHome ? (
+                    <p className={styles.infoValue}>Cuando quieran: no necesita reserva.</p>
                   ) : (
                     <p className={styles.missing}>
                       Confirmá horarios y reserva con el lugar antes de ir.
@@ -351,6 +386,52 @@ function ActivityDetailContent({ activityId, placeContext, activityPicker, initi
                   )}
                 </div>
               </div>
+
+              {peopleText ? (
+                <div className={styles.infoRow}>
+                  <Icon name="users" size={15} className={styles.infoIcon} />
+                  <div>
+                    <p className={styles.infoLabel}>Cantidad de personas</p>
+                    <p className={styles.infoValue}>{peopleText}</p>
+                  </div>
+                </div>
+              ) : null}
+
+              {activity.minAge != null ? (
+                <div className={styles.infoRow}>
+                  <Icon name="user" size={15} className={styles.infoIcon} />
+                  <div>
+                    <p className={styles.infoLabel}>Edad apta</p>
+                    <p className={styles.infoValue}>
+                      {activity.minAge === 0 ? "Para todas las edades" : `Desde ${activity.minAge} años`}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+
+              {activity.materials?.length ? (
+                <div className={styles.infoRow}>
+                  <Icon name="list-checks" size={15} className={styles.infoIcon} />
+                  <div>
+                    <p className={styles.infoLabel}>Qué necesitan</p>
+                    <p className={styles.infoValue}>{activity.materials.join(" · ")}</p>
+                  </div>
+                </div>
+              ) : null}
+
+              {activity.rulesRef ? (
+                <div className={styles.infoRow}>
+                  <Icon name="book-open" size={15} className={styles.infoIcon} />
+                  <div>
+                    <p className={styles.infoLabel}>Reglas</p>
+                    <p className={styles.infoValue}>
+                      <a href={activity.rulesRef} target="_blank" rel="noopener noreferrer">
+                        Ver de dónde salen las reglas
+                      </a>
+                    </p>
+                  </div>
+                </div>
+              ) : null}
 
               <div className={`${styles.infoRow} ${styles.infoRowLast}`}>
                 <Icon name="tag" size={15} className={styles.infoIcon} />
@@ -366,7 +447,7 @@ function ActivityDetailContent({ activityId, placeContext, activityPicker, initi
             </div>
           </div>
 
-          {firstLocation ? (
+          {firstLocation && !atHome ? (
             <div className={styles.section} id="activity-location">
               <p className={styles.sectionLabel}>ubicación</p>
               <LocationPreview

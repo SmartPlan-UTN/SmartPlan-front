@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 
-import type { SortDirection } from "@/types";
+import type { Occasion, SortDirection } from "@/types";
 
 export interface UseExplorationFiltersResult<TSortField extends string> {
   categoryIds: number[];
@@ -9,6 +9,12 @@ export interface UseExplorationFiltersResult<TSortField extends string> {
   minRating: string;
   sortBy: TSortField;
   direction: SortDirection;
+  atHome: boolean;
+  free: boolean;
+  occasions: Occasion[];
+  toggleOccasion: (value: Occasion) => void;
+  setAtHome: (value: boolean) => void;
+  setFree: (value: boolean) => void;
   setMinPrice: (value: string) => void;
   setMaxPrice: (value: string) => void;
   setMinRating: (value: string) => void;
@@ -26,7 +32,7 @@ export interface UseExplorationFiltersResult<TSortField extends string> {
  */
 export function useExplorationFilters<TSortField extends string>(
   defaultSort: TSortField,
-  initial: Partial<Pick<UseExplorationFiltersResult<TSortField>, "categoryIds" | "minPrice" | "maxPrice" | "minRating" | "sortBy" | "direction">> = {},
+  initial: Partial<Pick<UseExplorationFiltersResult<TSortField>, "categoryIds" | "minPrice" | "maxPrice" | "minRating" | "sortBy" | "direction" | "atHome" | "free" | "occasions">> = {},
 ): UseExplorationFiltersResult<TSortField> {
   const [categoryIds, setCategoryIds] = useState<number[]>(initial.categoryIds ?? []);
   const [minPrice, setMinPrice] = useState(initial.minPrice ?? "");
@@ -34,6 +40,12 @@ export function useExplorationFilters<TSortField extends string>(
   const [minRating, setMinRating] = useState(initial.minRating ?? "");
   const [sortBy, setSortBy] = useState<TSortField>(initial.sortBy ?? defaultSort);
   const [direction, setDirection] = useState<SortDirection>(initial.direction ?? "asc");
+  const [atHome, setAtHome] = useState(initial.atHome ?? false);
+  const [free, setFree] = useState(initial.free ?? false);
+  const [occasions, setOccasions] = useState<Occasion[]>(initial.occasions ?? []);
+  const toggleOccasion = useCallback((key: Occasion) => {
+    setOccasions((current) => current.includes(key) ? current.filter((value) => value !== key) : [...current, key]);
+  }, []);
 
   const toggleCategory = useCallback((categoryId: number) => {
     setCategoryIds((current) =>
@@ -50,6 +62,9 @@ export function useExplorationFilters<TSortField extends string>(
     setMinRating("");
     setSortBy(defaultSort);
     setDirection("asc");
+    setAtHome(false);
+    setFree(false);
+    setOccasions([]);
   }, [defaultSort]);
 
   return {
@@ -59,6 +74,12 @@ export function useExplorationFilters<TSortField extends string>(
     minRating,
     sortBy,
     direction,
+    atHome,
+    free,
+    occasions,
+    toggleOccasion,
+    setAtHome,
+    setFree,
     setMinPrice,
     setMaxPrice,
     setMinRating,

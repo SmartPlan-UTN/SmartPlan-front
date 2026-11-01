@@ -35,6 +35,11 @@ The current tokens are copied into
 | `--electric` | `#2B5BFF` | Everything AI-related: plan generation, suggestions |
 | `--gold` | `#FFD166` | Ratings and stars |
 
+For small action labels, use `--ember-action` behind white text and
+`--ember-ink` for ember text on light surfaces. These variants retain the
+brand hue while meeting AA text contrast; primary-button hover darkens
+instead of brightening the background. Keep `--ember` for decorative accents.
+
 ### Status
 `--success #22C06B` · `--warning #F5A623` · `--error #F04040`
 

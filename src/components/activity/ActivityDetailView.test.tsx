@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getActivity } from "@/lib/api";
+import { getActivity, getPlacePhotoMedia } from "@/lib/api";
 import { downloadMedia } from "@/lib/api/media";
 
 import { ActivityDetailView } from "./ActivityDetailView";
@@ -21,7 +21,7 @@ vi.mock("@/context", () => ({
 
 vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
-  return { ...actual, getActivity: vi.fn() };
+  return { ...actual, getActivity: vi.fn(), getPlacePhotoMedia: vi.fn() };
 });
 
 vi.mock("@/lib/api/media", async (importOriginal) => {
@@ -193,5 +193,54 @@ describe("ActivityDetailView hero photo (SmartPlan-back#102)", () => {
 
     expect(await screen.findByText("Sin imagen disponible")).toBeInTheDocument();
     expect(downloadMedia).not.toHaveBeenCalled();
+  });
+});
+
+describe("ActivityDetailView at the Hogar (#210)", () => {
+  it("shows rules, materials, age and people, and no address or map", async () => {
+    vi.mocked(getActivity).mockResolvedValue({
+      id: 77,
+      name: "El impostor",
+      description: "Todos reciben una palabra menos uno, que tiene que disimular.",
+      estimatedCost: 0,
+      estimatedDuration: 30,
+      type: null,
+      averageRating: null,
+      ratingCount: 0,
+      distanceKm: null,
+      categories: [{ id: 4, name: "Entertainment" }],
+      atHome: true,
+      place: { id: 1, name: "Legacy home", kind: "home", kindLabel: null, address: "", department: null,
+        googlePlaceId: "stale-place", latitude: null, longitude: null, coordinatesOwned: false,
+        externalRating: null, externalPrice: null, image: null },
+      occasions: ["friends", "big_group"],
+      minPeople: 4,
+      maxPeople: 12,
+      minAge: 8,
+      materials: ["solo celulares"],
+      rulesRef: "https://example.test/reglas",
+      locations: [
+        {
+          id: 5,
+          atHome: true,
+          latitude: null,
+          longitude: null,
+          notes: null,
+          place: { id: 1, name: "En casa / donde estén", description: null, address: "Donde estén", kind: "home", department: null },
+        },
+      ],
+    });
+
+    render(<ActivityDetailView activityId={77} />);
+
+    expect(await screen.findByText("En casa / donde estén")).toBeInTheDocument();
+    expect(screen.getByText("De 4 a 12 personas")).toBeInTheDocument();
+    expect(screen.getByText("Desde 8 años")).toBeInTheDocument();
+    expect(screen.getByText("solo celulares")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ver de dónde salen las reglas" })).toHaveAttribute("href", "https://example.test/reglas");
+    expect(screen.getByRole("list", { name: /Ideal para: Con amigos, Grupo grande/ })).toBeInTheDocument();
+    expect(screen.queryByText(/Ver en Google Maps/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Donde estén")).not.toBeInTheDocument();
+    expect(getPlacePhotoMedia).not.toHaveBeenCalled();
   });
 });

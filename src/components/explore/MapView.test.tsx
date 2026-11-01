@@ -21,6 +21,7 @@ vi.mock("@/lib/maps/useGoogleMap", () => ({
 }));
 
 afterEach(() => {
+  mocks.params = new URLSearchParams("type=tasting&itemType=ACTIVITY");
   mocks.markerClicks = [];
   vi.unstubAllGlobals();
   vi.clearAllMocks();
@@ -59,6 +60,13 @@ function setup() {
 }
 
 describe("Explore map", () => {
+  it("keeps repeated and comma-separated occasions from the list URL", async () => {
+    mocks.params = new URLSearchParams("occasions=romantic,quiet&occasions=quiet,unknown");
+    mocks.getMarkers.mockResolvedValue({ data: [] });
+    const map = setup();
+    await act(async () => { map.idle(); });
+    expect(mocks.getMarkers).toHaveBeenCalledWith(expect.objectContaining({ occasions: ["romantic", "quiet"] }));
+  });
   it("uses a valid page size and frames filtered results outside downtown", async () => {
     mocks.getMarkers.mockResolvedValue({ data: [{ itemType: "ACTIVITY", latitude: -33.45, longitude: -69.21, name: "Cata" }] });
     const map = setup();
@@ -92,5 +100,15 @@ describe("Explore map", () => {
     expect(screen.getByRole("status")).toHaveTextContent("No pudimos actualizar");
     await act(async () => { map.idle(); });
     expect(screen.getByRole("status")).toHaveTextContent("No hay resultados");
+  });
+});
+
+describe("map markers (#210)", () => {
+  it("never pins the Hogar or a marker without coordinates", async () => {
+    const { isMappableMarker } = await import("./MapView");
+    const base = { itemType: "ACTIVITY", latitude: -32.9, longitude: -68.8, place: { kind: "park" } };
+    expect(isMappableMarker(base as never)).toBe(true);
+    expect(isMappableMarker({ ...base, place: { kind: "home" } } as never)).toBe(false);
+    expect(isMappableMarker({ ...base, latitude: Number.NaN } as never)).toBe(false);
   });
 });

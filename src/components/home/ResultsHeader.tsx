@@ -180,6 +180,14 @@ function ContextAction({
             : null}
           {kind === "budget" ? (
             <>
+              {/* Nothing to spend is an answer too: only free plans. */}
+              <button
+                type="button"
+                className={styles.option}
+                onClick={() => choose({ freeOnly: true })}
+              >
+                Gratis
+              </button>
               {BUDGET_OPTIONS.map((value) => (
                 <button
                   key={value}

@@ -189,6 +189,8 @@ export interface AdminActivity {
   availableTimesOfDay?: TimeOfDay[];
   minPeople?: number | null;
   maxPeople?: number | null;
+  /** `Occasion` keys: who it suits and its mood. */
+  occasions?: string[];
   id: number;
   name: string;
   description: string;
@@ -223,6 +225,8 @@ export interface AdminActivitiesQuery {
 export interface AdminActivityInput {
   costBasis?: 'per_party' | 'per_person';
   availableTimesOfDay?: TimeOfDay[];
+  /** Without occasions the activity is never recommended automatically. */
+  occasions?: string[];
   minPeople?: number | null;
   maxPeople?: number | null;
   name: string;

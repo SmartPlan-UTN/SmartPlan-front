@@ -1,0 +1,26 @@
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  background: var(--surface-card);
+  color: var(--fg-2);
+  font-size: 12px;
+  font-weight: var(--w-label);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.more {
+  color: var(--fg-2);
+}

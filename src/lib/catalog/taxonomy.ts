@@ -52,6 +52,8 @@ export const ACTIVITY_TYPE_OPTIONS = [
   { value: "thermal_baths", label: "Termas" },
   { value: "spa_treatment", label: "Spa" },
   { value: "ski", label: "Esquí" },
+  { value: "game", label: "Juego" },
+  { value: "home_plan", label: "Plan en casa" },
 ];
 
 const PLACE_KINDS: Record<string, Presentation> = {
@@ -91,6 +93,7 @@ const PLACE_KINDS: Record<string, Presentation> = {
   zoo: { icon: "trees", family: "outdoors" },
   live_music_venue: { icon: "music-2", family: "night" },
   visitor_center: { icon: "info", family: "culture" },
+  home: { icon: "house", family: "other" },
 };
 
 const ACTIVITY_SUBTYPES: Record<string, Presentation> = {
@@ -123,6 +126,9 @@ const ACTIVITY_SUBTYPES: Record<string, Presentation> = {
   thermal_baths: { icon: "waves", family: "wellness" },
   spa_treatment: { icon: "flower-2", family: "wellness" },
   workshop: { icon: "palette", family: "culture" },
+  // Games and plans at the Hogar (#210).
+  game: { icon: "gamepad-2", family: "other" },
+  home_plan: { icon: "house", family: "other" },
   shopping: { icon: "shopping-bag", family: "shopping" },
   sport_activity: { icon: "dumbbell", family: "sports" },
   amusement: { icon: "popcorn", family: "other" },

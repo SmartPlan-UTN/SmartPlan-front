@@ -648,13 +648,13 @@
 }
 
 .stateToggle {
-  background: var(--ember);
+  background: var(--ember-action);
   color: var(--white);
   cursor: pointer;
 }
 
 .stateToggle:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--ember) 90%, var(--char));
+  background: color-mix(in srgb, var(--ember-action) 90%, var(--char));
 }
 
 .stateToggle:active:not(:disabled) {

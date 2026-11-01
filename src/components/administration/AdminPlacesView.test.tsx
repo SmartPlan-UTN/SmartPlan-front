@@ -2,14 +2,14 @@ import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { listPlaces } from "@/lib/api";
+import { listAdminPlaces } from "@/lib/api";
 import type { PlaceOption } from "@/types";
 
 import { AdminPlacesView } from "./AdminPlacesView";
 
 vi.mock("@/lib/api", () => ({
   ApiError: class ApiError extends Error {},
-  listPlaces: vi.fn(),
+  listAdminPlaces: vi.fn(),
 }));
 
 vi.mock("@/components/media", () => ({
@@ -30,7 +30,7 @@ const places: PlaceOption[] = [
 
 describe("AdminPlacesView", () => {
   beforeEach(() => {
-    vi.mocked(listPlaces).mockResolvedValue({
+    vi.mocked(listAdminPlaces).mockResolvedValue({
       data: places,
       pagination: { page: 1, limit: 20, total: 21, totalPages: 2 },
     });
@@ -47,7 +47,7 @@ describe("AdminPlacesView", () => {
       expect.stringContaining("google.com/maps"),
     );
     expect(screen.getByText("Mostrando 1–1 de 21 lugares")).toBeInTheDocument();
-    expect(listPlaces).toHaveBeenCalledWith({ search: undefined, page: 1, limit: 20 });
+    expect(listAdminPlaces).toHaveBeenCalledWith({ search: undefined, page: 1, limit: 20 });
   });
 
   it("opens a read-only view from the place row and manages images from it", async () => {
@@ -70,7 +70,7 @@ describe("AdminPlacesView", () => {
     await user.type(screen.getByRole("textbox", { name: "Buscar lugares" }), "mercado");
 
     await waitFor(() =>
-      expect(listPlaces).toHaveBeenLastCalledWith({ search: "mercado", page: 1, limit: 20 }),
+      expect(listAdminPlaces).toHaveBeenLastCalledWith({ search: "mercado", page: 1, limit: 20 }),
     );
   });
 
@@ -88,7 +88,7 @@ describe("AdminPlacesView", () => {
   });
 
   it("shows a retryable error when the first load fails", async () => {
-    vi.mocked(listPlaces).mockRejectedValueOnce(new Error("offline"));
+    vi.mocked(listAdminPlaces).mockRejectedValueOnce(new Error("offline"));
     render(<AdminPlacesView />);
 
     expect(await screen.findByText("No pudimos cargar los lugares")).toBeInTheDocument();

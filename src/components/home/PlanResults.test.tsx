@@ -51,6 +51,7 @@ it("places matching community plans below the map and before starting over", () 
   ).toBeTruthy();
 });
 
+const mapPlans = vi.hoisted(() => vi.fn());
 const createOuting = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api", async (importActual) => ({
@@ -63,7 +64,10 @@ vi.mock("@/lib/api", async (importActual) => ({
 // tests are about the header/cards/CU22 wiring; ResultsMap gets its own
 // coverage (buildPlanPins.test.ts) for the data it's actually built from.
 vi.mock("./ResultsMap", () => ({
-  ResultsMap: () => <div data-testid="results-map-stub" />,
+  ResultsMap: ({ plans }: { plans: import("@/lib/maps/buildPlanPins").ResultsMapPlanPin[] }) => {
+    mapPlans(plans);
+    return <div data-testid="results-map-stub" />;
+  },
 }));
 
 function location(
@@ -665,4 +669,95 @@ it("carries the request origin in hero and alternative detail links", async () =
     "href",
     "/plans/8?from=%2Fplan-requests%2F42",
   );
+});
+
+
+function homePlan(): PlanDetailResult {
+  return {
+    ...PLAN,
+    id: 90,
+    title: "Juegos en casa",
+    estimatedTotalCost: 0,
+    estimatedTotalCostMax: 0,
+    priceCompleteness: "EXACT",
+    details: [{
+      id: 90, order: 1, estimatedCost: 0, estimatedDuration: 60, activity: null,
+      stop: {
+        kind: "OFFERING", label: "Truco", action: null, actionLabel: null,
+        activityId: 90, startMinute: 1260, legTravelMinutes: 15,
+        legDistanceMeters: null, estimateBasis: null,
+        place: {
+          id: 90, name: "Hogar", kind: "home", atHome: true, kindLabel: null,
+          address: null, latitude: null, longitude: null,
+          googlePlaceId: null, departmentName: null,
+        },
+      },
+    }],
+  };
+}
+
+describe("PlanResults home stops (#210, CU17)", () => {
+  it("replaces the map and route actions with a home note", () => {
+    render(<PlanResults plans={[homePlan()]} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
+    expect(screen.getByRole("heading", { name: "Estos planes son en casa" })).toBeInTheDocument();
+    expect(screen.getByText("Se hacen donde estén, así que no hay recorrido para mostrar en el mapa.")).toBeInTheDocument();
+    expect(screen.queryByTestId("results-map-stub")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /ver recorrido|ver en el mapa/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /cómo llegar|buscarlo en google maps/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/ubicación a confirmar|todavía sin confirmar|revisalo antes de salir/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("Dónde", { exact: true })).not.toBeInTheDocument();
+    expect(screen.getByText("Gratis", { exact: true })).toBeInTheDocument();
+  });
+
+  it("offers a route only for the mixed alternative and keeps the map when switching", async () => {
+    const home = homePlan();
+    const mixed = { ...PLAN, details: [PLAN.details[0], { ...home.details[0], order: 2 }] };
+    render(<PlanResults plans={[home, mixed]} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
+    expect(screen.getByTestId("results-map-stub")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /ver recorrido|ver en el mapa/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/no tenemos su ubicación exacta/i)).not.toBeInTheDocument();
+    await userEvent.setup().click(within(screen.getByRole("group", { name: "Elegir un plan" })).getAllByRole("button")[1]);
+    expect(screen.getByRole("button", { name: "Ver recorrido" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /cómo llegar/i })).toBeInTheDocument();
+    expect(screen.queryByText(/min hasta la próxima parada/)).not.toBeInTheDocument();
+  });
+
+  it("uses Gratis for a single free stop even when its saved insight says $0", () => {
+    const home = homePlan();
+    home.insight = {
+      role: "BEST", roleLabel: "Mi elección", why: "Para jugar", difference: null,
+      uncertainties: [], budgetStatus: "WITHIN", travelMinutes: null, travelKm: null,
+      stops: [{ label: "Truco", evidence: [], caveats: [], insight: {
+      purpose: "Jugar", price: "$0", priceSource: null, priceLive: false,
+      hours: null, hoursSource: null, fit: null, order: null, attribution: null,
+    } }],
+    };
+    render(<PlanResults plans={[home]} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
+    expect(screen.getByText("Gratis", { exact: true })).toBeInTheDocument();
+    expect(screen.queryByText("$0", { exact: true })).not.toBeInTheDocument();
+  });
+});
+
+
+it("passes the resolved starting point to the mixed plan's home pin", () => {
+  const home = homePlan();
+  const start = { latitude: -32.89, longitude: -68.84 };
+  const mixed = { ...PLAN, details: [PLAN.details[0], { ...home.details[0], order: 2 }] };
+  render(<PlanResults plans={[mixed]} resolvedContext={{ startingPoint: start } as import("@/types").ResolvedPlanContext} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
+  expect(mapPlans).toHaveBeenLastCalledWith(expect.arrayContaining([
+    expect.objectContaining({ stops: expect.arrayContaining([
+      expect.objectContaining({ lat: start.latitude, lng: start.longitude, order: 2, atHome: true }),
+    ]) }),
+  ]));
+});
+
+
+it("keeps preparation copy at home while exposing the required task", () => {
+  const home = homePlan();
+  home.readiness = { stage: "PREPARATION_REQUIRED", ready: false, label: "Preparar", summary: "Preparar materiales",
+    verifiedStops: 1, totalStops: 1, tasks: [{ detailId: 90, kind: "RESERVATION", required: true,
+      label: "Preparar los materiales", status: "PENDING", confirmedAt: null, actionUrl: null, actionLabel: null }] };
+  render(<PlanResults plans={[home]} onAdjust={vi.fn()} onDiscard={vi.fn()} />);
+  expect(screen.getByText(/Antes de empezar: Preparar los materiales/)).toBeInTheDocument();
+  expect(screen.queryByText(/Antes de salir:/)).not.toBeInTheDocument();
 });
