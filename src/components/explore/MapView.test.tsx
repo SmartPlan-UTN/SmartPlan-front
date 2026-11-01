@@ -21,6 +21,7 @@ vi.mock("@/lib/maps/useGoogleMap", () => ({
 }));
 
 afterEach(() => {
+  mocks.params = new URLSearchParams("type=tasting&itemType=ACTIVITY");
   mocks.markerClicks = [];
   vi.unstubAllGlobals();
   vi.clearAllMocks();
@@ -59,6 +60,13 @@ function setup() {
 }
 
 describe("Explore map", () => {
+  it("keeps repeated and comma-separated occasions from the list URL", async () => {
+    mocks.params = new URLSearchParams("occasions=romantic,quiet&occasions=quiet,unknown");
+    mocks.getMarkers.mockResolvedValue({ data: [] });
+    const map = setup();
+    await act(async () => { map.idle(); });
+    expect(mocks.getMarkers).toHaveBeenCalledWith(expect.objectContaining({ occasions: ["romantic", "quiet"] }));
+  });
   it("uses a valid page size and frames filtered results outside downtown", async () => {
     mocks.getMarkers.mockResolvedValue({ data: [{ itemType: "ACTIVITY", latitude: -33.45, longitude: -69.21, name: "Cata" }] });
     const map = setup();

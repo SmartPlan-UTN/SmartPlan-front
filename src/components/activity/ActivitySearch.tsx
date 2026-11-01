@@ -89,6 +89,8 @@ export function ActivitySearch({
     toggleCategory,
     atHome,
     free,
+    occasions,
+    toggleOccasion,
     setAtHome,
     setFree,
     clear: clearFilters,
@@ -219,12 +221,14 @@ export function ActivitySearch({
       departmentId: departmentId ?? undefined,
       atHome: atHome || undefined,
       free: free || undefined,
+      occasions: occasions.length ? occasions : undefined,
       sortBy,
       direction,
     }),
     [
       atHome,
       free,
+      occasions,
       itemType,
       activityType,
       effectiveQuery,
@@ -251,7 +255,7 @@ export function ActivitySearch({
   const mapFiltersQuery = `${ROUTES.exploreMap}?${explorationQuery({
     type: activityType, itemType,
     search: query, categoryIds, minPrice, maxPrice, minRating,
-    cityId, departmentId, atHome, free,
+    cityId, departmentId, atHome, free, occasions,
     sortBy: sortBy === "distance" ? "relevance" : sortBy,
     direction,
     page: query !== effectiveQuery || minPrice !== debouncedMinPrice ||
@@ -286,7 +290,7 @@ export function ActivitySearch({
     (activityType ? 1 : 0) +
     (departmentId !== null ? 1 : 0) +
     (atHome ? 1 : 0) +
-    (free ? 1 : 0);
+    (free ? 1 : 0) + occasions.length;
 
   // The URL mirrors what is applied, so reloading or sharing the link keeps
   // the same search (#210). replaceState: filters are not history entries.
@@ -294,7 +298,7 @@ export function ActivitySearch({
     type: activityType, itemType,
     search: effectiveQuery, categoryIds,
     minPrice: debouncedMinPrice, maxPrice: debouncedMaxPrice, minRating: debouncedMinRating,
-    cityId, departmentId, atHome, free,
+    cityId, departmentId, atHome, free, occasions,
     sortBy: sortBy === "distance" ? "relevance" : sortBy,
     direction, page,
   });
@@ -320,6 +324,7 @@ export function ActivitySearch({
           categoryIds={categoryIds}
           onToggleCategory={toggleCategory}
           activityType={{ value: activityType, onChange: (value) => { setActivityType(value); if (value) setItemType("ACTIVITY"); } }}
+          occasionFilter={{ value: occasions, onToggle: toggleOccasion }}
           atHomeFree={{
             atHome,
             onAtHomeChange: setAtHome,

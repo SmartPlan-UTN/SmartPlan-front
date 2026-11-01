@@ -3,6 +3,12 @@
    (CU10, CU11). Reused by activity and plan search.
    ================================================================ */
 
+.occasionChoices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
 /* Vertical rhythm for a search screen's sections (search bar, chips,
    toolbar, filters, states, grid) — was missing entirely, so everything
    sat flush against everything else. */

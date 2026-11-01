@@ -17,9 +17,10 @@ describe("«En casa» and «Gratis» in the URL (#210)", () => {
     expect(state).toMatchObject({ atHome: true, free: true });
     expect(readExplorationState(Object.fromEntries(new URLSearchParams(explorationQuery(state))))).toEqual(state);
   });
-  it("leaves the flags off by default and ignores occasions", () => {
-    expect(readExplorationState({ occasions: "romantic" })).toMatchObject({ atHome: false, free: false });
-    expect(explorationQuery(readExplorationState({ occasions: "romantic" }))).not.toMatch(/occasions|atHome|free/);
+  it("round trips known occasions and discards malformed values", () => {
+    const state = readExplorationState({ occasions: ["romantic,quiet", "quiet,unknown"] });
+    expect(state).toMatchObject({ atHome: false, free: false, occasions: ["romantic", "quiet"] });
+    expect(readExplorationState(Object.fromEntries(new URLSearchParams(explorationQuery(state))))).toEqual(state);
   });
 });
 

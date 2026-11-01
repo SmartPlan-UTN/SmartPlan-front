@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { getExploreMapMarkers } from "@/lib/api";
+import { parseOccasions } from "@/lib/occasions";
 import { DEFAULT_MAP_CENTER } from "@/lib/maps/defaultCenter";
 import { markerIconUrl, markerPresentation } from "@/lib/maps/markerIcon";
 import { useGoogleMap } from "@/lib/maps/useGoogleMap";
@@ -107,6 +108,7 @@ function readFiltersFromSearchParams(
         : undefined,
     atHome: searchParams.get("atHome") === "true" || undefined,
     free: searchParams.get("free") === "true" || undefined,
+    occasions: searchParams.has("occasions") ? parseOccasions(searchParams.getAll("occasions")) : undefined,
   };
 }
 

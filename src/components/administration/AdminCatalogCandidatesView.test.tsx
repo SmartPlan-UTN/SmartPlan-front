@@ -236,6 +236,19 @@ describe("AdminCatalogCandidatesView (RF44, CU50)", () => {
     expect(await within(dialog).findByText("La duración tiene que ser un número entero de minutos.")).toBeInTheDocument();
   });
 
+  it("preserves a valid unit when editing a free candidate", async () => {
+    const user = userEvent.setup();
+    const free = candidate({ price: { kind: "FREE", min: 0, max: 0, unit: "UNSPECIFIED", source: "CURATED", sourceRef: "https://example.com/rules", verifiedAt: "2026-10-30T00:00:00.000Z" } });
+    vi.mocked(getCatalogCandidate).mockResolvedValue(detail(free));
+    vi.mocked(updateCatalogCandidate).mockResolvedValue(detail(free));
+    render(<AdminCatalogCandidatesView />);
+    await user.click(await screen.findByRole("button", { name: /Editar Cata/ }));
+    const dialog = await screen.findByRole("dialog", { name: "Editar candidato" });
+    await user.click(within(dialog).getByRole("button", { name: "Guardar cambios" }));
+    expect(updateCatalogCandidate).toHaveBeenCalledWith(7, expect.objectContaining({ price: expect.objectContaining({ kind: "FREE", unit: "UNSPECIFIED" }) }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+
   it("shows what the place already offers and what review changed", async () => {
     const user = userEvent.setup();
     vi.mocked(getCatalogCandidate).mockResolvedValue(detail());

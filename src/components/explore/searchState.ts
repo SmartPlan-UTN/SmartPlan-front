@@ -1,4 +1,5 @@
-import type { SortDirection } from "@/types";
+import type { Occasion, SortDirection } from "@/types";
+import { parseOccasions } from "@/lib/occasions";
 
 export type ExplorationSearchParams = Record<string, string | string[] | undefined>;
 
@@ -16,6 +17,7 @@ export interface ExplorationSearchState {
   atHome: boolean;
   /** "Gratis": evidenced free prices only. */
   free: boolean;
+  occasions: Occasion[];
   sortBy: "relevance" | "price" | "rating";
   direction: SortDirection;
   page: number;
@@ -47,6 +49,7 @@ export function readExplorationState(params: ExplorationSearchParams = {}): Expl
     departmentId: cityId === null ? null : positiveId(value("departmentId")),
     atHome: value("atHome") === "true",
     free: value("free") === "true",
+    occasions: parseOccasions(params.occasions),
     sortBy: sortBy === "price" || sortBy === "rating" ? sortBy : "relevance",
     direction: value("direction") === "desc" ? "desc" : "asc",
     page: positiveId(value("page")) ?? 1,
@@ -66,6 +69,7 @@ export function explorationQuery(state: ExplorationSearchState): string {
   if (state.departmentId !== null) params.set("departmentId", String(state.departmentId));
   if (state.atHome) params.set("atHome", "true");
   if (state.free) params.set("free", "true");
+  if (state.occasions.length) params.set("occasions", state.occasions.join(","));
   params.set("sortBy", state.sortBy);
   params.set("direction", state.direction);
   params.set("page", String(state.page));

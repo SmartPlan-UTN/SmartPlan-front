@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
-import { Button, Chip, Icon } from "@/components/ui";
+import { Button, Chip, FormDialog } from "@/components/ui";
 import { useScrollLock } from "@/hooks";
 import { ApiError, listAdminPlaces, updateCatalogCandidate } from "@/lib/api";
 import { OCCASIONS, OCCASION_GROUP_LABELS } from "@/lib/occasions";
@@ -85,8 +85,6 @@ export function CatalogCandidateDialog({
   onSaved,
 }: CatalogCandidateDialogProps) {
   useScrollLock();
-  const titleId = useId();
-  const nameRef = useRef<HTMLInputElement>(null);
   const payload = candidate.payload as Record<string, unknown>;
   const price = (payload.price ?? candidate.price ?? {
     kind: "UNKNOWN",
@@ -115,16 +113,6 @@ export function CatalogCandidateDialog({
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => nameRef.current?.focus(), []);
-
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && !saving) onClose();
-    }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose, saving]);
 
   useEffect(() => {
     const search = placeSearch.trim();
@@ -162,7 +150,7 @@ export function CatalogCandidateDialog({
       kind: priceKind,
       min,
       max: priceKind === "FREE" ? 0 : priceKind === "RANGE" ? numberOrNull(priceMax) : priceKind === "FIXED" ? min : null,
-      unit: priceKind === "FREE" ? null : priceUnit,
+      unit: priceKind === "FREE" ? "UNSPECIFIED" : priceUnit,
       source: priceSource,
       sourceRef: priceRef.trim() || null,
       verifiedAt: priceDate ? `${priceDate}T00:00:00.000Z` : null,
@@ -211,32 +199,12 @@ export function CatalogCandidateDialog({
     ) : null;
 
   return (
-    <div className={styles.dialogOverlay}>
-      <div className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby={titleId}>
-        <header className={styles.dialogHeader}>
-          <div>
-            <h2 id={titleId} className="sp-h4">
-              Editar candidato
-            </h2>
-            <p className="sp-small">
-              Se guarda en la cola; entra al catálogo recién al aprobarlo.
-            </p>
-          </div>
-          <button
-            type="button"
-            className={styles.iconButton}
-            aria-label="Cerrar formulario"
-            disabled={saving}
-            onClick={onClose}
-          >
-            <Icon name="x" size={18} />
-          </button>
-        </header>
-
-        <form className={styles.form} onSubmit={(event) => void submit(event)} noValidate>
+    <FormDialog title="Editar candidato"
+      subtitle="Se guarda en la cola; entra al catálogo recién al aprobarlo."
+      busy={saving} onClose={onClose} onSubmit={(event) => void submit(event)}>
           <label className={styles.field}>
             Nombre
-            <input ref={nameRef} value={name} maxLength={150} onChange={(event) => setName(event.target.value)} aria-invalid={Boolean(errors.name)} />
+            <input value={name} maxLength={150} onChange={(event) => setName(event.target.value)} aria-invalid={Boolean(errors.name)} />
             {fieldError("name")}
           </label>
           <label className={styles.field}>
@@ -419,8 +387,6 @@ export function CatalogCandidateDialog({
               {saving ? "Guardando..." : "Guardar cambios"}
             </Button>
           </div>
-        </form>
-      </div>
-    </div>
+    </FormDialog>
   );
 }

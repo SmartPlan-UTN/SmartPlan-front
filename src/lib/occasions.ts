@@ -42,3 +42,10 @@ export function sortOccasions(keys: readonly string[]): Occasion[] {
     (occasion) => occasion.key,
   );
 }
+
+/** Accept repeated or comma-separated query values, dropping unknown keys. */
+export function parseOccasions(value: string | string[] | undefined | null): Occasion[] {
+  return sortOccasions((Array.isArray(value) ? value : [value ?? ""])
+    .flatMap((entry) => entry.split(","))
+    .map((entry) => entry.trim()));
+}

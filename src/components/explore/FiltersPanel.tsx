@@ -2,8 +2,9 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 
-import { Select } from "@/components/ui";
-import type { CategoryOption, LocationOption } from "@/types";
+import { Chip, Select } from "@/components/ui";
+import { OCCASIONS } from "@/lib/occasions";
+import type { CategoryOption, LocationOption, Occasion } from "@/types";
 
 import { priceRangeError } from "./searchState";
 import { getCategoriesOnce } from "./categoryCatalog";
@@ -74,6 +75,7 @@ export interface FiltersPanelProps {
   activityType?: { value: string; onChange: (value: string) => void };
   /** "En casa" goes with the location and "Gratis" with the price (#210). */
   atHomeFree?: AtHomeFreeFilterProps;
+  occasionFilter?: { value: readonly Occasion[]; onToggle: (value: Occasion) => void };
 }
 
 export interface AtHomeFreeFilterProps {
@@ -102,6 +104,7 @@ export function FiltersPanel({
   location,
   activityType,
   atHomeFree,
+  occasionFilter,
 }: FiltersPanelProps) {
   const ratingName = useId();
   const rangeError = priceRangeError(minPrice, maxPrice);
@@ -252,6 +255,19 @@ export function FiltersPanel({
               )}
             </p>
           </div>
+        </section>
+      ) : null}
+
+      {occasionFilter ? (
+        <section className={styles.filterSection} aria-labelledby={`${ratingName}-occasions`}>
+          <h3 id={`${ratingName}-occasions`} className={styles.filterHeading}>Ocasión</h3>
+          <div className={styles.occasionChoices}>
+            {OCCASIONS.map((occasion) => (
+              <Chip key={occasion.key} active={occasionFilter.value.includes(occasion.key)}
+                onClick={() => occasionFilter.onToggle(occasion.key)}>{occasion.short}</Chip>
+            ))}
+          </div>
+          <p className={styles.fieldLabel}>Actividades que coincidan con alguna de las ocasiones elegidas.</p>
         </section>
       ) : null}
 

@@ -70,7 +70,7 @@ describe("ActivitySearch", () => {
     const user = userEvent.setup();
     render(<ActivitySearch />);
     await screen.findByRole("heading", { name: "Ruta del vino" });
-    expect(screen.queryByRole("heading", { name: "Ocasión" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Ocasión" })).toBeInTheDocument();
     await user.click(screen.getByRole("checkbox", { name: "En casa" }));
     await user.click(screen.getByRole("checkbox", { name: "Gratis" }));
     await waitFor(() =>
@@ -82,6 +82,20 @@ describe("ActivitySearch", () => {
     await waitFor(() => expect(window.location.search).toContain("atHome=true"));
     expect(window.location.search).toContain("free=true");
     expect(screen.getByRole("link", { name: "Ver mapa" })).toHaveAttribute("href", expect.stringContaining("atHome=true"));
+  });
+
+  it("restores occasions from the URL, updates the query and map, and clears them", async () => {
+    searchExplore.mockResolvedValue(page([makeActivity()]));
+    const user = userEvent.setup();
+    render(<ActivitySearch initialState={readExplorationState({ occasions: "romantic" })} />);
+    await screen.findByRole("heading", { name: "Ruta del vino" });
+    expect(screen.getByRole("button", { name: "En pareja" })).toHaveAttribute("aria-pressed", "true");
+    await user.click(screen.getByRole("button", { name: "Tranquilo" }));
+    await waitFor(() => expect(searchExplore).toHaveBeenLastCalledWith(expect.objectContaining({ occasions: ["romantic", "quiet"] })));
+    expect(new URLSearchParams(window.location.search).get("occasions")).toBe("romantic,quiet");
+    expect(screen.getByRole("link", { name: "Ver mapa" }).getAttribute("href")).toContain("occasions=romantic%2Cquiet");
+    await user.click(screen.getByRole("button", { name: "Limpiar" }));
+    await waitFor(() => expect(searchExplore).toHaveBeenLastCalledWith(expect.objectContaining({ occasions: undefined })));
   });
 
   it("filters a subtype and carries the activity and subtype selection to the map", async () => {
