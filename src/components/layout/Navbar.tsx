@@ -44,7 +44,9 @@ function activeMobileHref(currentRoute: string): string | undefined {
  * the prototype.
  *
  * Below 900px the top bar keeps identity and session only; the frequent
- * destinations move to a persistent, thumb-reachable bottom bar.
+ * destinations move to a persistent, thumb-reachable bottom bar. Manual
+ * plan creation is not repeated here: it lives inside Mis planes (account
+ * menu) and Comunidad, next to Planificar in the bottom bar.
  *
  * Explorar also gets a full-screen "Armando tu plan perfecto..." transition
  * (matching `Results.jsx`'s own loading state) when it's clicked from
@@ -158,17 +160,6 @@ export function Navbar() {
           </nav>
 
           <div className={styles.actions}>
-            <Link
-              href={ROUTES.createPlan}
-              className={styles.mobileCreatePlan}
-              aria-label="Crear un plan"
-              title="Crear un plan"
-            >
-              <span className={styles.mobileCreatePlanIcon} aria-hidden="true">
-                <Icon name="plus" size={16} stroke={2.4} />
-              </span>
-              <span>Crear<span className={styles.mobileCreatePlanWord}> plan</span></span>
-            </Link>
             <NotificationBell />
             <UserMenu />
           </div>
