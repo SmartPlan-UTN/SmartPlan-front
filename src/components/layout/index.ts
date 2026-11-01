@@ -15,7 +15,11 @@ export {
   USER_LINKS,
   type NavigationLink,
 } from "./links";
-export { UserMenu } from "./UserMenu";
+export {
+  LogoutConfirmModal,
+  UserMenu,
+  type LogoutConfirmModalProps,
+} from "./UserMenu";
 export { Navbar } from "./Navbar";
 export { SiteFooter } from "./SiteFooter";
 export {

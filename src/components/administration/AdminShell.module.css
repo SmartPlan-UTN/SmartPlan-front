@@ -178,6 +178,21 @@
   font-size: var(--t-small);
 }
 
+.sessionActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.logoutButton {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 .main {
   flex: 1;
   min-width: 0;
@@ -244,7 +259,8 @@
     left: -4px;
   }
 
-  .mobilePanel .exitLink {
+  .mobilePanel .sessionActions {
+    padding-top: var(--s-2);
     border-top: 1px solid var(--hairline);
   }
 

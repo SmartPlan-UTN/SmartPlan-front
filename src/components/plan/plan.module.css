@@ -703,6 +703,34 @@
   .actionMain > a {
     width: 100%;
   }
+
+  /* Up to five quiet actions never fit one row here, and wrapping them as
+     they come left a lone, off-grid button below (Editar · Eliminar, then
+     Guardar). Equal cells, icon over label, keep every row level. */
+  .actionQuiet {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--s-1);
+  }
+
+  .ownerActionLink,
+  .ownerActionButton,
+  .saveButton,
+  .shareButton {
+    flex-direction: column;
+    gap: var(--s-1);
+    width: 100%;
+    min-height: 56px;
+    padding: var(--s-2) var(--s-1);
+    font-size: var(--t-label);
+    line-height: 1.2;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .shareFallback {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -134,16 +134,14 @@ describe("Navbar", () => {
     ).toHaveAttribute("href", "/favorites");
     expect(screen.queryByRole("link", { name: "Historial" })).toBeNull();
     expect(within(nav).queryByRole("link", { name: /crear/i })).toBeNull();
-    expect(within(screen.getByRole("banner")).getByRole("link", { name: "Crear un plan" }))
-      .toHaveAttribute("href", "/plans/create");
+    expect(within(screen.getByRole("banner")).queryByRole("link", { name: /crear/i })).toBeNull();
   });
 
-  it.each(["/", "/explore", "/community", "/plans", "/outings", "/favorites"])("keeps manual plan creation reachable from %s", async (path) => {
+  it.each(["/", "/explore", "/community", "/plans", "/outings", "/favorites"])("keeps the top bar free of a create CTA on %s", async (path) => {
     route.actual = path;
     mockAnonymousStartup();
     renderNavbar();
-    const link = within(screen.getByRole("banner")).getByRole("link", {name: "Crear un plan"});
-    expect(link).toHaveAttribute("href", "/plans/create");
+    expect(within(screen.getByRole("banner")).queryByRole("link", {name: /crear/i})).toBeNull();
     expect(within(screen.getByRole("navigation", {name: "Navegación móvil"})).getByRole("link", {name: "Planificar"}))
       .toHaveAttribute("href", "/?startComposer=1");
     await screen.findByRole("link", {name: "Iniciar sesión"});

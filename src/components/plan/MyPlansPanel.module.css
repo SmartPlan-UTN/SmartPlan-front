@@ -211,6 +211,29 @@
   color: var(--ember);
 }
 
+/* The whole card opens the plan, not just its title: the title link
+   stretches over the card, and the card's own controls (editar, eliminar,
+   publicar) sit above it. One link per card, no nested interactives. */
+.planCard {
+  position: relative;
+}
+
+.cardTitleLink::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-card);
+}
+
+.planCard:hover .cardTitleLink {
+  color: var(--ember);
+}
+
+.planCard :is(a, button):not(.cardTitleLink) {
+  position: relative;
+  z-index: 1;
+}
+
 .cardActions {
   display: flex;
   flex-shrink: 0;

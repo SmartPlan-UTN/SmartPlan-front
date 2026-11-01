@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useRef, useState, type ReactNode } from "react";
 
+import { LogoutConfirmModal } from "@/components/layout";
 import { Icon, Logo, type IconName } from "@/components/ui";
 import { useSession } from "@/lib/auth";
 import { ROUTES, isActiveRoute, type Route } from "@/lib/routes";
@@ -81,6 +82,55 @@ function AdminNavigation({ pathname, onNavigate }: { pathname: string; onNavigat
   );
 }
 
+/**
+ * "Salir del panel" goes back to the app with the session open; "Cerrar
+ * sesión" closes it, behind the same confirmation as the navbar's user menu
+ * (the panel has no navbar, so this is its only way out of the account).
+ */
+function AdminSessionActions({ onNavigate }: { onNavigate?: () => void }) {
+  const { logout } = useSession();
+  const router = useRouter();
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const logoutButtonRef = useRef<HTMLButtonElement>(null);
+
+  async function confirmLogout() {
+    setConfirmingLogout(false);
+    await logout();
+    // `replace`, as in `UserMenu`: "back" must not return to a screen that
+    // required the session just closed.
+    router.replace(ROUTES.login);
+  }
+
+  return (
+    <div className={styles.sessionActions}>
+      <Link className={styles.exitLink} href={ROUTES.home} onClick={onNavigate}>
+        <Icon name="arrow-left" size={17} />
+        Salir del panel
+      </Link>
+      <button
+        ref={logoutButtonRef}
+        type="button"
+        className={`${styles.exitLink} ${styles.logoutButton}`}
+        onClick={() => setConfirmingLogout(true)}
+      >
+        <Icon name="log-out" size={17} />
+        Cerrar sesión
+      </button>
+      {confirmingLogout ? (
+        <LogoutConfirmModal
+          onCancel={() => {
+            setConfirmingLogout(false);
+            logoutButtonRef.current?.focus();
+          }}
+          onConfirm={() => {
+            void confirmLogout();
+          }}
+        />
+      ) : null}
+    </div>
+  );
+}
+
 export function AdminShell({ children }: AdminShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -98,10 +148,7 @@ export function AdminShell({ children }: AdminShellProps) {
         <AdminNavigation pathname={pathname} />
         <div className={styles.sidebarFooter}>
           <AdminIdentity />
-          <Link className={styles.exitLink} href={ROUTES.home}>
-            <Icon name="log-out" size={17} />
-            Salir del panel
-          </Link>
+          <AdminSessionActions />
         </div>
       </aside>
 
@@ -122,10 +169,7 @@ export function AdminShell({ children }: AdminShellProps) {
         {mobileOpen ? (
           <div className={styles.mobilePanel}>
             <AdminNavigation pathname={pathname} onNavigate={() => setMobileOpen(false)} />
-            <Link className={styles.exitLink} href={ROUTES.home}>
-              <Icon name="log-out" size={17} />
-              Salir del panel
-            </Link>
+            <AdminSessionActions onNavigate={() => setMobileOpen(false)} />
           </div>
         ) : null}
       </header>

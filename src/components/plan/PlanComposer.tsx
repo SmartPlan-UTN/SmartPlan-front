@@ -126,7 +126,11 @@ export function PlanComposer({
   const [inspirationId, setInspirationId] = useState(inspiredByPlanId);
   const [inspirationUnavailable, setInspirationUnavailable] = useState(false);
   const [adaptContext, setAdaptContext] = useState<AdaptContext>(DEFAULT_ADAPT_CONTEXT);
-  const [step, setStep] = useState<ComposerStep>(initialActivityId ? 1 : 0);
+  // Always step 1 (Plan), even when arriving with an activity from Explorar
+  // or its detail ("Agregar al plan" → new plan): the activity is already in
+  // the route shown under the form, and jumping straight into the catalog
+  // search skipped naming the plan.
+  const [step, setStep] = useState<ComposerStep>(0);
   const [mobilePane, setMobilePane] = useState<ComposerPane>("catalog");
   // List or map: two views of the same search, kept across steps.
   const [discoveryView, setDiscoveryView] = useState<DiscoveryView>("list");

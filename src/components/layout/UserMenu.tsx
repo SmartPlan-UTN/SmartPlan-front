@@ -16,7 +16,7 @@ import { NavLink } from "./NavLink";
 import { ADMIN_USER_LINK, USER_LINKS } from "./links";
 import styles from "./layout.module.css";
 
-interface LogoutConfirmModalProps {
+export interface LogoutConfirmModalProps {
   onCancel: () => void;
   onConfirm: () => void;
 }
@@ -25,9 +25,9 @@ interface LogoutConfirmModalProps {
  * Confirmation dialog for "Cerrar sesión", matching the `LogoutModal` in
  * SmartPlanSystemDesign/v2/Navbar.jsx: closing the session is destructive
  * enough to warrant a deliberate second step instead of firing on the first
- * click.
+ * click. Shared with the administration panel's own "Cerrar sesión".
  */
-function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
+export function LogoutConfirmModal({ onCancel, onConfirm }: LogoutConfirmModalProps) {
   const cancelRef = useRef<HTMLButtonElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
