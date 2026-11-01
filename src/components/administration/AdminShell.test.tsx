@@ -61,4 +61,28 @@ describe("AdminShell", () => {
     expect(screen.queryByRole("alertdialog")).toBeNull();
     expect(logout).not.toHaveBeenCalled();
   });
+
+  it.each(["sidebar", "mobile"])("restores focus after cancelling logout from the %s", async (location) => {
+    const user = userEvent.setup();
+    render(<AdminShell>contenido</AdminShell>);
+
+    if (location === "mobile") {
+      await user.click(screen.getByRole("button", { name: "Abrir menú administrativo" }));
+    }
+    const container = screen.getByRole(location === "sidebar" ? "complementary" : "banner");
+    const trigger = within(container).getByRole("button", { name: "Cerrar sesión" });
+
+    for (const cancelWithEscape of [false, true]) {
+      await user.click(trigger);
+      expect(screen.getByRole("button", { name: "Cancelar" })).toHaveFocus();
+      if (cancelWithEscape) {
+        await user.keyboard("{Escape}");
+      } else {
+        await user.click(screen.getByRole("button", { name: "Cancelar" }));
+      }
+      expect(screen.queryByRole("alertdialog")).toBeNull();
+      expect(trigger).toHaveFocus();
+    }
+    expect(logout).not.toHaveBeenCalled();
+  });
 });

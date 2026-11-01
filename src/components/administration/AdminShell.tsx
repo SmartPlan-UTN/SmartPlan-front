@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 
 import { LogoutConfirmModal } from "@/components/layout";
 import { Icon, Logo, type IconName } from "@/components/ui";
@@ -91,6 +91,7 @@ function AdminSessionActions({ onNavigate }: { onNavigate?: () => void }) {
   const { logout } = useSession();
   const router = useRouter();
   const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const logoutButtonRef = useRef<HTMLButtonElement>(null);
 
   async function confirmLogout() {
     setConfirmingLogout(false);
@@ -107,6 +108,7 @@ function AdminSessionActions({ onNavigate }: { onNavigate?: () => void }) {
         Salir del panel
       </Link>
       <button
+        ref={logoutButtonRef}
         type="button"
         className={`${styles.exitLink} ${styles.logoutButton}`}
         onClick={() => setConfirmingLogout(true)}
@@ -116,7 +118,10 @@ function AdminSessionActions({ onNavigate }: { onNavigate?: () => void }) {
       </button>
       {confirmingLogout ? (
         <LogoutConfirmModal
-          onCancel={() => setConfirmingLogout(false)}
+          onCancel={() => {
+            setConfirmingLogout(false);
+            logoutButtonRef.current?.focus();
+          }}
           onConfirm={() => {
             void confirmLogout();
           }}
