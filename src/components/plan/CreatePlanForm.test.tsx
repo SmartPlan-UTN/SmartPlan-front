@@ -641,8 +641,9 @@ describe("PlanComposer creation flow", () => {
   it("returns to the source activity after creating a prefilled plan", async () => {
     const user = userEvent.setup();
     render(<CreatePlanForm initialActivityId={42} returnToActivity />);
+    // Lands on step 1 (Plan) with the activity already in the route.
     expect(await screen.findByText("Actividad 42")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /Paso 1: Plan/ }));
+    expect(screen.getByLabelText(/Nombre del plan/)).toBeInTheDocument();
     await user.type(
       screen.getByLabelText(/Nombre del plan/),
       "Salida desde actividad",
