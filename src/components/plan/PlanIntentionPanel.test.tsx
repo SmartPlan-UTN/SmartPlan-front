@@ -4,19 +4,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PlanIntentionPanel, resolvePanelState } from "./PlanIntentionPanel";
 
-describe("resolvePanelState (CU22)", () => {
-  it("maps the viewer state and plan status to one panel state", () => {
-    expect(resolvePanelState("view-only", "generated")).toBe("absent");
-    expect(resolvePanelState("selectable", "generated")).toBe("intend");
-    expect(resolvePanelState("selected", "generated")).toBe("intending");
-    // A finished plan is a record only for the viewer who marked it.
-    expect(resolvePanelState("selected", "completed")).toBe("done");
-    expect(resolvePanelState("selectable", "completed")).toBe("absent");
+describe("resolvePanelState (CU22, #130)", () => {
+  it("maps the viewer state to one panel state", () => {
+    expect(resolvePanelState("view-only")).toBe("absent");
+    expect(resolvePanelState("selectable")).toBe("intend");
+    expect(resolvePanelState("selected")).toBe("added");
   });
 });
 
-describe("PlanIntentionPanel (CU22, PAN 17)", () => {
-  const handlers = { onIntend: vi.fn(), onWithdraw: vi.fn() };
+describe("PlanIntentionPanel (CU22, PAN 17, #130)", () => {
+  const onIntend = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -26,57 +23,53 @@ describe("PlanIntentionPanel (CU22, PAN 17)", () => {
     return render(
       <PlanIntentionPanel
         viewerPlanState="selectable"
-        statusKey="generated"
+        activeOutingId={null}
         busy={false}
-        onIntend={handlers.onIntend}
-        onWithdraw={handlers.onWithdraw}
+        onIntend={onIntend}
         {...props}
       />,
     );
   }
 
-  it("renders nothing for a view-only viewer", () => {
-    const { container } = renderPanel({ viewerPlanState: "view-only" });
-    expect(container).toBeEmptyDOMElement();
-  });
-
-  it("off state: one toggle, aria-pressed false, calls onIntend once", async () => {
+  it("offers 'Lo voy a hacer' as a one-shot action, not a toggle", async () => {
     const user = userEvent.setup();
-    renderPanel({ viewerPlanState: "selectable" });
+    renderPanel({});
 
-    const toggle = screen.getByRole("button", { name: /^lo voy a hacer$/i });
-    expect(toggle).toHaveAttribute("aria-pressed", "false");
-    await user.click(toggle);
-    expect(handlers.onIntend).toHaveBeenCalledOnce();
-    expect(handlers.onWithdraw).not.toHaveBeenCalled();
+    const button = screen.getByRole("button", { name: "Lo voy a hacer" });
+    expect(button).not.toHaveAttribute("aria-pressed");
+    await user.click(button);
+
+    expect(onIntend).toHaveBeenCalledTimes(1);
   });
 
-  it("on state: same toggle and label, aria-pressed true, clicking again withdraws", async () => {
-    const user = userEvent.setup();
-    renderPanel({ viewerPlanState: "selected" });
+  it("disables the action while it saves", () => {
+    renderPanel({ busy: true });
 
-    // The label never changes — only aria-pressed and the visuals.
-    const toggle = screen.getByRole("button", { name: /^lo voy a hacer$/i });
-    expect(toggle).toHaveAttribute("aria-pressed", "true");
-    // No separate revert control.
-    expect(screen.getAllByRole("button")).toHaveLength(1);
-
-    await user.click(toggle);
-    expect(handlers.onWithdraw).toHaveBeenCalledOnce();
-    expect(handlers.onIntend).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Lo voy a hacer" })).toBeDisabled();
   });
 
-  it("busy freezes the toggle", () => {
-    renderPanel({ viewerPlanState: "selected", busy: true });
+  it("once added, says so and links to the outing — with no undo", () => {
+    renderPanel({ viewerPlanState: "selected", activeOutingId: 40 });
+
+    expect(screen.getByText("Agregado a Mis salidas")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /^lo voy a hacer$/i }),
-    ).toBeDisabled();
+      screen.getByRole("link", { name: /ver en mis salidas/i }),
+    ).toHaveAttribute("href", "/outings/40");
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.queryByText(/ya no lo voy a hacer/i)).not.toBeInTheDocument();
   });
 
-  it("done state: renders a record, no interactive toggle", () => {
-    renderPanel({ viewerPlanState: "selected", statusKey: "completed" });
+  it("falls back to Mis salidas when the outing id is unknown", () => {
+    renderPanel({ viewerPlanState: "selected", activeOutingId: null });
 
-    expect(screen.getByText("Hiciste este plan")).toBeInTheDocument();
-    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /ver en mis salidas/i }),
+    ).toHaveAttribute("href", "/outings");
+  });
+
+  it("renders nothing for a plan the viewer cannot choose", () => {
+    const { container } = renderPanel({ viewerPlanState: "view-only" });
+
+    expect(container).toBeEmptyDOMElement();
   });
 });

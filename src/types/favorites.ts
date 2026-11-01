@@ -1,3 +1,4 @@
+import type { Price, PriceCompleteness } from './pricing';
 import { BaseEntity } from './common';
 import type { User } from './users';
 import type { Activity } from './activities';
@@ -40,7 +41,8 @@ export interface FavoriteActivitySummary {
   id: number;
   name: string;
   description: string;
-  estimatedCost: number;
+  estimatedCost: number | null;
+  price?: Price | null;
   estimatedDuration: number;
   type: string | null;
 }
@@ -58,7 +60,10 @@ export interface FavoritePlanSummary {
   id: number;
   title: string;
   description: string | null;
-  estimatedTotalCost: number;
+  estimatedTotalCost: number | null;
+  estimatedTotalCostMax?: number | null;
+  unpricedCount?: number;
+  priceCompleteness?: PriceCompleteness;
   estimatedTotalDuration: number;
   peopleCount: number;
   activityCount: number;

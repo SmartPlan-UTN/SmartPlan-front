@@ -1,30 +1,24 @@
 import type { SortDirection } from './common';
 
 /**
- * Moderation outcome for a rating's comment (CU44, CU55). Resolved
- * synchronously on submit — `SmartPlan-back`'s `RatingModerationService`
- * classifies the comment (profanity list, then Gemini) before the create
- * request returns, so `OwnRating.moderationStatus` already reflects the
- * final state, not a pending async job.
- */
-export type RatingModerationStatus = 'pending' | 'approved' | 'rejected';
-
-/**
- * A rating as its own author sees it (CU44, CU46, CU47) — the only view
- * that includes moderation state, since that's only ever the author's
- * business. Matches `OwnRatingDto` in `SmartPlan-back`.
+ * A rating as its own author sees it (CU44, CU46, CU47). There is no
+ * automatic moderation (#156): it is public as soon as it is created, and
+ * the author only ever learns that an administrator removed it after a
+ * report. Matches `OwnRatingDto` in `SmartPlan-back`.
  */
 export interface OwnRating {
+  images?: import('./media').MediaImage[];
   id: number;
   score: number;
   comment: string | null;
   authorAlias: string;
   createdAt: string;
   updatedAt: string;
+  isOwn: boolean;
   activityId: number;
   planId: number;
-  moderationStatus: RatingModerationStatus;
-  moderationReason: string | null;
+  /** An administrator removed it after a report; nobody else sees it. */
+  removed: boolean;
 }
 
 /**
@@ -55,22 +49,26 @@ export interface UpdateRatingInput {
 
 /**
  * A rating as anyone browsing the activity sees it (CU45) — no author
- * identity beyond the alias, no moderation state (the list endpoint only
- * ever returns approved ratings). Matches `PublicRatingDto`.
+ * identity beyond the alias. The list leaves out reported and removed
+ * ratings, except the viewer's own one under review. Matches
+ * `PublicRatingDto`.
  */
 export interface PublicRating {
+  images?: import('./media').MediaImage[];
   id: number;
   score: number;
   comment: string | null;
   authorAlias: string;
   createdAt: string;
   updatedAt: string;
+  /** The viewer wrote it, so they cannot report it (#156). */
+  isOwn: boolean;
 }
 
 /**
  * Aggregate shown above the review list (CU45's "Promedio y cantidad
- * total"). Matches `RatingSummaryDto` — counts only approved ratings, same
- * scope as the list itself.
+ * total"). Matches `RatingSummaryDto` — counts only public ratings: one
+ * under review or removed counts for no one.
  */
 export interface RatingSummary {
   averageRating: number;

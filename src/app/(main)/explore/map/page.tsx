@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
+import { explorationQuery, readExplorationState, type ExplorationSearchParams } from "@/components/explore";
 import { MapView } from "@/components/explore";
 import { Container } from "@/components/layout";
 import { FloatingBackLink } from "@/components/ui";
@@ -12,11 +13,12 @@ export const metadata: Metadata = {
   title: "Mapa",
 };
 
-export default function ExploreMapPage() {
+export default async function ExploreMapPage({ searchParams }: { searchParams: Promise<ExplorationSearchParams> }) {
+  const returnQuery = explorationQuery(readExplorationState(await searchParams));
   return (
     <Container>
       <div className={styles.page}>
-        <FloatingBackLink href={ROUTES.explore} label="Volver a la lista" />
+        <FloatingBackLink href={`${ROUTES.explore}?${returnQuery}`} label="Volver a la lista" />
 
         <h1 className="sp-h3">Actividades en el mapa</h1>
         {/* `MapView` reads the filters carried over from the list view via

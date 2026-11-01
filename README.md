@@ -66,7 +66,7 @@ src/app/
 ├── (main)/      screens with a navbar
 │   ├── page.tsx     home
 │   ├── explore/
-│   └── (private)/   favorites, history, profile, preferences — require a session
+│   └── (private)/   favorites, outings, profile, preferences — require a session
 └── admin/       administration panel
 ```
 

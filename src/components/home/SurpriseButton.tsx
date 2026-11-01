@@ -1,11 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 
 import { Icon } from "@/components/ui";
-import { ROUTES } from "@/lib/routes";
-import { surpriseLocationErrorCopy } from "@/lib/recommendation/planRequestErrors";
 
 import {
   useSurpriseLocation,
@@ -22,7 +19,8 @@ export interface SurpriseResolvedMeta {
 export interface SurpriseButtonProps {
   /** A generation is already in flight (or the session is still loading). */
   submitting: boolean;
-  onResolved: (coords: SurpriseCoords, meta: SurpriseResolvedMeta) => void;
+  /** `coords` is null when neither device GPS nor a preferred area resolved — the backend still generates a plan from a sensible default. */
+  onResolved: (coords: SurpriseCoords | null, meta: SurpriseResolvedMeta) => void;
 }
 
 /**
@@ -32,13 +30,13 @@ export interface SurpriseButtonProps {
  * in" without competing with "Planificar".
  *
  * One press resolves a location (device GPS, or the saved preferred area as
- * a fallback) and hands the coordinates up; the shared generation flow takes
- * it from there. A denied or missing location is answered in a single line,
- * never as a dead end and never as a form.
+ * a fallback) and hands it up; the shared generation flow takes it from
+ * there. Without either signal, the request still goes out — the backend
+ * picks a sensible department on its own — so this never blocks with an
+ * error, only a note about which signal was actually used.
  */
 export function SurpriseButton({ submitting, onResolved }: SurpriseButtonProps) {
-  const router = useRouter();
-  const { state, hasCategoryPreferences, request, reset } = useSurpriseLocation();
+  const { state, hasCategoryPreferences, request } = useSurpriseLocation();
 
   const firedRef = useRef(false);
 
@@ -74,43 +72,10 @@ export function SurpriseButton({ submitting, onResolved }: SurpriseButtonProps) 
         {locating ? "Buscando algo para vos…" : "Sorpréndeme"}
       </button>
 
-      {state.status === "error" ? (
-        <SurpriseButtonNote
-          kind={state.kind}
-          onPreferences={() => {
-            reset();
-            router.push(ROUTES.preferences);
-          }}
-        />
-      ) : !locating && !submitting && hasCategoryPreferences === false ? (
+      {!locating && !submitting && hasCategoryPreferences === false ? (
         <span className={styles.hint}>
           Sin preferencias guardadas: te sorprendemos con algo nuevo.
         </span>
-      ) : null}
-    </span>
-  );
-}
-
-function SurpriseButtonNote({
-  kind,
-  onPreferences,
-}: {
-  kind: Parameters<typeof surpriseLocationErrorCopy>[0];
-  onPreferences: () => void;
-}) {
-  const copy = surpriseLocationErrorCopy(kind);
-
-  return (
-    <span className={styles.note} role="alert">
-      {copy.title} {copy.body}
-      {copy.actions.includes("go-preferences") ? (
-        <button
-          type="button"
-          className={styles.noteLink}
-          onClick={onPreferences}
-        >
-          Ir a preferencias
-        </button>
       ) : null}
     </span>
   );

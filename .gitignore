@@ -15,6 +15,8 @@
 
 # next.js
 /.next/
+/.next-*/
+/*.log
 /out/
 
 # production
@@ -52,3 +54,8 @@ next-env.d.ts
 /v2/
 /design-qa.md
 /SmartPlan*.html
+
+# Local verification output (never product or provider content).
+*.local.log
+/.playwright-cli/
+/output/playwright/

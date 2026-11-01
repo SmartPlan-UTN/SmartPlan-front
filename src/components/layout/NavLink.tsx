@@ -28,6 +28,8 @@ export interface NavLinkProps {
    * plain link.
    */
   onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
+  /** Extra classes for the link, e.g. a viewport-specific visibility rule. */
+  className?: string;
 }
 
 const BASE_CLASS: Record<LinkVariant, string> = {
@@ -48,7 +50,7 @@ const ACTIVE_CLASS: Record<LinkVariant, string> = {
  *
  * The `navbar` variant is text-only, matching
  * SmartPlanSystemDesign/v2/Navbar.jsx's horizontal links — `icon` is
- * accepted but only rendered for `option` (dropdown and mobile-panel
+ * accepted but only rendered for `option` (the user menu's dropdown
  * items). An icon there also threw off `.activeLink`'s dot indicator: it
  * centers under the whole link, icon included, not just the label.
  */
@@ -59,6 +61,7 @@ export function NavLink({
   variant = "navbar",
   onNavigate,
   onClick,
+  className,
 }: NavLinkProps) {
   const currentRoute = usePathname();
   const active = isActiveRoute(currentRoute, href);
@@ -66,7 +69,7 @@ export function NavLink({
   return (
     <Link
       href={href}
-      className={cn(BASE_CLASS[variant], active && ACTIVE_CLASS[variant])}
+      className={cn(BASE_CLASS[variant], active && ACTIVE_CLASS[variant], className)}
       aria-current={active ? "page" : undefined}
       onClick={(event) => {
         onClick?.(event);

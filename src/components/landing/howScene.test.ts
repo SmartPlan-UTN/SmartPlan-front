@@ -69,6 +69,7 @@ describe("how beats", () => {
     const keys = [
       "emphasis",
       "type",
+      "connections",
       "shrink",
       "options",
       "choose",
@@ -98,6 +99,14 @@ describe("how beats", () => {
     // Type is done well before the signals rise.
     expect(getHowBeats(1, 0.24).type).toBeCloseTo(1, 2);
     expect(getHowBeats(1, 0.24).signals).toBe(0);
+  });
+
+  it("connects all fragments before clearing them for the options", () => {
+    expect(getHowBeats(1, 0.26).connections).toBe(0);
+    expect(getHowBeats(1, 0.46).connections).toBe(1);
+    expect(getHowBeats(1, 0.46).signals).toBe(1);
+    expect(getHowBeats(1, 0.56).signals).toBe(0);
+    expect(getHowBeats(1, 0.56).options).toBe(0);
   });
 
   it("holds every option until the composer has stepped back", () => {

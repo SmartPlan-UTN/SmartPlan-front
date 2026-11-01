@@ -17,6 +17,8 @@ export default defineConfig({
     },
   },
   test: {
+    // Local QA builds contain generated code, not test sources.
+    include: ['src/**/*.test.{ts,tsx}'],
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
     // Devuelve los espías a su implementación original después de cada test.

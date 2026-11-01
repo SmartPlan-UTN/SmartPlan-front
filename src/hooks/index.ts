@@ -18,6 +18,7 @@ export {
   type UseExplorationSearchResult,
 } from "./useExplorationSearch";
 export { useReducedMotion } from "./useReducedMotion";
+export { useScrollLock } from "./useScrollLock";
 export {
   useScrollProgress,
   type UseScrollProgressResult,
@@ -32,6 +33,11 @@ export {
   type LastSubmission,
 } from "./usePlanRequestPolling";
 export {
+  useRecentPlanRequests,
+  type RecentPlanRequestsStatus,
+  type UseRecentPlanRequestsResult,
+} from "./useRecentPlanRequests";
+export {
   useRecommendations,
   resetRecommendationsCache,
   type RecommendationsStatus,
@@ -44,10 +50,25 @@ export {
   type PlanSelectionOutcome,
   type UsePlanSelectionResult,
 } from "./usePlanSelection";
-export { useMyPlans, type UseMyPlansResult } from "./useMyPlans";
+export {
+  useNotifications,
+  NOTIFICATIONS_POLL_MS,
+  type UseNotificationsResult,
+} from "./useNotifications";
+export {
+  useOutings,
+  type UseOutingsResult,
+} from "./useOutings";
 export {
   useFeedbackSubmit,
   type FeedbackSubmitStatus,
   type FeedbackSubmitOutcome,
   type UseFeedbackSubmitResult,
 } from "./useFeedbackSubmit";
+export {
+  useReportContent,
+  REPORT_THANKS,
+  type ReportOutcome,
+  type UseReportContentResult,
+} from "./useReportContent";
+export { useToast, type UseToastResult } from "./useToast";

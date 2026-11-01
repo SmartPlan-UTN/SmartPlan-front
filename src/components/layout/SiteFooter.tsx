@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/ui";
-import { ROUTES } from "@/lib/routes";
+import { helpSectionRoute, ROUTES } from "@/lib/routes";
 
 import styles from "./footer.module.css";
 
@@ -25,7 +25,8 @@ const GROUPS = [
     links: [
       { label: "Mi perfil", href: ROUTES.profile },
       { label: "Favoritos", href: ROUTES.favorites },
-      { label: "Historial", href: ROUTES.history },
+      { label: "Mis planes", href: ROUTES.plans },
+      { label: "Mis salidas", href: ROUTES.outings },
       { label: "Preferencias", href: ROUTES.preferences },
     ],
   },
@@ -34,6 +35,14 @@ const GROUPS = [
     links: [
       { label: "Crear una cuenta", href: ROUTES.signup },
       { label: "Iniciar sesión", href: ROUTES.login },
+    ],
+  },
+  {
+    title: "Ayuda",
+    links: [
+      { label: "Manual de usuario", href: helpSectionRoute("manual") },
+      { label: "Preguntas frecuentes", href: helpSectionRoute("faq") },
+      { label: "Contacto", href: helpSectionRoute("contact") },
     ],
   },
 ] as const;

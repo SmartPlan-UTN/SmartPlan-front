@@ -7,13 +7,15 @@ export interface ContainerProps {
 }
 
 /**
- * Centers content at the 1200px max width (`--max-w`) with the vertical
- * section spacing (`--section-v`).
+ * Centers content at the 1200px max width (`--max-w`) with the page's
+ * vertical padding (`--page-pad-top` / `--page-pad-bottom`: the section
+ * spacing on wide viewports, tighter below 768px).
  *
  * Deliberately not part of the layout: some screens go full-bleed —the home
  * hero, the plan-generation waiting screen— and a container imposed from
- * above would force them to fight it. The layout provides the navbar and
- * the wave background; the screen decides its own width.
+ * above would force them to fight it. The layouts provide the navbar and
+ * (from the root layout) the wave background; the screen decides its own
+ * width.
  */
 export function Container({ children }: ContainerProps) {
   return <div className={styles.container}>{children}</div>;

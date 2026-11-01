@@ -1,0 +1,30 @@
+.section {
+  margin-top: var(--s-7);
+  padding-top: var(--s-6);
+  border-top: 1px solid var(--hairline);
+}
+
+.kicker {
+  margin: 0 0 var(--s-2);
+  color: var(--fg-2);
+}
+
+.heading {
+  margin: 0 0 var(--s-4);
+  font-size: var(--t-h3);
+  font-weight: var(--w-display);
+  letter-spacing: var(--track-h1);
+  line-height: 1.05;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: var(--s-4);
+}
+
+.more {
+  margin: var(--s-3) 0 0;
+  color: var(--fg-2);
+  font-size: var(--t-small);
+}

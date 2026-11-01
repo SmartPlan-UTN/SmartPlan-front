@@ -1,0 +1,262 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: var(--s-4);
+  background: color-mix(in srgb, var(--char) 62%, transparent);
+  backdrop-filter: blur(5px);
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  width: min(100%, 480px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: var(--s-6);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
+  animation: crop-dialog-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.header h2,
+.header p {
+  margin: 0;
+}
+
+.header h2 {
+  color: var(--fg-1);
+  font-size: var(--t-h4);
+  font-weight: var(--w-heading);
+}
+
+.eyebrow {
+  margin-bottom: var(--s-1) !important;
+  color: var(--ember);
+  font-size: var(--t-label);
+  font-weight: var(--w-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.description {
+  margin-top: var(--s-1) !important;
+  color: var(--fg-2);
+  font-size: var(--t-small);
+  line-height: 1.5;
+}
+
+.closeButton {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-btn);
+  background: transparent;
+  color: var(--fg-2);
+  cursor: pointer;
+}
+
+.closeButton:hover:not(:disabled) {
+  border-color: var(--ember-20);
+  color: var(--ember);
+}
+
+.closeButton:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.closeButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cropArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.viewport {
+  position: relative;
+  width: min(320px, calc(100vw - 96px));
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 4px solid var(--surface-card);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 25%, var(--ember-15), transparent 58%),
+    var(--surface);
+  box-shadow:
+    0 0 0 1px var(--hairline),
+    0 10px 28px color-mix(in srgb, var(--char) 16%, transparent);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.viewport:active {
+  cursor: grabbing;
+}
+
+.viewport:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 4px;
+}
+
+.cropImage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  max-width: none;
+  max-height: none;
+  pointer-events: none;
+  user-select: none;
+}
+
+.cropGuide {
+  position: absolute;
+  inset: 0;
+  border: 1px solid color-mix(in srgb, var(--white) 56%, transparent);
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--char) 12%, transparent);
+  pointer-events: none;
+}
+
+.loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--s-4);
+  color: var(--fg-2);
+  font-size: var(--t-small);
+  text-align: center;
+}
+
+.cropHint {
+  margin: 0;
+  color: var(--fg-3);
+  font-size: var(--t-label);
+  text-align: center;
+}
+
+.zoomControl {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 3rem;
+  align-items: center;
+  gap: var(--s-3);
+  color: var(--fg-2);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+}
+
+.zoomControl > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.zoomControl > span svg {
+  color: var(--ember);
+}
+
+.zoomControl input {
+  width: 100%;
+  accent-color: var(--ember);
+  cursor: pointer;
+}
+
+.zoomControl input:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 3px;
+}
+
+.zoomControl output {
+  color: var(--fg-1);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  margin: 0;
+  padding: var(--s-3);
+  border-radius: var(--r-btn);
+  background: color-mix(in srgb, var(--error) 10%, transparent);
+  color: var(--fg-1);
+  font-size: var(--t-small);
+  line-height: 1.45;
+}
+
+.error svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--error);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-2);
+}
+
+.spinner {
+  animation: crop-spin 800ms linear infinite;
+}
+
+@keyframes crop-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes crop-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 480px) {
+  .dialog {
+    gap: var(--s-4);
+    padding: var(--s-5);
+  }
+
+  .viewport {
+    width: min(280px, calc(100vw - 80px));
+  }
+
+  .actions > * {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog,
+  .spinner {
+    animation: none;
+  }
+}

@@ -30,23 +30,73 @@ function renderState(
  * two are different situations and these assert they behave differently.
  */
 describe("GenerationState (CU17)", () => {
+  it("puts the backend-confirmed stage in the main status line", () => {
+    render(
+      <GenerationState
+        phase="processing"
+        failure={null}
+        progressStage="searching"
+        onKeepWaiting={vi.fn()}
+        onRetry={vi.fn()}
+        onDiscard={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Buscando lugares que realmente encajen…" })).toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+    expect(screen.queryByText(/transcurridos|en esta etapa|estimamos/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Etapa confirmada")).toHaveTextContent("Buscando actividades");
+  });
+
+  it("reflects the backend processing state when detailed stages are unavailable", () => {
+    renderState("processing");
+
+    expect(screen.getByRole("heading", { name: "Pensando tu salida…" })).toBeInTheDocument();
+  });
+
   it("announces the wait to assistive technology while queued", () => {
     renderState("pending");
 
-    const card = screen.getByText(/tu pedido está en cola/i).closest("div");
+    const card = screen.getByText(/ya recibimos tu idea/i).closest("div");
     expect(card).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByRole("progressbar", { name: /generación en curso/i })).toBeInTheDocument();
+    expect(screen.queryByRole("list", { name: "Etapas confirmadas" })).not.toBeInTheDocument();
   });
 
   it("keeps waiting on a display timeout without discarding the request", async () => {
     const user = userEvent.setup();
     const { onKeepWaiting, onDiscard } = renderState("timedOut");
 
-    expect(screen.getByText(/sigue tardando más de lo esperado/i)).toBeInTheDocument();
+    expect(screen.getByText(/está tardando más de lo esperado/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /seguir esperando/i }));
 
     expect(onKeepWaiting).toHaveBeenCalledOnce();
     expect(onDiscard).not.toHaveBeenCalled();
+  });
+
+  it("keeps the queued heading when the delay notice appears", () => {
+    renderState("timedOut");
+    expect(screen.getByRole("heading", { name: "Ya recibimos tu idea" })).toBeInTheDocument();
+  });
+
+  it.each(["auto", "surprise"] as const)("does not announce acceptance during a delayed %s submission", async (mode) => {
+    const onKeepWaiting = vi.fn();
+    render(<GenerationState phase="submissionDelayed" mode={mode} failure={null}
+      onKeepWaiting={onKeepWaiting} onRetry={vi.fn()} onDiscard={vi.fn()} />);
+    expect(screen.getByRole("heading", { name: mode === "auto" ? "Enviando tu idea…" : "Preparando tu sorpresa" })).toBeInTheDocument();
+    expect(screen.queryByText("Ya recibimos tu idea")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Etapa confirmada")).not.toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole("button", { name: "Seguir esperando" }));
+    expect(onKeepWaiting).toHaveBeenCalledOnce();
+  });
+
+  it.each([true, false])("offers timeout recovery matching retry availability (%s)", (canRetry) => {
+    render(<GenerationState phase="failed" failure={{ code: "GENERATION_TIMEOUT", message: "ignored" }}
+      canRetry={canRetry} onKeepWaiting={vi.fn()} onRetry={vi.fn()} onDiscard={vi.fn()} />);
+    expect(screen.getByRole("alert")).toHaveTextContent(canRetry ? "Podés volver a intentarlo" : "Volvé al buscador para hacer una nueva búsqueda");
+    expect(Boolean(screen.queryByRole("button", { name: "Reintentar" }))).toBe(canRetry);
   });
 
   it("surfaces the service failure and retries the same request", async () => {
@@ -91,12 +141,22 @@ describe("GenerationState (CU19 surprise)", () => {
     ).toBeInTheDocument();
   });
 
-  it("maps a NO_LOCATION_AVAILABLE failure to the spec copy", () => {
+  it("explains unavailable requested experiences instead of suggesting another zone", () => {
+    render(<GenerationState phase="failed"
+      failure={{ code: "NO_VALID_COMBINATIONS", message: "ignored" }}
+      unsupportedExperiences={["Cine"]}
+      onKeepWaiting={vi.fn()} onRetry={vi.fn()} onDiscard={vi.fn()} />);
+    expect(screen.getByRole("heading", { name: "Todavía no podemos planificar cine" })).toBeVisible();
+    expect(screen.getByText(/nos faltan horarios o propuestas verificables/i)).toBeVisible();
+    expect(screen.queryByText(/probá con otra zona/i)).not.toBeInTheDocument();
+  });
+
+  it.each(["auto", "surprise"] as const)("shows no available plans for %s searches (CU17/CU19)", (mode) => {
     render(
       <GenerationState
         phase="failed"
-        failure={{ code: "NO_LOCATION_AVAILABLE", message: "ignored" }}
-        mode="surprise"
+        failure={{ code: "NO_VALID_COMBINATIONS", message: "ignored" }}
+        mode={mode}
         onKeepWaiting={vi.fn()}
         onRetry={vi.fn()}
         onDiscard={vi.fn()}
@@ -104,7 +164,11 @@ describe("GenerationState (CU19 surprise)", () => {
     );
 
     expect(
-      screen.getByText(/no encontramos suficientes actividades cerca/i),
+      screen.getByText("No hay planes disponibles para esa consulta"),
     ).toBeInTheDocument();
+    expect(screen.getByText("Sin resultados")).toBeInTheDocument();
+    expect(screen.getByText(/probá con otra zona/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /reintentar/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /volver al buscador/i })).toBeInTheDocument();
   });
 });

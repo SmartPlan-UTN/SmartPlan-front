@@ -1,0 +1,185 @@
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { MediaGallery } from './MediaGallery';
+import { MediaGalleryManager } from './MediaGalleryManager';
+import { sortImages } from './sortImages';
+
+const listMedia = vi.hoisted(() => vi.fn());
+const uploadMedia = vi.hoisted(() => vi.fn());
+const deleteMedia = vi.hoisted(() => vi.fn());
+
+vi.mock('@/lib/api/media', () => ({
+  listMedia,
+  uploadMedia,
+  updateMedia: vi.fn(),
+  deleteMedia,
+  downloadMedia: vi.fn().mockRejectedValue(new Error('image unavailable')),
+}));
+
+function photo(id: number, isPrimary = false) {
+  return { id, url: `/api/media/plan/${id}`, isPrimary, displayOrder: id, createdAt: '2026-09-30' };
+}
+
+describe('MediaGalleryManager', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    let nextPreview = 0;
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => `blob:preview-${++nextPreview}`) });
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: vi.fn() });
+  });
+
+  it('invites to add photos instead of reporting an empty gallery', async () => {
+    listMedia.mockResolvedValue([]);
+    render(<MediaGalleryManager target="plan" resourceId={7} resourceName="Tarde de vinos" />);
+
+    expect(await screen.findByText('Sumá fotos si querés')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Fotos de tu salida' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Agregar fotos')).toBeEnabled();
+    expect(screen.queryByText(/todavía no hay/i)).not.toBeInTheDocument();
+  });
+
+  it('keeps the photos that uploaded and names the one that failed', async () => {
+    listMedia.mockResolvedValueOnce([]).mockResolvedValueOnce([photo(3, true)]);
+    uploadMedia.mockRejectedValueOnce(new Error('S3 unavailable')).mockResolvedValueOnce({ id: 3 });
+    render(<MediaGalleryManager target="feedback" resourceId={7} resourceName="experiencia" />);
+
+    await screen.findByText('Sumá fotos si querés');
+    const input = await screen.findByLabelText('Agregar fotos');
+    await userEvent.upload(input, [
+      new File(['first'], 'fallo.png', { type: 'image/png' }),
+      new File(['second'], 'bien.png', { type: 'image/png' }),
+    ]);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('fallo.png');
+    expect(screen.getByText('1 de 5')).toBeInTheDocument();
+    expect(uploadMedia).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(URL.revokeObjectURL).toHaveBeenCalledTimes(2));
+  });
+
+  it('stops offering to add once the limit is reached', async () => {
+    listMedia.mockResolvedValue(Array.from({ length: 5 }, (_, index) => photo(index + 1, index === 0)));
+    render(<MediaGalleryManager target="feedback" resourceId={7} resourceName="experiencia" />);
+
+    expect(await screen.findByText('5 de 5')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Agregar fotos')).not.toBeInTheDocument();
+    expect(screen.getByText('Llegaste al máximo de 5 fotos.')).toBeInTheDocument();
+  });
+
+  it('offers a retry without claiming photos were saved when every upload fails', async () => {
+    listMedia.mockResolvedValue([]);
+    uploadMedia.mockRejectedValueOnce(new Error('Upload failed'));
+    render(<MediaGalleryManager target="activity" resourceId={3} resourceName="Actividad" />);
+    await screen.findByText('Sumá fotos si querés');
+
+    await userEvent.upload(screen.getByLabelText('Agregar fotos'),
+      new File(['photo'], 'fallo.png', { type: 'image/png' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('fallo.png');
+    expect(alert).toHaveTextContent('Intentá de nuevo.');
+    expect(alert).not.toHaveTextContent('quedaron guardadas');
+    expect(screen.getByLabelText('Agregar fotos')).toBeEnabled();
+  });
+
+  it('marks the cover and asks before deleting a photo', async () => {
+    listMedia.mockResolvedValueOnce([photo(1, true), photo(2)]).mockResolvedValueOnce([photo(1, true)]);
+    deleteMedia.mockResolvedValue(undefined);
+    render(<MediaGalleryManager target="plan" resourceId={7} resourceName="Tarde de vinos" />);
+
+    expect(await screen.findByText('Portada')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Usar como portada' })).toHaveLength(1);
+
+    await userEvent.click(screen.getAllByRole('button', { name: 'Eliminar foto' })[1]);
+    expect(deleteMedia).not.toHaveBeenCalled();
+    const confirm = screen.getByRole('group', { name: 'Confirmar eliminación' });
+    await userEvent.click(within(confirm).getByRole('button', { name: 'Eliminar' }));
+
+    expect(deleteMedia).toHaveBeenCalledWith('plan', 7, 2);
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /ver foto/i })).toHaveLength(1));
+  });
+
+  it('reloads when another gallery changed the same resource', async () => {
+    listMedia.mockResolvedValueOnce([]).mockResolvedValueOnce([photo(1, true)]);
+    const { rerender } = render(
+      <MediaGalleryManager target="plan" resourceId={7} resourceName="Tarde de vinos" refreshKey={0} />,
+    );
+    await screen.findByText('Sumá fotos si querés');
+
+    rerender(
+      <MediaGalleryManager target="plan" resourceId={7} resourceName="Tarde de vinos" refreshKey={1} />,
+    );
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Ver foto 1 de 1' })).toBeInTheDocument());
+    expect(listMedia).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('MediaGallery', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('draws nothing while there are no photos', async () => {
+    listMedia.mockResolvedValue([]);
+    const { container } = render(<MediaGallery target="plan" resourceId={7} resourceName="Tarde de vinos" />);
+
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
+    expect(screen.queryByText(/sin imágenes/i)).not.toBeInTheDocument();
+  });
+
+  it('opens a photo full size and moves between photos', async () => {
+    listMedia.mockResolvedValue([photo(1, true), photo(2), photo(3)]);
+    render(<MediaGallery target="plan" resourceId={7} resourceName="Tarde de vinos" />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Ver foto 2 de 3' }));
+    const dialog = screen.getByRole('dialog', { name: 'Fotos de Tarde de vinos' });
+    expect(within(dialog).getByText('2 / 3')).toBeInTheDocument();
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Foto siguiente' }));
+    expect(within(dialog).getByText('3 / 3')).toBeInTheDocument();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(within(dialog).getByText('1 / 3')).toBeInTheDocument();
+
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('shows a retryable error instead of making a failure look empty', async () => {
+    listMedia.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce([]);
+    const user = userEvent.setup();
+    const { container } = render(
+      <MediaGallery target="plan" resourceId={7} resourceName="Tarde de vinos" />,
+    );
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('No pudimos cargar las fotos.');
+    await user.click(within(alert).getByRole('button', { name: 'Reintentar' }));
+
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
+    expect(listMedia).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps keyboard focus inside the lightbox', async () => {
+    listMedia.mockResolvedValue([photo(1, true), photo(2)]);
+    const user = userEvent.setup();
+    render(<MediaGallery target="plan" resourceId={7} resourceName="Tarde de vinos" />);
+    await user.click(await screen.findByRole('button', { name: 'Ver foto 1 de 2' }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Fotos de Tarde de vinos' });
+    const close = within(dialog).getByRole('button', { name: 'Cerrar' });
+    const next = within(dialog).getByRole('button', { name: 'Foto siguiente' });
+    expect(close).toHaveFocus();
+
+    await user.tab({ shift: true });
+    expect(next).toHaveFocus();
+  });
+});
+
+describe('sortImages', () => {
+  it('puts the selected cover first only when the presentation requests it', () => {
+    const ordered = [photo(1), photo(2, true)];
+
+    expect(sortImages(ordered).map((image) => image.id)).toEqual([1, 2]);
+    expect(sortImages(ordered, true).map((image) => image.id)).toEqual([2, 1]);
+  });
+});

@@ -52,6 +52,12 @@ export interface LocationOption {
 }
 /** Place catalog projection returned by `GET /places`. */
 export interface PlaceOption {
+  /**
+   * `GET /admin/places` only: whether the public sees it. A published place
+   * stays hidden until it has an approved activity.
+   */
+  visible?: boolean;
+  images?: import('./media').MediaImage[];
   id: number;
   name: string;
   description: string | null;
@@ -68,6 +74,7 @@ export interface PlaceOption {
 }
 
 export interface PlaceListParams {
+  scope?: 'plannable';
   search?: string;
   departmentId?: number;
   page?: number;

@@ -1,6 +1,11 @@
 .hero {
   position: relative;
   isolation: isolate;
+  /* Anchor for the results handoff: `LandingHero` scrolls this section
+     into view (`block: "start"`) the instant a generation completes, so
+     the header + first result render clear of the fixed navbar instead of
+     wherever the viewport happened to be scrolled inside the hero. */
+  scroll-margin-top: var(--navbar-h);
   display: grid;
   /* `minmax(0, 1fr)` — the 0 min keeps the track from being pulled wider
      than the viewport by a nowrap headline (grid + percentage-width child

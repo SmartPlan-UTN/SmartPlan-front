@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
 
+import { PageKicker } from "@/components/layout";
 import { Button, Icon } from "@/components/ui";
 import {
   ApiError,
@@ -17,6 +18,8 @@ import type {
 } from "@/types";
 
 import { categoryPresentation } from "./categoryPresentation";
+import { LeavePreferencesDialog } from "./LeavePreferencesDialog";
+import { usePreferencesNavigation } from "./usePreferencesNavigation";
 import { DeviceLocationField } from "./DeviceLocationField";
 import { InterestTile } from "./InterestTile";
 import { MaxDistanceField } from "./MaxDistanceField";
@@ -36,6 +39,8 @@ const SKELETON_TILE_COUNT = 10;
 const GENERIC_SAVE_ERROR =
   "No pudimos guardar tus preferencias. Intentá de nuevo.";
 const CONFIRM_AREA_ERROR = "Confirmá tu ubicación preferida antes de guardar.";
+const LOCATING_AREA_ERROR =
+  "Esperá a que terminemos de ubicar la zona en el mapa.";
 const TOTAL_FIELDS = 5;
 
 type LoadStatus = "loading" | "loaded" | "error";
@@ -72,17 +77,41 @@ function parseBudget(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+/** The stored point is where the user tapped, so it counts as well as the place. */
 function samePlace(a: PreferredArea | null, b: PreferredArea | null): boolean {
-  return (a?.placeId ?? null) === (b?.placeId ?? null);
+  if (a === null || b === null) return a === b;
+  return (
+    a.placeId === b.placeId &&
+    a.latitude === b.latitude &&
+    a.longitude === b.longitude
+  );
 }
 
-function PreferencesHeader() {
+function PreferencesHeader({ onboarding }: { onboarding: boolean }) {
+  if (onboarding) {
+    return (
+      <header className={`${styles.pageHeader} sp-page-intro`}>
+        <PageKicker>Tu cuenta ya está lista</PageKicker>
+        <h1 className="sp-page-title">
+          Contanos un poco de vos antes de{" "}
+          <span className="sp-page-title-accent">arrancar</span>.
+        </h1>
+        <p className="sp-page-lead">
+          Todo es opcional: completá lo que quieras o omitilo por ahora. Después
+          podés cambiarlo desde Preferencias.
+        </p>
+      </header>
+    );
+  }
+
   return (
-    <header className={styles.pageHeader}>
-      <h1 className={styles.heading}>
-        Afiná los planes que <span>smartplan</span> arma para vos.
+    <header className={`${styles.pageHeader} sp-page-intro`}>
+      <PageKicker>Para recomendarte mejor</PageKicker>
+      <h1 className="sp-page-title">
+        Afiná los planes que <span className="sp-page-title-accent">smartplan</span>{" "}
+        arma para vos.
       </h1>
-      <p className={styles.subtitle}>
+      <p className="sp-page-lead">
         Tus respuestas nos ayudan a recomendar mejor. Podés cambiarlas cuando
         quieras.
       </p>
@@ -115,10 +144,10 @@ function presentCategories(categories: CategoryOption[]): PresentedCategory[] {
     });
 }
 
-function LoadingState() {
+function LoadingState({ onboarding }: { onboarding: boolean }) {
   return (
     <div className={styles.experience}>
-      <PreferencesHeader />
+      <PreferencesHeader onboarding={onboarding} />
       <p className={styles.srOnly} role="status">
         Cargando tus preferencias…
       </p>
@@ -134,10 +163,18 @@ function LoadingState() {
   );
 }
 
-function LoadErrorState({ onRetry }: { onRetry: () => void }) {
+function LoadErrorState({
+  onboarding,
+  onRetry,
+  onSkip,
+}: {
+  onboarding: boolean;
+  onRetry: () => void;
+  onSkip?: () => void;
+}) {
   return (
     <div className={styles.experience}>
-      <PreferencesHeader />
+      <PreferencesHeader onboarding={onboarding} />
       <div className={styles.loadError} role="alert">
         <span className={styles.errorIcon} aria-hidden="true">
           <Icon name="circle-alert" size={24} />
@@ -149,6 +186,11 @@ function LoadErrorState({ onRetry }: { onRetry: () => void }) {
         <Button type="button" variant="primary" onClick={onRetry}>
           Reintentar
         </Button>
+        {onSkip ? (
+          <Button type="button" variant="ghostLight" onClick={onSkip}>
+            Omitir por ahora
+          </Button>
+        ) : null}
       </div>
     </div>
   );
@@ -156,8 +198,22 @@ function LoadErrorState({ onRetry }: { onRetry: () => void }) {
 
 const STEP_ORDER: PreferenceStep[] = ["interests", "outing", "location"];
 
+interface PreferencesFormProps {
+  /**
+   * First setup right after signing up (US02/US8). Without it the form edits
+   * the profile in place (PAN 15). With it, a successful save calls `onSaved`
+   * instead of showing a toast, "Omitir por ahora" calls `onSkip`, and the
+   * discard/reset actions are hidden. Validation and payload are the same.
+   */
+  onboarding?: {
+    onSaved: () => void;
+    onSkip: () => void;
+  };
+}
+
 /** CU8/CU18 · PAN 15 — Edit and personalize user preferences. */
-export function PreferencesForm() {
+export function PreferencesForm({ onboarding }: PreferencesFormProps = {}) {
+  const formId = useId();
   const [status, setStatus] = useState<LoadStatus>("loading");
   const [retryToken, setRetryToken] = useState(0);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
@@ -172,6 +228,7 @@ export function PreferencesForm() {
   const [areaText, setAreaText] = useState("");
   const [area, setArea] = useState<PreferredArea | null>(null);
   const [areaStatus, setAreaStatus] = useState<PreferredAreaStatus>("empty");
+  const [areaLocating, setAreaLocating] = useState(false);
   const [savedUseDevice, setSavedUseDevice] = useState(false);
   const [useDevice, setUseDevice] = useState(false);
   const [savedMaxDistance, setSavedMaxDistance] = useState<number | null>(null);
@@ -180,6 +237,9 @@ export function PreferencesForm() {
   const [activeStep, setActiveStep] = useState<PreferenceStep>("interests");
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // State updates are async: a second submit in the same tick would still
+  // read `saving === false`, so the in-flight guard lives in a ref.
+  const savingRef = useRef(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [toast, setToast] = useState<{
@@ -309,10 +369,11 @@ export function PreferencesForm() {
     (selectedIds.size > 0 ? 1 : 0) +
     (parsedBudget !== null && parsedBudget > 0 ? 1 : 0) +
     (people !== null ? 1 : 0) +
-    (area !== null ? 1 : 0) +
+    (area !== null || useDevice ? 1 : 0) +
     (maxDistance !== null ? 1 : 0);
 
   const busy = saving || resetting;
+  const navigation = usePreferencesNavigation(status === "loaded" && isDirty && !onboarding, busy);
 
   function toggleCategory(categoryId: number) {
     setFormError(null);
@@ -357,7 +418,9 @@ export function PreferencesForm() {
       setSavedMaxDistance(updated.maxDistanceKm);
       setMaxDistance(updated.maxDistanceKm);
       setFormError(null);
-      setToast({ key: Date.now(), text: successToast, state: "visible" });
+      if (!onboarding) {
+        setToast({ key: Date.now(), text: successToast, state: "visible" });
+      }
       return true;
     } catch (error) {
       setFormError(
@@ -369,21 +432,28 @@ export function PreferencesForm() {
     }
   }
 
-  async function submit() {
+  async function submit(): Promise<boolean> {
     setFormError(null);
-    if (!isDirty) return;
+    if (!isDirty) return true;
     if (budgetError) {
       setActiveStep("outing");
-      return;
+      return false;
+    }
+    if (areaLocating) {
+      setActiveStep("location");
+      setFormError(LOCATING_AREA_ERROR);
+      return false;
     }
     if (areaPending) {
       setActiveStep("location");
       setFormError(CONFIRM_AREA_ERROR);
-      return;
+      return false;
     }
 
+    if (savingRef.current) return false;
+    savingRef.current = true;
     setSaving(true);
-    await persist(
+    const saved = await persist(
       {
         categoryIds: [...selectedIds],
         usualBudget: parsedBudget,
@@ -394,7 +464,13 @@ export function PreferencesForm() {
       },
       "Perfil de preferencias guardado",
     );
+    // Released even when onboarding navigates away: the saved profile is no
+    // longer dirty, so Save stays disabled, and a navigation that doesn't
+    // happen must not leave the form locked.
+    savingRef.current = false;
     setSaving(false);
+    if (saved && onboarding) onboarding.onSaved();
+    return saved;
   }
 
   async function confirmReset() {
@@ -409,10 +485,14 @@ export function PreferencesForm() {
     void submit();
   }
 
-  if (status === "loading") return <LoadingState />;
+  if (status === "loading") return <LoadingState onboarding={!!onboarding} />;
   if (status === "error") {
     return (
-      <LoadErrorState onRetry={() => setRetryToken((token) => token + 1)} />
+      <LoadErrorState
+        onboarding={!!onboarding}
+        onRetry={() => setRetryToken((token) => token + 1)}
+        onSkip={onboarding?.onSkip}
+      />
     );
   }
 
@@ -423,8 +503,8 @@ export function PreferencesForm() {
 
   return (
     <>
-      <form className={styles.experience} onSubmit={handleSubmit} noValidate>
-        <PreferencesHeader />
+      <form id={formId} className={styles.experience} onSubmit={handleSubmit} noValidate>
+        <PreferencesHeader onboarding={!!onboarding} />
         <div className={styles.workflow}>
           <PreferenceSteps
             activeStep={activeStep}
@@ -432,7 +512,7 @@ export function PreferencesForm() {
             interestCount={selectedIds.size}
             budgetValue={parsedBudget}
             peopleValue={people}
-            areaLabel={area?.label ?? null}
+            areaLabel={area?.label ?? (useDevice ? "Ubicación del dispositivo" : null)}
             maxDistanceKm={maxDistance}
             onChange={setActiveStep}
           />
@@ -580,6 +660,14 @@ export function PreferencesForm() {
                       setAreaStatus(next);
                       setFormError(null);
                     }}
+                    onLocatingChange={(locating) => {
+                      setAreaLocating(locating);
+                      if (!locating) {
+                        setFormError((current) =>
+                          current === LOCATING_AREA_ERROR ? null : current,
+                        );
+                      }
+                    }}
                   />
                 </div>
 
@@ -589,6 +677,7 @@ export function PreferencesForm() {
                   </span>
                   <DeviceLocationField
                     value={useDevice}
+                    saved={savedUseDevice}
                     disabled={busy}
                     onChange={(value) => {
                       setUseDevice(value);
@@ -643,13 +732,18 @@ export function PreferencesForm() {
               ) : (
                 <p className={styles.readyMessage}>
                   <Icon name="circle-check" size={18} />
-                  Ya podés guardar tu perfil.
+                  {areaLocating ? "Esperá mientras ubicamos tu zona."
+                    : areaPending ? "Confirmá la zona para poder guardar."
+                    : isDirty ? "Guardá los cambios para aplicarlos."
+                    : "Tus preferencias están guardadas."}
                 </p>
               )}
             </div>
           </section>
         </div>
         <PreferencesActions
+          formId={formId}
+          onboarding={!!onboarding}
           dirty={isDirty}
           saving={saving}
           busy={busy}
@@ -660,10 +754,20 @@ export function PreferencesForm() {
               total={TOTAL_FIELDS}
             />
           }
-          onDiscard={discardChanges}
-          onReset={() => setResetOpen(true)}
+          {...(onboarding
+            ? { onSkip: onboarding.onSkip }
+            : {
+                onDiscard: discardChanges,
+                onReset: () => setResetOpen(true),
+              })}
         />
       </form>
+
+      {navigation.pending ? (
+        <LeavePreferencesDialog busy={busy} error={formError ?? budgetError}
+          onCancel={navigation.cancel} onDiscard={navigation.proceed}
+          onSave={() => { void submit().then((saved) => { if (saved) navigation.proceed(); }); }} />
+      ) : null}
 
       <ResetPreferencesDialog
         open={resetOpen}

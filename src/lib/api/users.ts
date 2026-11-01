@@ -19,6 +19,8 @@ export async function updatePreferences(
 export interface UpdateProfileData {
   name: string;
   lastName: string;
+  username?: string;
+  bio?: string;
 }
 
 export async function getProfile(): Promise<UserProfile> {

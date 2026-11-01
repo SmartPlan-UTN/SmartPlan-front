@@ -1,0 +1,119 @@
+/* ================================================================
+   Decision trail — the planner's real funnel, read left to right as the
+   narrowing of a decision.
+   ================================================================ */
+
+.trail {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: var(--s-5);
+  align-items: start;
+  width: min(100%, 1240px);
+  margin: clamp(40px, 6vw, 72px) auto 0;
+  padding: var(--s-5) 0;
+  border-block: 1px solid var(--hairline);
+}
+
+.eyebrow {
+  margin: 6px 0 0;
+  color: var(--ember);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.steps {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: var(--s-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  animation: step-in 520ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(240ms + var(--i, 0) * 170ms);
+}
+
+/* A thread through the figures: the funnel narrows to the right. */
+.step + .step::before {
+  content: "";
+  position: absolute;
+  top: 24px;
+  left: calc(var(--s-4) * -1 + 4px);
+  width: calc(var(--s-4) - 8px);
+  height: 1.5px;
+  background: var(--hairline);
+}
+
+.value {
+  color: var(--fg-1);
+  font-family: var(--font-display-serif);
+  font-size: clamp(34px, 3.6vw, 48px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.step:last-child .value {
+  color: var(--ember);
+}
+
+.label {
+  max-width: 20ch;
+  color: var(--fg-2);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+@keyframes step-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 960px) {
+  .trail {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-3);
+  }
+
+  .steps {
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    row-gap: var(--s-4);
+  }
+
+  .step + .step::before {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .steps {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--s-4) var(--s-3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step {
+    animation: none;
+  }
+}

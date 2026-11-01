@@ -6,16 +6,20 @@
 
 export { AppShell, type AppShellProps } from "./AppShell";
 export { AppBackground } from "./AppBackground";
-export { moodForRoute } from "./section-mood";
 export { Container, type ContainerProps } from "./Container";
 export { Screen, type ScreenProps } from "./Screen";
+export { PageKicker, type PageKickerProps } from "./PageKicker";
 export { NavLink, type NavLinkProps, type LinkVariant } from "./NavLink";
 export {
   MAIN_LINKS,
   USER_LINKS,
   type NavigationLink,
 } from "./links";
-export { UserMenu } from "./UserMenu";
+export {
+  LogoutConfirmModal,
+  UserMenu,
+  type LogoutConfirmModalProps,
+} from "./UserMenu";
 export { Navbar } from "./Navbar";
 export { SiteFooter } from "./SiteFooter";
 export {

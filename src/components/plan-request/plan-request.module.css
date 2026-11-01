@@ -1,0 +1,45 @@
+.page {
+  /* Reserve the request search bar above the fixed mobile map controls. */
+  --results-map-offset: var(--s-7);
+  width: min(100%, 1480px);
+  min-height: calc(100svh - var(--navbar-h));
+  margin-inline: auto;
+  /* The navbar is sticky and already takes its own height. */
+  padding: var(--s-3) clamp(var(--s-3), 3vw, var(--s-7)) var(--s-7);
+  /* The page reads as one warm sheet of paper, not a stack of widgets. */
+  background:
+    radial-gradient(60% 40% at 92% 0%, rgba(232, 93, 32, 0.07), transparent 70%),
+    transparent;
+}
+
+.resultsContent,
+.waitContent {
+  width: 100%;
+}
+
+.otherProposals {
+  width: min(100%, 1240px);
+  margin: var(--s-7) auto var(--s-4);
+  color: var(--fg-2);
+  font-size: var(--t-h3);
+  font-weight: var(--w-display);
+}
+
+.refiningNote {
+  width: min(100%, 1240px);
+  margin: 0 auto var(--s-4);
+  padding: 10px 16px;
+  border-radius: var(--r-card-sm);
+  background: var(--ember-10);
+  color: var(--fg-1);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+@media (max-width: 680px) {
+  .page {
+    padding-top: var(--s-2);
+    padding-inline: var(--s-3);
+    padding-bottom: calc(var(--mobile-nav-h) + var(--s-4) + env(safe-area-inset-bottom));
+  }
+}

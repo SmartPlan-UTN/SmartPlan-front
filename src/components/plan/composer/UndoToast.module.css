@@ -1,0 +1,34 @@
+@keyframes toast-in-wide {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* `div.` outranks the base toast rule whatever order the sheets load in.
+   On a wide screen it sits under the route column, where the change was
+   made, instead of over the catalog's pagination. */
+@media (min-width: 900px) {
+  div.placement {
+    right: max(
+      var(--s-5),
+      calc((100vw - var(--max-w)) / 2 + var(--s-5))
+    );
+    left: auto;
+    transform: none;
+    animation-name: toast-in-wide;
+  }
+}
+
+/* Above the floating totals bar and the mobile navigation. */
+@media (max-width: 899px) {
+  div.placement {
+    bottom: calc(
+      var(--mobile-nav-h) + 96px + var(--s-2) + env(safe-area-inset-bottom)
+    );
+  }
+}

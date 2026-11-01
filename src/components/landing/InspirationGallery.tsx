@@ -284,7 +284,7 @@ function StaticTile({ tile, eager }: { tile: GalleryTile; eager?: boolean }) {
           src={image.src}
           alt={image.alt}
           fill
-          sizes={tile.sizes}
+          sizes={eager ? "(max-width: 900px) 92vw, 1280px" : "(max-width: 900px) 46vw, 640px"}
           className={styles.photo}
           // Never `priority`: the hero owns the LCP and this must not
           // compete with it for bandwidth. The lead is only un-lazied

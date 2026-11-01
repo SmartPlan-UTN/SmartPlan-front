@@ -434,7 +434,7 @@ function StaticStory() {
                       src={image.src}
                       alt={image.alt}
                       fill
-                      sizes="(max-width: 900px) 92vw, 40vw"
+                      sizes="(max-width: 900px) 32vw, 760px"
                       loading="lazy"
                       decoding="async"
                       style={image.focus ? { objectPosition: image.focus } : undefined}

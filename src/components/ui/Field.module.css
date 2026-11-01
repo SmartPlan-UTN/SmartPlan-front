@@ -33,8 +33,9 @@
   width: 100%;
   /* Literal px, not --s-3 (12px): the v2 prototype pads inputs 14px, not
      12 — a small but consistent enough gap to throw off the whole field's
-     proportions next to the design. */
-  padding: 13px 14px;
+     proportions next to the design. The block padding is overridable so
+     the auth forms can tighten it on short screens. */
+  padding: var(--field-padding-block, 13px) 14px;
   border: 1.5px solid var(--hairline);
   border-radius: var(--r-card-sm);
   background: color-mix(in srgb, var(--cream) 70%, transparent);

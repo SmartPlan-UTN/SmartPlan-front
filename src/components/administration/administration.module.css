@@ -9,6 +9,92 @@
   margin-bottom: var(--s-1);
 }
 
+/* Title on the left, range and report on the right: the dashboard's header
+   layout (AdminDashboard.module.css), so both screens read the same. */
+.headerRow {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-4);
+}
+
+/* A long title wraps onto two lines instead of pushing the controls below
+   it; they only drop under the title on narrow screens. */
+.headerRow > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.headerRow > .headerActions {
+  flex: none;
+}
+
+@media (max-width: 1100px) {
+  .headerRow {
+    flex-wrap: wrap;
+  }
+}
+
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.rangeGroup {
+  display: flex;
+  flex-shrink: 0;
+  gap: 3px;
+  align-self: flex-start;
+  margin-top: var(--s-1);
+  padding: 4px;
+  border-radius: var(--r-card-sm);
+  background: color-mix(in srgb, var(--char) 6%, transparent);
+}
+
+.rangeBtn {
+  padding: 7px 15px;
+  border: none;
+  border-radius: var(--r-btn);
+  background: transparent;
+  color: var(--fg-2);
+  font-family: var(--font);
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 150ms ease, background 150ms ease, box-shadow 150ms ease;
+}
+
+.rangeBtn:hover {
+  color: var(--fg-1);
+}
+
+.rangeBtn:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.rangeBtnActive {
+  background: var(--surface-card);
+  color: var(--ember);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--char) 10%, transparent);
+}
+
+.createIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--ember-10);
+  color: var(--ember);
+}
+
 .eyebrow {
   display: flex;
   align-items: center;
@@ -31,7 +117,7 @@
 
 .kpiGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 18px;
 }
 
@@ -66,6 +152,7 @@
 .kpiIcon_ember { background: var(--ember-15); color: var(--ember); }
 .kpiIcon_success { background: var(--success-15); color: var(--success); }
 .kpiIcon_electric { background: var(--electric-15); color: var(--electric); }
+.kpiIcon_warning { background: var(--warning-15); color: var(--warning-ink); }
 
 .kpiLabel,
 .kpiValue,
@@ -97,6 +184,7 @@
 .kpiDetail_ember { color: var(--ember); }
 .kpiDetail_success { color: var(--success); }
 .kpiDetail_electric { color: var(--electric); }
+.kpiDetail_warning { color: var(--warning-ink); }
 
 .toolbar {
   display: flex;
@@ -183,7 +271,7 @@
 }
 
 .table th {
-  padding: 14px 20px;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--hairline);
   color: var(--fg-3);
   font-size: 11.5px;
@@ -234,7 +322,7 @@
 }
 
 .table td {
-  padding: var(--s-4) 20px;
+  padding: var(--s-4) 16px;
   border-bottom: 1px solid var(--hairline);
   color: var(--fg-1);
   font-size: 15px;
@@ -264,7 +352,7 @@
   width: 100%;
   min-height: 72px;
   min-width: 200px;
-  padding: var(--s-4) 20px;
+  padding: var(--s-4) 16px;
   border: 0;
   border-radius: var(--r-btn);
   background: transparent;
@@ -276,7 +364,12 @@
   cursor: pointer;
 }
 
-.userCell:hover {
+.clickableRow {
+  cursor: pointer;
+}
+
+.userCell:hover,
+.clickableRow:hover .userCell {
   color: var(--ember);
 }
 
@@ -285,28 +378,15 @@
   outline-offset: 3px;
 }
 
-.avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
-  border-radius: var(--r-chip);
-  font-size: 14.5px;
-  font-weight: var(--w-display);
-}
-
-.avatar_0 { background: var(--ember-15); color: var(--ember); }
-.avatar_1 { background: var(--electric-15); color: var(--electric); }
-.avatar_2 { background: var(--gold-22); color: var(--rating-ink); }
-.avatar_3 { background: var(--success-15); color: var(--success); }
-.avatar_4 { background: var(--warning-15); color: var(--warning-ink); }
-.avatar_5 { background: color-mix(in srgb, var(--char) 8%, transparent); color: var(--fg-2); }
-
 .secondaryCell {
   color: var(--fg-2) !important;
   font-size: 14.5px !important;
+}
+
+/* A long email may break instead of widening the table past the card, which
+   would leave the Estado column under the pinned actions column. */
+.emailCell {
+  overflow-wrap: anywhere;
 }
 
 .roleBadge {
@@ -341,7 +421,6 @@
 
 .status_active { background: var(--success-15); color: var(--success); }
 .status_suspended { background: var(--warning-15); color: var(--warning-ink); }
-.status_banned { background: color-mix(in srgb, var(--error) 12%, transparent); color: var(--error); }
 
 .actionsHeading {
   position: sticky;
@@ -431,14 +510,6 @@
   background: color-mix(in srgb, var(--char) 5%, transparent);
 }
 
-.actionsPopover .dangerAction {
-  color: var(--error);
-}
-
-.actionsPopover .dangerAction:hover {
-  background: color-mix(in srgb, var(--error) 8%, transparent);
-}
-
 .state {
   display: flex;
   min-height: 270px;
@@ -486,6 +557,9 @@
   z-index: 300;
   display: grid;
   place-items: center;
+  overflow-y: auto;
+  /* The wheel scrolls the dialog, never the page behind the overlay. */
+  overscroll-behavior: contain;
   padding: var(--s-4);
   background: color-mix(in srgb, var(--char) 58%, transparent);
   -webkit-backdrop-filter: blur(4px);
@@ -494,6 +568,11 @@
 
 .dialog {
   width: min(100%, 440px);
+  /* A tall form (e.g. "Nuevo usuario") scrolls inside the dialog instead of
+     running past the bottom of the screen. */
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: var(--s-6);
   border: 1px solid var(--hairline);
   border-radius: var(--r-card);
@@ -716,6 +795,12 @@
   margin-top: 0;
 }
 
+@media (max-width: 1320px) {
+  .kpiGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 900px) {
   .kpiGrid {
     grid-template-columns: 1fr;
@@ -723,6 +808,18 @@
 
   .kpiCard {
     padding: var(--s-4);
+  }
+}
+
+@media (max-width: 600px) {
+  .headerActions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .headerActions .rangeGroup {
+    align-self: stretch;
   }
 }
 

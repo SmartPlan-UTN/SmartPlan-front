@@ -88,6 +88,19 @@ button.resendButton { border-width: 1.5px; border-color: var(--ember); color: va
   font-size: var(--t-small);
 }
 
+.formErrorLink {
+  color: inherit;
+  font-weight: var(--w-label);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.formErrorLink:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 .formError svg {
   flex-shrink: 0;
   color: var(--error);
@@ -182,6 +195,99 @@ button.resendButton { border-width: 1.5px; border-color: var(--ember); color: va
   gap: var(--s-3);
 }
 
+/* ── RegisterForm-only: password + confirmation ──────────────────────
+   Side by side from tablet up, with the strength meter and requirements
+   spanning both columns underneath, so the longest form in the app fits a
+   laptop screen without scrolling. Narrow cards (phones, and tablets where
+   the photo panel takes half the width) keep one column, with the hints
+   right under the password they describe — hence a container query on the
+   card rather than a viewport breakpoint. */
+.passwordGrid {
+  display: grid;
+  grid-template-areas:
+    "password"
+    "hints"
+    "confirm";
+  row-gap: 14px;
+}
+
+.passwordField {
+  grid-area: password;
+}
+
+.passwordHints {
+  grid-area: hints;
+  /* The password Field already reserves its error line above, so the
+     meter's own top margin would double the space. */
+  margin-top: -8px;
+}
+
+.confirmField {
+  grid-area: confirm;
+}
+
+@container auth-card (min-width: 440px) {
+  .passwordGrid {
+    grid-template-areas:
+      "password confirm"
+      "hints hints";
+    grid-template-columns: 1fr 1fr;
+    column-gap: var(--s-3);
+  }
+
+  .passwordHints ul {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: var(--s-3);
+  }
+}
+
+/* Short laptop screens: pairs with the tighter card padding in
+   `AuthSplitShell.module.css` so neither form needs to scroll. */
+@media (min-width: 561px) and (max-height: 820px) {
+  .headerLogin,
+  .headerRegister {
+    margin-bottom: 18px;
+  }
+
+  .formLogin {
+    gap: 12px;
+  }
+
+  .formRegister,
+  .passwordGrid {
+    row-gap: 10px;
+  }
+}
+
+/* Very short screens (1366×768 laptops once the browser's own toolbars
+   take their share): slimmer inputs and a smaller title on top of the
+   above. */
+@media (min-width: 561px) and (max-height: 760px) {
+  .header h1 {
+    font-size: var(--t-h3);
+  }
+
+  .headerLogin,
+  .headerRegister {
+    margin-bottom: 10px;
+  }
+
+  .form {
+    --field-padding-block: 10px;
+  }
+
+  .formRegister,
+  .passwordGrid {
+    row-gap: 6px;
+  }
+
+  .footerLogin,
+  .footerRegister {
+    margin-top: 10px;
+  }
+}
+
 @media (max-width: 560px) {
   .headerLogin,
   .headerRegister {
@@ -196,14 +302,16 @@ button.resendButton { border-width: 1.5px; border-color: var(--ember); color: va
     gap: 12px;
   }
 
-  .row2 {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
   .footerLogin,
   .footerRegister {
     margin-top: 18px;
+  }
+}
+
+@media (max-width: 340px) {
+  .row2 {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 }
 

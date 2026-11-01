@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { ROUTES } from "@/lib/routes";
+
 import { PlanCard, type PlanCardProps } from "@/components/plan";
 import { Button, Icon, LoadingDots } from "@/components/ui";
 import { listFavoritePlans } from "@/lib/api";
@@ -24,6 +26,9 @@ function toCardPlan(fp: FavoritePlanResponse): PlanCardProps["plan"] {
     title: p.title,
     description: p.description,
     estimatedTotalCost: p.estimatedTotalCost,
+    estimatedTotalCostMax: p.estimatedTotalCostMax ?? null,
+    unpricedCount: p.unpricedCount,
+    priceCompleteness: p.priceCompleteness,
     estimatedTotalDuration: p.estimatedTotalDuration,
     activityCount: p.activityCount,
     distanceKm: null,
@@ -120,6 +125,7 @@ export function SavedPlansPanel() {
             {items.map((favorite) => (
               <li key={favorite.id}>
                 <PlanCard
+                  returnTo={ROUTES.favorites}
                   plan={toCardPlan(favorite)}
                   isSaved
                   onSavedChange={(saved) => {

@@ -2,7 +2,18 @@ import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios';
 import { getApiBaseUrl } from './config';
 import { getToken } from './token-provider';
 import { notifyUnauthorized } from './auth-events';
+import { refreshSessionOnce } from './session-refresher';
 import { normalizeError, type ApiError } from './errors';
+
+declare module 'axios' {
+  interface InternalAxiosRequestConfig {
+    /**
+     * Set once a request has already been replayed after a session refresh,
+     * so a request that 401s again is rejected instead of refreshing forever.
+     */
+    retriedAfterRefresh?: boolean;
+  }
+}
 
 /**
  * Configuration options for apiClient requests, omitting `url` and `method`.
@@ -107,21 +118,75 @@ export function isSessionInvalidating(apiError: ApiError): boolean {
 }
 
 /**
+ * Endpoints that establish a session rather than consume one. A 401 here is
+ * the answer itself — wrong credentials, no refresh cookie, an expired
+ * recovery token — so refreshing and replaying would be meaningless, and on
+ * `/sessions/refresh` it would recurse into the very call that just failed.
+ * Every other route (including `/sessions/me` and `/users/me`) is a normal
+ * authenticated request and is eligible for the refresh-and-retry below.
+ */
+const NON_REFRESHABLE_PATHS = new Set([
+  '/sessions',
+  '/sessions/refresh',
+  '/users',
+  '/password-recoveries',
+]);
+
+/**
+ * Whether a failed request should try to renew the session and run again.
+ * Exported (not part of the public `@/lib/api` barrel) for direct testing.
+ */
+export function isRetriableAfterRefresh(
+  apiError: ApiError,
+  url: string | undefined,
+  alreadyRetried: boolean | undefined,
+): boolean {
+  return (
+    isSessionInvalidating(apiError) &&
+    !alreadyRetried &&
+    !NON_REFRESHABLE_PATHS.has(url ?? '')
+  );
+}
+
+/**
  * Response interceptor:
  * - Captures response errors.
- * - If the error is a 401 that actually means the session/token is invalid
- *   (not one of `NON_SESSION_UNAUTHORIZED_CODES`), notifies the event bus
- *   through `notifyUnauthorized()`.
+ * - On a 401 that means the access token expired mid-session, renews the
+ *   session once through `refreshSessionOnce()` and replays the original
+ *   request, so the 15-minute access-token lifetime is invisible to the user.
+ *   Before this, any 401 ended the session outright, which logged everyone
+ *   out exactly 15 minutes after logging in even though the refresh cookie
+ *   was still valid for 30 days.
+ * - Only when the renewal fails (no cookie, revoked or expired session) does
+ *   it notify the event bus through `notifyUnauthorized()`.
  * - Ensures every thrown exception is an `ApiError`.
  */
 instance.interceptors.response.use(
   (response) => response,
-  (error: unknown) => {
+  async (error: unknown) => {
     const apiError = normalizeError(error);
 
-    if (isSessionInvalidating(apiError)) {
-      notifyUnauthorized();
+    if (!isSessionInvalidating(apiError)) {
+      return Promise.reject(apiError);
     }
+
+    const config = axios.isAxiosError(error) ? error.config : undefined;
+
+    if (
+      config &&
+      isRetriableAfterRefresh(apiError, config.url, config.retriedAfterRefresh)
+    ) {
+      const renewed = await refreshSessionOnce();
+
+      if (renewed) {
+        config.retriedAfterRefresh = true;
+        // The request interceptor overwrites `Authorization` with the token
+        // that `refreshSessionOnce()` just installed.
+        return instance.request(config);
+      }
+    }
+
+    notifyUnauthorized();
 
     return Promise.reject(apiError);
   }

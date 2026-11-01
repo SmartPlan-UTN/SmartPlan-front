@@ -194,11 +194,12 @@ describe("LoginForm", () => {
     await fillValidFields(user);
     await user.click(screen.getByRole("button", { name: "Iniciar sesión" }));
 
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Tu cuenta está suspendida. Contactá a soporte para más información.",
+    );
     expect(
-      await screen.findByText(
-        "Tu cuenta está suspendida. Contactá a soporte para más información.",
-      ),
-    ).toBeInTheDocument();
+      screen.getByRole("link", { name: "Contactá a soporte" }),
+    ).toHaveAttribute("href", "/help#contact");
   });
 
   it("shows a rate-limit message for ATTEMPT_LIMIT_EXCEEDED", async () => {

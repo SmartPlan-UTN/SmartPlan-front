@@ -148,6 +148,11 @@ export function PlanComposer({
       textareaRef.current?.focus();
       return;
     }
+    if (trimmed.length > 1000) {
+      setValidationError('Resumí tu consulta en hasta 1.000 caracteres.');
+      textareaRef.current?.focus();
+      return;
+    }
     onSubmit(trimmed, context);
   }
 
@@ -239,7 +244,7 @@ export function PlanComposer({
           className={styles.submit}
           onClick={submit}
           disabled={submitting}
-          aria-label="Planificar"
+          aria-label="Planificar una salida"
         >
           {submitting ? (
             <span className={styles.submitDots} aria-hidden="true">

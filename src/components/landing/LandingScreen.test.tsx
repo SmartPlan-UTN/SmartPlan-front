@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { SessionStatus } from "@/lib/auth";
@@ -7,6 +7,7 @@ import { LandingScreen } from "./LandingScreen";
 
 const useSession = vi.hoisted(() => vi.fn());
 const usePlanRequestPolling = vi.hoisted(() => vi.fn());
+const replace = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/auth", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/auth")>()),
@@ -19,14 +20,19 @@ vi.mock("@/hooks", async (importActual) => ({
 }));
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), replace, refresh: vi.fn() }),
+  usePathname: () => "/",
 }));
 
 // The rest of the landing is noise for this test: it only checks which
 // component fills the recommendations/showcase slot.
 vi.mock("./LandingHero", () => ({
   HERO_COMPOSER_ID: "plan-composer",
-  LandingHero: () => <div data-testid="hero" />,
+  LandingHero: () => (
+    <div id="plan-composer" data-testid="hero">
+      <textarea aria-label="Idea para la salida" />
+    </div>
+  ),
 }));
 vi.mock("./InspirationGallery", () => ({ InspirationGallery: () => null }));
 vi.mock("./ImmersiveStory", () => ({ ImmersiveStory: () => null }));
@@ -53,6 +59,8 @@ function session(status: SessionStatus) {
 }
 
 beforeEach(() => {
+  window.history.replaceState(null, "", "/");
+  replace.mockReset();
   usePlanRequestPolling.mockReturnValue({ phase: "idle", lastSubmission: null });
   session("anonymous");
 });
@@ -88,6 +96,26 @@ describe("LandingScreen recommendations slot (CU20)", () => {
       expect(screen.getByTestId("hero")).toBeInTheDocument();
       unmount();
     }
+  });
+
+  it("focuses the composer for an anonymous visitor already on Inicio", () => {
+    render(<LandingScreen />);
+    const hero = screen.getByTestId("hero");
+    hero.scrollIntoView = vi.fn();
+
+    fireEvent(window, new Event("smartplan:start-composer"));
+
+    expect(screen.getByRole("textbox", { name: "Idea para la salida" })).toHaveFocus();
+  });
+
+  it("focuses the composer and clears its query entry point without a session", () => {
+    window.history.replaceState(null, "", "/?startComposer=1");
+    HTMLElement.prototype.scrollIntoView = vi.fn();
+
+    render(<LandingScreen />);
+
+    expect(screen.getByRole("textbox", { name: "Idea para la salida" })).toHaveFocus();
+    expect(replace).toHaveBeenCalledWith("/");
   });
 
   it("ends with Manual Explore followed directly by the footer", async () => {

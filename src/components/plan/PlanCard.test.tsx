@@ -36,6 +36,11 @@ const basePlan: PlanSearchResult = {
 };
 
 describe("PlanCard", () => {
+  it("labels an unrated plan honestly instead of displaying 0.0", () => {
+    render(<PlanCard plan={{ ...basePlan, averageRating: 0 }} />);
+    expect(screen.getByText("Sin reseñas")).toBeInTheDocument();
+    expect(screen.queryByText("0.0")).not.toBeInTheDocument();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     mockIsPlanSaved.mockReturnValue(false);

@@ -8,7 +8,7 @@ import { Button, Field, Icon } from "@/components/ui";
 import { useToggle } from "@/hooks";
 import { ApiError } from "@/lib/api";
 import { useSession } from "@/lib/auth";
-import { ROUTES } from "@/lib/routes";
+import { helpSectionRoute, ROUTES } from "@/lib/routes";
 import { EMAIL_PATTERN, MIN_PASSWORD_LENGTH, REQUIRED_MESSAGE } from "@/lib/utils";
 
 import styles from "./AuthForm.module.css";
@@ -46,9 +46,9 @@ function loginErrorMessage(error: ApiError): string {
     case "INVALID_CREDENTIALS":
       return "El email o la contraseña son incorrectos.";
     case "ACCOUNT_SUSPENDED":
-      return "Tu cuenta está suspendida. Contactá a soporte para más información.";
-    case "ACCOUNT_BANNED":
-      return "Tu cuenta fue dada de baja. Contactá a soporte si creés que es un error.";
+      // Followed by a link to the help page's contact section (see the
+      // `formError` block below).
+      return "Tu cuenta está suspendida.";
     case "ATTEMPT_LIMIT_EXCEEDED":
     case "TOO_MANY_REQUESTS":
       return "Hiciste demasiados intentos. Esperá un momento antes de volver a intentar.";
@@ -128,10 +128,12 @@ export function LoginForm({ destination, passwordChanged, accountDeleted }: Logi
   const [showPassword, toggleShowPassword] = useToggle(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const [accountSuspended, setAccountSuspended] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   async function submit() {
     setFormError(null);
+    setAccountSuspended(false);
 
     const errors = validate(email, password);
     setFieldErrors(errors);
@@ -148,6 +150,7 @@ export function LoginForm({ destination, passwordChanged, accountDeleted }: Logi
     } catch (error) {
       if (error instanceof ApiError) {
         setFormError(loginErrorMessage(error));
+        setAccountSuspended(error.code === "ACCOUNT_SUSPENDED");
         setFieldErrors(fieldErrorsFrom(error));
       } else {
         setFormError("No pudimos iniciar sesión. Intentá de nuevo.");
@@ -179,7 +182,21 @@ export function LoginForm({ destination, passwordChanged, accountDeleted }: Logi
         {formError ? (
           <p className={styles.formError} role="alert">
             <Icon name="circle-alert" size={18} />
-            {formError}
+            <span>
+              {formError}
+              {accountSuspended ? (
+                <>
+                  {" "}
+                  <Link
+                    href={helpSectionRoute("contact")}
+                    className={styles.formErrorLink}
+                  >
+                    Contactá a soporte
+                  </Link>{" "}
+                  para más información.
+                </>
+              ) : null}
+            </span>
           </p>
         ) : null}
 

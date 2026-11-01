@@ -13,7 +13,7 @@ describe("PlanComposer", () => {
     render(<PlanComposer submitting={false} onSubmit={onSubmit} />);
 
     await user.type(screen.getByLabelText(FIELD), "hi");
-    await user.click(screen.getByRole("button", { name: "Planificar" }));
+    await user.click(screen.getByRole("button", { name: "Planificar una salida" }));
 
     expect(onSubmit).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toHaveTextContent(/contale un poco más/i);
@@ -25,7 +25,7 @@ describe("PlanComposer", () => {
     render(<PlanComposer submitting={false} onSubmit={onSubmit} />);
 
     await user.type(screen.getByLabelText(FIELD), "  algo romántico para hoy  ");
-    await user.click(screen.getByRole("button", { name: "Planificar" }));
+    await user.click(screen.getByRole("button", { name: "Planificar una salida" }));
 
     expect(onSubmit).toHaveBeenCalledWith("algo romántico para hoy", {});
   });
@@ -53,7 +53,7 @@ describe("PlanComposer", () => {
     await user.click(screen.getByRole("option", { name: "Tarde" }));
 
     await user.type(screen.getByLabelText(FIELD), "algo lindo");
-    await user.click(screen.getByRole("button", { name: "Planificar" }));
+    await user.click(screen.getByRole("button", { name: "Planificar una salida" }));
 
     expect(onSubmit).toHaveBeenCalledWith("algo lindo", { timeOfDay: "afternoon" });
   });
@@ -62,7 +62,7 @@ describe("PlanComposer", () => {
     render(<PlanComposer submitting onSubmit={vi.fn()} />);
 
     expect(screen.getByLabelText(FIELD)).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Planificar" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Planificar una salida" })).toBeDisabled();
   });
 
   it("uses a suggested idea to fill and focus the composer without submitting", async () => {
@@ -122,5 +122,16 @@ describe("PlanComposer", () => {
     );
 
     expect(screen.getByRole("button", { name: "Sorpréndeme" })).toBeInTheDocument();
+  });
+
+  it('shows no "En casa" or "Gratis" chip where the context is hidden: the text says it (#210)', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    render(<PlanComposer submitting={false} hideContext onSubmit={onSubmit} />);
+    expect(screen.queryByRole("button", { name: "En casa" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Gratis" })).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText("Contale a smartplan qué querés hacer"), "noche de juegos gratis");
+    await user.click(screen.getByRole("button", { name: "Planificar una salida" }));
+    expect(onSubmit).toHaveBeenCalledWith("noche de juegos gratis", {});
   });
 });

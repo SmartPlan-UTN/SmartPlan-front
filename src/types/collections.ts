@@ -1,3 +1,4 @@
+import type { Price } from './pricing';
 import { BaseEntity } from './common';
 import type { User } from './users';
 import type { Activity } from './activities';
@@ -71,7 +72,8 @@ export interface CollectionActivityDetail {
     id: number;
     name: string;
     description: string;
-    estimatedCost: number;
+    estimatedCost: number | null;
+    price?: Price | null;
     estimatedDuration: number;
     type: string | null;
   };

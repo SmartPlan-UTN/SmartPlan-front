@@ -1,0 +1,27 @@
+.hero {
+  position: relative;
+}
+
+.summary {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 720px);
+  margin: calc(-1 * var(--s-6)) auto 0;
+  padding: var(--s-5);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
+}
+
+@media (max-width: 560px) {
+  .hero figcaption {
+    bottom: var(--s-5);
+  }
+
+  .summary {
+    width: calc(100% - var(--s-4));
+    margin-top: calc(-1 * var(--s-4));
+    padding: var(--s-4);
+  }
+}

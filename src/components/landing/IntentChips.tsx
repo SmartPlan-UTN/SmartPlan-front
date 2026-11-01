@@ -38,7 +38,10 @@ export function IntentChips({ disabled = false, onPick }: IntentChipsProps) {
               type="button"
               className={styles.intent}
               disabled={disabled}
-              onClick={() => onPick(intent.query)}
+              onClick={() => {
+                const index = Math.floor(Math.random() * intent.queries.length);
+                onPick(intent.queries[index]);
+              }}
             >
               <Icon name={intent.icon} size={14} stroke={1.9} aria-hidden="true" />
               {intent.label}

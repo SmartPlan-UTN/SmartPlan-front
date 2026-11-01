@@ -1,0 +1,82 @@
+.chip {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-height: 28px;
+  padding: 4px 12px 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--ember) 32%, transparent);
+  border-radius: var(--r-chip);
+  background: var(--ember-04);
+  color: var(--fg-1);
+  font-size: var(--t-label);
+  line-height: 1.2;
+  text-decoration: none;
+  transition:
+    background-color var(--d-fast) var(--ease-inout),
+    border-color var(--d-fast) var(--ease-inout);
+}
+
+.chip:hover {
+  border-color: var(--ember);
+  background: var(--ember-10);
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.chip svg {
+  flex-shrink: 0;
+  color: var(--ember);
+}
+
+.label {
+  flex-shrink: 0;
+  font-weight: var(--w-label);
+  color: var(--fg-2);
+}
+
+.sep {
+  color: var(--fg-3);
+}
+
+.title {
+  overflow: hidden;
+  font-weight: var(--w-heading);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.by {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--fg-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.onDark {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(26, 17, 9, 0.5);
+  color: var(--fg-on-dark);
+  backdrop-filter: blur(6px);
+}
+
+.onDark .label,
+.onDark .by {
+  color: var(--fg-on-dark-2);
+}
+
+.onDark svg {
+  color: var(--gold);
+}
+
+.onDark:hover {
+  border-color: var(--gold);
+  background: rgba(26, 17, 9, 0.7);
+}

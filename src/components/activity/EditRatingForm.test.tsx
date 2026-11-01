@@ -22,8 +22,8 @@ function mockRating(overrides: Partial<OwnRating> = {}): OwnRating {
     updatedAt: "2026-08-25T12:00:00.000Z",
     activityId: 42,
     planId: 10,
-    moderationStatus: "approved",
-    moderationReason: null,
+    isOwn: true,
+    removed: false,
     ...overrides,
   };
 }

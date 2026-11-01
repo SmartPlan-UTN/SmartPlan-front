@@ -1,6 +1,11 @@
 import Image from "next/image";
 
-export type LogoVariant = "white" | "ink";
+/**
+ * `ember` is the brand lockup over light surfaces: the isotype in `--ember`
+ * and, in the `full` kind, the wordmark in ink so it stays as legible as the
+ * `ink` variant.
+ */
+export type LogoVariant = "white" | "ink" | "ember";
 export type LogoKind = "full" | "mark";
 
 export interface LogoProps {

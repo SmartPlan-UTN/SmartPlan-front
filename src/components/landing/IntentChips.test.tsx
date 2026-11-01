@@ -14,19 +14,25 @@ describe("IntentChips", () => {
     }
   });
 
-  it("picks the intent's full phrase, not the label on the chip", async () => {
+  it("fills a natural, complete query selected from the chip's options", async () => {
     const user = userEvent.setup();
     const onPick = vi.fn();
+    const random = vi.spyOn(Math, "random").mockReturnValue(0.99);
     render(<IntentChips onPick={onPick} />);
 
     await user.click(screen.getByRole("button", { name: "Cita" }));
 
-    // The whole point of the chips: they demonstrate that the field takes
-    // a sentence. A chip that inserted its own label would teach the
-    // opposite — that this is a keyword box.
     const [picked] = onPick.mock.calls[0];
-    expect(picked).toBe("Una cita al atardecer, con buena comida y vista");
-    expect(picked.split(" ").length).toBeGreaterThan(3);
+    const cita = INTENTS.find(({ label }) => label === "Cita")?.queries;
+    expect(picked).toBe(cita?.[cita.length - 1]);
+    expect(picked).toMatch(/cena y cine/i);
+    expect(picked).toMatch(/horarios hay y cuánto sale/i);
+    random.mockRestore();
+  });
+
+  it("offers multiple natural alternatives per intent", () => {
+    expect(INTENTS.every(({ queries }) => queries.length >= 3)).toBe(true);
+    expect(INTENTS.flatMap(({ queries }) => queries).every((query) => query.includes(" "))).toBe(true);
   });
 
   it("does not fire while disabled", async () => {

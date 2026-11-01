@@ -1,0 +1,15 @@
+.panel { margin-block: var(--s-4); border-block: 1px solid var(--hairline); padding-block: var(--s-4); }
+.panel summary { cursor: pointer; font-weight: 650; color: var(--fg-1); }
+.panel p { color: var(--fg-2); font-size: 0.875rem; margin-block: var(--s-3); }
+.search { display: flex; align-items: end; gap: var(--s-3); margin-block: var(--s-4); }
+.field { display: grid; gap: var(--s-2); flex: 1; min-width: 0; font-size: 0.875rem; }
+.field input { width: 100%; border: 1px solid var(--hairline); border-radius: var(--r-btn); background: var(--surface-card); color: var(--fg-1); padding: var(--s-3); font: inherit; }
+.field input:focus-visible { outline: 2px solid var(--ember); outline-offset: 3px; }
+.results { list-style: none; padding: 0; margin: 0; }
+.results li { display: flex; justify-content: space-between; align-items: center; gap: var(--s-3); padding-block: var(--s-3); border-top: 1px solid var(--hairline); }
+.results li > div { min-width: 0; overflow-wrap: anywhere; }
+.results button { flex-shrink: 0; }
+.results strong, .results span { display: block; }
+.results span { color: var(--fg-2); font-size: 0.8rem; margin-top: var(--s-1); }
+.results a { color: var(--ember); text-decoration: underline; }
+@media (max-width: 560px) { .search { align-items: stretch; flex-direction: column; } }

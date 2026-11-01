@@ -1,0 +1,75 @@
+.refinement {
+  margin-top: var(--s-4);
+  border-top: 1px solid var(--hairline);
+  padding-top: var(--s-3);
+}
+.refinement summary {
+  cursor: pointer;
+  color: var(--ember);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+.refinement summary:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 4px;
+}
+.adjustments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+  margin-top: var(--s-3);
+}
+.hint {
+  color: var(--fg-2);
+  font-size: 0.8125rem;
+  margin: var(--s-3) 0;
+}
+.stops {
+  padding-left: var(--s-5);
+  margin: 0;
+}
+.stops li {
+  padding-block: var(--s-2);
+  font-size: 0.875rem;
+}
+.stops li > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+}
+
+/* Whole-plan adjustments: short, in the person's words. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.chip {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--fg-1);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+.chip:hover:not(:disabled) {
+  border-color: var(--ember);
+  background: var(--ember-04);
+  color: var(--ember);
+}
+.chip:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+.chip:disabled {
+  opacity: 0.45;
+  cursor: default;
+}

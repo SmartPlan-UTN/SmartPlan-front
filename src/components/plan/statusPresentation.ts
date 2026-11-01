@@ -7,7 +7,7 @@ import type { PlanStatusKey } from "@/types";
  * `generated` and `selected` deliberately get **no** pill — `generated` is the
  * default (a proposal), and a plan's owner marking intent (`selected`) is
  * private to them: it surfaces in the action area, never as a badge a stranger
- * could read. `cancelled` never reaches the public detail (it 404s).
+ * could read. `cancelled` never reaches the shared detail (it 404s).
  */
 export interface PlanStatusPresentation {
   label: string;

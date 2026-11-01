@@ -1,31 +1,17 @@
 "use client";
 
-import {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  type CSSProperties,
-} from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
-import { WAVE_PALETTES } from "@/styles/wave-palettes";
-
-import {
-  createWaveScene,
-  type Mood,
-  type WaveScene,
-} from "./wave-scene";
+import { createWaveScene, type WaveScene } from "./wave-scene";
 import type { WavesRequest } from "./waves.worker";
 import styles from "./MoodBackground.module.css";
 
-export type { Mood } from "./wave-scene";
-
 export interface MoodBackgroundProps {
   active?: boolean;
-  mood?: Mood;
   /**
    * Changing this swells the waves once and lets them settle — the tide
-   * coming in. `AppShell` passes the current route, so every navigation
-   * breaks a wave. Left undefined, the waves just idle.
+   * coming in. `AppBackground` passes the current route, so every
+   * navigation breaks a wave. Left undefined, the waves just idle.
    */
   tideKey?: string | number;
 }
@@ -33,16 +19,12 @@ export interface MoodBackgroundProps {
 /**
  * Backing-store resolution cap.
  *
- * The waves are 4-14% opacity shapes with no fine detail, so a HiDPI
+ * The waves are 4-8% opacity shapes with no fine detail, so a HiDPI
  * backing store buys nothing you can see and costs four times the pixels
  * to fill, four layers deep, every frame. Raise this if the curve edges
  * ever start to read as stepped.
  */
 const MAX_DPR = 1;
-
-interface WaveStyle extends CSSProperties {
-  "--wave-top-glow": string;
-}
 
 /** Whatever is currently driving the canvas — a worker, or the main
  * thread when the browser has no `OffscreenCanvas`. */
@@ -50,7 +32,6 @@ interface WaveEngine {
   /** The canvas this engine is bound to; a remount gets a fresh one. */
   canvas: HTMLCanvasElement;
   resize(width: number, height: number, dpr: number): void;
-  setMood(mood: Mood, animate: boolean): void;
   tide(): void;
   setRunning(running: boolean): void;
   destroy(): void;
@@ -58,7 +39,6 @@ interface WaveEngine {
 
 function createWorkerEngine(
   canvas: HTMLCanvasElement,
-  mood: Mood,
   width: number,
   height: number,
   dpr: number,
@@ -82,14 +62,11 @@ function createWorkerEngine(
   // One-way door: a canvas can only be handed over once, and from here on
   // the main thread must not touch its size or context.
   const offscreen = canvas.transferControlToOffscreen();
-  post({ type: "init", canvas: offscreen, width, height, dpr, mood }, [
-    offscreen,
-  ]);
+  post({ type: "init", canvas: offscreen, width, height, dpr }, [offscreen]);
 
   return {
     canvas,
     resize: (w, h, ratio) => post({ type: "resize", width: w, height: h, dpr: ratio }),
-    setMood: (next, animate) => post({ type: "mood", mood: next, animate }),
     tide: () => post({ type: "tide" }),
     setRunning: (running) => post({ type: "running", running }),
     destroy: () => worker.terminate(),
@@ -98,7 +75,6 @@ function createWorkerEngine(
 
 function createMainThreadEngine(
   canvas: HTMLCanvasElement,
-  mood: Mood,
   width: number,
   height: number,
   dpr: number,
@@ -106,7 +82,7 @@ function createMainThreadEngine(
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 
-  const scene: WaveScene = createWaveScene(ctx, mood);
+  const scene: WaveScene = createWaveScene(ctx);
   scene.resize(width, height, dpr);
 
   let frame = 0;
@@ -135,10 +111,6 @@ function createMainThreadEngine(
       scene.resize(w, h, ratio);
       scene.draw(performance.now());
     },
-    setMood: (next, animate) => {
-      scene.setMood(next, performance.now(), animate);
-      if (!animate) scene.draw(performance.now());
-    },
     tide: () => scene.tide(performance.now()),
     setRunning: (running) => (running ? start() : stop()),
     destroy: stop,
@@ -147,7 +119,8 @@ function createMainThreadEngine(
 
 /**
  * Decorative, `aria-hidden` animated background: 4 layered waves that
- * undulate independently behind the content, plus a soft mood-tinted glow.
+ * undulate independently behind the content, plus a soft fixed warm glow
+ * at the bottom. One palette everywhere (`styles/wave-palettes.ts`).
  * Freezes on a single frame under `prefers-reduced-motion: reduce`.
  *
  * The waves are drawn into a canvas from a worker rather than animated as
@@ -169,7 +142,6 @@ function createMainThreadEngine(
  */
 export function MoodBackground({
   active = true,
-  mood = "idle",
   tideKey,
 }: MoodBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -179,10 +151,6 @@ export function MoodBackground({
   const isFirstTideRef = useRef(true);
   const reducedMotionRef = useRef(false);
   const activeRef = useRef(active);
-  const moodRef = useRef(mood);
-  const waveStyle: WaveStyle = {
-    "--wave-top-glow": WAVE_PALETTES[mood].topGlow,
-  };
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -227,8 +195,8 @@ export function MoodBackground({
       const { width, height } = measure();
       const dpr = currentDpr();
       engineRef.current =
-        createWorkerEngine(canvas, moodRef.current, width, height, dpr) ??
-        createMainThreadEngine(canvas, moodRef.current, width, height, dpr);
+        createWorkerEngine(canvas, width, height, dpr) ??
+        createMainThreadEngine(canvas, width, height, dpr);
     }
 
     const engine = engineRef.current;
@@ -253,9 +221,9 @@ export function MoodBackground({
     syncRunning();
 
     // Measures the wrapper's own rendered box, not the viewport: this fills
-    // its nearest positioned ancestor via `inset: 0` (or the viewport itself
-    // when a caller overrides `position: fixed` through `style`, as
-    // `AuthSplitShell` does), which isn't always exactly one screen tall.
+    // its nearest positioned ancestor via `inset: 0` — `AppBackground`'s
+    // low horizon band, or the Explore transition overlay — which isn't
+    // always exactly one screen tall.
     const observer = new ResizeObserver(handleResize);
     observer.observe(container);
     window.addEventListener("resize", handleResize);
@@ -276,11 +244,6 @@ export function MoodBackground({
   }, []);
 
   useEffect(() => {
-    moodRef.current = mood;
-    engineRef.current?.setMood(mood, !reducedMotionRef.current);
-  }, [mood]);
-
-  useEffect(() => {
     activeRef.current = active;
     engineRef.current?.setRunning(
       active && !document.hidden && !reducedMotionRef.current,
@@ -298,14 +261,7 @@ export function MoodBackground({
   }, [active, tideKey]);
 
   return (
-    <div
-      ref={containerRef}
-      aria-hidden="true"
-      className={styles.root}
-      data-mood={mood}
-      style={waveStyle}
-    >
-      <div className={styles.topGlow} />
+    <div ref={containerRef} aria-hidden="true" className={styles.root}>
       <div className={styles.bottomGlow} />
       <canvas ref={canvasRef} className={styles.canvas} />
     </div>

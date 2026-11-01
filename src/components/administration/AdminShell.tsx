@@ -1,21 +1,37 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useRef, useState, type ReactNode } from "react";
 
+import { LogoutConfirmModal } from "@/components/layout";
 import { Icon, Logo, type IconName } from "@/components/ui";
 import { useSession } from "@/lib/auth";
 import { ROUTES, isActiveRoute, type Route } from "@/lib/routes";
 
 import styles from "./AdminShell.module.css";
 
-const ADMIN_LINKS: Array<{ href: Route; label: string; icon: IconName }> = [
+const ADMIN_LINKS: Array<{
+  href: Route;
+  label: string;
+  icon: IconName;
+  /** Shown only to whoever holds it; the backend enforces it as well. */
+  permission?: string;
+}> = [
   { href: ROUTES.admin, label: "Inicio", icon: "layout-dashboard" },
   { href: ROUTES.adminActivities, label: "Actividades", icon: "sparkles" },
+  {
+    href: ROUTES.adminCatalogCandidates,
+    label: "Candidatos",
+    icon: "list-checks",
+    permission: "catalog.review",
+  },
+  { href: ROUTES.adminPlaces, label: "Lugares", icon: "map-pin" },
+  { href: ROUTES.adminMenus, label: "Cartas", icon: "utensils" },
   { href: ROUTES.adminPlans, label: "Planes", icon: "map" },
   { href: ROUTES.adminUsers, label: "Usuarios", icon: "users" },
-  { href: ROUTES.adminRatings, label: "Valoraciones", icon: "star" },
+  { href: ROUTES.adminReports, label: "Denuncias", icon: "flag" },
+  { href: ROUTES.adminMcp, label: "MCP", icon: "settings" },
 ];
 
 export interface AdminShellProps {
@@ -40,9 +56,13 @@ function AdminIdentity() {
 }
 
 function AdminNavigation({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+  const { user } = useSession();
+  const links = ADMIN_LINKS.filter(
+    (item) => !item.permission || (user?.permissions.includes(item.permission) ?? false),
+  );
   return (
     <nav className={styles.nav} aria-label="Administración">
-      {ADMIN_LINKS.map((item) => {
+      {links.map((item) => {
         const active = isActiveRoute(pathname, item.href) &&
           (item.href !== ROUTES.admin || pathname === ROUTES.admin);
         return (
@@ -59,6 +79,55 @@ function AdminNavigation({ pathname, onNavigate }: { pathname: string; onNavigat
         );
       })}
     </nav>
+  );
+}
+
+/**
+ * "Salir del panel" goes back to the app with the session open; "Cerrar
+ * sesión" closes it, behind the same confirmation as the navbar's user menu
+ * (the panel has no navbar, so this is its only way out of the account).
+ */
+function AdminSessionActions({ onNavigate }: { onNavigate?: () => void }) {
+  const { logout } = useSession();
+  const router = useRouter();
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const logoutButtonRef = useRef<HTMLButtonElement>(null);
+
+  async function confirmLogout() {
+    setConfirmingLogout(false);
+    await logout();
+    // `replace`, as in `UserMenu`: "back" must not return to a screen that
+    // required the session just closed.
+    router.replace(ROUTES.login);
+  }
+
+  return (
+    <div className={styles.sessionActions}>
+      <Link className={styles.exitLink} href={ROUTES.home} onClick={onNavigate}>
+        <Icon name="arrow-left" size={17} />
+        Salir del panel
+      </Link>
+      <button
+        ref={logoutButtonRef}
+        type="button"
+        className={`${styles.exitLink} ${styles.logoutButton}`}
+        onClick={() => setConfirmingLogout(true)}
+      >
+        <Icon name="log-out" size={17} />
+        Cerrar sesión
+      </button>
+      {confirmingLogout ? (
+        <LogoutConfirmModal
+          onCancel={() => {
+            setConfirmingLogout(false);
+            logoutButtonRef.current?.focus();
+          }}
+          onConfirm={() => {
+            void confirmLogout();
+          }}
+        />
+      ) : null}
+    </div>
   );
 }
 
@@ -79,10 +148,7 @@ export function AdminShell({ children }: AdminShellProps) {
         <AdminNavigation pathname={pathname} />
         <div className={styles.sidebarFooter}>
           <AdminIdentity />
-          <Link className={styles.exitLink} href={ROUTES.home}>
-            <Icon name="log-out" size={17} />
-            Salir del panel
-          </Link>
+          <AdminSessionActions />
         </div>
       </aside>
 
@@ -103,10 +169,7 @@ export function AdminShell({ children }: AdminShellProps) {
         {mobileOpen ? (
           <div className={styles.mobilePanel}>
             <AdminNavigation pathname={pathname} onNavigate={() => setMobileOpen(false)} />
-            <Link className={styles.exitLink} href={ROUTES.home}>
-              <Icon name="log-out" size={17} />
-              Salir del panel
-            </Link>
+            <AdminSessionActions onNavigate={() => setMobileOpen(false)} />
           </div>
         ) : null}
       </header>

@@ -1,0 +1,18 @@
+.hint {
+  max-width: 380px;
+  margin: var(--s-2) auto 0;
+  color: var(--fg-3);
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.link {
+  color: var(--electric);
+  font-weight: var(--w-label);
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}

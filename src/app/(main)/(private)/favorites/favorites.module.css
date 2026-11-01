@@ -2,11 +2,6 @@
   border-bottom: 1px solid var(--hairline);
 }
 
-.eyebrow {
-  margin-bottom: var(--s-2);
-  color: var(--ember);
-}
-
 .sectionNav {
   margin-top: var(--s-5);
 }
@@ -60,10 +55,10 @@
     margin-top: var(--s-4);
   }
 
+  /* Side by side, as on desktop: pushing two short labels to opposite
+     edges read as two unrelated controls. */
   .sectionNav {
-    width: 100%;
-    justify-content: space-between;
-    gap: var(--s-2);
+    gap: var(--s-5);
   }
 
   .tabButton {

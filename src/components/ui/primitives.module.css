@@ -55,7 +55,11 @@
 
 .buttonPrimary {
   color: var(--white);
-  background: var(--ember);
+  background: var(--ember-action);
+}
+
+.buttonPrimary:hover:not(:disabled) {
+  filter: brightness(0.94);
 }
 
 .buttonSecondary {
@@ -76,7 +80,7 @@
 }
 
 .buttonGhostEmber {
-  color: var(--ember);
+  color: var(--ember-ink);
   background: var(--ember-15);
 }
 
@@ -116,8 +120,8 @@
 
 .chipActive {
   color: var(--white);
-  background: var(--ember);
-  border-color: var(--ember);
+  background: var(--ember-action);
+  border-color: var(--ember-action);
 }
 
 .chipDark {
@@ -128,6 +132,7 @@
 .badge {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   width: fit-content;
   padding: 5px 10px;
   border-radius: var(--r-chip);
@@ -142,7 +147,7 @@
 }
 
 .badgeCost {
-  color: var(--ember);
+  color: var(--ember-ink);
   background: var(--ember-10);
 }
 

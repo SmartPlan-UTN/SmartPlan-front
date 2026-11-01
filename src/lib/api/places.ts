@@ -33,8 +33,20 @@ export async function listDepartments(
 /** Lists registered places that can be associated with an activity. */
 export async function listPlaces(
   params: PlaceListParams = {},
+  options: { signal?: AbortSignal } = {},
 ): Promise<PaginatedResult<PlaceOption>> {
-  return apiClient.get<PaginatedResult<PlaceOption>>('/places', { params });
+  return apiClient.get<PaginatedResult<PlaceOption>>('/places', { params, signal: options.signal });
+}
+
+/**
+ * Places for administration screens (`GET /admin/places`): unlike
+ * `listPlaces`, it includes places hidden until they get an approved
+ * activity, which are exactly the ones an administrator must reach.
+ */
+export async function listAdminPlaces(
+  params: PlaceListParams = {},
+): Promise<PaginatedResult<PlaceOption>> {
+  return apiClient.get<PaginatedResult<PlaceOption>>('/admin/places', { params });
 }
 
 /**

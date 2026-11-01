@@ -1,0 +1,73 @@
+.panel {
+  border-top: 1px solid var(--hairline);
+  padding-top: var(--s-4);
+  margin-bottom: var(--s-4);
+  font-size: 0.875rem;
+}
+.panel summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--fg-1);
+}
+.panel p {
+  color: var(--fg-2);
+  margin-block: var(--s-3);
+}
+.stop {
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  padding: var(--s-4);
+  margin-top: var(--s-4);
+  display: grid;
+  gap: var(--s-3);
+  min-width: 0;
+}
+.stop legend {
+  font-weight: 600;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.stop label {
+  display: grid;
+  gap: var(--s-2);
+}
+.stop input {
+  width: 100%;
+  background: var(--surface-card);
+  color: var(--fg-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-btn);
+  padding: var(--s-3);
+}
+.stop input[aria-invalid="true"] {
+  border-color: var(--ember);
+}
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+.tags button {
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-chip);
+  padding: var(--s-2) var(--s-3);
+  color: var(--fg-2);
+  background: transparent;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.tags button[aria-pressed="true"] {
+  border-color: var(--ember);
+  color: var(--ember);
+  background: var(--ember-04);
+}
+.tags button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.panel button:focus-visible,
+.panel summary:focus-visible,
+.panel input:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 3px;
+}

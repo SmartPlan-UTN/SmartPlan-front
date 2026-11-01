@@ -1,0 +1,83 @@
+.trigger {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg-3);
+  cursor: pointer;
+}
+
+.trigger:hover {
+  background: color-mix(in srgb, var(--error) 8%, transparent);
+  color: var(--error);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.overlay {
+  background: color-mix(in srgb, var(--char) 55%, transparent);
+  color: var(--fg-on-dark);
+}
+
+.overlay:hover {
+  background: color-mix(in srgb, var(--char) 75%, transparent);
+  color: var(--fg-on-dark);
+}
+
+.reasons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  margin-bottom: var(--s-2);
+  padding: 0;
+  color: var(--fg-1);
+  font-size: var(--t-small);
+  font-weight: var(--w-label);
+}
+
+.reason {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 0 var(--s-3);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-btn);
+  color: var(--fg-1);
+  font-size: var(--t-small);
+  cursor: pointer;
+}
+
+.reason:has(input:checked) {
+  border-color: var(--ember);
+  background: color-mix(in srgb, var(--ember) 6%, transparent);
+}
+
+.reason input {
+  accent-color: var(--ember);
+}
+
+.reason:focus-within {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+@media (max-width: 520px) {
+  .reasons {
+    grid-template-columns: 1fr;
+  }
+}

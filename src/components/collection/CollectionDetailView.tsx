@@ -11,7 +11,7 @@ import {
   collectionEditRoute,
   ROUTES,
 } from "@/lib/routes";
-import { formatArs, formatDuration, gradientFor } from "@/lib/utils";
+import { formatDuration, gradientFor, formatPrice } from "@/lib/utils";
 import type { CollectionActivityDetail, CollectionDetail } from "@/types";
 
 import styles from "./CollectionDetailView.module.css";
@@ -238,7 +238,7 @@ function CollectionActivityCard({
               <Icon name="clock" size={13} />
               {formatDuration(activity.estimatedDuration)}
             </span>
-            <Badge variant="cost">{formatArs(activity.estimatedCost)}</Badge>
+            <Badge variant="cost">{formatPrice(activity)}</Badge>
           </span>
         </span>
       </Link>

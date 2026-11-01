@@ -1,9 +1,11 @@
 import Link from "next/link";
 
 import { Badge, Icon, Stars } from "@/components/ui";
+import { AuthenticatedImage } from "@/components/media";
 import { useFavorites } from "@/context";
 import { planDetailRoute } from "@/lib/routes";
-import { formatArs, formatDuration, gradientFor } from "@/lib/utils";
+import { formatDuration, gradientFor, formatPlanTotal } from "@/lib/utils";
+import { categoryLabel } from "@/lib/utils/catalogLabels";
 import type { PlanSearchResult } from "@/types";
 
 import styles from "./plan.module.css";
@@ -14,12 +16,14 @@ import exploreStyles from "../explore/explore.module.css";
 export interface PlanCardProps {
   plan: Omit<PlanSearchResult, "averageRating" | "status"> &
     Partial<Pick<PlanSearchResult, "averageRating" | "status">>;
+  returnTo?: string;
   isSaved?: boolean;
   onSavedChange?: (saved: boolean) => void;
 }
 
 export function PlanCard({
   plan,
+  returnTo,
   isSaved: controlledSaved,
   onSavedChange,
 }: PlanCardProps) {
@@ -46,12 +50,12 @@ export function PlanCard({
     // No `aria-label` override: the card's own content already gives a
     // screen reader everything a sighted user sees.
     <article className={exploreStyles.card}>
-      <Link href={planDetailRoute(plan.id)} className={exploreStyles.cardContent}>
+      <Link href={planDetailRoute(plan.id, returnTo)} className={exploreStyles.cardContent}>
         <div
           className={exploreStyles.imageWrapper}
           style={{ background: gradientFor(plan.id) }}
         >
-          <Icon name="route" size={40} className={exploreStyles.imagePlaceholder} />
+          {plan.imageUrl ? <AuthenticatedImage url={plan.imageUrl} alt={plan.title} width={320} height={180} /> : <Icon name="route" size={40} className={exploreStyles.imagePlaceholder} />}
         </div>
 
       <div className={exploreStyles.body}>
@@ -69,13 +73,13 @@ export function PlanCard({
             <Icon name="clock" size={12} />
             {formatDuration(plan.estimatedTotalDuration)}
           </span>
-          <Badge variant="cost">{formatArs(plan.estimatedTotalCost)}</Badge>
-          {plan.averageRating != null ? (
+          <Badge variant="cost">{formatPlanTotal(plan)}</Badge>
+          {plan.averageRating != null && plan.averageRating > 0 ? (
             <span className={exploreStyles.metaItem}>
               <Stars rating={plan.averageRating} size={11} />
               {plan.averageRating.toFixed(1)}
             </span>
-          ) : null}
+          ) : <span className={exploreStyles.metaItem}>Sin reseñas</span>}
           {plan.distanceKm != null ? (
             <span className={exploreStyles.metaItem}>
               <Icon name="map-pin" size={12} />
@@ -90,7 +94,7 @@ export function PlanCard({
         <div className={exploreStyles.tagRow}>
           {visibleCategories.map((category) => (
             <Badge variant="tag" key={category.id}>
-              {category.name}
+              {categoryLabel(category.name)}
             </Badge>
           ))}
         </div>

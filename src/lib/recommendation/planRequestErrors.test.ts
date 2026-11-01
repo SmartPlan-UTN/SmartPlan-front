@@ -2,31 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import { ApiError } from "@/lib/api";
 
-import {
-  surpriseGenerationErrorCopy,
-  surpriseLocationErrorCopy,
-} from "./planRequestErrors";
-
-describe("surpriseLocationErrorCopy", () => {
-  it("asks for a location when there is no GPS and no preferred area", () => {
-    const copy = surpriseLocationErrorCopy("no-location");
-    expect(copy.title).toMatch(/necesitamos tu ubicación/i);
-    expect(copy.actions).toContain("go-preferences");
-  });
-
-  it("points an unsupported browser straight to preferences", () => {
-    const copy = surpriseLocationErrorCopy("unsupported");
-    expect(copy.actions).toEqual(["go-preferences"]);
-  });
-});
+import { surpriseGenerationErrorCopy } from "./planRequestErrors";
 
 describe("surpriseGenerationErrorCopy", () => {
-  it("maps NO_LOCATION_AVAILABLE and NO_VALID_COMBINATIONS to the not-enough-activities copy", () => {
-    for (const code of ["NO_LOCATION_AVAILABLE", "NO_VALID_COMBINATIONS"]) {
-      expect(surpriseGenerationErrorCopy({ code }).title).toMatch(
-        /no encontramos suficientes actividades cerca/i,
-      );
-    }
+  it("explains that no plans match the query without retrying the same filters", () => {
+    expect(
+      surpriseGenerationErrorCopy({ code: "NO_VALID_COMBINATIONS" }).title,
+    ).toBe("No hay planes disponibles para esa consulta");
+    expect(surpriseGenerationErrorCopy({ code: "NO_VALID_COMBINATIONS" }).actions).toEqual(["go-back"]);
   });
 
   it("explains the active-request limit without offering a retry", () => {

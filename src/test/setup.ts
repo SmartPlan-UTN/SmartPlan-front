@@ -1,7 +1,15 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup } from "@testing-library/react";
+import { MotionGlobalConfig } from "motion/react";
 import { afterEach } from "vitest";
+
+/**
+ * Animations never finish under jsdom (no frames), which would keep exiting
+ * rows in the DOM forever. Skipping them makes motion apply end states at
+ * once, which is what every assertion here wants.
+ */
+MotionGlobalConfig.skipAnimations = true;
 
 afterEach(() => {
   cleanup();
@@ -38,3 +46,10 @@ if (typeof globalThis.IntersectionObserver === "undefined") {
   globalThis.IntersectionObserver =
     IntersectionObserverStub as unknown as typeof IntersectionObserver;
 }
+
+/**
+ * jsdom does not implement scrolling: `window.scrollTo` only logs "Not
+ * implemented". Screens that restore a scroll position (the plan composer's
+ * catalog/route tabs) call it, so a no-op keeps the output readable.
+ */
+window.scrollTo = (() => undefined) as typeof window.scrollTo;

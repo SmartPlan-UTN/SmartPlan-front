@@ -3,15 +3,26 @@
 import { useEffect, useState, type FormEvent } from "react";
 
 import { Button, Field, Icon } from "@/components/ui";
-import { ApiError, getProfile, updateProfile } from "@/lib/api";
+import { AuthenticatedImage } from "@/components/media";
+import {
+  ApiError,
+  deleteAvatar,
+  getProfile,
+  updateProfile,
+  uploadAvatar,
+} from "@/lib/api";
 import { REQUIRED_MESSAGE } from "@/lib/utils";
 import type { UserProfile } from "@/types";
+import { publishAvatarChange } from "@/lib/profile/avatarChanges";
 
+import { AvatarCropDialog } from "./AvatarCropDialog";
 import styles from "./profile.module.css";
 
 interface FieldErrors {
   name?: string;
   lastName?: string;
+  username?: string;
+  bio?: string;
 }
 
 /** Matches `SmartPlan-back`'s `update-profile.dto.ts`: `name`/`lastName`
@@ -28,6 +39,8 @@ function saveErrorMessage(error: ApiError): string {
   if (error.code === "VALIDATION_FAILED") {
     return "Revisá los datos ingresados.";
   }
+
+  if (error.code === "USERNAME_UNAVAILABLE") return "Ese username ya está en uso. Probá con otro.";
 
   if (error.isForbidden) {
     return "No tenés permiso para hacer esto.";
@@ -69,13 +82,17 @@ function fieldErrorsFrom(error: ApiError): FieldErrors {
       fieldErrors.name = message;
     } else if (detail.field === "lastName") {
       fieldErrors.lastName = message;
+    } else if (detail.field === "username") {
+      fieldErrors.username = message;
+    } else if (detail.field === "bio") {
+      fieldErrors.bio = message;
     }
   }
 
   return fieldErrors;
 }
 
-function validate(name: string, lastName: string): FieldErrors {
+function validate(name: string, lastName: string, username: string, bio: string): FieldErrors {
   const errors: FieldErrors = {};
 
   if (!name.trim()) {
@@ -89,6 +106,12 @@ function validate(name: string, lastName: string): FieldErrors {
   } else if (lastName.trim().length > MAX_NAME_LENGTH) {
     errors.lastName = `Máximo ${MAX_NAME_LENGTH} caracteres`;
   }
+
+  const normalizedUsername = username.trim().toLowerCase().replace(/^@/, "");
+  if (!/^[a-z0-9_]{3,24}$/.test(normalizedUsername)) {
+    errors.username = "Usá de 3 a 24 letras, números o guion bajo.";
+  }
+  if (bio.length > 160) errors.bio = "Máximo 160 caracteres.";
 
   return errors;
 }
@@ -108,6 +131,8 @@ export function ProfileForm() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
+  const [bio, setBio] = useState("");
   // Read-only until "Editar perfil" is clicked (CU5): landing on the screen
   // with the fields already open for editing made it too easy to change
   // something by accident while just checking your own data.
@@ -115,9 +140,12 @@ export function ProfileForm() {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [toastState, setToastState] = useState<"hidden" | "visible" | "leaving">(
-    "hidden",
-  );
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [avatarDraft, setAvatarDraft] = useState<File | null>(null);
+  const [toastState, setToastState] = useState<
+    "hidden" | "visible" | "leaving"
+  >("hidden");
 
   useEffect(() => {
     let ignore = false;
@@ -131,6 +159,8 @@ export function ProfileForm() {
         setProfile(loaded);
         setName(loaded.name);
         setLastName(loaded.lastName);
+        setUsername(loaded.username ?? `viajero${loaded.id}`);
+        setBio(loaded.bio ?? "");
         setStatus("loaded");
       } catch {
         // Same reasoning as the save path: whatever failed (network, 5xx,
@@ -152,6 +182,8 @@ export function ProfileForm() {
     if (!profile) return;
     setName(profile.name);
     setLastName(profile.lastName);
+    setUsername(profile.username ?? `viajero${profile.id}`);
+    setBio(profile.bio ?? "");
     setFieldErrors({});
     setFormError(null);
   }
@@ -168,9 +200,9 @@ export function ProfileForm() {
   async function submit() {
     setFormError(null);
 
-    const errors = validate(name, lastName);
+    const errors = validate(name, lastName, username, bio);
     setFieldErrors(errors);
-    if (errors.name || errors.lastName) {
+    if (Object.values(errors).some(Boolean)) {
       return;
     }
 
@@ -179,10 +211,14 @@ export function ProfileForm() {
       const updated = await updateProfile({
         name: name.trim(),
         lastName: lastName.trim(),
+        username: username.trim().toLowerCase().replace(/^@/, ""),
+        bio: bio.trim(),
       });
       setProfile(updated);
       setName(updated.name);
       setLastName(updated.lastName);
+      setUsername(updated.username ?? `viajero${updated.id}`);
+      setBio(updated.bio ?? "");
       setEditing(false);
       setToastState("visible");
       setTimeout(() => {
@@ -220,7 +256,9 @@ export function ProfileForm() {
     return (
       <div className={styles.loadError} role="alert">
         <Icon name="circle-alert" size={24} />
-        <p className="sp-body">No pudimos cargar tu perfil. Intentá de nuevo.</p>
+        <p className="sp-body">
+          No pudimos cargar tu perfil. Intentá de nuevo.
+        </p>
         <Button
           type="button"
           variant="ghostLight"
@@ -234,7 +272,62 @@ export function ProfileForm() {
     );
   }
 
-  const initials = `${profile.name[0] ?? ""}${profile.lastName[0] ?? ""}`.toUpperCase();
+  const initials =
+    `${profile.name[0] ?? ""}${profile.lastName[0] ?? ""}`.toUpperCase();
+
+  function selectAvatar(file: File | undefined) {
+    if (!file) return;
+    if (
+      !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
+      file.size > 5 * 1024 * 1024
+    ) {
+      setAvatarError("Usá JPG, PNG o WebP de hasta 5 MB.");
+      return;
+    }
+    setAvatarError(null);
+    setAvatarDraft(file);
+  }
+
+  function cancelAvatarCrop() {
+    if (avatarBusy) return;
+    setAvatarDraft(null);
+    setAvatarError(null);
+  }
+
+  async function saveAvatar(file: File) {
+    if (!profile || avatarBusy) return;
+    setAvatarBusy(true);
+    setAvatarError(null);
+    try {
+      const avatar = await uploadAvatar(file);
+      setProfile((current) =>
+        current ? { ...current, avatarUrl: avatar.url } : current,
+      );
+      publishAvatarChange(profile.id, avatar.url);
+      setAvatarDraft(null);
+    } catch {
+      setAvatarError("No pudimos guardar tu foto. Intentá de nuevo.");
+    } finally {
+      setAvatarBusy(false);
+    }
+  }
+
+  async function removeAvatar() {
+    if (!profile || avatarBusy) return;
+    setAvatarBusy(true);
+    setAvatarError(null);
+    try {
+      await deleteAvatar();
+      setProfile((current) =>
+        current ? { ...current, avatarUrl: null } : current,
+      );
+      publishAvatarChange(profile.id, null);
+    } catch {
+      setAvatarError("No pudimos quitar tu foto. Intentá de nuevo.");
+    } finally {
+      setAvatarBusy(false);
+    }
+  }
 
   return (
     <>
@@ -242,8 +335,15 @@ export function ProfileForm() {
         <div className={styles.cardHeader} />
 
         <div className={styles.identity}>
-          <div className={styles.avatar} aria-hidden="true">
-            {initials}
+          <div className={styles.avatar}>
+            <AuthenticatedImage
+              url={profile.avatarUrl}
+              alt={`Avatar de ${profile.name}`}
+              width={72}
+              height={72}
+              fallback={<span aria-hidden="true">{initials}</span>}
+              loadingFallback={<span aria-hidden="true">{initials}</span>}
+            />
           </div>
           <div className={styles.identityText}>
             <p className={`sp-h3 ${styles.name}`}>
@@ -253,11 +353,53 @@ export function ProfileForm() {
           </div>
         </div>
 
+        <div className={styles.avatarActions}>
+          <label
+            className={`${styles.avatarUpload} ${avatarBusy ? styles.avatarUploadDisabled : ""}`}
+          >
+            <Icon name="image-plus" size={16} aria-hidden="true" />
+            <span>{avatarBusy ? "Procesando foto..." : "Elegir foto"}</span>
+            <input
+              className={styles.avatarFileInput}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              aria-describedby="avatar-upload-help"
+              disabled={avatarBusy}
+              onChange={(event) => {
+                selectAvatar(event.target.files?.[0]);
+                event.target.value = "";
+              }}
+            />
+          </label>
+          <span id="avatar-upload-help" className={styles.avatarHint}>
+            JPG, PNG o WebP · Hasta 5 MB
+          </span>
+          {profile.avatarUrl ? (
+            <Button
+              type="button"
+              variant="ghostEmber"
+              size="sm"
+              disabled={avatarBusy}
+              onClick={() => void removeAvatar()}
+            >
+              <Icon name="trash-2" size={14} aria-hidden="true" />
+              Quitar foto
+            </Button>
+          ) : null}
+          {avatarError ? (
+            <p className={styles.avatarError} role="alert">
+              {avatarError}
+            </p>
+          ) : null}
+        </div>
+
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
           <div className={styles.divider} />
 
           <div className={styles.sectionHeader}>
-            <p className={`sp-label ${styles.sectionLabel}`}>Información personal</p>
+            <p className={`sp-label ${styles.sectionLabel}`}>
+              Información personal
+            </p>
             {!editing ? (
               <Button type="button" variant="ghostLight" onClick={startEditing}>
                 <Icon name="pencil" size={14} aria-hidden="true" />
@@ -303,6 +445,31 @@ export function ProfileForm() {
           <Field label="Email" type="email" value={profile.email} disabled />
 
           <div className={styles.divider} />
+          <div className={styles.sectionHeader}>
+            <p className={`sp-label ${styles.sectionLabel}`}>Tu identidad en Comunidad</p>
+          </div>
+          <Field
+            label="Username"
+            type="text"
+            autoComplete="off"
+            value={username}
+            onChange={(event) => setUsername(event.target.value.replace(/^@/, "").slice(0, 24))}
+            error={fieldErrors.username}
+            disabled={!editing || saving}
+            required
+          />
+          <p className={styles.fieldHint}>Se muestra al compartir. Usá de 3 a 24 letras, números o guion bajo.</p>
+          <Field
+            label="Biografía (opcional)"
+            type="text"
+            value={bio}
+            onChange={(event) => setBio(event.target.value.slice(0, 160))}
+            error={fieldErrors.bio}
+            disabled={!editing || saving}
+          />
+          <p className={styles.fieldHint}>Tu nombre legal, email y teléfono no aparecen en tu perfil público.</p>
+
+          <div className={styles.divider} />
 
           {editing ? (
             <div className={styles.actions}>
@@ -334,6 +501,15 @@ export function ProfileForm() {
           <Icon name="circle-check" size={16} />
           Cambios guardados correctamente
         </div>
+      ) : null}
+      {avatarDraft ? (
+        <AvatarCropDialog
+          file={avatarDraft}
+          busy={avatarBusy}
+          error={avatarError}
+          onCancel={cancelAvatarCrop}
+          onConfirm={saveAvatar}
+        />
       ) : null}
     </>
   );

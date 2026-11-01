@@ -1,0 +1,418 @@
+/* The adaptation step reuses the Plan Creator's field styles (IdeaStep) and
+   adds what is its own: the day's context, a verdict per stop, a comparison. */
+
+.adapt {
+  padding-bottom: var(--s-7);
+}
+
+.header {
+  display: grid;
+  gap: var(--s-2);
+}
+
+.heading {
+  margin: 0;
+  font-size: clamp(26px, 3vw, 36px);
+  font-weight: var(--w-display);
+  letter-spacing: var(--track-display);
+  line-height: 1;
+  text-wrap: balance;
+}
+
+.lead {
+  max-width: 54ch;
+  margin: 0;
+  color: var(--fg-2);
+  font-size: var(--t-body);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+/* ── When and with whom ──────────────────────────────────────────────── */
+.when {
+  display: grid;
+  gap: var(--s-4);
+  min-width: 0;
+  margin: 0;
+  padding: var(--s-4);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-card);
+  background: var(--surface-card);
+}
+
+.when legend {
+  padding: 0 var(--s-2);
+  margin-left: calc(var(--s-2) * -1);
+  color: var(--fg-2);
+  font-size: var(--t-label);
+  font-weight: var(--w-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-4);
+}
+
+.fields > div {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  min-width: 0;
+}
+
+.fields label,
+.selectLabel {
+  color: var(--fg-1);
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+}
+
+.fields label em {
+  color: var(--fg-3);
+  font-style: normal;
+  font-weight: 400;
+}
+
+.fields input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--s-3);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-btn);
+  background: var(--cream);
+  color: var(--fg-1);
+  font: inherit;
+  font-size: var(--t-body);
+}
+
+.fields input:focus {
+  border-color: var(--ember);
+  box-shadow: var(--focus-ember);
+  outline: 0;
+}
+
+.dateField {
+  grid-column: 1 / -1;
+}
+
+.quickDays {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.quickDays button {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-chip);
+  background: transparent;
+  color: var(--fg-1);
+  font: inherit;
+  font-size: var(--t-label);
+  font-weight: var(--w-heading);
+  cursor: pointer;
+}
+
+.quickDays button:hover {
+  border-color: var(--char);
+}
+
+.quickDays button[aria-pressed="true"] {
+  border-color: var(--char);
+  background: var(--char);
+  color: var(--cream);
+}
+
+.quickDays button:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+/* ── The route, for that day ─────────────────────────────────────────── */
+.route {
+  display: grid;
+  gap: var(--s-3);
+}
+
+.routeHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-1) var(--s-4);
+}
+
+.routeHead h3 {
+  margin: 0;
+  font-size: var(--t-h4);
+  font-weight: var(--w-display);
+  letter-spacing: -0.02em;
+}
+
+.routeHead p {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: var(--t-small);
+}
+
+.retry {
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fg-1);
+  font: inherit;
+  font-weight: var(--w-heading);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.retry:hover {
+  color: var(--ember);
+}
+
+.stops {
+  display: grid;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stops li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--s-3);
+  align-items: center;
+  padding: var(--s-3) var(--s-3) var(--s-3) var(--s-4);
+  border: 1.5px solid var(--hairline);
+  border-left-width: 5px;
+  border-radius: var(--r-card-sm);
+  background: var(--surface-card);
+}
+
+.stops li[data-tone="ok"] {
+  border-left-color: var(--success);
+}
+
+.stops li[data-tone="warn"] {
+  border-left-color: var(--warning);
+}
+
+.stops li[data-tone="bad"] {
+  border-left-color: var(--error);
+}
+
+.index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-chip);
+  background: var(--char);
+  color: var(--cream);
+  font-size: var(--t-label);
+  font-weight: var(--w-display);
+}
+
+.stopBody {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.stopBody strong {
+  font-size: var(--t-body);
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.stopMeta {
+  color: var(--fg-2);
+  font-size: var(--t-label);
+}
+
+.verdict {
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+}
+
+.verdict[data-tone="idle"] {
+  color: var(--fg-2);
+  font-weight: 400;
+}
+
+.stops li[data-tone="warn"] .verdict {
+  color: var(--warning-ink);
+}
+
+.stops li[data-tone="bad"] .verdict {
+  color: var(--error-ink);
+}
+
+.stops li[data-tone="ok"] .verdict {
+  color: var(--fg-1);
+}
+
+.stopActions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.swap {
+  min-height: 36px;
+  padding: 0 var(--s-3);
+  border: 1.5px solid var(--char);
+  border-radius: var(--r-btn);
+  background: transparent;
+  color: var(--fg-1);
+  font: inherit;
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.swap:hover {
+  background: var(--char);
+  color: var(--cream);
+}
+
+.remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: transparent;
+  color: var(--fg-2);
+  cursor: pointer;
+}
+
+.remove:hover:not(:disabled) {
+  background: var(--ember-10);
+  color: var(--fg-1);
+}
+
+.remove:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.swap:focus-visible,
+.remove:focus-visible,
+.skip:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.budgetNote {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: var(--t-small);
+}
+
+/* ── Original against yours ──────────────────────────────────────────── */
+.compare {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.2fr);
+  gap: var(--s-4);
+  align-items: center;
+  padding: var(--s-4);
+  border-radius: var(--r-card);
+  background: var(--cream);
+}
+
+.compare > svg {
+  color: var(--fg-3);
+}
+
+.compareLabel {
+  margin: 0 0 2px;
+  color: var(--fg-2);
+  font-size: var(--t-label);
+  font-weight: var(--w-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.compareValue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px var(--s-2);
+  margin: 0;
+  font-size: var(--t-h4);
+  font-weight: var(--w-display);
+  letter-spacing: -0.02em;
+}
+
+.compareMeta {
+  margin: 2px 0 0;
+  color: var(--fg-2);
+  font-size: var(--t-label);
+}
+
+.delta {
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  letter-spacing: 0;
+}
+
+.delta[data-direction="up"] {
+  color: var(--warning-ink);
+}
+
+.delta[data-direction="down"] {
+  color: var(--fg-1);
+}
+
+.skip {
+  min-height: 44px;
+  padding: 0 var(--s-2);
+  border: 0;
+  background: none;
+  color: var(--fg-1);
+  font: inherit;
+  font-size: var(--t-small);
+  font-weight: var(--w-heading);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+.skip:hover {
+  color: var(--ember);
+}
+
+@media (max-width: 560px) {
+  .fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stops li {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .stopActions {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+
+  .compare {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .compare > svg {
+    transform: rotate(90deg);
+  }
+}

@@ -1,0 +1,368 @@
+/* The plan as a finished thing, on the cream canvas: who it is (name, note),
+   what it adds up to, who sees it, and where it happens. The route and the
+   confirmation are the dark object beside it, the same one it was built on. */
+.story {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding-bottom: var(--s-6);
+  animation: step-enter var(--d-fast, 200ms) var(--ease-out, ease) backwards;
+}
+
+.identity {
+  display: grid;
+  justify-items: start;
+  gap: var(--s-2);
+}
+
+.back {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 40px;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fg-2);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.back:hover:not(:disabled),
+.edit:hover:not(:disabled) {
+  color: var(--ember);
+}
+
+.back:focus-visible,
+.edit:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.title {
+  width: fit-content;
+  max-width: 100%;
+  margin: var(--s-1) 0 0;
+  overflow-wrap: anywhere;
+  color: var(--fg-1);
+  font-family: var(--font-display-serif);
+  font-size: clamp(36px, 5.2vw, 60px);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.04;
+}
+
+.title:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--ember);
+  outline-offset: 4px;
+}
+
+.note {
+  max-width: 56ch;
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 17px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.edit {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 36px;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fg-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+/* The figures and who sees it, on one line: what the plan adds up to. */
+.ledger {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-3) var(--s-5);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--hairline);
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) clamp(20px, 3vw, 36px);
+  margin: 0;
+}
+
+.facts div {
+  display: grid;
+  gap: 2px;
+}
+
+.facts dt {
+  color: var(--fg-3);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.facts dd {
+  margin: 0;
+  color: var(--fg-1);
+  font-size: 20px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.facts .long {
+  color: var(--warning-ink);
+}
+
+.facts .beyondDay {
+  color: var(--error-ink);
+}
+
+.health {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--r-card-sm);
+  background: color-mix(in srgb, var(--warning) 18%, var(--cream));
+  color: var(--warning-ink);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.health.beyondDay {
+  background: color-mix(in srgb, var(--error) 12%, var(--cream));
+  color: var(--error-ink);
+}
+
+.health svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.visibility {
+  display: grid;
+  min-width: 0;
+  justify-items: start;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.visibility legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 0;
+  color: var(--fg-3);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.segments {
+  display: inline-flex;
+  width: fit-content;
+  padding: 3px;
+  border: 1px solid color-mix(in srgb, var(--fg-1) 16%, transparent);
+  border-radius: var(--r-card-sm);
+  background: var(--surface-card);
+}
+
+.segments label {
+  position: relative;
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 14px;
+  border-radius: 9px;
+  color: var(--fg-2);
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+  transition:
+    background-color var(--d-fast, 160ms) ease,
+    color var(--d-fast, 160ms) ease;
+}
+
+.segments label.selected {
+  background: var(--char);
+  color: var(--fg-on-dark);
+}
+
+.segments input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.segments label:has(input:focus-visible) {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.visibility p {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 12.5px;
+}
+
+/* ── Where it happens ──────────────────────────────────────────────── */
+.plate {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  animation: plate-enter 260ms var(--ease-out, ease) 60ms backwards;
+}
+
+/* The map (or its placeholder) fills the plate by flex, not by a
+   percentage height, which a growing story could not resolve. */
+.plateMap {
+  display: flex;
+  height: clamp(300px, 44vh, 520px);
+  flex-direction: column;
+}
+
+.plateMap > * {
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.platePending {
+  height: 100%;
+  border-radius: var(--r-card);
+  background: var(--map-paper);
+}
+
+.plate figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+  color: var(--fg-3);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.plate figcaption strong {
+  color: var(--fg-2);
+  font-weight: 650;
+}
+
+.legLine {
+  width: 18px;
+  height: 0;
+  flex-shrink: 0;
+  border-top: 2px dashed var(--ember);
+}
+
+@keyframes step-enter {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes plate-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 900px) {
+  /* The story stays in view while a long route scrolls beside it. With a
+     map, it fills the screen from where it starts and the map takes what
+     is left, so nothing below it is blank. */
+  .story {
+    position: sticky;
+    top: calc(var(--navbar-h) + var(--s-4));
+  }
+
+  /* A minimum, not a height: a long name (up to 150 characters) or the
+     health note make the story taller instead of spilling out of it. */
+  .withPlate {
+    min-height: max(
+      640px,
+      calc(100dvh - var(--story-top, 160px) - var(--s-5))
+    );
+    padding-bottom: 0;
+  }
+
+  .withPlate .plate {
+    flex: 1 1 auto;
+  }
+
+  .withPlate .plateMap {
+    height: auto;
+    min-height: 300px;
+    flex: 1 1 auto;
+  }
+}
+
+@media (max-width: 899px) {
+  .back {
+    display: none;
+  }
+}
+
+@media (max-width: 680px) {
+  .facts dd {
+    font-size: 17px;
+  }
+
+  /* The map runs edge to edge, like a photograph in the story. */
+  .plateMap {
+    height: auto;
+    margin-inline: calc(-1 * var(--s-4));
+    aspect-ratio: 4 / 3;
+  }
+
+  .plate figcaption {
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .story,
+  .plate {
+    animation: none;
+  }
+
+  .segments label {
+    transition-duration: 0.01ms;
+  }
+}

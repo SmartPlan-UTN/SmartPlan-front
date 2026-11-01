@@ -74,9 +74,9 @@ describe("RecommendedPlans (CU20 · CU21)", () => {
     const list = screen.getByRole("list", { name: /planes recomendados/i });
     const links = within(list).getAllByRole("link");
     expect(links.map((a) => a.getAttribute("href"))).toEqual([
-      "/plans/1",
-      "/plans/2",
-      "/plans/3",
+      "/plans/1?from=%2F",
+      "/plans/2?from=%2F",
+      "/plans/3?from=%2F",
     ]);
   });
 
